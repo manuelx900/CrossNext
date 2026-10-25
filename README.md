@@ -22,28 +22,29 @@ CrossNext adapts their interface, navigation and study workflows. Additional
 references include [CrossInk](https://github.com/uxjulia/CrossInk),
 [CrossDiTo](https://github.com/dito94/CrossDiTo) and
 [VCodex](https://github.com/franssjz/cpr-vcodex); see the [credits](docs/crossnext-changes.md).
-Special thanks to CrossDiTo for helping with firmware optimization.
 
 ![CrossNext for Xteink X4 Pro](docs/images/overview.png)
 
 ## PET: your reading companion
 
-Choose an egg and grow a companion through your reading. Check its needs, offer
-daily care, play four minigames and decorate its home with 240 objects across
-four categories. You can place and remove decorations whenever you like;
-removing an object keeps it in your collection.
+PET turns your reading routine into a story with a virtual companion. Choose an
+egg, name your pet and watch it grow as you read.
 
-The album brings together life stages, reading days, streaks and **50 memory
-types**. Memories appear as you earn them, and the last reading milestone is
-**100 hours in the current life**. Inherited furnishings do not unlock new
-memories by themselves. Previous generations keep their summary, while objects,
-supplies and project progress pass on to the next companion.
+- **Reading statistics:** follow your reading time, reading days and streaks.
+- **Difficulty and goals:** adjust the care difficulty and daily reading goal
+  to suit your routine.
+- **Daily care:** feed, clean and care for your pet, keeping an eye on its
+  needs and health.
+- **Games and affection:** pet your companion and play minigames to lift its mood.
+- **A home of its own:** unlock furnishings through reading and arrange its
+  room to your liking.
+- **Memories and generations:** discover memories as you progress, follow your
+  pet's life stages and revisit previous generations.
 
 ![PET: status, care, home and memories](docs/images/pet.png)
 
-Install the matching **CrossNext-Resources.zip** on the microSD for PET, Reading
-Quest and The Intercept. Each app explains what to install if its contents are
-missing. See [PET's guide](docs/apps/pet.md) and
+Install **CrossNext-Resources.zip** on the microSD to use PET.
+See [PET's guide](docs/apps/pet.md) and
 [what's new in v1.1.0](docs/releases/CrossNext-v1.1.0.md).
 
 ## Read, study and play

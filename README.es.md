@@ -15,7 +15,6 @@ Referencias adicionales: [CrossInk](https://github.com/uxjulia/CrossInk),
 [CrossDiTo](https://github.com/dito94/CrossDiTo) y
 [VCodex](https://github.com/franssjz/cpr-vcodex); consulta los
 [créditos](docs/crossnext-changes.md) para distinguir código heredado de referencias.
-Agradecimiento especial a CrossDiTo por su ayuda en la optimización del firmware.
 
 La base de [CrossPlay](https://github.com/ma-r-s/crossplay) procede de
 [CrossPoint Reader](https://github.com/crosspoint-reader/crosspoint-reader).
@@ -26,21 +25,25 @@ este fork adapta la interfaz, la navegación y los flujos de estudio.
 
 ## PET: tu compañero de lectura
 
-Elige un huevo y haz crecer a tu mascota leyendo. Consulta sus necesidades,
-cuídala, juega a cuatro minijuegos y decora su hogar con 240 objetos repartidos
-en cuatro categorías. Puedes colocar y retirar las decoraciones cuando quieras;
-retirar un objeto lo conserva en tu colección.
+PET convierte tu rutina de lectura en la historia de un compañero virtual.
+Elige un huevo, ponle nombre y acompáñalo mientras crece con tus lecturas.
 
-El álbum reúne etapas de vida, días con lectura, rachas y **50 tipos de
-recuerdos**. Aparecen al conseguirlos, y el último hito de lectura llega a las
-**100 horas en la vida actual**. Heredar objetos no desbloquea nuevos recuerdos
-por sí solo. Las generaciones anteriores conservan su resumen; los objetos,
-las provisiones y el progreso de proyectos pasan a la siguiente mascota.
+- **Estadísticas de lectura:** consulta el tiempo leído, los días de lectura
+  y tus rachas.
+- **Dificultad y metas:** adapta la dificultad de los cuidados y tu objetivo
+  diario de lectura a tu rutina.
+- **Cuidados diarios:** alimenta, limpia y cuida a tu mascota, atendiendo sus
+  necesidades y su salud.
+- **Juegos y cariño:** acaricia a tu compañero y juega a minijuegos para
+  mejorar su ánimo.
+- **Un hogar propio:** consigue muebles y adornos leyendo y decora su
+  habitación a tu gusto.
+- **Recuerdos y generaciones:** descubre recuerdos a medida que avanzas,
+  sigue sus etapas de vida y consulta las generaciones anteriores.
 
 ![PET: estado, cuidados, hogar y recuerdos](docs/images/pet.png)
 
-Instala **CrossNext-Resources.zip** en la microSD para usar PET, Aventura lectora
-y The Intercept. Si faltan contenidos, cada app indica qué debes instalar.
+Instala **CrossNext-Resources.zip** en la microSD para usar PET.
 Consulta [la guía de PET](docs/apps/pet.md) y
 [las novedades de v1.1.0](docs/releases/CrossNext-v1.1.0.md).
 
