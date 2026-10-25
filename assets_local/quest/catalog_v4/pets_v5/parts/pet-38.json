@@ -1,0 +1,15 @@
+{
+  "id": 38,
+  "name": "Chimera",
+  "subject": "An original chimera: lion front and body, one small goat head beside the main head, and an attached snake-head tail. Only three clear faces.",
+  "height": 312,
+  "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original chimera: lion front and body, one small goat head beside the main head, and an attached snake-head tail. Only three clear faces. The final native sprite will be about312 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+  "mode": "built-in image_gen",
+  "references": [
+    "dragon-v3.png",
+    "cat.png",
+    "figure-0.png"
+  ],
+  "source": "exec-564524f7-c60a-4ef5-97eb-1af3003f1706.png",
+  "file": "pet-38.png"
+}

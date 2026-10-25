@@ -1,0 +1,16 @@
+WikDict EN-ES
+
+Copyright: Wiktionary contributors; WikDict / Karl Bartel.
+Data license: Creative Commons Attribution-ShareAlike 4.0 International.
+Original entries and contributor histories: https://www.wiktionary.org/
+Extraction: DBnary (https://kaiko.getalp.org/about-dbnary/).
+Processing/publisher: WikDict (Karl Bartel), distributed through FreeDict.
+Provider: https://www.wikdict.com/page/about
+Source archive: https://download.wikdict.com/dictionaries/stardict/wikdict-en-es.zip
+Upstream dictionary date: 2026-06-23.
+CrossNext preserves the dictionary, index, synonyms and metadata bytes.
+No entry text was edited; only the containing folder name was chosen for SD use.
+Keep the original .ifo metadata and this attribution with redistributions.
+See LICENSE-CC-BY-SA-4.0.txt. If adapting data, identify your changes and
+use the same or a compatible license. No endorsement is implied.
+This collection does not relicense the firmware or other resources.

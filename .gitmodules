@@ -1,0 +1,4 @@
+[submodule "freeink-sdk"]
+	path = freeink-sdk
+	url = https://github.com/ma-r-s/freeink-sdk.git
+	branch = fix/sd-free-space

@@ -1,0 +1,94 @@
+{
+  "descanso-005": {
+    "pose": "head",
+    "opening_height": 46
+  },
+  "descanso-012": {
+    "pose": "head",
+    "opening_height": 46
+  },
+  "descanso-013": {
+    "pose": "head",
+    "opening_height": 50
+  },
+  "descanso-014": {
+    "pose": "head",
+    "opening_height": 44
+  },
+  "descanso-017": {
+    "pose": "head",
+    "opening_height": 46
+  },
+  "descanso-020": {
+    "pose": "head",
+    "opening_height": 48
+  },
+  "descanso-022": {
+    "pose": "head",
+    "opening_height": 52
+  },
+  "descanso-024": {
+    "pose": "head",
+    "opening_height": 48
+  },
+  "descanso-026": {
+    "pose": "head",
+    "opening_height": 46
+  },
+  "descanso-029": {
+    "pose": "head",
+    "opening_height": 44
+  },
+  "descanso-030": {
+    "pose": "head",
+    "opening_height": 48
+  },
+  "descanso-033": {
+    "pose": "head",
+    "opening_height": 50
+  },
+  "descanso-037": {
+    "pose": "head",
+    "opening_height": 46
+  },
+  "descanso-040": {
+    "pose": "head",
+    "opening_height": 42
+  },
+  "descanso-044": {
+    "pose": "head",
+    "opening_height": 44
+  },
+  "descanso-045": {
+    "pose": "head",
+    "opening_height": 40
+  },
+  "descanso-049": {
+    "pose": "head",
+    "opening_height": 48
+  },
+  "descanso-051": {
+    "pose": "head",
+    "opening_height": 44
+  },
+  "descanso-053": {
+    "pose": "head",
+    "opening_height": 40
+  },
+  "descanso-054": {
+    "pose": "head",
+    "opening_height": 46
+  },
+  "descanso-056": {
+    "pose": "head",
+    "opening_height": 44
+  },
+  "descanso-057": {
+    "pose": "head",
+    "opening_height": 38
+  },
+  "descanso-060": {
+    "pose": "head",
+    "opening_height": 36
+  }
+}

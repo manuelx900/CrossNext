@@ -1,0 +1,11 @@
+Lichess puzzle data — CC0 1.0 Universal
+
+Source: https://database.lichess.org/#puzzles
+Download: https://database.lichess.org/lichess_db_puzzle.csv.zst
+License: https://creativecommons.org/publicdomain/zero/1.0/
+
+Lichess releases these database exports under CC0 and permits download,
+modification and redistribution. The bundled selection contains 1,000 records.
+Exact source IDs, positions, ratings and lines are preserved in
+tools_local/chess/puzzles.json. Import/packing code is fork-owned; no Lichess
+application code or python-chess implementation is included in the firmware.

@@ -1,0 +1,215 @@
+# Rebuild the browser emulator after a merge, and publish it.
+#
+# site/emulator/ is a build artefact, and both sides of every merge used to
+# conflict on it, which is the whole reason the integration tree needed a
+# single occupant. This job does that rebuild on GitHub after every push to
+# xteink whose sources are newer than the artefact
+# (scripts_local/emulator-stale.sh, the same test check.sh applies).
+#
+# IT NO LONGER COMMITS THE BYTES. It used to, and that cost 111 revisions of
+# crossplay.wasm, ~357MB of history and about 20MB a day forever -- paid for by
+# every clone and every CI checkout in the fork, for a ~104MB working tree in a
+# ~497MB repository. The wasm now goes to the `emulator` GitHub release under a
+# content-addressed name, and the only thing committed is the ~1KB pointer
+# site/emulator-manifest.json. site/fetch-emulator.mjs is site/vercel.json's
+# buildCommand and puts the files back during Vercel's build; a fetch that
+# fails or arrives with the wrong bytes fails that build, so the previous
+# deployment keeps serving rather than a broken one replacing it.
+# tools_local/site/publish_emulator.py owns both halves and explains the shape.
+#
+# The commit is still called "chore: emulator rebuilt for <sha>", and what
+# depends on that string has MOVED. It used to be the release gate:
+# crossplay-autorelease.yml told an emulator rebuild from a real merge by
+# grepping this subject, so a rename there stopped every release silently.
+# Card #242 replaced that with the classification table
+# (scripts_local/device-build-needed.sh), which reads paths, so the gate no
+# longer cares what this commit calls itself.
+#
+# One thing still does: scripts_local/release_notes.py drops a subject starting
+# "chore: emulator rebuilt" from the release page. Rename this and every
+# release page grows a line no player can act on. That is a cosmetic failure
+# rather than a silent stall, which is the whole difference card #242 bought.
+#
+# The commit is pushed with the workflow's own token, so it starts no CI run
+# of its own: it changes nothing a device build sees, and the next real merge's
+# CI covers it. One at a time, rebased before push, so two quick merges make
+# two commits in order rather than a conflict.
+#
+# What this job CANNOT see is whether the live site ends up serving what it
+# published. crossplay-site-live.yml asks the origin that, after this finishes
+# and again once a day.
+name: CrossPlay emulator
+
+on:
+  push:
+    branches: [xteink]
+    paths:
+      - "src/**"
+      - "lib/**"
+      - "assets_local/**"
+      - "tools_local/wasm/**"
+      - "platformio.sim.ini"
+      - "freeink-sdk"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: crossplay-emulator
+  cancel-in-progress: false
+
+env:
+  EMSDK_VERSION: "6.0.6"
+
+jobs:
+  rebuild:
+    if: github.repository == 'ma-r-s/crossplay'
+    runs-on: ubuntu-latest
+    # This job shallow-clones emsdk from GitHub, installs an emscripten
+    # toolchain, runs pio and builds wasm -- four places a network step can hang
+    # with nothing to show for it. Without a cap it inherits GitHub's SIX HOUR
+    # default. 60 matches the other two capped jobs; a rebuild that has been
+    # going an hour is stuck, not slow.
+    timeout-minutes: 60
+    steps:
+      # One rebuild per quiet window, not one per merge. Trunk landed a commit
+      # every fourteen minutes on 2026-09-05 and this job rebuilt after each:
+      # twenty-one "chore: emulator rebuilt" commits in a day, each moving the
+      # tip under whatever --committed gate was in flight, each a Vercel deploy
+      # of site/emulator until the free plan's daily budget was gone. So the
+      # job first waits for xteink to hold still for QUIET_SECONDS (a push
+      # restarts the clock, CAP_SECONDS ends the wait regardless), then checks
+      # out the tip AS IT IS THEN. With cancel-in-progress false a run that is
+      # waiting keeps waiting while arrivals replace the one pending run behind
+      # it, so a stream of merges yields one rebuild of the last of them.
+      # host-tests/ci runs this step's own text against a fake gh.
+      - name: Wait for xteink to hold still
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          quiet="${QUIET_SECONDS:-600}"; poll="${POLL_SECONDS:-60}"; cap="${CAP_SECONDS:-2400}"
+          tip() { gh api "repos/$GITHUB_REPOSITORY/commits/xteink" --jq .sha; }
+          last="$(tip)"; still=0; waited=0
+          while [ "$still" -lt "$quiet" ] && [ "$waited" -lt "$cap" ]; do
+            sleep "$poll"; waited=$((waited + poll))
+            now="$(tip)"
+            if [ "$now" = "$last" ]; then
+              still=$((still + poll))
+            else
+              echo "xteink moved to ${now:0:8} after ${waited}s; the quiet clock restarts"
+              last="$now"; still=0
+            fi
+          done
+          if [ "$still" -lt "$quiet" ]; then
+            echo "xteink never held still for ${quiet}s in ${cap}s; building ${last:0:8} anyway"
+          else
+            echo "xteink held still at ${last:0:8} for ${still}s; building it"
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: xteink
+          fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.RELEASE_TOKEN || github.token }}
+
+      # emulator-stale.sh answers THREE ways: 0 stale, 1 fresh, 2 it could not
+      # look (its cd failed). An `if` keeps only "was it zero", so 2 landed in
+      # the else branch and was recorded as stale=false. Every later step is
+      # gated on `stale == 'true'`, so all of them were skipped and the job
+      # reported success having rebuilt nothing -- the one outcome that looks
+      # exactly like "the emulator was already fresh". Capture the code and
+      # fail on anything that is not one of the two real answers.
+      - name: Is the emulator behind its sources?
+        id: stale
+        run: |
+          set +e
+          bash scripts_local/emulator-stale.sh .
+          rc=$?
+          set -e
+          case "$rc" in
+            0) echo "stale=true"  >> "$GITHUB_OUTPUT" ;;
+            1) echo "stale=false" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::emulator-stale.sh could not answer (exit $rc); the emulator was not checked, so it was not rebuilt"
+               exit 1 ;;
+          esac
+
+      - uses: actions/setup-python@v5
+        if: steps.stale.outputs.stale == 'true'
+        with:
+          python-version: "3.12"
+
+      - name: Install PlatformIO and the simulator's host libraries
+        if: steps.stale.outputs.stale == 'true'
+        run: |
+          pip install --upgrade pip
+          pip install -U https://github.com/pioarduino/platformio-core/archive/refs/tags/v6.1.19.zip brotli
+          sudo apt-get update && sudo apt-get install -y libsdl2-dev libssl-dev
+
+      - name: Cache PlatformIO packages
+        if: steps.stale.outputs.stale == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-emulator-${{ runner.os }}-${{ hashFiles('platformio.ini', 'platformio.sim.ini') }}
+
+      - name: Cache emscripten
+        if: steps.stale.outputs.stale == 'true'
+        id: emsdk-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/emsdk
+          key: emsdk-${{ env.EMSDK_VERSION }}-${{ runner.os }}
+
+      - name: Install emscripten
+        if: steps.stale.outputs.stale == 'true' && steps.emsdk-cache.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git ~/emsdk
+          ~/emsdk/emsdk install "$EMSDK_VERSION"
+          ~/emsdk/emsdk activate "$EMSDK_VERSION"
+
+      - name: Build the emulator
+        if: steps.stale.outputs.stale == 'true'
+        run: |
+          pio run -e simulator_x4_pro -t compiledb
+          source ~/emsdk/emsdk_env.sh
+          python3 tools_local/wasm/build.py
+          git status --short site/emulator
+
+      # Upload BEFORE committing, and never the other way round. A manifest on
+      # xteink naming assets that were never uploaded is a Vercel build that
+      # fails on every deploy until someone notices; assets uploaded with no
+      # manifest pointing at them are four unreferenced files on a release.
+      - name: Publish the artefact to the emulator release
+        if: steps.stale.outputs.stale == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools_local/site/publish_emulator.py
+
+      - name: Commit and push the manifest
+        if: steps.stale.outputs.stale == 'true'
+        run: |
+          git config user.name "crossplay-release[bot]"
+          git config user.email "crossplay-release@users.noreply.github.com"
+          # The pointer, and only the pointer. site/emulator/ itself is still
+          # tracked at the revision it was frozen at (the fallback described in
+          # site/README.md), and the rebuild has just rewritten those files in
+          # this runner's tree -- so they are restored, both to keep them out of
+          # the commit and because `git pull --rebase` below refuses to run with
+          # unstaged changes in the tree.
+          git add site/emulator-manifest.json
+          git checkout -- site/emulator
+          if git diff --cached --quiet; then
+            # The manifest carries built_from, which build.py stamps with the
+            # revision it compiled -- a different commit every time this job
+            # runs. So an unchanged manifest cannot mean "a rebuild produced
+            # identical bytes"; it means the rebuild or the publish did not
+            # happen. Committing nothing would leave the artefact reading stale
+            # forever and check.sh red on the deploy branch, so this is loud.
+            echo "::error::the manifest did not change, so nothing was published."
+            exit 1
+          fi
+          git commit -m "chore: emulator rebuilt for $(git rev-parse --short HEAD)" -m "Rebuilt by crossplay-emulator.yml after a push to xteink. The bytes are on the emulator release; this is the pointer to them."
+          git pull --rebase origin xteink
+          git push origin HEAD:xteink

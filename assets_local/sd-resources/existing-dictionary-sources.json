@@ -1,0 +1,199 @@
+{
+  "retrieved": "2026-10-20",
+  "files": [
+    {
+      "path": "dictionaries/English Simple/en-simple.css",
+      "url": "https://github.com/xxyzz/wiktionary_stardict/releases/download/20261018/en-simple.tar.zst",
+      "member": "./en-simple.css",
+      "archiveSha256": "10bc1adb6c0eddb881d9e1fcf31f2dc080d3e53396fa89d47829e1efe7c0a5d4",
+      "sha256": "ad4c19f9402e81d222764240d49394f0ec035edef36c74686f30233d671f742d",
+      "bytes": 825,
+      "modified": false,
+      "license": "GPL-3.0-or-later"
+    },
+    {
+      "path": "dictionaries/English Simple/en-simple.dict.dz",
+      "url": "https://github.com/xxyzz/wiktionary_stardict/releases/download/20261018/en-simple.tar.zst",
+      "member": "./en-simple.dict.dz",
+      "archiveSha256": "10bc1adb6c0eddb881d9e1fcf31f2dc080d3e53396fa89d47829e1efe7c0a5d4",
+      "sha256": "4d4e3701c579284aa95c082dd0bf9c441d7e1a71301d804e1a66a0a4784cd226",
+      "bytes": 3661410,
+      "modified": true,
+      "license": "CC-BY-SA-4.0",
+      "upstreamSha256": "d6197bdeb8ecc28698ad262b8ad49afec62b9ee8f0d11dd652d5106aff42a242",
+      "modifications": "Local removal of unrelated reference entries; dictionary indices and synonym pointers rebuilt; dictzip chunk table regenerated where applicable."
+    },
+    {
+      "path": "dictionaries/English Simple/en-simple.idx",
+      "url": "https://github.com/xxyzz/wiktionary_stardict/releases/download/20261018/en-simple.tar.zst",
+      "member": "./en-simple.idx",
+      "archiveSha256": "10bc1adb6c0eddb881d9e1fcf31f2dc080d3e53396fa89d47829e1efe7c0a5d4",
+      "sha256": "1b5928f29fd5d85b23fbea375b88ede6e6a18612432af95f1fc0a3e1d5bebf4b",
+      "bytes": 494715,
+      "modified": true,
+      "license": "CC-BY-SA-4.0",
+      "upstreamSha256": "7c3b910697fcf0018dbad809c9a48b7f7f4e7adfb07291c3cd4fcd92dfef1d11",
+      "modifications": "Local removal of unrelated reference entries; dictionary indices and synonym pointers rebuilt; dictzip chunk table regenerated where applicable."
+    },
+    {
+      "path": "dictionaries/English Simple/en-simple.ifo",
+      "url": "https://github.com/xxyzz/wiktionary_stardict/releases/download/20261018/en-simple.tar.zst",
+      "member": "./en-simple.ifo",
+      "archiveSha256": "10bc1adb6c0eddb881d9e1fcf31f2dc080d3e53396fa89d47829e1efe7c0a5d4",
+      "sha256": "475aaccdee604d77336c46daf7c321ee634c60fb152bb011df2a6a26739e92af",
+      "bytes": 331,
+      "modified": true,
+      "license": "CC-BY-SA-4.0",
+      "upstreamSha256": "e1e51a0f13b475738a50e070ba30a96046b8dc5de5321e67e6f0668ad04b1c63",
+      "modifications": "Local removal of unrelated reference entries; dictionary indices and synonym pointers rebuilt; dictzip chunk table regenerated where applicable."
+    },
+    {
+      "path": "dictionaries/English Simple/en-simple.syn",
+      "url": "https://github.com/xxyzz/wiktionary_stardict/releases/download/20261018/en-simple.tar.zst",
+      "member": "./en-simple.syn",
+      "archiveSha256": "10bc1adb6c0eddb881d9e1fcf31f2dc080d3e53396fa89d47829e1efe7c0a5d4",
+      "sha256": "97779fdd4a04d304222f4ff7fc25808ce9884584bff1a6f56d32788c3e458056",
+      "bytes": 563784,
+      "modified": true,
+      "license": "CC-BY-SA-4.0",
+      "upstreamSha256": "271f7911eaf30462b8029f2f8753cdc85dd05bd43ec4266a08b9637de01fbbc6",
+      "modifications": "Local removal of unrelated reference entries; dictionary indices and synonym pointers rebuilt; dictzip chunk table regenerated where applicable."
+    },
+    {
+      "path": "dictionaries/Spanish Wiktionary/es-es.css",
+      "url": "https://github.com/xxyzz/wiktionary_stardict/releases/download/20261018/es-es.tar.zst",
+      "member": "./es-es.css",
+      "archiveSha256": "0319285758d5d40022c3cc00c0e414b2d60883a1c1ae0bd53378789443c48676",
+      "sha256": "21a3cd0e88331dc750f1870eae9df658c1d3302ab6dbb8b6bae468be8d1f5645",
+      "bytes": 746,
+      "modified": false,
+      "license": "GPL-3.0-or-later"
+    },
+    {
+      "path": "dictionaries/Spanish Wiktionary/es-es.dict.dz",
+      "url": "https://github.com/xxyzz/wiktionary_stardict/releases/download/20261018/es-es.tar.zst",
+      "member": "./es-es.dict.dz",
+      "archiveSha256": "0319285758d5d40022c3cc00c0e414b2d60883a1c1ae0bd53378789443c48676",
+      "sha256": "65ed348ca3847586a86064cc273d0b534ec59010b29ffb801ba8ca08c05c95ef",
+      "bytes": 19017080,
+      "modified": true,
+      "license": "CC-BY-SA-4.0",
+      "upstreamSha256": "9b94b6a7d0dccc04ac8253f9a07d192caa6859599348608d2b63a269a28dd97b",
+      "modifications": "Local removal of unrelated reference entries; dictionary indices and synonym pointers rebuilt; dictzip chunk table regenerated where applicable."
+    },
+    {
+      "path": "dictionaries/Spanish Wiktionary/es-es.idx",
+      "url": "https://github.com/xxyzz/wiktionary_stardict/releases/download/20261018/es-es.tar.zst",
+      "member": "./es-es.idx",
+      "archiveSha256": "0319285758d5d40022c3cc00c0e414b2d60883a1c1ae0bd53378789443c48676",
+      "sha256": "a28f5d785a5cd44b72f015fc5a95ee44eb500f65b32ed3056e1dbbae962c8b03",
+      "bytes": 2240617,
+      "modified": true,
+      "license": "CC-BY-SA-4.0",
+      "upstreamSha256": "2aeaf8323c620cd4e645710fecaec026225938d3038dc7540285275edfdf969b",
+      "modifications": "Local removal of unrelated reference entries; dictionary indices and synonym pointers rebuilt; dictzip chunk table regenerated where applicable."
+    },
+    {
+      "path": "dictionaries/Spanish Wiktionary/es-es.ifo",
+      "url": "https://github.com/xxyzz/wiktionary_stardict/releases/download/20261018/es-es.tar.zst",
+      "member": "./es-es.ifo",
+      "archiveSha256": "0319285758d5d40022c3cc00c0e414b2d60883a1c1ae0bd53378789443c48676",
+      "sha256": "918665101081731b02efacb875642c3dcc419cf4e66ccc5c06122b68f52a8321",
+      "bytes": 331,
+      "modified": true,
+      "license": "CC-BY-SA-4.0",
+      "upstreamSha256": "9b9a23cffb00d758faadee84c8ea0dce2e42eb78337eac4ce27c6991731ef446",
+      "modifications": "Local removal of unrelated reference entries; dictionary indices and synonym pointers rebuilt; dictzip chunk table regenerated where applicable."
+    },
+    {
+      "path": "dictionaries/Spanish Wiktionary/es-es.syn",
+      "url": "https://github.com/xxyzz/wiktionary_stardict/releases/download/20261018/es-es.tar.zst",
+      "member": "./es-es.syn",
+      "archiveSha256": "0319285758d5d40022c3cc00c0e414b2d60883a1c1ae0bd53378789443c48676",
+      "sha256": "db3e42fc0548c3696b53fd571644e96b47b709318f6ed452ce96f362f0299b9a",
+      "bytes": 16430366,
+      "modified": true,
+      "license": "CC-BY-SA-4.0",
+      "upstreamSha256": "5f18d14a1c24e0909c32ae112614b80287bd369fabfcf71e17fe0b419687f24f",
+      "modifications": "Local removal of unrelated reference entries; dictionary indices and synonym pointers rebuilt; dictzip chunk table regenerated where applicable."
+    },
+    {
+      "path": "dictionaries/WikDict EN-ES/stardict.ifo",
+      "url": "https://download.wikdict.com/dictionaries/stardict/wikdict-en-es.zip",
+      "member": "wikdict-en-es/stardict.ifo",
+      "archiveSha256": "5a73d40520c9b3da192636747d7230ce52deb7ca98cf62faf8196e9038da0bdd",
+      "sha256": "ede31027d5dbcbd8d9455611cd99c6119044f0f8fe8cc870e694b7429169e328",
+      "bytes": 911,
+      "modified": true,
+      "license": "CC-BY-SA-4.0",
+      "upstreamSha256": "71a4e6b77b92ed07d904c441685afd69862e3d022fcb97f6e13eed41a51520ff",
+      "modifications": "Local removal of unrelated reference entries; dictionary indices and synonym pointers rebuilt; dictzip chunk table regenerated where applicable."
+    },
+    {
+      "path": "dictionaries/WikDict EN-ES/stardict.syn",
+      "url": "https://download.wikdict.com/dictionaries/stardict/wikdict-en-es.zip",
+      "member": "wikdict-en-es/stardict.syn",
+      "archiveSha256": "5a73d40520c9b3da192636747d7230ce52deb7ca98cf62faf8196e9038da0bdd",
+      "sha256": "cdc600fed7c9f1d2278eac726abd825a2b14a055cf14cfcc21d1aca914a3a327",
+      "bytes": 879611,
+      "modified": true,
+      "license": "CC-BY-SA-4.0",
+      "upstreamSha256": "06f4d1503d1ece2bd3f0297e0f696e53d452b47aa2eb6fcf5bd804d59a893c85",
+      "modifications": "Local removal of unrelated reference entries; dictionary indices and synonym pointers rebuilt; dictzip chunk table regenerated where applicable."
+    },
+    {
+      "path": "dictionaries/WikDict EN-ES/stardict.dict",
+      "url": "https://download.wikdict.com/dictionaries/stardict/wikdict-en-es.zip",
+      "member": "wikdict-en-es/stardict.dict",
+      "archiveSha256": "5a73d40520c9b3da192636747d7230ce52deb7ca98cf62faf8196e9038da0bdd",
+      "sha256": "cad0d181a9dad5781c6b2b42e4cbe6e90f9e40323c55bf33f6a3131ec5b399d8",
+      "bytes": 15854095,
+      "modified": true,
+      "license": "CC-BY-SA-4.0",
+      "upstreamSha256": "01a7a177e3e940f473c32f6dcd477f78898a75e5019f4b69274e951edcdc7f1a",
+      "modifications": "Local removal of unrelated reference entries; dictionary indices and synonym pointers rebuilt; dictzip chunk table regenerated where applicable."
+    },
+    {
+      "path": "dictionaries/WikDict EN-ES/stardict.idx",
+      "url": "https://download.wikdict.com/dictionaries/stardict/wikdict-en-es.zip",
+      "member": "wikdict-en-es/stardict.idx",
+      "archiveSha256": "5a73d40520c9b3da192636747d7230ce52deb7ca98cf62faf8196e9038da0bdd",
+      "sha256": "7b96e45549265bf4af1d7e15aa5a3190404280000b78fb33017f022264b00705",
+      "bytes": 1258861,
+      "modified": true,
+      "license": "CC-BY-SA-4.0",
+      "upstreamSha256": "4a4bf0c495735919c5c6dca1b7d90c50a62884a1705657b8c37e104ca6765dce",
+      "modifications": "Local removal of unrelated reference entries; dictionary indices and synonym pointers rebuilt; dictzip chunk table regenerated where applicable."
+    },
+    {
+      "path": "dictionaries/WikDict ES-EN/stardict.ifo",
+      "url": "https://download.wikdict.com/dictionaries/stardict/wikdict-es-en.zip",
+      "member": "wikdict-es-en/stardict.ifo",
+      "archiveSha256": "1ea067f7a069745fffa1a1fee7db86b86f875758a86392f6445cceb7a09cf94a",
+      "sha256": "8857cbf86a69683a57bf8bf569cdfcf91bdc80e03b9faf55f0fd2b3cbfdb9cfa",
+      "bytes": 882,
+      "modified": false,
+      "license": "CC-BY-SA-4.0"
+    },
+    {
+      "path": "dictionaries/WikDict ES-EN/stardict.dict",
+      "url": "https://download.wikdict.com/dictionaries/stardict/wikdict-es-en.zip",
+      "member": "wikdict-es-en/stardict.dict",
+      "archiveSha256": "1ea067f7a069745fffa1a1fee7db86b86f875758a86392f6445cceb7a09cf94a",
+      "sha256": "0c583f49c10444a7ba9438f01531d8b39b5834dd735306c797e061697e589a3b",
+      "bytes": 3565192,
+      "modified": false,
+      "license": "CC-BY-SA-4.0"
+    },
+    {
+      "path": "dictionaries/WikDict ES-EN/stardict.idx",
+      "url": "https://download.wikdict.com/dictionaries/stardict/wikdict-es-en.zip",
+      "member": "wikdict-es-en/stardict.idx",
+      "archiveSha256": "1ea067f7a069745fffa1a1fee7db86b86f875758a86392f6445cceb7a09cf94a",
+      "sha256": "75dfefa62ae76bedeb917f43e416b77be62602af2884eba708ee835d66b130e6",
+      "bytes": 400286,
+      "modified": false,
+      "license": "CC-BY-SA-4.0"
+    }
+  ]
+}

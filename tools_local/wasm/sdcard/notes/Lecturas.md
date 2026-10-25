@@ -1,0 +1,2 @@
+- [x] Leer veinte minutos
+- [ ] Anotar una idea

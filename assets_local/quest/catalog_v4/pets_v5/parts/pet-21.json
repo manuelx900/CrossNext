@@ -1,0 +1,15 @@
+{
+  "id": 21,
+  "name": "Mushroom sprite",
+  "subject": "An original living mushroom with a broad cap, three bold spots, a simple expressive face, two short legs and tiny arms.",
+  "height": 104,
+  "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original living mushroom with a broad cap, three bold spots, a simple expressive face, two short legs and tiny arms. The final native sprite will be about104 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+  "mode": "built-in image_gen",
+  "references": [
+    "dragon-v3.png",
+    "cat.png",
+    "figure-0.png"
+  ],
+  "source": "exec-381a8bd5-b4c9-490d-be3d-0e55e1f49f72.png",
+  "file": "pet-21.png"
+}

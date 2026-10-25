@@ -1,0 +1,19 @@
+{
+  "tool": "Built-in image generation",
+  "date": "2026-10-17",
+  "purpose": "Repair two faulty extracted female celestial variants as single complete figures",
+  "records": [
+    {
+      "nativeIndex": 183,
+      "file": "overrides/figures183.png",
+      "reference": "outfits-9.png",
+      "prompt": "Create ONE single standalone full-body FEMALE Empyrean knight game sprite, correcting the female knight represented by second row, second column of the reference atlas. The atlas is a style and outfit reference only; DO NOT return the atlas. Match its cute monochrome chibi pixel style, youthful expressive large eyes, shoulder-length dark hair, same petite head/body proportions. One character only, centered, standing facing front, both complete feet visible, no other people, no companion, no spark floating separately. Outfit: maximal white celestial plate armor, broad symmetric FEATHERED WING MANTLE physically attached to shoulders, triple-point imperial crown, white breastplate with one dark geometric center, layered short armored skirt and black boots. Preserve the costume of the male knight in the FIRST row SECOND column; adapt to female face and hair. Thick clean chunky pixel contours, only black and white pixels plus true transparent exterior, no gray texture, no stippling, no photorealism. Large clear sprite, 15 percent transparent padding around every extremity. Do not crop any crown, wing tips, hair, hands, cape or feet. No text. Full portrait canvas."
+    },
+    {
+      "nativeIndex": 185,
+      "file": "overrides/figures185.png",
+      "reference": "outfits-9.png",
+      "prompt": "Create ONE single standalone full-body FEMALE Eternal oracle game sprite, correcting the female oracle represented by second row, third column of the reference atlas. The atlas is a style and outfit reference only; DO NOT return the atlas. Match its cute monochrome chibi pixel style, youthful expressive large eyes, shoulder-length dark hair, same petite head/body proportions. One character only, centered, standing facing front, both complete feet visible. Absolutely no second character, no mirrored duplicate, no companion. Outfit: grand layered white flowing oracle robes with dark central panel and a white four-point star, symmetrical curved celestial shoulder arches ending in round clasps, an attached circular halo arch behind head, tiny star crown, hanging sleeve openings and simple black boots. Preserve the costume of the male oracle in FIRST row THIRD column; adapt to female face and hair. Thick clean chunky pixel contours, only black and white pixels plus true transparent exterior, no gray texture, no stippling, no photorealism. Large clear sprite, 15 percent transparent padding around every extremity. Do not crop any halo, crown, sleeve, hair, hands or feet. No text. Full portrait canvas."
+    }
+  ]
+}

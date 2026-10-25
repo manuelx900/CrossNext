@@ -1,0 +1,241 @@
+name: CI (build)
+
+# FORK CHANGE: DISABLED ON GITHUB (disabled_manually), and nothing in the file
+# said so. Its triggers below are untouched and read as fully live -- in
+# particular `pull_request`, which fires on every pull request in this
+# repository when the workflow is enabled. It was: it went red on every pull
+# request for a week, on the fork's own code rather than upstream's, and was
+# read by nobody. (`master` still exists on this remote, inherited from
+# upstream; the fork's default branch is `xteink` and nothing pushes to
+# `master`.)
+#
+# Its three jobs that had nowhere else to run (clang-format, the cmake unit
+# tests, cppcheck) moved into crossplay-ci.yml on 2026-09-04, card 170. Its four
+# device builds duplicated crossplay-ci.yml's.
+#
+# Kept rather than deleted because deleting it conflicts on every sync from
+# upstream. Re-enable it in the Actions tab if you ever want upstream's own
+# checks back; the trigger is untouched on purpose, so re-enabling is one click
+# and not a merge.
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  clang-format:
+    if: github.repository == 'ma-r-s/crossplay'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install clang-format-21
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 21
+          sudo apt-get update
+          sudo apt-get install -y clang-format-21
+
+      - name: Run clang-format
+        run: |
+          PATH="/usr/lib/llvm-21/bin:$PATH" ./bin/clang-format-fix
+          git diff --exit-code || (echo "Please run 'bin/clang-format-fix' to fix formatting issues" && exit 1)
+
+  cppcheck:
+    if: github.repository == 'ma-r-s/crossplay'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "latest"
+          enable-cache: false
+
+      - name: Install PlatformIO Core
+        run: |
+          uv pip install --system -U https://github.com/pioarduino/platformio-core/archive/refs/tags/v6.1.19.zip
+          # platform-espressif32's builder/main.py imports these unconditionally; its own
+          # penv bootstrap (builder/penv_setup.py) is supposed to install them automatically
+          # but isn't picking them up reliably in this runner image, so pin them explicitly.
+          uv pip install --system -U "littlefs-python>=0.16.0" "fatfs-ng>=0.1.14" "pyyaml>=6.0.2" \
+            "rich-click>=1.8.6" "zopfli>=0.2.2" "intelhex>=2.3.0" "rich>=14.0.0" "urllib3<2" \
+            "cryptography>=45.0.3" "certifi>=2025.8.3" "ecdsa>=0.19.1" "bitstring>=4.3.1" \
+            "reedsolo>=1.5.3,<1.8" "esp-idf-size>=2.0.0" "esp-coredump>=1.14.0"
+
+      - name: Cache PlatformIO packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-v2-${{ runner.os }}-${{ hashFiles('platformio.ini') }}
+          restore-keys: pio-v2-${{ runner.os }}-
+
+      - name: Install cppcheck runtime dependency
+        run: |
+          # pioarduino's Linux cppcheck binary links against libpcre.so.3.
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libpcre3
+
+      - name: Run cppcheck
+        run: pio check --fail-on-defect low --fail-on-defect medium --fail-on-defect high
+
+  build:
+    if: github.repository == 'ma-r-s/crossplay'
+    name: Build ${{ matrix.env }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Short board-specific names keep pull-request artifacts easy to identify.
+        # The release workflow applies the published crosspoint-<version>-<device>.bin names.
+        include:
+          - env: default
+            asset: firmware.bin
+          - env: sticky
+            asset: firmware-sticky.bin
+          - env: x4pro
+            asset: firmware-x4pro.bin
+          - env: x4c
+            asset: firmware-x4c.bin
+          - env: papermono
+            asset: firmware-papermono.bin
+          - env: metalio_eink4
+            asset: firmware-metalio_eink4.bin
+          - env: eego_a4
+            asset: firmware-eego_a4.bin
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "latest"
+          enable-cache: false
+
+      - name: Install PlatformIO Core
+        run: |
+          uv pip install --system -U https://github.com/pioarduino/platformio-core/archive/refs/tags/v6.1.19.zip
+          # platform-espressif32's builder/main.py imports these unconditionally; its own
+          # penv bootstrap (builder/penv_setup.py) is supposed to install them automatically
+          # but isn't picking them up reliably in this runner image, so pin them explicitly.
+          uv pip install --system -U "littlefs-python>=0.16.0" "fatfs-ng>=0.1.14" "pyyaml>=6.0.2" \
+            "rich-click>=1.8.6" "zopfli>=0.2.2" "intelhex>=2.3.0" "rich>=14.0.0" "urllib3<2" \
+            "cryptography>=45.0.3" "certifi>=2025.8.3" "ecdsa>=0.19.1" "bitstring>=4.3.1" \
+            "reedsolo>=1.5.3,<1.8" "esp-idf-size>=2.0.0" "esp-coredump>=1.14.0"
+
+      - name: Cache PlatformIO packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-v3-${{ runner.os }}-${{ matrix.env }}-${{ hashFiles('platformio.ini') }}
+          restore-keys: pio-v3-${{ runner.os }}-${{ matrix.env }}-
+
+      - name: Pin pioarduino core inside the platform penv
+        run: |
+          set -euo pipefail
+          # Envs with custom_sdkconfig (default, sticky) run a nested `pio run` from
+          # ~/.platformio/penv. The platform bootstraps that penv with an open-ended
+          # "pioarduino>=6.1.19", which now resolves to 6.2.0. That core wants
+          # tool-scons 4.11.1 while platform 55.03.311 pins 4.8.1; the two keep
+          # reinstalling over each other and the running SCons loses its package
+          # mid-build ("No module named 'SCons.Tool.FortranCommon'"). Keep the penv
+          # core on the same version as the outer core installed above.
+          # See https://github.com/pioarduino/platform-espressif32/issues/529
+          pio pkg install -e ${{ matrix.env }}
+          uv pip install --python ~/.platformio/penv/bin/python "pioarduino==6.1.19"
+          ~/.platformio/penv/bin/pio --version
+
+      - name: Build ${{ matrix.env }} firmware
+        run: |
+          set -euo pipefail
+          pio run -e ${{ matrix.env }} | tee pio.log
+
+      - name: Extract firmware stats
+        run: |
+          set -euo pipefail
+          ram_line="$(grep -E "RAM:\\s" -m1 pio.log || true)"
+          flash_line="$(grep -E "Flash:\\s" -m1 pio.log || true)"
+          echo "ram_line=${ram_line}" >> "$GITHUB_OUTPUT"
+          echo "flash_line=${flash_line}" >> "$GITHUB_OUTPUT"
+          {
+            echo "## ${{ matrix.env }} firmware build stats"
+            if [ -n "$ram_line" ]; then echo "- ${ram_line}"; else echo "- RAM: not found"; fi
+            if [ -n "$flash_line" ]; then echo "- ${flash_line}"; else echo "- Flash: not found"; fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ matrix.asset }}
+          path: .pio/build/${{ matrix.env }}/firmware.bin
+          if-no-files-found: error
+
+  unit-tests:
+    if: github.repository == 'ma-r-s/crossplay'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build
+
+      - name: Cache googletest source
+        uses: actions/cache@v4
+        with:
+          path: build/test/_deps/googletest-src
+          key: ${{ runner.os }}-googletest-${{ hashFiles('test/CMakeLists.txt') }}
+
+      - name: Configure
+        run: cmake -S test -B build/test -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build/test
+
+      - name: Run tests
+        run: ctest --test-dir build/test --output-on-failure -j
+
+  # This job is used as the PR required actions check, allows for changes to other steps in the future without breaking
+  # PR requirements.
+  test-status:
+    name: Test Status
+    needs:
+      - build
+      - clang-format
+      - cppcheck
+      - unit-tests
+    if: github.repository == 'ma-r-s/crossplay' && (always())
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail because needed jobs failed
+        # Fail if any job failed or was cancelled (skipped jobs are ok)
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        run: exit 1
+      - name: Success
+        run: exit 0

@@ -1,0 +1,267 @@
+[
+  {
+    "species": "silva",
+    "file": "silva-sleep-atlas.png",
+    "sha256": "9c164720e2d063a465dd9ec11aa0569342bd845a62903c1fcaa9c2f1df60c7a0",
+    "tool": "image_gen built-in",
+    "columns": 3,
+    "rows": [
+      "newborn",
+      "baby",
+      "juvenile",
+      "adult"
+    ]
+  },
+  {
+    "species": "nox",
+    "file": "nox-sleep-atlas.png",
+    "sha256": "774afae3eae5ad3b90d38c496b9868046647f431de2e890c8cca80b99307b716",
+    "tool": "image_gen built-in",
+    "columns": 3,
+    "rows": [
+      "newborn",
+      "baby",
+      "juvenile",
+      "adult"
+    ]
+  },
+  {
+    "species": "ember",
+    "file": "ember-sleep-atlas.png",
+    "sha256": "9b411faa1fb016ce6713f63a6a52e1fc17b2cd4557b439f591bb172091b2362a",
+    "tool": "image_gen built-in",
+    "columns": 3,
+    "rows": [
+      "newborn",
+      "baby",
+      "juvenile",
+      "adult"
+    ]
+  },
+  {
+    "species": "silva",
+    "pose": "normal",
+    "file": "moods/silva-normal-atlas.png",
+    "sha256": "28354c7a050f01529cac791e8458042f563989eaf482458e846496843f1a1694",
+    "tool": "image_gen built-in",
+    "columns": 3,
+    "rows": [
+      "newborn",
+      "baby",
+      "juvenile",
+      "adult"
+    ]
+  },
+  {
+    "species": "nox",
+    "pose": "normal",
+    "file": "moods/nox-normal-atlas.png",
+    "sha256": "0b697be42617defaad105e7f23858fcc40e25dc83cb82ac6a0ee4e0741ca119d",
+    "tool": "image_gen built-in",
+    "columns": 3,
+    "rows": [
+      "newborn",
+      "baby",
+      "juvenile",
+      "adult"
+    ]
+  },
+  {
+    "species": "ember",
+    "pose": "normal",
+    "file": "moods/ember-normal-atlas.png",
+    "sha256": "5e58222e9723484d1570a3e0629bc447d1b3c5df78dbe188518bf606f80c4683",
+    "tool": "image_gen built-in",
+    "columns": 3,
+    "rows": [
+      "newborn",
+      "baby",
+      "juvenile",
+      "adult"
+    ]
+  },
+  {
+    "species": "silva",
+    "pose": "happy",
+    "file": "moods/silva-happy-atlas.png",
+    "sha256": "98439e27a4843127a0d2ad48d3c62dbb258afcddebe68f58aacaa8965f23d5f7",
+    "tool": "image_gen built-in",
+    "columns": 3,
+    "rows": [
+      "newborn",
+      "baby",
+      "juvenile",
+      "adult"
+    ]
+  },
+  {
+    "species": "nox",
+    "pose": "happy",
+    "file": "moods/nox-happy-atlas.png",
+    "sha256": "03ca710ea57432335732a6e6d3401c1b066d1b92372b6944b34f2e02aa97f9aa",
+    "tool": "image_gen built-in",
+    "columns": 3,
+    "rows": [
+      "newborn",
+      "baby",
+      "juvenile",
+      "adult"
+    ]
+  },
+  {
+    "species": "ember",
+    "pose": "happy",
+    "file": "moods/ember-happy-atlas.png",
+    "sha256": "8b09f2a3a66addf5982122a2151af33fc1829bea9f57ceaaa6597d80b1ebe233",
+    "tool": "image_gen built-in",
+    "columns": 3,
+    "rows": [
+      "newborn",
+      "baby",
+      "juvenile",
+      "adult"
+    ]
+  },
+  {
+    "species": "silva",
+    "pose": "hungry",
+    "file": "moods/silva-hungry-atlas.png",
+    "sha256": "63184dc853255ffa5cca5ab12050f6cfd3c8f7562e620cee1f8038df7126423f",
+    "tool": "image_gen built-in",
+    "columns": 3,
+    "rows": [
+      "newborn",
+      "baby",
+      "juvenile",
+      "adult"
+    ]
+  },
+  {
+    "species": "nox",
+    "pose": "hungry",
+    "file": "moods/nox-hungry-atlas.png",
+    "sha256": "bf8511d723c4aa43cf737d3586923b3f9b45f58060bc14c81d41b49e34dd9779",
+    "tool": "image_gen built-in",
+    "columns": 3,
+    "rows": [
+      "newborn",
+      "baby",
+      "juvenile",
+      "adult"
+    ]
+  },
+  {
+    "species": "ember",
+    "pose": "hungry",
+    "file": "moods/ember-hungry-atlas.png",
+    "sha256": "33f668f24fa23732b1567ba27d58a8130153c9ac34f1bc50eda023b3cad2a9b0",
+    "tool": "image_gen built-in",
+    "columns": 3,
+    "rows": [
+      "newborn",
+      "baby",
+      "juvenile",
+      "adult"
+    ]
+  },
+  {
+    "species": "silva",
+    "pose": "tired",
+    "file": "moods/silva-tired-atlas.png",
+    "sha256": "16e77fe248b3152016e42608f385a5a06f37a25e5f24acee09c430c3f2ec8cbb",
+    "tool": "image_gen built-in",
+    "columns": 3,
+    "rows": [
+      "newborn",
+      "baby",
+      "juvenile",
+      "adult"
+    ]
+  },
+  {
+    "species": "nox",
+    "pose": "tired",
+    "file": "moods/nox-tired-atlas.png",
+    "sha256": "c231c8470fd7f9b539b4e0455cafe34677095ef12e3556e80ea98dc8075816bb",
+    "tool": "image_gen built-in",
+    "columns": 3,
+    "rows": [
+      "newborn",
+      "baby",
+      "juvenile",
+      "adult"
+    ]
+  },
+  {
+    "species": "ember",
+    "pose": "tired",
+    "file": "moods/ember-tired-atlas.png",
+    "sha256": "c4fc8af3f8145b47ab5a735f34212e342bf4a647e7f44cf199f9d0599bf355aa",
+    "tool": "image_gen built-in",
+    "columns": 3,
+    "rows": [
+      "newborn",
+      "baby",
+      "juvenile",
+      "adult"
+    ]
+  },
+  {
+    "species": "silva",
+    "pose": "sick",
+    "file": "moods/silva-sick-atlas.png",
+    "sha256": "f83a234ee58149f30de7950540a9f999a17d15a26e72fe8bb36974b6841d7983",
+    "tool": "image_gen built-in",
+    "columns": 3,
+    "rows": [
+      "newborn",
+      "baby",
+      "juvenile",
+      "adult"
+    ]
+  },
+  {
+    "species": "nox",
+    "pose": "sick",
+    "file": "moods/nox-sick-atlas.png",
+    "sha256": "61ca12d00483420d2d4d39dbea5be00a4163de4ac1436bc5732fe3cc993a6a4f",
+    "tool": "image_gen built-in",
+    "columns": 3,
+    "rows": [
+      "newborn",
+      "baby",
+      "juvenile",
+      "adult"
+    ]
+  },
+  {
+    "species": "ember",
+    "pose": "sick",
+    "file": "moods/ember-sick-atlas.png",
+    "sha256": "15a64f901803682d121a8fdb8aa0258f214f872455e8a59425133cc2d646d006",
+    "tool": "image_gen built-in",
+    "columns": 3,
+    "rows": [
+      "newborn",
+      "baby",
+      "juvenile",
+      "adult"
+    ]
+  },
+  {
+    "file": "egg-wobble-atlas.png",
+    "sha256": "453e6dbbef724fd93075e3148a95c5be03b7b5c281e2c9d0f47b024df6454038",
+    "tool": "image_gen built-in",
+    "columns": 3,
+    "rows": [
+      "silva",
+      "nox",
+      "ember"
+    ],
+    "phases": [
+      "left",
+      "center",
+      "right"
+    ]
+  }
+]

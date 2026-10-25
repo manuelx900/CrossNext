@@ -1,0 +1,11 @@
+{
+  "name": "CatalogList",
+  "version": "1.0.0",
+  "description": "FreeInk streaming catalog-list extractors: JsonListParser (items array + dotted field paths, over JsonSax) and XmlListParser (repeating element + element/attribute selectors, over expat, e.g. WebDAV PROPFIND). Rows stream to a sink; no document is held in memory.",
+  "keywords": "catalog, json, xml, webdav, streaming",
+  "authors": [{"name": "FreeInk SDK Contributors"}],
+  "dependencies": {"JsonSax": "*"},
+  "platforms": "espressif32",
+  "frameworks": ["arduino"],
+  "notes": "XmlListParser needs expat (XML_*). The consuming project must provide an expat library on the include/link path."
+}

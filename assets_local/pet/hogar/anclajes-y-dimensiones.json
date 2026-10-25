@@ -1,0 +1,94 @@
+{
+  "status": "art-brief-only-not-implemented",
+  "target": "x4pro-portrait",
+  "screen": [
+    480,
+    800
+  ],
+  "current_home_card": {
+    "x": 17,
+    "y": 149,
+    "width": 446,
+    "height": 270
+  },
+  "proposed_scene": {
+    "x": 24,
+    "y": 197,
+    "width": 432,
+    "height": 216
+  },
+  "background_master": [
+    864,
+    432
+  ],
+  "sheet": [
+    1280,
+    1024
+  ],
+  "cell": [
+    256,
+    256
+  ],
+  "grid": [
+    5,
+    4
+  ],
+  "anchors": {
+    "descanso": {
+      "x": 108,
+      "y": 190,
+      "width": 180,
+      "height": 100,
+      "pivot": "bottom-center",
+      "layer": "rest-behind-pet"
+    },
+    "adorno_suelo": {
+      "x": 389,
+      "y": 190,
+      "width": 62,
+      "height": 104,
+      "pivot": "bottom-center",
+      "layer": "decor"
+    },
+    "adorno_pared": {
+      "x": 96,
+      "y": 54,
+      "width": 96,
+      "height": 64,
+      "pivot": "center",
+      "layer": "wall"
+    },
+    "adorno_techo": {
+      "x": 96,
+      "y": 4,
+      "width": 88,
+      "height": 78,
+      "pivot": "top-center",
+      "layer": "wall"
+    },
+    "juego": {
+      "x": 303,
+      "y": 202,
+      "width": 76,
+      "height": 48,
+      "pivot": "bottom-center",
+      "layer": "foreground"
+    },
+    "entorno_suelo": {
+      "x": 43,
+      "y": 205,
+      "width": 62,
+      "height": 24,
+      "pivot": "bottom-center",
+      "layer": "ground"
+    },
+    "entorno_pared": {
+      "x": 235,
+      "y": 24,
+      "width": 96,
+      "height": 44,
+      "pivot": "center",
+      "layer": "wall"
+    }
+  }
+}

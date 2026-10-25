@@ -1,0 +1,27 @@
+{
+  "source": "User supplied species backgrounds, 2026-10-25",
+  "conversion": "Preserve original PNG; nearest resize to 448 px wide; bottom-aligned center crop/pad to 144 px; threshold 160 to 1-bit; two 224x144 halves without ink crop",
+  "images": [
+    {
+      "species": "silva",
+      "file": "silva.png",
+      "width": 2210,
+      "height": 711,
+      "sha256": "81bb0feb14f1b84840aab2e442ee8a55abdfa15a48f3856da933ef47d820eec2"
+    },
+    {
+      "species": "ember",
+      "file": "ember.png",
+      "width": 2188,
+      "height": 718,
+      "sha256": "9cbbba540960f128bba9603ca1a903616694405483a7972b9abb38cd53f82239"
+    },
+    {
+      "species": "nox",
+      "file": "nox.png",
+      "width": 2172,
+      "height": 724,
+      "sha256": "eb13029c3c82abac6c1268a61b62b2902174337c095f99e4a7c5240294d524e9"
+    }
+  ]
+}

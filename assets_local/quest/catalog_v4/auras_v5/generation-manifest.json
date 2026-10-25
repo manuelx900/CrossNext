@@ -1,0 +1,449 @@
+{
+  "mode": "built-in image_gen",
+  "auras": [
+    {
+      "id": 0,
+      "name": "Quiet spark",
+      "subject": "Two small diamond sparkles and one tiny four-point star, a very subtle beginner effect.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Two small diamond sparkles and one tiny four-point star, a very subtle beginner effect.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/dew.png",
+      "source": "exec-230bab39-ee89-4ee9-8625-9b160868352d.png",
+      "file": "aura-00.png"
+    },
+    {
+      "id": 1,
+      "name": "Reading dots",
+      "subject": "Four small round floating light motes, two on either side. Very simple beginner effect.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Four small round floating light motes, two on either side. Very simple beginner effect.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/dew.png",
+      "source": "exec-4b6e6e2b-d4c3-4a8b-9220-543c34cfa6f9.png",
+      "file": "aura-01.png"
+    },
+    {
+      "id": 2,
+      "name": "Little stars",
+      "subject": "Four cute small four-point stars, evenly spaced around the empty oval.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Four cute small four-point stars, evenly spaced around the empty oval.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/dew.png",
+      "source": "exec-60c61b38-a893-4ba2-b9be-5bbc7625818f.png",
+      "file": "aura-02.png"
+    },
+    {
+      "id": 3,
+      "name": "Soft breeze",
+      "subject": "Two short broad curved wind strokes, one at each side; clean tapered swooshes.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Two short broad curved wind strokes, one at each side; clean tapered swooshes.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/dew.png",
+      "source": "exec-76112878-4bb1-423e-bd63-82a1ff6b8cac.png",
+      "file": "aura-03.png"
+    },
+    {
+      "id": 4,
+      "name": "Falling leaves",
+      "subject": "Four separate cute leaves, one in each outer corner, each with one short vein.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Four separate cute leaves, one in each outer corner, each with one short vein.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/dew.png",
+      "source": "exec-049245a8-df5c-4a11-919f-7b079213ee54.png",
+      "file": "aura-04.png"
+    },
+    {
+      "id": 5,
+      "name": "Moon glimmer",
+      "subject": "One small crescent above the window and two little four-point stars at the lower sides.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: One small crescent above the window and two little four-point stars at the lower sides.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/dew.png",
+      "source": "exec-109cc3b7-9b32-4960-8e4b-0c091edde76a.png",
+      "file": "aura-05.png"
+    },
+    {
+      "id": 6,
+      "name": "Fireflies",
+      "subject": "Six tiny cute diamond-shaped glowing firefly symbols distributed evenly along the perimeter.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Six tiny cute diamond-shaped glowing firefly symbols distributed evenly along the perimeter.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/dew.png",
+      "source": "exec-42912e6a-bd66-4099-aa18-c66a04ce8f42.png",
+      "file": "aura-06.png"
+    },
+    {
+      "name": "dew",
+      "source": "exec-ced009d3-c73c-462b-a91f-4a984b6e0a5f.png",
+      "prompt": "Generate ONE new transparent-background game aura sprite for a monochrome e-ink chibi RPG. The attached character is ONLY a style/stroke reference: do NOT include the character, a person, clothing, text, border, UI, ground or background. Portrait composition, roughly 192x224 logical pixel art enlarged cleanly. REDESIGN the artwork from scratch with recognizable clear silhouettes; do not skeletonize, trace into wire shapes, or use hairline contours. Pure black and opaque white interiors, actual transparent exterior, no gray, dithering or texture. Consistent crisp outline about TWO logical pixels at 192px width, matching the attached chibi character's outlines. Low-level DEW aura: exactly FOUR cute water droplets with pointed tips and rounded bottoms, each a coherent filled white shape with a clean black outline and one tiny black accent. Place them at the four outer corners of an invisible vertical oval, around x12%/88%, y25%/75%; droplets about15% of full canvas height. Leave the center60%width and central70%height completely transparent for a full body avatar. Keep every droplet complete, simple, balanced and comfortably inside image edges. No additional little particles, frames or scenery. Distinct droplets must retain their teardrop form at small screen size.",
+      "id": 7,
+      "file": "aura-07.png"
+    },
+    {
+      "id": 8,
+      "name": "Ink motes",
+      "subject": "Five small tilted square ink motes around the window, simple white centers and black outlines.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Five small tilted square ink motes around the window, simple white centers and black outlines.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/dew.png",
+      "source": "exec-4b730161-fc1f-4823-937b-3e1496f1ae4e.png",
+      "file": "aura-08.png"
+    },
+    {
+      "id": 9,
+      "name": "Gentle halo",
+      "subject": "A delicate broken oval halo with two small four-point sparks; leave big gaps along the sides.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: A delicate broken oval halo with two small four-point sparks; leave big gaps along the sides.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/dew.png",
+      "source": "exec-2e42440e-a45c-43ea-9c66-fe15d49db6a6.png",
+      "file": "aura-09.png"
+    },
+    {
+      "id": 10,
+      "name": "Star circle",
+      "subject": "Six clear four-point stars forming an implied vertical circle, no continuous outline.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Six clear four-point stars forming an implied vertical circle, no continuous outline.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/dew.png",
+      "source": "exec-1fd36c2f-b608-40fe-b5c7-e41792ff73f2.png",
+      "file": "aura-10.png"
+    },
+    {
+      "id": 11,
+      "name": "Forest breeze",
+      "subject": "Six cute leaves and two broad curved wind swooshes flowing along the sides.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Six cute leaves and two broad curved wind swooshes flowing along the sides.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/dew.png",
+      "source": "exec-04caa3ac-33a2-4694-a3dc-3d20c56d6bb7.png",
+      "file": "aura-11.png"
+    },
+    {
+      "id": 12,
+      "name": "Moonlight",
+      "subject": "A clear crescent moon above and six small four-point stars framing the oval.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: A clear crescent moon above and six small four-point stars framing the oval.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/dew.png",
+      "source": "exec-82b236c6-f8b3-4923-a6df-52dd71c2c364.png",
+      "file": "aura-12.png"
+    },
+    {
+      "id": 13,
+      "name": "Ember ring",
+      "subject": "Six small rounded pointed flame motes, each a white cartoon flame outlined in black.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Six small rounded pointed flame motes, each a white cartoon flame outlined in black.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/dew.png",
+      "source": "exec-9d0f4dde-295c-421c-9dc0-3033f6fa5899.png",
+      "file": "aura-13.png"
+    },
+    {
+      "id": 14,
+      "name": "Water ripple",
+      "subject": "Two broken elliptical water ripples framing the window, with a few simple rounded drops.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Two broken elliptical water ripples framing the window, with a few simple rounded drops.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/dew.png",
+      "source": "exec-bbea8426-d880-400c-8b67-f75775c0f677.png",
+      "file": "aura-14.png"
+    },
+    {
+      "id": 15,
+      "name": "Wind spiral",
+      "subject": "Two broad sweeping wind arcs circling the empty window; clean tapered ribbons, few lines.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Two broad sweeping wind arcs circling the empty window; clean tapered ribbons, few lines.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/dew.png",
+      "source": "exec-65e728df-6527-48f4-802d-90ff6a2e7bc4.png",
+      "file": "aura-15.png"
+    },
+    {
+      "id": 16,
+      "name": "Crystal glimmer",
+      "subject": "Six clear diamond crystal shards with just one facet line each.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Six clear diamond crystal shards with just one facet line each.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/dew.png",
+      "source": "exec-60dcf0df-88c8-4930-a306-72b9793e82ea.png",
+      "file": "aura-16.png"
+    },
+    {
+      "id": 17,
+      "name": "Rune sparks",
+      "subject": "Four invented square glyph tiles and four small stars, no real letters or existing religious symbols.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Four invented square glyph tiles and four small stars, no real letters or existing religious symbols.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/dew.png",
+      "source": "exec-2b8e237c-5124-4476-b332-34d840ee8cc9.png",
+      "file": "aura-17.png"
+    },
+    {
+      "id": 18,
+      "name": "Snow halo",
+      "subject": "Six large simple six-arm cartoon snowflakes framing the empty oval; clear readable silhouettes.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Six large simple six-arm cartoon snowflakes framing the empty oval; clear readable silhouettes.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/dew.png",
+      "source": "exec-5e17b593-89b7-49a8-a36b-595d13cc9b59.png",
+      "file": "aura-18.png"
+    },
+    {
+      "id": 19,
+      "name": "Dawn rays",
+      "subject": "Eight short broad sun rays along the outside of an implied oval. Alternate simple triangular and rounded rays.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Eight short broad sun rays along the outside of an implied oval. Alternate simple triangular and rounded rays.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/dew.png",
+      "source": "exec-c906580f-5f86-49e3-b66f-63566fc31cbb.png",
+      "file": "aura-19.png"
+    },
+    {
+      "id": 20,
+      "name": "Arcane circle",
+      "subject": "A broken geometric rune ring and four large star points; invented geometric symbols, no text.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: A broken geometric rune ring and four large star points; invented geometric symbols, no text.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/middle.png",
+      "source": "exec-9883bf6d-eaa6-42c9-a956-f89fd9241be5.png",
+      "file": "aura-20.png"
+    },
+    {
+      "id": 21,
+      "name": "Frost ring",
+      "subject": "An angular broken icy ring with six large crystal tips and one facet line per crystal.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: An angular broken icy ring with six large crystal tips and one facet line per crystal.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/middle.png",
+      "source": "exec-54cdb5f4-2f25-4253-81a3-d4a5c2e4d13e.png",
+      "file": "aura-21.png"
+    },
+    {
+      "id": 22,
+      "name": "Flame spiral",
+      "subject": "Two large curving white cartoon flame arcs surrounding the window, three broad flame tips on each arc.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Two large curving white cartoon flame arcs surrounding the window, three broad flame tips on each arc.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/middle.png",
+      "source": "exec-cab159bd-f97d-4a73-bef8-c41c4eb9b871.png",
+      "file": "aura-22.png"
+    },
+    {
+      "id": 23,
+      "name": "Lunar orbit",
+      "subject": "A crescent moon above, two elliptical orbit arcs along the sides and four clear stars.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: A crescent moon above, two elliptical orbit arcs along the sides and four clear stars.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/middle.png",
+      "source": "exec-3b6e65f3-2ee7-4ba8-91b8-b02906b266a4.png",
+      "file": "aura-23.png"
+    },
+    {
+      "id": 24,
+      "name": "Thunder field",
+      "subject": "Six clear angular lightning bolts arranged around the window; white interiors with crisp black borders.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Six clear angular lightning bolts arranged around the window; white interiors with crisp black borders.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/middle.png",
+      "source": "exec-09f6a273-6f79-4415-be55-11871dce6575.png",
+      "file": "aura-24.png"
+    },
+    {
+      "id": 25,
+      "name": "Petal storm",
+      "subject": "Eight broad simple flower petals and two light curved motion ribbons framing the window.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Eight broad simple flower petals and two light curved motion ribbons framing the window.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/middle.png",
+      "source": "exec-6f8cc4e4-ee14-40ee-aab3-728fb189b4fa.png",
+      "file": "aura-25.png"
+    },
+    {
+      "id": 26,
+      "name": "Crystal orbit",
+      "subject": "Eight clear diamond crystals and two broad broken orbital arcs.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Eight clear diamond crystals and two broad broken orbital arcs.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/middle.png",
+      "source": "exec-ed7b0d88-9c76-4190-aac1-0441679d8e5e.png",
+      "file": "aura-26.png"
+    },
+    {
+      "id": 27,
+      "name": "Spirit circle",
+      "subject": "Three friendly floating wisp flames and a broken geometric rune ring. Wisps are simple rounded shapes without faces.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Three friendly floating wisp flames and a broken geometric rune ring. Wisps are simple rounded shapes without faces.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/middle.png",
+      "source": "exec-7801b586-a244-4056-95f0-c0e064727e3a.png",
+      "file": "aura-27.png"
+    },
+    {
+      "id": 28,
+      "name": "Solar corona",
+      "subject": "A ring of broad cartoon sun rays around the empty oval, alternating long and short rays, four stars.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: A ring of broad cartoon sun rays around the empty oval, alternating long and short rays, four stars.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/middle.png",
+      "source": "exec-ea934c3c-f242-4d16-a954-03c336c8bd7d.png",
+      "file": "aura-28.png"
+    },
+    {
+      "name": "middle",
+      "source": "exec-5aed7736-8674-4616-950a-d03d5a3ccc8c.png",
+      "prompt": "Generate ONE new transparent-background magical aura sprite for a monochrome e-ink chibi RPG. The attached character is ONLY a style/stroke reference; do NOT draw the character, a face, clothing, UI, text, ground or background. Portrait composition, a clean 192x224 logical pixel-art design enlarged with crisp chunky pixel edges. Pure black plus opaque white within illustrated shapes, actual transparent exterior. No grayscale, dithering, realistic effects, skeletonized contours or thin wire drawings. Use a consistent TWO logical pixel black outline at192px width, comparable to the reference's costume. Mid-level READING MAGIC aura: two broad curved ribbons of wind and THREE tiny floating open-book/page symbols arranged along the outside of a vertical oval, with four small four-point stars. The central60% width and70%height must remain completely transparent for the whole avatar. Curves and book pages should have clean confident recognizable cartoon forms with white fill, small black accents and very few interior lines, clearly legible when reduced to192x224. Symmetric balanced visual weight, complete shapes with margin at all edges. No drawn oval border; the objects imply the aura's perimeter.",
+      "id": 29,
+      "file": "aura-29.png"
+    },
+    {
+      "id": 30,
+      "name": "Phoenix halo",
+      "subject": "Two large sweeping flame-feather arcs, five broad feather tips on each side; cartoon phoenix energy, no bird body.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Two large sweeping flame-feather arcs, five broad feather tips on each side; cartoon phoenix energy, no bird body.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/middle.png",
+      "source": "exec-4c25c3d4-4fd9-4ea3-8bd5-9b66085f4086.png",
+      "file": "aura-30.png"
+    },
+    {
+      "id": 31,
+      "name": "Dragon sigil",
+      "subject": "Two stylized broad dragon-wing shapes and a broken circular geometric seal, no animal body.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Two stylized broad dragon-wing shapes and a broken circular geometric seal, no animal body.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/middle.png",
+      "source": "exec-c315a8d8-4c0c-487e-a078-0a753cb299f3.png",
+      "file": "aura-31.png"
+    },
+    {
+      "id": 32,
+      "name": "Celestial ring",
+      "subject": "Two broken celestial rings and six clear star crystals around the perimeter.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Two broken celestial rings and six clear star crystals around the perimeter.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/middle.png",
+      "source": "exec-cd3bbfee-6592-4cd5-9fe6-9e067946e03a.png",
+      "file": "aura-32.png"
+    },
+    {
+      "id": 33,
+      "name": "Moon sanctuary",
+      "subject": "A large crescent moon above, two layered side orbits and six clear four-point stars.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: A large crescent moon above, two layered side orbits and six clear four-point stars.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/middle.png",
+      "source": "exec-3e57e4af-da2d-47bc-995f-009c25aba9d4.png",
+      "file": "aura-33.png"
+    },
+    {
+      "id": 34,
+      "name": "Sun sanctuary",
+      "subject": "A broad sunburst arch above and layered broken orbits on either side, four stars.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: A broad sunburst arch above and layered broken orbits on either side, four stars.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/middle.png",
+      "source": "exec-e47146e8-bf0d-44b6-944b-fa485e27f767.png",
+      "file": "aura-34.png"
+    },
+    {
+      "id": 35,
+      "name": "Crystal sanctuary",
+      "subject": "Four clusters of three broad crystals with three broken rings around the empty center.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Four clusters of three broad crystals with three broken rings around the empty center.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/divine.png",
+      "source": "exec-18070171-ba2b-4ec3-be2d-f89b467ceb1b.png",
+      "file": "aura-35.png"
+    },
+    {
+      "id": 36,
+      "name": "Storm crown",
+      "subject": "A crown-like arch of lightning above and two large angular lightning arcs framing the sides.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: A crown-like arch of lightning above and two large angular lightning arcs framing the sides.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/divine.png",
+      "source": "exec-a093492f-bb9e-4755-8e2d-9c9702df4524.png",
+      "file": "aura-36.png"
+    },
+    {
+      "id": 37,
+      "name": "Spirit wings",
+      "subject": "Two broad symmetric feather wings, each with only five large soft feathers, framing the empty body window. One small halo above.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Two broad symmetric feather wings, each with only five large soft feathers, framing the empty body window. One small halo above.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/divine.png",
+      "source": "exec-e7a0c11e-8b90-4382-be73-7bbdd226f1f0.png",
+      "file": "aura-37.png"
+    },
+    {
+      "id": 38,
+      "name": "Starfall",
+      "subject": "Six clear falling four-point stars and two broad short comet trails framing the window.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Six clear falling four-point stars and two broad short comet trails framing the window.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/divine.png",
+      "source": "exec-7fbf7640-5977-4c78-acb8-c0c71d94cd26.png",
+      "file": "aura-38.png"
+    },
+    {
+      "id": 39,
+      "name": "World tree halo",
+      "subject": "Two branching tree boughs framing the sides, with eight large cartoon leaves total and a small star above.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Two branching tree boughs framing the sides, with eight large cartoon leaves total and a small star above.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/divine.png",
+      "source": "exec-28c296b9-b646-48ab-9706-e4b520377230.png",
+      "file": "aura-39.png"
+    },
+    {
+      "id": 40,
+      "name": "Astral gate",
+      "subject": "Two broken rune circles forming an arched gate and six large star crystals; simple invented geometry.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Two broken rune circles forming an arched gate and six large star crystals; simple invented geometry.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/divine.png",
+      "source": "exec-34af4357-ed2d-4571-9c06-9a265863e4d9.png",
+      "file": "aura-40.png"
+    },
+    {
+      "id": 41,
+      "name": "Eclipse gate",
+      "subject": "A bold open eclipse arch above and short broad rays along the sides, four star points.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: A bold open eclipse arch above and short broad rays along the sides, four star points.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/divine.png",
+      "source": "exec-79a29c64-995a-41e7-b2af-aac8413cd97a.png",
+      "file": "aura-41.png"
+    },
+    {
+      "id": 42,
+      "name": "Empyrean wings",
+      "subject": "Two layered wings with six broad feathers per side and a simple geometric halo above.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Two layered wings with six broad feathers per side and a simple geometric halo above.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/divine.png",
+      "source": "exec-d2e8ac67-d1c4-4da3-95b1-e7c982e2b5ed.png",
+      "file": "aura-42.png"
+    },
+    {
+      "id": 43,
+      "name": "Cosmic orbit",
+      "subject": "Three sweeping broken elliptical orbits, four clear stars and two crescents, balanced around the empty window.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Three sweeping broken elliptical orbits, four clear stars and two crescents, balanced around the empty window.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/divine.png",
+      "source": "exec-46613e85-5ae4-4334-9a42-3d1de60d1a21.png",
+      "file": "aura-43.png"
+    },
+    {
+      "id": 44,
+      "name": "Creation seal",
+      "subject": "An invented broken magic circle, four broad leaves and four large stars; clear ordered composition.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: An invented broken magic circle, four broad leaves and four large stars; clear ordered composition.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/divine.png",
+      "source": "exec-820e33e2-5a63-4d27-a6d5-bc6ff69fb8ac.png",
+      "file": "aura-44.png"
+    },
+    {
+      "id": 45,
+      "name": "Infinity field",
+      "subject": "Two broad flowing infinity-loop ribbons framing the empty central window and six star points; all ribbons stay on the perimeter.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Two broad flowing infinity-loop ribbons framing the empty central window and six star points; all ribbons stay on the perimeter.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/divine.png",
+      "source": "exec-9cb7d017-cf13-4420-ad0a-716abe49d34d.png",
+      "file": "aura-45.png"
+    },
+    {
+      "id": 46,
+      "name": "Divine corona",
+      "subject": "A triple sunburst crown above with four broad wing feathers on each side and four stars.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: A triple sunburst crown above with four broad wing feathers on each side and four stars.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/divine.png",
+      "source": "exec-9cada25e-7139-4803-88af-a1e43016dab3.png",
+      "file": "aura-46.png"
+    },
+    {
+      "id": 47,
+      "name": "Celestial throne",
+      "subject": "Two tall wing-like arches framing an empty central window and three separated halo rings above; six broad feathers per side.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Two tall wing-like arches framing an empty central window and three separated halo rings above; six broad feathers per side.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/divine.png",
+      "source": "exec-3572cae9-6d73-4eda-9a24-93b93e89431c.png",
+      "file": "aura-47.png"
+    },
+    {
+      "id": 48,
+      "name": "Eternal firmament",
+      "subject": "Two grand celestial arches, two crescent moons and six large starbursts; majestic but restrained, clearly readable.",
+      "prompt": "Use case: stylized-concept. Generate ONE production aura sprite for a monochrome e-ink chibi RPG. The reference image is ONLY a style/stroke/composition reference, do not copy its motif. Do not include a character, people, faces, clothing, UI, text, ground or background. Portrait layout approximately 192x224 logical pixel art, enlarged crisply. Pure black outlines and opaque white shape interiors, genuine transparent exterior. Consistent confident TWO logical pixel outlines at192px width like the reference. Recognizable clean cartoon silhouettes; no grayscale, dithering, hatching, realistic texture, skeletonized wire outlines or hairline details. The aura frames an ABSENT avatar: center60%width and70%height must be completely transparent. Place all motifs along the outer perimeter with safe outer margins. Keep complete shapes, balanced visual weight and very few internal details. Do not draw a rectangular border. Higher power means more coherent shapes, never thicker strokes. Specific motif: Two grand celestial arches, two crescent moons and six large starbursts; majestic but restrained, clearly readable.",
+      "reference": "assets_local/quest/catalog_v4/redesign-prototypes/divine.png",
+      "source": "exec-d6ed519f-4d76-4a2f-af8a-ccf32ac87842.png",
+      "file": "aura-48.png"
+    },
+    {
+      "name": "divine",
+      "source": "exec-f2de4186-b24c-4e15-953e-a53ace0746f5.png",
+      "prompt": "Generate ONE new transparent-background DIVINE RADIANCE aura sprite for a monochrome e-ink chibi RPG. The attached character is ONLY a style and stroke reference; do NOT include the character, people, clothing, text, UI, ground or background. Portrait composition at roughly192x224 logical pixel-art resolution, enlarged crisply. This is a complete fresh redesign with strong recognizable cartoon silhouettes, NOT skeletonized outlines or a web of thin wires. Pure black and opaque white illustrated shapes, genuine transparent exterior. No gray, dithering, textures, realistic feather shading or hundreds of tiny marks. Consistent clean TWO logical pixel black outlines at192px width, matching the reference's costume. Two big symmetric angel wings frame an EMPTY central body-shaped window: each wing has only SIX broad rounded pointed feathers, simple white surfaces with short black shadow accents and at most one interior detail per feather. Wings sweep outward then downward without crossing the central60%width/70%height avatar window. THREE simple separated elliptical halos sit above that empty central space; add four clear four-point stars around the outside, with one star below. Maximum level appearance, elegant and powerful but readable small. The whole aura surrounds an absent avatar; leave the center transparent. Keep all feathers, halos and stars complete with safe outer margins. No external rectangular/oval frame.",
+      "id": 49,
+      "file": "aura-49.png"
+    }
+  ]
+}

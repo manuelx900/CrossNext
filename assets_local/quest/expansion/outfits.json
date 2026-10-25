@@ -1,0 +1,152 @@
+[
+  {
+    "page": 0,
+    "prompt": "Use case: identity-preserve. Production sprite sheet for the SAME TWO stylized fantasy game characters as the references. Preserve their EXACT illustrated facial identity, eye shape, small nose, hair, pleasant expression, youthful cartoon face and body proportions. Do NOT make realistic adult faces. EXACTLY FIVE COLUMNS x TWO ROWS on a SQUARE canvas, ten COMPLETE FULL-BODY character illustrations, generous white gutters. Top row: the MALE character in five outfits. Bottom row: the FEMALE character in matching five outfits. Whole head, whole skull, complete hat, entire outfit, hands, trouser legs and complete boots visible in each cell. Each figure is a coherent CUSTOM DRAWING WITH CLOTHES ACTUALLY WORN, never separate objects pasted on top. Same frontal standing pose and body size in every cell, relaxed arms slightly out with hands at hips, same foot positions. No duplicate hands/feet/heads. Five designs by column: 1 linen bandana, simple apprentice tunic with belt, plain ankle boots; 2 fitted leather cap, short traveler's shoulder cloak over tunic, stitched travel shoes; 3 raised-brim felt travel hat, laced tunic, soft shoes; 4 open linen hood, hunter mantle, fur-trimmed winter boots; 5 soft nightcap, quilted vest over linen shirt, woven sandals with cloth shin wraps. Hats physically fit the ORIGINAL full rounded skull above eyebrows. BOTH EYES, forehead, nose and mouth visible in every case. Keep reference illustration style: clean expressive black/white ink and sparse stipple. Clear WHITE backdrop, no text numbers gridlines scenery or shadows. FULL figures entirely inside equal cells. Square 2048 by2048 contact sheet. Do not crop hats or soles. Use reference2 for the coherent finished clothing fit, reference1 for the exact face identity.",
+    "path": "C:\\Users\\manue\\.codex\\generated_images\\01a140d9-840f-7b01-8dec-ea2f4034fe27\\exec-7dd35330-3805-4b17-95a5-166d59b1039d.png",
+    "file": "outfits-0.png",
+    "neck": [
+      160,
+      160
+    ],
+    "cuff": [
+      500,
+      500
+    ],
+    "generator": "Built-in image_gen"
+  },
+  {
+    "page": 1,
+    "prompt": "IDENTITY-PRESERVING game illustration. Reference1 defines the EXACT two stylized youthful game characters; reference2 defines the desired final worn clothing quality. EXACTLY FIVE COLUMNS TWO ROWS, ten COMPLETE FULL-BODY CUSTOM ILLUSTRATIONS, SQUARE canvas. Top row same MALE character five outfits; bottom row same FEMALE character matching outfits. Column designs: 1. wearing Wool beanie, Pilgrim robe and Folded boots; 2. wearing Fur cap, Fur collar and Jester boots; 3. wearing Scout hood, Scout coat and Buckle boots; 4. wearing Pilgrim hat, Sage coat and Laced boots; 5. wearing Silk wrap, Ranger cloak and Leather boots. Keep original reference's youthful illustrated face, eye shape, small nose, mouth, hair identity, expression and head/body proportions. NOT realistic adults or realistic portraits; no photorealism, no chibi. Clothes physically drawn ON body with natural fit, not detached equipment pasted on top. Same frontal relaxed standing pose, arms slightly out, hands by hips, same body height and foot positions in ALL TEN CELLS. Align neck and boot cuff heights across columns. Long robes must end ABOVE boot cuffs so all footwear remains visible. Hood is open with full rounded skull, forehead and BOTH EYES visible. Hats and crowns fit the original rounded head above eyebrows, never hide eyes or flatten cranium. Full headwear and soles INSIDE each equal cell with generous WHITE MARGINS and gutters. Entire coherent anatomy, no extra faces hands legs or feet, no empty hats. Expressive clean black/white ink and sparse stipple exactly as reference. Pure white background, no scenery floor labels text or gridlines. Square contact sheet 2048x2048.",
+    "path": "C:\\Users\\manue\\.codex\\generated_images\\01a140d9-840f-7b01-8dec-ea2f4034fe27\\exec-64656cb8-dd51-4844-bce6-c85c53739c2d.png",
+    "file": "outfits-1.png",
+    "neck": [
+      162,
+      162
+    ],
+    "cuff": [
+      510,
+      510
+    ],
+    "generator": "Built-in image_gen"
+  },
+  {
+    "page": 2,
+    "prompt": "IDENTITY-PRESERVING game illustration. Reference1 defines the EXACT two stylized youthful game characters; reference2 defines the desired final worn clothing quality. EXACTLY FIVE COLUMNS TWO ROWS, ten COMPLETE FULL-BODY CUSTOM ILLUSTRATIONS, SQUARE canvas. Top row same MALE character five outfits; bottom row same FEMALE character matching outfits. Column designs: 1. wearing Iron helm, Wool robe and Iron boots; 2. wearing Kettle helm, Warden coat and Wool boots; 3. wearing Chain hood, Leather coat and Strapped boots; 4. wearing Monk hood, Winter mantle and Fur boots; 5. wearing Feather hat, Chain coat and Riding boots. Keep original reference's youthful illustrated face, eye shape, small nose, mouth, hair identity, expression and head/body proportions. NOT realistic adults or realistic portraits; no photorealism, no chibi. Clothes physically drawn ON body with natural fit, not detached equipment pasted on top. Same frontal relaxed standing pose, arms slightly out, hands by hips, same body height and foot positions in ALL TEN CELLS. Align neck and boot cuff heights across columns. Long robes must end ABOVE boot cuffs so all footwear remains visible. Hood is open with full rounded skull, forehead and BOTH EYES visible. Hats and crowns fit the original rounded head above eyebrows, never hide eyes or flatten cranium. Full headwear and soles INSIDE each equal cell with generous WHITE MARGINS and gutters. Entire coherent anatomy, no extra faces hands legs or feet, no empty hats. Expressive clean black/white ink and sparse stipple exactly as reference. Pure white background, no scenery floor labels text or gridlines. Square contact sheet 2048x2048.",
+    "path": "C:\\Users\\manue\\.codex\\generated_images\\01a140d9-840f-7b01-8dec-ea2f4034fe27\\exec-44ac06f8-0a80-4700-a7e9-741802517f74.png",
+    "file": "outfits-2.png",
+    "neck": [
+      154,
+      160
+    ],
+    "cuff": [
+      502,
+      506
+    ],
+    "generator": "Built-in image_gen"
+  },
+  {
+    "page": 3,
+    "prompt": "IDENTITY-PRESERVING game illustration. Reference1 defines the EXACT two stylized youthful game characters; reference2 defines the desired final worn clothing quality. EXACTLY FIVE COLUMNS TWO ROWS, ten COMPLETE FULL-BODY CUSTOM ILLUSTRATIONS, SQUARE canvas. Top row same MALE character five outfits; bottom row same FEMALE character matching outfits. Column designs: 1. wearing Sage turban, Knight tabard and Scout boots; 2. wearing Silver beret, Steel cuirass and High boots; 3. wearing Embroidered hood, Scholar coat and Sage boots; 4. wearing Tricorn, Sun armor and Greaves; 5. wearing Steel helm, Shadow cloak and Desert boots. Keep original reference's youthful illustrated face, eye shape, small nose, mouth, hair identity, expression and head/body proportions. NOT realistic adults or realistic portraits; no photorealism, no chibi. Clothes physically drawn ON body with natural fit, not detached equipment pasted on top. Same frontal relaxed standing pose, arms slightly out, hands by hips, same body height and foot positions in ALL TEN CELLS. Align neck and boot cuff heights across columns. Long robes must end ABOVE boot cuffs so all footwear remains visible. Hood is open with full rounded skull, forehead and BOTH EYES visible. Hats and crowns fit the original rounded head above eyebrows, never hide eyes or flatten cranium. Full headwear and soles INSIDE each equal cell with generous WHITE MARGINS and gutters. Entire coherent anatomy, no extra faces hands legs or feet, no empty hats. Expressive clean black/white ink and sparse stipple exactly as reference. Pure white background, no scenery floor labels text or gridlines. Square contact sheet 2048x2048.",
+    "path": "C:\\Users\\manue\\.codex\\generated_images\\01a140d9-840f-7b01-8dec-ea2f4034fe27\\exec-a8363e8f-6fc7-435f-9929-84e272097693.png",
+    "file": "outfits-3.png",
+    "neck": [
+      145,
+      146
+    ],
+    "cuff": [
+      509,
+      510
+    ],
+    "generator": "Built-in image_gen"
+  },
+  {
+    "page": 4,
+    "prompt": "IDENTITY-PRESERVING game illustration. The references define the EXACT two stylized youthful game characters and coherent worn clothing quality. EXACTLY FIVE COLUMNS TWO ROWS on SQUARE canvas. Ten COMPLETE FULL-BODY CUSTOM illustrations: top row MALE, bottom row FEMALE, five matching outfits by column: 1. Ranger hat, Silver armor, Ranger boots; 2. Pilot cap, White tabard, Triple strap boots; 3. Frost hood, Runic robe, Silver boots; 4. Winged helm, Gold mantle, Knight boots; 5. Desert veil, Frost coat, Runic boots. Preserve the references' youthful drawn face, distinctive eye shape, small nose mouth hair and head/body proportions. NO realistic adult faces or realistic portraiture, no photorealism, no chibi. Every outfit is physically drawn already worn, coherent shoulders sleeves hands torso trouser legs and shoes, not pasted separate equipment. Same frontal relaxed standing pose and BODY SIZE for all ten, arms slightly out, hands by hips, identical neck height and boot cuff line. ALL long hems end ABOVE the boot cuff line so footwear is unobstructed. Full rounded cranium under all headwear, hairline and forehead visible, BOTH EYES clearly visible below hat brim. Front brims turned UP; crowns rest ON full rounded skull without flattening it. Hoods fully open around face. Entire hat and soles inside each equal cell with generous WHITE MARGINS and gutters. Expressive BLACK AND WHITE ink, sparse stipple exactly like reference, no gray gradients, no floor scenery text labels gridlines. Ten complete character figures only, square contact sheet2048x2048.",
+    "path": "C:\\Users\\manue\\.codex\\generated_images\\01a140d9-840f-7b01-8dec-ea2f4034fe27\\exec-870c2b82-2eaa-46c8-9635-899e9586e0ff.png",
+    "file": "outfits-4.png",
+    "neck": [
+      151,
+      151
+    ],
+    "cuff": [
+      503,
+      503
+    ],
+    "generator": "Built-in image_gen"
+  },
+  {
+    "page": 5,
+    "prompt": "IDENTITY-PRESERVING game illustration. The references define the EXACT two stylized youthful game characters and coherent worn clothing quality. EXACTLY FIVE COLUMNS TWO ROWS on SQUARE canvas. Ten COMPLETE FULL-BODY CUSTOM illustrations: top row MALE, bottom row FEMALE, five matching outfits by column: 1. Wizard hat, Mage robe, Winged boots; 2. Hunter hat, Ember coat, Raven boots; 3. Valkyrie helm, Star robe, Steel greaves; 4. Oracle turban, High mage coat, Frost boots; 5. Silk veil, Raven mantle, Dragon greaves. Preserve the references' youthful drawn face, distinctive eye shape, small nose mouth hair and head/body proportions. NO realistic adult faces or realistic portraiture, no photorealism, no chibi. Every outfit is physically drawn already worn, coherent shoulders sleeves hands torso trouser legs and shoes, not pasted separate equipment. Same frontal relaxed standing pose and BODY SIZE for all ten, arms slightly out, hands by hips, identical neck height and boot cuff line. ALL long hems end ABOVE the boot cuff line so footwear is unobstructed. Full rounded cranium under all headwear, hairline and forehead visible, BOTH EYES clearly visible below hat brim. Front brims turned UP; crowns rest ON full rounded skull without flattening it. Hoods fully open around face. Entire hat and soles inside each equal cell with generous WHITE MARGINS and gutters. Expressive BLACK AND WHITE ink, sparse stipple exactly like reference, no gray gradients, no floor scenery text labels gridlines. Ten complete character figures only, square contact sheet2048x2048.",
+    "path": "C:\\Users\\manue\\.codex\\generated_images\\01a140d9-840f-7b01-8dec-ea2f4034fe27\\exec-0cecd8c4-6474-45d3-a1b7-c7a9b8b2814d.png",
+    "file": "outfits-5.png",
+    "neck": [
+      165,
+      162
+    ],
+    "cuff": [
+      512,
+      512
+    ],
+    "generator": "Built-in image_gen"
+  },
+  {
+    "page": 6,
+    "prompt": "IDENTITY-PRESERVING game illustration. The references define the EXACT two stylized youthful game characters and coherent worn clothing quality. EXACTLY FIVE COLUMNS TWO ROWS on SQUARE canvas. Ten COMPLETE FULL-BODY CUSTOM illustrations: top row MALE, bottom row FEMALE, five matching outfits by column: 1. Star hat, Moon robe, Crystal boots; 2. Jeweled crown, Dawn mantle, Sun boots; 3. Antler crown, Void robe, High mage boots; 4. Sun hood, Warden armor, Warden boots; 5. Plume hat, Frostguard coat, Royal boots. Preserve the references' youthful drawn face, distinctive eye shape, small nose mouth hair and head/body proportions. NO realistic adult faces or realistic portraiture, no photorealism, no chibi. Every outfit is physically drawn already worn, coherent shoulders sleeves hands torso trouser legs and shoes, not pasted separate equipment. Same frontal relaxed standing pose and BODY SIZE for all ten, arms slightly out, hands by hips, identical neck height and boot cuff line. ALL long hems end ABOVE the boot cuff line so footwear is unobstructed. Full rounded cranium under all headwear, hairline and forehead visible, BOTH EYES clearly visible below hat brim. Front brims turned UP; crowns rest ON full rounded skull without flattening it. Hoods fully open around face. Entire hat and soles inside each equal cell with generous WHITE MARGINS and gutters. Expressive BLACK AND WHITE ink, sparse stipple exactly like reference, no gray gradients, no floor scenery text labels gridlines. Ten complete character figures only, square contact sheet2048x2048.",
+    "path": "C:\\Users\\manue\\.codex\\generated_images\\01a140d9-840f-7b01-8dec-ea2f4034fe27\\exec-925153ff-cf50-4b47-b2f6-e71e62a81f7b.png",
+    "file": "outfits-6.png",
+    "neck": [
+      177,
+      177
+    ],
+    "cuff": [
+      527,
+      517
+    ],
+    "generator": "Built-in image_gen"
+  },
+  {
+    "page": 7,
+    "prompt": "IDENTITY-PRESERVING game illustration. The references define the EXACT two stylized youthful game characters and coherent clothing fit. EXACTLY FIVE COLUMNS TWO ROWS, SQUARE canvas. Ten COMPLETE FULL-BODY CUSTOM ILLUSTRATIONS. Top row same MALE, bottom row same FEMALE. Five matching outfit designs by column: 1. Royal crown, Dragon armor, Moon boots; 2. High mitre, Forest mantle, Ember boots; 3. Spire crown, Night robe, Valkyrie boots; 4. Oracle veil, Sky mantle, Winterguard boots; 5. Laurel crown, Royal armor, Sky boots. Detailed high-level garments with embroidery, layered folds, clasps and ornate trim, but KEEP EXACT ORIGINAL illustrated faces, eye shapes, small nose, mouth, hair identity and youthful head/body proportions. NO realistic adult faces, NO realistic portraiture, no photorealism or chibi. Every outfit is a complete drawing already worn, not detached objects pasted on top. Same frontal relaxed standing pose, hands by hips, arms slightly out, uniform body size, NECK AND BOOT CUFFS aligned across every cell. All long robe hems end ABOVE boot cuffs so footwear visible. Natural complete rounded skull and full forehead under headwear, BOTH EYES clearly visible. Crowns sit ABOVE the full hairline, never compress or replace cranium. Hats have brims tilted up above eyebrows. Hoods open around the whole face. No face veils. Whole hats and soles entirely inside equal cells with generous white margins and gutters. BLACK/WHITE expressive ink and sparse stipple exactly as reference. Pure white, no floor scenery lettering labels gridlines shadows. Ten complete figures, square2048x2048.",
+    "path": "C:\\Users\\manue\\.codex\\generated_images\\01a140d9-840f-7b01-8dec-ea2f4034fe27\\exec-f64e3dab-8f86-4aa7-a0d0-b533d8288cc7.png",
+    "file": "outfits-7.png",
+    "neck": [
+      158,
+      158
+    ],
+    "cuff": [
+      519,
+      519
+    ],
+    "generator": "Built-in image_gen"
+  },
+  {
+    "page": 8,
+    "prompt": "IDENTITY-PRESERVING game illustration. The references define the EXACT two stylized youthful game characters and coherent clothing fit. EXACTLY FIVE COLUMNS TWO ROWS, SQUARE canvas. Ten COMPLETE FULL-BODY CUSTOM ILLUSTRATIONS. Top row same MALE, bottom row same FEMALE. Five matching outfit designs by column: 1. Ram helm, Oracle robe, Feather greaves; 2. Seer hood, Antler mantle, Star greaves; 3. Solar crown, Celestial robe, Phoenix greaves; 4. Runic hat, Sun priest robe, Storm greaves; 5. Shadow crown, Crown guard coat, Archmage boots. Detailed high-level garments with embroidery, layered folds, clasps and ornate trim, but KEEP EXACT ORIGINAL illustrated faces, eye shapes, small nose, mouth, hair identity and youthful head/body proportions. NO realistic adult faces, NO realistic portraiture, no photorealism or chibi. Every outfit is a complete drawing already worn, not detached objects pasted on top. Same frontal relaxed standing pose, hands by hips, arms slightly out, uniform body size, NECK AND BOOT CUFFS aligned across every cell. All long robe hems end ABOVE boot cuffs so footwear visible. Natural complete rounded skull and full forehead under headwear, BOTH EYES clearly visible. Crowns sit ABOVE the full hairline, never compress or replace cranium. Hats have brims tilted up above eyebrows. Hoods open around the whole face. No face veils. Whole hats and soles entirely inside equal cells with generous white margins and gutters. BLACK/WHITE expressive ink and sparse stipple exactly as reference. Pure white, no floor scenery lettering labels gridlines shadows. Ten complete figures, square2048x2048.",
+    "path": "C:\\Users\\manue\\.codex\\generated_images\\01a140d9-840f-7b01-8dec-ea2f4034fe27\\exec-9c45025a-22c7-48c0-b41a-f87893cdb605.png",
+    "file": "outfits-8.png",
+    "neck": [
+      157,
+      157
+    ],
+    "cuff": [
+      504,
+      504
+    ],
+    "generator": "Built-in image_gen"
+  },
+  {
+    "page": 9,
+    "prompt": "Identity-preserving built-in image_gen edit: same ten characters and headwear, stronger level 90-100 shoulder mantles, ornate royal armor, large celestial emblems, integrated armored boots; pure white 5x2 sheet.",
+    "path": "C:\\Users\\manue\\.codex\\generated_images\\01a140d9-840f-7b01-8dec-ea2f4034fe27\\exec-3ee37207-afa1-43c4-8efc-0bc1c6e897d7.png",
+    "file": "outfits-9-power.png",
+    "neck": [
+      157,
+      157
+    ],
+    "cuff": [
+      508,
+      508
+    ],
+    "generator": "Built-in image_gen"
+  }
+]

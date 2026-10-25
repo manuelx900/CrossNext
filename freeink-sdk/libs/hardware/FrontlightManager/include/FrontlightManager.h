@@ -1,0 +1,141 @@
+#pragma once
+
+// FreeInk SDK — frontlight manager.
+//
+// Drives a PWM frontlight described by BoardConfig::ACTIVE.frontlight. Inert on
+// boards without one (e.g. Xteink X4/X3), so it is always safe to construct.
+//
+// Two topologies, selected purely by the board profile:
+//   * Single channel (de-link primary LED, LilyGo backlight, Murphy): one PWM pin
+//     (frontlight.gpio). setColorTemperature() is a no-op.
+//   * Warm/cool pair (Xteink X4 Pro: cool=GPIO8, warm=GPIO9): two independent PWM
+//     channels. Overall brightness is the total light; color temperature splits that
+//     total between the cool (gpio) and warm (gpioWarm) strings, so brightness stays
+//     roughly constant as the color shifts. setColorTemperature() drives the mix.
+
+#include <Arduino.h>
+#include <BoardConfig.h>
+
+class FrontlightManager {
+ public:
+  // Bring up the PWM channel(s), and say whether the light can now be driven.
+  //
+  // FALSE means every later setBrightness()/on()/setColorTemperature() will be
+  // accepted and do nothing: the board has no frontlight, or its channels
+  // would not configure. Check it. Until 2026-08-31 this returned void, so a
+  // consumer had no way to tell a light that came up from one that did not,
+  // and the X4 Pro shipped two releases whose LEDC channels never attached
+  // while the firmware logged "Frontlight up" on the way past. Every signal
+  // short of a human eye reported success, which is why it survived a release.
+  bool begin();
+
+  // Set brightness as a 0-100 percentage, mapped to duty through a perceptual
+  // gamma-1.6554 curve (1% is the smallest non-zero duty step, not 1% linear
+  // duty). 0 turns the light off. On a warm/cool board this is the TOTAL
+  // brightness; the current color-temperature split is preserved.
+  void setBrightness(uint8_t percent);
+
+  // Set brightness with 8-bit control and a perceptual curve. Level 1 maps to the
+  // smallest non-zero hardware duty, making dim night reading possible.
+  void setBrightnessLevel(uint8_t level);
+
+  // Convenience: fully off / restore last brightness.
+  void off();
+  void on();
+
+  // Cut frontlight leakage through deep sleep: drive the LED pads LOW and hold
+  // them (so the level survives deep sleep via gpio_deep_sleep_hold_en), and
+  // release the LEDC KEEP_ALIVE clock. Call from the consumer's sleep path just
+  // before deep sleep. Only meaningful on LEDC frontlights (no-op otherwise).
+  // releaseOnWake() must be called at boot before begin() re-attaches the
+  // channels.
+  // Implemented only under FREEINK_FRONTLIGHT_LS, so guard the declarations to
+  // match (otherwise boards without it get an undefined reference at link time).
+#ifdef FREEINK_FRONTLIGHT_LS
+  void park();
+
+  // Undo park() at boot so begin() can re-attach the LEDC channels. The release is
+  // UNCONDITIONAL: park() latches a digital pad hold that survives deep sleep AND
+  // the wake reset, while _lsParked (a DRAM flag) is lost on reset — so after a
+  // wake the hold is still present even though _lsParked reads false. Releasing
+  // unconditionally (gpio_hold_dis on a non-held pad is a harmless no-op) is the
+  // only way to guarantee the held pad is cleared; every other driver releases
+  // holds unconditionally before driving for this reason.
+  void releaseOnWake();
+#endif
+
+  // Warm/cool mix, 0 = fully cool, 100 = fully warm, 50 = neutral. Only meaningful on a
+  // two-channel board (hasColorTemperature()); a no-op on single-channel frontlights.
+  void setColorTemperature(uint8_t warmPercent);
+
+  bool present() const {
+#if FREEINK_CAP_FRONTLIGHT
+    // A PMIC-driven frontlight (Paper Mono: PM1 PWM0 -> AW9967) has no ESP
+#if FREEINK_DEVICE_EEGO_A4
+    // An optional EEGO A4 LM3630A is present only after begin() gets an ACK.
+    if (BoardConfig::ACTIVE.board == BoardConfig::Board::EegoA4 && BoardConfig::hasI2cFrontlight()) return _begun;
+#endif
+    // GPIO, so viaPm1Pwm counts as present alongside the LEDC-pin boards.
+    return BoardConfig::ACTIVE.frontlight.gpio != BoardConfig::PIN_UNASSIGNED ||
+           BoardConfig::ACTIVE.frontlight.viaPm1Pwm;
+#else
+    return false;  // frontlight code not compiled in (FREEINK_CAP_FRONTLIGHT=0)
+#endif
+  }
+
+  // True when the board wires a second (warm) channel, so setColorTemperature() does
+  // something. False on single-channel frontlights and on boards with none.
+  bool hasColorTemperature() const {
+#if FREEINK_DEVICE_EEGO_A4 && FREEINK_CAP_FRONTLIGHT
+    if (BoardConfig::ACTIVE.board == BoardConfig::Board::EegoA4) {
+      return present() && BoardConfig::hasColorTemperatureFrontlight();
+    }
+#endif
+#if FREEINK_CAP_WARMLIGHT
+    return BoardConfig::ACTIVE.frontlight.gpio != BoardConfig::PIN_UNASSIGNED &&
+           BoardConfig::ACTIVE.frontlight.gpioWarm != BoardConfig::PIN_UNASSIGNED;
+#else
+    return false;  // no warm-channel board in this build (FREEINK_CAP_WARMLIGHT=0)
+#endif
+  }
+
+  uint8_t brightness() const { return _brightness; }
+  uint8_t brightnessLevel() const { return _brightnessLevel; }
+  uint8_t colorTemperature() const { return _warmPercent; }
+
+ private:
+#if FREEINK_CAP_FRONTLIGHT
+  // Recompute and write both channels from _brightness + _warmPercent.
+  void apply();
+#if FREEINK_DEVICE_EEGO_A4
+  // LM3630A (I2C) frontlight helpers — see FrontlightManager.cpp.
+  bool lm3630aWrite(uint8_t reg, uint8_t value);
+  bool lm3630aRead(uint8_t reg, uint8_t& value);
+  bool lm3630aUpdate(uint8_t reg, uint8_t mask, uint8_t value);
+  bool configureLm3630a();
+  void applyLm3630a();
+#endif
+#endif
+#ifdef FREEINK_FRONTLIGHT_LS
+  // Keep RC_FAST powered through light sleep only while the light is actually
+  // lit. The LEDC driver's KEEP_ALIVE config pins RC_FAST (and the digital
+  // domain at its higher sleep bias) for every light-sleep window from boot;
+  // begin() cancels that via the refcounted sleep sub-mode API and apply()
+  // re-arms it on 0<->nonzero total-duty transitions, so dark idle sleeps at
+  // full depth.
+  void updateLsKeepAlive(bool lit);
+  bool _lsAttachOk = false;        // both channel attaches succeeded (refcount is balanced)
+  bool _lsKeepAliveArmed = false;  // our own +1 on the RC_FAST sleep sub-mode is active
+  bool _lsParked = false;          // park() has driven + held the frontlight pads LOW
+#endif
+
+  bool _begun = false;
+#if FREEINK_DEVICE_EEGO_A4
+  bool _i2cConfigured = false;
+#endif
+  uint8_t _brightness = 0;
+  uint8_t _brightnessLevel = 0;
+  bool _useLevel = false;
+  uint8_t _lastBrightness = 50;
+  uint8_t _warmPercent = 50;  // neutral by default
+};

@@ -1,0 +1,200 @@
+[
+  {
+    "filename": "tltaylor1--aws-scs-c03.apkg",
+    "url": "https://raw.githubusercontent.com/tltaylor1/anki-decks/main/aws-scs-c03/aws-scs-c03.apkg",
+    "source": "https://github.com/tltaylor1/anki-decks/blob/main/aws-scs-c03/aws-scs-c03.apkg",
+    "repo": "tltaylor1/anki-decks",
+    "path": "aws-scs-c03/aws-scs-c03.apkg",
+    "bytes": 138888,
+    "sha256": "04e66f57b72c5ddf55a90db84f144fe9089df1d9f34ee87b3de177b7901d92ac"
+  },
+  {
+    "filename": "tltaylor1--bicep.apkg",
+    "url": "https://raw.githubusercontent.com/tltaylor1/anki-decks/main/bicep/bicep.apkg",
+    "source": "https://github.com/tltaylor1/anki-decks/blob/main/bicep/bicep.apkg",
+    "repo": "tltaylor1/anki-decks",
+    "path": "bicep/bicep.apkg",
+    "bytes": 70903,
+    "sha256": "ede6bcd185e941bdc2dc374c425ff0724758d05858d8de388a1675ff323cd2bc"
+  },
+  {
+    "filename": "tltaylor1--compliance-frameworks.apkg",
+    "url": "https://raw.githubusercontent.com/tltaylor1/anki-decks/main/compliance-frameworks/compliance-frameworks.apkg",
+    "source": "https://github.com/tltaylor1/anki-decks/blob/main/compliance-frameworks/compliance-frameworks.apkg",
+    "repo": "tltaylor1/anki-decks",
+    "path": "compliance-frameworks/compliance-frameworks.apkg",
+    "bytes": 99378,
+    "sha256": "b3e5fe8f5da661909488c928dc8027e0f2e56cd8d1947afaa4da17275468c18c"
+  },
+  {
+    "filename": "tltaylor1--cybersecurity.apkg",
+    "url": "https://raw.githubusercontent.com/tltaylor1/anki-decks/main/cybersecurity/cybersecurity.apkg",
+    "source": "https://github.com/tltaylor1/anki-decks/blob/main/cybersecurity/cybersecurity.apkg",
+    "repo": "tltaylor1/anki-decks",
+    "path": "cybersecurity/cybersecurity.apkg",
+    "bytes": 89368,
+    "sha256": "bf10d7dc399d02d88548579fcc2b94c0b1a98601a59adbb217dbbc9c2b2fac28"
+  },
+  {
+    "filename": "tltaylor1--kql.apkg",
+    "url": "https://raw.githubusercontent.com/tltaylor1/anki-decks/main/kql/kql.apkg",
+    "source": "https://github.com/tltaylor1/anki-decks/blob/main/kql/kql.apkg",
+    "repo": "tltaylor1/anki-decks",
+    "path": "kql/kql.apkg",
+    "bytes": 77371,
+    "sha256": "4960050ebca2c97062c569d28f428c7b6469f314d15a8fa5270c109af3cc1c49"
+  },
+  {
+    "filename": "tltaylor1--powershell.apkg",
+    "url": "https://raw.githubusercontent.com/tltaylor1/anki-decks/main/powershell/powershell.apkg",
+    "source": "https://github.com/tltaylor1/anki-decks/blob/main/powershell/powershell.apkg",
+    "repo": "tltaylor1/anki-decks",
+    "path": "powershell/powershell.apkg",
+    "bytes": 79794,
+    "sha256": "4fd6d67fd09d5da780aa95d3949a7459e687ccf763527e4c7a2f83f4ba3761ed"
+  },
+  {
+    "filename": "tltaylor1--python.apkg",
+    "url": "https://raw.githubusercontent.com/tltaylor1/anki-decks/main/python/python.apkg",
+    "source": "https://github.com/tltaylor1/anki-decks/blob/main/python/python.apkg",
+    "repo": "tltaylor1/anki-decks",
+    "path": "python/python.apkg",
+    "bytes": 85016,
+    "sha256": "66b76f179ea50f288fc04df91d90ff9d7da7c4d5c296278b657486396ac226b3"
+  },
+  {
+    "filename": "Ankiwordbank--french-top-1000-first-100.apkg",
+    "url": "https://raw.githubusercontent.com/Ankiwordbank/free-anki-decks/main/decks/french-top-1000-first-100/french-top-1000-first-100.apkg",
+    "source": "https://github.com/Ankiwordbank/free-anki-decks/blob/main/decks/french-top-1000-first-100/french-top-1000-first-100.apkg",
+    "repo": "Ankiwordbank/free-anki-decks",
+    "path": "decks/french-top-1000-first-100/french-top-1000-first-100.apkg",
+    "bytes": 1705091,
+    "sha256": "f8f890f1add653b2929d038518abbaa4ae94ef120a3325837455c43bb0752678"
+  },
+  {
+    "filename": "Ankiwordbank--german-verbs-50.apkg",
+    "url": "https://raw.githubusercontent.com/Ankiwordbank/free-anki-decks/main/decks/german-verbs-50/german-verbs-50.apkg",
+    "source": "https://github.com/Ankiwordbank/free-anki-decks/blob/main/decks/german-verbs-50/german-verbs-50.apkg",
+    "repo": "Ankiwordbank/free-anki-decks",
+    "path": "decks/german-verbs-50/german-verbs-50.apkg",
+    "bytes": 944061,
+    "sha256": "4310f101c6f5ed8d2c834a21726b0c4e74d9eb8582da2b0c2b05b03071b67810"
+  },
+  {
+    "filename": "Ankiwordbank--portuguese-verbs-50.apkg",
+    "url": "https://raw.githubusercontent.com/Ankiwordbank/free-anki-decks/main/decks/portuguese-verbs-50/portuguese-verbs-50.apkg",
+    "source": "https://github.com/Ankiwordbank/free-anki-decks/blob/main/decks/portuguese-verbs-50/portuguese-verbs-50.apkg",
+    "repo": "Ankiwordbank/free-anki-decks",
+    "path": "decks/portuguese-verbs-50/portuguese-verbs-50.apkg",
+    "bytes": 1371754,
+    "sha256": "2c0002d60d7308d12bfe1168db43b487e54f4f2b6fbaedcb93514c45cae497a5"
+  },
+  {
+    "filename": "Ankiwordbank--spanish-top-1000-first-100.apkg",
+    "url": "https://raw.githubusercontent.com/Ankiwordbank/free-anki-decks/main/decks/spanish-top-1000-first-100/spanish-top-1000-first-100.apkg",
+    "source": "https://github.com/Ankiwordbank/free-anki-decks/blob/main/decks/spanish-top-1000-first-100/spanish-top-1000-first-100.apkg",
+    "repo": "Ankiwordbank/free-anki-decks",
+    "path": "decks/spanish-top-1000-first-100/spanish-top-1000-first-100.apkg",
+    "bytes": 2024253,
+    "sha256": "5223fd491163f6882419f26000d9dd4915813450d64bdde55478a87cd2dd7104"
+  },
+  {
+    "filename": "Ankiwordbank--spanish-verbs-50.apkg",
+    "url": "https://raw.githubusercontent.com/Ankiwordbank/free-anki-decks/main/decks/spanish-verbs-50/spanish-verbs-50.apkg",
+    "source": "https://github.com/Ankiwordbank/free-anki-decks/blob/main/decks/spanish-verbs-50/spanish-verbs-50.apkg",
+    "repo": "Ankiwordbank/free-anki-decks",
+    "path": "decks/spanish-verbs-50/spanish-verbs-50.apkg",
+    "bytes": 1103566,
+    "sha256": "0dceb23602d982d3e79fcb6986960533885e16045e9b2600f8918e523f1c26c0"
+  },
+  {
+    "filename": "MilesCranmer--Computer_Science_by_Brian_Spiering.apkg",
+    "url": "https://raw.githubusercontent.com/MilesCranmer/anki_science/master/computer_science/Computer_Science_by_Brian_Spiering.apkg",
+    "source": "https://github.com/MilesCranmer/anki_science/blob/master/computer_science/Computer_Science_by_Brian_Spiering.apkg",
+    "repo": "MilesCranmer/anki_science",
+    "path": "computer_science/Computer_Science_by_Brian_Spiering.apkg",
+    "bytes": 24954442,
+    "sha256": "c50eb139a8d8e0791650e6588132b90a7dc93b43d263d1f41278e085e2e1478d"
+  },
+  {
+    "filename": "MilesCranmer--Unix.apkg",
+    "url": "https://raw.githubusercontent.com/MilesCranmer/anki_science/master/computer_science/Unix.apkg",
+    "source": "https://github.com/MilesCranmer/anki_science/blob/master/computer_science/Unix.apkg",
+    "repo": "MilesCranmer/anki_science",
+    "path": "computer_science/Unix.apkg",
+    "bytes": 152995,
+    "sha256": "28e77c6ef20c78b81656afd8db17ffecbbc163c4b40dbe50db67f344b62aa07d"
+  },
+  {
+    "filename": "MilesCranmer--Bayesian_Statistics.apkg",
+    "url": "https://raw.githubusercontent.com/MilesCranmer/anki_science/master/math_ml_statistics/Bayesian_Statistics.apkg",
+    "source": "https://github.com/MilesCranmer/anki_science/blob/master/math_ml_statistics/Bayesian_Statistics.apkg",
+    "repo": "MilesCranmer/anki_science",
+    "path": "math_ml_statistics/Bayesian_Statistics.apkg",
+    "bytes": 236569,
+    "sha256": "cf8bc006fc54aeb56cdfcbc22130d8c31427d1c7e9375579cef711707ba6305c"
+  },
+  {
+    "filename": "MilesCranmer--Probability_Theory_and_Mathematical_Statistics.apkg",
+    "url": "https://raw.githubusercontent.com/MilesCranmer/anki_science/master/math_ml_statistics/Probability_Theory_and_Mathematical_Statistics.apkg",
+    "source": "https://github.com/MilesCranmer/anki_science/blob/master/math_ml_statistics/Probability_Theory_and_Mathematical_Statistics.apkg",
+    "repo": "MilesCranmer/anki_science",
+    "path": "math_ml_statistics/Probability_Theory_and_Mathematical_Statistics.apkg",
+    "bytes": 178983,
+    "sha256": "fc8966e220a4cb4477ac0df6ab38b89785da138b74a0f1715f8a26cbf51daafb"
+  },
+  {
+    "filename": "MilesCranmer--Nuclear_physics.apkg",
+    "url": "https://raw.githubusercontent.com/MilesCranmer/anki_science/master/physics_and_astronomy/Nuclear_physics.apkg",
+    "source": "https://github.com/MilesCranmer/anki_science/blob/master/physics_and_astronomy/Nuclear_physics.apkg",
+    "repo": "MilesCranmer/anki_science",
+    "path": "physics_and_astronomy/Nuclear_physics.apkg",
+    "bytes": 276970,
+    "sha256": "1f478cc2e1f1f808c91065ce345c70f2797615a18697d2ebcf335df2ed9b9117"
+  },
+  {
+    "filename": "MilesCranmer--Physics_GRE.apkg",
+    "url": "https://raw.githubusercontent.com/MilesCranmer/anki_science/master/physics_and_astronomy/Physics_GRE.apkg",
+    "source": "https://github.com/MilesCranmer/anki_science/blob/master/physics_and_astronomy/Physics_GRE.apkg",
+    "repo": "MilesCranmer/anki_science",
+    "path": "physics_and_astronomy/Physics_GRE.apkg",
+    "bytes": 1000821,
+    "sha256": "8b781843cf2037629742b3b111c4772cce630ac56a928acce2a6751a52dea055"
+  },
+  {
+    "filename": "MilesCranmer--comprehensive_astrophysics.apkg",
+    "url": "https://raw.githubusercontent.com/MilesCranmer/anki_science/master/physics_and_astronomy/comprehensive_astrophysics.apkg",
+    "source": "https://github.com/MilesCranmer/anki_science/blob/master/physics_and_astronomy/comprehensive_astrophysics.apkg",
+    "repo": "MilesCranmer/anki_science",
+    "path": "physics_and_astronomy/comprehensive_astrophysics.apkg",
+    "bytes": 66893,
+    "sha256": "2aaf51800c11693d309f04043727350478f23ce8427a6ba2e3075c668d9156fc"
+  },
+  {
+    "filename": "MilesCranmer--astronomy.apkg",
+    "url": "https://raw.githubusercontent.com/MilesCranmer/anki_science/master/wiki_scrape/astronomy.apkg",
+    "source": "https://github.com/MilesCranmer/anki_science/blob/master/wiki_scrape/astronomy.apkg",
+    "repo": "MilesCranmer/anki_science",
+    "path": "wiki_scrape/astronomy.apkg",
+    "bytes": 794842,
+    "sha256": "91d137a20abc6fc00188ae7f0af1fc85215426a3a651bbd04dd0eee33110455a"
+  },
+  {
+    "filename": "taivop--How-to-Formulate-Knowledge.apkg",
+    "url": "https://raw.githubusercontent.com/taivop/anki-decks/master/How-to-Formulate-Knowledge.apkg",
+    "source": "https://github.com/taivop/anki-decks/blob/master/How-to-Formulate-Knowledge.apkg",
+    "repo": "taivop/anki-decks",
+    "path": "How-to-Formulate-Knowledge.apkg",
+    "bytes": 23171,
+    "sha256": "474d22f9bd9eb08407870997a8fcbd99f9cdc4a51ca23084059617b1bd855766"
+  },
+  {
+    "filename": "taivop--book ML Yearning.apkg",
+    "url": "https://raw.githubusercontent.com/taivop/anki-decks/master/book%20ML%20Yearning.apkg",
+    "source": "https://github.com/taivop/anki-decks/blob/master/book%20ML%20Yearning.apkg",
+    "repo": "taivop/anki-decks",
+    "path": "book ML Yearning.apkg",
+    "bytes": 49415,
+    "sha256": "34b0385b0525e9c40c1658f0e2788f68b296572606c2808ff22c5383b894f369"
+  }
+]

@@ -1,0 +1,1 @@
+Simulator sample library: five original short demonstration EPUBs, original vector covers and six landscapes; 45-day checksummed reading journal and sample task lists. Rebuild with tools_local/wasm/seed_demo.py. These files never enter device flash.

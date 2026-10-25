@@ -1,0 +1,753 @@
+{
+  "mode": "built-in image_gen",
+  "minimumNativeHeight": 96,
+  "assets": [
+    {
+      "id": 0,
+      "name": "Hamster",
+      "subject": "A compact hamster sitting upright, round ears, tiny paws clearly separated, white muzzle and black back patches.",
+      "height": 96,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: A compact hamster sitting upright, round ears, tiny paws clearly separated, white muzzle and black back patches. The final native sprite will be about96 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dog.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-a1f2beab-88bd-424d-a8fe-b9b1759d6a3b.png",
+      "file": "pet-00.png"
+    },
+    {
+      "id": 1,
+      "name": "Bird",
+      "subject": "A small songbird standing on two visible feet, folded wings, short beak, simple black wing patches.",
+      "height": 96,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: A small songbird standing on two visible feet, folded wings, short beak, simple black wing patches. The final native sprite will be about96 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dog.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-1f8b0ff4-326b-4fcb-b5e6-02b9ba228425.png",
+      "file": "pet-01.png"
+    },
+    {
+      "id": 2,
+      "name": "Turtle",
+      "subject": "A turtle on four sturdy short feet, rounded shell divided into only five large plates, expressive simple eyes.",
+      "height": 96,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: A turtle on four sturdy short feet, rounded shell divided into only five large plates, expressive simple eyes. The final native sprite will be about96 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dog.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-d8aa1cc1-c285-4d97-954a-f3053477db7c.png",
+      "file": "pet-02.png"
+    },
+    {
+      "name": "cat",
+      "title": "Gato",
+      "prompt": "Create ONE production-style BLACK AND WHITE PIXEL ART companion sprite. Images1 and2 are the USER-APPROVED PET STYLE, image3 is the exact HERO. Match their expressive block-shaped eyes, firm stepped pixel contours, clear flat black/white shapes and very sparse interior detail. The animal must look like a creature from the SAME SPRITE SET as this hero and these two pets. Important: actual coarse square pixel clusters, not an ink illustration with pixelated edges. No smooth line art, fine fur strands, realistic anatomy shading, hairline decoration, grayscale, dithering, texture or antialiasing. A charming stylized animal with coherent readable proportions like the approved cat/dog. True transparent outside and opaque black/white within the sprite. Full body, all ears/wings/paws/tail complete, safe margins. No human, UI, scene, floor, external shadow, labels or frame. Preserve a confident contour that matches the HERO at the intended final display size; larger creatures need more pixels and detail, NOT a magnified thick outline from a tiny sprite. Subject: a sitting CAT very close in style and proportions to approved image2, modest tuft, pointed ears, friendly black pixel eyes, tiny nose, curled tail, clear paws. Keep the same appealing sprite personality, no realistic fur strokes. Intended SMALL native sprite64x80, cat about1/4 the hero's height. Firm TWO final pixel outline. Black tufts and small black shadows, white chest/body, just two short blocky whisker marks. It must remain recognizable as a few deliberate pixel clusters at64x80.",
+      "references": [
+        "codex-clipboard-d5967640-dbff-49a4-bbd3-a6b70e96e51f.png",
+        "codex-clipboard-fbadf95b-bf11-4ea5-8db2-bb2ff1acb838.png",
+        "figure-0.png"
+      ],
+      "source": "exec-df54a2f9-d06b-4889-99c5-f0003364d38d.png",
+      "file": "pet-03.png",
+      "id": 3,
+      "approvedPrototype": true
+    },
+    {
+      "id": 4,
+      "name": "Rabbit",
+      "subject": "A sitting rabbit with upright long ears, compact readable body and clear front paws, black ear shadows.",
+      "height": 104,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: A sitting rabbit with upright long ears, compact readable body and clear front paws, black ear shadows. The final native sprite will be about104 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dog.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-f526ecfe-cccc-417c-b112-8ac62b50e312.png",
+      "file": "pet-04.png"
+    },
+    {
+      "id": 5,
+      "name": "Dog",
+      "subject": "A sitting floppy-eared dog closely matching the user-approved dog reference, expressive eyes and black ears.",
+      "height": 120,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: A sitting floppy-eared dog closely matching the user-approved dog reference, expressive eyes and black ears. The final native sprite will be about120 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dog.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-4344ebdb-b98d-4371-83c1-d7d1815e4eab.png",
+      "file": "pet-05.png"
+    },
+    {
+      "id": 6,
+      "name": "Fox",
+      "subject": "A seated fox with pointed ears, a broad bushy tail curving beside its paws, black ear/tail accents.",
+      "height": 112,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: A seated fox with pointed ears, a broad bushy tail curving beside its paws, black ear/tail accents. The final native sprite will be about112 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dog.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-29124586-e18b-4a62-9ff0-aa2f3ae3859c.png",
+      "file": "pet-06.png"
+    },
+    {
+      "id": 7,
+      "name": "Owl",
+      "subject": "An owl standing upright, folded wings, large simple expressive eyes framed by bold black brows, few feather blocks.",
+      "height": 112,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An owl standing upright, folded wings, large simple expressive eyes framed by bold black brows, few feather blocks. The final native sprite will be about112 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dog.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-3e10ca5f-4987-4ba2-b7da-fb5abdfcab2e.png",
+      "file": "pet-07.png"
+    },
+    {
+      "id": 8,
+      "name": "Squirrel",
+      "subject": "A squirrel sitting upright with a large curled tail, a small nut held in paws, simple cheek marks.",
+      "height": 96,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: A squirrel sitting upright with a large curled tail, a small nut held in paws, simple cheek marks. The final native sprite will be about96 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dog.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-071b2d5d-caf2-4240-8c1c-e5c0852a44f9.png",
+      "file": "pet-08.png"
+    },
+    {
+      "id": 9,
+      "name": "Hedgehog",
+      "subject": "A rounded hedgehog with a few broad triangular black spine groups and a clear white face and four paws.",
+      "height": 96,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: A rounded hedgehog with a few broad triangular black spine groups and a clear white face and four paws. The final native sprite will be about96 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dog.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-44afe7b9-6298-4f8c-a4ce-a37596792036.png",
+      "file": "pet-09.png"
+    },
+    {
+      "id": 10,
+      "name": "Wolf",
+      "subject": "A proud wolf standing on four paws in three-quarter view, strong torso, alert ears, compact geometric fur blocks.",
+      "height": 176,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: A proud wolf standing on four paws in three-quarter view, strong torso, alert ears, compact geometric fur blocks. The final native sprite will be about176 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dog.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-df3b8282-57fa-45d1-8c34-848385618a0a.png",
+      "file": "pet-10.png"
+    },
+    {
+      "id": 11,
+      "name": "Raven",
+      "subject": "A raven standing on sturdy feet, bold mostly black body with a few white wing highlights and a chunky beak.",
+      "height": 112,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: A raven standing on sturdy feet, bold mostly black body with a few white wing highlights and a chunky beak. The final native sprite will be about112 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dog.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-39714d9b-4ade-43a0-8765-9c69bdaa4110.png",
+      "file": "pet-11.png"
+    },
+    {
+      "id": 12,
+      "name": "Red panda",
+      "subject": "A red panda sitting alert, clear face mask and a large curled striped tail, bold black legs.",
+      "height": 128,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: A red panda sitting alert, clear face mask and a large curled striped tail, bold black legs. The final native sprite will be about128 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dog.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-e27fc79d-b2c3-4fea-9514-4fabff83b51f.png",
+      "file": "pet-12.png"
+    },
+    {
+      "id": 13,
+      "name": "Deer",
+      "subject": "A deer standing with a compact upright pose and modest antlers, simple hooves and broad white body areas.",
+      "height": 216,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: A deer standing with a compact upright pose and modest antlers, simple hooves and broad white body areas. The final native sprite will be about216 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dog.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-6c5ca6c8-f409-4e3a-a7e9-cc55401c6e73.png",
+      "file": "pet-13.png"
+    },
+    {
+      "id": 14,
+      "name": "Snow leopard",
+      "subject": "A snow leopard standing in three-quarter view with a curled long tail and at most eight bold spot groups.",
+      "height": 200,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: A snow leopard standing in three-quarter view with a curled long tail and at most eight bold spot groups. The final native sprite will be about200 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dog.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-058bbb65-7bc4-4158-a42b-2b9fb6693840.png",
+      "file": "pet-14.png"
+    },
+    {
+      "id": 15,
+      "name": "Bear",
+      "subject": "A strong bear standing on four paws with an upright head, broad readable muzzle, bold shadow patches.",
+      "height": 264,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: A strong bear standing on four paws with an upright head, broad readable muzzle, bold shadow patches. The final native sprite will be about264 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dog.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-0de6bcef-4e93-46bb-bb3e-8fd17cc5628f.png",
+      "file": "pet-15.png"
+    },
+    {
+      "id": 16,
+      "name": "Lion",
+      "subject": "A standing lion with a simple bold black mane broken by a few white highlights, expressive eyes and curved tufted tail.",
+      "height": 224,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: A standing lion with a simple bold black mane broken by a few white highlights, expressive eyes and curved tufted tail. The final native sprite will be about224 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dog.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-d913d2b2-0544-4aa8-bdc5-d102b17122bd.png",
+      "file": "pet-16.png"
+    },
+    {
+      "name": "tiger",
+      "title": "Tigre",
+      "prompt": "Create ONE production-style BLACK AND WHITE PIXEL ART companion sprite. Images1 and2 are the USER-APPROVED PET STYLE, image3 is the exact HERO. Match their expressive block-shaped eyes, firm stepped pixel contours, clear flat black/white shapes and very sparse interior detail. The animal must look like a creature from the SAME SPRITE SET as this hero and these two pets. Important: actual coarse square pixel clusters, not an ink illustration with pixelated edges. No smooth line art, fine fur strands, realistic anatomy shading, hairline decoration, grayscale, dithering, texture or antialiasing. A charming stylized animal with coherent readable proportions like the approved cat/dog. True transparent outside and opaque black/white within the sprite. Full body, all ears/wings/paws/tail complete, safe margins. No human, UI, scene, floor, external shadow, labels or frame. Preserve a confident contour that matches the HERO at the intended final display size; larger creatures need more pixels and detail, NOT a magnified thick outline from a tiny sprite. Subject: a TIGER standing in three-quarter view, longer feline body and gently raised curved tail, head facing partly toward viewer. Use the approved cat's facial language and simplified geometry, with expressive pixel eyes matching the hero. A proud stylized grown companion; moderate head size about1/3 of total height, not realistic illustration. Intended MEDIUM native sprite240x208. Its final contour should be THREE pixels, the same physical stroke as the hero, NOT the thick relative contour of the small cat magnified four times. Deliberate square pixel stair steps and compact black clusters throughout. Maximum8 broad stripe groups, a few solid black shadows under neck, belly and near legs, clear white regions. No delicate hair or realistic facial detail.",
+      "references": [
+        "codex-clipboard-d5967640-dbff-49a4-bbd3-a6b70e96e51f.png",
+        "codex-clipboard-fbadf95b-bf11-4ea5-8db2-bb2ff1acb838.png",
+        "figure-0.png"
+      ],
+      "source": "exec-1402d54a-9d15-4bc1-ac5a-02a30d0e1809.png",
+      "file": "pet-17.png",
+      "id": 17,
+      "approvedPrototype": true
+    },
+    {
+      "id": 18,
+      "name": "Eagle",
+      "subject": "An eagle standing tall, wings partly lifted upward in a compact V, chunky beak and few broad feather groups.",
+      "height": 152,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An eagle standing tall, wings partly lifted upward in a compact V, chunky beak and few broad feather groups. The final native sprite will be about152 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dog.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-6df9ef0d-62e8-4eea-9c15-f9b547faf2b4.png",
+      "file": "pet-18.png"
+    },
+    {
+      "id": 19,
+      "name": "Polar bear",
+      "subject": "A large polar bear on four paws, strong compact body and broad white surfaces with sparse black shadows.",
+      "height": 280,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: A large polar bear on four paws, strong compact body and broad white surfaces with sparse black shadows. The final native sprite will be about280 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dog.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-9a6957ac-5ce3-47ac-a93e-1e979c0bdae9.png",
+      "file": "pet-19.png"
+    },
+    {
+      "id": 20,
+      "name": "Friendly slime",
+      "subject": "An original friendly slime: a clear domed blob with expressive hero-like eyes, two simple highlights and a bold black base.",
+      "height": 96,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original friendly slime: a clear domed blob with expressive hero-like eyes, two simple highlights and a bold black base. The final native sprite will be about96 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-41c5e8c7-0746-4e4c-8072-5ffcf4635078.png",
+      "file": "pet-20.png"
+    },
+    {
+      "id": 21,
+      "name": "Mushroom sprite",
+      "subject": "An original living mushroom with a broad cap, three bold spots, a simple expressive face, two short legs and tiny arms.",
+      "height": 104,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original living mushroom with a broad cap, three bold spots, a simple expressive face, two short legs and tiny arms. The final native sprite will be about104 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-381a8bd5-b4c9-490d-be3d-0e55e1f49f72.png",
+      "file": "pet-21.png"
+    },
+    {
+      "id": 22,
+      "name": "Spirit rabbit",
+      "subject": "An original spirit rabbit with long ears and a broad wisp-shaped tail attached to the body, simple white/black fur patterns.",
+      "height": 112,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original spirit rabbit with long ears and a broad wisp-shaped tail attached to the body, simple white/black fur patterns. The final native sprite will be about112 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-c282ed74-5a42-4271-85a6-f64f365a5170.png",
+      "file": "pet-22.png"
+    },
+    {
+      "id": 23,
+      "name": "Spirit fox",
+      "subject": "An original spirit fox with two broad flame-shaped tails attached to its body, expressive eyes and dark ear accents.",
+      "height": 136,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original spirit fox with two broad flame-shaped tails attached to its body, expressive eyes and dark ear accents. The final native sprite will be about136 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-1332da7f-b038-43e0-8044-9fdb5fbae4eb.png",
+      "file": "pet-23.png"
+    },
+    {
+      "id": 24,
+      "name": "Moon cat",
+      "subject": "An original moon cat, upright sitting pose, crescent mark on its forehead and a thick curled tail with a few broad bands.",
+      "height": 120,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original moon cat, upright sitting pose, crescent mark on its forehead and a thick curled tail with a few broad bands. The final native sprite will be about120 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-0d98293e-d250-48a7-ab61-f874f31947ff.png",
+      "file": "pet-24.png"
+    },
+    {
+      "id": 25,
+      "name": "Jackalope",
+      "subject": "A jackalope: a compact rabbit with small branching deer antlers, strong ears and visible paws.",
+      "height": 128,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: A jackalope: a compact rabbit with small branching deer antlers, strong ears and visible paws. The final native sprite will be about128 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-2796313d-51ed-4e36-b403-eda42c2a431a.png",
+      "file": "pet-25.png"
+    },
+    {
+      "id": 26,
+      "name": "Shadow wolf",
+      "subject": "An original shadow wolf with bold mostly black body, white face/chest highlights, compact angular fur tufts and a long tail.",
+      "height": 216,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original shadow wolf with bold mostly black body, white face/chest highlights, compact angular fur tufts and a long tail. The final native sprite will be about216 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-136fa6b9-1acd-4adf-b03d-cccbdffc35c1.png",
+      "file": "pet-26.png"
+    },
+    {
+      "id": 27,
+      "name": "Mandrake",
+      "subject": "An original mandrake creature: a chunky root body with four root limbs, expressive face, a crown of only six broad leaves.",
+      "height": 112,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original mandrake creature: a chunky root body with four root limbs, expressive face, a crown of only six broad leaves. The final native sprite will be about112 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-e96fabe2-c8bd-49a2-a66c-c2244e139862.png",
+      "file": "pet-27.png"
+    },
+    {
+      "id": 28,
+      "name": "Rune owl",
+      "subject": "An original rune owl with folded wings, a simple invented geometric chest emblem and two ear tufts. No real writing.",
+      "height": 152,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original rune owl with folded wings, a simple invented geometric chest emblem and two ear tufts. No real writing. The final native sprite will be about152 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-d471625f-803c-44f9-b6b2-741a8ff00dff.png",
+      "file": "pet-28.png"
+    },
+    {
+      "id": 29,
+      "name": "Spark drake",
+      "subject": "An original small drake with four legs, short wings, a chunky lightning-shaped crest attached to its head and bold tail tip.",
+      "height": 192,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original small drake with four legs, short wings, a chunky lightning-shaped crest attached to its head and bold tail tip. The final native sprite will be about192 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-42da489e-55e4-4ccd-9360-145fb9c8508f.png",
+      "file": "pet-29.png"
+    },
+    {
+      "id": 30,
+      "name": "Griffin",
+      "subject": "An original griffin with eagle head and front talons, lion body and raised compact wings, only five broad feather groups per wing.",
+      "height": 280,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original griffin with eagle head and front talons, lion body and raised compact wings, only five broad feather groups per wing. The final native sprite will be about280 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-a2bba1a7-294e-4de6-b504-2711d0c31912.png",
+      "file": "pet-30.png"
+    },
+    {
+      "id": 31,
+      "name": "Hippogriff",
+      "subject": "An original hippogriff: eagle front half and horse hindquarters, compact raised wings, sturdy legs and an expressive face.",
+      "height": 296,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original hippogriff: eagle front half and horse hindquarters, compact raised wings, sturdy legs and an expressive face. The final native sprite will be about296 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-1ba9330f-c35c-4280-bacb-aae9f5c390ec.png",
+      "file": "pet-31.png"
+    },
+    {
+      "id": 32,
+      "name": "Unicorn",
+      "subject": "A unicorn standing in a compact three-quarter pose, a single clear horn, simple flowing mane and bold hoof shadows.",
+      "height": 264,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: A unicorn standing in a compact three-quarter pose, a single clear horn, simple flowing mane and bold hoof shadows. The final native sprite will be about264 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-13030fbd-cec1-45fa-b442-c269bf99730a.png",
+      "file": "pet-32.png"
+    },
+    {
+      "id": 33,
+      "name": "Pegasus",
+      "subject": "A pegasus standing with two raised wings forming a tall silhouette; simple horse body and a few broad feather groups.",
+      "height": 280,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: A pegasus standing with two raised wings forming a tall silhouette; simple horse body and a few broad feather groups. The final native sprite will be about280 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-b7d561a0-6305-46cd-968c-ff29e1801302.png",
+      "file": "pet-33.png"
+    },
+    {
+      "id": 34,
+      "name": "Kirin",
+      "subject": "An original kirin: deer-like body, branching antlers, flowing simple mane and only a few broad diamond armor scales.",
+      "height": 280,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original kirin: deer-like body, branching antlers, flowing simple mane and only a few broad diamond armor scales. The final native sprite will be about280 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-b728d8d3-4faf-4230-8dac-b20920907cc4.png",
+      "file": "pet-34.png"
+    },
+    {
+      "id": 35,
+      "name": "Manticore",
+      "subject": "An original manticore with lion body and head, small raised bat wings and an attached curved scorpion tail. Approachable fantasy style.",
+      "height": 296,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original manticore with lion body and head, small raised bat wings and an attached curved scorpion tail. Approachable fantasy style. The final native sprite will be about296 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-f1d59e40-1767-4a6e-a62f-134e28272b8e.png",
+      "file": "pet-35.png"
+    },
+    {
+      "id": 36,
+      "name": "Basilisk",
+      "subject": "An original basilisk: a stout four-legged reptile with a bold crown-like head crest and an attached coiled tail.",
+      "height": 280,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original basilisk: a stout four-legged reptile with a bold crown-like head crest and an attached coiled tail. The final native sprite will be about280 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-0ba49ef2-262a-4e62-a0a0-64fc3b99dd38.png",
+      "file": "pet-36.png"
+    },
+    {
+      "id": 37,
+      "name": "Stone golem",
+      "subject": "An original stone golem, upright strong blocky body, large shoulders, simple geometric plates and expressive bright eyes. No weapon.",
+      "height": 312,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original stone golem, upright strong blocky body, large shoulders, simple geometric plates and expressive bright eyes. No weapon. The final native sprite will be about312 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-c945e00d-d741-4397-b34b-2c761b6abe07.png",
+      "file": "pet-37.png"
+    },
+    {
+      "id": 38,
+      "name": "Chimera",
+      "subject": "An original chimera: lion front and body, one small goat head beside the main head, and an attached snake-head tail. Only three clear faces.",
+      "height": 312,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original chimera: lion front and body, one small goat head beside the main head, and an attached snake-head tail. Only three clear faces. The final native sprite will be about312 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-564524f7-c60a-4ef5-97eb-1af3003f1706.png",
+      "file": "pet-38.png"
+    },
+    {
+      "id": 39,
+      "name": "Phoenix",
+      "subject": "An original phoenix standing with raised wings, five broad flame-feather groups per wing and a broad attached flaming tail.",
+      "height": 280,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original phoenix standing with raised wings, five broad flame-feather groups per wing and a broad attached flaming tail. The final native sprite will be about280 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-d66ed249-4b9a-49b0-970b-ceb846e1fb5c.png",
+      "file": "pet-39.png"
+    },
+    {
+      "id": 40,
+      "name": "Wyvern",
+      "subject": "An original wyvern with two hind legs and two wing arms raised in a compact V, clear snout and curled long tail.",
+      "height": 304,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original wyvern with two hind legs and two wing arms raised in a compact V, clear snout and curled long tail. The final native sprite will be about304 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-d45b5d63-9614-43ce-ad83-77d243c3061f.png",
+      "file": "pet-40.png"
+    },
+    {
+      "id": 41,
+      "name": "Mountain dragon",
+      "subject": "An original strong mountain dragon standing upright on four legs, compact raised wings, broad horns and a few geometric rock-like plates.",
+      "height": 328,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original strong mountain dragon standing upright on four legs, compact raised wings, broad horns and a few geometric rock-like plates. The final native sprite will be about328 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-13607488-0a15-4a38-98cf-f756597ee517.png",
+      "file": "pet-41.png"
+    },
+    {
+      "id": 42,
+      "name": "Eastern dragon",
+      "subject": "An original eastern dragon coiled into a tall compact S silhouette, long snout, four small paws and a simplified blocky mane.",
+      "height": 336,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original eastern dragon coiled into a tall compact S silhouette, long snout, four small paws and a simplified blocky mane. The final native sprite will be about336 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-565488ac-e424-4525-b52f-73ae45118843.png",
+      "file": "pet-42.png"
+    },
+    {
+      "id": 43,
+      "name": "Hydra",
+      "subject": "An original hydra with exactly three expressive dragon heads, a compact strong four-legged body and a curled attached tail.",
+      "height": 336,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original hydra with exactly three expressive dragon heads, a compact strong four-legged body and a curled attached tail. The final native sprite will be about336 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-2a1d569a-b347-4f88-b80b-5da71bfd966c.png",
+      "file": "pet-43.png"
+    },
+    {
+      "id": 44,
+      "name": "Leviathan",
+      "subject": "An original leviathan, a huge aquatic serpent coiled into a tall compact silhouette, large fins, expressive head and a few broad black bands.",
+      "height": 344,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original leviathan, a huge aquatic serpent coiled into a tall compact silhouette, large fins, expressive head and a few broad black bands. The final native sprite will be about344 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-6fd91b4b-3fdf-4cb4-891a-3b60faa81f0b.png",
+      "file": "pet-44.png"
+    },
+    {
+      "id": 45,
+      "name": "Ancient titan",
+      "subject": "An original ancient titan: a huge upright armored stone creature with broad shoulders, heavy geometric plates, a simple face and no weapon.",
+      "height": 352,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original ancient titan: a huge upright armored stone creature with broad shoulders, heavy geometric plates, a simple face and no weapon. The final native sprite will be about352 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-09246c00-44ee-4319-918d-42092e0d6358.png",
+      "file": "pet-45.png"
+    },
+    {
+      "id": 46,
+      "name": "Star wyrm",
+      "subject": "An original star wyrm, a tall coiled cosmic serpent, star-shaped crest connected to its head and a few integrated star markings on the body.",
+      "height": 352,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original star wyrm, a tall coiled cosmic serpent, star-shaped crest connected to its head and a few integrated star markings on the body. The final native sprite will be about352 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-6c1a764b-d54c-4995-b01a-82fdea9d2b51.png",
+      "file": "pet-46.png"
+    },
+    {
+      "name": "dragon",
+      "title": "Dragón",
+      "prompt": "Create ONE production-style BLACK AND WHITE PIXEL ART companion sprite. Images1 and2 are the USER-APPROVED PET STYLE, image3 is the exact HERO. Match their expressive block-shaped eyes, firm stepped pixel contours, clear flat black/white shapes and very sparse interior detail. The animal must look like a creature from the SAME SPRITE SET as this hero and these two pets. Important: actual coarse square pixel clusters, not an ink illustration with pixelated edges. No smooth line art, fine fur strands, realistic anatomy shading, hairline decoration, grayscale, dithering, texture or antialiasing. A charming stylized animal with coherent readable proportions like the approved cat/dog. True transparent outside and opaque black/white within the sprite. Full body, all ears/wings/paws/tail complete, safe margins. No human, UI, scene, floor, external shadow, labels or frame. Preserve a confident contour that matches the HERO at the intended final display size; larger creatures need more pixels and detail, NOT a magnified thick outline from a tiny sprite. Subject: an original DRAGON standing tall in three-quarter pose, two raised wings, four strong legs, curved long tail, modest angular snout and two horns. Adapt the approved cat/dog and hero's friendly expressive black pixel eyes and compact sprite shapes to a majestic fantasy creature. Strong grown proportions with a moderate head, neither baby toy nor realistic dragon drawing. Intended LARGE native sprite272x340, taller than the256px hero. Firm THREE final pixel outer contour, equal in physical thickness to the hero despite the larger body. Build from visible square pixel clusters and clean stair steps, not smooth thin ink outlines. Very simple wings: only2 broad structural divisions each, substantial black shadow clusters at wing roots, neck/chest and legs, balanced white highlights. No individual scales, tendril details, long thin claws, fur or tiny ornament. Same visual family as the approved pets, just a larger fantasy companion.",
+      "references": [
+        "codex-clipboard-d5967640-dbff-49a4-bbd3-a6b70e96e51f.png",
+        "codex-clipboard-fbadf95b-bf11-4ea5-8db2-bb2ff1acb838.png",
+        "figure-0.png"
+      ],
+      "source": "exec-dc8025fd-5d3f-444d-b863-f6d205ec8a5c.png",
+      "file": "pet-47.png",
+      "id": 47,
+      "approvedPrototype": true
+    },
+    {
+      "id": 48,
+      "name": "Cosmic stag",
+      "subject": "An original majestic cosmic stag with a tall body, compact branching antlers ending in connected star points, a few bold constellation marks on its body.",
+      "height": 328,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original majestic cosmic stag with a tall body, compact branching antlers ending in connected star points, a few bold constellation marks on its body. The final native sprite will be about328 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-09b9a193-0db0-4373-91a6-011c4eb71b82.png",
+      "file": "pet-48.png"
+    },
+    {
+      "id": 49,
+      "name": "Celestial dragon",
+      "subject": "An original majestic celestial dragon on four legs, tall raised wings, connected crown-like star horns, expressive eyes and bold white/black armor-like chest shapes.",
+      "height": 360,
+      "prompt": "Create ONE BLACK AND WHITE PIXEL ART game companion sprite. References are the user-approved pet style and exact hero: match expressive black pixel-block eyes, firm stair-step contours, clear black/white masses and sparse details. It must belong to the SAME sprite set, not a smooth illustration. Use visible coarse square pixel clusters throughout, simple compact shapes and a few bold black shadow groups; no fine linework, realistic fur/scales, grayscale, antialiasing, dithering, hatching or texture. True transparent exterior, opaque white/black interiors. Complete body, ears, paws, wings and tail, with safe outer margins. Everything attached to the creature; no aura, separate particles, background, ground, external shadow, UI, text or frame. Keep the silhouette compact rather than very wide so it fits beside the hero. Subject: An original majestic celestial dragon on four legs, tall raised wings, connected crown-like star horns, expressive eyes and bold white/black armor-like chest shapes. The final native sprite will be about360 pixels tall, maximum272 pixels wide, beside a256px tall hero. Its outer contour should be TWO TO THREE final pixels, physically matching the hero. Larger creatures have more native pixels, never a tiny sprite enlarged with a heavy contour. Small species must still be clearly readable at96px height.",
+      "mode": "built-in image_gen",
+      "references": [
+        "dragon-v3.png",
+        "cat.png",
+        "figure-0.png"
+      ],
+      "source": "exec-82cf8f89-6772-4b09-8746-b31f5020ed9a.png",
+      "file": "pet-49.png"
+    }
+  ]
+}

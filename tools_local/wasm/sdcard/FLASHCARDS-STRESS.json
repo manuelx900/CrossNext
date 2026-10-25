@@ -1,0 +1,2921 @@
+{
+  "synthetic": true,
+  "decks": [
+    {
+      "file": "01_Textos_y_formatos.apkg",
+      "notes": 31,
+      "cards": 31,
+      "media": 0,
+      "bytes": 4430,
+      "sha256": "1949688bbd9897a14b605037c30d85de40907e21d7c7c66c292c4f311797d76d",
+      "cases": [
+        {
+          "case": "basic",
+          "front_bytes": 5,
+          "back_bytes": 5
+        },
+        {
+          "case": "special",
+          "front_bytes": 27,
+          "back_bytes": 18
+        },
+        {
+          "case": "text-1000",
+          "front_bytes": 13,
+          "back_bytes": 1004
+        },
+        {
+          "case": "text-5000",
+          "front_bytes": 13,
+          "back_bytes": 5004
+        },
+        {
+          "case": "text-20000",
+          "front_bytes": 14,
+          "back_bytes": 20004
+        },
+        {
+          "case": "20k-question-50k-answer",
+          "front_bytes": 20000,
+          "back_bytes": 50004
+        },
+        {
+          "case": "word-2000",
+          "front_bytes": 2000,
+          "back_bytes": 19
+        },
+        {
+          "case": "100-breaks",
+          "front_bytes": 1000,
+          "back_bytes": 5
+        },
+        {
+          "case": "over-limit",
+          "front_bytes": 9,
+          "back_bytes": 70000
+        },
+        {
+          "case": "empty-front",
+          "front_bytes": 0,
+          "back_bytes": 17
+        },
+        {
+          "case": "empty-answer",
+          "front_bytes": 14,
+          "back_bytes": 0
+        },
+        {
+          "case": "html-malformed",
+          "front_bytes": 16,
+          "back_bytes": 28
+        },
+        {
+          "case": "code",
+          "front_bytes": 8,
+          "back_bytes": 1661
+        },
+        {
+          "case": "math-chem-0",
+          "front_bytes": 16,
+          "back_bytes": 24
+        },
+        {
+          "case": "math-chem-1",
+          "front_bytes": 16,
+          "back_bytes": 32
+        },
+        {
+          "case": "math-chem-2",
+          "front_bytes": 16,
+          "back_bytes": 36
+        },
+        {
+          "case": "math-chem-3",
+          "front_bytes": 16,
+          "back_bytes": 40
+        },
+        {
+          "case": "math-chem-4",
+          "front_bytes": 16,
+          "back_bytes": 46
+        },
+        {
+          "case": "math-chem-5",
+          "front_bytes": 16,
+          "back_bytes": 25
+        },
+        {
+          "case": "math-chem-6",
+          "front_bytes": 16,
+          "back_bytes": 39
+        },
+        {
+          "case": "math-chem-7",
+          "front_bytes": 16,
+          "back_bytes": 38
+        },
+        {
+          "case": "unicode-es",
+          "front_bytes": 2,
+          "back_bytes": 36
+        },
+        {
+          "case": "unicode-cjk",
+          "front_bytes": 3,
+          "back_bytes": 33
+        },
+        {
+          "case": "unicode-rtl",
+          "front_bytes": 3,
+          "back_bytes": 25
+        },
+        {
+          "case": "unicode-unicode",
+          "front_bytes": 7,
+          "back_bytes": 41
+        },
+        {
+          "case": "table-2",
+          "front_bytes": 7,
+          "back_bytes": 168
+        },
+        {
+          "case": "table-5",
+          "front_bytes": 7,
+          "back_bytes": 357
+        },
+        {
+          "case": "table-10",
+          "front_bytes": 8,
+          "back_bytes": 672
+        },
+        {
+          "case": "table-span",
+          "front_bytes": 12,
+          "back_bytes": 104
+        },
+        {
+          "case": "html-css",
+          "front_bytes": 64,
+          "back_bytes": 69
+        },
+        {
+          "case": "script",
+          "model": 1002,
+          "front_bytes": 55,
+          "back_bytes": 11
+        }
+      ],
+      "case_count": 31,
+      "cases_sampled": false
+    },
+    {
+      "file": "02_Imagenes_limites.apkg",
+      "notes": 17,
+      "cards": 17,
+      "media": 15,
+      "bytes": 9733454,
+      "sha256": "84ecb7d974f898a602a941e4cc07d12d7d2171ebbe983764e31cd8ad1cd51f96",
+      "cases": [
+        {
+          "case": "image-normal.png",
+          "front_bytes": 16,
+          "back_bytes": 22
+        },
+        {
+          "case": "image-normal.jpg",
+          "front_bytes": 16,
+          "back_bytes": 22
+        },
+        {
+          "case": "image-alpha.png",
+          "front_bytes": 15,
+          "back_bytes": 21
+        },
+        {
+          "case": "image-static.gif",
+          "front_bytes": 16,
+          "back_bytes": 22
+        },
+        {
+          "case": "image-sample.webp",
+          "front_bytes": 17,
+          "back_bytes": 23
+        },
+        {
+          "case": "image-wide.png",
+          "front_bytes": 14,
+          "back_bytes": 20
+        },
+        {
+          "case": "image-tall.png",
+          "front_bytes": 14,
+          "back_bytes": 20
+        },
+        {
+          "case": "image-4k.jpg",
+          "front_bytes": 12,
+          "back_bytes": 18
+        },
+        {
+          "case": "image-8k.png",
+          "front_bytes": 12,
+          "back_bytes": 18
+        },
+        {
+          "case": "image-10mb.jpg",
+          "front_bytes": 14,
+          "back_bytes": 20
+        },
+        {
+          "case": "image-broken.png",
+          "front_bytes": 16,
+          "back_bytes": 22
+        },
+        {
+          "case": "image-space & ñ.png",
+          "front_bytes": 20,
+          "back_bytes": 30
+        },
+        {
+          "case": "image-../outside.png",
+          "front_bytes": 20,
+          "back_bytes": 26
+        },
+        {
+          "case": "missing",
+          "front_bytes": 13,
+          "back_bytes": 22
+        },
+        {
+          "case": "audio",
+          "front_bytes": 15,
+          "back_bytes": 17
+        },
+        {
+          "case": "video",
+          "front_bytes": 15,
+          "back_bytes": 53
+        },
+        {
+          "case": "external-url",
+          "front_bytes": 12,
+          "back_bytes": 43
+        }
+      ],
+      "case_count": 17,
+      "cases_sampled": false
+    },
+    {
+      "file": "03_Cloze_y_plantillas.apkg",
+      "notes": 8,
+      "cards": 12,
+      "media": 1,
+      "bytes": 3150,
+      "sha256": "3c3e8fe80e867e0c19dd21639c3abec9fc48af8f0fddac4f108c4db20a9852b4",
+      "cases": [
+        {
+          "case": "cloze-simple",
+          "model": 1001,
+          "front_bytes": 29,
+          "back_bytes": 5
+        },
+        {
+          "case": "cloze-multiple",
+          "model": 1001,
+          "ordinals": [
+            0,
+            1,
+            2
+          ],
+          "front_bytes": 37,
+          "back_bytes": 0
+        },
+        {
+          "case": "cloze-hint",
+          "model": 1001,
+          "front_bytes": 37,
+          "back_bytes": 0
+        },
+        {
+          "case": "cloze-nested",
+          "model": 1001,
+          "ordinals": [
+            0,
+            1
+          ],
+          "front_bytes": 27,
+          "back_bytes": 0
+        },
+        {
+          "case": "cloze-image",
+          "model": 1001,
+          "front_bytes": 37,
+          "back_bytes": 10
+        },
+        {
+          "case": "reversed",
+          "model": 1003,
+          "ordinals": [
+            0,
+            1
+          ],
+          "front_bytes": 5,
+          "back_bytes": 4
+        },
+        {
+          "case": "type-in",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "custom",
+          "model": 1002,
+          "front_bytes": 20,
+          "back_bytes": 15
+        }
+      ],
+      "case_count": 8,
+      "cases_sampled": false
+    },
+    {
+      "file": "Escala/00100_tarjetas.apkg",
+      "notes": 100,
+      "cards": 100,
+      "media": 0,
+      "bytes": 4099,
+      "sha256": "68cd4e0937618078cb23d360c0b1440e7bcc7fbbf4f2e02a13e4c6c328446077",
+      "cases": [
+        {
+          "case": "card-0",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-1",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-2",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-3",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-4",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-5",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-6",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-7",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-8",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-9",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-10",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-11",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-12",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-13",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-14",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-15",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-16",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-17",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-18",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-19",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-20",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-21",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-22",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-23",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-24",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-25",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-26",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-27",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-28",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-29",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-30",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-31",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-32",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-33",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-34",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-35",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-36",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-37",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-38",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-39",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-40",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-41",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-42",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-43",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-44",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-45",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-46",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-47",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-48",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-49",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-50",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-51",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-52",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-53",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-54",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-55",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-56",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-57",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-58",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-59",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-60",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-61",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-62",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-63",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-64",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-65",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-66",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-67",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-68",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-69",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-70",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-71",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-72",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-73",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-74",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-75",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-76",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-77",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-78",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-79",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-80",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-81",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-82",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-83",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-84",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-85",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-86",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-87",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-88",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-89",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-90",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-91",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-92",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-93",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-94",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-95",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-96",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-97",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-98",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-99",
+          "front_bytes": 14,
+          "back_bytes": 12
+        }
+      ],
+      "case_count": 100,
+      "cases_sampled": false
+    },
+    {
+      "file": "Escala/01000_tarjetas.apkg",
+      "notes": 1000,
+      "cards": 1000,
+      "media": 0,
+      "bytes": 26863,
+      "sha256": "b827ed80bae0f13088572a568140e9ab02126de099ebd9681f1a56cdde588e8a",
+      "cases": [
+        {
+          "case": "card-0",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-1",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-2",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-3",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-4",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-5",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-6",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-7",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-8",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-9",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-10",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-11",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-12",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-13",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-14",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-15",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-16",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-17",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-18",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-19",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-20",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-21",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-22",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-23",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-24",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-25",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-26",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-27",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-28",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-29",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-30",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-31",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-32",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-33",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-34",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-35",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-36",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-37",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-38",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-39",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-40",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-41",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-42",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-43",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-44",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-45",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-46",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-47",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-48",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-49",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-50",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-51",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-52",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-53",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-54",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-55",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-56",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-57",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-58",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-59",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-60",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-61",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-62",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-63",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-64",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-65",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-66",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-67",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-68",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-69",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-70",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-71",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-72",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-73",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-74",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-75",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-76",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-77",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-78",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-79",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-80",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-81",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-82",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-83",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-84",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-85",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-86",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-87",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-88",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-89",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-90",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-91",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-92",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-93",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-94",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-95",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-96",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-97",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-98",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-99",
+          "front_bytes": 14,
+          "back_bytes": 12
+        }
+      ],
+      "case_count": 1000,
+      "cases_sampled": true
+    },
+    {
+      "file": "Escala/10000_tarjetas.apkg",
+      "notes": 10000,
+      "cards": 10000,
+      "media": 0,
+      "bytes": 242379,
+      "sha256": "0b8612fc9642f0badb9374a2038c0581c3d0708e6fc220cd0402201aee377dbf",
+      "cases": [
+        {
+          "case": "card-0",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-1",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-2",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-3",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-4",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-5",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-6",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-7",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-8",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-9",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-10",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-11",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-12",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-13",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-14",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-15",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-16",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-17",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-18",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-19",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-20",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-21",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-22",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-23",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-24",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-25",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-26",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-27",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-28",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-29",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-30",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-31",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-32",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-33",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-34",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-35",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-36",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-37",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-38",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-39",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-40",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-41",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-42",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-43",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-44",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-45",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-46",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-47",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-48",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-49",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-50",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-51",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-52",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-53",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-54",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-55",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-56",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-57",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-58",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-59",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-60",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-61",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-62",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-63",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-64",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-65",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-66",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-67",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-68",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-69",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-70",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-71",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-72",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-73",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-74",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-75",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-76",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-77",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-78",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-79",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-80",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-81",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-82",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-83",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-84",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-85",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-86",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-87",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-88",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-89",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-90",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-91",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-92",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-93",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-94",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-95",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-96",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-97",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-98",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-99",
+          "front_bytes": 14,
+          "back_bytes": 12
+        }
+      ],
+      "case_count": 10000,
+      "cases_sampled": true
+    },
+    {
+      "file": "Escala/30000_tarjetas.apkg",
+      "notes": 30000,
+      "cards": 30000,
+      "media": 0,
+      "bytes": 725731,
+      "sha256": "43fb84c30ccf7022921c5a8b0bdaed5752202fd85d127a5653771fb9bf6f1d5a",
+      "cases": [
+        {
+          "case": "card-0",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-1",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-2",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-3",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-4",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-5",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-6",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-7",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-8",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-9",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-10",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-11",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-12",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-13",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-14",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-15",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-16",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-17",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-18",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-19",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-20",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-21",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-22",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-23",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-24",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-25",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-26",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-27",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-28",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-29",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-30",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-31",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-32",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-33",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-34",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-35",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-36",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-37",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-38",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-39",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-40",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-41",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-42",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-43",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-44",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-45",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-46",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-47",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-48",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-49",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-50",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-51",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-52",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-53",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-54",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-55",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-56",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-57",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-58",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-59",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-60",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-61",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-62",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-63",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-64",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-65",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-66",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-67",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-68",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-69",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-70",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-71",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-72",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-73",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-74",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-75",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-76",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-77",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-78",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-79",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-80",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-81",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-82",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-83",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-84",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-85",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-86",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-87",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-88",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-89",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-90",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-91",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-92",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-93",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-94",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-95",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-96",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-97",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-98",
+          "front_bytes": 14,
+          "back_bytes": 12
+        },
+        {
+          "case": "card-99",
+          "front_bytes": 14,
+          "back_bytes": 12
+        }
+      ],
+      "case_count": 30000,
+      "cases_sampled": true
+    },
+    {
+      "file": "Escala/100_imagenes.apkg",
+      "notes": 100,
+      "cards": 100,
+      "media": 100,
+      "bytes": 98793,
+      "sha256": "e073e4427fee8df29d7d8ab32b55003b8c310da4a3d0ee92109d561912b89927",
+      "cases": [
+        {
+          "case": "image-0",
+          "front_bytes": 7,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-1",
+          "front_bytes": 7,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-2",
+          "front_bytes": 7,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-3",
+          "front_bytes": 7,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-4",
+          "front_bytes": 7,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-5",
+          "front_bytes": 7,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-6",
+          "front_bytes": 7,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-7",
+          "front_bytes": 7,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-8",
+          "front_bytes": 7,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-9",
+          "front_bytes": 7,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-10",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-11",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-12",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-13",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-14",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-15",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-16",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-17",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-18",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-19",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-20",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-21",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-22",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-23",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-24",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-25",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-26",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-27",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-28",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-29",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-30",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-31",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-32",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-33",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-34",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-35",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-36",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-37",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-38",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-39",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-40",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-41",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-42",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-43",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-44",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-45",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-46",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-47",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-48",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-49",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-50",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-51",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-52",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-53",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-54",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-55",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-56",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-57",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-58",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-59",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-60",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-61",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-62",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-63",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-64",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-65",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-66",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-67",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-68",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-69",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-70",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-71",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-72",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-73",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-74",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-75",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-76",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-77",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-78",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-79",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-80",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-81",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-82",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-83",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-84",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-85",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-86",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-87",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-88",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-89",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-90",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-91",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-92",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-93",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-94",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-95",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-96",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-97",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-98",
+          "front_bytes": 8,
+          "back_bytes": 25
+        },
+        {
+          "case": "image-99",
+          "front_bytes": 8,
+          "back_bytes": 25
+        }
+      ],
+      "case_count": 100,
+      "cases_sampled": false
+    }
+  ],
+  "hardware_measurements": "pending",
+  "integrity": [
+    {
+      "file": "Integridad/No-es-SQLite.apkg",
+      "sha256": "a3989126344744ef800dbc88bf7e744853f3f2eac75c9ab3301f4e845ef22078"
+    },
+    {
+      "file": "Integridad/Rutas-extranas.apkg",
+      "sha256": "8635e34858181ce6e484512451283bdf4a0ccf9521c59f58f8367fc8db048835"
+    },
+    {
+      "file": "Integridad/Tamano-excesivo.apkg",
+      "sha256": "d8e6c96f42e4c085c282f9302be54c533de43d3e9b824f96e0989737d7a348dc"
+    },
+    {
+      "file": "Integridad/Truncado.apkg",
+      "sha256": "d993c75aa0f1e227bfc14e0029797626cfa070aa599922177c61fc4c6f619466"
+    }
+  ]
+}

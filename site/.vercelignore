@@ -1,0 +1,30 @@
+# The deploy is the page and the things it loads. Everything else in here is
+# tooling that only ever runs on a laptop, and shipping it would put working
+# scripts on a public URL for no reason.
+#
+# Keep this in step with site/README.md: every script it documents belongs here.
+#
+# TWO DELIBERATE EXCEPTIONS, both of which look exactly like things that belong
+# in this list and would break every deploy if added. fetch-emulator.mjs IS the
+# build command (see vercel.json), and emulator-manifest.json is the file it
+# reads; ignoring either leaves the build unable to find it and the emulator
+# unable to reach the site. They are two more public files on a public
+# repository's site, which is the whole cost.
+*.py
+README.md
+# sim-shot capture recipes: replay scripts for regenerating the screenshots,
+# consumed by scripts_local on a laptop, loaded by no page.
+recipes/
+# The inbox's dev fixture. serve.py and host-tests/site read it on a laptop; the
+# deployed page never does -- production answers /api/inbox from api/inbox.js.
+# It was served at /inbox/fixture.json (200, 22.8KB) carrying real card titles,
+# real bodies and the asks put to Mario, because this file excluded *.py and not
+# the data those scripts read. Excluding the script and shipping its input is
+# the gap: ask what a tool READS, not just what it is.
+inbox/fixture.json
+# The Wikipedia page's mock pack and its checks. ?mock=1 reads mock/ so the
+# page can be looked at from a laptop; deployed, that switch finds nothing and
+# the page says the pack could not be reached, which is the truth there. The
+# tests need node or a browser and load in no page.
+wikipedia/mock/
+wikipedia/tests/

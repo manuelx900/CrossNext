@@ -1,0 +1,82 @@
+#pragma once
+
+// FOREHEAD: the party game where the person holding the device is the only one
+// who cannot see it.
+//
+// The activity is the thin layer: it owns the clock, the orientation, the save
+// file and the two keys. The rules are in ForeheadCore.h (freestanding) and the
+// drawing is in ForeheadScreens.cpp (freestanding). See docs/apps/forehead.md.
+
+#include <memory>
+
+#include "../../activities/Activity.h"
+#include "ForeheadCore.h"
+#include "ForeheadScreens.h"
+
+class ForeheadActivity final : public Activity {
+ public:
+  ForeheadActivity(GfxRenderer& renderer, MappedInputManager& mappedInput)
+      : Activity("Forehead", renderer, mappedInput) {}
+  ~ForeheadActivity() override = default;
+
+  static std::unique_ptr<Activity> create(GfxRenderer& renderer, MappedInputManager& mappedInput);
+
+  void onEnter() override;
+  void onExit() override;
+  void loop() override;
+  void render(RenderLock&&) override;
+
+ private:
+  enum class View : uint8_t { Menu, Picker, HowTo, Settings, Ready, Play, Result };
+
+  // Landscape for everything you hold against your head, portrait for
+  // everything you hold in your hand. The orientation is global, so it is set
+  // on every view change and put back in onExit -- leaving it turned rotates
+  // whatever activity comes next.
+  static bool landscape(View view) { return view == View::Ready || view == View::Play || view == View::Result; }
+  void go(View next);
+
+  void startRound();
+  void endRound();
+  void routeAction(int action, int value);
+  int secondsLeft() const;
+
+  bool loadState();
+  void saveState();
+  void flushSave();
+  bool anythingToClear() const;
+
+  forehead::Deck deck;
+  forehead::Round round;
+  forehead::Record record;
+
+  View view = View::Menu;
+  int category = 0;
+  int roundSeconds = forehead::kDefaultRoundSeconds;
+  int pickerPage = 0;
+  int howToPage = 0;
+  int resultPage = 0;
+
+  uint32_t startMs = 0;
+  int lastTick = -1;
+
+  // Eats the release edge of the key that was still held when the clock ran
+  // out, so the buzzer cannot also turn the results page. See loop().
+  bool swallowKeyRelease = false;
+  bool dirty = false;
+  // Armed by the first tap on RESET EVERYTHING and disarmed by leaving the
+  // screen, so the question cannot be answered by a stray tap arriving on a
+  // screen the player has already walked away from.
+  bool confirmingReset = false;
+  // Whether the ARMED frame has actually reached the panel. render() turns the
+  // new interaction map live before displayBuffer returns, and a FAST_REFRESH
+  // is ~0.3s during which loop() keeps polling touch at ~10ms -- so without
+  // this, a second tap on a control that looks like it did nothing lands on the
+  // armed map and wipes the save before the player has seen the question. That
+  // is the same "nothing happened is unreadable on this panel" argument the
+  // page wrap is built on, applied to the one irreversible control here.
+  bool armedFrameShown = false;
+  bool flashOnNextPaint = false;
+  bool interactionsReady = false;
+  toybox::Interactions interactions;
+};

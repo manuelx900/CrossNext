@@ -1,0 +1,20 @@
+# Blank issues are on. The templates that used to live beside this file were
+# CrossPoint's, and one of them made you tick a box swearing your idea was "not
+# an interactive app (game, calculator, notepad)" before you could file it.
+# Interactive apps are the entire reason this fork exists, so nobody could
+# have filed a truthful feature request here.
+blank_issues_enabled: true
+
+contact_links:
+  - name: Something wrong with reading, not with the apps?
+    url: https://github.com/crosspoint-reader/crosspoint-reader/issues
+    about: |
+      The reader, the EPUB engine, sync and the file browser are CrossPoint's,
+      and this fork tracks it daily. If you can reproduce it on stock CrossPoint
+      it belongs upstream, where far more people will see it.
+
+  - name: What is on the shelf, and what is deliberately not
+    url: https://github.com/ma-r-s/crossplay/blob/xteink/LOCAL_SCOPE.md
+    about: |
+      What this fork accepts, what it turns down, and why. Worth two minutes
+      before proposing an app.

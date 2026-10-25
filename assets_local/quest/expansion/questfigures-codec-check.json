@@ -1,0 +1,13 @@
+{
+  "groups": {
+    "heads": 100,
+    "bodies": 100,
+    "headMasks": 100,
+    "bodyMasks": 100,
+    "bare": 2,
+    "bareMasks": 2
+  },
+  "sha256": "3f0219c7341a4d9b0aa71d037e58212e69c322f8497c2a7ecc99ae022d575677",
+  "decodedBytes": 933984,
+  "packedBytes": 395685
+}

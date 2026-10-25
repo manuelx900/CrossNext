@@ -1,0 +1,556 @@
+{
+  "canvas": [
+    96,
+    96
+  ],
+  "inset": 4,
+  "resampling": "nearest-neighbor",
+  "alpha_threshold": 128,
+  "ink_threshold": 128,
+  "sources": {
+    "weapons": "source-sheets/weapons.png",
+    "places": "source-sheets/places.png",
+    "motives": "source-sheets/motives.png"
+  },
+  "weapons": [
+    {
+      "index": 0,
+      "id": "AXE",
+      "symbol": "WeaponAxe",
+      "crop": [
+        39,
+        60,
+        270,
+        283
+      ]
+    },
+    {
+      "index": 1,
+      "id": "BAT",
+      "symbol": "WeaponBat",
+      "crop": [
+        336,
+        60,
+        544,
+        283
+      ]
+    },
+    {
+      "index": 2,
+      "id": "CANE",
+      "symbol": "WeaponCane",
+      "crop": [
+        642,
+        60,
+        822,
+        290
+      ]
+    },
+    {
+      "index": 3,
+      "id": "DAGGER",
+      "symbol": "WeaponDagger",
+      "crop": [
+        908,
+        67,
+        1111,
+        283
+      ]
+    },
+    {
+      "index": 4,
+      "id": "FORK",
+      "symbol": "WeaponFork",
+      "crop": [
+        1200,
+        60,
+        1397,
+        297
+      ]
+    },
+    {
+      "index": 5,
+      "id": "GUN",
+      "symbol": "WeaponGun",
+      "crop": [
+        39,
+        339,
+        261,
+        535
+      ]
+    },
+    {
+      "index": 6,
+      "id": "HAMMER",
+      "symbol": "WeaponHammer",
+      "crop": [
+        330,
+        308,
+        553,
+        549
+      ]
+    },
+    {
+      "index": 7,
+      "id": "IRON",
+      "symbol": "WeaponIron",
+      "crop": [
+        596,
+        356,
+        886,
+        542
+      ]
+    },
+    {
+      "index": 8,
+      "id": "JAR",
+      "symbol": "WeaponJar",
+      "crop": [
+        922,
+        325,
+        1125,
+        542
+      ]
+    },
+    {
+      "index": 9,
+      "id": "KNIFE",
+      "symbol": "WeaponKnife",
+      "crop": [
+        1190,
+        328,
+        1410,
+        542
+      ]
+    },
+    {
+      "index": 10,
+      "id": "LAMP",
+      "symbol": "WeaponLamp",
+      "crop": [
+        62,
+        568,
+        244,
+        787
+      ]
+    },
+    {
+      "index": 11,
+      "id": "MUG",
+      "symbol": "WeaponMug",
+      "crop": [
+        327,
+        617,
+        562,
+        787
+      ]
+    },
+    {
+      "index": 12,
+      "id": "NAIL",
+      "symbol": "WeaponNail",
+      "crop": [
+        653,
+        587,
+        809,
+        787
+      ]
+    },
+    {
+      "index": 13,
+      "id": "OAR",
+      "symbol": "WeaponOar",
+      "crop": [
+        893,
+        568,
+        1126,
+        798
+      ]
+    },
+    {
+      "index": 14,
+      "id": "PAN",
+      "symbol": "WeaponPan",
+      "crop": [
+        1177,
+        582,
+        1410,
+        795
+      ]
+    },
+    {
+      "index": 15,
+      "id": "ROPE",
+      "symbol": "WeaponRope",
+      "crop": [
+        29,
+        824,
+        283,
+        1045
+      ]
+    },
+    {
+      "index": 16,
+      "id": "SPADE",
+      "symbol": "WeaponSpade",
+      "crop": [
+        328,
+        802,
+        554,
+        1038
+      ]
+    },
+    {
+      "index": 17,
+      "id": "TORCH",
+      "symbol": "WeaponTorch",
+      "crop": [
+        596,
+        846,
+        878,
+        1002
+      ]
+    },
+    {
+      "index": 18,
+      "id": "VASE",
+      "symbol": "WeaponVase",
+      "crop": [
+        936,
+        825,
+        1097,
+        1045
+      ]
+    },
+    {
+      "index": 19,
+      "id": "WIRE",
+      "symbol": "WeaponWire",
+      "crop": [
+        1173,
+        825,
+        1418,
+        1042
+      ]
+    }
+  ],
+  "places": [
+    {
+      "index": 0,
+      "id": "ATTIC",
+      "symbol": "PlaceAttic",
+      "crop": [
+        52,
+        49,
+        358,
+        290
+      ]
+    },
+    {
+      "index": 1,
+      "id": "BARN",
+      "symbol": "PlaceBarn",
+      "crop": [
+        395,
+        49,
+        700,
+        286
+      ]
+    },
+    {
+      "index": 2,
+      "id": "CAVE",
+      "symbol": "PlaceCave",
+      "crop": [
+        732,
+        54,
+        1070,
+        291
+      ]
+    },
+    {
+      "index": 3,
+      "id": "DOCK",
+      "symbol": "PlaceDock",
+      "crop": [
+        1097,
+        89,
+        1409,
+        290
+      ]
+    },
+    {
+      "index": 4,
+      "id": "FARM",
+      "symbol": "PlaceFarm",
+      "crop": [
+        28,
+        325,
+        369,
+        554
+      ]
+    },
+    {
+      "index": 5,
+      "id": "GARDEN",
+      "symbol": "PlaceGarden",
+      "crop": [
+        396,
+        311,
+        711,
+        565
+      ]
+    },
+    {
+      "index": 6,
+      "id": "HALL",
+      "symbol": "PlaceHall",
+      "crop": [
+        738,
+        327,
+        1075,
+        559
+      ]
+    },
+    {
+      "index": 7,
+      "id": "INN",
+      "symbol": "PlaceInn",
+      "crop": [
+        1102,
+        311,
+        1421,
+        568
+      ]
+    },
+    {
+      "index": 8,
+      "id": "KITCHEN",
+      "symbol": "PlaceKitchen",
+      "crop": [
+        45,
+        583,
+        353,
+        811
+      ]
+    },
+    {
+      "index": 9,
+      "id": "LAKE",
+      "symbol": "PlaceLake",
+      "crop": [
+        389,
+        602,
+        711,
+        816
+      ]
+    },
+    {
+      "index": 10,
+      "id": "MILL",
+      "symbol": "PlaceMill",
+      "crop": [
+        739,
+        576,
+        1061,
+        822
+      ]
+    },
+    {
+      "index": 11,
+      "id": "OFFICE",
+      "symbol": "PlaceOffice",
+      "crop": [
+        1090,
+        576,
+        1404,
+        822
+      ]
+    },
+    {
+      "index": 12,
+      "id": "PARK",
+      "symbol": "PlacePark",
+      "crop": [
+        30,
+        820,
+        372,
+        1062
+      ]
+    },
+    {
+      "index": 13,
+      "id": "ROOF",
+      "symbol": "PlaceRoof",
+      "crop": [
+        390,
+        864,
+        711,
+        1063
+      ]
+    },
+    {
+      "index": 14,
+      "id": "STUDY",
+      "symbol": "PlaceStudy",
+      "crop": [
+        732,
+        849,
+        1054,
+        1068
+      ]
+    },
+    {
+      "index": 15,
+      "id": "TOWER",
+      "symbol": "PlaceTower",
+      "crop": [
+        1139,
+        833,
+        1406,
+        1062
+      ]
+    }
+  ],
+  "motives": [
+    {
+      "index": 0,
+      "id": "ANGER",
+      "symbol": "MotiveAnger",
+      "crop": [
+        43,
+        66,
+        347,
+        366
+      ]
+    },
+    {
+      "index": 1,
+      "id": "DEBT",
+      "symbol": "MotiveDebt",
+      "crop": [
+        398,
+        102,
+        707,
+        374
+      ]
+    },
+    {
+      "index": 2,
+      "id": "ENVY",
+      "symbol": "MotiveEnvy",
+      "crop": [
+        750,
+        130,
+        1058,
+        342
+      ]
+    },
+    {
+      "index": 3,
+      "id": "FEAR",
+      "symbol": "MotiveFear",
+      "crop": [
+        1118,
+        92,
+        1403,
+        367
+      ]
+    },
+    {
+      "index": 4,
+      "id": "GREED",
+      "symbol": "MotiveGreed",
+      "crop": [
+        39,
+        426,
+        355,
+        700
+      ]
+    },
+    {
+      "index": 5,
+      "id": "HATE",
+      "symbol": "MotiveHate",
+      "crop": [
+        400,
+        411,
+        697,
+        691
+      ]
+    },
+    {
+      "index": 6,
+      "id": "JUSTICE",
+      "symbol": "MotiveJustice",
+      "crop": [
+        740,
+        401,
+        1069,
+        693
+      ]
+    },
+    {
+      "index": 7,
+      "id": "LOVE",
+      "symbol": "MotiveLove",
+      "crop": [
+        1119,
+        412,
+        1413,
+        678
+      ]
+    },
+    {
+      "index": 8,
+      "id": "MERCY",
+      "symbol": "MotiveMercy",
+      "crop": [
+        46,
+        766,
+        347,
+        1011
+      ]
+    },
+    {
+      "index": 9,
+      "id": "POWER",
+      "symbol": "MotivePower",
+      "crop": [
+        396,
+        742,
+        688,
+        1011
+      ]
+    },
+    {
+      "index": 10,
+      "id": "REVENGE",
+      "symbol": "MotiveRevenge",
+      "crop": [
+        747,
+        721,
+        1025,
+        1018
+      ]
+    },
+    {
+      "index": 11,
+      "id": "SHAME",
+      "symbol": "MotiveShame",
+      "crop": [
+        1113,
+        757,
+        1396,
+        1004
+      ]
+    }
+  ],
+  "menu": {
+    "source": "source-sheets/menu.png",
+    "size": [
+      192,
+      240
+    ]
+  }
+}

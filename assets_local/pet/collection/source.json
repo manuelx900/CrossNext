@@ -1,0 +1,7 @@
+{
+  "generator": "built-in image_gen",
+  "reference": "codex-clipboard-d2ef4964-a149-4ff0-8a0d-fe34de9aa1af.png",
+  "sha256": "0aeff53067a7d3bc93465177e0e1adcdbbd0347855d8d0218d397755ddf093de",
+  "date": "2026-10-23",
+  "conversion": "Nearest-neighbor downscale to 280x210 and threshold128 for BW1 in optional collection.bin SD pack; no illustration retouching."
+}

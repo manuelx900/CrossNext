@@ -1,0 +1,647 @@
+/* The Study installer, as a wizard: one step at a time, sized to the viewport
+   when it fits and scrolling the page when it does not. Shared tokens come
+   from /styles.css; everything here is layout and the handful of components
+   the installer owns. Logs scroll inside their own panes.
+
+   It used to clamp the page to 100vh and clip: the step was position:absolute
+   inside a min-height:0 row, so on a 900px-tall window the step-2 "Next" button
+   hung 29 of its 45 pixels below the clip and elementFromPoint at its own
+   centre returned the footer. At 720px tall none of it was on screen and the
+   document reported no scrollable height at all, so the page looked finished.
+   Everything in a step is in normal flow now, and the page scrolls when the
+   step is taller than the window. */
+
+.study-body {
+  min-height: 100vh;
+  /* Everything the wizard puts above and below the emulator: the top bar, the
+     title block, the stepper, the step's own padding and the foot. It is NOT a
+     constant -- the foot's one sentence wraps to two lines on a narrower
+     window -- so this is the worst case, not the typical one.
+
+     Measured at step 3 across 721x600 .. 1920x1080: the chrome is 274px where
+     the foot fits on one line and 285px at 1100x700 where it does not, which
+     needs 14.71rem. 12.5rem was the number before, and it was wrong at every
+     one of those sizes; nobody could tell, because the step box was
+     position:absolute and cropped the panel before the cap ever applied. 14rem
+     was the wide-window truth only, and left step 3 overflowing by 4 to 11px
+     between 721 and 1100. 15rem takes step 3's overflow to zero from 900x650
+     up, and costs the panel 16px of height at 1440x900.
+
+     BELOW 650px TALL IT STILL SCROLLS, AND NO VALUE HERE CAN STOP IT: at
+     721x600 the side column's own paragraph, buttons and status line come to
+     330px against a 310px panel, so the text is what exceeds the window. That
+     is the page doing exactly what this file was changed to let it do. Do not
+     shrink this token chasing those three sizes -- it will not move them, and
+     it will shrink the panel on every screen that was already fine.
+
+     If the foot's wording changes, re-run the sweep. Too large costs a
+     slightly smaller panel; too small puts a scrollbar on a step that did not
+     need one. Neither crops anything any more. */
+  --preview-chrome: 15rem;
+}
+
+.wizard {
+  min-height: calc(100vh - var(--bar));
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding: 0 var(--gutter);
+  display: grid;
+  /* The single column is explicit and floored at 0, not the implicit auto
+     track: an auto column takes its min size from the stepper's max-content
+     (four nowrap chips, wider than a 320px phone) and pushes the whole page
+     wider than the viewport. minmax(0, 1fr) lets the column shrink to the
+     window so the stepper fits inside it instead of overflowing it. */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto 1fr auto;
+  gap: 0.4rem;
+}
+
+/* --- head: the title ------------------------------------------------------ */
+
+/* A row until the mode switch beside the title was retired; the eyebrow and
+   the title are all that is left, so it is a block with a little air on top. */
+.wiz-head {
+  padding-top: 0.9rem;
+}
+
+.wiz-title {
+  font-size: clamp(1.5rem, 3.2vw, 2.2rem);
+  margin: 0.1rem 0 0;
+}
+
+/* --- stepper -------------------------------------------------------------- */
+
+.wiz-stepper {
+  display: flex;
+  /* Wrap on a phone too narrow for four chips in a row: the grid column above
+     is floored at 0 so it no longer stretches to the stepper's width, which
+     leaves the nowrap chips overflowing the viewport unless they can fall to a
+     second line. At any width wide enough for one row this is inert. */
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--edge);
+  padding-bottom: 0.5rem;
+}
+
+.wiz-stepper button {
+  font: inherit;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.7rem;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.wiz-stepper button span {
+  display: inline-grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+}
+
+.wiz-stepper button.is-current {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.wiz-stepper button.is-done {
+  color: var(--ink);
+}
+
+.wiz-stepper button.is-done span {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.wiz-stepper button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+/* --- the step area -------------------------------------------------------- */
+
+/* One cell, every step stacked in it. Only .is-current is displayed, so they
+   never collide; stacking them in a grid cell rather than with position:
+   absolute keeps the visible one in flow, which is what lets a tall step push
+   the page taller instead of being clipped by it. The 1fr row still fills the
+   window when the step is short, so a short step looks exactly as it did. */
+.wiz-body {
+  display: grid;
+  grid-template-rows: 1fr;
+}
+
+.wiz-step {
+  grid-area: 1 / 1;
+  min-width: 0;
+  display: none;
+  padding: 0.9rem 0.1rem;
+}
+
+.wiz-step.is-current {
+  display: block;
+}
+
+/* --- step 1: the deck ----------------------------------------------------- */
+
+.study-dropzone {
+  height: 56%;
+  min-height: 11rem;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  border: 2px dashed var(--edge);
+  background: var(--paper-2);
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease;
+  padding: 1rem;
+}
+
+.study-dropzone:hover,
+.study-dropzone:focus-visible,
+.study-dropzone.dragging {
+  border-color: var(--ink);
+}
+
+.study-dropzone.dragging {
+  background: var(--paper);
+}
+
+/* A drop with no acknowledgement is a drop people repeat. */
+.study-dropzone.is-busy {
+  border-style: solid;
+  border-color: var(--ink);
+  opacity: 0.55;
+}
+
+.study-drop-big {
+  font-family: var(--display);
+  font-size: clamp(1.5rem, 3.5vw, 2.4rem);
+  margin: 0;
+}
+
+.study-drop-small {
+  color: var(--muted);
+  margin: 0.6rem auto 0;
+  font-size: 0.88rem;
+  max-width: 34rem;
+}
+
+.study-alt {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-top: 0.9rem;
+  max-width: 44rem;
+}
+
+.linklike {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--ink);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.study-status {
+  margin-top: 1rem;
+}
+
+.study-progress {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.study-progress.is-error {
+  color: var(--ink);
+  border-left: 3px solid var(--ink);
+  padding-left: 0.9rem;
+  white-space: pre-wrap;
+}
+
+/* --- step 2: the report --------------------------------------------------- */
+
+.wiz-check-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 0.5rem 2rem;
+  align-items: start;
+}
+
+.study-card-title {
+  font-family: var(--display);
+  font-size: 1.25rem;
+  margin: 0 0 0.2rem;
+}
+
+.study-facts {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0.2rem 0 0;
+}
+
+.study-warn {
+  border-left: 3px solid var(--ink);
+  padding-left: 0.9rem;
+  font-size: 0.85rem;
+  margin: 0.5rem 0 0;
+}
+
+.study-deck-choice {
+  display: block;
+  padding: 0.15rem 0;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.study-deck-choice input {
+  margin-right: 0.5rem;
+}
+
+.study-deck-cards {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin-left: 0.4rem;
+}
+
+.study-verdict {
+  font-family: var(--display);
+  font-size: 1.25rem;
+  margin: 0.5rem 0 0.3rem;
+}
+
+.study-verdict.is-bad::before,
+.study-verdict.is-good::before {
+  content: "";
+  display: inline-block;
+  width: 0.65em;
+  height: 0.65em;
+  margin-right: 0.45em;
+  background: var(--ink);
+}
+
+.study-verdict.is-good::before {
+  border-radius: 50%;
+}
+
+.wiz-type-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0 0 0.2rem;
+}
+
+.study-placeholder {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+
+.wiz-report {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.7rem;
+  margin-top: 0.5rem;
+}
+
+.study-log {
+  background: var(--paper-2);
+  border: 1px solid var(--edge);
+  padding: 0.7rem 0.9rem;
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  line-height: 1.5;
+  overflow: auto;
+  white-space: pre-wrap;
+  margin: 0;
+  max-height: 32vh;
+}
+
+#typeLog {
+  grid-column: 1 / -1;
+  max-height: 18vh;
+}
+
+.study-mapping {
+  margin-top: 0.6rem;
+}
+
+.study-mapping summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.study-mapping p {
+  font-size: 0.85rem;
+  color: var(--muted);
+  max-width: 40rem;
+}
+
+.study-map-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: 0.4rem 0.9rem;
+  margin: 0.6rem 0 0.8rem;
+}
+
+.study-map-grid label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+}
+
+.study-map-grid input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--edge);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* --- step 3: the preview --------------------------------------------------- */
+
+.wiz-try {
+  display: grid;
+  grid-template-columns: minmax(15rem, 21rem) minmax(0, 1fr);
+  gap: 2rem;
+  height: 100%;
+  align-items: stretch;
+}
+
+.wiz-try-side p {
+  font-size: 0.95rem;
+  margin-top: 0;
+}
+
+.study-device {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* --preview-chrome is everything the wizard puts above and below the panel:
+   the top bar, the title block, the stepper, the step's own padding and the
+   foot. 12.5rem was 1.5rem short of the truth (274px of chrome at 1440x900)
+   and nobody could tell, because the step box was position:absolute and
+   cropped the panel before its own cap ever applied. In flow the cap is what
+   decides, so it has to be the real number: too large now costs a short page
+   scroll instead of silently trimming the device. */
+.study-preview-frame {
+  height: 100%;
+  max-height: calc(100vh - var(--bar) - var(--preview-chrome));
+  aspect-ratio: 3 / 5;
+  max-width: 100%;
+  border: 1px solid var(--edge);
+  background: #faf9f6;
+  display: block;
+}
+
+/* --- step 4 --------------------------------------------------------------- */
+
+.wiz-write {
+  max-width: 46rem;
+}
+
+.wiz-write p {
+  font-size: 0.95rem;
+  margin-top: 0;
+}
+
+.study-status-line {
+  font-family: var(--mono);
+  font-size: 0.83rem;
+  color: var(--muted);
+  margin-top: 0.8rem;
+  white-space: pre-wrap;
+}
+
+.wiz-after {
+  margin-top: 1.2rem;
+  border-top: 1px solid var(--edge);
+  padding-top: 0.9rem;
+}
+
+#syncLog {
+  margin-top: 0.8rem;
+  max-height: 30vh;
+}
+
+/* --- foot ------------------------------------------------------------------ */
+
+.wiz-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid var(--edge);
+  padding: 0.5rem 0 0.7rem;
+}
+
+.wiz-fine {
+  color: var(--muted);
+  font-size: 0.72rem;
+  margin: 0;
+}
+
+.wiz-fine a {
+  color: inherit;
+}
+
+.wizard .btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.wiz-next {
+  margin-top: 1.2rem;
+}
+
+.wiz-stepper button {
+  white-space: nowrap;
+}
+
+/* the working line pulses so a long first load reads as alive, not hung */
+.study-progress.is-busy::after {
+  content: "";
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  margin-left: 0.5em;
+  background: currentColor;
+  animation: study-pulse 1s ease-in-out infinite;
+  vertical-align: baseline;
+}
+
+@keyframes study-pulse {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .study-progress.is-busy::after {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+/* --- the sample card and its field mapping ------------------------------- */
+
+.wiz-sample {
+  display: grid;
+  grid-template-columns: minmax(15rem, 19rem) minmax(0, 1fr);
+  gap: 2rem;
+  margin: 0.9rem 0 0.3rem;
+  align-items: start;
+}
+
+.wiz-card {
+  border: 1.5px solid var(--ink);
+  background: #faf9f6;
+  color: #111110;
+  padding: 1rem 1.1rem 1.2rem;
+}
+
+.wiz-card-side {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #777;
+  margin: 0 0 0.3rem;
+}
+
+.wiz-card-word {
+  font-family: var(--serif);
+  font-size: 1.7rem;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.wiz-card-reading {
+  font-family: var(--serif);
+  font-style: italic;
+  color: #444;
+  margin: 0.1rem 0 0;
+}
+
+.wiz-card-rule {
+  border-top: 1px solid #bbb;
+  margin: 0.8rem 0 0.6rem;
+}
+
+.wiz-card-meaning {
+  font-family: var(--serif);
+  font-size: 1rem;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.wiz-card-pos {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: #666;
+  margin: 0.25rem 0 0;
+}
+
+.wiz-card-sentence {
+  font-family: var(--serif);
+  font-size: 0.9rem;
+  margin: 0.55rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.wiz-card-sub {
+  font-family: var(--serif);
+  font-size: 0.85rem;
+  color: #555;
+  margin: 0.2rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+/* The panel exists to show the mapping; five of seven menus rendering as
+   "Sentence⌄" defeated the whole point. Label above, menu full width. */
+.wiz-map .study-map-grid {
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+}
+
+.wiz-map .study-map-grid label {
+  display: block;
+}
+
+.wiz-map select {
+  width: 100%;
+  margin-top: 0.15rem;
+  min-width: 0;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--edge);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+@media (max-width: 720px) {
+  .wiz-sample {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* [hidden] must win over the display: grid/flex the layout classes set,
+   or the state machine's hidden-toggling silently stops working. */
+#samplePanel[hidden],
+#previewBody[hidden],
+#writeBody[hidden],
+#reportBody[hidden],
+#typeBody[hidden],
+#openSummary[hidden],
+#typeChoices[hidden] {
+  display: none !important;
+}
+
+/* --- small screens ---------------------------------------------------------- */
+
+@media (max-width: 720px) {
+  .wiz-step {
+    padding: 0.7rem 0;
+  }
+
+  .wiz-stepper button {
+    padding: 0.3rem 0.4rem;
+  }
+
+  .wiz-check-head,
+  .wiz-report,
+  .wiz-try {
+    grid-template-columns: 1fr;
+  }
+
+  .study-preview-frame {
+    height: auto;
+    width: 100%;
+    max-height: none;
+  }
+}

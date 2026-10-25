@@ -1,0 +1,2010 @@
+#pragma once
+
+// FreeInk SDK — lightweight UI primitives.
+//
+// FreeInkUI is intentionally not a retained DOM. It provides small value types,
+// fixed-capacity interaction routing, and simple row/column slot layout so apps
+// can build reusable e-paper components without hardcoding panel coordinates.
+// Labels and asset pointers are borrowed; the caller owns lifetime.
+//
+// The library is freestanding C++ (no Arduino/ESP-IDF dependency) so the same
+// code runs on firmware and in host-side unit tests.
+
+#include <stddef.h>
+#include <stdint.h>
+#include <initializer_list>
+#include <string.h>
+
+#include <atomic>
+
+namespace freeink {
+namespace ui {
+
+using ActionId = uint16_t;
+static constexpr ActionId NO_ACTION = 0;
+
+struct Size {
+  int16_t width = 0;
+  int16_t height = 0;
+};
+
+struct Point {
+  int16_t x = 0;
+  int16_t y = 0;
+};
+
+// Fixed-capacity queue for completed logical touch taps. UI loops can capture
+// one-shot release events every input update even while a renderer temporarily
+// owns or rebuilds the interaction table, then route the taps once that table
+// is safe again. On overflow the oldest tap is discarded in favor of current
+// input; push() returns false so diagnostics can surface that condition.
+template <size_t Capacity>
+class TouchTapQueue {
+ public:
+  static_assert(Capacity > 0, "TouchTapQueue capacity must be positive");
+
+  bool push(const int16_t x, const int16_t y) {
+    bool retainedAll = true;
+    if (count_ == Capacity) {
+      head_ = (head_ + 1) % Capacity;
+      --count_;
+      overflowed_ = true;
+      retainedAll = false;
+    }
+    const size_t tail = (head_ + count_) % Capacity;
+    taps_[tail] = Point{x, y};
+    ++count_;
+    return retainedAll;
+  }
+
+  bool pop(int16_t& x, int16_t& y) {
+    if (count_ == 0) return false;
+    const Point tap = taps_[head_];
+    head_ = (head_ + 1) % Capacity;
+    --count_;
+    x = tap.x;
+    y = tap.y;
+    return true;
+  }
+
+  void clear() {
+    head_ = 0;
+    count_ = 0;
+    overflowed_ = false;
+  }
+
+  size_t size() const { return count_; }
+  bool empty() const { return count_ == 0; }
+  bool overflowed() const { return overflowed_; }
+  void clearOverflow() { overflowed_ = false; }
+
+ private:
+  Point taps_[Capacity]{};
+  size_t head_ = 0;
+  size_t count_ = 0;
+  bool overflowed_ = false;
+};
+
+struct Insets {
+  int16_t top = 0;
+  int16_t right = 0;
+  int16_t bottom = 0;
+  int16_t left = 0;
+};
+
+struct Rect {
+  int16_t x = 0;
+  int16_t y = 0;
+  int16_t width = 0;
+  int16_t height = 0;
+
+  bool empty() const { return width <= 0 || height <= 0; }
+  int16_t right() const { return static_cast<int16_t>(x + width); }
+  int16_t bottom() const { return static_cast<int16_t>(y + height); }
+  bool contains(int16_t px, int16_t py) const {
+    return px >= x && py >= y && px < right() && py < bottom();
+  }
+  Rect inset(Insets insets) const {
+    return Rect{static_cast<int16_t>(x + insets.left),
+                static_cast<int16_t>(y + insets.top),
+                static_cast<int16_t>(width - insets.left - insets.right),
+                static_cast<int16_t>(height - insets.top - insets.bottom)};
+  }
+};
+
+enum class Orientation : uint8_t {
+  Portrait,
+  LandscapeClockwise,
+  PortraitInverted,
+  LandscapeCounterClockwise,
+};
+
+struct DeviceContext {
+  int16_t width = 0;
+  int16_t height = 0;
+  Orientation orientation = Orientation::Portrait;
+  // Transform selector for touchToLogical(): maps PANEL-NATIVE normalized touch
+  // coordinates (the BoardConfig touch contract) into this logical frame.
+  // Distinct from `orientation` (what the app renders as): a DisplayTarget
+  // rendering Portrait on a landscape-native panel rotates 90° CW, so its touch
+  // transform is LandscapeClockwise — the render rotation's inverse. Render
+  // targets set this (see DisplayTarget::touchOrientation()); the default,
+  // Portrait, is the identity mapping.
+  Orientation touchOrientation = Orientation::Portrait;
+  bool hasTouch = false;
+  bool hasButtons = true;
+  Insets safeArea{};
+  int16_t minTouchSize = 44;
+
+  Rect screen() const { return Rect{0, 0, width, height}; }
+  Rect safeRect() const { return screen().inset(safeArea); }
+};
+
+// The touchOrientation selector that inverts a target's render rotation: a
+// target rendering `render` rotates logical->panel by that rotation, so
+// panel-native touch must map back through its inverse. This is the same
+// per-orientation transform GfxRenderer::tapToLogical bakes into its cases,
+// so render targets built on either path agree.
+inline Orientation touchOrientationFor(const Orientation render) {
+  switch (render) {
+  case Orientation::Portrait:
+    return Orientation::LandscapeClockwise;
+  case Orientation::PortraitInverted:
+    return Orientation::LandscapeCounterClockwise;
+  case Orientation::LandscapeClockwise:
+    return Orientation::PortraitInverted;
+  case Orientation::LandscapeCounterClockwise:
+  default:
+    return Orientation::Portrait;
+  }
+}
+
+// Maps a touch point reported in normalized panel-native coordinates (0..1,
+// as InputManager reports taps — aligned to the display's native frame per
+// the BoardConfig touch contract) to logical screen coordinates under the
+// device's touchOrientation — the transform every app otherwise re-derives by
+// hand. flipX/flipY compensate for mirrored panel mounting; they are a
+// property of the board, not the app, so feed them from the board profile or
+// a config constant.
+inline Point touchToLogical(const DeviceContext &device, float nx, float ny,
+                            const bool flipX = false,
+                            const bool flipY = false) {
+  if (flipX)
+    nx = 1.0f - nx;
+  if (flipY)
+    ny = 1.0f - ny;
+  float lx;
+  float ly;
+  switch (device.touchOrientation) {
+  case Orientation::PortraitInverted:
+    lx = 1.0f - nx;
+    ly = 1.0f - ny;
+    break;
+  case Orientation::LandscapeClockwise:
+    lx = 1.0f - ny;
+    ly = nx;
+    break;
+  case Orientation::LandscapeCounterClockwise:
+    lx = ny;
+    ly = 1.0f - nx;
+    break;
+  case Orientation::Portrait:
+  default:
+    lx = nx;
+    ly = ny;
+    break;
+  }
+  int32_t x = static_cast<int32_t>(lx * device.width);
+  int32_t y = static_cast<int32_t>(ly * device.height);
+  if (x < 0)
+    x = 0;
+  if (x >= device.width)
+    x = device.width - 1;
+  if (y < 0)
+    y = 0;
+  if (y >= device.height)
+    y = device.height - 1;
+  return Point{static_cast<int16_t>(x), static_cast<int16_t>(y)};
+}
+
+// --- Swipe gesture classification -------------------------------------------
+// Pure geometry over swipe endpoints in LOGICAL screen coordinates (map the
+// InputManager's normalized endpoints through touchToLogical, or an
+// app-owned equivalent, first). Classification lives here; what a gesture
+// MEANS (back, menu, home) stays with the app.
+
+enum class SwipeDir : uint8_t { None, Left, Right, Up, Down };
+
+// Dominant-axis direction of a swipe. Ties go to the horizontal axis.
+inline SwipeDir swipeDirection(const int sx, const int sy, const int ex,
+                               const int ey) {
+  const int dx = ex - sx;
+  const int dy = ey - sy;
+  const int adx = dx < 0 ? -dx : dx;
+  const int ady = dy < 0 ? -dy : dy;
+  if (adx >= ady)
+    return dx < 0 ? SwipeDir::Left : SwipeDir::Right;
+  return dy < 0 ? SwipeDir::Up : SwipeDir::Down;
+}
+
+enum class ScreenEdge : uint8_t { Left, Right, Top, Bottom };
+
+// Default anchor bands, as fractions of the screen dimension: how close to an
+// edge a swipe must START to count as an edge gesture. Side edges are wider
+// (a thumb reaching in from the bezel lands further from the edge than a
+// deliberate top/bottom pull).
+inline constexpr float EDGE_SWIPE_SIDE_FRAC = 0.25f;
+inline constexpr float EDGE_SWIPE_TOP_BOTTOM_FRAC = 0.14f;
+
+// True when a swipe starts inside `edgeFrac` of `edge` and travels away from
+// that edge with its own axis dominant (a strictly-diagonal pull does not
+// count). Endpoints are logical screen coordinates; screenW/screenH are the
+// logical screen size. Anchoring keeps mid-screen swipes free for the app's
+// own SwipeDir consumers.
+inline bool edgeSwipe(const ScreenEdge edge, const int sx, const int sy,
+                      const int ex, const int ey, const int screenW,
+                      const int screenH, float edgeFrac = -1.0f) {
+  if (edgeFrac < 0.0f)
+    edgeFrac = (edge == ScreenEdge::Left || edge == ScreenEdge::Right)
+                   ? EDGE_SWIPE_SIDE_FRAC
+                   : EDGE_SWIPE_TOP_BOTTOM_FRAC;
+  const int dx = ex - sx;
+  const int dy = ey - sy;
+  const int adx = dx < 0 ? -dx : dx;
+  const int ady = dy < 0 ? -dy : dy;
+  switch (edge) {
+  case ScreenEdge::Left:
+    return sx <= static_cast<int>(screenW * edgeFrac) && dx > 0 && adx > ady;
+  case ScreenEdge::Right:
+    return sx >= screenW - static_cast<int>(screenW * edgeFrac) && dx < 0 &&
+           adx > ady;
+  case ScreenEdge::Top:
+    return sy <= static_cast<int>(screenH * edgeFrac) && dy > 0 && ady > adx;
+  case ScreenEdge::Bottom:
+    return sy >= screenH - static_cast<int>(screenH * edgeFrac) && dy < 0 &&
+           ady > adx;
+  }
+  return false;
+}
+
+enum State : uint8_t {
+  StateNormal = 0,
+  StateSelected = 1 << 0,
+  StateFocused = 1 << 1,
+  StateActive = 1 << 2,
+  StateDisabled = 1 << 3,
+  StateChecked = 1 << 4,
+};
+
+inline State operator|(State a, State b) {
+  return static_cast<State>(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
+}
+inline State operator&(State a, State b) {
+  return static_cast<State>(static_cast<uint8_t>(a) & static_cast<uint8_t>(b));
+}
+inline State &operator|=(State &a, State b) {
+  a = a | b;
+  return a;
+}
+inline bool hasState(State state, State bit) {
+  return (static_cast<uint8_t>(state) & static_cast<uint8_t>(bit)) != 0;
+}
+
+enum InputMask : uint16_t {
+  InputNone = 0,
+  InputTouch = 1 << 0,
+  InputFocus = 1 << 1,
+  InputConfirm = 1 << 2,
+  InputBack = 1 << 3,
+  InputPrev = 1 << 4,
+  InputNext = 1 << 5,
+  InputSwipeLeft = 1 << 6,
+  InputSwipeRight = 1 << 7,
+  InputLongPress = 1 << 8,
+  // Continuous positional touch: while a finger that landed on this element is
+  // held, routing dispatches every frame with ActionEvent::dragPermille set to
+  // the horizontal position within the element's rect (sliders, scrubbers).
+  InputDrag = 1 << 9,
+  InputCoordinates = 1 << 10,
+  InputPointerOnly = 1 << 11,
+  InputDefault = InputTouch | InputFocus | InputConfirm,
+};
+
+inline InputMask operator|(InputMask a, InputMask b) {
+  return static_cast<InputMask>(static_cast<uint16_t>(a) |
+                                static_cast<uint16_t>(b));
+}
+inline bool acceptsInput(uint16_t mask, InputMask bit) {
+  return (mask & static_cast<uint16_t>(bit)) != 0;
+}
+
+enum class Color : uint8_t {
+  Transparent,
+  White,
+  LightGray,
+  DarkGray,
+  Black,
+};
+
+enum class PaintKind : uint8_t {
+  None,
+  Solid,
+  Dither,
+  Bitmap,
+};
+
+enum class BitmapFormat : uint8_t {
+  Mask1,
+  BW1,
+  Gray2,
+  NativeBmp,
+};
+
+enum class BitmapMode : uint8_t {
+  Center,
+  Stretch,
+  Contain,
+  Cover,
+  Tile,
+  TileX,
+  TileY,
+};
+
+struct BitmapRef {
+  const uint8_t *data = nullptr;
+  uint16_t width = 0;
+  uint16_t height = 0;
+  BitmapFormat format = BitmapFormat::BW1;
+  bool progmem = true;
+
+  explicit operator bool() const {
+    return data != nullptr && width > 0 && height > 0;
+  }
+};
+
+struct AssetRef {
+  const char *id = nullptr;
+  const char *path = nullptr;
+  BitmapRef bitmap{};
+
+  explicit operator bool() const {
+    return bitmap || path != nullptr || id != nullptr;
+  }
+};
+
+class AssetResolver {
+public:
+  virtual ~AssetResolver() = default;
+  virtual BitmapRef bitmapFor(const AssetRef &asset) = 0;
+};
+
+struct BitmapFill {
+  BitmapRef bitmap{};
+  BitmapMode mode = BitmapMode::Center;
+};
+
+// Per-element rotation (side-bezel button hints, vertical labels). Targets
+// declare what they support; unsupported rotations draw unrotated.
+enum class Rotation : uint8_t {
+  None,
+  CW90,
+  R180,
+  CCW90,
+};
+
+// Visits every ink pixel of a row-major, MSB-first, set-bit-is-ink 1-bit mask
+// laid out into rect under the given mode (Center at native size, Stretch /
+// Contain / Cover with nearest-neighbor sampling, Tile / TileX / TileY
+// repeating), optionally rotated. Output is clipped to the rect. Shared,
+// host-testable layout math for DrawTarget implementations: plot(x, y) is
+// called per ink pixel. Rotation here is per-element (an icon rotated
+// relative to its screen); whole-display rotation happens in the renderer's
+// coordinate mapping and needs nothing from callers.
+template <typename Plot>
+inline void forEachBitmapPixel(const Rect rect, const BitmapRef &src,
+                               const BitmapMode mode, Plot &&plot,
+                               const Rotation rotation = Rotation::None) {
+  if (!src || rect.empty())
+    return;
+  const int bytesPerRow = (src.width + 7) / 8;
+  // Mask1 is the freeink::Icon convention (bit 1 = transparent, bit 0 = draw);
+  // BW1 is set-bit-is-ink. Fold that polarity in here so both formats plot
+  // their drawn pixels through the same sampling math.
+  const bool maskInverted = src.format == BitmapFormat::Mask1;
+  const auto srcInk = [&](const int sx, const int sy) {
+    const uint8_t bit =
+        (src.data[sy * bytesPerRow + sx / 8] >> (7 - (sx % 8))) & 0x01;
+    return static_cast<uint8_t>(maskInverted ? (bit ^ 1) : bit);
+  };
+
+  // Sample through the rotation so the rest of the layout math sees a
+  // pre-rotated bitmap of the effective dimensions.
+  struct {
+    int16_t width;
+    int16_t height;
+  } bitmap{static_cast<int16_t>(src.width), static_cast<int16_t>(src.height)};
+  if (rotation == Rotation::CW90 || rotation == Rotation::CCW90) {
+    bitmap.width = static_cast<int16_t>(src.height);
+    bitmap.height = static_cast<int16_t>(src.width);
+  }
+  const auto inkAt = [&](const int sx, const int sy) {
+    switch (rotation) {
+    case Rotation::CW90:
+      return srcInk(sy, src.height - 1 - sx);
+    case Rotation::R180:
+      return srcInk(src.width - 1 - sx, src.height - 1 - sy);
+    case Rotation::CCW90:
+      return srcInk(src.width - 1 - sy, sx);
+    case Rotation::None:
+    default:
+      return srcInk(sx, sy);
+    }
+  };
+
+  if (mode == BitmapMode::Tile || mode == BitmapMode::TileX ||
+      mode == BitmapMode::TileY) {
+    const bool tileX = mode != BitmapMode::TileY;
+    const bool tileY = mode != BitmapMode::TileX;
+    const int spanX =
+        tileX ? rect.width
+              : (bitmap.width < rect.width ? bitmap.width : rect.width);
+    const int spanY =
+        tileY ? rect.height
+              : (bitmap.height < rect.height ? bitmap.height : rect.height);
+    for (int dy = 0; dy < spanY; ++dy) {
+      for (int dx = 0; dx < spanX; ++dx) {
+        if (inkAt(dx % bitmap.width, dy % bitmap.height)) {
+          plot(static_cast<int16_t>(rect.x + dx),
+               static_cast<int16_t>(rect.y + dy));
+        }
+      }
+    }
+    return;
+  }
+
+  int dstW = bitmap.width;
+  int dstH = bitmap.height;
+  if (mode == BitmapMode::Stretch) {
+    dstW = rect.width;
+    dstH = rect.height;
+  } else if (mode == BitmapMode::Contain || mode == BitmapMode::Cover) {
+    const int32_t byW = (static_cast<int32_t>(rect.width) << 8) / bitmap.width;
+    const int32_t byH =
+        (static_cast<int32_t>(rect.height) << 8) / bitmap.height;
+    const int32_t scale = mode == BitmapMode::Contain ? (byW < byH ? byW : byH)
+                                                      : (byW > byH ? byW : byH);
+    dstW = static_cast<int>((bitmap.width * scale) >> 8);
+    dstH = static_cast<int>((bitmap.height * scale) >> 8);
+  }
+  if (dstW <= 0 || dstH <= 0)
+    return;
+  const int x0 = rect.x + (rect.width - dstW) / 2;
+  const int y0 = rect.y + (rect.height - dstH) / 2;
+  for (int dy = 0; dy < dstH; ++dy) {
+    const int py = y0 + dy;
+    if (py < rect.y || py >= rect.bottom())
+      continue; // Cover overflow clips to the rect
+    const int sy =
+        static_cast<int>((static_cast<int32_t>(dy) * bitmap.height) / dstH);
+    for (int dx = 0; dx < dstW; ++dx) {
+      const int px = x0 + dx;
+      if (px < rect.x || px >= rect.right())
+        continue;
+      const int sx =
+          static_cast<int>((static_cast<int32_t>(dx) * bitmap.width) / dstW);
+      if (inkAt(sx, sy))
+        plot(static_cast<int16_t>(px), static_cast<int16_t>(py));
+    }
+  }
+}
+
+struct Paint {
+  PaintKind kind = PaintKind::None;
+  Color color = Color::Transparent;
+  BitmapFill bitmap{};
+
+  // constexpr so all-default style aggregates (BoxStyle, StyleSet,
+  // ThemeTokens) can be constant-initialized into flash.
+  static constexpr Paint none() { return Paint{}; }
+  static constexpr Paint solid(Color c) {
+    Paint p;
+    p.kind = PaintKind::Solid;
+    p.color = c;
+    return p;
+  }
+  static constexpr Paint dither(Color c) {
+    Paint p;
+    p.kind = PaintKind::Dither;
+    p.color = c;
+    return p;
+  }
+  static constexpr Paint bitmapFill(BitmapFill fill) {
+    Paint p;
+    p.kind = PaintKind::Bitmap;
+    p.bitmap = fill;
+    return p;
+  }
+};
+
+using FontId = uint16_t;
+
+enum class TextAlign : uint8_t {
+  Left,
+  Center,
+  Right,
+};
+
+struct TextStyle {
+  FontId font = 0;
+  TextAlign align = TextAlign::Left;
+  Color color = Color::Black;
+  uint8_t maxLines = 1;
+  bool bold = false;
+  bool italic = false;
+  bool inverted = false;
+  // Rotated text is single-line; the rect is interpreted in screen space and
+  // the text flows along the rotated axis.
+  Rotation rotation = Rotation::None;
+};
+
+// True when `s` is entirely default-constructed. Screen's themed substitution
+// uses this instead of `font == 0`: FONT_SLOT_SMALL is 0, so the font alone
+// cannot distinguish "unset" from "explicitly the small slot". Customizing any
+// field (maxLines, align, bold, ...) marks the style as caller-owned.
+inline bool textStyleUnset(const TextStyle &s) {
+  return s.font == 0 && s.align == TextAlign::Left && s.color == Color::Black &&
+         s.maxLines == 1 && !s.bold && !s.italic && !s.inverted &&
+         s.rotation == Rotation::None;
+}
+
+// Which corners a radius applies to (RoundedRaff-style cards round only the
+// top band's top corners and the bottom band's bottom corners).
+enum Corners : uint8_t {
+  CornerTopLeft = 1 << 0,
+  CornerTopRight = 1 << 1,
+  CornerBottomLeft = 1 << 2,
+  CornerBottomRight = 1 << 3,
+  CornersTop = CornerTopLeft | CornerTopRight,
+  CornersBottom = CornerBottomLeft | CornerBottomRight,
+  CornersAll = CornersTop | CornersBottom,
+};
+
+enum Edges : uint8_t {
+  EdgesNone = 0,
+  EdgeTop = 1 << 0,
+  EdgeRight = 1 << 1,
+  EdgeBottom = 1 << 2,
+  EdgeLeft = 1 << 3,
+  EdgesHorizontal = EdgeTop | EdgeBottom,
+  EdgesVertical = EdgeLeft | EdgeRight,
+  EdgesAll = EdgesHorizontal | EdgesVertical,
+};
+
+struct BoxStyle {
+  Paint background = Paint::none();
+  Paint foreground = Paint::solid(Color::Black);
+  Paint border = Paint::none();
+  uint8_t borderWidth = 0;
+  uint8_t radius = 0;
+  uint8_t corners = CornersAll;
+};
+
+struct StyleSet {
+  BoxStyle normal{};
+  BoxStyle selected{};
+  BoxStyle focused{};
+  BoxStyle active{};
+  BoxStyle disabled{};
+  bool explicitlySet = false;
+
+  // True when the caller never assigned any visible style, so components fall
+  // back to their built-in defaults. Borders count too: an outline-only style
+  // (transparent background) is still "set".
+  bool unset() const {
+    return !explicitlySet && normal.background.kind == PaintKind::None &&
+           normal.border.kind == PaintKind::None &&
+           selected.background.kind == PaintKind::None &&
+           focused.background.kind == PaintKind::None;
+  }
+
+  const BoxStyle &resolve(State state) const {
+    if (hasState(state, StateDisabled))
+      return disabled;
+    if (hasState(state, StateActive))
+      return active;
+    if (hasState(state, StateFocused))
+      return focused;
+    if (hasState(state, StateSelected) || hasState(state, StateChecked))
+      return selected;
+    return normal;
+  }
+};
+
+// How a list marks its selected row. Screen::list() expands this into the
+// row StyleSet / SelectionMarker it implies; explicit rowStyles or a marker
+// set by the caller win.
+enum class SelectionStyle : uint8_t {
+  InvertFill, // selected row fills black, text inverts
+  LightPill,  // LightGray dither fill, text stays black
+  Underline,  // rows keep their normal style; underline marker
+  Triangle,   // rows keep their normal style; triangle marker
+};
+
+// Sentinel for radius props: inherit the theme's shape token. Screen wrappers
+// substitute the matching ThemeTokens value; components rendered on a bare
+// Frame resolve it to their classic default via resolveRadius().
+inline constexpr uint8_t RADIUS_INHERIT = 0xFF;
+
+inline uint8_t resolveRadius(const uint8_t propRadius, const uint8_t fallback) {
+  return propRadius == RADIUS_INHERIT ? fallback : propRadius;
+}
+
+struct ThemeTokens {
+  FontId fontSmall = 0;
+  FontId fontBody = 0;
+  FontId fontTitle = 0;
+  int16_t spaceXs = 2;
+  int16_t spaceSm = 4;
+  int16_t spaceMd = 8;
+  int16_t spaceLg = 16;
+  int16_t minTouchSize = 44;
+  int16_t rowHeight = 44;
+  int16_t headerHeight = 44;
+  int16_t footerHeight = 40;
+  int16_t progressHeight = 4;
+  // Lists size each row from its content, separately from generic controls.
+  // An optional minimum supports deliberately spacious list themes.
+  int16_t listMinRowHeight = 0;
+  int16_t listRowPaddingY = 4;
+  // Touch comfort is distinct from the minimum valid hit-target size.
+  int16_t listTouchMinRowHeight = 56;
+  int16_t listTouchRowPaddingY = 8;
+  int16_t listTouchRowGap = 6;
+  // List shape tokens forwarded by Screen::resolveListProps().
+  int16_t listRowGap = 0;
+  uint8_t listRowRadius = 0;
+  Paint listSeparator = Paint::none();
+  int16_t listSidePadding = 8; // text inset within a row
+  int16_t listInset = 0; // horizontal inset of the rows (scroll indicator stays
+                         // at the band edge)
+  SelectionStyle listSelectionStyle = SelectionStyle::InvertFill;
+  int16_t listScrollWidth = 3; // scroll indicator thickness
+  uint8_t listScrollSide = 0;  // 0 = right edge, 1 = left edge
+  // Inward offset of the scroll indicator from the band edge. Normally 0 (the
+  // track hugs the edge); boards whose panel sits recessed behind the bezel set
+  // this so the indicator clears the bezel and stays visible.
+  int16_t listScrollInset = 0;
+  // Header shape tokens, forwarded by Screen::header() the same way.
+  int16_t headerSidePadding = 6;
+  uint8_t headerUnderline = 1; // bottom rule thickness; 0 = none
+  TextAlign headerTitleAlign = TextAlign::Left;
+  // Control shape tokens, forwarded into any radius prop left at
+  // RADIUS_INHERIT: quick-setting tiles and slider step buttons
+  // (Screen::tileGrid()/sliderRow()), the sheet's free-edge corners
+  // (Screen::sheet()), and the capsule slider's corners — a capsuleRadius of
+  // at least half the control's height draws the classic full stadium,
+  // smaller values square it toward the theme's card language.
+  uint8_t controlRadius = 18;
+  uint8_t sheetRadius = 0;
+  uint8_t capsuleRadius = 255;
+  TextStyle smallText{};
+  TextStyle bodyText{};
+  TextStyle titleText{};
+  StyleSet button{};
+  StyleSet listRow{};
+  StyleSet key{};
+  StyleSet popup{};
+  StyleSet textField{};
+};
+
+// All-default tokens, constant-initialized into flash (costs rodata, no RAM):
+// FreeInkApp's last-resort theme when its owned copy could not be allocated.
+inline constexpr ThemeTokens FALLBACK_THEME_TOKENS{};
+
+struct ThemeDocument {
+  uint8_t schema = 0;
+  const char *id = nullptr;
+  const char *name = nullptr;
+  const char *deviceId = nullptr;
+  ThemeTokens tokens{};
+  AssetResolver *assets = nullptr;
+};
+
+class DrawTarget {
+public:
+  virtual ~DrawTarget() = default;
+  // Optional pixel clipping in logical coordinates. Unsupported targets return
+  // false; components must then omit partially visible content.
+  virtual Rect clipRect() const { return Rect{0, 0, 32767, 32767}; }
+  virtual bool setClipRect(Rect) { return false; }
+  virtual Size measureText(FontId font, const char *text,
+                           TextStyle style) const = 0;
+  virtual int16_t lineHeight(FontId font) const = 0;
+  // Visible ink of `text` relative to its line box (y = ink top below the
+  // line top), for centering glyphs rather than line boxes. Targets without
+  // glyph metrics report the whole line box.
+  virtual Rect inkBounds(FontId font, const char *text, TextStyle style) const {
+    return Rect{0, 0, measureText(font, text, style).width, lineHeight(font)};
+  }
+  // text() implementations must honor style.align, style.maxLines, and
+  // ellipsis truncation. Targets with a native wrapping pipeline (bidi,
+  // kerning-aware) should use it; everyone else can delegate the whole
+  // algorithm to layoutText() below and only draw the emitted runs.
+  // radius > 0 fills a rounded rect (corners selects which); targets without
+  // rounded support may ignore both.
+  virtual void fill(Rect rect, Paint paint, uint8_t radius = 0,
+                    uint8_t corners = CornersAll) = 0;
+  virtual void stroke(Rect rect, Paint paint, uint8_t width, uint8_t radius = 0,
+                      uint8_t corners = CornersAll) = 0;
+  // Straight line segment of the given thickness; underlines, dividers,
+  // battery/key glyph art.
+  virtual void line(Point from, Point to, uint8_t width, Paint paint) = 0;
+  // Filled triangle; selection markers, arrows, bookmark notches.
+  virtual void triangle(Point a, Point b, Point c, Paint paint) = 0;
+  virtual void text(Rect rect, const char *text, TextStyle style) = 0;
+  // rotation is per-element (relative to the screen); whole-display rotation
+  // is the renderer's coordinate mapping and needs nothing here.
+  virtual void bitmap(Rect rect, BitmapRef bitmap, BitmapMode mode,
+                      Paint foreground = Paint::solid(Color::Black),
+                      Rotation rotation = Rotation::None) = 0;
+};
+
+// UTF-8 horizontal ellipsis, appended to truncated lines.
+static constexpr const char *TEXT_ELLIPSIS = "\xE2\x80\xA6";
+
+// SDK-owned text layout: greedy word wrap up to style.maxLines, hard breaks
+// on '\n', character-level breaking for words wider than the rect, ellipsis
+// on the last line when text remains, alignment, and vertical centering of
+// the line block. Built only on measureText/lineHeight, so a DrawTarget's
+// text() can delegate everything here and just draw single-line runs:
+//
+//   void text(Rect rect, const char* text, TextStyle style) override {
+//     layoutText(*this, rect, text, style, [&](const char* line, Rect r) {
+//       rawDrawLine(r.x, r.y, line, style);  // line is NUL-terminated
+//     });
+//   }
+//
+// emit(line, lineRect) is called per line; `line` points to an internal
+// buffer valid only during the call. lineRect is the aligned rect of the
+// measured run (height = lineHeight). Lines cap at 16 and ~220 bytes; both
+// are far beyond e-paper chrome needs.
+template <typename Emit>
+inline void layoutText(const DrawTarget &target, const Rect rect,
+                       const char *text, const TextStyle style, Emit &&emit) {
+  if (!text || text[0] == '\0' || rect.empty())
+    return;
+  constexpr uint8_t MAX_LINES = 16;
+  constexpr uint16_t MAX_LINE_BYTES = 220;
+  const uint8_t maxLines =
+      style.maxLines > 0
+          ? (style.maxLines < MAX_LINES ? style.maxLines : MAX_LINES)
+          : 1;
+  const int16_t lh = target.lineHeight(style.font);
+
+  char buf[MAX_LINE_BYTES + 8];
+  const auto widthOf = [&](const char *start, const uint16_t len,
+                           const bool ellipsis) {
+    uint16_t n = len < MAX_LINE_BYTES ? len : MAX_LINE_BYTES;
+    memcpy(buf, start, n);
+    if (ellipsis) {
+      buf[n++] = '\xE2';
+      buf[n++] = '\x80';
+      buf[n++] = '\xA6';
+    }
+    buf[n] = '\0';
+    return target.measureText(style.font, buf, style).width;
+  };
+
+  // Pass 1: split into line ranges.
+  struct Range {
+    const char *begin;
+    uint16_t len;
+    bool ellipsis;
+  };
+  Range ranges[MAX_LINES];
+  uint8_t lineCount = 0;
+  const char *p = text;
+  while (*p != '\0' && lineCount < maxLines) {
+    while (*p == ' ')
+      ++p; // lines never start with spaces
+    if (*p == '\0')
+      break;
+    if (*p == '\n') {
+      ++p;
+      ranges[lineCount++] = Range{p, 0, false}; // preserve blank lines
+      continue;
+    }
+    const char *lineStart = p;
+    uint16_t fitLen = 0;
+    const char *scan = p;
+    while (true) {
+      // advance to the end of the next word
+      const char *wordEnd = scan;
+      while (*wordEnd != '\0' && *wordEnd != ' ' && *wordEnd != '\n')
+        ++wordEnd;
+      const uint16_t candidate = static_cast<uint16_t>(wordEnd - lineStart);
+      if (candidate > MAX_LINE_BYTES ||
+          widthOf(lineStart, candidate, false) > rect.width)
+        break;
+      fitLen = candidate;
+      if (*wordEnd == '\0' || *wordEnd == '\n')
+        break;
+      scan = wordEnd + 1;
+      while (*scan == ' ')
+        ++scan;
+      if (*scan == '\0' || *scan == '\n')
+        break;
+    }
+    if (fitLen == 0) {
+      // single word wider than the rect: break at characters (UTF-8 aware)
+      uint16_t len = 0;
+      while (lineStart[len] != '\0' && lineStart[len] != ' ' &&
+             lineStart[len] != '\n') {
+        uint16_t next = static_cast<uint16_t>(len + 1);
+        while ((lineStart[next] & 0xC0) == 0x80)
+          ++next; // keep codepoints whole
+        if (next > MAX_LINE_BYTES ||
+            (len > 0 && widthOf(lineStart, next, false) > rect.width))
+          break;
+        len = next;
+      }
+      fitLen = len > 0 ? len : 1;
+    }
+    ranges[lineCount++] = Range{lineStart, fitLen, false};
+    p = lineStart + fitLen;
+    if (*p == '\n')
+      ++p;
+  }
+  if (lineCount == 0)
+    return;
+
+  // Anything left over: ellipsize the last line, shrinking until it fits.
+  while (*p == ' ')
+    ++p;
+  if (*p != '\0') {
+    Range &last = ranges[lineCount - 1];
+    last.ellipsis = true;
+    while (last.len > 0 && widthOf(last.begin, last.len, true) > rect.width) {
+      --last.len;
+      while (last.len > 0 && (last.begin[last.len] & 0xC0) == 0x80)
+        --last.len; // codepoint boundary
+    }
+  }
+
+  // Pass 2: emit aligned, vertically centered runs.
+  const int16_t blockH = static_cast<int16_t>(lineCount * lh);
+  int16_t y = static_cast<int16_t>(
+      rect.y + (rect.height > blockH ? (rect.height - blockH) / 2 : 0));
+  for (uint8_t i = 0; i < lineCount; ++i) {
+    const int16_t w = widthOf(ranges[i].begin, ranges[i].len,
+                              ranges[i].ellipsis); // also fills buf
+    int16_t x = rect.x;
+    if (style.align == TextAlign::Center)
+      x = static_cast<int16_t>(rect.x + (rect.width - w) / 2);
+    if (style.align == TextAlign::Right)
+      x = static_cast<int16_t>(rect.right() - w);
+    if (x < rect.x)
+      x = rect.x;
+    emit(static_cast<const char *>(buf), Rect{x, y, w, lh});
+    y = static_cast<int16_t>(y + lh);
+  }
+}
+
+// Bounds of `text` wrapped into maxWidth under `style` (honors maxLines and
+// the ellipsis tail): width = widest emitted line, height = line count times
+// lineHeight. Built on layoutText, so it agrees exactly with what
+// text()/drawText render through targets that delegate to it — use it to
+// reserve space for wrapped titles, auto-size dialogs, or compute row
+// heights, instead of estimating line counts from single-line measureText.
+inline Size measureWrappedText(const DrawTarget &target, const char *text,
+                               const TextStyle style, const int16_t maxWidth) {
+  int16_t widest = 0;
+  int16_t lines = 0;
+  layoutText(target, Rect{0, 0, maxWidth, 1}, text, style,
+             [&](const char *, const Rect r) {
+               if (r.width > widest)
+                 widest = r.width;
+               ++lines;
+             });
+  return Size{widest,
+              static_cast<int16_t>(lines * target.lineHeight(style.font))};
+}
+
+inline Color invertedColor(const Color color) {
+  switch (color) {
+  case Color::White:
+    return Color::Black;
+  case Color::Black:
+    return Color::White;
+  case Color::LightGray:
+    return Color::DarkGray;
+  case Color::DarkGray:
+    return Color::LightGray;
+  case Color::Transparent:
+  default:
+    return color;
+  }
+}
+
+inline Paint invertedPaint(Paint paint) {
+  if (paint.kind == PaintKind::Solid || paint.kind == PaintKind::Dither) {
+    paint.color = invertedColor(paint.color);
+  }
+  return paint;
+}
+
+// Whole-UI dark mode in one call: wrap any DrawTarget and every color drawn
+// through it inverts (black↔white, light↔dark gray), including component
+// defaults the app never touches. Construct it once over the real target and
+// flip setEnabled() from a setting; when disabled it is a pure passthrough.
+//
+//   freeink::ui::InvertedDrawTarget target(realTarget, settings.darkMode);
+//   freeink::ui::Frame<32> ui(target, device, input, interactions);
+//
+// The screen clear stays app-owned — clear to black when inverted.
+class InvertedDrawTarget final : public DrawTarget {
+public:
+  explicit InvertedDrawTarget(DrawTarget &inner, bool enabled = true)
+      : inner_(inner), enabled_(enabled) {}
+
+  void setEnabled(bool enabled) { enabled_ = enabled; }
+  bool enabled() const { return enabled_; }
+
+  Rect clipRect() const override { return inner_.clipRect(); }
+  bool setClipRect(Rect rect) override { return inner_.setClipRect(rect); }
+
+  Size measureText(FontId font, const char *text,
+                   TextStyle style) const override {
+    return inner_.measureText(font, text, style);
+  }
+  int16_t lineHeight(FontId font) const override {
+    return inner_.lineHeight(font);
+  }
+  void fill(Rect rect, Paint paint, uint8_t radius = 0,
+            uint8_t corners = CornersAll) override {
+    inner_.fill(rect, enabled_ ? invertedPaint(paint) : paint, radius, corners);
+  }
+  void stroke(Rect rect, Paint paint, uint8_t width, uint8_t radius = 0,
+              uint8_t corners = CornersAll) override {
+    inner_.stroke(rect, enabled_ ? invertedPaint(paint) : paint, width, radius,
+                  corners);
+  }
+  void line(Point from, Point to, uint8_t width, Paint paint) override {
+    inner_.line(from, to, width, enabled_ ? invertedPaint(paint) : paint);
+  }
+  void triangle(Point a, Point b, Point c, Paint paint) override {
+    inner_.triangle(a, b, c, enabled_ ? invertedPaint(paint) : paint);
+  }
+  void text(Rect rect, const char *text, TextStyle style) override {
+    if (enabled_) {
+      style.color = invertedColor(style.color);
+      style.inverted = style.color == Color::White;
+    }
+    inner_.text(rect, text, style);
+  }
+  void bitmap(Rect rect, BitmapRef bitmap, BitmapMode mode,
+              Paint foreground = Paint::solid(Color::Black),
+              Rotation rotation = Rotation::None) override {
+    inner_.bitmap(rect, bitmap, mode,
+                  enabled_ ? invertedPaint(foreground) : foreground, rotation);
+  }
+
+private:
+  DrawTarget &inner_;
+  bool enabled_;
+};
+
+struct InputSnapshot {
+  bool touchReleased = false;
+  bool touchPressed = false;
+  // Finger currently down (touchX/Y = its position). Only InputDrag-masked
+  // interactions react; everything else ignores held frames.
+  bool touchHeld = false;
+  bool longPress = false;
+  bool swipeLeft = false;
+  bool swipeRight = false;
+  int16_t touchX = 0;
+  int16_t touchY = 0;
+
+  bool focusNext = false;
+  bool focusPrev = false;
+  bool confirm = false;
+  bool back = false;
+  bool prev = false;
+  bool next = false;
+};
+
+struct ActionEvent {
+  ActionId action = NO_ACTION;
+  int16_t value = 0;
+  State state = StateNormal;
+  // True when the dispatch came from a long-press touch release (the
+  // interaction matched via InputLongPress). Lets one key offer an alternate
+  // output on hold — e.g. a keyboard digit key emitting its shift symbol —
+  // without registering a second ActionId.
+  bool longPress = false;
+  // For InputDrag interactions: horizontal touch position within the
+  // element's hit rect, 0..1000 (clamped). -1 for non-positional events.
+  int16_t dragPermille = -1;
+
+  explicit operator bool() const { return action != NO_ACTION; }
+};
+
+struct Interaction {
+  Rect rect{};
+  ActionId action = NO_ACTION;
+  int16_t value = 0;
+  uint16_t inputMask = InputDefault;
+  State state = StateNormal;
+  uint8_t focusOrder = 0;
+  uint8_t navigationColumns = 0;
+  uint8_t navigationRows = 0;
+};
+
+class InteractionSink {
+public:
+  virtual ~InteractionSink() = default;
+  virtual bool addInteraction(const Interaction &interaction) = 0;
+  virtual State stateFor(ActionId action, int16_t value, State base) const = 0;
+};
+
+// Storage for one generation of hit rects: interactions_/count_/overflowed_.
+// InteractionBuffer below keeps TWO of these (see the cross-task note on
+// building_/published_) so a render task can be constructing a new
+// generation while another task safely reads the last-completed one.
+template <size_t MaxInteractions>
+class InteractionBuffer final : public InteractionSink {
+public:
+  bool addInteraction(const Interaction &interaction) override {
+    if (interaction.action == NO_ACTION && !acceptsInput(interaction.inputMask, InputCoordinates))
+      return false;
+    if (count_[building_] >= MaxInteractions) {
+      overflowed_[building_] = true;
+      return false;
+    }
+    interactions_[building_][count_[building_]++] = interaction;
+    return true;
+  }
+
+  State stateFor(ActionId action, int16_t value, State base) const override {
+    if (action == NO_ACTION) return base;
+    State state = base;
+    if (buttonFocus_ && focusAction_ != NO_ACTION) {
+      state = static_cast<State>(state & ~(StateSelected | StateChecked | StateFocused));
+      if (focusAction_ == action && focusValue_ == value) state |= StateFocused;
+    }
+    const size_t slotCount = count_[building_];
+    const Interaction *slot = interactions_[building_];
+    const int16_t activeIndex = active_.load(std::memory_order_relaxed);
+    if (activeIndex >= 0 && activeIndex < static_cast<int16_t>(slotCount)) {
+      const Interaction &active = slot[activeIndex];
+      if (active.action == action && active.value == value)
+        state |= StateActive;
+    }
+    // Tap flash renders with the focused style (light-gray dither) — a gray
+    // acknowledgment overlay, softer than the inverted active style.
+    if (flashAction_ != NO_ACTION && flashAction_ == action &&
+        flashValue_ == value)
+      state |= StateFocused;
+    return state;
+  }
+
+  void limitButtonActions(std::initializer_list<ActionId> actions) {
+    for (size_t n = 0; n < count_[building_]; ++n) {
+      auto &entry = interactions_[building_][n];
+      bool allowed = false;
+      for (const auto action : actions) allowed |= entry.action == action;
+      if (!allowed) entry.inputMask |= InputPointerOnly;
+    }
+  }
+
+  bool buttonSelected(ActionId action, int16_t value, bool selected = false) const {
+    if (!buttonFocus_ || focusAction_ == NO_ACTION) return selected;
+    if (focusAction_ == action) return focusValue_ == value;
+    return false;
+  }
+
+  void clear() {
+    count_[building_] = 0;
+    overflowed_[building_] = false;
+  }
+
+  size_t count() const { return count_[building_]; }
+  // True if a frame registered more interactions than the buffer holds —
+  // dropped elements never receive input, so size the template accordingly.
+  bool overflowed() const { return overflowed_[building_]; }
+  const Interaction *data() const { return interactions_[building_]; }
+  int16_t focusedIndex() const { return focused_; }
+  uint32_t focusPosition() const { return (uint32_t(uint16_t(focused_ + 1)) << 16) | uint16_t(subFocus_); }
+  bool hasButtonFocus() const { return buttonFocus_ && focused_ >= 0; }
+  bool buttonFocusRect(Rect &rect) const {
+    const auto slot = published_.load(std::memory_order_acquire);
+    const int16_t index = focusIndexFor(slot);
+    if (!buttonFocus_.load(std::memory_order_relaxed) || index < 0 || index >= static_cast<int16_t>(count_[slot])) return false;
+    const auto &entry = interactions_[slot][index];
+    if (hasState(entry.state, StateDisabled)) return false;
+    rect = focusRectFor(entry, subFocus_.load(std::memory_order_relaxed));
+    return true;
+  }
+  void paintButtonFocus(DrawTarget &target) const {
+    const int16_t index = focused_.load(std::memory_order_relaxed);
+    if (!buttonFocus_.load(std::memory_order_relaxed) || index < 0 || index >= static_cast<int16_t>(count_[building_])) return;
+    const auto &entry = interactions_[building_][index];
+    if (!acceptsInput(entry.inputMask, InputCoordinates) || hasState(entry.state, StateDisabled)) return;
+    const auto cell = focusRectFor(entry, subFocus_.load(std::memory_order_relaxed));
+    const int edge = cell.width < cell.height ? cell.width : cell.height;
+    if (edge <= 0) return;
+    const int inset = edge > 4 ? 2 : edge > 2 ? 1 : 0;
+    const auto rect = cell.inset(Insets{int16_t(inset), int16_t(inset), int16_t(inset), int16_t(inset)});
+    const int width = rect.width < rect.height ? rect.width : rect.height;
+    if (width <= 0) return;
+    target.stroke(rect, Paint::solid(Color::White), static_cast<uint8_t>(width > 4 ? 4 : width));
+    target.stroke(rect, Paint::solid(Color::Black), static_cast<uint8_t>(width > 2 ? 2 : width));
+  }
+  void cancelTouchContact() {
+    contactHeld_ = false;
+    active_ = -1;
+    lastDragX_ = -1;
+  }
+  void setFocusedIndex(int16_t index) {
+    subFocus_ = 0;
+    if (index >= 0 && index < static_cast<int16_t>(count_[building_]))
+      focused_ = index;
+    else {
+      focused_ = -1;
+      buttonFocus_ = false;
+      focusAction_ = NO_ACTION;
+    }
+  }
+
+  ActionEvent route(const InputSnapshot &input) {
+    return routeAgainst(building_, input);
+  }
+
+  // Cross-task counterparts of count()/overflowed()/data()/route(): read the
+  // last-published generation (see publish()) instead of building_, which a
+  // concurrent render may be mid-rebuild on another task. A caller that never
+  // opts into publishing (below) never needs these — every method above
+  // keeps behaving exactly as it always has for single-task use.
+  size_t publishedCount() const {
+    return count_[published_.load(std::memory_order_acquire)];
+  }
+  bool publishedOverflowed() const {
+    return overflowed_[published_.load(std::memory_order_acquire)];
+  }
+  const Interaction *publishedData() const {
+    return interactions_[published_.load(std::memory_order_acquire)];
+  }
+  ActionEvent routePublished(const InputSnapshot &input) {
+    return routeAgainst(published_.load(std::memory_order_acquire), input);
+  }
+
+  bool hitPublished(int16_t x, int16_t y, ActionId action,
+                    Interaction &out) const {
+    const uint8_t slot = published_.load(std::memory_order_acquire);
+    for (int16_t i = static_cast<int16_t>(count_[slot]) - 1; i >= 0; --i) {
+      const Interaction &hit = interactions_[slot][i];
+      if (hit.action == action && !hasState(hit.state, StateDisabled) &&
+          hit.rect.contains(x, y)) {
+        out = hit;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Opts a render pass into cross-task double buffering: subsequent
+  // clear()/addInteraction()/route()/etc. build into whichever generation is
+  // NOT currently published, so a concurrent routePublished()/publishedData()
+  // call on another task never sees a half-rebuilt table. Call once, before
+  // constructing the Frame for this pass. Callers that never call this (every
+  // existing single-task use, including the host test suite) keep building_
+  // pinned at generation 0 forever — a no-op, so this is pure opt-in.
+  void beginPublishCycle() {
+    building_ = static_cast<uint8_t>(1 - published_.load(std::memory_order_relaxed));
+  }
+
+  // Atomically publishes the generation just built (building_) so
+  // routePublished()/publishedData()/publishedCount()/publishedOverflowed()
+  // on any task see a complete, stable table — never one mid-rebuild. Call
+  // once the frame's hit() calls are done (after Frame::finish(), or directly
+  // after building for a caller that doesn't need finish()'s same-generation
+  // route()). Release-paired with the acquire loads above: every write this
+  // generation's addInteraction() calls made is visible to whoever observes
+  // the new published_ value.
+  void publish() { published_.store(building_, std::memory_order_release); }
+
+  // Index of the interaction currently under a held touch (-1 when none).
+  // Lets the render loop repaint for touch-down feedback: the active element
+  // draws with its StateActive style while the finger is down. Shared across
+  // both generations by design — it names an action/value pair, not a raw
+  // index into a specific generation's array — same for focusedIndex() and
+  // the flash state below.
+  int16_t activeIndex() const { return active_; }
+
+  // Tap flash: mark one action/value for the frame(s) that follow a
+  // dispatched tap, so the tapped element paints a gray acknowledgment (the
+  // focused style's light-gray dither) in the same refresh that shows the
+  // tap's result — visual confirmation with no extra panel refresh.
+  // FreeInkApp arms this on dispatch and clears it after the repaint.
+  void setFlash(ActionId action, int16_t value) {
+    flashAction_ = action;
+    flashValue_ = value;
+  }
+  void clearFlash() { flashAction_ = NO_ACTION; }
+
+private:
+  // Two generations of hit rects; building_ picks which one clear()/
+  // addInteraction()/route()/etc. currently target, published_ picks which
+  // one routePublished()/publishedData()/etc. read. A caller that never calls
+  // beginPublishCycle()/publish() only ever touches generation 0 through
+  // both, so this is behaviourally identical to the single-buffer design
+  // unless a caller opts in.
+  Interaction interactions_[2][MaxInteractions]{};
+  size_t count_[2] = {0, 0};
+  bool overflowed_[2] = {false, false};
+  uint8_t building_ = 0;
+  std::atomic<uint8_t> published_{0};
+  // Persistent interaction-session state: deliberately NOT per-generation.
+  // focused_ in particular must survive re-renders (GPIO focus navigation),
+  // Paint reads these while the loop task routes on the other core.
+  std::atomic<int32_t> focusAction_{NO_ACTION};
+  std::atomic<int32_t> focusValue_{0};
+  std::atomic<int32_t> focused_{-1};
+  std::atomic<bool> buttonFocus_{false};
+  std::atomic<int32_t> subFocus_{0};
+  std::atomic<int32_t> active_{-1};
+  // Mirrors the last routed frame's contact, so its opening frame is visible.
+  bool contactHeld_ = false;
+  // Last x a bound drag dispatched from, -1 until the contact drags. A
+  // released drag commits from here: the release edge itself carries either
+  // the tap classifier's touch-DOWN point (contacts under the swipe
+  // threshold) or off-target -1,-1 coords, so routing the release like a tap
+  // snaps the value back to where the drag STARTED (or drops it entirely).
+  int16_t lastDragX_ = -1;
+  ActionId flashAction_ = NO_ACTION; // tap-flash target (see setFlash)
+  int16_t flashValue_ = 0;
+
+  static int16_t dragPermilleFor(const Rect &rect, const int16_t x) {
+    if (rect.width <= 1)
+      return 0;
+    int32_t p = (static_cast<int32_t>(x - rect.x) * 1000) / (rect.width - 1);
+    if (p < 0)
+      p = 0;
+    if (p > 1000)
+      p = 1000;
+    return static_cast<int16_t>(p);
+  }
+
+  int16_t focusIndexFor(uint8_t slot) const {
+    if (buttonFocus_ && focusAction_ != NO_ACTION) {
+      for (int16_t n = 0; n < static_cast<int16_t>(count_[slot]); ++n)
+        if (interactions_[slot][n].action == focusAction_.load() && interactions_[slot][n].value == focusValue_.load()) return n;
+      return -1;
+    }
+    return focused_.load(std::memory_order_relaxed);
+  }
+
+  bool focusable(uint8_t slot, int16_t idx) const {
+    const Interaction &interaction = interactions_[slot][idx];
+    return !hasState(interaction.state, StateDisabled) && !acceptsInput(interaction.inputMask, InputPointerOnly) &&
+           (acceptsInput(interaction.inputMask, InputFocus) ||
+            (buttonFocus_ && acceptsInput(interaction.inputMask, InputTouch)));
+  }
+
+  static int navigationCells(const Interaction &entry) {
+    const int cells = int(entry.navigationColumns) * entry.navigationRows;
+    return cells > 0 && cells <= 32767 ? cells : 1;
+  }
+
+  Rect focusRectFor(const Interaction &entry, int16_t subFocus) const {
+    const int cells = navigationCells(entry);
+    if (cells == 1) return entry.rect;
+    const int at = subFocus >= 0 && subFocus < cells ? subFocus : 0;
+    const int column = at % entry.navigationColumns, row = at / entry.navigationColumns;
+    const int x = entry.rect.x + column * entry.rect.width / entry.navigationColumns;
+    const int y = entry.rect.y + row * entry.rect.height / entry.navigationRows;
+    return Rect{static_cast<int16_t>(x), static_cast<int16_t>(y),
+                static_cast<int16_t>(entry.rect.x + (column + 1) * entry.rect.width / entry.navigationColumns - x),
+                static_cast<int16_t>(entry.rect.y + (row + 1) * entry.rect.height / entry.navigationRows - y)};
+  }
+
+  int16_t findTouch(uint8_t slot, int16_t x, int16_t y, InputMask kind) const {
+    const Interaction *interactions = interactions_[slot];
+    for (int16_t i = static_cast<int16_t>(count_[slot]) - 1; i >= 0; --i) {
+      const Interaction &interaction = interactions[i];
+      if (hasState(interaction.state, StateDisabled))
+        continue;
+      const bool acceptsKind = acceptsInput(interaction.inputMask, kind);
+      // InputTouch is the catch-all for tap-style kinds; long-press and drag
+      // are opt-in, so a plain button never absorbs them.
+      const bool acceptsTouchFallback =
+          kind != InputLongPress && kind != InputDrag &&
+          acceptsInput(interaction.inputMask, InputTouch);
+      if (!acceptsKind && !acceptsTouchFallback)
+        continue;
+      if (interaction.rect.contains(x, y))
+        return i;
+    }
+    return -1;
+  }
+
+  int16_t findFirst(uint8_t slot, InputMask kind) const {
+    const Interaction *interactions = interactions_[slot];
+    for (int16_t i = 0; i < static_cast<int16_t>(count_[slot]); ++i) {
+      const Interaction &interaction = interactions[i];
+      if (hasState(interaction.state, StateDisabled))
+        continue;
+      if (acceptsInput(interaction.inputMask, kind))
+        return i;
+    }
+    return -1;
+  }
+
+  void moveFocus(uint8_t slot, int8_t delta) {
+    const size_t slotCount = count_[slot];
+    if (slotCount == 0) {
+      focused_ = -1;
+      return;
+    }
+    int16_t start = focusIndexFor(slot);
+    if (start >= 0 && start < static_cast<int16_t>(slotCount)) {
+      const int candidate = subFocus_ + delta;
+      if (candidate >= 0 && candidate < navigationCells(interactions_[slot][start])) {
+        subFocus_ = static_cast<int16_t>(candidate);
+        return;
+      }
+    }
+    if (start < 0 || start >= static_cast<int16_t>(slotCount))
+      start = -1;
+    const auto before = [](const Interaction &a, const Interaction &b) {
+      return a.rect.y < b.rect.y || (a.rect.y == b.rect.y && a.rect.x < b.rect.x);
+    };
+    if (start >= 0 && start < static_cast<int16_t>(slotCount) &&
+        (interactions_[slot][start].action != focusAction_.load() ||
+         interactions_[slot][start].value != focusValue_.load())) start = -1;
+    int16_t next = -1, wrap = -1;
+    for (int16_t idx = 0; idx < static_cast<int16_t>(slotCount); ++idx) {
+      if (!focusable(slot, idx)) continue;
+      const auto &entry = interactions_[slot][idx];
+      if (wrap < 0 || (delta > 0 ? before(entry, interactions_[slot][wrap]) : before(interactions_[slot][wrap], entry))) wrap = idx;
+      if (start >= 0 && (delta > 0 ? !before(interactions_[slot][start], entry) : !before(entry, interactions_[slot][start]))) continue;
+      if (next < 0 || (delta > 0 ? before(entry, interactions_[slot][next]) : before(interactions_[slot][next], entry))) next = idx;
+    }
+    focused_ = next >= 0 ? next : wrap;
+    if (focused_ >= 0) {
+      const auto &entry = interactions_[slot][focused_];
+      focusAction_ = entry.action;
+      focusValue_ = entry.value;
+      subFocus_ = delta > 0 ? 0 : navigationCells(entry) - 1;
+    } else {
+      buttonFocus_ = false;
+      focusAction_ = NO_ACTION;
+    }
+  }
+
+  ActionEvent eventFor(uint8_t slot, int16_t idx) const {
+    const Interaction &interaction = interactions_[slot][idx];
+    return ActionEvent{interaction.action, interaction.value,
+                       interaction.state};
+  }
+
+  ActionEvent routeAgainst(uint8_t slot, const InputSnapshot &input) {
+    ActionEvent event{};
+    const size_t slotCount = count_[slot];
+    if (buttonFocus_) focused_ = focusIndexFor(slot);
+    if (input.focusNext || input.focusPrev) buttonFocus_ = true;
+    if ((input.touchPressed || input.touchReleased) && input.touchX >= 0 && input.touchY >= 0) {
+      buttonFocus_ = false;
+      focused_ = -1;
+    }
+
+    // touchPressed is gated on the contact first reading as a tap, which a
+    // fast drag never is. Bind on the frame the contact begins, at the point
+    // it landed — the live position would let a passing contact grab a
+    // slider. Drag-masked elements only, so taps keep press-then-release;
+    // a contact starting elsewhere clears whatever the last one bound.
+    // The latch closes on hold and opens on the release edge, never on the
+    // mere absence of a hold: render() routes a default-constructed snapshot
+    // through this same buffer on every repaint, and a drag repaints every
+    // frame. Clearing on !touchHeld would let that placeholder re-open the
+    // latch between two input frames, making every held frame read as a fresh
+    // contact — the bind below would then re-run against the live position and
+    // drop the drag the moment the finger leaves the rect.
+    const bool contactBegan = input.touchHeld && !contactHeld_;
+    if (input.touchHeld) contactHeld_ = true;
+    if (input.touchReleased) contactHeld_ = false;
+    if (contactBegan) {
+      active_ = findTouch(slot, input.touchX, input.touchY, InputDrag);
+      lastDragX_ = -1;
+    }
+
+    // Runs second so an adapter reporting both edges on one frame keeps its
+    // pressed-element highlight.
+    if (input.touchPressed) {
+      active_ = findTouch(slot, input.touchX, input.touchY, InputTouch);
+    }
+
+    // Grab semantics: a drag stays bound to the element the finger landed on
+    // even when it wanders off the rect, and follows the x position live.
+    if (input.touchHeld && active_ >= 0 &&
+        active_ < static_cast<int16_t>(slotCount)) {
+      const Interaction &held = interactions_[slot][active_];
+      if (!hasState(held.state, StateDisabled) &&
+          acceptsInput(held.inputMask, InputDrag)) {
+        ActionEvent dragged = eventFor(slot, active_);
+        dragged.dragPermille = dragPermilleFor(held.rect, input.touchX);
+        lastDragX_ = input.touchX;
+        return dragged;
+      }
+    }
+
+    if (input.touchReleased) {
+      // A contact that dragged commits as a drag, at the last held position
+      // (grab semantics: even off the rect). It must not fall through to the
+      // tap path below, whose coordinates are the touch-down point.
+      if (lastDragX_ >= 0 && active_ >= 0 &&
+          active_ < static_cast<int16_t>(slotCount)) {
+        const Interaction &held = interactions_[slot][active_];
+        const int16_t releaseIdx = active_;
+        active_ = -1;
+        if (!hasState(held.state, StateDisabled) &&
+            acceptsInput(held.inputMask, InputDrag)) {
+          ActionEvent released = eventFor(slot, releaseIdx);
+          released.dragPermille = dragPermilleFor(held.rect, lastDragX_);
+          lastDragX_ = -1;
+          return released;
+        }
+      }
+      lastDragX_ = -1;
+      const int16_t idx =
+          findTouch(slot, input.touchX, input.touchY,
+                    input.longPress ? InputLongPress : InputTouch);
+      active_ = -1;
+      if (idx >= 0) {
+        ActionEvent released = eventFor(slot, idx);
+        released.longPress = input.longPress;
+        // A tap on a draggable element is a jump-to-position: carry the spot.
+        if (acceptsInput(interactions_[slot][idx].inputMask, InputDrag)) {
+          released.dragPermille =
+              dragPermilleFor(interactions_[slot][idx].rect, input.touchX);
+        }
+        return released;
+      }
+    }
+
+    if (input.swipeLeft) {
+      const int16_t idx = findFirst(slot, InputSwipeLeft);
+      if (idx >= 0)
+        return eventFor(slot, idx);
+    }
+    if (input.swipeRight) {
+      const int16_t idx = findFirst(slot, InputSwipeRight);
+      if (idx >= 0)
+        return eventFor(slot, idx);
+    }
+    if (input.back) {
+      const int16_t idx = findFirst(slot, InputBack);
+      if (idx >= 0)
+        return eventFor(slot, idx);
+    }
+    if (input.prev) {
+      const int16_t idx = findFirst(slot, InputPrev);
+      if (idx >= 0)
+        return eventFor(slot, idx);
+      if (focused_ >= 0 && focused_ < static_cast<int16_t>(slotCount)) {
+        const auto &entry = interactions_[slot][focused_];
+        if (entry.navigationRows > 1 && subFocus_ >= entry.navigationColumns) subFocus_ -= entry.navigationColumns;
+      }
+    }
+    if (input.next) {
+      const int16_t idx = findFirst(slot, InputNext);
+      if (idx >= 0)
+        return eventFor(slot, idx);
+      if (focused_ >= 0 && focused_ < static_cast<int16_t>(slotCount)) {
+        const auto &entry = interactions_[slot][focused_];
+        if (entry.navigationRows > 1 && subFocus_ + entry.navigationColumns < navigationCells(entry))
+          subFocus_ += entry.navigationColumns;
+      }
+    }
+
+    if (input.focusNext)
+      moveFocus(slot, 1);
+    if (input.focusPrev)
+      moveFocus(slot, -1);
+    // Focus indices persist across frames so GPIO navigation survives
+    // re-renders, but a screen change can leave a stale index. Only confirm a
+    // focus target that exists in the current table and accepts confirm input.
+    if (input.confirm && focused_ >= 0 &&
+        focused_ < static_cast<int16_t>(slotCount)) {
+      const Interaction &focused = interactions_[slot][focused_];
+      if (!hasState(focused.state, StateDisabled) &&
+          (acceptsInput(focused.inputMask, InputConfirm) ||
+           (buttonFocus_ && acceptsInput(focused.inputMask, InputTouch)))) {
+        if (acceptsInput(focused.inputMask, InputCoordinates)) {
+          const Rect rect = focusRectFor(focused, subFocus_.load(std::memory_order_relaxed));
+          const auto target = findTouch(slot, rect.x + rect.width / 2, rect.y + rect.height / 2, InputTouch);
+          return target >= 0 ? eventFor(slot, target) : ActionEvent{};
+        }
+        return eventFor(slot, focused_);
+      }
+    }
+
+    return event;
+  }
+};
+
+enum class Axis : uint8_t {
+  Row,
+  Column,
+};
+
+enum class Align : uint8_t {
+  Start,
+  Center,
+  End,
+  Stretch,
+};
+
+struct Slot {
+  int16_t basis = 0;
+  uint8_t flex = 0;
+  Rect rect{};
+};
+
+template <size_t MaxSlots> class Stack {
+public:
+  Stack(Rect rect, Axis axis, int16_t gap = 0)
+      : rect_(rect), axis_(axis), gap_(gap) {}
+
+  int8_t fixed(int16_t px) { return add(Slot{px, 0, {}}); }
+  int8_t flex(uint8_t grow = 1, int16_t minPx = 0) {
+    return add(Slot{minPx, grow, {}});
+  }
+  int8_t autoSize(Size size) {
+    return fixed(axis_ == Axis::Row ? size.width : size.height);
+  }
+
+  void layout() {
+    int16_t fixedTotal = 0;
+    uint16_t flexTotal = 0;
+    int8_t lastFlex = -1;
+    for (uint8_t i = 0; i < count_; ++i) {
+      fixedTotal = static_cast<int16_t>(fixedTotal + slots_[i].basis);
+      flexTotal = static_cast<uint16_t>(flexTotal + slots_[i].flex);
+      if (slots_[i].flex)
+        lastFlex = static_cast<int8_t>(i);
+    }
+    const int16_t totalGap =
+        count_ > 1 ? static_cast<int16_t>((count_ - 1) * gap_) : 0;
+    const int16_t mainSize = axis_ == Axis::Row ? rect_.width : rect_.height;
+    int16_t remaining = static_cast<int16_t>(mainSize - fixedTotal - totalGap);
+    if (remaining < 0)
+      remaining = 0;
+
+    int16_t cursor = axis_ == Axis::Row ? rect_.x : rect_.y;
+    int16_t allocatedFlex = 0;
+    for (uint8_t i = 0; i < count_; ++i) {
+      int16_t main = slots_[i].basis;
+      if (slots_[i].flex && flexTotal) {
+        // The last flex slot absorbs the integer-division remainder so flex
+        // layouts always fill the rect exactly, even with a fixed slot after.
+        int16_t share = static_cast<int16_t>(
+            (static_cast<int32_t>(remaining) * slots_[i].flex) / flexTotal);
+        if (static_cast<int8_t>(i) == lastFlex)
+          share = static_cast<int16_t>(remaining - allocatedFlex);
+        allocatedFlex = static_cast<int16_t>(allocatedFlex + share);
+        main = static_cast<int16_t>(main + share);
+      }
+      if (axis_ == Axis::Row) {
+        slots_[i].rect = Rect{cursor, rect_.y, main, rect_.height};
+      } else {
+        slots_[i].rect = Rect{rect_.x, cursor, rect_.width, main};
+      }
+      cursor = static_cast<int16_t>(cursor + main + gap_);
+    }
+  }
+
+  uint8_t count() const { return count_; }
+  Rect rect(uint8_t index) const {
+    return index < count_ ? slots_[index].rect : Rect{};
+  }
+
+private:
+  Rect rect_{};
+  Axis axis_ = Axis::Column;
+  int16_t gap_ = 0;
+  Slot slots_[MaxSlots]{};
+  uint8_t count_ = 0;
+
+  int8_t add(Slot slot) {
+    if (count_ >= MaxSlots)
+      return -1;
+    slots_[count_] = slot;
+    return static_cast<int8_t>(count_++);
+  }
+};
+
+template <size_t MaxInteractions> class Frame {
+public:
+  Frame(DrawTarget &target, const DeviceContext &device,
+        const InputSnapshot &input,
+        InteractionBuffer<MaxInteractions> &interactions,
+        AssetResolver *assets = nullptr)
+      : target_(target), device_(device), input_(input),
+        interactions_(interactions), assets_(assets) {
+    interactions_.clear();
+  }
+
+  DrawTarget &target() { return target_; }
+  AssetResolver *assets() { return assets_; }
+  const DeviceContext &device() const { return device_; }
+  Rect screen() const { return device_.screen(); }
+  Rect safeRect() const { return device_.safeRect(); }
+
+  bool hit(Rect rect, ActionId action, int16_t value = 0,
+           uint16_t inputMask = InputDefault, State state = StateNormal) {
+    return interactions_.addInteraction(
+        Interaction{rect, action, value, inputMask, state, 0});
+  }
+
+  bool navigationGrid(Rect rect, uint8_t columns, uint8_t rows) {
+    if (!columns || !rows || rect.width <= 0 || rect.height <= 0 || int(columns) * rows > 32767) return false;
+    return interactions_.addInteraction(Interaction{rect, NO_ACTION, 0,
+      InputFocus | InputConfirm | InputCoordinates, StateNormal, 0, columns, rows});
+  }
+
+  void limitButtonActions(std::initializer_list<ActionId> actions) { interactions_.limitButtonActions(actions); }
+
+  bool buttonNavigationActive() const { return interactions_.hasButtonFocus(); }
+
+  bool buttonSelected(ActionId action, int16_t value, bool selected = false) const {
+    return interactions_.buttonSelected(action, value, selected);
+  }
+
+  State stateFor(ActionId action, int16_t value = 0,
+                 State base = StateNormal) const {
+    return interactions_.stateFor(action, value, base);
+  }
+
+  ActionEvent finish() { return interactions_.route(input_); }
+
+private:
+  DrawTarget &target_;
+  const DeviceContext &device_;
+  const InputSnapshot &input_;
+  InteractionBuffer<MaxInteractions> &interactions_;
+  AssetResolver *assets_ = nullptr;
+};
+
+StyleSet defaultButtonStyles();
+StyleSet defaultListRowStyles();
+StyleSet defaultKeyStyles();
+StyleSet defaultPopupStyles();
+StyleSet plainStyles(Paint foreground = Paint::solid(Color::Black));
+// Canonical font-slot convention: the bundled targets (DisplayTarget,
+// GfxRendererTarget) both expose setFont() slots 0/1/2 as SMALL/BODY/TITLE.
+// The theme-token defaults follow it so an app that binds its target's slots
+// gets correctly-keyed text roles without spelling the mapping out again.
+constexpr FontId FONT_SLOT_SMALL = 0;
+constexpr FontId FONT_SLOT_BODY = 1;
+constexpr FontId FONT_SLOT_TITLE = 2;
+
+ThemeTokens defaultThemeTokens(FontId smallFont = FONT_SLOT_SMALL,
+                               FontId bodyFont = FONT_SLOT_BODY,
+                               FontId titleFont = FONT_SLOT_TITLE);
+// defaultThemeTokens with the metric tokens (rowHeight, header/footer heights,
+// touch size, small gap) derived from a font line height, so rows fit a
+// label+subtitle pair with whatever font the target binds. The static 44px
+// defaults assume ~18px UI fonts; the bundled Noto Sans is 34px/line.
+// FreeInkApp calls this with its target's body-font line height.
+ThemeTokens themeTokensForLineHeight(int16_t lineHeight,
+                                     FontId smallFont = FONT_SLOT_SMALL,
+                                     FontId bodyFont = FONT_SLOT_BODY,
+                                     FontId titleFont = FONT_SLOT_TITLE);
+inline int16_t clampI16(const int value, const int minValue = 0,
+                        const int maxValue = 32767) {
+  if (value < minValue)
+    return static_cast<int16_t>(minValue);
+  if (value > maxValue)
+    return static_cast<int16_t>(maxValue);
+  return static_cast<int16_t>(value);
+}
+inline uint8_t clampU8(const int value, const int minValue = 0,
+                       const int maxValue = 255) {
+  if (value < minValue)
+    return static_cast<uint8_t>(minValue);
+  if (value > maxValue)
+    return static_cast<uint8_t>(maxValue);
+  return static_cast<uint8_t>(value);
+}
+inline uint8_t clampRadius(const int radius, const int maxRadius = 12) {
+  return clampU8(radius, 0, maxRadius);
+}
+inline Rect makeRect(const int x, const int y, const int width,
+                     const int height) {
+  return Rect{clampI16(x, -32768), clampI16(y, -32768), clampI16(width),
+              clampI16(height)};
+}
+inline Size makeSize(const int width, const int height) {
+  return Size{clampI16(width), clampI16(height)};
+}
+inline Insets makeInsets(const int all) {
+  const int16_t value = clampI16(all);
+  return Insets{value, value, value, value};
+}
+inline Insets makeInsets(const int top, const int right, const int bottom,
+                         const int left) {
+  return Insets{clampI16(top), clampI16(right), clampI16(bottom),
+                clampI16(left)};
+}
+inline StyleSet selectedOutlineListRowStyles(const int radius = 0) {
+  StyleSet styles = defaultListRowStyles();
+  styles.selected.background = Paint::solid(Color::White);
+  styles.selected.foreground = Paint::solid(Color::Black);
+  styles.selected.border = Paint::solid(Color::Black);
+  styles.selected.borderWidth = 1;
+  styles.selected.radius = clampRadius(radius);
+  return styles;
+}
+inline StyleSet selectedPlainListRowStyles() {
+  StyleSet styles = defaultListRowStyles();
+  styles.selected.background = Paint::solid(Color::White);
+  styles.selected.foreground = Paint::solid(Color::Black);
+  styles.selected.border = Paint::none();
+  styles.selected.borderWidth = 0;
+  return styles;
+}
+inline StyleSet
+outlinedButtonStyles(const int radius = 0,
+                     const Color selectedBackground = Color::LightGray) {
+  StyleSet styles = defaultButtonStyles();
+  styles.normal.background = Paint::solid(Color::White);
+  styles.normal.foreground = Paint::solid(Color::Black);
+  styles.normal.border = Paint::solid(Color::Black);
+  styles.normal.borderWidth = 1;
+  styles.normal.radius = clampRadius(radius);
+  styles.selected.background = Paint::solid(selectedBackground);
+  styles.selected.foreground = Paint::solid(Color::Black);
+  styles.selected.border = Paint::solid(Color::Black);
+  styles.selected.borderWidth = 1;
+  styles.selected.radius = clampRadius(radius);
+  return styles;
+}
+
+// Borderless controls for chrome-light apps: nothing drawn at rest (no box,
+// no border), a light fill for selected/pressed feedback. Set as
+// ThemeTokens.button (and pass to dropdowns/rows) for the "just text on
+// paper" look.
+inline StyleSet
+flatButtonStyles(const int radius = 0,
+                 const Color selectedBackground = Color::LightGray) {
+  StyleSet styles = defaultButtonStyles();
+  styles.normal.background = Paint{};
+  styles.normal.foreground = Paint::solid(Color::Black);
+  styles.normal.border = Paint{};
+  styles.normal.borderWidth = 0;
+  styles.normal.radius = clampRadius(radius);
+  styles.selected.background = Paint::solid(selectedBackground);
+  styles.selected.foreground = Paint::solid(Color::Black);
+  styles.selected.border = Paint{};
+  styles.selected.borderWidth = 0;
+  styles.selected.radius = clampRadius(radius);
+  return styles;
+}
+Rect centeredRect(Rect outer, Size inner);
+Rect ensureMinTouchRect(Rect visual, int16_t minSize, Rect bounds);
+// Number of rows that fully fit in the rect at the given row height/gap.
+uint16_t listVisibleRows(Rect rect, int16_t rowHeight, int16_t rowGap = 0);
+// Adjusts topIndex the minimal amount so selectedIndex is visible, then clamps
+// to the valid scroll range. Pass the current topIndex to keep the window
+// stable when the selection is already on-screen.
+uint16_t listTopIndexFor(int16_t selectedIndex, uint16_t topIndex,
+                         uint16_t visibleRows, uint16_t count);
+// Shared immediate-mode list navigation helpers for apps that render lists
+// with their own theme/renderer but want SDK-owned selection semantics.
+inline int listClampedIndex(const int index, const int count) {
+  if (count <= 0)
+    return 0;
+  if (index < 0)
+    return 0;
+  if (index >= count)
+    return count - 1;
+  return index;
+}
+inline bool listSelectIndex(int &selectedIndex, const int requestedIndex,
+                            const int count) {
+  if (count <= 0 || requestedIndex < 0 || requestedIndex >= count ||
+      selectedIndex == requestedIndex)
+    return false;
+  selectedIndex = requestedIndex;
+  return true;
+}
+inline bool listSelectIndex(size_t &selectedIndex, const int requestedIndex,
+                            const int count) {
+  if (count <= 0 || requestedIndex < 0 || requestedIndex >= count ||
+      selectedIndex == static_cast<size_t>(requestedIndex))
+    return false;
+  selectedIndex = static_cast<size_t>(requestedIndex);
+  return true;
+}
+inline bool listMoveIndex(int &selectedIndex, const int delta,
+                          const int count) {
+  if (count <= 0 || delta == 0)
+    return false;
+  const int oldIndex = selectedIndex;
+  selectedIndex = (selectedIndex + delta + count) % count;
+  return selectedIndex != oldIndex;
+}
+inline bool listMoveIndex(size_t &selectedIndex, const int delta,
+                          const int count) {
+  if (count <= 0 || delta == 0)
+    return false;
+  int selected = static_cast<int>(selectedIndex);
+  const bool changed = listMoveIndex(selected, delta, count);
+  selectedIndex = static_cast<size_t>(selected);
+  return changed;
+}
+inline bool listPageIndex(int &selectedIndex, const int deltaPages,
+                          const int count, int pageItems) {
+  if (count <= 0 || deltaPages == 0)
+    return false;
+  if (pageItems < 1)
+    pageItems = 1;
+  const int oldIndex = selectedIndex;
+  selectedIndex =
+      listClampedIndex(selectedIndex + deltaPages * pageItems, count);
+  return selectedIndex != oldIndex;
+}
+void drawText(DrawTarget &target, Rect rect, const char *text, TextStyle style);
+void drawBitmap(DrawTarget &target, Rect rect, BitmapRef bitmap,
+                BitmapMode mode, Paint foreground = Paint::solid(Color::Black));
+BitmapRef resolveBitmap(AssetResolver *resolver, const AssetRef &asset);
+int16_t clampInt16(int32_t value, int16_t minValue, int16_t maxValue);
+TextStyle textStyleWithForeground(TextStyle text, Paint foreground);
+
+inline void setStyleRadius(StyleSet &styles, uint8_t radius) {
+  styles.normal.radius = radius;
+  styles.selected.radius = radius;
+  styles.focused.radius = radius;
+  styles.active.radius = radius;
+  styles.disabled.radius = radius;
+}
+
+// Lucide's delete icon at the keyboard's native display size. Keeping the
+// raster at its rendered size avoids the jagged edges caused by enlarging the
+// old 16px mask with nearest-neighbor scaling.
+inline BitmapRef lucideDeleteIcon28() {
+  static constexpr uint8_t bits[] = {
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xC0, 0x00, 0x7F,
+      0xFF, 0x00, 0x00, 0x3F, 0xFE, 0x1F, 0xFF, 0x1F, 0xFC, 0x7F, 0xFF, 0x9F,
+      0xF8, 0xFF, 0xFF, 0x9F, 0xF1, 0xF8, 0xE3, 0x9F, 0xE3, 0xF8, 0x43, 0x9F,
+      0xC7, 0xFC, 0x07, 0x9F, 0x8F, 0xFE, 0x0F, 0x9F, 0x8F, 0xFE, 0x0F, 0x9F,
+      0xC7, 0xFC, 0x07, 0x9F, 0xE3, 0xF8, 0x43, 0x9F, 0xF1, 0xF8, 0xE3, 0x9F,
+      0xF8, 0xFF, 0xFF, 0x9F, 0xFC, 0x7F, 0xFF, 0x9F, 0xFE, 0x1F, 0xFF, 0x1F,
+      0xFF, 0x00, 0x00, 0x3F, 0xFF, 0xC0, 0x00, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF,
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+      0xFF, 0xFF, 0xFF, 0xFF,
+  };
+  return BitmapRef{bits, 28, 28, BitmapFormat::Mask1};
+}
+
+// Lucide's arrow-big-up at 32px.
+inline BitmapRef lucideArrowBigUpIcon32() {
+  static constexpr uint8_t bits[] = {
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+      0xFF, 0xFC, 0x3F, 0xFF, 0xFF, 0xF8, 0x1F, 0xFF, 0xFF, 0xF0, 0x0F, 0xFF,
+      0xFF, 0xE0, 0x07, 0xFF, 0xFF, 0xC1, 0x83, 0xFF, 0xFF, 0x83, 0xC1, 0xFF,
+      0xFF, 0x07, 0xE0, 0xFF, 0xFE, 0x0F, 0xF0, 0x7F, 0xFC, 0x1F, 0xF8, 0x3F,
+      0xF8, 0x3F, 0xFC, 0x1F, 0xF0, 0x7F, 0xFE, 0x0F, 0xF0, 0x0F, 0xF0, 0x0F,
+      0xF0, 0x07, 0xE0, 0x0F, 0xF0, 0x03, 0xC0, 0x0F, 0xF8, 0x03, 0xC0, 0x1F,
+      0xFF, 0xC3, 0xC3, 0xFF, 0xFF, 0xC3, 0xC3, 0xFF, 0xFF, 0xC3, 0xC3, 0xFF,
+      0xFF, 0xC3, 0xC3, 0xFF, 0xFF, 0xC3, 0xC3, 0xFF, 0xFF, 0xC3, 0xC3, 0xFF,
+      0xFF, 0xC3, 0xC3, 0xFF, 0xFF, 0xC0, 0x03, 0xFF, 0xFF, 0xC0, 0x03, 0xFF,
+      0xFF, 0xE0, 0x07, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+  };
+  return BitmapRef{bits, 32, 32, BitmapFormat::Mask1};
+}
+
+// Lucide's arrow-big-up at 28px for the compact keyboard Shift key.
+inline BitmapRef lucideArrowBigUpIcon28() {
+  static constexpr uint8_t bits[] = {
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xF9, 0xFF, 0xFF,
+      0xFF, 0xE0, 0x7F, 0xFF, 0xFF, 0xC0, 0x3F, 0xFF, 0xFF, 0x80, 0x1F, 0xFF,
+      0xFF, 0x00, 0x0F, 0xFF, 0xFE, 0x06, 0x07, 0xFF, 0xFC, 0x0F, 0x03, 0xFF,
+      0xF8, 0x1F, 0x81, 0xFF, 0xF0, 0x3F, 0xC0, 0xFF, 0xF0, 0x7F, 0xE0, 0xFF,
+      0xE0, 0x3F, 0xC0, 0x7F, 0xE0, 0x0F, 0x00, 0x7F, 0xE0, 0x0F, 0x00, 0x7F,
+      0xF8, 0x0F, 0x01, 0xFF, 0xFF, 0x8F, 0x1F, 0xFF, 0xFF, 0x8F, 0x1F, 0xFF,
+      0xFF, 0x8F, 0x1F, 0xFF, 0xFF, 0x8F, 0x1F, 0xFF, 0xFF, 0x8F, 0x1F, 0xFF,
+      0xFF, 0x8F, 0x1F, 0xFF, 0xFF, 0x80, 0x1F, 0xFF, 0xFF, 0x80, 0x1F, 0xFF,
+      0xFF, 0xC0, 0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+      0xFF, 0xFF, 0xFF, 0xFF,
+  };
+  return BitmapRef{bits, 28, 28, BitmapFormat::Mask1};
+}
+
+// Lucide's arrow-big-up at its native 24px size. Keeping the source geometry
+// on the pixel grid gives the one-bit keyboard glyph an even 2px stroke.
+inline BitmapRef lucideArrowBigUpIcon24() {
+  static constexpr uint8_t bits[] = {
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xC3, 0xFF,
+      0xFF, 0x81, 0xFF, 0xFF, 0x18, 0xFF, 0xFE, 0x3C, 0x7F, 0xFC, 0x7E, 0x3F,
+      0xF8, 0xFF, 0x1F, 0xF1, 0xFF, 0x8F, 0xE3, 0xFF, 0xC7, 0xE0, 0x7E, 0x07,
+      0xF0, 0x3C, 0x0F, 0xFF, 0x3C, 0xFF, 0xFF, 0x3C, 0xFF, 0xFF, 0x3C, 0xFF,
+      0xFF, 0x3C, 0xFF, 0xFF, 0x3C, 0xFF, 0xFF, 0x3C, 0xFF, 0xFF, 0x00, 0xFF,
+      0xFF, 0x81, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+  };
+  return BitmapRef{bits, 24, 24, BitmapFormat::Mask1};
+}
+
+// Lucide's globe at 32px, the size the key sizer lands on for a keyboard row.
+// Half that is not enough: the disc, its two meridians and the equator have no
+// detail to spare, and nothing else in the set needs this much room.
+inline BitmapRef lucideGlobeIcon32() {
+  static constexpr uint8_t bits[] = {
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFC, 0x3F, 0xFF,
+      0xFF, 0xE0, 0x07, 0xFF, 0xFF, 0x80, 0x01, 0xFF, 0xFE, 0x00, 0x00, 0x7F,
+      0xFC, 0x18, 0x18, 0x3F, 0xF8, 0x71, 0x8E, 0x1F, 0xF8, 0xF1, 0x8F, 0x1F,
+      0xF1, 0xE3, 0xC7, 0x8F, 0xF1, 0xE3, 0xC7, 0x8F, 0xE3, 0xE3, 0xC7, 0xC7,
+      0xE3, 0xE7, 0xE7, 0xC7, 0xE7, 0xC7, 0xE3, 0xE7, 0xC7, 0xC7, 0xE3, 0xE3,
+      0xC0, 0x00, 0x00, 0x03, 0xC0, 0x00, 0x00, 0x03, 0xC7, 0xC7, 0xE3, 0xE3,
+      0xE7, 0xC7, 0xE3, 0xE7, 0xE3, 0xE7, 0xE7, 0xC7, 0xE3, 0xE3, 0xC7, 0xC7,
+      0xF1, 0xE3, 0xC7, 0x8F, 0xF1, 0xE3, 0xC7, 0x8F, 0xF8, 0xF1, 0x8F, 0x1F,
+      0xF8, 0x71, 0x8E, 0x1F, 0xFC, 0x18, 0x18, 0x3F, 0xFE, 0x00, 0x00, 0x7F,
+      0xFF, 0x80, 0x01, 0xFF, 0xFF, 0xE0, 0x07, 0xFF, 0xFF, 0xFC, 0x3F, 0xFF,
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+  };
+  return BitmapRef{bits, 32, 32, BitmapFormat::Mask1};
+}
+
+// Lucide's globe at its native 24px size for compact keyboard controls.
+inline BitmapRef lucideGlobeIcon24() {
+  static constexpr uint8_t bits[] = {
+      0xFF, 0xFF, 0xFF, 0xFF, 0x81, 0xFF, 0xFE, 0x00, 0x7F, 0xF8, 0x00, 0x1F,
+      0xF1, 0x99, 0x8F, 0xE3, 0x18, 0xC7, 0xE7, 0x3C, 0xE7, 0xCF, 0x3C, 0xF3,
+      0xCE, 0x3C, 0x73, 0x9E, 0x7E, 0x79, 0x9E, 0x7E, 0x79, 0x80, 0x00, 0x01,
+      0x80, 0x00, 0x01, 0x9E, 0x7E, 0x79, 0x9E, 0x7E, 0x79, 0xCE, 0x3C, 0x73,
+      0xCF, 0x3C, 0xF3, 0xE7, 0x3C, 0xE7, 0xE3, 0x19, 0xC7, 0xF1, 0x99, 0x8F,
+      0xF8, 0x00, 0x1F, 0xFE, 0x00, 0x7F, 0xFF, 0x81, 0xFF, 0xFF, 0xFF, 0xFF,
+  };
+  return BitmapRef{bits, 24, 24, BitmapFormat::Mask1};
+}
+
+inline void drawBorderEdges(DrawTarget &target, Rect rect, Paint paint,
+                            uint8_t width, uint8_t radius, uint8_t corners,
+                            uint8_t edges) {
+  if (paint.kind == PaintKind::None || width == 0 || edges == EdgesNone ||
+      rect.empty())
+    return;
+  if ((edges & EdgesAll) == EdgesAll) {
+    target.stroke(rect, paint, width, radius, corners);
+    return;
+  }
+  // Axis-aligned edges draw as exact fill bands INSIDE the rect: a thick
+  // line() centers its stroke on the segment, which would leak half the
+  // width outside the rect (e.g. a 3px header rule jutting into the content
+  // below the band).
+  if (edges & EdgeTop) {
+    target.fill(Rect{rect.x, rect.y, rect.width, static_cast<int16_t>(width)},
+                paint);
+  }
+  if (edges & EdgeRight) {
+    target.fill(Rect{static_cast<int16_t>(rect.right() - width), rect.y,
+                     static_cast<int16_t>(width), rect.height},
+                paint);
+  }
+  if (edges & EdgeBottom) {
+    target.fill(Rect{rect.x, static_cast<int16_t>(rect.bottom() - width),
+                     rect.width, static_cast<int16_t>(width)},
+                paint);
+  }
+  if (edges & EdgeLeft) {
+    target.fill(Rect{rect.x, rect.y, static_cast<int16_t>(width), rect.height},
+                paint);
+  }
+}
+
+} // namespace ui
+} // namespace freeink

@@ -1,0 +1,14 @@
+{
+  "name": "cat",
+  "title": "Gato",
+  "prompt": "Create ONE production-style BLACK AND WHITE PIXEL ART companion sprite. Images1 and2 are the USER-APPROVED PET STYLE, image3 is the exact HERO. Match their expressive block-shaped eyes, firm stepped pixel contours, clear flat black/white shapes and very sparse interior detail. The animal must look like a creature from the SAME SPRITE SET as this hero and these two pets. Important: actual coarse square pixel clusters, not an ink illustration with pixelated edges. No smooth line art, fine fur strands, realistic anatomy shading, hairline decoration, grayscale, dithering, texture or antialiasing. A charming stylized animal with coherent readable proportions like the approved cat/dog. True transparent outside and opaque black/white within the sprite. Full body, all ears/wings/paws/tail complete, safe margins. No human, UI, scene, floor, external shadow, labels or frame. Preserve a confident contour that matches the HERO at the intended final display size; larger creatures need more pixels and detail, NOT a magnified thick outline from a tiny sprite. Subject: a sitting CAT very close in style and proportions to approved image2, modest tuft, pointed ears, friendly black pixel eyes, tiny nose, curled tail, clear paws. Keep the same appealing sprite personality, no realistic fur strokes. Intended SMALL native sprite64x80, cat about1/4 the hero's height. Firm TWO final pixel outline. Black tufts and small black shadows, white chest/body, just two short blocky whisker marks. It must remain recognizable as a few deliberate pixel clusters at64x80.",
+  "references": [
+    "codex-clipboard-d5967640-dbff-49a4-bbd3-a6b70e96e51f.png",
+    "codex-clipboard-fbadf95b-bf11-4ea5-8db2-bb2ff1acb838.png",
+    "figure-0.png"
+  ],
+  "source": "exec-df54a2f9-d06b-4889-99c5-f0003364d38d.png",
+  "file": "pet-03.png",
+  "id": 3,
+  "approvedPrototype": true
+}

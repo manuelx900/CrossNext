@@ -1,0 +1,9 @@
+{
+  "groups": {
+    "pets": 50,
+    "petsMasks": 50
+  },
+  "sha256": "0f4e993970198e15f48cad9ac63503299d402d12363be711fe3a32c30470f673",
+  "decodedBytes": 123612,
+  "packedBytes": 8112
+}

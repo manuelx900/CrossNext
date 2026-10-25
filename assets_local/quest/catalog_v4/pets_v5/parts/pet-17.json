@@ -1,0 +1,14 @@
+{
+  "name": "tiger",
+  "title": "Tigre",
+  "prompt": "Create ONE production-style BLACK AND WHITE PIXEL ART companion sprite. Images1 and2 are the USER-APPROVED PET STYLE, image3 is the exact HERO. Match their expressive block-shaped eyes, firm stepped pixel contours, clear flat black/white shapes and very sparse interior detail. The animal must look like a creature from the SAME SPRITE SET as this hero and these two pets. Important: actual coarse square pixel clusters, not an ink illustration with pixelated edges. No smooth line art, fine fur strands, realistic anatomy shading, hairline decoration, grayscale, dithering, texture or antialiasing. A charming stylized animal with coherent readable proportions like the approved cat/dog. True transparent outside and opaque black/white within the sprite. Full body, all ears/wings/paws/tail complete, safe margins. No human, UI, scene, floor, external shadow, labels or frame. Preserve a confident contour that matches the HERO at the intended final display size; larger creatures need more pixels and detail, NOT a magnified thick outline from a tiny sprite. Subject: a TIGER standing in three-quarter view, longer feline body and gently raised curved tail, head facing partly toward viewer. Use the approved cat's facial language and simplified geometry, with expressive pixel eyes matching the hero. A proud stylized grown companion; moderate head size about1/3 of total height, not realistic illustration. Intended MEDIUM native sprite240x208. Its final contour should be THREE pixels, the same physical stroke as the hero, NOT the thick relative contour of the small cat magnified four times. Deliberate square pixel stair steps and compact black clusters throughout. Maximum8 broad stripe groups, a few solid black shadows under neck, belly and near legs, clear white regions. No delicate hair or realistic facial detail.",
+  "references": [
+    "codex-clipboard-d5967640-dbff-49a4-bbd3-a6b70e96e51f.png",
+    "codex-clipboard-fbadf95b-bf11-4ea5-8db2-bb2ff1acb838.png",
+    "figure-0.png"
+  ],
+  "source": "exec-1402d54a-9d15-4bc1-ac5a-02a30d0e1809.png",
+  "file": "pet-17.png",
+  "id": 17,
+  "approvedPrototype": true
+}

@@ -1,0 +1,360 @@
+{
+  "version": 1,
+  "downloaded": "2026-10-19",
+  "decks": [
+    {
+      "archive": "1220822549.apkg",
+      "path": "Medicina/Terminologia y etimologia.apkg",
+      "source": "https://ankiweb.net/shared/info/1220822549",
+      "sha256": "c46671bf5bb7c0f3f66e1715dd73f0c562531351775e8497ac7d42a9eb87c86e",
+      "bytes": 900991,
+      "notes": 520,
+      "cards": 520,
+      "media": 4
+    },
+    {
+      "archive": "165712339.apkg",
+      "path": "Terminologia medica.apkg",
+      "source": "https://ankiweb.net/shared/info/165712339",
+      "sha256": "6f4c78a68f61beb8cfc508f268421b380a7417e02ab65e2d36620eff9b91fed5",
+      "bytes": 32970,
+      "notes": 181,
+      "cards": 181,
+      "media": 0
+    },
+    {
+      "archive": "alphabet.apkg",
+      "path": "Alfabeto y Morse.apkg",
+      "source": "https://github.com/AK1089/anki-decks/tree/main/decks/alphabet",
+      "sha256": "9029eff0826d40c25156f7178e96b8ea887e9923be595ed403a821e9d698c790",
+      "bytes": 65754,
+      "notes": 26,
+      "cards": 156,
+      "media": 0
+    },
+    {
+      "archive": "amsterdam-metro-map.apkg",
+      "path": "Viajes/Metro Amsterdam.apkg",
+      "source": "https://github.com/AK1089/anki-decks/tree/main/decks/amsterdam-metro-map",
+      "sha256": "e4869f59c79fd16ecc14e9ad3887463339b627a7b4a3cc531267eabedd86718b",
+      "bytes": 924438,
+      "notes": 39,
+      "cards": 78,
+      "media": 3
+    },
+    {
+      "archive": "Ankiwordbank--french-top-1000-first-100.apkg",
+      "path": "Idiomas/Frances frecuente.apkg",
+      "source": "https://github.com/Ankiwordbank/free-anki-decks/blob/main/decks/french-top-1000-first-100/french-top-1000-first-100.apkg",
+      "sha256": "f8f890f1add653b2929d038518abbaa4ae94ef120a3325837455c43bb0752678",
+      "bytes": 1705091,
+      "notes": 100,
+      "cards": 100,
+      "media": 100
+    },
+    {
+      "archive": "Ankiwordbank--german-verbs-50.apkg",
+      "path": "Idiomas/Verbos alemanes.apkg",
+      "source": "https://github.com/Ankiwordbank/free-anki-decks/blob/main/decks/german-verbs-50/german-verbs-50.apkg",
+      "sha256": "4310f101c6f5ed8d2c834a21726b0c4e74d9eb8582da2b0c2b05b03071b67810",
+      "bytes": 944061,
+      "notes": 50,
+      "cards": 50,
+      "media": 50
+    },
+    {
+      "archive": "Ankiwordbank--portuguese-verbs-50.apkg",
+      "path": "Idiomas/Verbos portugueses.apkg",
+      "source": "https://github.com/Ankiwordbank/free-anki-decks/blob/main/decks/portuguese-verbs-50/portuguese-verbs-50.apkg",
+      "sha256": "2c0002d60d7308d12bfe1168db43b487e54f4f2b6fbaedcb93514c45cae497a5",
+      "bytes": 1371754,
+      "notes": 54,
+      "cards": 54,
+      "media": 54
+    },
+    {
+      "archive": "Ankiwordbank--spanish-top-1000-first-100.apkg",
+      "path": "Idiomas/Espanol frecuente.apkg",
+      "source": "https://github.com/Ankiwordbank/free-anki-decks/blob/main/decks/spanish-top-1000-first-100/spanish-top-1000-first-100.apkg",
+      "sha256": "5223fd491163f6882419f26000d9dd4915813450d64bdde55478a87cd2dd7104",
+      "bytes": 2024253,
+      "notes": 100,
+      "cards": 100,
+      "media": 100
+    },
+    {
+      "archive": "Ankiwordbank--spanish-verbs-50.apkg",
+      "path": "Idiomas/Verbos espanoles.apkg",
+      "source": "https://github.com/Ankiwordbank/free-anki-decks/blob/main/decks/spanish-verbs-50/spanish-verbs-50.apkg",
+      "sha256": "0dceb23602d982d3e79fcb6986960533885e16045e9b2600f8918e523f1c26c0",
+      "bytes": 1103566,
+      "notes": 52,
+      "cards": 52,
+      "media": 51
+    },
+    {
+      "archive": "countries.apkg",
+      "path": "Paises del mundo.apkg",
+      "source": "https://github.com/AK1089/anki-decks/tree/main/decks/countries",
+      "sha256": "d5f7c1ef14a556939e4c5f1350346503e002865ab46ff43184275edbc66f0c65",
+      "bytes": 3035585,
+      "notes": 186,
+      "cards": 744,
+      "media": 186
+    },
+    {
+      "archive": "ipa.apkg",
+      "path": "Fonetica IPA.apkg",
+      "source": "https://github.com/AK1089/anki-decks/tree/main/decks/ipa",
+      "sha256": "e1e6a4a5fd4bb761d1883a8fb64e16c12484cc8639f50113dd29d348215bf502",
+      "bytes": 114906,
+      "notes": 40,
+      "cards": 120,
+      "media": 0
+    },
+    {
+      "archive": "MilesCranmer--astronomy.apkg",
+      "path": "Astronomia.apkg",
+      "source": "https://github.com/MilesCranmer/anki_science/blob/master/wiki_scrape/astronomy.apkg",
+      "sha256": "91d137a20abc6fc00188ae7f0af1fc85215426a3a651bbd04dd0eee33110455a",
+      "bytes": 794842,
+      "notes": 355,
+      "cards": 355,
+      "media": 0
+    },
+    {
+      "archive": "MilesCranmer--Bayesian_Statistics.apkg",
+      "path": "Ciencias/Matematicas/Estadistica bayesiana.apkg",
+      "source": "https://github.com/MilesCranmer/anki_science/blob/master/math_ml_statistics/Bayesian_Statistics.apkg",
+      "sha256": "cf8bc006fc54aeb56cdfcbc22130d8c31427d1c7e9375579cef711707ba6305c",
+      "bytes": 236569,
+      "notes": 48,
+      "cards": 48,
+      "media": 143
+    },
+    {
+      "archive": "MilesCranmer--comprehensive_astrophysics.apkg",
+      "path": "Ciencias/Fisica/Astrofisica.apkg",
+      "source": "https://github.com/MilesCranmer/anki_science/blob/master/physics_and_astronomy/comprehensive_astrophysics.apkg",
+      "sha256": "2aaf51800c11693d309f04043727350478f23ce8427a6ba2e3075c668d9156fc",
+      "bytes": 66893,
+      "notes": 321,
+      "cards": 321,
+      "media": 0
+    },
+    {
+      "archive": "MilesCranmer--Computer_Science_by_Brian_Spiering.apkg",
+      "path": "Informática - Brian Spiering.apkg",
+      "source": "https://github.com/MilesCranmer/anki_science/blob/master/computer_science/Computer_Science_by_Brian_Spiering.apkg",
+      "sha256": "c50eb139a8d8e0791650e6588132b90a7dc93b43d263d1f41278e085e2e1478d",
+      "bytes": 24954442,
+      "notes": 1844,
+      "cards": 2588,
+      "media": 330
+    },
+    {
+      "archive": "MilesCranmer--Nuclear_physics.apkg",
+      "path": "Ciencias/Fisica/Fisica nuclear.apkg",
+      "source": "https://github.com/MilesCranmer/anki_science/blob/master/physics_and_astronomy/Nuclear_physics.apkg",
+      "sha256": "1f478cc2e1f1f808c91065ce345c70f2797615a18697d2ebcf335df2ed9b9117",
+      "bytes": 276970,
+      "notes": 106,
+      "cards": 106,
+      "media": 52,
+      "prepared": "Fisica-nuclear-preparada.apkg",
+      "prepared_sha256": "c47ecd015d7d05642c0296482c32bc83dedfc7bc45e6c5ab299759d003509cae",
+      "preparation": "Image Occlusion Enhanced masks flattened to paired PNG faces; original retained."
+    },
+    {
+      "archive": "MilesCranmer--Physics_GRE.apkg",
+      "path": "Ciencias/Fisica/Physics GRE.apkg",
+      "source": "https://github.com/MilesCranmer/anki_science/blob/master/physics_and_astronomy/Physics_GRE.apkg",
+      "sha256": "8b781843cf2037629742b3b111c4772cce630ac56a928acce2a6751a52dea055",
+      "bytes": 1000821,
+      "notes": 108,
+      "cards": 108,
+      "media": 254
+    },
+    {
+      "archive": "MilesCranmer--Probability_Theory_and_Mathematical_Statistics.apkg",
+      "path": "Ciencias/Matematicas/Probabilidad y estadistica.apkg",
+      "source": "https://github.com/MilesCranmer/anki_science/blob/master/math_ml_statistics/Probability_Theory_and_Mathematical_Statistics.apkg",
+      "sha256": "fc8966e220a4cb4477ac0df6ab38b89785da138b74a0f1715f8a26cbf51daafb",
+      "bytes": 178983,
+      "notes": 254,
+      "cards": 413,
+      "media": 2
+    },
+    {
+      "archive": "MilesCranmer--Unix.apkg",
+      "path": "Unix.apkg",
+      "source": "https://github.com/MilesCranmer/anki_science/blob/master/computer_science/Unix.apkg",
+      "sha256": "28e77c6ef20c78b81656afd8db17ffecbbc163c4b40dbe50db67f344b62aa07d",
+      "bytes": 152995,
+      "notes": 261,
+      "cards": 419,
+      "media": 2
+    },
+    {
+      "archive": "periodic-table.apkg",
+      "path": "Tabla periodica.apkg",
+      "source": "https://github.com/AK1089/anki-decks/tree/main/decks/periodic-table",
+      "sha256": "ee19ec4b6db55368ffbbd2607d52a8964dad44cfaa034dcb2cbcbeebd9461335",
+      "bytes": 680154,
+      "notes": 118,
+      "cards": 708,
+      "media": 0
+    },
+    {
+      "archive": "taivop--book ML Yearning.apkg",
+      "path": "Lecturas/Machine Learning Yearning.apkg",
+      "source": "https://github.com/taivop/anki-decks/blob/master/book%20ML%20Yearning.apkg",
+      "sha256": "34b0385b0525e9c40c1658f0e2788f68b296572606c2808ff22c5383b894f369",
+      "bytes": 49415,
+      "notes": 23,
+      "cards": 31,
+      "media": 1
+    },
+    {
+      "archive": "taivop--How-to-Formulate-Knowledge.apkg",
+      "path": "Lecturas/Como formular el conocimiento.apkg",
+      "source": "https://github.com/taivop/anki-decks/blob/master/How-to-Formulate-Knowledge.apkg",
+      "sha256": "474d22f9bd9eb08407870997a8fcbd99f9cdc4a51ca23084059617b1bd855766",
+      "bytes": 23171,
+      "notes": 141,
+      "cards": 141,
+      "media": 0
+    },
+    {
+      "archive": "tltaylor1--aws-scs-c03.apkg",
+      "path": "Tecnologia/Cloud AWS.apkg",
+      "source": "https://github.com/tltaylor1/anki-decks/blob/main/aws-scs-c03/aws-scs-c03.apkg",
+      "sha256": "04e66f57b72c5ddf55a90db84f144fe9089df1d9f34ee87b3de177b7901d92ac",
+      "bytes": 138888,
+      "notes": 426,
+      "cards": 426,
+      "media": 0
+    },
+    {
+      "archive": "tltaylor1--bicep.apkg",
+      "path": "Tecnologia/Bicep.apkg",
+      "source": "https://github.com/tltaylor1/anki-decks/blob/main/bicep/bicep.apkg",
+      "sha256": "ede6bcd185e941bdc2dc374c425ff0724758d05858d8de388a1675ff323cd2bc",
+      "bytes": 70903,
+      "notes": 50,
+      "cards": 50,
+      "media": 0
+    },
+    {
+      "archive": "tltaylor1--compliance-frameworks.apkg",
+      "path": "Tecnologia/Seguridad/Normativas.apkg",
+      "source": "https://github.com/tltaylor1/anki-decks/blob/main/compliance-frameworks/compliance-frameworks.apkg",
+      "sha256": "b3e5fe8f5da661909488c928dc8027e0f2e56cd8d1947afaa4da17275468c18c",
+      "bytes": 99378,
+      "notes": 226,
+      "cards": 226,
+      "media": 0
+    },
+    {
+      "archive": "tltaylor1--cybersecurity.apkg",
+      "path": "Tecnologia/Seguridad/Ciberseguridad.apkg",
+      "source": "https://github.com/tltaylor1/anki-decks/blob/main/cybersecurity/cybersecurity.apkg",
+      "sha256": "bf10d7dc399d02d88548579fcc2b94c0b1a98601a59adbb217dbbc9c2b2fac28",
+      "bytes": 89368,
+      "notes": 184,
+      "cards": 184,
+      "media": 0
+    },
+    {
+      "archive": "tltaylor1--kql.apkg",
+      "path": "Consultas KQL.apkg",
+      "source": "https://github.com/tltaylor1/anki-decks/blob/main/kql/kql.apkg",
+      "sha256": "4960050ebca2c97062c569d28f428c7b6469f314d15a8fa5270c109af3cc1c49",
+      "bytes": 77371,
+      "notes": 118,
+      "cards": 118,
+      "media": 0
+    },
+    {
+      "archive": "tltaylor1--powershell.apkg",
+      "path": "PowerShell.apkg",
+      "source": "https://github.com/tltaylor1/anki-decks/blob/main/powershell/powershell.apkg",
+      "sha256": "4fd6d67fd09d5da780aa95d3949a7459e687ccf763527e4c7a2f83f4ba3761ed",
+      "bytes": 79794,
+      "notes": 133,
+      "cards": 133,
+      "media": 0
+    },
+    {
+      "archive": "tltaylor1--python.apkg",
+      "path": "Python.apkg",
+      "source": "https://github.com/tltaylor1/anki-decks/blob/main/python/python.apkg",
+      "sha256": "66b76f179ea50f288fc04df91d90ff9d7da7c4d5c296278b657486396ac226b3",
+      "bytes": 85016,
+      "notes": 125,
+      "cards": 125,
+      "media": 0
+    },
+    {
+      "archive": "tube-map.apkg",
+      "path": "Viajes/Metro Londres.apkg",
+      "source": "https://github.com/AK1089/anki-decks/tree/main/decks/tube-map",
+      "sha256": "eeac409d657ce39b908a342072c96368d16e30352e2c0f5ede1bd8e4be3033ab",
+      "bytes": 10986342,
+      "notes": 133,
+      "cards": 266,
+      "media": 4
+    },
+    {
+      "archive": "luke-a-thompson--MEDS2005_Anatomy.apkg",
+      "path": "Medicina/Anatomia.apkg",
+      "source": "https://github.com/luke-a-thompson/AnkiDecks/blob/main/MEDS2005%20Anatomy.apkg",
+      "sha256": "c3b922875108bc11d6f998c2b55ca64821445168905e735751cf99bd83fdedfd",
+      "bytes": 18523099,
+      "notes": 281,
+      "cards": 282,
+      "media": 367,
+      "prepared": "Anatomia-preparada.apkg",
+      "prepared_sha256": "e4a70560e3aff824f38d446895f4091c55e54e1a29fca7bb23c7dda0bb4f1d7c",
+      "preparation": "Image Occlusion Enhanced masks flattened to paired PNG faces; original retained."
+    }
+  ],
+  "dictionaries": [
+    {
+      "archive": "en-simple.tar.zst",
+      "folder": "English Simple",
+      "entries": 29642,
+      "source": "https://xxyzz.github.io/wiktionary_stardict/",
+      "license": "CC BY-SA 4.0",
+      "sha256": "10bc1adb6c0eddb881d9e1fcf31f2dc080d3e53396fa89d47829e1efe7c0a5d4",
+      "bytes": 4110961
+    },
+    {
+      "archive": "es-es.tar.zst",
+      "folder": "Espanol Wikcionario",
+      "entries": 123686,
+      "source": "https://xxyzz.github.io/wiktionary_stardict/",
+      "license": "CC BY-SA 4.0",
+      "sha256": "0319285758d5d40022c3cc00c0e414b2d60883a1c1ae0bd53378789443c48676",
+      "bytes": 23446485
+    },
+    {
+      "archive": "wikdict-en-es.zip",
+      "folder": "WikDict EN-ES",
+      "source": "https://www.wikdict.com/page/download",
+      "license": "CC BY-SA 4.0",
+      "sha256": "5a73d40520c9b3da192636747d7230ce52deb7ca98cf62faf8196e9038da0bdd",
+      "bytes": 3820237,
+      "entries": 67225
+    },
+    {
+      "archive": "wikdict-es-en.zip",
+      "folder": "WikDict ES-EN",
+      "source": "https://www.wikdict.com/page/download",
+      "license": "CC BY-SA 4.0",
+      "sha256": "1ea067f7a069745fffa1a1fee7db86b86f875758a86392f6445cceb7a09cf94a",
+      "bytes": 954820,
+      "entries": 21952
+    }
+  ]
+}

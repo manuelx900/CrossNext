@@ -1,0 +1,5 @@
+# Development-only graphics and font conversion, never firmware dependencies.
+resvg-py==0.5.0
+Pillow==12.3.0
+fonttools==4.60.1
+freetype-py==2.5.1

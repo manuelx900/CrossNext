@@ -1,0 +1,19 @@
+{
+  "name": "CrossNext",
+  "short_name": "CrossNext",
+  "description": "CrossNext, firmware for the Xteink X4 Pro and the Seeed reTerminal Sticky. The browser runs the X4 Pro build.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#faf9f6",
+  "theme_color": "#111110",
+  "icons": [
+    {
+      "src": "/assets/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

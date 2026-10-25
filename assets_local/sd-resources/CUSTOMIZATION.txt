@@ -1,0 +1,54 @@
+CUSTOMIZING CROSSNEXT RESOURCES
+
+Fonts and dictionaries
+Add a font family folder under /fonts with supported TTF/OTF/TTC files
+(direct vector loading requires a supported PSRAM device such as X4 Pro).
+Include the font's license. Reboot or refresh installed fonts.
+Add a StarDict folder under /dictionaries with one uncompressed .idx and
+the matching .dict or .dict.dz, plus .ifo and optional .syn. Use folder names
+up to 31 UTF-8 bytes. Keep the provider's license and attribution.
+Use the existing reader settings to choose a different dictionary.
+
+Automatic defaults
+Spanish interface: Spanish Wiktionary for definitions; WikDict EN-ES for translation.
+English interface: English Simple for definitions; WikDict ES-EN for translation.
+English Simple defines English words in simple English.
+Unassigned automatic slots are filled at boot or when selecting an interface
+language, provided the matching resources are installed. Existing names are
+never replaced, including choices saved by earlier firmware versions. Missing
+files are never selected for an unassigned slot.
+Choosing a dictionary manually, including None, disables automatic selection
+for that role; your saved choice survives reboot and language changes.
+Existing named dictionary choices are retained when updating the firmware.
+Previously empty legacy settings adopt automatic defaults.
+Other interface languages do not receive new monolingual defaults in this pack.
+
+Reading Adventure graphics
+There is no DRM or secret signing key. The firmware checks format, bounds and
+CRC32 to detect invalid/corrupted files. A modified compatible pack is accepted
+when its CRC32 and format are valid. ZIP SHA-256 manifests aid distribution;
+they are not a firmware allowlist.
+graphics.bin is a binary BW1 sprite pack, not a folder of interchangeable PNGs.
+To change artwork, edit the project art inputs/generator and run:
+  python tools_local/quest/build_whole_art.py
+  python tools_local/build_resources.py
+The first command needs the project's graphics Python dependencies.
+See docs/apps/quest-gear.md and tools_local/quest/build_resource_pack.py.
+Preserve the 900 sprite IDs, meanings, group order and compatible dimensions;
+keep ink/mask pairs aligned. The pack builder regenerates CRC32 and manifests.
+Copy the resulting apps/reading-adventure folder to your microSD while powered off.
+Keep personal source art outside the generated resources staging folder.
+The generator refuses to overwrite manually edited staging files.
+Saved game progress lives separately under /.crosspoint and is not part of
+the graphics pack. Never replace or remove that folder to install resources.
+
+PET and The Intercept graphics
+The complete ZIP also includes apps/pet and apps/intercept. Both apps need
+compatible resources before entering. PET requires all six .bin files; The
+Intercept requires graphics.bin (49 stable illustrations). Build every app
+folder with python tools_local/build_resources.py. Individual Intercept artwork
+inputs are in assets_local/intercept/png; its builder is
+ tools_local/intercept/build_resource_pack.py.
+See docs/apps/pet.md and docs/apps/intercept.md. Keep the stable sprite IDs,
+meanings and supported dimensions. Rebuild CRC32/manifests after customizing.
+Never copy simulator cards or replace .crosspoint to install app resources.

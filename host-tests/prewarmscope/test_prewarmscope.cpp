@@ -1,0 +1,201 @@
+// How long a prewarmed glyph cache lives, and what that rules out.
+//
+// The reader warmed the NEXT page's glyphs while the device sat idle, so a page
+// turn would not have to. The simulator showed it prewarming each page twice
+// with byte-for-byte identical results, 780ms apart -- once for the idle pass
+// and once for the render that immediately followed it. The reason is here:
+// FontCacheManager::PrewarmScope clears the cache when it is constructed AND
+// when it is destroyed, so glyphs warmed inside a scope cannot outlive it, and
+// the next render's own scope would drop them at its constructor anyway.
+//
+// Two independent reasons for the same outcome is exactly the sort of fact that
+// should fail a test rather than be re-derived by the next person who tries to
+// keep a cache across a page turn. That is what this suite is.
+//
+// The FontCacheManager under test is real. Only SdCardFont is faked, and only
+// the five methods FontCacheManager reaches for, so the lifetime being asserted
+// is the shipping one.
+
+#include <FontCacheManager.h>
+#include <SdCardFont.h>
+#include <TtfEpdFont.h>
+
+#include <cstdio>
+#include <map>
+#include <string>
+
+// -- the fake ---------------------------------------------------------------
+//
+// Real definitions of the SdCardFont methods FontCacheManager calls, linked
+// instead of SdCardFont.cpp (which needs the SD card). Every call is counted.
+namespace {
+struct Counts {
+  int clears = 0;
+  int prewarms = 0;
+  int resets = 0;
+  std::string lastText;
+  uint8_t lastStyleMask = 0;
+};
+Counts counts;
+}  // namespace
+
+void SdCardFont::clearCache() { counts.clears++; }
+void SdCardFont::releaseResidentCaches() { counts.clears++; }
+void SdCardFont::resetStats() { counts.resets++; }
+void SdCardFont::logStats(const char*) {}
+// Upstream's FontCacheManager::resolveScanStyle() (2026-09-04 sync) asks the
+// SD font to fold a requested style down to one it actually HAS, so a page
+// that draws bold in a regular-only face does not pay for a second prewarm
+// pass. This fake is a single-face font -- that is the premise of the
+// "one font is one prewarm" case below -- so every style folds to regular.
+uint8_t SdCardFont::resolveStyle(uint8_t) const { return 0; }
+// The trailing `accumulate` is upstream's (2026-09-19 sync): an incremental
+// prewarm adds to the resident set instead of replacing it, so adjacent calls
+// for one page share a build. This suite counts prewarms and their text, not
+// what each one retained, so the fake ignores it -- but the parameter has to
+// be here, because a stub that no longer matches the declaration does not
+// compile, which is how this suite noticed.
+int SdCardFont::prewarm(const char* utf8Text, const uint8_t styleMask, bool, bool, bool) {
+  counts.prewarms++;
+  counts.lastText = utf8Text ? utf8Text : "";
+  counts.lastStyleMask = styleMask;
+  return 0;
+}
+SdCardFont::~SdCardFont() = default;
+
+static int checks = 0;
+static int failed = 0;
+
+static void eq(const int got, const int want, const char* what) {
+  checks++;
+  if (got != want) {
+    failed++;
+    std::printf("FAIL prewarmscope  %s\n      want %d\n      got  %d\n", what, want, got);
+  }
+}
+
+static void eqs(const std::string& got, const std::string& want, const char* what) {
+  checks++;
+  if (got != want) {
+    failed++;
+    std::printf("FAIL prewarmscope  %s\n      want \"%s\"\n      got  \"%s\"\n", what, want.c_str(), got.c_str());
+  }
+}
+
+int main() {
+  const std::map<int, EpdFontFamily> noBuiltins;
+  SdCardFont font;
+  const std::map<int, SdCardFont*> sdFonts{{7, &font}};
+  // TrueType fonts (upstream, PSRAM boards) play no part in the scope's lifetime.
+  const std::map<int, TtfEpdFont*> noTtf;
+  FontCacheManager fcm(noBuiltins, sdFonts, noTtf);
+
+  // -- a scope starts from an empty cache -----------------------------------
+  {
+    counts = Counts{};
+    auto scope = fcm.createPrewarmScope();
+    eq(counts.clears, 1, "opening a scope drops whatever was cached before it");
+
+    fcm.recordText("hello", 7, EpdFontFamily::REGULAR);
+    eq(counts.prewarms, 0, "scanning does not touch the card");
+
+    scope.endScanAndPrewarm();
+    eq(counts.prewarms, 1, "ending the scan prewarms once for the font it saw");
+    // Upstream (2026-09-04) hands prewarm the DEDUPLICATED, sorted character
+    // set rather than the raw run, so the same glyph is not decompressed twice
+    // on a page that uses it twice. "hello" scans as its four distinct chars.
+    eqs(counts.lastText, "ehlo", "and prewarms exactly the distinct characters scanned");
+    eq(counts.clears, 1, "prewarming does not clear what it just loaded");
+  }
+  // -- and does not survive it ----------------------------------------------
+  //
+  // THIS is why warming the next page ahead of time could not work. The scope
+  // that did the warming ends, and the glyphs go with it.
+  eq(counts.clears, 2, "closing the scope discards the cache it just warmed");
+
+  // -- nothing carries from one render to the next --------------------------
+  //
+  // The second reason. Even a cache that somehow outlived its scope would be
+  // dropped by the next render's scope before it drew anything.
+  {
+    counts = Counts{};
+    {
+      auto first = fcm.createPrewarmScope();
+      fcm.recordText("page one", 7, EpdFontFamily::REGULAR);
+      first.endScanAndPrewarm();
+    }
+    eq(counts.clears, 2, "one render's scope clears at both ends");
+    auto second = fcm.createPrewarmScope();
+    eq(counts.clears, 3, "and the next render's scope clears again before it scans");
+  }
+
+  // -- a page mixes fonts, and each one gets prewarmed ----------------------
+  //
+  // The status bar draws in the UI font while the body draws in the reader's.
+  // Batching only the first font id seen would leave the other to fault in
+  // glyph by glyph during the real draw pass, which is the slow path this
+  // whole mechanism exists to avoid.
+  {
+    counts = Counts{};
+    SdCardFont second;
+    const std::map<int, SdCardFont*> two{{7, &font}, {8, &second}};
+    FontCacheManager mixed(noBuiltins, two, noTtf);
+    auto scope = mixed.createPrewarmScope();
+    mixed.recordText("body", 7, EpdFontFamily::REGULAR);
+    mixed.recordText("bar", 8, EpdFontFamily::REGULAR);
+    scope.endScanAndPrewarm();
+    eq(counts.prewarms, 2, "a page using two fonts prewarms both");
+  }
+
+  // -- styles accumulate into one pass per font -----------------------------
+  //
+  // Bold and italic runs on one page are ONE prewarm for a face that has only
+  // one style: an SD font pays per pass, not per glyph. Upstream buckets the
+  // scan by RESOLVED style (resolveScanStyle -> SdCardFont::resolveStyle), so
+  // a style the face does not have folds into the one it does instead of
+  // costing a second pass. A face that really has both would now get one pass
+  // each, which is the point: you pay only for styles that exist.
+  {
+    counts = Counts{};
+    auto scope = fcm.createPrewarmScope();
+    fcm.recordText("plain ", 7, EpdFontFamily::REGULAR);
+    fcm.recordText("bold", 7, EpdFontFamily::BOLD);
+    scope.endScanAndPrewarm();
+    eq(counts.prewarms, 1, "one font is one prewarm however many styles it draws");
+    eq(counts.lastStyleMask, 0x01, "and the pass asks only for the style the face has");
+    eqs(counts.lastText, " abdilnop", "over the distinct characters of all of it");
+  }
+
+#if CROSSPOINT_VECTOR_FONTS
+  {
+    TtfEpdFont vector;
+    const std::map<int, TtfEpdFont*> vectors{{9, &vector}};
+    FontCacheManager mixed(noBuiltins, sdFonts, vectors);
+    counts = {};
+    for (int page = 0; page < 3; ++page) {
+      auto scope = mixed.createPrewarmScope(FontCacheManager::ScopeCache::Reader);
+      mixed.recordText("page", 9, EpdFontFamily::REGULAR);
+      mixed.recordText("bar", 7, EpdFontFamily::REGULAR);
+      auto moved = std::move(scope);
+      moved.endScanAndPrewarm();
+    }
+    eq(vector.clears, 0, "reader scopes retain vector coverage across pages and moves");
+    eq(vector.retries, 6, "reader scopes discard failed vector faces at both ends");
+    eq(vector.additions, 3, "reader pages add vector coverage without rebuilding it");
+    eq(vector.builds, 0, "reader scopes do not replace vector coverage");
+    eq(counts.clears, 6, "reader scopes still clear bitmap SD caches at both ends");
+    {
+      auto scope = mixed.createPrewarmScope();
+      mixed.recordText("transient", 9, EpdFontFamily::REGULAR);
+    }
+    eq(vector.clears, 2, "transient scopes keep the existing vector reset contract");
+    eq(vector.builds, 1, "transient scope replaces its vector coverage");
+    mixed.clearCache();
+    eq(vector.clears, 3, "explicit cache reset clears retained vector coverage");
+    mixed.releaseSdFontCaches();
+    eq(vector.releases, 1, "heap-critical transitions release vector caches");
+  }
+#endif
+  std::printf("prewarmscope: %d checks, %d failed\n", checks, failed);
+  return failed == 0 ? 0 : 1;
+}

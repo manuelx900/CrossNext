@@ -1,0 +1,10 @@
+{
+  "name": "AudioManager",
+  "version": "1.0.0",
+  "description": "FreeInk WAV playback through board-selected I2S codecs, including the Metalio UART-controlled slave I2S module. Asynchronous playback, volume and looping.",
+  "keywords": "audio, i2s, es8388, wav, eink",
+  "authors": [{"name": "FreeInk SDK Contributors"}],
+  "dependencies": {},
+  "platforms": "espressif32",
+  "frameworks": ["arduino"]
+}

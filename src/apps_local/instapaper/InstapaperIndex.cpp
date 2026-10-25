@@ -1,0 +1,321 @@
+#include "InstapaperIndex.h"
+
+#include <Utf8.h>
+
+#include <algorithm>
+#include <cstdio>
+#include <cstdlib>
+
+namespace instapaper {
+
+namespace {
+
+constexpr char kMagic[] = "instapaper";
+// 1 is the first. When a column is added or moved, bump this and teach
+// parseIndex the old order -- see the header for what happens otherwise.
+constexpr int kVersion = 1;
+
+// Flags share one column because a bool per column is a column per bool, and
+// every one of those is a chance to add the next one in the wrong place.
+constexpr uint32_t kFlagRenderable = 1u << 0;
+constexpr uint32_t kFlagProgressDirty = 1u << 1;
+constexpr uint32_t kFlagArchivePending = 1u << 2;
+
+std::string field(std::string_view row, size_t& cursor) {
+  if (cursor > row.size()) return {};
+  const size_t tab = row.find('\t', cursor);
+  const size_t end = tab == std::string_view::npos ? row.size() : tab;
+  std::string value(row.substr(cursor, end - cursor));
+  cursor = tab == std::string_view::npos ? row.size() + 1 : tab + 1;
+  return value;
+}
+
+uint32_t toUint(const std::string& text) { return static_cast<uint32_t>(std::strtoul(text.c_str(), nullptr, 10)); }
+
+int64_t toInt64(const std::string& text) { return static_cast<int64_t>(std::strtoll(text.c_str(), nullptr, 10)); }
+
+// The one definition of what this column may hold. serializeIndex clamps with
+// it too, so a wire value of 1e30 is written as "1.0000" rather than as the
+// forty characters "%.4f" would otherwise spell -- and so serialising an
+// article, parsing it and serialising it again cannot change the file.
+float clampProgress(const float value) {
+  if (!(value > 0.0f)) return 0.0f;  // also catches NaN, which would poison every later comparison
+  return value > 1.0f ? 1.0f : value;
+}
+
+float toFloat(const std::string& text) {
+  const double value = std::strtod(text.c_str(), nullptr);
+  if (!(value > 0.0)) return 0.0f;
+  return value > 1.0 ? 1.0f : static_cast<float>(value);
+}
+
+}  // namespace
+
+std::string sanitizeToken(const std::string_view text) {
+  std::string out;
+  for (const char c : text) {
+    if (out.size() >= kTokenLimit) break;
+    if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) out.push_back(c);
+  }
+  return out;
+}
+
+std::string sanitizeField(const std::string_view text) {
+  std::string out;
+  out.reserve(text.size());
+  bool lastWasSpace = false;
+  for (const char c : text) {
+    const bool isSpace = c == '\t' || c == '\n' || c == '\r' || c == ' ';
+    if (isSpace) {
+      if (!out.empty() && !lastWasSpace) out.push_back(' ');
+      lastWasSpace = true;
+      continue;
+    }
+    out.push_back(c);
+    lastWasSpace = false;
+  }
+  while (!out.empty() && out.back() == ' ') out.pop_back();
+  return out;
+}
+
+std::string articleFileName(const int64_t id) {
+  char buf[32];
+  std::snprintf(buf, sizeof(buf), "a%lld.txt", static_cast<long long>(id));
+  return buf;
+}
+
+std::string serializeIndex(const std::vector<Article>& articles) {
+  std::string out = std::string(kMagic) + "\t" + std::to_string(kVersion) + "\n";
+  for (const Article& a : articles) {
+    if (a.id == 0) continue;
+    uint32_t flags = 0;
+    if (a.renderable) flags |= kFlagRenderable;
+    if (a.progressDirty) flags |= kFlagProgressDirty;
+    if (a.archivePending) flags |= kFlagArchivePending;
+    // No shared buffer for the row. It used to be one char[160] holding every
+    // numeric column AND both tokens, and snprintf does not overflow -- it
+    // truncates, which here is worse. A long `hash` did not corrupt memory; it
+    // cut the row off mid-number, so the tail (domain, title) was appended
+    // straight onto a half-written column and the next parse read the title
+    // out of the sha column, lost savedAt, progress and the flags, and with
+    // them the archive intent the reader had already pressed. A short row is a
+    // corrupted row because this index IS the sync protocol.
+    //
+    // Every column below is bounded where it is written: the integers by
+    // std::to_string, the float by clampProgress, the two tokens by
+    // sanitizeToken. Nothing here can be made too long by anything the service
+    // sends.
+    char progressText[16];
+    std::snprintf(progressText, sizeof(progressText), "%.4f", static_cast<double>(clampProgress(a.progress)));
+
+    out += std::to_string(static_cast<long long>(a.id));
+    out += '\t';
+    out += sanitizeToken(a.hash);
+    out += '\t';
+    out += sanitizeToken(a.sha);
+    out += '\t';
+    out += std::to_string(a.savedAt);
+    out += '\t';
+    out += std::to_string(a.words);
+    out += '\t';
+    out += std::to_string(static_cast<unsigned>(a.minutes));
+    out += '\t';
+    out += progressText;
+    out += '\t';
+    out += std::to_string(a.progressAt);
+    out += '\t';
+    out += std::to_string(flags);
+    out += '\t';
+    out += sanitizeField(a.domain);
+    out += '\t';
+    // Title last: the only free-form column, so damage stops at the newline.
+    out += sanitizeField(a.title);
+    out += '\n';
+  }
+  return out;
+}
+
+bool parseIndex(const std::string_view text, std::vector<Article>& out) {
+  out.clear();
+  size_t pos = 0;
+  const size_t firstBreak = text.find('\n');
+  if (firstBreak == std::string_view::npos) return false;
+  const std::string_view header = text.substr(0, firstBreak);
+  if (header.rfind(kMagic, 0) != 0) return false;
+  size_t headerCursor = 0;
+  field(header, headerCursor);
+  const int version = std::atoi(field(header, headerCursor).c_str());
+  if (version < 1 || version > kVersion) return false;
+  pos = firstBreak + 1;
+
+  while (pos < text.size()) {
+    const size_t lineEnd = text.find('\n', pos);
+    const std::string_view row =
+        text.substr(pos, lineEnd == std::string_view::npos ? std::string_view::npos : lineEnd - pos);
+    pos = lineEnd == std::string_view::npos ? text.size() : lineEnd + 1;
+    if (row.empty()) continue;
+
+    size_t cursor = 0;
+    Article a;
+    a.id = toInt64(field(row, cursor));
+    a.hash = sanitizeToken(field(row, cursor));
+    a.sha = sanitizeToken(field(row, cursor));
+    a.savedAt = toUint(field(row, cursor));
+    a.words = toUint(field(row, cursor));
+    a.minutes = static_cast<uint16_t>(toUint(field(row, cursor)));
+    a.progress = toFloat(field(row, cursor));
+    a.progressAt = toUint(field(row, cursor));
+    const uint32_t flags = toUint(field(row, cursor));
+    a.renderable = (flags & kFlagRenderable) != 0;
+    a.progressDirty = (flags & kFlagProgressDirty) != 0;
+    a.archivePending = (flags & kFlagArchivePending) != 0;
+    // The two columns a reader looks at, folded on the way OUT of the index as
+    // well as in. An index written before the fold existed holds real curly
+    // quotes and em dashes, and the reading cut has no glyph for either, so a
+    // queue saved last week would keep its holes until it was re-synced.
+    a.domain = utf8FoldTypography(field(row, cursor));
+    a.title = utf8FoldTypography(field(row, cursor));
+
+    // A row with no id is damage rather than data. A row with no title is
+    // not: an untitled bookmark is a thing Instapaper really returns, and
+    // the queue draws its domain instead.
+    if (a.id == 0) continue;
+    out.push_back(std::move(a));
+  }
+  return true;
+}
+
+void sortForQueue(std::vector<Article>& articles) {
+  std::stable_sort(articles.begin(), articles.end(), [](const Article& a, const Article& b) {
+    if (a.savedAt != b.savedAt) return a.savedAt > b.savedAt;
+    return a.id > b.id;
+  });
+}
+
+std::vector<const Article*> visible(const std::vector<Article>& articles) {
+  std::vector<const Article*> out;
+  out.reserve(articles.size());
+  for (const Article& a : articles) {
+    if (a.archivePending) continue;
+    out.push_back(&a);
+  }
+  return out;
+}
+
+uint32_t maxTopLine(const uint32_t visibleLines, const uint32_t lineCount) {
+  return lineCount > visibleLines ? lineCount - visibleLines : 0;
+}
+
+uint32_t turnedTopLine(const uint32_t topLine, const uint32_t visibleLines, const uint32_t lineCount, const int delta) {
+  if (visibleLines == 0) return topLine;
+  const uint32_t ceiling = maxTopLine(visibleLines, lineCount);
+  if (delta > 0) return topLine + visibleLines > ceiling ? ceiling : topLine + visibleLines;
+  return topLine > visibleLines ? topLine - visibleLines : 0;
+}
+
+uint32_t topLineFor(const float progress, const uint32_t visibleLines, const uint32_t lineCount) {
+  if (!(progress > 0.0f) || lineCount == 0 || visibleLines == 0) return 0;
+  const uint32_t ceiling = maxTopLine(visibleLines, lineCount);
+  const float clamped = progress > 1.0f ? 1.0f : progress;
+  const uint32_t wanted = static_cast<uint32_t>(clamped * static_cast<float>(lineCount));
+  return wanted > ceiling ? ceiling : wanted;
+}
+
+float progressFor(const uint32_t topLine, const uint32_t visibleLines, const uint32_t lineCount) {
+  if (lineCount == 0) return 0.0f;
+  if (topLine + visibleLines >= lineCount) return 1.0f;
+  return static_cast<float>(topLine) / static_cast<float>(lineCount);
+}
+
+Pages pagesFor(const uint32_t topLine, const uint32_t visibleLines, const uint32_t lineCount) {
+  Pages out;
+  if (visibleLines == 0 || lineCount == 0) return out;
+  out.count = (lineCount + visibleLines - 1) / visibleLines;
+  if (out.count == 0) out.count = 1;
+  out.page = topLine + visibleLines >= lineCount ? out.count : topLine / visibleLines + 1;
+  if (out.page > out.count) out.page = out.count;
+  if (out.page == 0) out.page = 1;
+  return out;
+}
+
+std::vector<Article> composeHave(const std::vector<Article>& local, const std::vector<int64_t>& hasText) {
+  std::vector<Article> out;
+  out.reserve(hasText.size());
+  for (const Article& a : local) {
+    if (std::find(hasText.begin(), hasText.end(), a.id) != hasText.end()) out.push_back(a);
+  }
+  return out;
+}
+
+MergePlan mergeSummary(std::vector<Article>& local, const std::vector<Article>& incoming,
+                       const std::vector<int64_t>& deleted, const std::vector<int64_t>& archived,
+                       const std::vector<int64_t>& hasText) {
+  MergePlan plan;
+  const auto names = [](const std::vector<int64_t>& ids, const int64_t id) {
+    return std::find(ids.begin(), ids.end(), id) != ids.end();
+  };
+
+  // Only what this sync actually claimed. `have` carries the dirty progress
+  // up, and composeHave leaves out any row whose text is missing, so those
+  // rows were never sent and their flags must survive to be sent later. This
+  // used to clear every row on the stated assumption that `have` held them
+  // all; when that stopped being true the flag would have been dropped
+  // without the position ever reaching Instapaper.
+  for (Article& a : local) {
+    if (names(hasText, a.id)) a.progressDirty = false;
+  }
+
+  for (const Article& in : incoming) {
+    auto it = std::find_if(local.begin(), local.end(), [&](const Article& a) { return a.id == in.id; });
+    if (it == local.end()) {
+      local.push_back(in);
+      local.back().progressDirty = false;
+      plan.download.push_back(in.id);
+      continue;
+    }
+    const std::string previousSha = it->sha;
+    const float localProgress = it->progress;
+    const uint32_t localProgressAt = it->progressAt;
+    const bool wasPending = it->archivePending;
+    *it = in;
+    it->progressDirty = false;
+    it->archivePending = wasPending;
+    // Timestamps decide, both ways. The bridge sent ours up in the same call
+    // that fetched these, so a server value that is still older means our
+    // reading is the newer fact and putting the server's back would undo it.
+    if (localProgressAt > in.progressAt) {
+      it->progress = localProgress;
+      it->progressAt = localProgressAt;
+    }
+    if (it->sha != previousSha) plan.download.push_back(it->id);
+  }
+
+  // An article the index knows and the card does not must be fetched however
+  // untouched its metadata looks: a download can fail after the index was
+  // saved, and without this the row would sit there forever opening nothing.
+  for (const Article& a : local) {
+    if (names(hasText, a.id)) continue;
+    if (!names(plan.download, a.id)) plan.download.push_back(a.id);
+  }
+
+  const auto gone = [&](const Article& a) { return names(deleted, a.id) || names(archived, a.id); };
+  for (const Article& a : local) {
+    if (gone(a)) plan.drop.push_back(a.id);
+  }
+  local.erase(std::remove_if(local.begin(), local.end(), gone), local.end());
+
+  sortForQueue(local);
+  if (local.size() > kMaxArticles) {
+    for (size_t i = kMaxArticles; i < local.size(); ++i) plan.drop.push_back(local[i].id);
+    local.resize(kMaxArticles);
+  }
+  // Anything trimmed off the end must not also be queued for download: it is
+  // about to lose its file, and fetching it first would spend a round trip
+  // writing bytes this function has already decided to delete.
+  plan.download.erase(std::remove_if(plan.download.begin(), plan.download.end(),
+                                     [&](const int64_t id) { return names(plan.drop, id); }),
+                      plan.download.end());
+  return plan;
+}
+
+}  // namespace instapaper

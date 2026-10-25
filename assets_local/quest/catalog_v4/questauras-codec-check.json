@@ -1,0 +1,9 @@
+{
+  "groups": {
+    "motifs": 50,
+    "motifsMasks": 50
+  },
+  "sha256": "3bc8596d3fc0101adecdc23c8ceb116cc6e4b8827a26b6c9e638d951f1fc7420",
+  "decodedBytes": 537600,
+  "packedBytes": 130238
+}

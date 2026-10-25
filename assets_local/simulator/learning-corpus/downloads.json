@@ -1,0 +1,42 @@
+[
+  {
+    "filename": "wikdict-en-es.zip",
+    "url": "https://download.wikdict.com/dictionaries/stardict/wikdict-en-es.zip"
+  },
+  {
+    "filename": "wikdict-es-en.zip",
+    "url": "https://download.wikdict.com/dictionaries/stardict/wikdict-es-en.zip"
+  },
+  {
+    "filename": "en-simple.tar.zst",
+    "url": "https://github.com/xxyzz/wiktionary_stardict/releases/download/20261018/en-simple.tar.zst"
+  },
+  {
+    "filename": "es-es.tar.zst",
+    "url": "https://github.com/xxyzz/wiktionary_stardict/releases/download/20261018/es-es.tar.zst"
+  },
+  {
+    "filename": "alphabet.apkg",
+    "url": "https://media.githubusercontent.com/media/AK1089/anki-decks/main/decks/alphabet/alphabet.apkg"
+  },
+  {
+    "filename": "amsterdam-metro-map.apkg",
+    "url": "https://media.githubusercontent.com/media/AK1089/anki-decks/main/decks/amsterdam-metro-map/amsterdam-metro-map.apkg"
+  },
+  {
+    "filename": "countries.apkg",
+    "url": "https://media.githubusercontent.com/media/AK1089/anki-decks/main/decks/countries/countries.apkg"
+  },
+  {
+    "filename": "ipa.apkg",
+    "url": "https://media.githubusercontent.com/media/AK1089/anki-decks/main/decks/ipa/ipa.apkg"
+  },
+  {
+    "filename": "periodic-table.apkg",
+    "url": "https://media.githubusercontent.com/media/AK1089/anki-decks/main/decks/periodic-table/periodic-table.apkg"
+  },
+  {
+    "filename": "tube-map.apkg",
+    "url": "https://media.githubusercontent.com/media/AK1089/anki-decks/main/decks/tube-map/tube-map.apkg"
+  }
+]

@@ -1,0 +1,103 @@
+#pragma once
+#include <ArduinoJson.h>
+#include <PersistableStore.h>
+
+#include <cstdint>
+#include <string>
+
+// Document matching method for KOReader sync
+enum class DocumentMatchMethod : uint8_t {
+  FILENAME = 0,  // Match by filename (simpler, works across different file sources)
+  BINARY = 1,    // Match by partial MD5 of file content (more accurate, but files must be identical)
+};
+
+// How manual "Sync Progress" resolves differences after fetching remote progress.
+enum class KOReaderSyncBehavior : uint8_t {
+  ASK_EVERY_TIME = 0,  // Preserve legacy behavior: always show Apply/Upload choices.
+  SMART = 1,           // Auto-resolve simple cases using furthest progress.
+};
+
+// Protocol family/capability profile selected for the configured sync server.
+enum class KOReaderServerType : uint8_t {
+  CROSSPOINT = 0,  // CrossPoint protocol extensions, including rich position.
+  KOSYNC = 1,      // Strict standard KOSync payloads.
+  OTHER = 2,       // Compatible custom servers that accept CrossPoint-style extensions.
+};
+
+/**
+ * Singleton class for storing KOReader sync credentials on the SD card.
+ * Passwords are XOR-obfuscated with the device's unique hardware MAC address
+ * and base64-encoded before writing to JSON (not cryptographically secure,
+ * but prevents casual reading and ties credentials to the specific device).
+ */
+
+class KOReaderCredentialStore : public PersistableStore<KOReaderCredentialStore> {
+ private:
+  std::string username;
+  std::string password;
+  std::string serverUrl;                                            // Custom sync server URL (empty = default)
+  DocumentMatchMethod matchMethod = DocumentMatchMethod::FILENAME;  // Default to filename for compatibility
+  bool sendMetadata = true;                                         // Send document metadata with progress sync
+  bool syncClippings = false;                                       // Opt-in crosspoint-sync extension
+  KOReaderSyncBehavior syncBehavior = KOReaderSyncBehavior::SMART;
+  KOReaderServerType serverType = KOReaderServerType::CROSSPOINT;
+
+  // Private constructor for singleton
+  KOReaderCredentialStore() = default;
+  ~KOReaderCredentialStore() = default;
+
+  friend class PersistableStore<KOReaderCredentialStore>;
+
+ public:
+  static KOReaderCredentialStore& getInstance() {
+    return PersistableStore<KOReaderCredentialStore>::getLoadedInstance();
+  }
+  static const char* getFilePath() { return "/.crosspoint/koreader.json"; }
+  void toJson(JsonDocument& doc) const;
+  bool fromJson(JsonVariantConst doc);
+
+  // Credential management
+  void setCredentials(const std::string& user, const std::string& pass);
+  const std::string& getUsername() const { return username; }
+  const std::string& getPassword() const { return password; }
+
+  // Get MD5 hash of password for API authentication
+  std::string getMd5Password() const;
+
+  // Check if credentials are set
+  bool hasCredentials() const;
+
+  // Clear credentials
+  void clearCredentials();
+
+  // Server URL management
+  void setServerUrl(const std::string& url);
+  const std::string& getServerUrl() const { return serverUrl; }
+
+  // Get base URL for API calls (with http:// normalization if no protocol, falls back to default)
+  std::string getBaseUrl() const;
+
+  // Server protocol/capability profile.
+  void setServerType(KOReaderServerType type);
+  KOReaderServerType getServerType() const { return serverType; }
+  bool supportsRichProgress() const { return serverType != KOReaderServerType::KOSYNC; }
+  bool supportsExtendedMetadata() const { return serverType == KOReaderServerType::OTHER; }
+
+  // Document matching method
+  void setMatchMethod(DocumentMatchMethod method);
+  DocumentMatchMethod getMatchMethod() const { return matchMethod; }
+
+  // Send metadata setting
+  void setSendMetadata(bool enabled);
+  bool getSendMetadata() const { return sendMetadata; }
+
+  void setSyncClippings(bool enabled) { syncClippings = enabled; }
+  bool getSyncClippings() const { return syncClippings; }
+
+  // Sync behavior
+  void setSyncBehavior(KOReaderSyncBehavior behavior);
+  KOReaderSyncBehavior getSyncBehavior() const { return syncBehavior; }
+};
+
+// Helper macro to access credential store
+#define KOREADER_STORE KOReaderCredentialStore::getInstance()

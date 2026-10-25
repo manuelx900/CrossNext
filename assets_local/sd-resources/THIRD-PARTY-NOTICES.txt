@@ -1,0 +1,56 @@
+CROSSNEXT RESOURCE COLLECTION - THIRD-PARTY NOTICES
+Reviewed and acquired: 2026-10-20
+
+These resources are copyrighted works under open licenses, not a claim of
+public-domain status. Each component retains its own license. Combining data
+and fonts in this ZIP does not relicense the firmware or other components.
+No affiliation with or endorsement by the providers is implied.
+
+FONTS - SIL OPEN FONT LICENSE 1.1
+Families: Bitter, Lexend Deca, Literata, Atkinson Hyperlegible, Merriweather,
+EB Garamond, PT Serif, Inter. Four static faces per family.
+Each fonts/<family>/OFL contains the original copyright notice and full license.
+Retain those files when redistributing. OFL fonts may be bundled with software;
+the font software must remain under OFL and must not be sold by itself.
+If modifying a font, observe any Reserved Font Names in that family's license.
+The six added families are unmodified upstream binary releases, not locally
+subsetted or converted fonts. Bitter/Lexend Deca are inherited from the existing
+CrossInk reference bundle, preserved without further modification here.
+Exact source URLs, pinned revisions or release members and hashes: SOURCES.json.
+Official license and FAQ: https://openfontlicense.org/
+
+DICTIONARY DATA - CREATIVE COMMONS ATTRIBUTION-SHAREALIKE 4.0 INTERNATIONAL
+English Simple and Spanish Wiktionary: text by Wiktionary contributors,
+converted to StarDict by xxyzz / wiktionary_stardict, release 20261018.
+Provider: https://xxyzz.github.io/wiktionary_stardict/
+WikDict EN-ES, ES-EN, EN-FR, FR-EN, EN-DE, DE-EN, EN-PT and PT-EN:
+Wiktionary contributors via DBnary, processed/published by WikDict / Karl Bartel,
+distributed through FreeDict. Upstream date 2026-06-23.
+Provider: https://www.wikdict.com/page/about
+The dictionary data and .ifo metadata are preserved without textual changes.
+The resources do not include separate dictionary image archives.
+Retain per-dictionary ATTRIBUTION.txt, original .ifo and full license notices.
+Identify any future adaptations and license adapted data under CC BY-SA 4.0
+or a permitted compatible license. Do not impose DRM or additional restrictions
+that prevent recipients from exercising their licensed rights.
+Full terms: licenses/CC-BY-SA-4.0.txt and each dictionary's copy.
+Official license: https://creativecommons.org/licenses/by-sa/4.0/
+
+OPTIONAL MONOLINGUAL CSS - GPL VERSION 3 OR LATER
+The two .css files beside the xxyzz dictionaries are preserved source files
+from https://github.com/xxyzz/wiktionary_stardict . Their full corresponding
+source is included directly as CSS; no CSS binary or modified version is shipped.
+See licenses/GPL-3.0.txt and the same license in each affected dictionary folder.
+The converter program itself is not included in the resources ZIP.
+
+OTHER CONTENT
+Reading Adventure artwork follows the project's existing asset terms. The
+third-party font/dictionary licenses above do not grant rights in that artwork.
+Bestiary's independent 700-entry catalogue is built into compatible firmware;
+an optional custom pack is installed separately. Betting remains reserved.
+This notice records verified provider license statements and provenance; it
+does not guarantee the absence of every possible third-party claim.
+
+Local dictionary modifications: unrelated reference entries were removed.
+Index offsets, synonym pointers and compressed chunk tables were regenerated.
+Upstream hashes and local transformations are recorded in SOURCES.json.

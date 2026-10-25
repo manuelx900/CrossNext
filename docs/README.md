@@ -1,0 +1,144 @@
+# What is in docs/
+
+This directory includes CrossNext documentation and inherited CrossPlay and
+CrossPoint references. Start with the [CrossNext README](../README.md) and
+[build guide](contributing/getting-started.md) for this release. The release
+tooling and service descriptions below also document upstream workflows;
+they do not describe a CrossNext-hosted deployment.
+
+**Upstream's reference docs keep upstream's filenames**, so merges from
+CrossPoint stay cheap: `activity-manager.md`, `comparison.md`, `dictionary.md`,
+`file-formats.md`, `fix-bricked-xteink.md`, `focus-reading.md`,
+`hyphenation-trie-format.md`, `i18n.md`, `plugin-events.md`, `sd-card-fonts.md`,
+`sd-plugins.md`, `translators.md`, `troubleshooting.md`, `webserver*.md`,
+`contributing/` and `images/`. The two plugin docs arrived with upstream's SD
+plugin system in the 2026-09-30 sync.
+
+`crosspoint-readme.md` is the exception to the naming rule: it is upstream's
+README, moved here when the fork took the `README.md` filename, and its
+internal links were re-based when it moved.
+
+`comparison.md` is upstream's too, and it is a snapshot rather than a current
+statement: it compares a named CrossPoint version against the stock XTOS
+firmware, says nothing about this fork, and nothing updates it. Read it as
+history.
+
+**A shared filename is not a byline, and this paragraph used to claim it was.**
+It said those files were "untouched", and several are not. The fork has edited
+`activity-manager.md`, `i18n.md`, `translators.md`, `troubleshooting.md`,
+`webserver.md` and `webserver-endpoints.md` at the root, plus most of
+`contributing/`. Keeping upstream's name is a merge decision, not an authorship
+claim. Ask git rather than reading a list that goes stale:
+
+```bash
+# verbatim upstream, upstream's file with fork edits, or ours alone?
+f=docs/i18n.md
+git cat-file -e crosspoint/develop:"$f" 2>/dev/null \
+  && { [ "$(git rev-parse crosspoint/develop:"$f")" = "$(git rev-parse HEAD:"$f")" ] \
+       && echo "upstream, verbatim" || echo "upstream's file, edited here"; } \
+  || echo "this fork's"
+```
+
+`contributing/` is worth naming file by file, because it is the directory a
+newcomer opens on instinct and it is no longer upstream's alone:
+
+| File                         | Who wrote it                                                                                         |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `getting-started.md`         | **rewritten for this fork.** Upstream's version cloned the wrong repository and built the wrong chip |
+| `landing-and-integration.md` | **this fork's.** No upstream counterpart                                                             |
+| `development-workflow.md`    | upstream's, with fork edits (branch, checks, where a PR goes)                                        |
+| `testing-debugging.md`       | upstream's filename, almost entirely fork content now                                                |
+| `README.md`                  | upstream's, index extended                                                                           |
+| `architecture.md`            | upstream's, one link re-pointed                                                                      |
+| `touch-and-ui.md`            | upstream's, verbatim                                                                                 |
+
+`host-tests/docsclaims/` holds that table to the repository: every row is
+checked against `crosspoint/develop`, so a row that stops being true is a test
+failure rather than something the next reader has to notice.
+
+**The fork's cross-cutting docs also live at the root**: how to build an app
+(`building-apps.md`), how it should look (`design-language.md`), what the
+project is (`identity.md`), the shelf contract (`shelf.md`), the two real
+buttons (`buttons.md`), how to
+reflash and inspect a device over Wi-Fi with no cable
+(`developer-mode.md`), how the two open bridges are attacked and defended
+(`bridge-security.md`), and what is knowingly unfinished (`open-items.md`).
+
+Four more are narrower but no less load-bearing, and this paragraph did not
+name any of them until the suite started asking: what the glass hides
+(`bezel-insets.md`), the unbounded build cache that fails builds by filling
+the disk (`build-cache.md`), the pixel budget an unwrapped string has in 32
+languages (`i18n-overflow.md`), and where Trivia's questions come from
+(`trivia-curation.md`).
+
+**Two files, and only one of them is published.** `release-body.md` is what a
+tag publishes, and it is deliberately tiny: one line of links, then this
+release's `### What is new in <version>` block. Nothing else. It describes
+neither the project nor how to install it, because `README.md`, `install.md`
+and the site all already do and a release page that repeats them is a release
+page nobody finishes. `release-notes.md` is the history, newest first, and
+nothing publishes it. They were one file until 2026-09-04, which is why
+v1.12.21's release page ran to 20,402 characters and carried six earlier
+releases under "What WAS new in ...".
+
+Neither is written by hand. `scripts_local/release_notes.py` rewrites the block
+in the body and prepends the same block to the history; `scripts_local/ship.sh`
+commits both in the configured release workspace before the build that ships (the version is
+compiled into the firmware, so the order is load-bearing). Edit the tooling, not the files -- except the body's
+one standing line of links, which is prose and is left alone by the generator.
+`host-tests/release` holds the body to a size ceiling and refuses install steps
+on it; growing it back is a test failure, not a judgement call.
+
+Only landings a person could receive something different from become notes, and
+the question is put to `scripts_local/device-build-needed.sh --ships` -- the
+same column of the same table `release-needed.sh` uses to decide whether to
+release at all, asked rather than copied. That table carries two independent
+attributes per path prefix, `builds` and `ships`, because the two questions have
+opposite risk profiles: a wrong "build" costs runner minutes, a wrong "release"
+puts an update prompt on every device in the field. While one predicate answered
+both, `.gitignore` cut v1.12.21 (live for a build, invisible to a release) and a
+fix to `crossplay-release.yml` was invisible to both (card #190). A path in no
+row of the table is not guessed at: the build runs and says so, and the release
+question REFUSES, naming the path.
+
+`ships` has three values, not two, because "cut a release" and "put a line on
+the page" are two more questions that were sharing one answer. `yes` is a change
+in the thing a person uses. `quiet` is a change only in how the release was
+packaged -- `scripts_local/ship.sh`, the one thing that uploads what anybody
+downloads, and `.github/workflows/crossplay-release.yml` before it was deleted
+on 2026-09-21. A `quiet` landing cuts a release exactly like a `yes` one, and
+it earns a bullet only if its pull request wrote a `What is new:` line, because
+packaging prose is written for developers and the page is read by players. CI
+used to ask for that line at pull-request time; with no pull-request run left
+to ask, the person who knows what changed writes it in the description and
+`release_notes.py` reads it there.
+
+The excluded landings are named in ship.sh's output and nowhere else.
+They used to be a trailing bullet -- "Plus 4 changes nothing on the device can
+see." -- which is itself a line a player cannot act on, on a page written for
+players. A sync's notes come from its body, which lists the upstream commit
+subjects, rather than from a title that only counts them.
+
+This text is read on the GitHub release page. The device never shows it: it
+parses `tag_name` and the asset's name, url and size, and the update screen
+draws two version numbers. What a device raises is "there is a release".
+
+`install.md` is the reader-facing one: everything about getting the firmware
+onto a device except the one-click browser install, which stays on the front
+page because it is what almost everybody wants. It exists so the README does
+not have to carry esptool invocations, the update-an-existing-install rules and
+Developer Mode's pairing flow above the fold.
+
+`developer-mode.md` covers a runtime setting and the routes it exposes. It is a
+fork doc rather than a section in upstream's `webserver-*.md` because those stay
+untouched so merges from CrossPoint stay cheap.
+
+**Everything about one app lives in [apps/](apps/)**, named after its
+directory in `src/apps_local/` (`dungeon.md` for the app the shelf calls
+D&Diagrams, `connectfour.md`, `chess.md`). Auxiliary records keep a
+qualifying suffix (`study-deck-format.md`, `xkcd-pack-format.md`). Not every
+app has a doc; one earns a doc when something about it would be rediscovered
+the hard way otherwise.
+
+[PaperMono support](papermono.md) documents the PaperMono / Lite hardware,
+build environments, installation assets and device verification steps.

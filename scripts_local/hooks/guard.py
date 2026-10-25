@@ -1,0 +1,1014 @@
+#!/usr/bin/env python3
+"""Claude Code hooks that make the workspace rules physical.
+
+Three rules kept getting forgotten because they lived in prose: work never
+happens in the integration tree, workers talk only to the orchestrator, and
+a turn does not end by handing the decision back to Mario. This script is
+wired from the workspace root's .claude/settings.json and runs as:
+
+    guard.py pretool        PreToolUse: refuse the edit, command or message
+    guard.py stop           Stop: refuse to end a turn on a hand-back
+    guard.py session-start  SessionStart: print the contract and the session id
+
+It reads the board (<workspace>/.board, written only by tools_local/board/
+board.py) to know who the orchestrator is, who holds the integration tree,
+and which card this session is bound to. It is INERT until
+<workspace>/.board/enabled exists, so installing it changes nothing; arming it
+is one `touch`, disarming is one `rm`.
+
+Exit 2 with a reason on stderr is the only way a hook blocks; anything else
+is a no-op. host-tests/bugflow/run.sh drives every branch below with fixture
+input, including the ones that must NOT block.
+"""
+
+import datetime as dt
+import hashlib
+import json
+import shlex
+import time
+import os
+import pathlib
+import re
+import subprocess
+import sys
+
+HANDBACK = re.compile(
+    r"(let me know|say the word|want me to|shall i\b|should i\b|do you want|"
+    r"would you like|ready when you are|your call|next steps?:|what'?s (left|next)|"
+    r"waiting (on|for) you|tell me (which|if|whether|what)|if you'd rather|"
+    r"i'll wait|awaiting your)",
+    re.IGNORECASE,
+)
+
+# A verb counts only as a command word: not inside a flag (`grep -ln` is not
+# `ln`) and not inside a quoted string (a grep PATTERN that says "sed -i" reads
+# a file, it does not edit one). Both refused read-only commands on 2026-09-04.
+WRITE_VERB = re.compile(
+    r"((?<![\w-])sed\s+-i|(?<![\w-])(tee|cp|mv|rm|touch|mkdir|ln|truncate)(?![\w-])|"
+    r"(?<![\w-])git\s+(?:-C\s+\S+\s+|--git-dir=\S+\s+|--work-tree=\S+\s+)*(merge|commit|checkout|reset|rebase|cherry-pick|tag(?!\s+(?:-l|-n|--list|--contains|--no-contains|--merged|--no-merged|--points-at)\b)|push|pull|switch|stash|apply|am|clean|restore|revert|worktree\s+(?:remove|prune|add|move)|branch\s+-[Dfdm]|update-ref|gc)\b|"
+    r"(?<![\w-])pio\s+run|\bbuild\.py|\bprecompress\.py)"
+)
+QUOTED = re.compile(r"'[^']*'|\"[^\"]*\"")
+TREE_NAME = re.compile(r"(?:^|[\s\"'=(/])wt/([A-Za-z0-9_.-]+)(?=[/\s\"');&|]|$)")
+
+
+def tree_names_in(seg):
+    """The trees one command segment writes into: those named in its unquoted
+    text, and those in quoted strings that are PATHS. A quoted string with
+    whitespace in it is a message or a format (`git commit -m 'fix for wt/x'`,
+    `printf 'note on wt/x\\n' >> notes.md`), and a tree it mentions is not a
+    tree it writes: the rule's first refusal, minutes after it went live, was
+    a printf naming a tree into a memory file. A bash -c payload is searched
+    as segments of its own, so the names inside it are still seen."""
+    names = TREE_NAME.findall(QUOTED.sub(" ", seg))
+    for q in QUOTED.findall(seg):
+        if not re.search(r"\s", q[1:-1]):
+            names += TREE_NAME.findall(q)
+    return names
+
+
+# Verbs that destroy or rewrite another actor's work in a tree; refused against
+# a tree the caller does not hold whatever the holder's liveness (a sweep once
+# committed another worker's in-progress diff with a reassuring message).
+DESTRUCTIVE = re.compile(
+    r"(?<![\w-])git\s+(?:-C\s+\S+\s+|--git-dir=\S+\s+|--work-tree=\S+\s+)*(worktree\s+(remove|prune|add|move)|branch\s+-[Dfdm]|update-ref|reset\s+--hard|clean\b|checkout\b|switch\b|restore\b|stash|commit|rebase|merge|pull|apply|am|cherry-pick|revert|gc)\b"
+    r"|(?<![\w-])rm\s+-[a-zA-Z]*[rR][a-zA-Z]*f?\s"
+)
+# A redirect whose TARGET is a file (2>&1 and >/dev/null are not writes into anything of ours).
+REDIRECT = re.compile(r"(?<![0-9&<])>{1,2}\s*(?!&)(\S+)")
+HEREDOC = re.compile(r"<<-?\s*['\"]?(\w+)['\"]?[^\n]*\n.*?\n\s*\1\s*(?=\n|$)", re.S)
+
+RAW_PIO = re.compile(r"(^|[;&|(]\s*|&&\s*)pio\s+run\b")
+
+# Publishing by hand, in the three spellings that reach users.
+#
+# Since the GitHub builds were removed, scripts_local/ship.sh is the only path
+# from a green gate to a release, and it is the only thing that gets the order
+# right: platformio.ini compiles the version into both release envs and
+# OtaUpdater.cpp:119 compares a release's tag against that compiled string, so
+# a tag pushed over images built before the bump leaves every device offering
+# an update it already installed. It is also the only thing that checks the
+# three magic numbers, and an unmerged image published as a full one bricks
+# the device that installs it.
+#
+# A tag push is included because crossplay-release.yml used to fire on `v*`
+# and the reflex outlived it: pushing the tag now publishes nothing and leaves
+# a version in the history with no release against it.
+#
+# This catches an agent typing the command. It does not catch ship.sh's own
+# calls, which is the point -- the hook sees the Bash tool's command, and
+# ship.sh runs these inside itself.
+MANUAL_RELEASE = re.compile(
+    r"(?:^|[;&|(\n]\s*|&&\s*)(?:"
+    r"gh\s+release\s+(?:create|upload)"
+    # CREATING a version tag. Reading and DELETING one are explicitly not
+    # refused: `git tag -d` and `--list` are how you inspect and how you undo,
+    # and the moment you need them most is right after a publish went wrong.
+    r"|git\s+tag\s+(?!-d\b|--delete\b|-l\b|--list\b|--contains\b|--points-at\b|--merged\b|-n)"
+    r"(?:-[a-zA-Z]+\s+|--[a-z-]+\s+)*['\"]?v[0-9]"
+    r"|git\s+push\s+\S+\s+(?:refs/tags/)?['\"]?v[0-9]"
+    r"|git\s+push\s+(?:\S+\s+)?--tags"
+    r")",
+    re.M,
+)
+
+# An actual invocation of ship.sh, not the string appearing anywhere in the
+# command. `gh release create v1 # ship.sh` disabled the guard above, and the
+# refusal text itself tells you to run ./scripts_local/ship.sh, so the bypass
+# was one copy-paste from the error message.
+SHIP_INVOCATION = re.compile(r"(?:^|[;&|(\n]\s*|&&\s*)(?:\S*/)?ship\.sh(?:\s|$)", re.M)
+
+# `tee out.txt`, `tee -a out.txt`: the other way output reaches a file.
+TEE_TARGET = re.compile(r"(?<![\w-])tee(?:\s+-[\w-]+)*\s+(\S+)")
+
+
+def scratch_root_of(path, workspace=None):
+    """The scratchpad directory this path sits DIRECTLY in, or None.
+
+    Only the flat top level is refused. `<scratchpad>/<ns>/gate.log` is the
+    remedy and has to stay allowed, so this looks at the immediate parent and
+    nothing higher. A `scratchpad/` inside the repository (there is none today)
+    is somebody's source file and is none of this rule's business.
+    """
+    if not path:
+        return None
+    try:
+        p = pathlib.Path(str(path))
+    except (TypeError, ValueError):
+        return None
+    if p.parent.name != "scratchpad":
+        return None
+    if workspace is not None:
+        # BOTH sides resolved. Comparing a resolved workspace against an
+        # unresolved path silently fails under any symlinked component (/var ->
+        # /private/var on macOS is the common one), and the exemption then does
+        # not apply to the thing it exists for.
+        try:
+            ws = pathlib.Path(workspace).resolve()
+            rp = pathlib.Path(str(p)).resolve()
+            if ws == rp.parent or ws in rp.parents:
+                return None
+        except OSError:
+            pass
+    return p.parent
+
+
+def scratch_ns(board, sid, cwd):
+    """The name of this worker's own subdirectory inside the shared scratchpad.
+
+    One card, one branch, one worktree is the workflow's own rule, so the tree
+    name is a faithful per-worker key -- and it is the only thing that told the
+    colliding runs apart on 2026-09-05, when `pgrep -f "check.sh --committed"`
+    returned four pids across three worktrees and a session nearly killed two
+    siblings' gates. Falls back to the bound card, then to the session id, so
+    it always answers something.
+    """
+    try:
+        parts = pathlib.Path(cwd or ".").parts
+    except (TypeError, ValueError):
+        parts = ()
+    if "wt" in parts:
+        i = len(parts) - 1 - list(reversed(parts)).index("wt")
+        if i + 1 < len(parts):
+            return parts[i + 1]
+    card = (board.session(sid) or {}).get("card")
+    if card is not None:
+        return "card%s" % card
+    return "s-" + (norm_sid(sid)[:8] or "unknown")
+
+
+def scratch_targets(cmd, cwd):
+    """Every path this command would WRITE that lands in a scratchpad directory.
+
+    Redirects and `tee`, which is every shape the three incidents took. A `cd`
+    into the scratchpad carries, because `cd <scratchpad> && cat > pr.md` is the
+    same write spelled differently.
+
+    A heredoc's BODY is data and is dropped, but its opening line is kept: the
+    redirect in `python3 - <<'PY' > out.json` sits after the `<<` on that line,
+    and dropping the whole construct (which is what writes_into_tree does) loses
+    it. That is one of the two spellings the PR-body incident actually used.
+    """
+    body = HEREDOC.sub(lambda m: m.group(0).split("\n", 1)[0], cmd)
+
+    # A `>` INSIDE a quoted string is text, not a redirect. `writes_into_tree`
+    # learned this the expensive way (its comment names four read-only commands
+    # refused on 2026-09-04) and answers it by deleting quoted strings outright
+    # -- which here would also delete `> "<scratchpad>/gate.log"`, the very
+    # thing being looked for. So each quoted string becomes a placeholder and is
+    # put back only if it turns out to BE a target: `git log --grep="a > /x"`
+    # then carries no redirect at all, while `> "/x"` still carries one.
+    quoted = []
+
+    def _stash(m):
+        quoted.append(m.group(0)[1:-1])
+        return " __Q%d__ " % (len(quoted) - 1)
+
+    body = QUOTED.sub(_stash, body)
+
+    def _unstash(text):
+        m = re.fullmatch(r"__Q(\d+)__", text)
+        return quoted[int(m.group(1))] if m else text
+
+    here = cwd or ""
+    out = []
+    for seg in re.split(r"&&|\|\||;|\|", body):
+        seg = seg.strip()
+        if not seg:
+            continue
+        # A leading `(`, `{` or `pushd` is the same `cd`. Not exhaustive -- a
+        # path held in a shell variable defeats this whole scan -- but these
+        # three are what an agent actually types.
+        m = re.match(r"[({]?\s*(?:cd|pushd)\s+(\S+)", seg)
+        if m:
+            here = _unstash(m.group(1)).strip("\"'")
+            continue
+        cands = [r.group(1) for r in REDIRECT.finditer(seg)]
+        cands += [t.group(1) for t in TEE_TARGET.finditer(seg)]
+        for target in cands:
+            # A trailing `)`/`}`/`;` is the shell closing a group, not part of
+            # the name. It only affects the path this refusal PRINTS, but the
+            # refusal's whole value is that the remedy can be pasted.
+            target = _unstash(target).strip("\"'").rstrip(")};")
+            if not target or target.startswith("/dev/"):
+                continue
+            if not target.startswith("/") and here:
+                target = here.rstrip("/") + "/" + target
+            if "/scratchpad/" in target:
+                out.append(target)
+    return out
+
+
+def scratch_refusal(board, sid, cwd, path, sroot):
+    ns = scratch_ns(board, sid, cwd)
+    name = pathlib.PurePath(str(path)).name
+    return (
+        "Refused: %s is at the top of the SHARED agent scratchpad.\n"
+        "It is described as session-specific and it is not: several agents run under one "
+        "session id, and every one of them independently reaches for gate.log, pr.md, "
+        "out.txt, check.log. On 2026-09-05 that truncated one agent's gate log mid-build -- "
+        "it read 'all green.' while its own gate was still compiling -- and put another "
+        "session's text into the body of PR #117. The corruption is silent: a "
+        "truncated-then-rewritten file reads as a legitimate result, never as damage.\n"
+        "Write into your own subdirectory, which nothing else can choose:\n"
+        "  mkdir -p %s/%s   then use %s/%s/%s\n"
+        "And a gate's verdict is not a file at all: run check.sh, grep CHECKSH-VERDICT in "
+        "its own captured output, or read the transcript path it prints on its first line."
+        % (path, sroot, ns, sroot, ns, name)
+    )
+
+
+def find_root():
+    env = os.environ.get("BOARD_ROOT")
+    if env:
+        return pathlib.Path(env)
+    here = pathlib.Path(__file__).resolve()
+    for p in [here] + list(here.parents):
+        if (p / "firmware-next").is_dir() and (p / "wt").is_dir():
+            return p
+    pd = os.environ.get("CLAUDE_PROJECT_DIR")
+    if pd:
+        return pathlib.Path(pd)
+    return None
+
+
+def read_json(path):
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
+def norm_sid(s):
+    s = str(s or "")
+    return s[6:] if s.startswith("local_") else s
+
+
+class Board:
+    def __init__(self, root):
+        self.root = root
+        self.dir = root / ".board"
+
+    @property
+    def enabled(self):
+        return (self.dir / "enabled").exists()
+
+    def orchestrator(self):
+        return read_json(self.dir / "orchestrator.json") or {}
+
+    def integrator(self):
+        return read_json(self.dir / "integrator.json") or {}
+
+    def session(self, sid):
+        return read_json(self.dir / "sessions" / f"{norm_sid(sid)}.json") or {}
+
+    def card(self, cid):
+        if cid is None:
+            return None
+        return read_json(self.dir / "cards" / f"{int(cid)}.json")
+
+    @staticmethod
+    def claim_ids(claim):
+        """Both ids a claim may carry: the hook-visible session id and the desktop
+        app's local_... id. A session is addressed by either, so both count."""
+        return {
+            norm_sid(claim.get("session_id")),
+            norm_sid(claim.get("app_session")),
+        } - {""}
+
+    def is_orchestrator(self, sid):
+        return norm_sid(sid) in self.claim_ids(self.orchestrator())
+
+    def dispatcher(self):
+        return read_json(self.dir / "dispatcher.json") or {}
+
+    def is_dispatcher(self, sid):
+        return norm_sid(sid) in self.claim_ids(self.dispatcher())
+
+    def is_integrator(self, sid):
+        return norm_sid(sid) in self.claim_ids(self.integrator())
+
+    @staticmethod
+    def tree_gate_pid(tree_path):
+        """The pid of a check.sh still verifying `tree_path`, or None.
+
+        check.sh keeps ${TMPDIR:-/tmp}/xteink-check-<tag>.running with its pid
+        while it runs (tag = the first eight hex of sha1 of the tree's real
+        path, as check.sh computes it). A tree with a living gate is in use
+        whatever its holder is doing.
+        """
+        try:
+            real = str(pathlib.Path(tree_path).resolve())
+        except OSError:
+            return None
+        tag = hashlib.sha1(real.encode()).hexdigest()[:8]
+        lock = (
+            pathlib.Path(os.environ.get("TMPDIR") or "/tmp")
+            / f"xteink-check-{tag}.running"
+        )
+        try:
+            pid = int((lock.read_text() or "0").split()[0])
+        except (OSError, ValueError, IndexError):
+            return None
+        if pid <= 0:
+            return None
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            return None
+        try:
+            cmd = subprocess.run(
+                ["ps", "-o", "command=", "-p", str(pid)], capture_output=True, text=True
+            ).stdout
+        except OSError:
+            return None
+        return pid if "check.sh" in cmd else None
+
+    def touch_session(self, sid):
+        p = self.dir / "sessions" / f"{norm_sid(sid)}.json"
+        try:
+            if p.exists():
+                os.utime(p, None)
+        except OSError:
+            pass
+
+    def end_session(self, sid):
+        d = self.dir / "sessions"
+        p = d / f"{norm_sid(sid)}.json"
+        cur = read_json(p) or {"session_id": norm_sid(sid)}
+        cur["ended_at"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
+        # Every tree this session's actors hold loses its lease now; a tree with
+        # a running gate stays in use through the gate's own pid file.
+        td = self.dir / "trees"
+        if td.is_dir():
+            for tp in td.glob("*.json"):
+                rec = read_json(tp) or {}
+                if norm_sid(rec.get("session")) == norm_sid(sid):
+                    # The lease is the file's mtime, and this write would renew
+                    # it: write the expiry, then put the mtime back before it.
+                    rec["expired_at"] = time.time()
+                    try:
+                        with open(tp, "w") as f:
+                            json.dump(rec, f, indent=1)
+                        os.utime(tp, (rec["expired_at"] - 1, rec["expired_at"] - 1))
+                    except OSError:
+                        pass
+        try:
+            d.mkdir(parents=True, exist_ok=True)
+            with open(p, "w") as f:
+                json.dump(cur, f, indent=1)
+        except OSError:
+            pass
+
+    LEASE_MINUTES = 45
+    CLAIMANT_SECONDS = 180
+
+    @staticmethod
+    def actor_of(data):
+        """(session_id, agent_id or main): the per-worker identity the hook can
+        see. A subagent carries its parent's session_id and its own agent_id;
+        the session's own conversation carries no agent_id. Measured 2026-09-06."""
+        return f"{norm_sid(data.get('session_id'))}:{data.get('agent_id') or 'main'}"
+
+    def tree_record(self, name):
+        return read_json(self.dir / "trees" / f"{name}.json")
+
+    def leave_claimant(self, data, cmd):
+        """Leave the actor's identity for a `board bind` about to run.
+
+        The CLI cannot see the agent id; the hook can. Keyed on the card and
+        the tree, which both sides know verbatim (a word hash broke on
+        redirects, pipes and $VARS). Only a segment that IS a bind command
+        counts, not one that mentions the words. A note grants nothing by
+        itself; the CLI's bind does, under its lock.
+        """
+        for seg in re.split(r"&&|\|\||;|\|", HEREDOC.sub(" ", cmd)):
+            seg = seg.strip()
+            m = re.match(
+                r"(?:\S*python3\s+\S*board\.py|board)\s+bind\s+(\d+)\b(.*)$", seg
+            )
+            if not m:
+                continue
+            t = re.search(r"--tree(?:=|\s+)[\"']?([^\s\"']+)", m.group(2))
+            if not t:
+                continue
+            key = f"{int(m.group(1))}|{t.group(1).rstrip('/').split('/')[-1]}"
+            d = self.dir / "claimants"
+            try:
+                d.mkdir(parents=True, exist_ok=True)
+                with open(d / f"{key}.json", "w") as f:
+                    json.dump(
+                        {
+                            "session_id": norm_sid(data.get("session_id")),
+                            "agent_id": data.get("agent_id") or "main",
+                            "tool_use_id": data.get("tool_use_id"),
+                            "at": time.time(),
+                        },
+                        f,
+                    )
+                for old in d.glob("*.json"):
+                    try:
+                        if time.time() - old.stat().st_mtime > self.CLAIMANT_SECONDS:
+                            old.unlink()
+                    except OSError:
+                        pass
+            except OSError:
+                pass
+
+    def renew_leases(self, actor):
+        """Every tool call by an actor renews the lease of the trees it holds:
+        the record's mtime IS the lease, so a renewal is a touch and cannot
+        race a takeover's write."""
+        d = self.dir / "trees"
+        if not d.is_dir():
+            return
+        for p in d.glob("*.json"):
+            rec = read_json(p) or {}
+            if rec.get("actor") == actor:
+                try:
+                    os.utime(p, None)
+                except OSError:
+                    pass
+
+    def tree_name_of(self, path_or_cwd):
+        """The wt/<name> a path is inside, or None. Segment-exact: wt/openbridge
+        is not wt/openbridge2."""
+        try:
+            p = pathlib.Path(path_or_cwd)
+            if not p.is_absolute():
+                p = pathlib.Path(os.getcwd()) / p
+            p = p.resolve()
+            wt = (self.root / "wt").resolve()
+            if wt not in p.parents:
+                return None
+            return p.relative_to(wt).parts[0]
+        except (OSError, ValueError, IndexError):
+            return None
+
+    def lease_live(self, path, rec):
+        try:
+            mtime = path.stat().st_mtime
+        except OSError:
+            return False
+        if rec.get("expired_at") and float(rec["expired_at"]) >= mtime:
+            return False
+        return time.time() - mtime < self.LEASE_MINUTES * 60
+
+    def tree_verdict(self, actor, name):
+        """None when `actor` may write into wt/<name>; else the refusal text.
+
+        The default is refusal: a tree with no holder record is nobody's until
+        `board bind` says whose it is. A tree whose holder is another actor is
+        refused whether that holder is live or not; taking a tree over is
+        `board bind --take`, which checks the lease, the gate and the tree's
+        quiescence and tells the displaced card. Anything that goes wrong in
+        this decision refuses rather than allows: the hook's usual fail-open
+        would here be the collision it exists to prevent.
+        """
+        tree = f"wt/{name}"
+        try:
+            path = self.dir / "trees" / f"{name}.json"
+            rec = read_json(path)
+            if not rec or not rec.get("actor"):
+                return (
+                    f"Refused: {tree} has no holder. Bind your card to it first, then write: "
+                    f"{board_cmd(self.root)} bind <card> --session <your session id> --tree {tree}"
+                )
+            if rec["actor"] == actor:
+                return None
+            gate = self.tree_gate_pid(self.root / tree)
+            age = int((time.time() - path.stat().st_mtime) // 60)
+            live = self.lease_live(path, rec)
+            if gate is not None:
+                how = f"a check.sh is still verifying it (pid {gate}), so nobody but the holder writes until it ends"
+            elif live:
+                how = f"lease live for another {max(0, self.LEASE_MINUTES - age)} min; --take is refused until it expires"
+            else:
+                how = (
+                    f"lease expired {age - self.LEASE_MINUTES} min ago; take it over on purpose: "
+                    f"{board_cmd(self.root)} bind <card> --session <your session id> --tree {tree} --take "
+                    f"(refused while the tree has uncommitted work, unless that session has ended; look first: {board_cmd(self.root)} tree {name})"
+                )
+            return (
+                f"Refused: {tree} is held by {rec['actor']} for card #{rec.get('card')}; this command would write into it. "
+                f"Two actors in one tree verify nothing. {how}. A tree of your own: ./scripts/wt.sh new <name>"
+            )
+        except Exception as e:  # noqa: BLE001
+            return f"Refused: the tree rule for {tree} could not be evaluated ({type(e).__name__}: {e}); refusing rather than allowing a write into a tree of unknown ownership"
+
+    def note_session(self, sid, cwd):
+        d = self.dir / "sessions"
+        d.mkdir(parents=True, exist_ok=True)
+        p = d / f"{norm_sid(sid)}.json"
+        cur = read_json(p) or {}
+        cur.setdefault("session_id", norm_sid(sid))
+        cur["cwd"] = cwd
+        try:
+            with open(p, "w") as f:
+                json.dump(cur, f, indent=1)
+        except OSError:
+            pass
+
+
+def board_cmd(root):
+    """The board CLI as an absolute command, from wherever it currently lives."""
+    for rel in (
+        "firmware-next/tools_local/board/board.py",
+        "wt/bugflow/tools_local/board/board.py",
+    ):
+        p = root / rel
+        if p.exists():
+            return f"python3 {p}"
+    return "python3 <tree>/tools_local/board/board.py"
+
+
+CURRENT = {"root": None, "sid": "", "tool": ""}
+
+
+def note_refusal(msg):
+    """One line per refusal in <workspace>/.board/refusals.log, and the same as a
+    workflow event on the board when its address is at hand. A refusal is the
+    hooks doing their job; how often they fire, and on what, is the number that
+    says whether the rules are teaching or merely obstructing. Never raises."""
+    root = CURRENT.get("root")
+    if root is None:
+        return
+    first = msg.strip().splitlines()[0][:160] if msg.strip() else "refused"
+    sid, tool = CURRENT.get("sid") or "?", CURRENT.get("tool") or "?"
+    try:
+        with open(root / ".board" / "refusals.log", "a") as f:
+            f.write(
+                f"{dt.datetime.now(dt.timezone.utc).isoformat()} {sid} {tool} {first}\n"
+            )
+    except Exception:
+        pass
+    try:
+        env = {}
+        for line in (root / ".board" / "supabase.env").read_text().splitlines():
+            if "=" in line and not line.startswith("#"):
+                k, v = line.split("=", 1)
+                env[k.strip()] = v.strip().strip("\"'")
+        url, key = env.get("SUPABASE_URL"), env.get("SUPABASE_ANON_KEY")
+        if url and key:
+            import urllib.request
+
+            body = json.dumps(
+                {
+                    "service": "workflow",
+                    "event": "refusal",
+                    "props": {"session": sid, "tool": tool, "rule": first},
+                }
+            ).encode()
+            req = urllib.request.Request(
+                url.rstrip("/") + "/rest/v1/events",
+                data=body,
+                method="POST",
+                headers={
+                    "apikey": key,
+                    "Authorization": "Bearer " + key,
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal",
+                },
+            )
+            urllib.request.urlopen(req, timeout=2).read()
+    except Exception:
+        pass
+
+
+def block(msg):
+    note_refusal(msg)
+    sys.stderr.write(msg.rstrip() + "\n")
+    sys.exit(2)
+
+
+def under_integration_tree(root, path):
+    if not path:
+        return False
+    try:
+        p = pathlib.Path(path)
+        if not p.is_absolute():
+            p = pathlib.Path(os.getcwd()) / p
+        p = p.resolve()
+        tree = (root / "firmware-next").resolve()
+        return p == tree or tree in p.parents
+    except OSError:
+        return False
+
+
+def writes_into_tree(cmd):
+    """Does this shell command change something under firmware-next?
+
+    Segments are split on && || ; and |, a `cd` into the tree makes later
+    segments count as inside it, heredoc bodies are data and are ignored, and
+    `2>&1` or `>/dev/null` are not writes. Reading the tree is always fine.
+
+    Quoted strings go before the split. Splitting first cut "$(git tag
+    --contains x | tr ...)" at its pipe and left an unbalanced quote around
+    a verb, which refused four read-only commands on 2026-09-04. A quoted
+    string never carries a verb; it may carry the tree's path, which stays.
+    """
+    body = HEREDOC.sub(" ", cmd)
+    body = QUOTED.sub(
+        lambda m: " firmware-next " if "firmware-next" in m.group(0) else " ", body
+    )
+    in_tree = False
+    for seg in re.split(r"&&|\|\||;|\|", body):
+        seg = seg.strip()
+        if not seg:
+            continue
+        m = re.match(r"cd\s+(\S+)", seg)
+        if m:
+            in_tree = "firmware-next" in m.group(1)
+            continue
+        names_tree = "firmware-next" in seg
+        # Verbs are looked for outside quotes; the tree's name anywhere counts.
+        if WRITE_VERB.search(seg) and (in_tree or names_tree):
+            return True
+        for r in REDIRECT.finditer(seg):
+            target = r.group(1).strip("\"'")
+            if target.startswith("/dev/"):
+                continue
+            if "firmware-next" in target or (in_tree and not target.startswith("/")):
+                return True
+    return False
+
+
+def pretool(board, data):
+    sid = data.get("session_id", "")
+    tool = data.get("tool_name", "")
+    inp = data.get("tool_input") or {}
+    root = board.root
+    board.touch_session(sid)
+    actor = board.actor_of(data)
+    board.renew_leases(actor)
+
+    if tool in ("Edit", "Write", "MultiEdit", "NotebookEdit"):
+        path = inp.get("file_path") or inp.get("notebook_path") or ""
+        sroot = scratch_root_of(path, root)
+        if sroot is not None:
+            block(scratch_refusal(board, sid, data.get("cwd"), path, sroot))
+        name = board.tree_name_of(path)
+        if name:
+            verdict = board.tree_verdict(actor, name)
+            if verdict:
+                block(verdict)
+        if under_integration_tree(root, path) and not board.is_integrator(sid):
+            block(
+                "Refused: that file is in firmware-next, the integration tree. Work happens in "
+                "wt/<name>/ (./scripts/wt.sh new <name>). Only the session holding the integration "
+                f"claim edits here: {board_cmd(root)} integrator --session {norm_sid(sid)}"
+            )
+        return
+
+    if tool == "Bash":
+        cmd = inp.get("command") or ""
+        for target in scratch_targets(cmd, data.get("cwd") or ""):
+            sroot = scratch_root_of(target, root)
+            if sroot is not None:
+                block(scratch_refusal(board, sid, data.get("cwd"), target, sroot))
+        if RAW_PIO.search(cmd) and "check.sh" not in cmd and "lib-sim.sh" not in cmd:
+            block(
+                "Refused: a raw `pio run` bypasses the workspace build lock and can corrupt another "
+                "tree's build. Use ./scripts_local/check.sh (or dev.sh / sim-shot.sh) from your tree."
+            )
+        if MANUAL_RELEASE.search(cmd) and not SHIP_INVOCATION.search(cmd):
+            block(
+                "Refused: releases are cut by ./scripts_local/ship.sh, which is now the only path "
+                "from a green gate to a public release.\n"
+                "Publishing by hand skips three things that have each already shipped a broken "
+                "release: the version bump BEFORE the build (platformio.ini compiles the version "
+                "in and OtaUpdater compares the tag against it, so images built before the bump "
+                "leave every device offering an update it already installed), the three magic "
+                "numbers that tell a merged image from an unmerged one, and the asset named "
+                "exactly firmware.bin, which is the only name the OTA updater matches.\n"
+                "    ./scripts_local/ship.sh --dry-run    # say what would happen\n"
+                "    ./scripts_local/ship.sh              # land this branch and publish\n"
+                "Undoing a bad publish is NOT refused: `gh release delete`, `git tag -d` and "
+                "`git push origin :v<n>` all pass, because the moment you need them most is "
+                "right after something went wrong."
+            )
+        board.leave_claimant(data, cmd)
+        # A write into a worktree: from the shell's cwd, from a `cd` earlier
+        # in the same command, or naming the tree. Names are read off the raw
+        # command per path segment (wt/x is not wt/x2), quotes included, so
+        # `bash -c 'cd wt/x && ...'` and "wt/x" count; a bash -c payload is
+        # searched for verbs like the command itself. Destructive git verbs
+        # count whatever else the command says.
+        stripped = HEREDOC.sub(" ", cmd)
+        inner = " ".join(
+            m.group(2)
+            for m in re.finditer(
+                r"\b(?:ba|z)?sh\s+-[a-zA-Z]*c\s+(['\"])(.*?)\1", stripped, re.S
+            )
+        )
+        cur = board.tree_name_of(data.get("cwd") or "")
+        cwd_path = pathlib.Path(data.get("cwd") or os.getcwd())
+        for seg in re.split(
+            r"&&|\|\||;|\|", stripped + (" ; " + inner if inner else "")
+        ):
+            seg = seg.strip()
+            if not seg:
+                continue
+            m = re.match(r"cd\s+([^\s;&|]+)", seg)
+            if m:
+                target = m.group(1).strip("\"'")
+                tpath = (
+                    pathlib.Path(target)
+                    if target.startswith("/")
+                    else cwd_path / target
+                )
+                cur = board.tree_name_of(str(tpath))
+                cwd_path = tpath
+                continue
+            # Quoted strings become a placeholder word, not a gap: with a gap,
+            # `git -C "wt/x" commit` read as `git -C commit` and the -C swallowed
+            # the verb, so a quoted tree path was never a write.
+            seg_body = QUOTED.sub(" q ", seg)
+            if not (
+                WRITE_VERB.search(seg_body)
+                or REDIRECT.search(seg_body)
+                or DESTRUCTIVE.search(seg_body)
+            ):
+                continue
+            names = [cur] if cur else []
+            names += tree_names_in(seg)
+            for name in dict.fromkeys(n for n in names if n):
+                verdict = board.tree_verdict(actor, name)
+                if verdict:
+                    block(verdict)
+        if writes_into_tree(cmd) and not board.is_integrator(sid):
+            block(
+                "Refused: that command writes into firmware-next, the integration tree. Reading it "
+                "is fine; changing it is the integrator's job. Work in wt/<name>/, or if you are "
+                f"integrating, claim the tree first: {board_cmd(root)} integrator --session {norm_sid(sid)}"
+            )
+        if re.search(
+            r"board(\.py)?\s+ask\b", HEREDOC.sub(" ", cmd)
+        ) and not board.is_orchestrator(sid):
+            block(
+                "Refused: only the orchestrator asks Mario. Record what you need on your card: "
+                f"{board_cmd(root)} block <card> --session {norm_sid(sid)} --need <desk|design|info|mario> --ask '...' --default '...'"
+            )
+        # `board seen` records that MARIO read a person's report, and it is the
+        # only thing that takes one out of his inbox. A session that runs it has
+        # not triaged the card: it has deleted the message, because nothing else
+        # was ever going to show that report to him. The rule is here rather
+        # than in the runbook for the same reason as every other rule in this
+        # file -- a session does not remember it, it hits it.
+        if re.search(r"board(\.py)?\s+seen\b", HEREDOC.sub(" ", cmd)):
+            block(
+                "Refused: `board seen` says Mario has READ a person's report, and only he can say "
+                "that. Marking one read is not triage -- it takes the report out of the one place "
+                "he looks, and nothing else would have shown it to him. Work the card as usual "
+                f"({board_cmd(root)} state <id> triaged) and leave it unread; he clears it himself "
+                "from crossplay.ma-r-s.com/inbox/ with one tap."
+            )
+        return
+
+    if tool in ("SendMessage", "mcp__ccd_session_mgmt__send_message"):
+        if board.is_orchestrator(sid) or board.is_dispatcher(sid):
+            return
+        orch = board.orchestrator()
+        if not orch:
+            return
+        to = str(inp.get("to") or inp.get("session_id") or "")
+        # A session's own subagents (Agent tool) are addressed by a bare agent
+        # id, not a session name or a local_ id; they are this session, not a
+        # peer, and the review cycle runs through them.
+        if re.fullmatch(r"a[0-9a-f]{16}", to):
+            return
+        name = str(orch.get("name") or "")
+        target = to.split(" [")[0].strip().lower()
+        allowed = {name.lower(), "main"} if name else {"main"}
+        if target in allowed or norm_sid(to) in Board.claim_ids(orch):
+            return
+        block(
+            f"Refused: workers talk only to the orchestrator ({name or 'not named yet'}). A peer "
+            "cannot resolve your blocker and cannot pass Mario's authority along. Message the "
+            f"orchestrator, or record the blocker on your card: {board_cmd(board.root)} block <card> --session {norm_sid(sid)} --need <desk|design|info|mario> --ask '...' --default '...'"
+        )
+
+
+def last_assistant_text(transcript_path):
+    text = ""
+    try:
+        with open(transcript_path) as f:
+            for line in f:
+                try:
+                    obj = json.loads(line)
+                except ValueError:
+                    continue
+                if obj.get("type") != "assistant":
+                    continue
+                content = (obj.get("message") or {}).get("content")
+                if isinstance(content, str):
+                    text = content
+                elif isinstance(content, list):
+                    parts = [
+                        c.get("text", "")
+                        for c in content
+                        if isinstance(c, dict) and c.get("type") == "text"
+                    ]
+                    if parts:
+                        text = "\n".join(parts)
+    except OSError:
+        return ""
+    return text
+
+
+def stop(board, data):
+    if data.get("stop_hook_active"):
+        return
+    sid = data.get("session_id", "")
+    if board.is_orchestrator(sid) or board.is_dispatcher(sid):
+        return
+    text = last_assistant_text(data.get("transcript_path", ""))
+    m = HANDBACK.search(text)
+    if not m:
+        return
+    sess = board.session(sid)
+    cid = sess.get("card")
+    card = board.card(cid)
+    if card:
+        for b in card.get("blockers", []):
+            if b.get("open"):
+                return
+    where = f"card #{cid}" if card else "no card bound yet"
+    bc = board_cmd(board.root)
+    bind = (
+        ""
+        if card
+        else (
+            f"\nBind a card first: {bc} list, then {bc} bind <id> --session "
+            f"{norm_sid(sid)} (or {bc} new '<title>' --from <app> to create one)."
+        )
+    )
+    block(
+        f"This turn ends by handing back ('{m.group(0)}'), and a worker never hands back to Mario "
+        f"({where}). Either take the next step now, or record why you cannot:\n"
+        f"  {bc} block <card> --session {norm_sid(sid)} --need <desk|design|info|mario> "
+        "--ask '<one line>' --default '<what happens if nobody answers>'\n"
+        "then end the turn with one line saying the card is blocked." + bind
+    )
+
+
+def session_end(board, data):
+    """SessionEnd: the session file says so, and every tree it held is free."""
+    board.end_session(data.get("session_id", ""))
+
+
+def session_start(board, data):
+    sid = norm_sid(data.get("session_id", ""))
+    board.note_session(sid, data.get("cwd", ""))
+    orch = board.orchestrator()
+    sess = board.session(sid)
+    cid = sess.get("card")
+    card = board.card(cid)
+    bc = board_cmd(board.root)
+    lines = []
+    lines.append(f"[bugflow] Your session id is {sid}.")
+    lines.append(
+        "[bugflow] Your scratchpad is SHARED, not private: several agents run under one "
+        f"session id. Write only inside <scratchpad>/{scratch_ns(board, sid, data.get('cwd', ''))}/ "
+        "-- a write to the flat top level is refused, because every agent picks the same "
+        "names and one of those collisions reached GitHub (card #314)."
+    )
+    if board.is_orchestrator(sid):
+        lines.append(
+            "[bugflow] You are the ORCHESTRATOR. Runbook: docs/workflow/orchestrator.md in the tree."
+        )
+    elif board.is_dispatcher(sid):
+        lines.append(
+            "[bugflow] You are DISPATCH: Mario talks to you; you file cards and hand them to their owners. Runbook: docs/workflow/dispatch.md."
+        )
+    else:
+        who = orch.get("name") or "not registered yet"
+        lines.append(f"[bugflow] You are a WORKER. The orchestrator is: {who}.")
+        if card:
+            lines.append(
+                f"[bugflow] Your card: #{card['id']} {card['title']} (state {card.get('state')}). Read it: {bc} show {card['id']}"
+            )
+        else:
+            lines.append(
+                f"[bugflow] No card bound. Before any edit: {bc} list, then {bc} bind <id> --session {sid}."
+            )
+    contract = board.root / "firmware-next" / "docs" / "workflow" / "worker-contract.md"
+    here = (
+        pathlib.Path(__file__).resolve().parents[2]
+        / "docs"
+        / "workflow"
+        / "worker-contract.md"
+    )
+    for p in (here, contract):
+        try:
+            with open(p) as f:
+                lines.append(f.read().rstrip())
+            break
+        except OSError:
+            continue
+    sys.stdout.write("\n".join(lines) + "\n")
+
+
+def main():
+    if len(sys.argv) < 2:
+        return
+    mode = sys.argv[1]
+    root = find_root()
+    if root is None:
+        return
+    board = Board(root)
+    if not board.enabled:
+        return
+    try:
+        data = json.load(sys.stdin)
+    except ValueError:
+        return
+    CURRENT.update(
+        root=root,
+        sid=norm_sid(data.get("session_id")),
+        tool=data.get("tool_name") or mode,
+    )
+    if mode == "pretool":
+        pretool(board, data)
+    elif mode == "session-end":
+        session_end(board, data)
+    elif mode == "stop":
+        stop(board, data)
+    elif mode == "session-start":
+        session_start(board, data)
+
+
+def guarded_main():
+    """Fail open, on purpose, and leave a trail.
+
+    A hook that crashes on its own bug must not lock every session out of the
+    repository, so anything unexpected here exits 0 (Claude Code treats that as
+    "no opinion") after appending one line to <workspace>/.board/hook-errors.log,
+    where the orchestrator can see that a check did not run. The only deliberate
+    refusals are the exit-2 paths above, each of which names its remedy with the
+    session id already filled in. A missing board, a missing switch file, or
+    unreadable input are all "no opinion", never a block.
+    """
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception as e:  # noqa: BLE001 - the point is to never lock anyone out
+        try:
+            root = find_root()
+            if root is not None:
+                with open(root / ".board" / "hook-errors.log", "a") as f:
+                    f.write(
+                        f"{dt.datetime.now(dt.timezone.utc).isoformat()} {sys.argv[1:]} {type(e).__name__}: {e}\n"
+                    )
+        except Exception:
+            pass
+        sys.stderr.write(
+            f"[bugflow] the guard could not run ({type(e).__name__}); letting this through and logging it\n"
+        )
+        sys.exit(0)
+
+
+if __name__ == "__main__":
+    guarded_main()

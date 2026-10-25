@@ -1,0 +1,58 @@
+{
+  "source": "PET-HOGAR-ILUSTRACIONES-v1.zip",
+  "originals": [
+    {
+      "file": "adorno-01.png",
+      "sha256": "473f164fb1a69fa5c415aac3949bbcf64c9e373de74e1a03aae1a08f531cbfdf"
+    },
+    {
+      "file": "adorno-02.png",
+      "sha256": "6ab5c7784e7fe04251be96597203a4a717e6018c954f69eae426ce8da838001d"
+    },
+    {
+      "file": "adorno-03.png",
+      "sha256": "d7ea675ae92f68fc8bdb2c9c36020d6be7a75cc45985805cb3864e57cd94f1b1"
+    },
+    {
+      "file": "descanso-01.png",
+      "sha256": "83b49eae4b5fa27d850dc8ed1de064d079d3ae853951925eb239031662e11253"
+    },
+    {
+      "file": "descanso-02.png",
+      "sha256": "5a3d9397c7f9762d68670bedf75f21effd8a3b84805e25a6a8fbafbb83c30c37"
+    },
+    {
+      "file": "descanso-03.png",
+      "sha256": "d44bfd1b726b69a2f665b36b275d530b2d0b448a1df98d60822be89b44df26ed"
+    },
+    {
+      "file": "entorno-01.png",
+      "sha256": "2139e0de4ec014eca53a26aeac4ef51435b48ec6bbd990c97d19bf77ac4ee44a"
+    },
+    {
+      "file": "entorno-02.png",
+      "sha256": "17068881bedf7b36dc81901fe5857b579f3e38bf2d7baef168c0a4e2e9adaae7"
+    },
+    {
+      "file": "entorno-03.png",
+      "sha256": "9a7c2c5f9e94c720efb9d63c18d0a16a4d2cda68715faa7e54bf8f76c51edfe6"
+    },
+    {
+      "file": "hogar-base.png",
+      "sha256": "b323f2d68f610ad8f4c470e7378aa5626cebc845079fb913595cbda5cbd5d84b"
+    },
+    {
+      "file": "juego-01.png",
+      "sha256": "b6e131c97fb044bfd5870dfb561f5a3f0ef12a48ffdb248304bfce0325ddae75"
+    },
+    {
+      "file": "juego-02.png",
+      "sha256": "9ff3e8b849009a055165df28c606b4b1cd2bef3ea3632394449676240846613d"
+    },
+    {
+      "file": "juego-03.png",
+      "sha256": "e8f4884288c111f81877f89f0b03553f3d6ea0c9e4a4e99e575abf2d673c44ae"
+    }
+  ],
+  "processing": "Crop real sheet cells; threshold to 1-bit; fit catalog limits; generate silhouette masks without changing original PNGs."
+}

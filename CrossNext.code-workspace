@@ -1,0 +1,7 @@
+{
+  "folders": [{ "name": "CrossNext", "path": "." }],
+  "settings": {
+    "git.openRepositoryInParentFolders": "never",
+    "git.detectSubmodules": false
+  }
+}

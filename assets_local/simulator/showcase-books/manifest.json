@@ -1,0 +1,65 @@
+[
+  {
+    "file": "Frankenstein.epub",
+    "title": "Frankenstein",
+    "author": "Mary Shelley",
+    "source": "https://www.gutenberg.org/ebooks/84",
+    "download": "https://www.gutenberg.org/ebooks/84.epub.images",
+    "rights": "Public domain in the USA; Project Gutenberg notices retained inside EPUB",
+    "sha256": "7ae81b2a5cdb7ac08f39429784874157accb749dfd303e384f983ef31226d8f4"
+  },
+  {
+    "file": "The Adventures of Sherlock Holmes.epub",
+    "title": "The Adventures of Sherlock Holmes",
+    "author": "Arthur Conan Doyle",
+    "source": "https://www.gutenberg.org/ebooks/1661",
+    "download": "https://www.gutenberg.org/ebooks/1661.epub.images",
+    "rights": "Public domain in the USA; Project Gutenberg notices retained inside EPUB",
+    "sha256": "f441042ace4506f5921318b5ee3deaf52169a59be31f0629b9082e27f8bba3f1"
+  },
+  {
+    "file": "Moby Dick.epub",
+    "title": "Moby Dick",
+    "author": "Herman Melville",
+    "source": "https://www.gutenberg.org/ebooks/2701",
+    "download": "https://www.gutenberg.org/ebooks/2701.epub.images",
+    "rights": "Public domain in the USA; Project Gutenberg notices retained inside EPUB",
+    "sha256": "31a206f406a8d36cd51935248c2d9ac281659fff48006fb78bde9123690964b6"
+  },
+  {
+    "file": "Pride and Prejudice.epub",
+    "title": "Pride and Prejudice",
+    "author": "Jane Austen",
+    "source": "https://www.gutenberg.org/ebooks/1342",
+    "download": "https://www.gutenberg.org/ebooks/1342.epub.noimages",
+    "rights": "Public domain in the USA; Project Gutenberg notices retained inside EPUB",
+    "sha256": "e59e587472723023b21bf380b8327858e7540b25e57affa3a68935b291e370dc"
+  },
+  {
+    "file": "Dracula.epub",
+    "title": "Dracula",
+    "author": "Bram Stoker",
+    "source": "https://www.gutenberg.org/ebooks/345",
+    "download": "https://www.gutenberg.org/ebooks/345.epub.images",
+    "rights": "Public domain in the USA; Project Gutenberg notices retained inside EPUB",
+    "sha256": "02a852bab9d8464f93fc253925646e847dcc334012a289ab57ecd5df27c3003e"
+  },
+  {
+    "file": "The Time Machine.epub",
+    "title": "The Time Machine",
+    "author": "H. G. Wells",
+    "source": "https://www.gutenberg.org/ebooks/35",
+    "download": "https://www.gutenberg.org/ebooks/35.epub.images",
+    "rights": "Public domain in the USA; Project Gutenberg notices retained inside EPUB",
+    "sha256": "1afc061129014a9c5f6783819e584b15176f92c59d08f31bb44af0ecf94bd525"
+  },
+  {
+    "file": "Don Quijote.epub",
+    "title": "Don Quijote",
+    "author": "Miguel de Cervantes",
+    "source": "https://www.gutenberg.org/ebooks/2000",
+    "download": "https://www.gutenberg.org/ebooks/2000.epub.images",
+    "rights": "Public domain in the USA; Project Gutenberg notices retained inside EPUB",
+    "sha256": "5c1cf9565d53af5a9a2b80b5997bf774237e5db747a0f357738a4ae1bfea49ab"
+  }
+]

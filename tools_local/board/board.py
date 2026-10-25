@@ -1,0 +1,2475 @@
+#!/usr/bin/env python3
+"""The board: the only door into the workspace's shared state.
+
+One card per piece of work. Sessions bind to a card, record blockers on it,
+and move it; the orchestrator reads it and asks Mario through it; Mario's
+inbox is the open blockers that need him. The hooks in scripts_local/hooks/
+read a local mirror of the same facts to decide what a session may do.
+
+Two stores behind one command line. The file store keeps JSON under
+<workspace>/.board/ and is what the tests drive. The Supabase store is the
+real board (server/board/supabase/), selected automatically when
+<workspace>/.board/supabase.env holds SUPABASE_URL and
+SUPABASE_SERVICE_ROLE_KEY; BOARD_BACKEND=file forces the file store. The
+Supabase store mirrors claims, session bindings and bound cards into the
+file store so the hooks never need the network.
+
+    board init
+    board orchestrator --name Main --session <id> [--app-id local_<id>]   who Mario's questions go through
+    board integrator --session <id> [--release]       who may write firmware-next
+    board dispatcher --name Dispatch --session <id>   the session Mario talks to; may message anyone
+    board pulse [add <host> <GET|POST> <url> <alive> <app> | remove <host>]   what the board probes every 30 min
+    board release                                     is the release watcher awake, and what is it owed
+    board noticed "<one line>" --from <app> [--detail "..."]   what you saw and are not fixing: NOT a card, expires by itself
+    board notices                                     what is noticed and still live, most seen first
+    board promote n<id> --reporter mario|user         a person asked for it: the notice becomes a card
+    board new "<title>" --from <app> [--kind bug|feature|task] [--body "..."] [--parent <id>] [--default "..."] [--session <id>]
+                       [--reporter mario|user|session|unknown]   whose observation it is; unknown unless said
+    board app <id> <app> [--default "..."]             move a card to another app
+    board parent <id> --of <parent>                    put a card under another (subtasks)
+    board bind <id> --session <sid> [--tree wt/x] [--branch app/x]
+    board block <id> --session <sid> --need desk|design|info|mario --ask "..." --default "..."
+    board unblock <id> [--n N]
+    board ask <id> --ask "..." --default "..." [--steps "1. ...\n2. ..."]   orchestrator only; steps for a thing to do
+    board answer <id> "<choice>" [--note "..."]
+    board seen <id> [--note "..."]                     Mario read a report from a person; clears it from his inbox
+    board state <id> reported|triaged|working|review|merged|released|done|parked
+    board owner <app> [--session <sid>] [--tree wt/x]  who owns an app (lookup with no flags)
+    board route <id>                                   which session a card goes to
+    board tick                                         the issue sweep, then the open board
+    board show <id> | board list [--open] | board inbox | board import <file.md>
+    board fresh                                        is this CLI running the code that is on trunk
+    board sync                                         copy the file store into Supabase, once
+
+Session ids are the ones the SessionStart hook prints; nothing else identifies
+a session from inside Bash, which is why every write that belongs to a session
+takes --session explicitly.
+
+A card on app `mario` is an inbox item by construction: filing one there, or
+moving one there, opens a `mario` blocker asking the card's title, because the
+inbox lists open `mario` blockers and Mario reads nothing else. --default says
+what happens if he never answers; without one it says so honestly.
+
+A report from a person is NOT a blocker. `board inbox` prints those first, in
+their own section, because nobody is blocked on "nice firmware, thanks" and
+they have no honest default -- and because a stranger's report had no way into
+the inbox at all until 2026-09-07. Each one interrupts him exactly once:
+`board seen <id>` records that he read it. See
+server/board/supabase/migrations/20260907000100_reports_from_people.sql.
+"""
+
+import argparse
+import datetime as dt
+import fcntl
+import hashlib
+import json
+import time
+import os
+import pathlib
+import re
+import subprocess
+import sys
+import textwrap
+import urllib.error
+import urllib.parse
+import urllib.request
+
+STATES = [
+    "reported",
+    "triaged",
+    "working",
+    "review",
+    "merged",
+    "released",
+    "done",
+    "parked",
+]
+NEEDS = ["desk", "design", "info", "mario", "device", "other"]
+
+# The app whose cards are Mario's own decisions, and what an auto-opened
+# blocker says happens when he never answers one. The wording is the honest
+# one on purpose: a blocker with no stated default forces him to engage before
+# he can safely ignore it, which is how an inbox turns into noise.
+MARIO_APP = "mario"
+MARIO_DEFAULT = "nothing happens until he answers"
+# A decision already taken is not one to ask again. The rule and the backfill
+# in 20260905000300 both skip these, and they have to agree: a board restored
+# by INSERTing a dump would otherwise flood the inbox with every settled
+# decision it ever held, which is the flood the backfill was written to avoid.
+SETTLED = ("done", "released", "parked")
+
+# Who a card's observation belongs to, which `source` never said: source is the
+# MECHANISM a card arrived by, and a bug Mario hit on his own device and a bug
+# an audit found by reading code both arrived as source 'session'. He asked
+# "what have I reported?" and the board could not answer.
+#
+# The default is 'unknown', NOT 'session'. A path that forgets to stamp must be
+# visible rather than silently claim one of our own sessions found it, because
+# the whole value of the answer is that he can trust the list. See
+# docs/workflow/what-mario-reported.md.
+REPORTERS = ("mario", "user", "session", "unknown")
+UNKNOWN_REPORTER = "unknown"
+
+
+def now():
+    return dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()
+
+
+def find_root():
+    env = os.environ.get("BOARD_ROOT")
+    if env:
+        return pathlib.Path(env)
+    here = pathlib.Path(__file__).resolve()
+    for p in [here] + list(here.parents):
+        if (p / "firmware-next").is_dir() and (p / "wt").is_dir():
+            return p
+    sys.exit(
+        "board: cannot find the workspace root (a directory holding firmware-next/ and wt/)"
+    )
+
+
+def norm_sid(s):
+    s = str(s or "")
+    return s[6:] if s.startswith("local_") else s
+
+
+def read_env(path):
+    out = {}
+    try:
+        for line in pathlib.Path(path).read_text().splitlines():
+            if "=" in line and not line.lstrip().startswith("#"):
+                k, _, v = line.partition("=")
+                out[k.strip()] = v.strip()
+    except OSError:
+        pass
+    return out
+
+
+def hist(c, what):
+    c.setdefault("history", []).append({"at": now(), "what": what})
+
+
+# ----------------------------------------------------------------------------
+# The file store: JSON under <workspace>/.board/. The hooks read exactly these
+# files, so the Supabase store mirrors into it.
+
+
+class FileStore:
+    name = "file"
+
+    def __init__(self, root):
+        self.root = root
+        self.dir = root / ".board"
+        self.cards = self.dir / "cards"
+        self.sessions = self.dir / "sessions"
+
+    def notices(self):
+        try:
+            rows = json.loads((self.dir / "notices.json").read_text() or "[]")
+        except (OSError, ValueError):
+            rows = []
+        return [n for n in rows if not n.get("promoted_card") and n.get("expires_at", "") > now()]
+
+    def put_notice(self, n):
+        try:
+            rows = json.loads((self.dir / "notices.json").read_text() or "[]")
+        except (OSError, ValueError):
+            rows = []
+        if n.get("id"):
+            rows = [n if r.get("id") == n["id"] else r for r in rows]
+        else:
+            n["id"] = 1 + max([r.get("id", 0) for r in rows] + [0])
+            rows.append(n)
+        (self.dir / "notices.json").write_text(json.dumps(rows, indent=1))
+        return n
+
+    def init(self):
+        self.cards.mkdir(parents=True, exist_ok=True)
+        self.sessions.mkdir(parents=True, exist_ok=True)
+        nid = self.dir / "next_id"
+        if not nid.exists():
+            nid.write_text("1\n")
+
+    def lock(self):
+        self.init()
+        f = open(self.dir / ".lock", "w")
+        fcntl.flock(f, fcntl.LOCK_EX)
+        return f
+
+    def _read(self, path):
+        try:
+            with open(path) as f:
+                return json.load(f)
+        except (OSError, ValueError):
+            return None
+
+    def _write(self, path, data):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".tmp")
+        with open(tmp, "w") as f:
+            json.dump(data, f, indent=1, sort_keys=True)
+        os.replace(tmp, path)
+
+    def _next_id(self):
+        p = self.dir / "next_id"
+        n = int((p.read_text() or "1").strip() or 1)
+        p.write_text(f"{n + 1}\n")
+        return n
+
+    # cards
+    def create_card(self, fields):
+        c = {
+            "id": fields.get("id") or self._next_id(),
+            "title": fields["title"],
+            "from": fields.get("from", "general"),
+            "kind": fields.get("kind", "task"),
+            "body": fields.get("body", ""),
+            "state": fields.get("state", "reported"),
+            "reporter": fields.get("reporter", UNKNOWN_REPORTER),
+            "mario_seen_at": fields.get("mario_seen_at"),
+            "created": fields.get("created") or now(),
+            "updated": now(),
+            "tree": fields.get("tree"),
+            "branch": fields.get("branch"),
+            "session": fields.get("session"),
+            "blockers": fields.get("blockers", []),
+            "answers": fields.get("answers", []),
+            "history": fields.get("history", []),
+            "github_issue": fields.get("github_issue"),
+            "parent": fields.get("parent"),
+        }
+        self.save_card(c)
+        return c
+
+    def get_card(self, cid):
+        c = self._read(self.cards / f"{int(cid)}.json")
+        if c is None:
+            sys.exit(f"board: no card #{cid}")
+        return c
+
+    def save_card(self, c):
+        c["updated"] = now()
+        self._write(self.cards / f"{c['id']}.json", c)
+
+    def set_blocker_default(self, cid, n, default):
+        c = self.get_card(cid)
+        for b in c["blockers"]:
+            if b["n"] == n:
+                b["default"] = default
+        self.save_card(c)
+
+    def list_cards(self):
+        out = []
+        if self.cards.is_dir():
+            for p in sorted(self.cards.glob("*.json"), key=lambda p: int(p.stem)):
+                c = self._read(p)
+                if c:
+                    out.append(c)
+        return out
+
+    # owners, claims, sessions
+    def owners(self):
+        return self._read(self.dir / "owners.json") or {}
+
+    def set_owner(self, app, session, tree):
+        o = self.owners()
+        cur = o.get(app, {})
+        o[app] = {
+            "session": session or cur.get("session"),
+            "tree": tree or cur.get("tree"),
+            "since": now(),
+        }
+        self._write(self.dir / "owners.json", o)
+        return o[app]
+
+    def claim(self, name):
+        return self._read(self.dir / f"{name}.json") or {}
+
+    def set_claim(self, name, session, display_name=None, app_session=None):
+        d = {"session_id": session, "since": now()}
+        if display_name:
+            d["name"] = display_name
+        if app_session:
+            d["app_session"] = app_session
+        self._write(self.dir / f"{name}.json", d)
+
+    def del_claim(self, name):
+        p = self.dir / f"{name}.json"
+        if p.exists():
+            p.unlink()
+
+    def session(self, sid):
+        return self._read(self.sessions / f"{sid}.json") or {"session_id": sid}
+
+    def save_session(self, s):
+        self._write(self.sessions / f"{s['session_id']}.json", s)
+
+
+# ----------------------------------------------------------------------------
+# The Supabase store: PostgREST with the service key. Same card shape out.
+
+
+class SupaStore:
+    name = "supabase"
+    SELECT = "*,blockers(*),history(*)"
+
+    def __init__(self, root, url, key):
+        self.root = root
+        self.url = url.rstrip("/")
+        self.key = key
+        self.mirror = FileStore(root)
+
+    def init(self):
+        self.mirror.init()
+
+    def lock(self):
+        return self.mirror.lock()
+
+    def notices(self):
+        return self._req("GET", "notices?promoted_card=is.null&expires_at=gt.now()&order=last_seen.desc") or []
+
+    def put_notice(self, n):
+        fields = {k: n[k] for k in ("app", "what", "detail", "seen", "sessions", "last_seen", "expires_at", "promoted_card") if k in n}
+        if n.get("id"):
+            self._req("PATCH", f"notices?id=eq.{int(n['id'])}", fields)
+            return n
+        rows = self._req("POST", "notices", fields, prefer="return=representation")
+        return rows[0] if rows else n
+
+    def _req(self, method, path, body=None, prefer=None):
+        data = json.dumps(body).encode() if body is not None else None
+        req = urllib.request.Request(
+            f"{self.url}/rest/v1/{path}", data=data, method=method
+        )
+        req.add_header("apikey", self.key)
+        req.add_header("Authorization", f"Bearer {self.key}")
+        req.add_header("Content-Type", "application/json")
+        req.add_header("Accept", "application/json")
+        if prefer:
+            req.add_header("Prefer", prefer)
+        try:
+            with urllib.request.urlopen(req, timeout=20) as r:
+                raw = r.read()
+                return json.loads(raw) if raw else None
+        except urllib.error.HTTPError as e:
+            sys.exit(
+                f"board: supabase {method} {path}: {e.code} {e.read().decode()[:300]}"
+            )
+        except urllib.error.URLError as e:
+            sys.exit(f"board: supabase unreachable: {e.reason}")
+
+    @staticmethod
+    def _to_card(row):
+        blockers = []
+        for b in sorted(row.get("blockers") or [], key=lambda b: b["n"]):
+            ans = None
+            if b.get("answered_at"):
+                ans = {
+                    "choice": b.get("answer_choice"),
+                    "note": b.get("answer_note") or "",
+                    "at": b["answered_at"],
+                }
+            blockers.append(
+                {
+                    "id": b["id"],
+                    "n": b["n"],
+                    "need": b["need"],
+                    "ask": b["ask"],
+                    "default": b["default"],
+                    "open": b["open"],
+                    "created": b["created_at"],
+                    "by": b.get("by_session"),
+                    "steps": b.get("steps"),
+                    "answer": ans,
+                }
+            )
+        history = [
+            {"at": h["at"], "what": h["what"]}
+            for h in sorted(row.get("history") or [], key=lambda h: h["at"])
+        ]
+        return {
+            "id": row["id"],
+            "title": row["title"],
+            "from": row["app"],
+            "kind": row["kind"],
+            "body": row["body"],
+            "state": row["state"],
+            "created": row["created_at"],
+            "updated": row["updated_at"],
+            "tree": row.get("tree"),
+            "branch": row.get("branch"),
+            "session": row.get("session"),
+            "blockers": blockers,
+            "answers": [
+                {
+                    "blocker": b["n"],
+                    "choice": b["answer"]["choice"],
+                    "note": b["answer"]["note"],
+                    "at": b["answer"]["at"],
+                }
+                for b in blockers
+                if b["answer"]
+            ],
+            "history": history,
+            "source": row.get("source"),
+            "device": row.get("device"),
+            "version": row.get("version"),
+            "reporter": row.get("reporter") or UNKNOWN_REPORTER,
+            "reporter_email": row.get("reporter_email"),
+            "mario_seen_at": row.get("mario_seen_at"),
+            "photo_path": row.get("photo_path"),
+            "github_issue": row.get("github_issue"),
+            "parent": row.get("parent"),
+        }
+
+    def create_card(self, fields):
+        body = {
+            "title": fields["title"],
+            "app": fields.get("from", "general"),
+            "kind": fields.get("kind", "task"),
+            "body": fields.get("body", ""),
+            "state": fields.get("state", "reported"),
+            "source": fields.get("source", "session"),
+            "reporter": fields.get("reporter", UNKNOWN_REPORTER),
+            "tree": fields.get("tree"),
+            "branch": fields.get("branch"),
+            "session": fields.get("session"),
+            "github_issue": fields.get("github_issue"),
+            "parent": fields.get("parent"),
+        }
+        if fields.get("id"):
+            body["id"] = fields["id"]
+        if fields.get("created"):
+            body["created_at"] = fields["created"]
+        rows = self._req(
+            "POST", "cards?select=" + self.SELECT, body, prefer="return=representation"
+        )
+        c = self._to_card(rows[0])
+        for h in fields.get("history", []):
+            self._req(
+                "POST",
+                "history",
+                {"card_id": c["id"], "at": h["at"], "what": h["what"]},
+                prefer="return=minimal",
+            )
+        for b in fields.get("blockers", []):
+            # on_conflict + merge-duplicates, because on a card whose app is
+            # `mario` the insert trigger has already written blocker n=1 by the
+            # time this runs, and a plain POST is then a unique violation that
+            # aborts `board sync` mid-run. The caller's blocker wins.
+            self._req(
+                "POST",
+                "blockers?on_conflict=card_id,n",
+                {
+                    "card_id": c["id"],
+                    "n": b["n"],
+                    "need": b["need"],
+                    "ask": b["ask"],
+                    "default": b.get("default", ""),
+                    "open": b.get("open", True),
+                    "by_session": b.get("by"),
+                    "steps": b.get("steps"),
+                    "created_at": b.get("created") or now(),
+                    "answer_choice": (b.get("answer") or {}).get("choice"),
+                    "answer_note": (b.get("answer") or {}).get("note"),
+                    "answered_at": (b.get("answer") or {}).get("at"),
+                },
+                prefer="resolution=merge-duplicates,return=minimal",
+            )
+        return self.get_card(c["id"])
+
+    def get_card(self, cid):
+        rows = self._req("GET", f"cards?id=eq.{int(cid)}&select={self.SELECT}")
+        if not rows:
+            sys.exit(f"board: no card #{cid}")
+        return self._to_card(rows[0])
+
+    def save_card(self, c):
+        """Persist the mutable top-level fields; blockers and history have their own writers."""
+        body = {
+            "title": c["title"],
+            "app": c["from"],
+            "kind": c["kind"],
+            "body": c["body"],
+            "state": c["state"],
+            "tree": c.get("tree"),
+            "branch": c.get("branch"),
+            "session": c.get("session"),
+            "parent": c.get("parent"),
+        }
+        self._req("PATCH", f"cards?id=eq.{c['id']}", body, prefer="return=minimal")
+        if c.get("session"):
+            self.mirror.save_card(dict(c))
+
+    def mark_seen(self, cid):
+        self._req(
+            "PATCH",
+            f"cards?id=eq.{int(cid)}",
+            {"mario_seen_at": now()},
+            prefer="return=minimal",
+        )
+        return self.get_card(cid)
+
+    def add_history(self, cid, what):
+        self._req(
+            "POST", "history", {"card_id": cid, "what": what}, prefer="return=minimal"
+        )
+
+    def add_blocker(self, cid, need, ask, default, by, steps=None):
+        c = self.get_card(cid)
+        n = 1 + max([b["n"] for b in c["blockers"]] + [0])
+        self._req(
+            "POST",
+            "blockers",
+            {
+                "card_id": cid,
+                "n": n,
+                "need": need,
+                "ask": ask,
+                "default": default,
+                "by_session": by,
+                "steps": steps,
+            },
+            prefer="return=minimal",
+        )
+        return n
+
+    def close_blocker(self, cid, n, answer=None):
+        body = {"open": False}
+        if answer:
+            body.update(
+                {
+                    "answer_choice": answer["choice"],
+                    "answer_note": answer.get("note", ""),
+                    "answered_at": now(),
+                }
+            )
+        self._req(
+            "PATCH",
+            f"blockers?card_id=eq.{cid}&n=eq.{n}",
+            body,
+            prefer="return=minimal",
+        )
+
+    def set_blocker_default(self, cid, n, default):
+        self._req(
+            "PATCH",
+            f"blockers?card_id=eq.{cid}&n=eq.{n}",
+            {"default": default},
+            prefer="return=minimal",
+        )
+
+    def list_cards(self):
+        rows = self._req("GET", f"cards?select={self.SELECT}&order=id.asc") or []
+        return [self._to_card(r) for r in rows]
+
+    def owners(self):
+        rows = self._req("GET", "owners?select=*") or []
+        return {
+            r["app"]: {
+                "session": r.get("session"),
+                "tree": r.get("tree"),
+                "since": r.get("since"),
+            }
+            for r in rows
+        }
+
+    def set_owner(self, app, session, tree):
+        cur = self.owners().get(app, {})
+        row = {
+            "app": app,
+            "session": session or cur.get("session"),
+            "tree": tree or cur.get("tree"),
+            "since": now(),
+        }
+        self._req(
+            "POST", "owners", row, prefer="resolution=merge-duplicates,return=minimal"
+        )
+        self.mirror.set_owner(app, row["session"], row["tree"])
+        return row
+
+    def claim(self, name):
+        rows = self._req("GET", f"claims?name=eq.{name}&select=*") or []
+        if not rows:
+            return {}
+        r = rows[0]
+        return {
+            "session_id": r["session"],
+            "since": r["since"],
+            "name": r.get("display_name"),
+            "app_session": r.get("app_session"),
+        }
+
+    def set_claim(self, name, session, display_name=None, app_session=None):
+        self._req(
+            "POST",
+            "claims",
+            {
+                "name": name,
+                "session": session,
+                "display_name": display_name,
+                "app_session": app_session,
+                "since": now(),
+            },
+            prefer="resolution=merge-duplicates,return=minimal",
+        )
+        self.mirror.set_claim(name, session, display_name, app_session)
+
+    def del_claim(self, name):
+        self._req("DELETE", f"claims?name=eq.{name}", prefer="return=minimal")
+        self.mirror.del_claim(name)
+
+    def session(self, sid):
+        rows = (
+            self._req("GET", f"sessions?id=eq.{urllib.parse.quote(sid)}&select=*") or []
+        )
+        if not rows:
+            return {"session_id": sid}
+        r = rows[0]
+        return {"session_id": r["id"], "cwd": r.get("cwd"), "card": r.get("card_id")}
+
+    def save_session(self, s):
+        self._req(
+            "POST",
+            "sessions",
+            {
+                "id": s["session_id"],
+                "cwd": s.get("cwd"),
+                "card_id": s.get("card"),
+                "last_seen": now(),
+            },
+            prefer="resolution=merge-duplicates,return=minimal",
+        )
+        self.mirror.save_session(s)
+
+
+def open_store(root):
+    env = read_env(root / ".board" / "supabase.env")
+    if (
+        os.environ.get("BOARD_BACKEND", "").lower() != "file"
+        and env.get("SUPABASE_URL")
+        and env.get("SUPABASE_SERVICE_ROLE_KEY")
+    ):
+        return SupaStore(root, env["SUPABASE_URL"], env["SUPABASE_SERVICE_ROLE_KEY"])
+    return FileStore(root)
+
+
+# ----------------------------------------------------------------------------
+# Commands. They speak in cards; the store decides where cards live.
+
+
+def card_history(st, c, what):
+    if isinstance(st, SupaStore):
+        st.add_history(c["id"], what)
+    else:
+        hist(c, what)
+
+
+def cmd_init(st, a):
+    st.init()
+    print(f"board: ready ({st.name})")
+
+
+def _kept_app_id(st, name, given):
+    """A re-registration without --app-id keeps the app id already on the claim.
+    The hook-visible id changes when a session restarts; the desktop app's id
+    does not, and dropping it silently cut every worker off from Main once."""
+    if given:
+        return norm_sid(given)
+    cur = st.claim(name) or {}
+    return norm_sid(cur.get("app_session")) or None
+
+
+def cmd_pulse(st, a):
+    """The hosts the board probes every 30 minutes (pulse_targets)."""
+    if not hasattr(st, "_req"):
+        print(
+            "board: the pulse runs on the board; listing or changing its hosts needs the Supabase store (.board/supabase.env)"
+        )
+        return
+    if a.action == "add":
+        if not (a.host and a.method and a.url and a.alive and a.app):
+            sys.exit("usage: board pulse add <host> <GET|POST> <url> <alive> <app>")
+        st._req(
+            "POST",
+            "pulse_targets",
+            {
+                "host": a.host,
+                "method": a.method.upper(),
+                "url": a.url,
+                "alive": a.alive,
+                "app": a.app,
+                "enabled": True,
+            },
+            prefer="resolution=merge-duplicates,return=minimal",
+        )
+        print(
+            f"board: pulse probes {a.host} ({a.method.upper()} {a.url}, alive {a.alive}) for {a.app}"
+        )
+        return
+    if a.action == "remove":
+        if not a.host:
+            sys.exit("usage: board pulse remove <host>")
+        st._req("DELETE", f"pulse_targets?host=eq.{a.host}", prefer="return=minimal")
+        print(f"board: pulse no longer probes {a.host}")
+        return
+    rows = st._req("GET", "pulse_targets?select=*&order=host") or []
+    print(f"{'HOST':<10} {'METHOD':<6} {'ALIVE':<12} {'APP':<11} URL")
+    for r in rows:
+        flag = "" if r.get("enabled", True) else "  (disabled)"
+        print(
+            f"{r['host']:<10} {r['method']:<6} {r['alive']:<12} {r['app']:<11} {r['url']}{flag}"
+        )
+
+
+def cmd_release(st, a):
+    """What the release watcher can see: whether it is armed, when it last got
+    an answer out of GitHub, what it is still owed, and every fault it has
+    already had its say about. The watcher opens its own cards; this is for the
+    question those cards cannot answer, which is whether it is still awake."""
+    if not hasattr(st, "_req"):
+        print(
+            "board: the release watcher runs on the board; reading it needs the Supabase store (.board/supabase.env)"
+        )
+        return
+    rows = st._req("GET", "release_state?select=*") or []
+    if not rows:
+        print("board: the release watcher is not installed on this board")
+        return
+    st8 = rows[0]
+    armed = (
+        "armed"
+        if st8.get("seeded")
+        else "NOT ARMED (its next pass adjudicates the history)"
+    )
+    print(f"watcher   {armed}, last answer from GitHub {st8.get('last_ok_at')}")
+    pend = st._req("GET", "release_pending?select=*&order=version") or []
+    if pend:
+        print(
+            "owed      "
+            + ", ".join(f"{r['version']} (tagged {r.get('at')})" for r in pend)
+        )
+    else:
+        print("owed      nothing: every version the pipeline tagged is published")
+    seen = st._req("GET", "release_seen?select=*&order=first_seen.desc&limit=12") or []
+    if seen:
+        print(f"{'SAID ITS SAY ABOUT':<28} WHEN")
+        for r in seen:
+            print(
+                f"{r['key']:<28} {str(r.get('first_seen'))[:19]}  {(r.get('note') or '')[:60]}"
+            )
+
+
+def cmd_orchestrator(st, a):
+    with st.lock():
+        app = _kept_app_id(st, "orchestrator", a.app_id)
+        st.set_claim("orchestrator", norm_sid(a.session), a.name, app)
+    print(
+        f"board: orchestrator is {a.name} ({norm_sid(a.session)}{', app ' + app if app else ''})"
+    )
+
+
+def cmd_dispatcher(st, a):
+    with st.lock():
+        app = _kept_app_id(st, "dispatcher", a.app_id)
+        st.set_claim("dispatcher", norm_sid(a.session), a.name, app)
+    print(
+        f"board: dispatcher is {a.name} ({norm_sid(a.session)}{', app ' + app if app else ''})"
+    )
+
+
+def cmd_integrator(st, a):
+    with st.lock():
+        cur = st.claim("integrator")
+        if a.release:
+            if cur and norm_sid(cur.get("session_id")) != norm_sid(a.session):
+                sys.exit(
+                    "board: the integration claim belongs to another session; it releases it, not you"
+                )
+            st.del_claim("integrator")
+            print("board: integration tree released")
+            return
+        if cur and norm_sid(cur.get("session_id")) != norm_sid(a.session):
+            sys.exit(
+                f"board: integration tree is held by {cur.get('session_id')} since {cur.get('since')}; wait or ask the orchestrator"
+            )
+        st.set_claim(
+            "integrator",
+            norm_sid(a.session),
+            None,
+            _kept_app_id(st, "integrator", a.app_id),
+        )
+    print(f"board: integration tree claimed by {norm_sid(a.session)}")
+
+
+STOPWORDS = frozenset(
+    "the a an is are from to of in on and or it its that this with for not no by at be as was were "
+    "has have had when then than into over under after before while still never always".split()
+)
+
+
+def title_tokens(title):
+    return {
+        w
+        for w in re.findall(r"[a-z0-9]+", str(title).lower())
+        if w not in STOPWORDS and len(w) > 1
+    }
+
+
+def says_the_same(mine, theirs):
+    """Two token sets are one subject: at least three words in common, and
+    most of the shorter one."""
+    if len(mine) < 3 or len(theirs) < 3:
+        return False
+    shared = len(mine & theirs)
+    return shared >= 3 and shared / min(len(mine), len(theirs)) >= 0.6
+
+
+NOTICE_DAYS = 14
+NOTICE_SHOWN_AT = 3
+
+
+def _later(days):
+    return (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=days)).isoformat(timespec="seconds")
+
+
+def cmd_noticed(st, a):
+    """What a session noticed and is not going to fix. NOT a card: one line
+    that expires by itself. On 2026-09-20 the board held 547 cards after 17
+    days; 145 of the 203 open ones were sessions' observations that nobody
+    was ever going to be allowed to pick up, and most were already fixed,
+    wrong, or about other cards. A notice asks nothing of anybody: seen again
+    it counts up and lives longer, seen NOTICE_SHOWN_AT times it is shown to
+    Mario as one line, and otherwise it is gone in NOTICE_DAYS days."""
+    sid = norm_sid(a.session or os.environ.get("CLAUDE_CODE_SESSION_ID", ""))
+    mine = title_tokens(a.what)
+    for c in st.list_cards():
+        if c["state"] not in SETTLED and says_the_same(mine, title_tokens(c["title"])):
+            print(f"already a card: #{c['id']} {c['title']}  (nothing added; board note {c['id']} '<what you found>' if you know more)")
+            return
+    with st.lock():
+        for n in st.notices():
+            if not says_the_same(mine, title_tokens(n["what"])):
+                continue
+            sessions = list(n.get("sessions") or [])
+            if sid and sid not in sessions:
+                sessions.append(sid)
+            n.update({"seen": int(n.get("seen", 1)) + 1, "sessions": sessions, "last_seen": now(), "expires_at": _later(NOTICE_DAYS)})
+            st.put_notice(n)
+            shown = "  (now shown to Mario)" if n["seen"] >= NOTICE_SHOWN_AT else ""
+            print(f"noticed again, {n['seen']} times now: {n['what']}{shown}")
+            return
+        n = st.put_notice({"app": a.from_app.lower(), "what": a.what, "detail": a.detail or "", "seen": 1,
+                           "sessions": [sid] if sid else [], "last_seen": now(), "expires_at": _later(NOTICE_DAYS)})
+    print(f"noticed (n{n.get('id', '')}): {a.what}  (expires in {NOTICE_DAYS} days unless it is seen again)")
+
+
+def cmd_notices(st, a):
+    rows = st.notices()
+    if not rows:
+        print("nothing noticed and still live")
+        return
+    for n in sorted(rows, key=lambda n: (-int(n.get("seen", 1)), n.get("last_seen", ""))):
+        print(f"n{n['id']:<5} x{n.get('seen', 1):<3} {n.get('app', ''):<12} {n['what']}")
+
+
+def cmd_promote(st, a):
+    """Mario (or a user) asked for it: the notice becomes a card."""
+    hit = [n for n in st.notices() if int(n["id"]) == a.id]
+    if not hit:
+        sys.exit(f"board: no live notice n{a.id}")
+    n = hit[0]
+    with st.lock():
+        c = st.create_card({"title": n["what"], "from": n.get("app") or "unknown", "kind": a.kind,
+                            "body": (n.get("detail") or "") + f"\nNoticed {n.get('seen', 1)} time(s) before it was asked for.",
+                            "reporter": a.reporter, "parent": None,
+                            "history": [{"at": now(), "what": f"created from notice n{n['id']}"}]})
+        n["promoted_card"] = c["id"]
+        st.put_notice(n)
+    print(f"#{c['id']} {c['title']}")
+
+
+def similar_open(st, title):
+    """Open cards whose title says the same thing in different words.
+
+    Two agents filed one cmake bug twenty minutes apart (#320, #321) with a
+    card about exactly that (#175) open. Token overlap against the shorter
+    title, at least three words in common: cheap, and it catches the case
+    that happens, a rewording of the same subject.
+    """
+    mine = title_tokens(title)
+    if len(mine) < 3:
+        return []
+    hits = []
+    for c in st.list_cards():
+        if c["state"] in SETTLED:
+            continue
+        if says_the_same(mine, title_tokens(c["title"])):
+            hits.append(c)
+    return hits
+
+
+def cmd_new(st, a):
+    # A session's own observation is not a card (cmd_noticed says why). A
+    # card a session files for itself is a card for work that starts NOW,
+    # bound to it in the same call, so there is always somebody to close it.
+    if a.reporter == "session" and not getattr(a, "session", None):
+        sys.exit(
+            "board: something you noticed and are not fixing now is not a card any more:\n"
+            f"  board noticed '<one line>' --from {a.from_app}\n"
+            "It expires by itself, counts up when it is seen again, and reaches Mario at three.\n"
+            "A card is for work that starts NOW: add --session <your id> and it is yours, in 'working'.\n"
+            "Something Mario or a user said is --reporter mario or --reporter user."
+        )
+    if not a.anyway:
+        dup = similar_open(st, a.title)
+        if dup:
+            lines = [f"board: this looks like an open card already on the board:"]
+            for c in dup[:3]:
+                lines.append(
+                    f"  #{c['id']} {c['state']:<9} {c['from']:<10} {c['title']}"
+                )
+            lines.append(
+                f"  add what you know to it: board note {dup[0]['id']} '<what you found>' (--body to append to the card),"
+            )
+            lines.append(
+                "  or file anyway with --anyway if it really is a different thing."
+            )
+            sys.exit("\n".join(lines))
+    with st.lock():
+        c = st.create_card(
+            {
+                "title": a.title,
+                "from": a.from_app.lower(),
+                "kind": a.kind,
+                "body": a.body or "",
+                "reporter": a.reporter,
+                "parent": a.parent,
+                "history": [{"at": now(), "what": "created"}],
+            }
+        )
+        ensure_inbox(st, c["id"], a.default, "board", adopt=True)
+        c = st.get_card(c["id"])
+        if getattr(a, "session", None):
+            c["session"] = norm_sid(a.session)
+            c["state"] = "working"
+            hist(c, f"bound to session {norm_sid(a.session)} at filing")
+            st.save_card(c)
+            c = st.get_card(c["id"])
+    # The card's own state, not whether this call did the filing: on the
+    # Supabase store the trigger files inside the INSERT, and a marker keyed on
+    # "did I file it" would go silent exactly where the SQL enforcer works.
+    inbox = any(b["open"] and b["need"] == "mario" for b in c["blockers"])
+    print(f"#{c['id']} {c['title']}" + ("  (in Mario's inbox)" if inbox else ""))
+
+
+IDLE_MINUTES = 45
+LEASE_MINUTES = 45
+CLAIMANT_SECONDS = 180
+
+
+def actor_key(session, agent):
+    return f"{norm_sid(session)}:{agent or 'main'}"
+
+
+def actor_session(actor):
+    return str(actor or "").split(":", 1)[0]
+
+
+def actor_is_main(actor):
+    return str(actor or "").endswith(":main")
+
+
+def tree_name(tree):
+    return str(tree or "").rstrip("/").split("/")[-1]
+
+
+def bind_claim_key(card, tree):
+    """The key under which the guard leaves the actor of a `board bind` call:
+    the card and the tree, which both the guard (from the command) and the
+    CLI (from its args) know verbatim. Words, quotes and redirects around
+    them do not matter."""
+    return f"{int(card)}|{tree_name(tree)}"
+
+
+def take_claimant(root, key):
+    """The actor the guard recorded for this bind call, consumed once."""
+    p = root / ".board" / "claimants" / f"{key}.json"
+    try:
+        d = json.loads(p.read_text() or "{}")
+        p.unlink()
+    except (OSError, ValueError):
+        return None
+    if time.time() - float(d.get("at", 0)) > CLAIMANT_SECONDS:
+        return None
+    return d
+
+
+def tree_record_path(root, tree):
+    return root / ".board" / "trees" / f"{tree_name(tree)}.json"
+
+
+def tree_record(root, tree):
+    p = tree_record_path(root, tree)
+    try:
+        d = json.loads(p.read_text() or "{}")
+        d["_mtime"] = p.stat().st_mtime
+        return d
+    except (OSError, ValueError):
+        return None
+
+
+def write_tree_record(root, tree, rec):
+    d = root / ".board" / "trees"
+    d.mkdir(parents=True, exist_ok=True)
+    p = d / f"{tree_name(tree)}.json"
+    tmp = p.with_suffix(".json.tmp")
+    rec = {k: v for k, v in rec.items() if not k.startswith("_")}
+    tmp.write_text(json.dumps(rec, indent=1))
+    os.replace(tmp, p)
+
+
+def clear_tree_record(root, tree):
+    try:
+        tree_record_path(root, tree).unlink()
+        return True
+    except OSError:
+        return False
+
+
+def lease_live(rec):
+    """A lease is the record's mtime: the holder's tool calls touch the file
+    (no read-modify-write to race a takeover), and an expiry written by
+    SessionEnd ends it early."""
+    if not rec:
+        return False
+    if rec.get("expired_at") and float(rec["expired_at"]) >= float(rec.get("_mtime", 0)):
+        return False
+    return time.time() - float(rec.get("_mtime", 0)) < LEASE_MINUTES * 60
+
+
+def tree_in_use(root, tree, rec):
+    return lease_live(rec) or tree_gate_pid(root, tree) is not None
+
+
+def tree_quiescence(root, tree):
+    """Why a tree may NOT be taken over: a living gate, uncommitted work, an
+    operation in progress. Empty list means quiescent."""
+    reasons = []
+    gate = tree_gate_pid(root, tree)
+    if gate is not None:
+        reasons.append(f"a check.sh is still verifying it (pid {gate})")
+    path = root / tree
+    if not path.is_dir():
+        return reasons
+    try:
+        st = subprocess.run(["git", "-C", str(path), "status", "--porcelain", "--ignore-submodules=untracked"], capture_output=True, text=True, timeout=20)
+        if st.returncode != 0:
+            reasons.append("git status could not be read")
+        else:
+            dirty = [l for l in st.stdout.splitlines() if not l.startswith("??")]
+            if dirty:
+                reasons.append(f"{len(dirty)} uncommitted change(s) in it")
+    except (OSError, subprocess.SubprocessError):
+        reasons.append("git status could not be read")
+    gitdir = subprocess.run(["git", "-C", str(path), "rev-parse", "--git-dir"], capture_output=True, text=True).stdout.strip()
+    if gitdir:
+        g = pathlib.Path(gitdir) if gitdir.startswith("/") else path / gitdir
+        for marker in ("MERGE_HEAD", "rebase-merge", "rebase-apply", "CHERRY_PICK_HEAD", "REVERT_HEAD", "index.lock"):
+            if (g / marker).exists():
+                reasons.append(f"{marker} present (an operation in progress)")
+    return reasons
+
+
+def session_ended(root, sid):
+    p = root / ".board" / "sessions" / f"{norm_sid(sid)}.json"
+    try:
+        return bool(json.loads(p.read_text() or "{}").get("ended_at"))
+    except (OSError, ValueError):
+        return False
+
+
+def session_live(root, sid):
+    """The hook touches .board/sessions/<sid>.json on every tool call and marks
+    ended_at at SessionEnd; a holder silent for IDLE_MINUTES or ended is gone."""
+    p = root / ".board" / "sessions" / f"{norm_sid(sid)}.json"
+    try:
+        st = p.stat()
+        cur = json.loads(p.read_text() or "{}")
+    except (OSError, ValueError):
+        return False
+    if cur.get("ended_at"):
+        return False
+    return (time.time() - st.st_mtime) < IDLE_MINUTES * 60
+
+
+def tree_gate_pid(root, tree):
+    """The pid of a check.sh still verifying wt/<name>, or None (the guard's rule)."""
+    try:
+        real = str((root / tree).resolve())
+    except OSError:
+        return None
+    lock = (
+        pathlib.Path(os.environ.get("TMPDIR") or "/tmp")
+        / f"xteink-check-{hashlib.sha1(real.encode()).hexdigest()[:8]}.running"
+    )
+    try:
+        pid = int((lock.read_text() or "0").split()[0])
+        os.kill(pid, 0)
+        cmd = subprocess.run(
+            ["ps", "-o", "command=", "-p", str(pid)], capture_output=True, text=True
+        ).stdout
+    except (OSError, ValueError, IndexError):
+        return None
+    return pid if "check.sh" in cmd else None
+
+
+def _related(actor_a, actor_b):
+    """A session's own conversation and its subagents hand trees between
+    themselves without ceremony; two subagents of one session do not (that is
+    the orchestrator dispatching two workers onto one tree)."""
+    return (actor_session(actor_a) == actor_session(actor_b)
+            and (actor_is_main(actor_a) or actor_is_main(actor_b)))
+
+
+def _actor_live(root, actor):
+    """The holder of a CARD is live when any tree it holds has a live lease, or
+    its session file is fresh and not ended."""
+    sid = actor_session(actor)
+    d = root / ".board" / "trees"
+    if d.is_dir():
+        for p in d.glob("*.json"):
+            rec = tree_record(root, p.stem)
+            if rec and rec.get("actor") == actor and tree_in_use(root, f"wt/{p.stem}", rec):
+                return True
+    return session_live(root, sid)
+
+
+def cmd_bind(st, a):
+    """One card, one branch, one worktree: the tree's holder is written here,
+    under the board's own lock, as (session, agent) plus a lease.
+
+    Who the agent is comes from the guard: it sees the hook payload's agent id
+    when this very command passes PreToolUse and leaves a claimant note keyed
+    on the card and the tree; this reads the note. Without one (a bind run
+    outside the hook, from a script, from a human shell) the agent is `main`,
+    and the output says so.
+    """
+    sid = norm_sid(a.session)
+    take = bool(getattr(a, "take", False))
+    tree = a.tree.rstrip("/") if a.tree else None
+    if tree and not tree.startswith("wt/"):
+        tree = f"wt/{tree_name(tree)}"
+    agent = None
+    note = take_claimant(st.root, bind_claim_key(a.id, tree)) if tree else None
+    if note and norm_sid(note.get("session_id")) == sid:
+        agent = note.get("agent_id") or "main"
+    me = actor_key(sid, agent)
+    no_note = tree is not None and not note
+    with st.lock():
+        c = st.get_card(a.id)
+        # The card: held by another actor that is live, and not this session's
+        # own hand-off between its conversation and its subagents, needs --take
+        # (the orchestrator once dispatched a second worker onto a card whose
+        # holder was mid-rebase).
+        holder = c.get("holder") or (actor_key(c.get("session"), None) if c.get("session") else None)
+        if holder and holder != me and c["state"] not in SETTLED and not _related(holder, me) and not take and _actor_live(st.root, holder):
+            sys.exit(
+                f"board: #{c['id']} is held by {holder}"
+                + (f" in {c['tree']}" if c.get("tree") else "")
+                + f". If that actor is gone, take it over on purpose: board bind {c['id']} --session {a.session}"
+                + (f" --tree {tree}" if tree else "") + " --take"
+            )
+        if tree:
+            rec = tree_record(st.root, tree)
+            other = rec and rec.get("actor") and rec["actor"] != me
+            if other and _related(rec["actor"], me):
+                card_history(st, c, f"{tree} handed within the session from {rec['actor']} to {me}")
+            elif other:
+                live = tree_in_use(st.root, tree, rec)
+                age = int((time.time() - float(rec.get("_mtime", 0))) // 60)
+                if live:
+                    left = max(0, LEASE_MINUTES - age)
+                    gate = tree_gate_pid(st.root, tree)
+                    sys.exit(
+                        f"board: {tree} is held by {rec['actor']} for card #{rec.get('card')}"
+                        + (f", with a check.sh still verifying it (pid {gate})" if gate is not None else f", lease live for another {left} min")
+                        + ".\n  Two actors in one tree verify nothing, and --take is refused while the holder is live."
+                        f"\n  A tree of your own: ./scripts/wt.sh new <name>; then board bind {c['id']} --session {a.session} --tree wt/<name>"
+                    )
+                if not take:
+                    sys.exit(
+                        f"board: {tree} is held by {rec['actor']} for card #{rec.get('card')}, lease expired {age - LEASE_MINUTES} min ago.\n"
+                        f"  Taking a tree over is a decision: board bind {c['id']} --session {a.session} --tree {tree} --take\n"
+                        f"  (refused while the tree has uncommitted work or an operation in progress, unless that holder's session has ended). Look first: board tree {tree_name(tree)}"
+                    )
+                reasons = tree_quiescence(st.root, tree)
+                ended = session_ended(st.root, actor_session(rec["actor"]))
+                if reasons and not ended:
+                    sys.exit(
+                        f"board: {tree} cannot be taken over while it is not quiescent: " + "; ".join(reasons) + ".\n"
+                        f"  Somebody's work is in it and their session has not ended. Look before you take: board tree {tree_name(tree)}"
+                    )
+                why = "lease expired, tree quiescent" if not reasons else "lease expired, its session ended; inherited with " + "; ".join(reasons)
+                card_history(st, c, f"took over {tree} from {rec['actor']} (card #{rec.get('card')}; {why})")
+                if rec.get("card") not in (None, c["id"]):
+                    try:
+                        old = st.get_card(rec["card"])
+                        card_history(st, old, f"{tree} was taken over by {me} for card #{c['id']} ({why})")
+                        st.save_card(old)
+                    except SystemExit:
+                        pass
+            write_tree_record(st.root, tree, {
+                "tree": tree, "card": c["id"], "actor": me, "session": sid, "agent": agent or "main",
+                "bound_at": now(), "gen": (int(str((rec or {}).get("gen", 0))) if str((rec or {}).get("gen", 0)).isdigit() else 0) + 1,
+            })
+        if holder and holder != me and not _related(holder, me):
+            card_history(st, c, f"taken over from {holder}")
+        c["session"] = sid
+        c["holder"] = me
+        if a.tree:
+            c["tree"] = tree
+        if a.branch:
+            c["branch"] = a.branch
+        if c["state"] in ("reported", "triaged"):
+            c["state"] = "working"
+        card_history(st, c, f"bound to {me}" + (f" in {tree}" if tree else ""))
+        st.save_card(c)
+        s = st.session(sid)
+        s["card"] = c["id"]
+        s["cards"] = [x for x in (s.get("cards") or []) if x != c["id"]] + [c["id"]]
+        st.save_session(s)
+    print(f"#{c['id']} bound to {me}" + (f" in {tree}" if tree else ""))
+    if no_note:
+        print(f"  (the guard left no note for this bind, so the holder is the session's main conversation; a subagent that meant to hold {tree} binds again from a plain command: board bind {c['id']} --session {a.session} --tree {tree})")
+
+
+def tree_verdict_line(root, tree, rec):
+    gate = tree_gate_pid(root, tree)
+    reasons = tree_quiescence(root, tree)
+    if not rec:
+        return ("free (no holder record)" if not reasons else "no holder record, but NOT quiescent: " + "; ".join(reasons) + "; not for a sweep"), 1 if reasons else 0
+    if tree_in_use(root, tree, rec):
+        return "IN USE, hands off", 1
+    if reasons:
+        ended = session_ended(root, actor_session(rec["actor"]))
+        return ("expired, NOT quiescent: " + "; ".join(reasons) + ("; its session has ended, so --take inherits that work" if ended else "; its session has not ended, so --take is refused")), 1
+    return f"expired and quiescent: free to take (board bind <card> --session <you> --tree {tree} --take)", 0
+
+
+def cmd_tree(st, a):
+    """What a sweep must ask before it calls a tree abandoned."""
+    name = tree_name(a.name)
+    tree = f"wt/{name}"
+    rec = tree_record(st.root, tree)
+    if getattr(a, "release", False):
+        if not rec:
+            print(f"{tree}: no record to release")
+            return
+        me_sid = norm_sid(getattr(a, "session", None) or os.environ.get("CLAUDE_CODE_SESSION_ID", ""))
+        # A record whose directory is gone holds nothing: the lease its holder
+        # keeps renewing guards an empty path. 34 such records sat on the board
+        # the day prune first asked it (2026-09-07), every one still "LIVE".
+        gone = not (st.root / tree).is_dir()
+        if not gone and actor_session(rec["actor"]) != me_sid and tree_in_use(st.root, tree, rec):
+            sys.exit(f"board: {tree} is in use by {rec['actor']}; only that session releases it, or wait for its lease")
+        clear_tree_record(st.root, tree)
+        try:
+            with st.lock():
+                c = st.get_card(rec.get("card"))
+                card_history(st, c, f"{tree} released (record cleared" + (", its directory was already gone" if gone else "") + ")")
+                st.save_card(c)
+        except (SystemExit, TypeError):
+            pass
+        print(f"{tree}: released" + (" (no such directory; the record was all that was left)" if gone else ""))
+        return
+    gate = tree_gate_pid(st.root, tree)
+    reasons = tree_quiescence(st.root, tree)
+    if not rec:
+        print(f"{tree}: no holder record (nobody has bound it since the record existed)")
+    else:
+        age = int((time.time() - float(rec.get("_mtime", 0))) // 60)
+        state = "LIVE" if lease_live(rec) else "expired"
+        print(f"{tree}: held by {rec.get('actor')} for card #{rec.get('card')}, lease {state} (renewed {age} min ago), bound {rec.get('bound_at')}")
+    print(f"  gate: {'running, pid ' + str(gate) if gate is not None else 'none'}")
+    print("  quiescent: " + ("yes" if not reasons else "NO: " + "; ".join(reasons)))
+    line, code = tree_verdict_line(st.root, tree, rec)
+    print("  verdict: " + line)
+    sys.exit(code)
+
+
+def cmd_trees(st, a):
+    """The rollout step: every open card with a tree and a session gets a
+    record naming that session's main conversation, once, so live workers
+    are not refused from their own trees the moment the guard starts
+    reading records. Subagents rebind themselves on first refusal."""
+    made = 0
+    for c in st.list_cards():
+        if c["state"] in SETTLED or not c.get("tree") or not c.get("session"):
+            continue
+        tree = c["tree"] if str(c["tree"]).startswith("wt/") else f"wt/{tree_name(c['tree'])}"
+        if tree_record(st.root, tree) or not (st.root / tree).is_dir():
+            continue
+        if a.seed:
+            write_tree_record(st.root, tree, {
+                "tree": tree, "card": c["id"], "actor": c.get("holder") or actor_key(c["session"], None),
+                "session": norm_sid(c["session"]), "agent": "main", "bound_at": now(), "gen": 1, "seeded": True,
+            })
+        made += 1
+    print(f"{made} tree record(s) {'written' if a.seed else 'missing (run with --seed to write them)'}")
+    d = st.root / ".board" / "trees"
+    gone = sorted(p.name[:-5] for p in d.glob("*.json") if not (st.root / "wt" / p.name[:-5]).is_dir()) if d.is_dir() else []
+    if gone:
+        print(f"{len(gone)} record(s) name a tree that no longer exists (board tree <name> --release clears one): " + ", ".join(gone))
+
+
+def _block(st, cid, need, ask, default, by, steps=None):
+    c = st.get_card(cid)
+    if isinstance(st, SupaStore):
+        n = st.add_blocker(cid, need, ask, default, by, steps)
+        st.add_history(cid, f"blocked ({need}): {ask}")
+        if c.get("session"):
+            st.mirror.save_card(st.get_card(cid))
+    else:
+        n = 1 + max([b["n"] for b in c["blockers"]] + [0])
+        c["blockers"].append(
+            {
+                "n": n,
+                "need": need,
+                "ask": ask,
+                "default": default,
+                "open": True,
+                "created": now(),
+                "by": by,
+                "steps": steps,
+                "answer": None,
+            }
+        )
+        hist(c, f"blocked ({need}): {ask}")
+        st.save_card(c)
+    return c, n
+
+
+def ensure_inbox(st, cid, default=None, by="board", adopt=False):
+    """A card on app `mario` is an item in Mario's inbox, by construction.
+
+    The inbox is the open `mario` blockers and nothing else, so a card filed on
+    the app that already means "only Mario decides this" was invisible to him
+    until someone remembered to block on it. Twice nobody did (cards 75 and 84
+    aged a day in `reported`), which is a dropped message, not a delay.
+
+    Idempotent on the only thing that matters -- whether an open `mario`
+    blocker is already there -- so re-running it, or moving a card to `mario`
+    twice, never files a second one.
+    """
+    c = st.get_card(cid)
+    if str(c.get("from", "")).lower() != MARIO_APP or c["state"] in SETTLED:
+        return False
+    want = (default or "").strip() or MARIO_DEFAULT
+    already = [b for b in c["blockers"] if b["open"] and b["need"] == "mario"]
+    if already:
+        # On the Supabase store the trigger opens this blocker inside the
+        # card's own INSERT or UPDATE, so the CLI arrives to find the work
+        # done and its --default dropped on the floor. `adopt` is the caller
+        # saying it knows none was open before it wrote, so the blocker it
+        # found is that one and the words it was given belong on it.
+        if adopt and (default or "").strip():
+            st.set_blocker_default(cid, already[-1]["n"], want)
+            return True
+        return False
+    _block(st, cid, "mario", c["title"], want, by)
+    return True
+
+
+def cmd_app(st, a):
+    """Move a card to another app, and into Mario's inbox when the app is his."""
+    app = a.app.lower()
+    with st.lock():
+        c = st.get_card(a.id)
+        was = str(c.get("from", "")).lower()
+        had = any(b["open"] and b["need"] == "mario" for b in c["blockers"])
+        moved = was != app
+        if moved:
+            c["from"] = app
+            card_history(st, c, f"moved to app {app}")
+            st.save_card(c)
+        # Only an actual move files, because only an actual move is something
+        # the SQL trigger can see (`old.app is distinct from new.app`). A CLI
+        # that also re-asked on a no-op would be a rule with two answers.
+        took = (
+            ensure_inbox(st, c["id"], a.default, "board", adopt=not had)
+            if moved
+            else False
+        )
+        c = st.get_card(c["id"])
+    ob = [b for b in c["blockers"] if b["open"] and b["need"] == "mario"]
+    print(f"#{c['id']} -> {app}" + ("  (in Mario's inbox)" if ob else ""))
+    # Say when the words the filer typed went nowhere. A --default silently
+    # dropped is the failure the default exists to prevent.
+    if (a.default or "").strip() and not took:
+        why = (
+            f"it already had an open mario blocker (#{ob[0]['n']})"
+            if ob and had
+            else f"it is {c['state']} on app {app}, so nothing was filed"
+        )
+        print(f"board: --default not applied to #{c['id']}: {why}")
+    # Moving a card off his desk does not withdraw what he was asked. Removing
+    # an item from his inbox without an answer is the dropped message this rule
+    # exists to prevent, so it is said out loud and left for a person.
+    if was == MARIO_APP and app != MARIO_APP and ob:
+        for b in ob:
+            print(
+                f"board: #{c['id']} is still in Mario's inbox on blocker #{b['n']}"
+                f" ({b['ask']}); answer it or: board unblock {c['id']} --n {b['n']}"
+            )
+
+
+def cmd_block(st, a):
+    with st.lock():
+        c, n = _block(st, a.id, a.need, a.ask, a.default, norm_sid(a.session), a.steps)
+    print(f"#{c['id']} blocked on {a.need}: {a.ask}")
+
+
+def cmd_ask(st, a):
+    with st.lock():
+        c, n = _block(st, a.id, "mario", a.ask, a.default, "orchestrator", a.steps)
+    print(f"#{c['id']} asked Mario: {a.ask}")
+
+
+def cmd_unblock(st, a):
+    with st.lock():
+        c = st.get_card(a.id)
+        for b in c["blockers"]:
+            if b["open"] and (a.n is None or b["n"] == a.n):
+                b["open"] = False
+                if isinstance(st, SupaStore):
+                    st.close_blocker(c["id"], b["n"])
+                    st.add_history(c["id"], f"unblocked #{b['n']}")
+                else:
+                    hist(c, f"unblocked #{b['n']}")
+        if not isinstance(st, SupaStore):
+            st.save_card(c)
+    print(f"#{c['id']} unblocked")
+
+
+def cmd_answer(st, a):
+    with st.lock():
+        c = st.get_card(a.id)
+        target = None
+        if a.n is not None:
+            for b in c["blockers"]:
+                if b["open"] and b["n"] == a.n:
+                    target = b
+            if target is None:
+                sys.exit(f"board: #{c['id']} has no open blocker #{a.n}")
+        else:
+            # More than one open `mario` blocker used to answer the LAST one
+            # silently, so an answer typed against the first line of the inbox
+            # landed on a different question. Rare before this rule; routine
+            # once every card on app mario carries one of its own.
+            asks = [b for b in c["blockers"] if b["open"] and b["need"] == "mario"]
+            if len(asks) > 1:
+                sys.exit(
+                    f"board: #{c['id']} has {len(asks)} open blockers that need Mario; "
+                    "say which with --n: "
+                    + ", ".join(f"#{b['n']} {b['ask']}" for b in asks)
+                )
+            target = asks[0] if asks else None
+        if target is None:
+            for b in c["blockers"]:
+                if b["open"]:
+                    target = b
+        if target is None:
+            sys.exit(f"board: #{c['id']} has no open blocker to answer")
+        answer = {"choice": a.choice, "note": a.note or "", "at": now()}
+        if isinstance(st, SupaStore):
+            st.close_blocker(c["id"], target["n"], answer)
+            st.add_history(c["id"], f"answered #{target['n']}: {a.choice}")
+        else:
+            target["open"] = False
+            target["answer"] = answer
+            c["answers"].append(
+                {
+                    "blocker": target["n"],
+                    "choice": a.choice,
+                    "note": a.note or "",
+                    "at": answer["at"],
+                }
+            )
+            hist(c, f"answered #{target['n']}: {a.choice}")
+            st.save_card(c)
+    print(f"#{c['id']} answered: {a.choice}")
+
+
+def cmd_state(st, a):
+    with st.lock():
+        c = st.get_card(a.id)
+        # A settled card leaves every list an agent reads (list --open, the
+        # orchestrator's queue), and its open blockers go with it: a
+        # reconciliation pass moved 35 finished cards to released and four
+        # owed hardware checks vanished. Mario's own blockers stay in his
+        # inbox whatever the card's state, so only the others are the trap.
+        if a.state in SETTLED and not getattr(a, "with_blockers", False):
+            owed = [b for b in c["blockers"] if b["open"] and b["need"] != "mario"]
+            if owed:
+                lines = [
+                    f"board: #{c['id']} still has {len(owed)} open blocker(s) that nobody would see once it is {a.state}:"
+                ]
+                for b in owed:
+                    lines.append(f"  {b['n']} [{b['need']}] {b['ask']}")
+                lines.append(
+                    f"  answer or unblock them first (board answer {c['id']} '<choice>' --n N / board unblock {c['id']} --n N),"
+                )
+                lines.append(
+                    "  or pass --with-blockers to settle the card and leave them open on purpose."
+                )
+                sys.exit("\n".join(lines))
+        c["state"] = a.state
+        card_history(st, c, f"state {a.state}")
+        st.save_card(c)
+        # A settled card's tree record would otherwise outlive the card, the
+        # session and the worktree, and the next tree of that name would be
+        # "taken over" from work that finished last week.
+        if a.state in SETTLED and c.get("tree"):
+            rec = tree_record(st.root, c["tree"])
+            if rec and rec.get("card") == c["id"]:
+                clear_tree_record(st.root, c["tree"])
+    print(f"#{c['id']} {a.state}")
+
+
+def cmd_note(st, a):
+    """Put what an agent learnt on the card it belongs to.
+
+    Nothing could enrich a card after `board new`: three child cards were filed
+    in one night purely to attach information to existing ones, and an agent
+    with a fresh reproduction had nowhere to put it. A note is a history line;
+    with --body it is also appended to the card's body, where show prints it.
+    """
+    with st.lock():
+        c = st.get_card(a.id)
+        text = " ".join(str(a.text).split())
+        if not text:
+            sys.exit("board: a note needs text")
+        card_history(st, c, f"note: {text}")
+        if a.body:
+            c["body"] = (
+                (c.get("body") or "").rstrip()
+                + ("\n\n" if c.get("body") else "")
+                + text
+            )
+        # The file store keeps history inside the card, so the note is only on
+        # disk once the card is written; on Supabase the line is already in.
+        st.save_card(c)
+    print(f"#{c['id']} noted" + (" (and appended to the body)" if a.body else ""))
+
+
+def cmd_parent(st, a):
+    """Put a card under another card (subtasks)."""
+    with st.lock():
+        c = st.get_card(a.id)
+        if a.of is not None:
+            st.get_card(a.of)
+            if a.of == c["id"]:
+                sys.exit("board: a card cannot be its own parent")
+        c["parent"] = a.of
+        card_history(st, c, f"under #{a.of}" if a.of is not None else "no parent")
+        st.save_card(c)
+    print(f"#{c['id']} -> parent {a.of}")
+
+
+def cmd_owner(st, a):
+    with st.lock():
+        if a.session or a.tree:
+            st.set_owner(
+                a.app.lower(), norm_sid(a.session) if a.session else None, a.tree
+            )
+        o = st.owners().get(a.app.lower())
+    if o:
+        print(f"{a.app}: session {o.get('session')}  tree {o.get('tree')}")
+    else:
+        print(f"{a.app}: no owner")
+
+
+def cmd_route(st, a):
+    c = st.get_card(a.id)
+    o = st.owners().get(str(c.get("from", "")).lower())
+    if o and o.get("session"):
+        print(
+            f"#{c['id']} -> {c['from']} owner session {o['session']} (tree {o.get('tree')})"
+        )
+    else:
+        print(f"#{c['id']} -> {c['from']} has no owner; start a worker")
+
+
+def derived(c):
+    """What git and GitHub say about this card's branch. Never stored."""
+    out = {}
+    tree, branch = c.get("tree"), c.get("branch")
+    if not (tree and branch):
+        return out
+    root = find_root()
+    tdir = root / tree if not pathlib.Path(tree).is_absolute() else pathlib.Path(tree)
+    try:
+        r = subprocess.run(
+            ["git", "-C", str(tdir), "rev-list", "--count", f"origin/xteink..{branch}"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if r.returncode == 0:
+            out["ahead"] = int(r.stdout.strip() or 0)
+        r = subprocess.run(
+            ["git", "-C", str(tdir), "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if r.returncode == 0:
+            out["dirty"] = len([l for l in r.stdout.splitlines() if l.strip()])
+    except (OSError, subprocess.SubprocessError, ValueError):
+        pass
+    try:
+        r = subprocess.run(
+            [
+                "gh",
+                "pr",
+                "list",
+                "-R",
+                "ma-r-s/crossplay",
+                "--head",
+                branch,
+                "--state",
+                "all",
+                "--json",
+                "number,state",
+                "--limit",
+                "1",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        if r.returncode == 0 and r.stdout.strip():
+            prs = json.loads(r.stdout)
+            if prs:
+                out["pr"] = prs[0]
+    except (OSError, subprocess.SubprocessError, ValueError):
+        pass
+    return out
+
+
+def fmt_card(c, full=False):
+    ob = [b for b in c["blockers"] if b["open"]]
+    flag = f"  BLOCKED({','.join(b['need'] for b in ob)})" if ob else ""
+    line = f"#{c['id']:<4} {c['state']:<9} {c['from']:<14} {c['title']}{flag}"
+    if not full:
+        return line
+    # The address the report form asks for, on the line that already says who
+    # reported it. It was collected and stored from the first day the form had
+    # the field and rendered nowhere, so two people who left one -- including
+    # someone offering to send us games -- read as unreachable strangers.
+    who = c.get("reporter") or UNKNOWN_REPORTER
+    if c.get("reporter_email"):
+        who += f" <{c['reporter_email']}>"
+    lines = [
+        line,
+        f"  kind {c['kind']}  reported by {who}"
+        f"  created {c['created']}  updated {c['updated']}",
+    ]
+    if c.get("tree") or c.get("branch") or c.get("session"):
+        lines.append(
+            f"  tree {c.get('tree')}  branch {c.get('branch')}  session {c.get('session')}"
+        )
+    # Everything else a reporter took the trouble to give us. The email was not
+    # the only field collected and never shown: #389 named its board and looked
+    # 1.12.11 up in Settings > About, #207 attached a photo of the screen, and
+    # `board show` printed none of it -- the device only ever appeared as prose
+    # inside a history line. Each is omitted when absent rather than printed
+    # empty, because a blank is how a missing thing starts reading as a present
+    # one. Values are safe by construction: the function accepts a device only
+    # from a fixed list, a version only as three dotted numbers, and builds
+    # photo_path itself as photos/<id>.<ext>.
+    got = []
+    if c.get("device"):
+        got.append(f"device {c['device']}")
+    if c.get("version"):
+        got.append(f"version {c['version']}")
+    if c.get("photo_path"):
+        got.append(f"photo {c['photo_path']}")
+    if c.get("github_issue"):
+        got.append(f"issue #{c['github_issue']}")
+    if got:
+        lines.append("  " + "  ".join(got))
+    d = derived(c)
+    if d:
+        lines.append("  derived " + json.dumps(d))
+    if c.get("body"):
+        lines.append("  " + c["body"].replace("\n", "\n  "))
+    for b in c["blockers"]:
+        st_ = (
+            "open"
+            if b["open"]
+            else f"closed: {b['answer']['choice'] if b.get('answer') else 'unblocked'}"
+        )
+        lines.append(
+            f"  blocker {b['n']} [{b['need']}, {st_}] {b['ask']}  | if nothing: {b['default']}"
+        )
+        if b.get("steps"):
+            lines.append(
+                "    how: "
+                + " / ".join(
+                    l.strip() for l in str(b["steps"]).splitlines() if l.strip()
+                )
+            )
+    for h in c.get("history", [])[-6:]:
+        lines.append(f"  {h['at']}  {h['what']}")
+    return "\n".join(lines)
+
+
+def cmd_show(st, a):
+    c = st.get_card(a.id)
+    print(fmt_card(c, full=True))
+    for k in st.list_cards():
+        if k.get("parent") == c["id"]:
+            print("    " + fmt_card(k))
+
+
+def cmd_list(st, a):
+    cards = st.list_cards()
+    if a.open:
+        cards = [c for c in cards if c["state"] not in ("done", "released", "parked")]
+    if getattr(a, "state", None):
+        cards = [c for c in cards if c["state"] == a.state]
+    # Who reported it. --from-mario is the question that made the column exist,
+    # so it gets a name of its own rather than an enum value to remember.
+    want = "mario" if getattr(a, "from_mario", False) else getattr(a, "reporter", None)
+    if want:
+        cards = [c for c in cards if (c.get("reporter") or UNKNOWN_REPORTER) == want]
+    if not cards:
+        # An empty result from a filter is a different fact from an empty board,
+        # and one sentence for both is how a filter that matched nothing reads
+        # as one that was never applied.
+        print(f"board: no cards reported by {want}" if want else "board: no cards")
+        return
+    by_id = {c["id"]: c for c in cards}
+    children = {}
+    for c in cards:
+        if c.get("parent") in by_id:
+            children.setdefault(c["parent"], []).append(c)
+    for c in cards:
+        if c.get("parent") in by_id:
+            continue
+        print(fmt_card(c))
+        for k in children.get(c["id"], []):
+            print("    " + fmt_card(k))
+
+
+# How stale the CLI you are running is.
+#
+# `board` is /opt/homebrew/bin/board resolving into the integration tree, so it
+# runs whatever that tree has checked out. On 2026-09-07 that was 332 commits
+# behind trunk, which meant `board list --reporter` -- merged the night before
+# and the whole point of the reporter column -- did not exist on the command
+# line, and nothing said so: the flag was simply an unrecognised argument. A
+# tool quietly running last week's code is the same shape as a generated file
+# judged by the wrong metrics, and both fail by looking normal.
+#
+# Behind by a few commits is the normal state of an integration tree while
+# other trees land work, so the threshold is TIME, not count: a warning fires
+# only once the oldest commit this CLI is missing is more than a day old. The
+# sibling guard is scripts_local/tree_freshness.sh, which asks the same
+# question about the tree a GATE is judging; read its "IF THIS BECOMES NOISE"
+# note before changing either. A qualifier that is always on is one people
+# scroll past, which is the failure both exist to prevent.
+STALE_AFTER_H = 24
+TRUNK = "origin/xteink"
+
+
+def cli_repo():
+    """The checkout this CLI is running from. One function, because the test
+    that drives main() has to aim it somewhere it can make stale on purpose."""
+    return pathlib.Path(__file__).resolve().parent
+
+
+def missing_commits(repo, trunk=None):
+    """(count, age in hours of the OLDEST commit this checkout lacks).
+
+    (0, 0) for a checkout that is current, that has no such ref, or that is not
+    a git repository at all -- this must never be the reason a board command
+    fails. `known_ref` tells the first of those apart from the other two.
+    """
+    trunk = trunk or TRUNK
+    try:
+        r = subprocess.run(
+            ["git", "-C", str(repo), "log", "--format=%ct", f"HEAD..{trunk}"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return 0, 0.0
+    if r.returncode != 0:
+        return 0, 0.0
+    stamps = [int(x) for x in r.stdout.split() if x.isdigit()]
+    if not stamps:
+        return 0, 0.0
+    return len(stamps), max(0.0, (time.time() - min(stamps)) / 3600.0)
+
+
+def known_ref(repo, trunk=None):
+    """Whether `trunk` resolves in this checkout at all.
+
+    Without it `board fresh` prints one sentence for "current" and for "there
+    is nothing here to compare against", which are opposite facts: the second
+    means the check is not running and nobody would know.
+    """
+    trunk = trunk or TRUNK
+    try:
+        r = subprocess.run(
+            ["git", "-C", str(repo), "rev-parse", "--verify", "--quiet", trunk],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return r.returncode == 0
+
+
+def stale_warning(repo, trunk=None):
+    """One line for stderr, or None. Silence means current, not unchecked --
+    `board fresh` says which, and BOARD_NO_FRESHNESS=1 turns the line off."""
+    if os.environ.get("BOARD_NO_FRESHNESS"):
+        return None
+    trunk = trunk or TRUNK
+    n, oldest = missing_commits(repo, trunk)
+    if not n or oldest < STALE_AFTER_H:
+        return None
+    days = oldest / 24
+    return (
+        f"board: this CLI is {n} commits behind {trunk}, the oldest of them "
+        f"{days:.0f} days old. Flags and behaviour added since are not in it.\n"
+        f"       git -C {repo} merge --ff-only {trunk}"
+    )
+
+
+def cmd_fresh(st, a):
+    repo = cli_repo()
+    if not known_ref(repo):
+        # Not the same fact as "up to date", and saying so is the point: a
+        # check that cannot run must not read as one that passed.
+        print(f"board: cannot check -- {repo} has no {TRUNK} to compare against")
+        return
+    n, oldest = missing_commits(repo)
+    if not n:
+        print(f"board: up to date with {TRUNK}")
+    else:
+        print(
+            f"board: {n} commits behind {TRUNK}, the oldest {oldest:.0f} h old"
+            + ("  -- stale" if oldest >= STALE_AFTER_H else "  -- fresh enough")
+        )
+        print(f"       git -C {repo} merge --ff-only {TRUNK}")
+    # Measured against the last fetch, never a live one: a board command must
+    # not reach the network to answer an unrelated question, and a `git fetch`
+    # in front of every `board show` would be paid hundreds of times a day.
+    # The sibling scripts_local/tree_freshness.sh takes --fetch because a gate
+    # runs once. So a gap can be UNDERSTATED here, never overstated.
+    print(f"       (against the last-fetched {TRUNK}; this never fetches)")
+
+
+def age_h(iso):
+    """Hours since an ISO timestamp, or None if it cannot be read."""
+    try:
+        t = dt.datetime.fromisoformat(str(iso).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=dt.timezone.utc)
+    return (dt.datetime.now(dt.timezone.utc) - t).total_seconds() / 3600.0
+
+
+def ago(iso):
+    h = age_h(iso)
+    if h is None:
+        return "just now"
+    if h < 1:
+        return "under an hour ago"
+    if h < 48:
+        return f"{int(round(h))} h ago"
+    return f"{int(round(h / 24))} days ago"
+
+
+def unread_reports(st, cards=None):
+    """What a person reported and Mario has not read yet.
+
+    NOT blockers, and deliberately: a blocker means a session cannot proceed,
+    and nobody is blocked on "nice firmware, thanks". `state` alone cannot
+    carry this either -- a report triaged an hour after it lands would leave
+    `reported` before he ever saw it, and one nobody triages would sit in his
+    face until it became wallpaper. So each report interrupts exactly once and
+    `board seen` is the act that ends it. The rest of the reasoning is in
+    server/board/supabase/migrations/20260907000100_reports_from_people.sql.
+    """
+    out = [
+        c
+        for c in (st.list_cards() if cards is None else cards)
+        if (c.get("reporter") or UNKNOWN_REPORTER) == "user"
+        and c["state"] not in SETTLED
+        and not c.get("mario_seen_at")
+    ]
+    out.sort(key=lambda c: c.get("created") or "")
+    return out
+
+
+def print_reports(people):
+    """The section that comes first, because it is the rarest thing here."""
+    n = len(people)
+    print(f"{n} {'person' if n == 1 else 'people'} wrote to you")
+    print("  Nobody is blocked on these. Each one shows once, then it is read.")
+    print()
+    for c in people:
+        facts = [c.get("kind") or "report"]
+        # The board the person holds, which the report form always asks for.
+        # The app is the form's own guess and is "unknown" on most reports, so
+        # it earns a place on the line only when it says something.
+        if c.get("device"):
+            facts.append(str(c["device"]).replace(",", " and "))
+        elif c["from"] not in ("unknown", "general"):
+            facts.append(c["from"])
+        if c.get("version"):
+            facts.append(c["version"])
+        facts.append(ago(c.get("created")))
+        facts.append(
+            f"reply to {c['reporter_email']}"
+            if c.get("reporter_email")
+            else "left no address"
+        )
+        print(f"  #{c['id']}  " + " · ".join(str(f) for f in facts))
+        lines = []
+        for para in str(c.get("body") or c["title"]).splitlines():
+            lines.extend(textwrap.wrap(para, 74) or [""])
+        for line in lines[:8]:
+            print(f"    {line}" if line else "")
+        if len(lines) > 8:
+            print(f"    ... {len(lines) - 8} more lines: board show {c['id']}")
+        print(f"  Read it: board seen {c['id']} --note '<what should happen>'")
+        print()
+
+
+def cmd_inbox(st, a):
+    # One read of the board, two passes over it. On Supabase list_cards is a
+    # request with every card's blockers and history joined in, and calling it
+    # twice to draw one screen doubled that for nothing.
+    cards = st.list_cards()
+    people = unread_reports(st, cards)
+    if people:
+        print_reports(people)
+    n = 0
+    for c in cards:
+        for b in c["blockers"]:
+            if b["open"] and b["need"] == "mario":
+                n += 1
+                print(f"From {c['from']} · #{c['id']} {c['title']}")
+                if c.get("body"):
+                    since = c["body"].splitlines()[-1]
+                    since = re.sub(r"^\s*since( then)?:\s*", "", since, flags=re.I)
+                    print(f"  Since: {since}")
+                print(f"  Need from you: {b['ask']}")
+                print(f"  If you do nothing: {b['default']}")
+                if b.get("steps"):
+                    for line in str(b["steps"]).splitlines():
+                        if line.strip():
+                            print(f"  How: {line.strip()}")
+                print(f"  Answer: board answer {c['id']} '<choice>' --n {b['n']}")
+                print()
+    if not n:
+        # Two different facts, and one sentence for both would say "nothing
+        # needs you" on a screen that just showed him three people's reports.
+        print("No session is waiting on you." if people else "Nothing needs you.")
+
+
+# What Mario's note is prefixed with on the card. A triager has to be able to
+# tell his sentence from the reporter's, because the two sit in one body.
+MARIO_SAID = "Mario, on reading this:"
+
+
+def cmd_seen(st, a):
+    """Mario read a report, and his note goes where triage will actually see it.
+
+    The first version put the note in `history` alone. Nothing reads history:
+    no view selects it, no command surfaces it, and no step of the
+    orchestrator's runbook visits it -- `board show` is the only way and
+    nothing tells anyone to run it. That swaps one failure for a worse one: he
+    stops never seeing the report and starts seeing it once, writing down what
+    should happen, and nobody ever reading that sentence. The body is what a
+    triager reads, so the note is appended there as well, the same way
+    `board note --body` does it.
+    """
+    with st.lock():
+        c = st.get_card(a.id)
+        if (c.get("reporter") or UNKNOWN_REPORTER) != "user":
+            sys.exit(
+                f"board: #{c['id']} was reported by {c.get('reporter') or UNKNOWN_REPORTER},"
+                " not by a person outside; only a person's report is read this way"
+            )
+        note = " ".join(str(a.note).split()) if a.note else ""
+        what = "Mario read the report" + (f": {note}" if note else "")
+        card_history(st, c, what)
+        c["mario_seen_at"] = now()
+        if note:
+            c["body"] = (
+                (c.get("body") or "").rstrip()
+                + ("\n\n" if c.get("body") else "")
+                + f"{MARIO_SAID} {note}"
+            )
+            # A card he has answered is not one still waiting for triage to
+            # decide what it is. Moving it is the difference between a note
+            # filed and a note acted on; without one he has read it and said
+            # nothing, so it stays in `reported` for the ordinary sweep.
+            if c["state"] == "reported":
+                c["state"] = "triaged"
+                card_history(st, c, "state triaged")
+        # Supabase keeps history in its own table and mario_seen_at needs its
+        # own PATCH; the body and state ride along on save_card. On the file
+        # store save_card is the only write there is.
+        if isinstance(st, SupaStore):
+            st.mark_seen(c["id"])
+        st.save_card(c)
+    print(
+        f"#{c['id']} read"
+        + (f", and on the card: {note}" if note else "")
+        + (" (now triaged)" if note else "")
+    )
+
+
+def cmd_import(st, a):
+    text = pathlib.Path(a.file).read_text()
+    sections = re.split(r"^## +", text, flags=re.M)[1:]
+    made = 0
+    with st.lock():
+        for s in sections:
+            head, _, body = s.partition("\n")
+            head = head.strip()
+            if not head:
+                continue
+            frm, title = (
+                (head.split(":", 1) + [""])[:2] if ":" in head else ("general", head)
+            )
+            c = st.create_card(
+                {
+                    "title": title.strip() or head,
+                    "from": frm.strip().lower(),
+                    "kind": a.kind,
+                    "body": body.strip(),
+                    "source": "import",
+                    "history": [
+                        {
+                            "at": now(),
+                            "what": f"imported from {pathlib.Path(a.file).name}",
+                        }
+                    ],
+                }
+            )
+            ensure_inbox(st, c["id"])
+            made += 1
+            print(f"#{c['id']} {c['title']}")
+    print(f"board: imported {made} cards")
+
+
+def guess_app(title, labels, owners):
+    """The app an issue is about: an app:<name> label, else an owner's name in the title."""
+    for l in labels:
+        if l.lower().startswith("app:"):
+            return l[4:].strip().lower()
+    t = title.lower()
+    for app in sorted(owners, key=len, reverse=True):
+        if app and app in t:
+            return app
+    if "read" in t or "page turn" in t or "epub" in t:
+        return "reader"
+    return "unknown"
+
+
+def cmd_issues(st, a):
+    """Open GitHub issues become cards, once each; released cards close their issue."""
+    if a.from_json:
+        issues = json.loads(pathlib.Path(a.from_json).read_text())
+    else:
+        r = subprocess.run(
+            [
+                "gh",
+                "issue",
+                "list",
+                "-R",
+                a.repo,
+                "--state",
+                "open",
+                "--limit",
+                "200",
+                "--json",
+                "number,title,body,labels,url,author,createdAt",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if r.returncode != 0:
+            sys.exit(f"board: gh issue list failed: {r.stderr.strip()[:200]}")
+        issues = json.loads(r.stdout or "[]")
+    cards = st.list_cards()
+    known = {c.get("github_issue"): c for c in cards if c.get("github_issue")}
+    owners = st.owners()
+    made = 0
+    with st.lock():
+        for i in issues:
+            labels = [
+                l["name"] if isinstance(l, dict) else str(l)
+                for l in (i.get("labels") or [])
+            ]
+            if i["number"] in known:
+                continue
+            kind = (
+                "feature"
+                if any(l.lower() in ("enhancement", "feature", "idea") for l in labels)
+                else "bug"
+            )
+            author = i.get("author")
+            author = author.get("login") if isinstance(author, dict) else author
+            body = (i.get("body") or "").strip()
+            c = st.create_card(
+                {
+                    "title": i["title"].strip()[:120],
+                    "from": guess_app(i["title"], labels, owners),
+                    "kind": kind,
+                    "body": f"GitHub issue #{i['number']} by {author or 'someone'}: {i.get('url', '')}\n\n{body}",
+                    "state": "reported",
+                    "source": "github",
+                    # A GitHub issue was written by a person, and that person
+                    # is not Mario -- he relays his own rather than filing them
+                    # there. The Supabase trigger derives the same value; this
+                    # keeps the file store, which the tests drive, in step.
+                    "reporter": "user",
+                    "github_issue": i["number"],
+                    "history": [
+                        {"at": now(), "what": f"from GitHub issue #{i['number']}"}
+                    ],
+                }
+            )
+            ensure_inbox(st, c["id"])
+            made += 1
+            print(f"#{c['id']} <- issue #{i['number']} {c['title']}")
+    closed = 0
+    if a.close_released:
+        for c in cards:
+            if c.get("github_issue") and c["state"] in ("released", "done"):
+                msg = (
+                    f"Shipped. This is card #{c['id']} on the board and went out in a release; "
+                    "open a new issue if it comes back."
+                )
+                r = subprocess.run(
+                    [
+                        "gh",
+                        "issue",
+                        "close",
+                        str(c["github_issue"]),
+                        "-R",
+                        a.repo,
+                        "--comment",
+                        msg,
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                )
+                if r.returncode == 0:
+                    closed += 1
+                    card_history(st, c, f"closed GitHub issue #{c['github_issue']}")
+                    if not isinstance(st, SupaStore):
+                        st.save_card(c)
+    print(f"board: {made} new card(s) from issues, {closed} issue(s) closed")
+
+
+def cmd_tick(st, a):
+    """A tick's read in one command: sweep GitHub for new issues, then the open board.
+
+    Never closes an issue. Closing stays a command typed on purpose.
+    """
+    ns = argparse.Namespace(repo=a.repo, from_json=a.from_json, close_released=False)
+    cmd_issues(st, ns)
+    print()
+    cmd_list(st, argparse.Namespace(open=True))
+
+
+def cmd_sync(st, a):
+    """Copy the file store into Supabase, keeping ids. Run once, then the file store is only a mirror."""
+    if not isinstance(st, SupaStore):
+        sys.exit(
+            "board: sync needs the Supabase store (is .board/supabase.env present?)"
+        )
+    files = FileStore(st.root)
+    existing = {c["id"] for c in st.list_cards()}
+    made = 0
+    for c in files.list_cards():
+        if c["id"] in existing:
+            continue
+        st.create_card(
+            {
+                "id": c["id"],
+                "title": c["title"],
+                "from": c["from"],
+                "kind": c["kind"],
+                "body": c["body"],
+                "state": c["state"],
+                "created": c.get("created"),
+                "tree": c.get("tree"),
+                "branch": c.get("branch"),
+                "session": c.get("session"),
+                "blockers": c.get("blockers", []),
+                "history": c.get("history", []),
+                "source": "import",
+            }
+        )
+        made += 1
+    for app, o in files.owners().items():
+        st.set_owner(app, o.get("session"), o.get("tree"))
+    for name in ("orchestrator", "integrator", "dispatcher"):
+        cl = files.claim(name)
+        if cl.get("session_id"):
+            st.set_claim(name, cl["session_id"], cl.get("name"))
+    print(f"board: synced {made} cards, {len(files.owners())} owners")
+
+
+class Parser(argparse.ArgumentParser):
+    """argparse, plus the freshness line on the path that needs it MOST.
+
+    The incident this whole check exists for was `board list --reporter user`
+    against a CLI 332 commits behind: `--reporter` had merged and the flag was
+    an unrecognised argument. argparse answers that with `sys.exit(2)` from
+    inside parse_args, so a check placed after parse_args cannot run in the one
+    case it was written for -- it would have printed nothing, exactly as the
+    unpatched CLI did. Putting it BEFORE parse_args is not enough either: the
+    line would land above a screenful of usage text, which is the "a warning
+    400 lines above the answer" failure this workspace has read past before.
+    So it prints last, under the error, where the person is already looking.
+    """
+
+    def error(self, message):
+        self.print_usage(sys.stderr)
+        print(f"{self.prog}: error: {message}", file=sys.stderr)
+        warn = stale_warning(cli_repo())
+        if warn:
+            print(warn, file=sys.stderr)
+        sys.exit(2)
+
+
+def main(argv=None):
+    p = Parser(
+        prog="board",
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    sub = p.add_subparsers(dest="cmd", required=True, parser_class=Parser)
+
+    sub.add_parser("init").set_defaults(fn=cmd_init)
+    app_help = "the desktop app's local_... id (get_session self), so messages addressed that way reach you"
+    s = sub.add_parser("pulse")
+    s.add_argument(
+        "action", nargs="?", default="list", choices=["list", "add", "remove"]
+    )
+    s.add_argument("host", nargs="?")
+    s.add_argument("method", nargs="?")
+    s.add_argument("url", nargs="?")
+    s.add_argument("alive", nargs="?")
+    s.add_argument("app", nargs="?")
+    s.set_defaults(fn=cmd_pulse)
+    sub.add_parser("release").set_defaults(fn=cmd_release)
+    s = sub.add_parser("orchestrator")
+    s.add_argument("--name", required=True)
+    s.add_argument("--session", required=True)
+    s.add_argument("--app-id", help=app_help)
+    s.set_defaults(fn=cmd_orchestrator)
+    s = sub.add_parser("dispatcher")
+    s.add_argument("--name", required=True)
+    s.add_argument("--session", required=True)
+    s.add_argument("--app-id", help=app_help)
+    s.set_defaults(fn=cmd_dispatcher)
+    s = sub.add_parser("integrator")
+    s.add_argument("--session", required=True)
+    s.add_argument("--app-id", help=app_help)
+    s.add_argument("--release", action="store_true")
+    s.set_defaults(fn=cmd_integrator)
+    s = sub.add_parser("noticed")
+    s.add_argument("what", help="one line: what you saw, where")
+    s.add_argument("--from", dest="from_app", required=True)
+    s.add_argument("--detail", help="a file:line or a sentence of evidence; short")
+    s.add_argument("--session")
+    s.set_defaults(fn=cmd_noticed)
+    s = sub.add_parser("notices")
+    s.set_defaults(fn=cmd_notices)
+    s = sub.add_parser("promote")
+    s.add_argument("id", type=lambda v: int(str(v).lstrip("n")))
+    s.add_argument("--reporter", choices=["mario", "user"], required=True, help="who asked for it")
+    s.add_argument("--kind", choices=["bug", "feature", "task"], default="task")
+    s.set_defaults(fn=cmd_promote)
+    s = sub.add_parser("new")
+    s.add_argument("--session", help="the work starts now and is yours: the card is bound to you in 'working'")
+    s.add_argument("title")
+    s.add_argument("--parent", type=int)
+    s.add_argument("--from", dest="from_app", required=True)
+    s.add_argument("--kind", choices=["bug", "feature", "task"], default="task")
+    s.add_argument("--body")
+    s.add_argument(
+        "--reporter",
+        choices=REPORTERS,
+        default=UNKNOWN_REPORTER,
+        help="whose observation this is: mario if he reported or asked for it, "
+        "session if you found it yourself, user if a person who is not Mario did. "
+        "Defaults to unknown, so a card filed without one is visible rather than "
+        "silently credited to a session",
+    )
+    s.add_argument(
+        "--default",
+        help="on app mario: what happens if he never answers (a card filed there opens a mario blocker by itself)",
+    )
+    s.add_argument(
+        "--anyway",
+        action="store_true",
+        help="file even if an open card's title says the same thing (the default is to stop and name it)",
+    )
+    s.set_defaults(fn=cmd_new)
+    s = sub.add_parser(
+        "note",
+        help="put what you learnt on a card: a history line, --body appends it to the card too",
+    )
+    s.add_argument("id", type=int)
+    s.add_argument("text")
+    s.add_argument("--body", action="store_true")
+    s.set_defaults(fn=cmd_note)
+    s = sub.add_parser("app", help="move a card to another app")
+    s.add_argument("id", type=int)
+    s.add_argument("app")
+    s.add_argument(
+        "--default",
+        help="on app mario: what happens if he never answers",
+    )
+    s.set_defaults(fn=cmd_app)
+    s = sub.add_parser("tree", help="who holds a worktree, its lease, its gate, whether it is quiescent")
+    s.add_argument("name")
+    s.add_argument("--release", action="store_true", help="clear the record (your own tree, or one whose lease has expired)")
+    s.add_argument("--session", help="with --release: whose tree it is (defaults to CLAUDE_CODE_SESSION_ID)")
+    s.set_defaults(fn=cmd_tree)
+    s = sub.add_parser("trees", help="tree records missing for open cards; --seed writes them (the rollout step)")
+    s.add_argument("--seed", action="store_true")
+    s.set_defaults(fn=cmd_trees)
+    s = sub.add_parser("bind")
+    s.add_argument("id", type=int)
+    s.add_argument("--session", required=True)
+    s.add_argument("--tree")
+    s.add_argument("--branch")
+    s.add_argument("--take", action="store_true", help="take over a card or tree whose holder is gone (refused while the holder is live; a tree with uncommitted work only when that session has ended)")
+    s.set_defaults(fn=cmd_bind)
+    s = sub.add_parser("block")
+    s.add_argument("id", type=int)
+    s.add_argument("--session", required=True)
+    s.add_argument("--need", choices=NEEDS, required=True)
+    s.add_argument("--ask", required=True)
+    s.add_argument("--default", required=True)
+    s.add_argument(
+        "--steps", help="numbered lines, one per line, for a thing Mario must do"
+    )
+    s.set_defaults(fn=cmd_block)
+    s = sub.add_parser("ask")
+    s.add_argument("id", type=int)
+    s.add_argument("--ask", required=True)
+    s.add_argument("--default", required=True)
+    s.add_argument(
+        "--steps", help="numbered lines, one per line, for a thing Mario must do"
+    )
+    s.set_defaults(fn=cmd_ask)
+    s = sub.add_parser("unblock")
+    s.add_argument("id", type=int)
+    s.add_argument("--n", type=int)
+    s.set_defaults(fn=cmd_unblock)
+    s = sub.add_parser("answer")
+    s.add_argument("id", type=int)
+    s.add_argument("choice")
+    s.add_argument(
+        "--n", type=int, help="which blocker; required when more than one needs Mario"
+    )
+    s.add_argument("--note")
+    s.set_defaults(fn=cmd_answer)
+    s = sub.add_parser(
+        "seen", help="Mario read a report from a person; it leaves his inbox"
+    )
+    s.add_argument("id", type=int)
+    s.add_argument(
+        "--note",
+        help="what he said should happen; it goes on the card for whoever triages it",
+    )
+    s.set_defaults(fn=cmd_seen)
+    s = sub.add_parser("state")
+    s.add_argument("id", type=int)
+    s.add_argument("state", choices=STATES)
+    s.add_argument(
+        "--with-blockers",
+        action="store_true",
+        help="settle the card even though desk/design/info blockers are still open on it",
+    )
+    s.set_defaults(fn=cmd_state)
+    s = sub.add_parser("parent")
+    s.add_argument("id", type=int)
+    s.add_argument("--of", type=int)
+    s.set_defaults(fn=cmd_parent)
+    s = sub.add_parser("owner")
+    s.add_argument("app")
+    s.add_argument("--session")
+    s.add_argument("--tree")
+    s.set_defaults(fn=cmd_owner)
+    s = sub.add_parser("route")
+    s.add_argument("id", type=int)
+    s.set_defaults(fn=cmd_route)
+    s = sub.add_parser("show")
+    s.add_argument("id", type=int)
+    s.set_defaults(fn=cmd_show)
+    s = sub.add_parser("list")
+    s.add_argument("--open", action="store_true")
+    s.add_argument("--state", choices=STATES, help="only cards in this state")
+    s.add_argument(
+        "--reporter", choices=REPORTERS, help="only cards from this reporter"
+    )
+    s.add_argument(
+        "--from-mario",
+        dest="from_mario",
+        action="store_true",
+        help="only what Mario reported, asked for or ruled on (--reporter mario)",
+    )
+    s.set_defaults(fn=cmd_list)
+    sub.add_parser("inbox").set_defaults(fn=cmd_inbox)
+    sub.add_parser(
+        "fresh", help="is this CLI running the code that is on trunk"
+    ).set_defaults(fn=cmd_fresh)
+    s = sub.add_parser("import")
+    s.add_argument("file")
+    s.add_argument("--kind", choices=["bug", "feature", "task"], default="task")
+    s.set_defaults(fn=cmd_import)
+    sub.add_parser("sync").set_defaults(fn=cmd_sync)
+    s = sub.add_parser("issues")
+    s.add_argument("--repo", default="ma-r-s/crossplay")
+    s.add_argument("--from-json")
+    s.add_argument("--close-released", action="store_true")
+    s.set_defaults(fn=cmd_issues)
+    s = sub.add_parser("tick", help="the issue sweep, then the open board")
+    s.add_argument("--repo", default="ma-r-s/crossplay")
+    s.add_argument("--from-json")
+    s.set_defaults(fn=cmd_tick)
+
+    a = p.parse_args(argv)
+    warn = stale_warning(cli_repo())
+    if warn:
+        print(warn, file=sys.stderr)
+    st = open_store(find_root())
+    a.fn(st, a)
+
+
+if __name__ == "__main__":
+    main()

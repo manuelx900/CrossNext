@@ -1,0 +1,1205 @@
+[
+  {
+    "title": "HUT 14",
+    "text": "Bletchley Park, 1942. They are keeping you waiting behind a locked door. A component from the calculating machine has vanished. The morning intercept rustles in your coat pocket. Outside, footsteps stop.",
+    "choices": [
+      {
+        "label": "Think through the accusation",
+        "next": 1,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Wait for the interviewer",
+        "next": 2,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Search your coat",
+        "next": 3,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 0,
+    "ending": "none"
+  },
+  {
+    "title": "THE ACCUSATION",
+    "text": "They suspect treason. You solve figures, crosswords and chess positions for a living. This room is another problem: contradict yourself, and your credibility may be the first casualty.",
+    "choices": [
+      {
+        "label": "Choose a strategy",
+        "next": 4,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Hear what they know",
+        "next": 2,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 1,
+    "ending": "none"
+  },
+  {
+    "title": "HARRIS ARRIVES",
+    "text": "Harris enters with a teacup and a file. A reel is missing from the Bombe. Your name was on the duty roster. He puts the cup beside you and asks where you were last night.",
+    "choices": [
+      {
+        "label": "Drink the tea",
+        "next": 5,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Leave the tea untouched",
+        "next": 6,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Answer calmly",
+        "next": 7,
+        "require": 0,
+        "forbid": 0,
+        "set": 2,
+        "clear": 0
+      }
+    ],
+    "scene": 2,
+    "ending": "none"
+  },
+  {
+    "title": "THE COMPONENT",
+    "text": "Inside the lining of your coat your fingers meet cold metal. The component is still there. Hooper said taking it would make the blackmail stop. Now the locked door has a different meaning.",
+    "choices": [
+      {
+        "label": "Keep it concealed",
+        "next": 4,
+        "require": 0,
+        "forbid": 0,
+        "set": 1,
+        "clear": 0
+      },
+      {
+        "label": "Hand it to Harris",
+        "next": 8,
+        "require": 0,
+        "forbid": 0,
+        "set": 33,
+        "clear": 0
+      }
+    ],
+    "scene": 3,
+    "ending": "none"
+  },
+  {
+    "title": "A WINNING PLAY",
+    "text": "Cooperation could preserve your credibility. A convincing lie could buy time. Escape would trade a locked room for the guards outside. None of these moves can be taken back.",
+    "choices": [
+      {
+        "label": "Cooperate",
+        "next": 7,
+        "require": 0,
+        "forbid": 0,
+        "set": 2,
+        "clear": 0
+      },
+      {
+        "label": "Invent an alibi",
+        "next": 9,
+        "require": 0,
+        "forbid": 0,
+        "set": 4,
+        "clear": 0
+      },
+      {
+        "label": "Examine the window",
+        "next": 10,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 4,
+    "ending": "none"
+  },
+  {
+    "title": "THE TEA",
+    "text": "The room tilts. Harris notices your silence, but his face is already receding. When you next open your eyes, another pair of shoes stands by the table.",
+    "choices": [
+      {
+        "label": "Pretend to remain asleep",
+        "next": 22,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Confront the visitor",
+        "next": 23,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Ask for water",
+        "next": 24,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 5,
+    "ending": "none"
+  },
+  {
+    "title": "A SMALL REFUSAL",
+    "text": "You push the cup away. Harris watches the movement more closely than the answer. He asks whether there is someone else he should be questioning.",
+    "choices": [
+      {
+        "label": "Ask what evidence he has",
+        "next": 7,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Mention Hooper",
+        "next": 13,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Look toward the window",
+        "next": 10,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 6,
+    "ending": "none"
+  },
+  {
+    "title": "THE MISSING REEL",
+    "text": "Harris wants a direct answer. Did you take the component? You can tell him what is in your coat, explain the pressure Hooper applied, or try to point the accusation elsewhere.",
+    "choices": [
+      {
+        "label": "Give him the component",
+        "next": 8,
+        "require": 1,
+        "forbid": 0,
+        "set": 32,
+        "clear": 0
+      },
+      {
+        "label": "Explain the blackmail",
+        "next": 14,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Accuse Hooper",
+        "next": 15,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 7,
+    "ending": "none"
+  },
+  {
+    "title": "METAL ON THE TABLE",
+    "text": "The component lies between you. Harris checks it without relaxing. Returning stolen equipment does not explain why it was taken. He wants a name and something more reliable than your word.",
+    "choices": [
+      {
+        "label": "Offer to find evidence",
+        "next": 16,
+        "require": 0,
+        "forbid": 0,
+        "set": 32,
+        "clear": 0
+      },
+      {
+        "label": "Stay and answer questions",
+        "next": 17,
+        "require": 0,
+        "forbid": 0,
+        "set": 32,
+        "clear": 0
+      }
+    ],
+    "scene": 8,
+    "ending": "none"
+  },
+  {
+    "title": "THE ALIBI",
+    "text": "You describe a quiet evening at your desk. Harris opens the file. A guard saw you leaving the machine room. Your invented account now has a witness against it.",
+    "choices": [
+      {
+        "label": "Defend the story",
+        "next": 18,
+        "require": 0,
+        "forbid": 0,
+        "set": 4,
+        "clear": 0
+      },
+      {
+        "label": "Admit the blackmail",
+        "next": 14,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Refuse further questions",
+        "next": 19,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 9,
+    "ending": "none"
+  },
+  {
+    "title": "THE WINDOW",
+    "text": "The window is high and the glass is thick. Beyond it, the path leads past another hut. Breaking it would be loud; waiting here has its own dangers.",
+    "choices": [
+      {
+        "label": "Break the glass",
+        "next": 20,
+        "require": 0,
+        "forbid": 0,
+        "set": 8,
+        "clear": 0
+      },
+      {
+        "label": "Study the path outside",
+        "next": 21,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Return to the interview",
+        "next": 7,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 10,
+    "ending": "none"
+  },
+  {
+    "title": "ANOTHER VISITOR",
+    "text": "Hooper has come while you are unsteady. He wants to know whether Harris has the component. He keeps one hand near the door.",
+    "choices": [
+      {
+        "label": "Pretend to sleep",
+        "next": 22,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Demand an explanation",
+        "next": 23,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Ask for water",
+        "next": 24,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 11,
+    "ending": "none"
+  },
+  {
+    "title": "A WARNING",
+    "text": "You call for Harris before the tea takes hold. He returns, irritated. An accusation about the cup will need something he can test.",
+    "choices": [
+      {
+        "label": "Keep the cup as evidence",
+        "next": 25,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Accuse Harris of poisoning you",
+        "next": 26,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Concentrate on the reel",
+        "next": 7,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 12,
+    "ending": "none"
+  },
+  {
+    "title": "HOOPER",
+    "text": "Harris recognizes the name. Hooper is useful, well connected, and not absent from last night's roster either. Recognition is not proof.",
+    "choices": [
+      {
+        "label": "Find something verifiable",
+        "next": 16,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Insist Hooper stole it",
+        "next": 15,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 13,
+    "ending": "none"
+  },
+  {
+    "title": "BLACKMAIL",
+    "text": "You describe a young man, a confidence betrayed, and the demand that followed. Harris listens without helping you. Naming the person who set the trap might also expose the person you hoped to protect.",
+    "choices": [
+      {
+        "label": "Give Harris the full account",
+        "next": 27,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Leave out the names",
+        "next": 18,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Propose a way to catch Hooper",
+        "next": 16,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 14,
+    "ending": "none"
+  },
+  {
+    "title": "AN EASY ACCUSATION",
+    "text": "Hooper, you say, must be responsible. Harris asks how you know. There is a difference between solving a problem and producing a witness who can prove the answer.",
+    "choices": [
+      {
+        "label": "Let Harris challenge the claim",
+        "next": 28,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Try a private message to Hooper",
+        "next": 22,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 15,
+    "ending": "none"
+  },
+  {
+    "title": "A TESTABLE CLUE",
+    "text": "A story can be denied. A document, a witness, or the missing component is harder to explain away. You have a little time to choose what to pursue.",
+    "choices": [
+      {
+        "label": "Inspect the nearby hut",
+        "next": 21,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Use the morning intercept",
+        "next": 29,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Question Hooper directly",
+        "next": 23,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 16,
+    "ending": "none"
+  },
+  {
+    "title": "MORE THAN A RETURN",
+    "text": "The machine can work again, but Harris still has a security breach to explain. He offers you one last opportunity to establish who organized it.",
+    "choices": [
+      {
+        "label": "Show the evidence",
+        "next": 30,
+        "require": 16,
+        "forbid": 0,
+        "set": 32,
+        "clear": 0
+      },
+      {
+        "label": "Look for proof",
+        "next": 16,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Accept his judgment",
+        "next": 31,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 17,
+    "ending": "none"
+  },
+  {
+    "title": "A CONTRADICTION",
+    "text": "Harris sets your first answer beside your latest one. They cannot both be true. You can abandon the lie, or let the interview end on a contradiction.",
+    "choices": [
+      {
+        "label": "Tell the truth about the blackmail",
+        "next": 14,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Keep denying everything",
+        "next": 32,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Try to leave",
+        "next": 33,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 18,
+    "ending": "none"
+  },
+  {
+    "title": "SILENCE",
+    "text": "You fold your arms. Harris closes the file. In this room, silence does not end the investigation; it only ends your part in directing it.",
+    "choices": [
+      {
+        "label": "Hear the decision",
+        "next": 32,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 19,
+    "ending": "none"
+  },
+  {
+    "title": "BROKEN GLASS",
+    "text": "The pane gives way. Cold air and the sound of a guard's whistle arrive together. There is time for one decision before someone reaches the door.",
+    "choices": [
+      {
+        "label": "Run for the outer path",
+        "next": 33,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Leave a coded clue",
+        "next": 29,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Stay and explain",
+        "next": 7,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 20,
+    "ending": "none"
+  },
+  {
+    "title": "BETWEEN THE HUTS",
+    "text": "The path is wet. Hooper's hut is close enough to reach before the next patrol, but the open ground beyond it offers a different kind of chance.",
+    "choices": [
+      {
+        "label": "Try to escape the grounds",
+        "next": 33,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Go into Hooper's hut",
+        "next": 34,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Return to Harris",
+        "next": 7,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 21,
+    "ending": "none"
+  },
+  {
+    "title": "A PRIVATE GAME",
+    "text": "Hooper studies you. On the table he sets out an imaginary chess position with his fingers. A coded answer could make him reveal what a direct accusation never would.",
+    "choices": [
+      {
+        "label": "Answer with a chess clue",
+        "next": 35,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Threaten to name him",
+        "next": 23,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Speak honestly",
+        "next": 36,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 22,
+    "ending": "none"
+  },
+  {
+    "title": "FACE TO FACE",
+    "text": "Hooper asks what you can actually prove. His confidence falters only when you mention details that someone outside his plan should not know.",
+    "choices": [
+      {
+        "label": "Confront him with proof",
+        "next": 37,
+        "require": 16,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Offer the component as a trade",
+        "next": 38,
+        "require": 1,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Bluff",
+        "next": 28,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 23,
+    "ending": "none"
+  },
+  {
+    "title": "THE CUP",
+    "text": "Hooper brings water but reaches for the teacup first. Keeping that cup might be more useful than accepting anything else he offers.",
+    "choices": [
+      {
+        "label": "Keep the cup",
+        "next": 25,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Check your coat again",
+        "next": 3,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 24,
+    "ending": "none"
+  },
+  {
+    "title": "SOMETHING TO TEST",
+    "text": "You keep the cup and ask Harris to have it examined. This is finally an allegation with an object attached to it. Hooper's attempt to remove it supplies a second useful detail.",
+    "choices": [
+      {
+        "label": "Give Harris the cup",
+        "next": 39,
+        "require": 0,
+        "forbid": 0,
+        "set": 16,
+        "clear": 0
+      },
+      {
+        "label": "Confront Hooper with it",
+        "next": 37,
+        "require": 0,
+        "forbid": 0,
+        "set": 16,
+        "clear": 0
+      }
+    ],
+    "scene": 25,
+    "ending": "none"
+  },
+  {
+    "title": "THE WRONG TARGET",
+    "text": "You accuse Harris without evidence. He sees a suspect trying to discredit the investigator. Whatever happened to the tea, you have made it harder for him to believe you.",
+    "choices": [
+      {
+        "label": "The interview ends",
+        "next": 32,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 26,
+    "ending": "none"
+  },
+  {
+    "title": "THE WHOLE ACCOUNT",
+    "text": "You give the names and describe the meeting. Harris asks precise questions. Your embarrassment is real, but so are the details he can now check.",
+    "choices": [
+      {
+        "label": "Let him verify the account",
+        "next": 39,
+        "require": 0,
+        "forbid": 0,
+        "set": 16,
+        "clear": 0
+      },
+      {
+        "label": "Offer to find Hooper",
+        "next": 16,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 27,
+    "ending": "none"
+  },
+  {
+    "title": "A FAILED BLUFF",
+    "text": "Harris has heard enough confident answers. Hooper has too. Neither supplies the fact your story is missing.",
+    "choices": [
+      {
+        "label": "Persist in the claim",
+        "next": 32,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Make a desperate escape",
+        "next": 33,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Admit what really happened",
+        "next": 14,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 28,
+    "ending": "none"
+  },
+  {
+    "title": "THE INTERCEPT",
+    "text": "The sheet in your pocket carries more than jumbled letters: its route through the huts places Hooper near the machine. A concise clue might get the right person to look in the right place.",
+    "choices": [
+      {
+        "label": "Encode a message for Hooper",
+        "next": 35,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Show the route to Harris",
+        "next": 39,
+        "require": 0,
+        "forbid": 0,
+        "set": 16,
+        "clear": 0
+      }
+    ],
+    "scene": 29,
+    "ending": "none"
+  },
+  {
+    "title": "THE MACHINE RUNS",
+    "text": "Harris has the component, and a trail that leads beyond your first frightened answers. The Bombe resumes its work. You leave Hut 14 under your own name, with fewer secrets and a future still to answer for.",
+    "choices": [],
+    "scene": 30,
+    "ending": "free"
+  },
+  {
+    "title": "UNDER SUSPICION",
+    "text": "Returning the component saved the machine from a delay. It did not save your position. Harris ends your access to the huts while the investigation continues. You survived the interview, but did not clear your name.",
+    "choices": [],
+    "scene": 31,
+    "ending": "suspicion"
+  },
+  {
+    "title": "IN CUSTODY",
+    "text": "The door opens for the guard rather than for you. Contradictions, missing evidence and a stolen component have become a case you can no longer direct. This attempt ends here.",
+    "choices": [],
+    "scene": 32,
+    "ending": "captured"
+  },
+  {
+    "title": "THE OUTER PATH",
+    "text": "You leave the huts behind. The darkness is useful, but the grounds are watched. A broken window has brought the patrols closer than you hoped.",
+    "choices": [
+      {
+        "label": "Cross the open ground",
+        "next": 41,
+        "require": 8,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Keep to the service path",
+        "next": 40,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Turn back and face Harris",
+        "next": 7,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 33,
+    "ending": "none"
+  },
+  {
+    "title": "HOOPER'S HUT",
+    "text": "The desk is unattended. Papers lie beneath a crossword, and the machine room appears in a pencilled schedule. Footsteps approach along the boards outside.",
+    "choices": [
+      {
+        "label": "Examine the papers",
+        "next": 42,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Wait for Hooper",
+        "next": 22,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Leave for Harris",
+        "next": 7,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 34,
+    "ending": "none"
+  },
+  {
+    "title": "A CHESS PROBLEM",
+    "text": "You give Hooper a position that mirrors his predicament: a protected piece, an exposed king, and a move that looks safe until the reply. He understands the warning. His next words supply the connection you needed.",
+    "choices": [
+      {
+        "label": "Ask him to admit the plan",
+        "next": 37,
+        "require": 0,
+        "forbid": 0,
+        "set": 16,
+        "clear": 0
+      },
+      {
+        "label": "Send the admission to Harris",
+        "next": 39,
+        "require": 0,
+        "forbid": 0,
+        "set": 16,
+        "clear": 0
+      }
+    ],
+    "scene": 35,
+    "ending": "none"
+  },
+  {
+    "title": "WITHOUT A MASK",
+    "text": "You speak about the pressure instead of pretending it never existed. Hooper briefly answers as a person rather than as an opponent. That opening could be used for a trade, or a trap.",
+    "choices": [
+      {
+        "label": "Ask for an honest arrangement",
+        "next": 43,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Ask him to confess",
+        "next": 37,
+        "require": 16,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Take the account to Harris",
+        "next": 39,
+        "require": 0,
+        "forbid": 0,
+        "set": 16,
+        "clear": 0
+      }
+    ],
+    "scene": 36,
+    "ending": "none"
+  },
+  {
+    "title": "HOOPER'S ADMISSION",
+    "text": "Hooper explains enough to connect the blackmail to the missing component. Harris can now recover the equipment and check the story. You must decide whether to finish the investigation or let Hooper disappear.",
+    "choices": [
+      {
+        "label": "Bring Harris the admission",
+        "next": 30,
+        "require": 0,
+        "forbid": 0,
+        "set": 48,
+        "clear": 0
+      },
+      {
+        "label": "Let Hooper go and leave",
+        "next": 40,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 37,
+    "ending": "none"
+  },
+  {
+    "title": "THE TRADE",
+    "text": "You place your last piece of leverage within Hooper's reach. A bargain without a witness or evidence is an invitation for him to solve his problem at your expense.",
+    "choices": [
+      {
+        "label": "Hand over the component",
+        "next": 41,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 1
+      },
+      {
+        "label": "Demand a witnessed agreement",
+        "next": 39,
+        "require": 0,
+        "forbid": 0,
+        "set": 16,
+        "clear": 0
+      },
+      {
+        "label": "Withdraw the offer",
+        "next": 16,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 38,
+    "ending": "none"
+  },
+  {
+    "title": "HARRIS LISTENS",
+    "text": "The details can be checked. Harris asks where the component is now. Clearing your account and getting the machine running are related problems, but they are not the same one.",
+    "choices": [
+      {
+        "label": "Return what is in your coat",
+        "next": 30,
+        "require": 1,
+        "forbid": 0,
+        "set": 32,
+        "clear": 0
+      },
+      {
+        "label": "Help recover the component",
+        "next": 44,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Stop answering now",
+        "next": 31,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 39,
+    "ending": "none"
+  },
+  {
+    "title": "BEYOND THE FENCE",
+    "text": "The huts vanish behind you. Freedom outside the grounds is not the same as innocence, and the machine is someone else's urgent problem now. You escaped; the account remains unfinished.",
+    "choices": [],
+    "scene": 40,
+    "ending": "escape"
+  },
+  {
+    "title": "THE LAST MISTAKE",
+    "text": "The patrol reaches you before the open ground ends, or Hooper's promise collapses when it is no longer useful to him. You have run out of safe moves. The story can be tried again from the beginning.",
+    "choices": [],
+    "scene": 41,
+    "ending": "betrayed"
+  },
+  {
+    "title": "THE PAPERS",
+    "text": "The schedule places Hooper where your story said he was. Beside it is the note that first drew you into the trap. The combination is specific enough for Harris to verify.",
+    "choices": [
+      {
+        "label": "Take the papers to Harris",
+        "next": 39,
+        "require": 0,
+        "forbid": 0,
+        "set": 16,
+        "clear": 0
+      },
+      {
+        "label": "Wait and confront Hooper",
+        "next": 37,
+        "require": 0,
+        "forbid": 0,
+        "set": 16,
+        "clear": 0
+      }
+    ],
+    "scene": 42,
+    "ending": "none"
+  },
+  {
+    "title": "ONE LAST ARRANGEMENT",
+    "text": "Hooper offers to put the part back. Trusting him would remove one immediate problem; making Harris a witness would make it harder to create another.",
+    "choices": [
+      {
+        "label": "Arrange a witnessed return",
+        "next": 44,
+        "require": 0,
+        "forbid": 0,
+        "set": 48,
+        "clear": 0
+      },
+      {
+        "label": "Bring Harris into the plan",
+        "next": 39,
+        "require": 0,
+        "forbid": 0,
+        "set": 16,
+        "clear": 0
+      }
+    ],
+    "scene": 43,
+    "ending": "none"
+  },
+  {
+    "title": "RECOVERING THE REEL",
+    "text": "With the account on record, the search returns to the missing hardware. Harris checks the machine room while you identify where the component should be.",
+    "choices": [
+      {
+        "label": "Finish the verified return",
+        "next": 30,
+        "require": 32,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Retrieve it from your coat",
+        "next": 8,
+        "require": 1,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Warn Harris about Hooper",
+        "next": 45,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 44,
+    "ending": "none"
+  },
+  {
+    "title": "THE FINAL QUESTION",
+    "text": "Harris waits. If you can connect Hooper to the theft, there is still a way to recover the component and end this properly. Otherwise the investigation has only your changing account.",
+    "choices": [
+      {
+        "label": "Present the evidence",
+        "next": 37,
+        "require": 16,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      },
+      {
+        "label": "Admit you have nothing more",
+        "next": 32,
+        "require": 0,
+        "forbid": 0,
+        "set": 0,
+        "clear": 0
+      }
+    ],
+    "scene": 45,
+    "ending": "none"
+  }
+]

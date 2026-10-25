@@ -1,0 +1,1564 @@
+{
+  "version": 4,
+  "outfits": [
+    {
+      "id": 0,
+      "en": "Apprentice",
+      "es": "Aprendiz",
+      "art": "plain white lace-neck tunic, dark trousers and simple boots",
+      "level": 1,
+      "tier": 0
+    },
+    {
+      "id": 1,
+      "en": "Linen traveler",
+      "es": "Viajero de lino",
+      "art": "light rolled-sleeve linen tunic with broad dark belt",
+      "level": 2,
+      "tier": 0
+    },
+    {
+      "id": 2,
+      "en": "Field scholar",
+      "es": "Estudiante de campo",
+      "art": "short waistcoat, plain shirt, loose trousers and small journal pouch",
+      "level": 3,
+      "tier": 0
+    },
+    {
+      "id": 3,
+      "en": "Book courier",
+      "es": "Mensajero",
+      "art": "short buttoned courier coat and a diagonal plain satchel strap",
+      "level": 4,
+      "tier": 0
+    },
+    {
+      "id": 4,
+      "en": "Herbalist",
+      "es": "Herbolario",
+      "art": "simple apron over tunic, small leaf clasp and rolled sleeves",
+      "level": 5,
+      "tier": 0
+    },
+    {
+      "id": 5,
+      "en": "Bookbinder",
+      "es": "Artesano del libro",
+      "art": "plain work apron and protective wrist cuffs, no tools held",
+      "level": 6,
+      "tier": 0
+    },
+    {
+      "id": 6,
+      "en": "Forest scout",
+      "es": "Explorador",
+      "art": "dark sleeveless vest, white shirt and light baggy trousers",
+      "level": 7,
+      "tier": 0
+    },
+    {
+      "id": 7,
+      "en": "Ink scribe",
+      "es": "Escriba",
+      "art": "short scholar robe with ink-drop brooch and dark sash",
+      "level": 8,
+      "tier": 0
+    },
+    {
+      "id": 8,
+      "en": "Wayfarer",
+      "es": "Caminante",
+      "art": "simple shoulder mantle, travel tunic and sturdy boots",
+      "level": 9,
+      "tier": 0
+    },
+    {
+      "id": 9,
+      "en": "Novice guard",
+      "es": "Guardia novel",
+      "art": "small smooth breastplate and plain rounded shoulder guards",
+      "level": 10,
+      "tier": 0
+    },
+    {
+      "id": 10,
+      "en": "Library ranger",
+      "es": "Guarda de biblioteca",
+      "art": "fitted ranger tunic and short squared cape, book clasp",
+      "level": 11,
+      "tier": 1
+    },
+    {
+      "id": 11,
+      "en": "River sailor",
+      "es": "Marinero",
+      "art": "striped undershirt under simple cropped sailor coat",
+      "level": 12,
+      "tier": 1
+    },
+    {
+      "id": 12,
+      "en": "Sky courier",
+      "es": "Correo del cielo",
+      "art": "short aviator jacket and round goggles resting on the head",
+      "level": 13,
+      "tier": 1
+    },
+    {
+      "id": 13,
+      "en": "Copper artificer",
+      "es": "Artificiero",
+      "art": "simple segmented leather apron and one large gear buckle",
+      "level": 14,
+      "tier": 1
+    },
+    {
+      "id": 14,
+      "en": "Cloaked pilgrim",
+      "es": "Peregrino",
+      "art": "full plain travel cloak with the face visible, sturdy robe",
+      "level": 15,
+      "tier": 1
+    },
+    {
+      "id": 15,
+      "en": "Sword student",
+      "es": "Aprendiz de espada",
+      "art": "original martial training wrap top and wide dark waist sash, no weapon",
+      "level": 16,
+      "tier": 1
+    },
+    {
+      "id": 16,
+      "en": "Spirit trainee",
+      "es": "Aprendiz espiritual",
+      "art": "white short-sleeved cross-wrap tunic over dark undershirt",
+      "level": 17,
+      "tier": 1
+    },
+    {
+      "id": 17,
+      "en": "Storm runner",
+      "es": "Corredor del viento",
+      "art": "asymmetric short jacket, scarf and close-fitting trousers",
+      "level": 18,
+      "tier": 1
+    },
+    {
+      "id": 18,
+      "en": "Star cadet",
+      "es": "Cadete estelar",
+      "art": "original smooth padded space academy suit with simple circular chest patch",
+      "level": 19,
+      "tier": 1
+    },
+    {
+      "id": 19,
+      "en": "Archive knight",
+      "es": "Caballero del archivo",
+      "art": "simple plate breastplate with an open-book clasp and short cape",
+      "level": 20,
+      "tier": 1
+    },
+    {
+      "id": 20,
+      "en": "Oz wanderer",
+      "es": "Viajero de Oz",
+      "art": "original 1900-book inspired checked travel over-tunic and silver shoes, no film likeness",
+      "level": 21,
+      "tier": 2
+    },
+    {
+      "id": 21,
+      "en": "Straw scholar",
+      "es": "Sabio de paja",
+      "art": "patchwork scholarly coat, straw tassels at cuffs, friendly human face",
+      "level": 22,
+      "tier": 2
+    },
+    {
+      "id": 22,
+      "en": "Tin sentinel",
+      "es": "Centinela de hojalata",
+      "art": "rounded tin-like armor with a simple heart badge, original literary interpretation",
+      "level": 23,
+      "tier": 2
+    },
+    {
+      "id": 23,
+      "en": "Lionhearted reader",
+      "es": "Corazon de leon",
+      "art": "short mane-like fur collar and a lion clasp on a plain coat",
+      "level": 24,
+      "tier": 2
+    },
+    {
+      "id": 24,
+      "en": "Emerald sage",
+      "es": "Sabio esmeralda",
+      "art": "original geometric gem-trimmed robe and small faceted crown",
+      "level": 25,
+      "tier": 2
+    },
+    {
+      "id": 25,
+      "en": "Wonderland guest",
+      "es": "Huesped del pais raro",
+      "art": "original pinafore-style travel overcoat with diamond pocket shapes",
+      "level": 26,
+      "tier": 2
+    },
+    {
+      "id": 26,
+      "en": "Mirror envoy",
+      "es": "Enviado del espejo",
+      "art": "mirrored split-panel coat, contrasting cuffs and chess-square brooch",
+      "level": 27,
+      "tier": 2
+    },
+    {
+      "id": 27,
+      "en": "Clockwork reader",
+      "es": "Lector mecanico",
+      "art": "original clock-face waistcoat and chunky mechanical shoulder accents",
+      "level": 28,
+      "tier": 2
+    },
+    {
+      "id": 28,
+      "en": "Nautilus navigator",
+      "es": "Navegante Nautilus",
+      "art": "original Jules Verne inspired naval frock coat, sea collar and brass-like round buttons",
+      "level": 29,
+      "tier": 2
+    },
+    {
+      "id": 29,
+      "en": "Silver road warden",
+      "es": "Guardian del camino",
+      "art": "long roadwarden coat, silver triangular hem plates and white scarf",
+      "level": 30,
+      "tier": 2
+    },
+    {
+      "id": 30,
+      "en": "Gothic scholar",
+      "es": "Estudioso gotico",
+      "art": "dark high-collar scholarly coat with white cravat and simple pointed cuffs",
+      "level": 31,
+      "tier": 3
+    },
+    {
+      "id": 31,
+      "en": "Alchemy keeper",
+      "es": "Guardian alquimista",
+      "art": "layered alchemist robe with one large flask-shaped clasp",
+      "level": 32,
+      "tier": 3
+    },
+    {
+      "id": 32,
+      "en": "Prometheus creation",
+      "es": "Criatura de Prometeo",
+      "art": "original Shelley-book inspired oversized patched coat, human rounded head, no neck bolts or flat head",
+      "level": 33,
+      "tier": 3
+    },
+    {
+      "id": 33,
+      "en": "Night noble",
+      "es": "Noble nocturno",
+      "art": "original 1897-literary vampire formal coat, white cravat and sweeping cape",
+      "level": 34,
+      "tier": 3
+    },
+    {
+      "id": 34,
+      "en": "Moon hunter",
+      "es": "Cazador lunar",
+      "art": "high-collar travel coat and broad-brim simple hat, geometric moon clasp",
+      "level": 35,
+      "tier": 3
+    },
+    {
+      "id": 35,
+      "en": "Portrait keeper",
+      "es": "Guardian del retrato",
+      "art": "ornate yet chunky Victorian frock coat and a simple framed brooch",
+      "level": 36,
+      "tier": 3
+    },
+    {
+      "id": 36,
+      "en": "Quixote knight",
+      "es": "Caballero de la Mancha",
+      "art": "original literary makeshift armor and shallow basin-like helmet, no weapon",
+      "level": 37,
+      "tier": 3
+    },
+    {
+      "id": 37,
+      "en": "Sea captain",
+      "es": "Capitan del mar",
+      "art": "double-breasted long sea coat and compact bicorne hat",
+      "level": 38,
+      "tier": 3
+    },
+    {
+      "id": 38,
+      "en": "Dream cartographer",
+      "es": "Cartografo de suenos",
+      "art": "long coat with simple star-map panels and round shoulder clasps",
+      "level": 39,
+      "tier": 3
+    },
+    {
+      "id": 39,
+      "en": "Glass alchemist",
+      "es": "Alquimista del cristal",
+      "art": "angular crystal collar and layered white lab-robe with dark waist sash",
+      "level": 40,
+      "tier": 3
+    },
+    {
+      "id": 40,
+      "en": "Wind ronin",
+      "es": "Ronin del viento",
+      "art": "original wandering swordsman layered wrap robe and short cape, no franchise symbols",
+      "level": 41,
+      "tier": 4
+    },
+    {
+      "id": 41,
+      "en": "Sun adept",
+      "es": "Adepto del sol",
+      "art": "original martial arts uniform with a broad sash and plain circular sun crest",
+      "level": 42,
+      "tier": 4
+    },
+    {
+      "id": 42,
+      "en": "Shadow courier",
+      "es": "Correo de sombras",
+      "art": "original stealth tunic with compact neck scarf and plain wrist wraps",
+      "level": 43,
+      "tier": 4
+    },
+    {
+      "id": 43,
+      "en": "Spirit blade scholar",
+      "es": "Sabio de la espada",
+      "art": "original formal cross-wrap robe, geometric spirit crest, no famous uniform",
+      "level": 44,
+      "tier": 4
+    },
+    {
+      "id": 44,
+      "en": "Astral voyager",
+      "es": "Viajero astral",
+      "art": "original smooth science-fiction explorer coat with round chest light",
+      "level": 45,
+      "tier": 4
+    },
+    {
+      "id": 45,
+      "en": "Mecha squire",
+      "es": "Escudero mecanico",
+      "art": "original chunky miniature mechanical armor, simple shoulder plates and white visor-free collar",
+      "level": 46,
+      "tier": 4
+    },
+    {
+      "id": 46,
+      "en": "Grimoire captain",
+      "es": "Capitan del grimorio",
+      "art": "original long magic-academy captain coat with three bold book clasps",
+      "level": 47,
+      "tier": 4
+    },
+    {
+      "id": 47,
+      "en": "Thunder sentinel",
+      "es": "Centinela del trueno",
+      "art": "angular shoulder armor and a newly designed zigzag breastplate motif",
+      "level": 48,
+      "tier": 4
+    },
+    {
+      "id": 48,
+      "en": "Frost warden",
+      "es": "Guardian de escarcha",
+      "art": "thick pale coat, broad fur collar and faceted ice belt buckle",
+      "level": 49,
+      "tier": 4
+    },
+    {
+      "id": 49,
+      "en": "Flame knight",
+      "es": "Caballero de la llama",
+      "art": "plate armor with broad flame-shaped shoulder silhouettes and dark undersuit",
+      "level": 50,
+      "tier": 4
+    },
+    {
+      "id": 50,
+      "en": "Silver paladin",
+      "es": "Paladin de plata",
+      "art": "polished white plate armor, layered skirt plates and a long plain cloak",
+      "level": 51,
+      "tier": 5
+    },
+    {
+      "id": 51,
+      "en": "Rune scholar",
+      "es": "Erudito de runas",
+      "art": "heavy angular scholarly robe with sparse invented geometric rune blocks",
+      "level": 52,
+      "tier": 5
+    },
+    {
+      "id": 52,
+      "en": "Royal archivist",
+      "es": "Archivero real",
+      "art": "long formal royal coat, broad cuffs and a simple small crown",
+      "level": 53,
+      "tier": 5
+    },
+    {
+      "id": 53,
+      "en": "Forest champion",
+      "es": "Campeon del bosque",
+      "art": "leaf-shaped shoulder plates and layered short cloak",
+      "level": 54,
+      "tier": 5
+    },
+    {
+      "id": 54,
+      "en": "Sea guardian",
+      "es": "Guardian del oceano",
+      "art": "shell-like rounded shoulder armor, wave-shaped hem and pearl clasp",
+      "level": 55,
+      "tier": 5
+    },
+    {
+      "id": 55,
+      "en": "Desert sovereign",
+      "es": "Soberano del desierto",
+      "art": "layered desert robe, wide cloth headband and crescent shoulder accents",
+      "level": 56,
+      "tier": 5
+    },
+    {
+      "id": 56,
+      "en": "Mountain warden",
+      "es": "Guardian de montanas",
+      "art": "large squared stone-like shoulders and a thick dark cloak",
+      "level": 57,
+      "tier": 5
+    },
+    {
+      "id": 57,
+      "en": "Crystal knight",
+      "es": "Caballero de cristal",
+      "art": "large clean faceted crystal breastplate and shard shoulder guards",
+      "level": 58,
+      "tier": 5
+    },
+    {
+      "id": 58,
+      "en": "Storm marshal",
+      "es": "Mariscal de tormentas",
+      "art": "long military-fantasy coat with bold lightning shoulder shapes",
+      "level": 59,
+      "tier": 5
+    },
+    {
+      "id": 59,
+      "en": "Royal magus",
+      "es": "Mago real",
+      "art": "broad high-collar robe, geometric mantle and compact crown",
+      "level": 60,
+      "tier": 5
+    },
+    {
+      "id": 60,
+      "en": "Dragon knight",
+      "es": "Caballero del dragon",
+      "art": "original dragon-scale shaped large armor plates and small horned crown",
+      "level": 61,
+      "tier": 6
+    },
+    {
+      "id": 61,
+      "en": "Phoenix scholar",
+      "es": "Sabio del fenix",
+      "art": "layered feather-shaped robe panels and bird-shaped shoulder silhouette",
+      "level": 62,
+      "tier": 6
+    },
+    {
+      "id": 62,
+      "en": "Moon hierophant",
+      "es": "Hierofante lunar",
+      "art": "ceremonial pale robe and crescent crown, broad black sash",
+      "level": 63,
+      "tier": 6
+    },
+    {
+      "id": 63,
+      "en": "Solar sentinel",
+      "es": "Centinela solar",
+      "art": "radiating sun-shaped shoulder plates and round sun chest motif",
+      "level": 64,
+      "tier": 6
+    },
+    {
+      "id": 64,
+      "en": "Void walker",
+      "es": "Caminante del vacio",
+      "art": "dark angular layered cloak with stark white edges and empty-circle clasp",
+      "level": 65,
+      "tier": 6
+    },
+    {
+      "id": 65,
+      "en": "Rune sovereign",
+      "es": "Soberano de runas",
+      "art": "ceremonial armor with four large invented square glyphs",
+      "level": 66,
+      "tier": 6
+    },
+    {
+      "id": 66,
+      "en": "Celestial envoy",
+      "es": "Enviado celestial",
+      "art": "long white coat with small symmetrical feather mantle",
+      "level": 67,
+      "tier": 6
+    },
+    {
+      "id": 67,
+      "en": "Chronicle guardian",
+      "es": "Guardian de cronicas",
+      "art": "massive book-like layered armor plates and plain crown",
+      "level": 68,
+      "tier": 6
+    },
+    {
+      "id": 68,
+      "en": "Astral admiral",
+      "es": "Almirante astral",
+      "art": "broad sweeping admiral coat, star collar and epaulets",
+      "level": 69,
+      "tier": 6
+    },
+    {
+      "id": 69,
+      "en": "Arcane regent",
+      "es": "Regente arcano",
+      "art": "large tiered wizard mantle and a symmetrical faceted crown",
+      "level": 70,
+      "tier": 6
+    },
+    {
+      "id": 70,
+      "en": "Phoenix sovereign",
+      "es": "Soberano del fenix",
+      "art": "large symmetric flame-feather mantle and long layered royal robe",
+      "level": 71,
+      "tier": 7
+    },
+    {
+      "id": 71,
+      "en": "Titan keeper",
+      "es": "Guardian de titanes",
+      "art": "massive rounded guardian armor and broad squared shoulder silhouette",
+      "level": 72,
+      "tier": 7
+    },
+    {
+      "id": 72,
+      "en": "Dragon sovereign",
+      "es": "Soberano draconico",
+      "art": "ornate horned shoulder armor with small integrated dragon-wing cloak",
+      "level": 73,
+      "tier": 7
+    },
+    {
+      "id": 73,
+      "en": "Moon oracle",
+      "es": "Oraculo lunar",
+      "art": "flowing crescent-trimmed robe, a broad moon crown and layered white sash",
+      "level": 74,
+      "tier": 7
+    },
+    {
+      "id": 74,
+      "en": "Sun emperor",
+      "es": "Emperador solar",
+      "art": "imperial plate armor with bold sunburst collar and long cape",
+      "level": 75,
+      "tier": 7
+    },
+    {
+      "id": 75,
+      "en": "Storm monarch",
+      "es": "Monarca de tormentas",
+      "art": "huge angular lightning mantle and layered royal cloak",
+      "level": 76,
+      "tier": 7
+    },
+    {
+      "id": 76,
+      "en": "Crystal archon",
+      "es": "Arconte de cristal",
+      "art": "large geometric crystal armor with a tall faceted crown",
+      "level": 77,
+      "tier": 7
+    },
+    {
+      "id": 77,
+      "en": "Spirit monarch",
+      "es": "Monarca espiritual",
+      "art": "white layered ceremonial robes and black hovering-looking shoulder ornaments attached to costume",
+      "level": 78,
+      "tier": 7
+    },
+    {
+      "id": 78,
+      "en": "World tree keeper",
+      "es": "Guardian del arbol",
+      "art": "large branching leaf crown and tree-bark shaped chest armor",
+      "level": 79,
+      "tier": 7
+    },
+    {
+      "id": 79,
+      "en": "Starforged champion",
+      "es": "Campeon estelar",
+      "art": "bold stellar plate armor with compact integrated star-wing mantle",
+      "level": 80,
+      "tier": 7
+    },
+    {
+      "id": 80,
+      "en": "Dawn seraph",
+      "es": "Serafin del alba",
+      "art": "white ceremonial armor and two small integrated feather wings",
+      "level": 81,
+      "tier": 8
+    },
+    {
+      "id": 81,
+      "en": "Celestial knight",
+      "es": "Caballero celestial",
+      "art": "majestic symmetric pale armor, wing-shaped shoulders and compact halo crown",
+      "level": 82,
+      "tier": 8
+    },
+    {
+      "id": 82,
+      "en": "Lunar seraph",
+      "es": "Serafin lunar",
+      "art": "crescent armor, long white robe and two integrated moon-feather wings",
+      "level": 83,
+      "tier": 8
+    },
+    {
+      "id": 83,
+      "en": "Solar seraph",
+      "es": "Serafin solar",
+      "art": "sunburst breastplate, feather mantle and integrated radiating crown",
+      "level": 84,
+      "tier": 8
+    },
+    {
+      "id": 84,
+      "en": "Astral archon",
+      "es": "Arconte astral",
+      "art": "large star-shaped collar and ceremonial segmented armor",
+      "level": 85,
+      "tier": 8
+    },
+    {
+      "id": 85,
+      "en": "Heavenly regent",
+      "es": "Regente del cielo",
+      "art": "majestic royal robe, feather shoulders and high symmetrical crown",
+      "level": 86,
+      "tier": 8
+    },
+    {
+      "id": 86,
+      "en": "Star paladin",
+      "es": "Paladin de estrellas",
+      "art": "white faceted plate armor, broad star cloak and bright geometric crown",
+      "level": 87,
+      "tier": 8
+    },
+    {
+      "id": 87,
+      "en": "Sky sovereign",
+      "es": "Soberano del cielo",
+      "art": "towering layered mantle, wing-shaped robe panels and open-face crown",
+      "level": 88,
+      "tier": 8
+    },
+    {
+      "id": 88,
+      "en": "Eclipse guardian",
+      "es": "Guardian del eclipse",
+      "art": "half-dark half-white ceremonial plate armor and circular eclipse collar",
+      "level": 89,
+      "tier": 8
+    },
+    {
+      "id": 89,
+      "en": "Cosmic librarian",
+      "es": "Erudito cosmico",
+      "art": "grand layered book-like robes and enormous star-shaped shoulder mantle",
+      "level": 90,
+      "tier": 8
+    },
+    {
+      "id": 90,
+      "en": "Divine herald",
+      "es": "Heraldo divino",
+      "art": "ceremonial white armor, integrated feather wings and a radiant crown",
+      "level": 91,
+      "tier": 9
+    },
+    {
+      "id": 91,
+      "en": "Empyrean knight",
+      "es": "Caballero empireo",
+      "art": "maximum celestial plate armor with a broad winged mantle and triple crown",
+      "level": 92,
+      "tier": 9
+    },
+    {
+      "id": 92,
+      "en": "Eternal oracle",
+      "es": "Oraculo eterno",
+      "art": "grand layered white robes with symmetric celestial shoulder arches",
+      "level": 93,
+      "tier": 9
+    },
+    {
+      "id": 93,
+      "en": "Astral deity",
+      "es": "Deidad astral",
+      "art": "divine geometric armor, integrated small star wings and tall radiant crown",
+      "level": 94,
+      "tier": 9
+    },
+    {
+      "id": 94,
+      "en": "Moon deity",
+      "es": "Deidad lunar",
+      "art": "majestic moon-shaped white armor and crescent wing mantle",
+      "level": 95,
+      "tier": 9
+    },
+    {
+      "id": 95,
+      "en": "Sun deity",
+      "es": "Deidad solar",
+      "art": "grand sunburst armor with long layered white cape and radiant crown",
+      "level": 96,
+      "tier": 9
+    },
+    {
+      "id": 96,
+      "en": "Creation keeper",
+      "es": "Guardian de la creacion",
+      "art": "divine robes with tree and star geometry, huge layered collar",
+      "level": 97,
+      "tier": 9
+    },
+    {
+      "id": 97,
+      "en": "Infinite sovereign",
+      "es": "Soberano infinito",
+      "art": "ornate white cosmic plate armor with broad infinity-loop shoulder silhouette",
+      "level": 98,
+      "tier": 9
+    },
+    {
+      "id": 98,
+      "en": "Celestial god",
+      "es": "Dios celestial",
+      "art": "ultimate celestial royal armor, symmetric integrated angel wings and grand halo crown",
+      "level": 99,
+      "tier": 9
+    },
+    {
+      "id": 99,
+      "en": "God of chronicles",
+      "es": "Dios de las cronicas",
+      "art": "final supreme reading deity: majestic geometric white armor, broad layered wing mantle and grand star-and-book crown",
+      "level": 100,
+      "tier": 9
+    }
+  ],
+  "pets": [
+    {
+      "id": 0,
+      "en": "Hamster",
+      "es": "Hamster",
+      "height": 96,
+      "level": 1
+    },
+    {
+      "id": 1,
+      "en": "Bird",
+      "es": "Pajaro",
+      "height": 96,
+      "level": 3
+    },
+    {
+      "id": 2,
+      "en": "Turtle",
+      "es": "Tortuga",
+      "height": 96,
+      "level": 5
+    },
+    {
+      "id": 3,
+      "en": "Cat",
+      "es": "Gato",
+      "height": 96,
+      "level": 7
+    },
+    {
+      "id": 4,
+      "en": "Rabbit",
+      "es": "Conejo",
+      "height": 104,
+      "level": 9
+    },
+    {
+      "id": 5,
+      "en": "Dog",
+      "es": "Perro",
+      "height": 120,
+      "level": 11
+    },
+    {
+      "id": 6,
+      "en": "Fox",
+      "es": "Zorro",
+      "height": 112,
+      "level": 13
+    },
+    {
+      "id": 7,
+      "en": "Owl",
+      "es": "Buho",
+      "height": 112,
+      "level": 15
+    },
+    {
+      "id": 8,
+      "en": "Squirrel",
+      "es": "Ardilla",
+      "height": 96,
+      "level": 17
+    },
+    {
+      "id": 9,
+      "en": "Hedgehog",
+      "es": "Erizo",
+      "height": 96,
+      "level": 19
+    },
+    {
+      "id": 10,
+      "en": "Wolf",
+      "es": "Lobo",
+      "height": 176,
+      "level": 21
+    },
+    {
+      "id": 11,
+      "en": "Raven",
+      "es": "Cuervo",
+      "height": 112,
+      "level": 23
+    },
+    {
+      "id": 12,
+      "en": "Red panda",
+      "es": "Panda rojo",
+      "height": 128,
+      "level": 25
+    },
+    {
+      "id": 13,
+      "en": "Deer",
+      "es": "Ciervo",
+      "height": 216,
+      "level": 27
+    },
+    {
+      "id": 14,
+      "en": "Snow leopard",
+      "es": "Leopardo de las nieves",
+      "height": 200,
+      "level": 29
+    },
+    {
+      "id": 15,
+      "en": "Bear",
+      "es": "Oso",
+      "height": 264,
+      "level": 31
+    },
+    {
+      "id": 16,
+      "en": "Lion",
+      "es": "Leon",
+      "height": 224,
+      "level": 33
+    },
+    {
+      "id": 17,
+      "en": "Tiger",
+      "es": "Tigre",
+      "height": 192,
+      "level": 35
+    },
+    {
+      "id": 18,
+      "en": "Eagle",
+      "es": "Aguila",
+      "height": 152,
+      "level": 37
+    },
+    {
+      "id": 19,
+      "en": "Polar bear",
+      "es": "Oso polar",
+      "height": 280,
+      "level": 39
+    },
+    {
+      "id": 20,
+      "en": "Friendly slime",
+      "es": "Slime amistoso",
+      "height": 96,
+      "level": 41
+    },
+    {
+      "id": 21,
+      "en": "Mushroom sprite",
+      "es": "Seta viviente",
+      "height": 104,
+      "level": 43
+    },
+    {
+      "id": 22,
+      "en": "Spirit rabbit",
+      "es": "Conejo espiritual",
+      "height": 112,
+      "level": 45
+    },
+    {
+      "id": 23,
+      "en": "Spirit fox",
+      "es": "Zorro espiritual",
+      "height": 136,
+      "level": 47
+    },
+    {
+      "id": 24,
+      "en": "Moon cat",
+      "es": "Gato lunar",
+      "height": 120,
+      "level": 49
+    },
+    {
+      "id": 25,
+      "en": "Jackalope",
+      "es": "Conejo cornudo",
+      "height": 128,
+      "level": 52
+    },
+    {
+      "id": 26,
+      "en": "Shadow wolf",
+      "es": "Lobo de sombras",
+      "height": 216,
+      "level": 54
+    },
+    {
+      "id": 27,
+      "en": "Mandrake",
+      "es": "Mandragora",
+      "height": 112,
+      "level": 56
+    },
+    {
+      "id": 28,
+      "en": "Rune owl",
+      "es": "Buho de runas",
+      "height": 152,
+      "level": 58
+    },
+    {
+      "id": 29,
+      "en": "Spark drake",
+      "es": "Draco de chispa",
+      "height": 192,
+      "level": 60
+    },
+    {
+      "id": 30,
+      "en": "Griffin",
+      "es": "Grifo",
+      "height": 280,
+      "level": 62
+    },
+    {
+      "id": 31,
+      "en": "Hippogriff",
+      "es": "Hipogrifo",
+      "height": 296,
+      "level": 64
+    },
+    {
+      "id": 32,
+      "en": "Unicorn",
+      "es": "Unicornio",
+      "height": 264,
+      "level": 66
+    },
+    {
+      "id": 33,
+      "en": "Pegasus",
+      "es": "Pegaso",
+      "height": 280,
+      "level": 68
+    },
+    {
+      "id": 34,
+      "en": "Kirin",
+      "es": "Kirin",
+      "height": 280,
+      "level": 70
+    },
+    {
+      "id": 35,
+      "en": "Manticore",
+      "es": "Manticora",
+      "height": 296,
+      "level": 72
+    },
+    {
+      "id": 36,
+      "en": "Basilisk",
+      "es": "Basilisco",
+      "height": 280,
+      "level": 74
+    },
+    {
+      "id": 37,
+      "en": "Stone golem",
+      "es": "Golem de piedra",
+      "height": 312,
+      "level": 76
+    },
+    {
+      "id": 38,
+      "en": "Chimera",
+      "es": "Quimera",
+      "height": 312,
+      "level": 78
+    },
+    {
+      "id": 39,
+      "en": "Phoenix",
+      "es": "Fenix",
+      "height": 280,
+      "level": 80
+    },
+    {
+      "id": 40,
+      "en": "Wyvern",
+      "es": "Guiverno",
+      "height": 304,
+      "level": 82
+    },
+    {
+      "id": 41,
+      "en": "Mountain dragon",
+      "es": "Dragon de montana",
+      "height": 328,
+      "level": 84
+    },
+    {
+      "id": 42,
+      "en": "Eastern dragon",
+      "es": "Dragon oriental",
+      "height": 336,
+      "level": 86
+    },
+    {
+      "id": 43,
+      "en": "Hydra",
+      "es": "Hidra",
+      "height": 336,
+      "level": 88
+    },
+    {
+      "id": 44,
+      "en": "Leviathan",
+      "es": "Leviatan",
+      "height": 344,
+      "level": 90
+    },
+    {
+      "id": 45,
+      "en": "Ancient titan",
+      "es": "Titan ancestral",
+      "height": 352,
+      "level": 92
+    },
+    {
+      "id": 46,
+      "en": "Star wyrm",
+      "es": "Sierpe estelar",
+      "height": 352,
+      "level": 94
+    },
+    {
+      "id": 47,
+      "en": "Ancient dragon",
+      "es": "Dragon ancestral",
+      "height": 294,
+      "level": 96
+    },
+    {
+      "id": 48,
+      "en": "Cosmic stag",
+      "es": "Ciervo cosmico",
+      "height": 328,
+      "level": 98
+    },
+    {
+      "id": 49,
+      "en": "Celestial dragon",
+      "es": "Dragon celestial",
+      "height": 360,
+      "level": 100
+    }
+  ],
+  "auras": [
+    {
+      "id": 0,
+      "en": "Quiet spark",
+      "es": "Chispa tenue",
+      "art": "two small diamond pixels and one tiny four point spark",
+      "level": 1,
+      "scale": 110
+    },
+    {
+      "id": 1,
+      "en": "Reading dots",
+      "es": "Puntos de lectura",
+      "art": "four tiny floating dots around the outside",
+      "level": 3,
+      "scale": 113
+    },
+    {
+      "id": 2,
+      "en": "Little stars",
+      "es": "Estrellitas",
+      "art": "four small four-point stars",
+      "level": 5,
+      "scale": 116
+    },
+    {
+      "id": 3,
+      "en": "Soft breeze",
+      "es": "Brisa suave",
+      "art": "two short curved pixel wind strokes",
+      "level": 7,
+      "scale": 119
+    },
+    {
+      "id": 4,
+      "en": "Falling leaves",
+      "es": "Hojas al viento",
+      "art": "four small leaves around the sides",
+      "level": 9,
+      "scale": 122
+    },
+    {
+      "id": 5,
+      "en": "Moon glimmer",
+      "es": "Brillo lunar",
+      "art": "one small crescent and two little stars",
+      "level": 11,
+      "scale": 125
+    },
+    {
+      "id": 6,
+      "en": "Fireflies",
+      "es": "Luciernagas",
+      "art": "six tiny diamond firefly sparks",
+      "level": 13,
+      "scale": 128
+    },
+    {
+      "id": 7,
+      "en": "Dew ring",
+      "es": "Rocio",
+      "art": "four little outlined water drops",
+      "level": 15,
+      "scale": 131
+    },
+    {
+      "id": 8,
+      "en": "Ink motes",
+      "es": "Motas de tinta",
+      "art": "five floating simple square ink motes",
+      "level": 17,
+      "scale": 134
+    },
+    {
+      "id": 9,
+      "en": "Gentle halo",
+      "es": "Halo tenue",
+      "art": "one thin broken oval ring and two sparkles",
+      "level": 19,
+      "scale": 137
+    },
+    {
+      "id": 10,
+      "en": "Star circle",
+      "es": "Circulo estelar",
+      "art": "six medium four-point stars in an oval",
+      "level": 21,
+      "scale": 140
+    },
+    {
+      "id": 11,
+      "en": "Forest breeze",
+      "es": "Brisa del bosque",
+      "art": "six leaves and two little wind swirls",
+      "level": 23,
+      "scale": 143
+    },
+    {
+      "id": 12,
+      "en": "Moonlight",
+      "es": "Luz de luna",
+      "art": "crescent moon and six small sparkles",
+      "level": 25,
+      "scale": 146
+    },
+    {
+      "id": 13,
+      "en": "Ember ring",
+      "es": "Anillo de brasas",
+      "art": "six little outlined flame motes",
+      "level": 27,
+      "scale": 149
+    },
+    {
+      "id": 14,
+      "en": "Water ripple",
+      "es": "Ondas de agua",
+      "art": "two thin concentric broken water ovals",
+      "level": 29,
+      "scale": 152
+    },
+    {
+      "id": 15,
+      "en": "Wind spiral",
+      "es": "Espiral de viento",
+      "art": "two sweeping pixel wind arcs",
+      "level": 31,
+      "scale": 155
+    },
+    {
+      "id": 16,
+      "en": "Crystal glimmer",
+      "es": "Destello de cristal",
+      "art": "six small diamond crystal shards",
+      "level": 33,
+      "scale": 158
+    },
+    {
+      "id": 17,
+      "en": "Rune sparks",
+      "es": "Chispas de runas",
+      "art": "four newly invented simple square glyphs and stars",
+      "level": 35,
+      "scale": 161
+    },
+    {
+      "id": 18,
+      "en": "Snow halo",
+      "es": "Halo de nieve",
+      "art": "six tiny snowflake symbols around an oval",
+      "level": 37,
+      "scale": 164
+    },
+    {
+      "id": 19,
+      "en": "Dawn rays",
+      "es": "Rayos del alba",
+      "art": "eight medium short radiating rays",
+      "level": 39,
+      "scale": 167
+    },
+    {
+      "id": 20,
+      "en": "Arcane circle",
+      "es": "Circulo arcano",
+      "art": "one bold geometric rune ring with four large star points",
+      "level": 41,
+      "scale": 170
+    },
+    {
+      "id": 21,
+      "en": "Frost ring",
+      "es": "Anillo de escarcha",
+      "art": "an angular ice ring with six large diamond crystals",
+      "level": 43,
+      "scale": 173
+    },
+    {
+      "id": 22,
+      "en": "Flame spiral",
+      "es": "Espiral de llamas",
+      "art": "two larger outlined flame arcs around the outside",
+      "level": 45,
+      "scale": 176
+    },
+    {
+      "id": 23,
+      "en": "Lunar orbit",
+      "es": "Orbita lunar",
+      "art": "one crescent above and two orbit arcs with stars",
+      "level": 47,
+      "scale": 179
+    },
+    {
+      "id": 24,
+      "en": "Thunder field",
+      "es": "Campo de trueno",
+      "art": "six angular lightning bolts surrounding an empty center",
+      "level": 49,
+      "scale": 182
+    },
+    {
+      "id": 25,
+      "en": "Petal storm",
+      "es": "Tormenta de petalos",
+      "art": "eight large falling stylized petals and a light ring",
+      "level": 52,
+      "scale": 185
+    },
+    {
+      "id": 26,
+      "en": "Crystal orbit",
+      "es": "Orbita de cristal",
+      "art": "eight faceted crystals around a double thin orbit",
+      "level": 54,
+      "scale": 188
+    },
+    {
+      "id": 27,
+      "en": "Spirit circle",
+      "es": "Circulo espiritual",
+      "art": "three wisp flames and a broken rune ring",
+      "level": 56,
+      "scale": 191
+    },
+    {
+      "id": 28,
+      "en": "Solar corona",
+      "es": "Corona solar",
+      "art": "a bold sun ray ring with a clear empty center",
+      "level": 58,
+      "scale": 194
+    },
+    {
+      "id": 29,
+      "en": "Archive seal",
+      "es": "Sello del archivo",
+      "art": "a large circular invented glyph seal and book-like square marks",
+      "level": 60,
+      "scale": 197
+    },
+    {
+      "id": 30,
+      "en": "Phoenix halo",
+      "es": "Halo del fenix",
+      "art": "two large symmetric upward flame-feather arcs",
+      "level": 62,
+      "scale": 200
+    },
+    {
+      "id": 31,
+      "en": "Dragon sigil",
+      "es": "Sello draconico",
+      "art": "bold invented dragon-wing geometry around a circular seal",
+      "level": 64,
+      "scale": 203
+    },
+    {
+      "id": 32,
+      "en": "Celestial ring",
+      "es": "Anillo celestial",
+      "art": "two bright outlined rings with six star crystals",
+      "level": 66,
+      "scale": 206
+    },
+    {
+      "id": 33,
+      "en": "Moon sanctuary",
+      "es": "Santuario lunar",
+      "art": "large crescent, layered orbital arches and stars",
+      "level": 68,
+      "scale": 209
+    },
+    {
+      "id": 34,
+      "en": "Sun sanctuary",
+      "es": "Santuario solar",
+      "art": "large sunburst corona and multiple orbit fragments",
+      "level": 70,
+      "scale": 212
+    },
+    {
+      "id": 35,
+      "en": "Crystal sanctuary",
+      "es": "Santuario de cristal",
+      "art": "large crystal clusters around a triple ring",
+      "level": 72,
+      "scale": 215
+    },
+    {
+      "id": 36,
+      "en": "Storm crown",
+      "es": "Corona de tormentas",
+      "art": "many bold lightning arcs around a broad empty center",
+      "level": 74,
+      "scale": 218
+    },
+    {
+      "id": 37,
+      "en": "Spirit wings",
+      "es": "Alas espirituales",
+      "art": "two broad symmetric ethereal feather wing shapes behind an empty center",
+      "level": 76,
+      "scale": 221
+    },
+    {
+      "id": 38,
+      "en": "Starfall",
+      "es": "Lluvia de estrellas",
+      "art": "large falling stars and two long comet trails",
+      "level": 78,
+      "scale": 224
+    },
+    {
+      "id": 39,
+      "en": "World tree halo",
+      "es": "Halo del arbol",
+      "art": "large leafy branching arcs framing an empty center",
+      "level": 80,
+      "scale": 227
+    },
+    {
+      "id": 40,
+      "en": "Astral gate",
+      "es": "Portal astral",
+      "art": "two ornate concentric invented rune circles and large stars",
+      "level": 82,
+      "scale": 230
+    },
+    {
+      "id": 41,
+      "en": "Eclipse gate",
+      "es": "Portal del eclipse",
+      "art": "a broad black and white eclipse ring and radiating sharp rays",
+      "level": 84,
+      "scale": 233
+    },
+    {
+      "id": 42,
+      "en": "Empyrean wings",
+      "es": "Alas empireas",
+      "art": "two enormous layered feather wings and a geometric halo",
+      "level": 86,
+      "scale": 236
+    },
+    {
+      "id": 43,
+      "en": "Cosmic orbit",
+      "es": "Orbita cosmica",
+      "art": "three sweeping planet-like orbital rings, stars and crescents",
+      "level": 88,
+      "scale": 239
+    },
+    {
+      "id": 44,
+      "en": "Creation seal",
+      "es": "Sello de la creacion",
+      "art": "large complex invented circular creation geometry with leaves and stars",
+      "level": 90,
+      "scale": 242
+    },
+    {
+      "id": 45,
+      "en": "Infinity field",
+      "es": "Campo infinito",
+      "art": "two large intersecting infinity loops and bright star points",
+      "level": 92,
+      "scale": 245
+    },
+    {
+      "id": 46,
+      "en": "Divine corona",
+      "es": "Corona divina",
+      "art": "huge triple sunburst halo with bold layered rays and wing fragments",
+      "level": 94,
+      "scale": 248
+    },
+    {
+      "id": 47,
+      "en": "Celestial throne",
+      "es": "Trono celestial",
+      "art": "majestic symmetric wing arches and three ornate geometric rings",
+      "level": 96,
+      "scale": 251
+    },
+    {
+      "id": 48,
+      "en": "Eternal firmament",
+      "es": "Firmamento eterno",
+      "art": "enormous layered celestial arches, starbursts, crescent moons and falling stars",
+      "level": 98,
+      "scale": 254
+    },
+    {
+      "id": 49,
+      "en": "Godly radiance",
+      "es": "Resplandor divino",
+      "art": "the final maximal divine aura: enormous symmetric feather wings, triple rune halos, broad starburst rays and orbiting crystal stars",
+      "level": 100,
+      "scale": 257
+    }
+  ],
+  "literarySources": [
+    "https://www.gutenberg.org/ebooks/55",
+    "https://www.gutenberg.org/ebooks/84"
+  ],
+  "artDirection": "Original monochrome chibi pixel art; modern archetypes have no franchise names, logos or copied costumes. Literary interpretations refer to the original texts, not screen adaptations."
+}

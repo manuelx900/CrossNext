@@ -1,0 +1,7 @@
+{
+  "tool": "image_gen.imagegen",
+  "prompt": "Edit this exact black-and-white pixel-art farewell ghost sprite. Surgical correction only: the far eye, at the LEFT edge of the face as viewed, immediately above the muzzle/nose (the character's right eye), currently looks OPEN because it has a black vertical oval/block and a tiny white pupil/highlight. REMOVE that open-eye block and its white highlight, restoring the white cheek there, and replace it with a simple short black CLOSED eyelid curve, matching the peaceful closed near eye. Both eyes must unmistakably be closed; no pupils, irises, glints, or eye apertures. Preserve the original near eye, face silhouette, nose, mouth, pointed leaf ears, leaf collar, large leaf tail, ghost wisp body, halo, canvas, scale, pose and crisp chunky monochrome pixel-art style. Keep a white opaque background. Do not add or remove any other feature.",
+  "reference_at_edit": "assets_local/pet/farewell/silva-farewell.png",
+  "preserved_reference": "references/silva-farewell-v1.png",
+  "output": "exec-bf6e2f52-6b60-4c33-b8bb-2fce1f8a99a5.png"
+}

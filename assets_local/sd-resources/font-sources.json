@@ -1,0 +1,364 @@
+{
+  "retrieved": "2026-10-20",
+  "files": [
+    {
+      "path": "fonts/Literata/Literata-Regular.ttf",
+      "url": "https://raw.githubusercontent.com/googlefonts/literata/0c2761b727a1b3a7cffd313c37f0f5163dfc7a63/fonts/ttf/Literata-Regular.ttf",
+      "bytes": 319964,
+      "sha256": "0390890de9bb9d5862a6ba4125b82c61792ccc3d66b63e73eee75c1a16fcd208",
+      "license": "OFL-1.1",
+      "revision": "0c2761b727a1b3a7cffd313c37f0f5163dfc7a63",
+      "modified": false
+    },
+    {
+      "path": "fonts/Literata/Literata-Bold.ttf",
+      "url": "https://raw.githubusercontent.com/googlefonts/literata/0c2761b727a1b3a7cffd313c37f0f5163dfc7a63/fonts/ttf/Literata-Bold.ttf",
+      "bytes": 331304,
+      "sha256": "b6af95b3b443cdbce964aa06741596987f2f5c3ede46a2bc846e5addd99d061f",
+      "license": "OFL-1.1",
+      "revision": "0c2761b727a1b3a7cffd313c37f0f5163dfc7a63",
+      "modified": false
+    },
+    {
+      "path": "fonts/Literata/Literata-Italic.ttf",
+      "url": "https://raw.githubusercontent.com/googlefonts/literata/0c2761b727a1b3a7cffd313c37f0f5163dfc7a63/fonts/ttf/Literata-Italic.ttf",
+      "bytes": 304104,
+      "sha256": "198f70cc9a17bab578553fa274b81984d58c440efe26bc06f1d841c194b6691a",
+      "license": "OFL-1.1",
+      "revision": "0c2761b727a1b3a7cffd313c37f0f5163dfc7a63",
+      "modified": false
+    },
+    {
+      "path": "fonts/Literata/Literata-BoldItalic.ttf",
+      "url": "https://raw.githubusercontent.com/googlefonts/literata/0c2761b727a1b3a7cffd313c37f0f5163dfc7a63/fonts/ttf/Literata-BoldItalic.ttf",
+      "bytes": 318888,
+      "sha256": "1dade59381ad02f4679d7e993a7a406472e587ac332af7a6168d3ad9214a99dc",
+      "license": "OFL-1.1",
+      "revision": "0c2761b727a1b3a7cffd313c37f0f5163dfc7a63",
+      "modified": false
+    },
+    {
+      "path": "fonts/Literata/OFL",
+      "url": "https://raw.githubusercontent.com/googlefonts/literata/0c2761b727a1b3a7cffd313c37f0f5163dfc7a63/OFL.txt",
+      "bytes": 4389,
+      "sha256": "8742963604cd89dc81437811a850018fc03b2bfad686d7422c8235967c87614e",
+      "license": "OFL-1.1",
+      "revision": "0c2761b727a1b3a7cffd313c37f0f5163dfc7a63",
+      "modified": false
+    },
+    {
+      "path": "fonts/EB Garamond/EBGaramond-Regular.ttf",
+      "url": "https://raw.githubusercontent.com/octaviopardo/EBGaramond12/106a4a6d377987459ae5e68673a4570f13b957fb/fonts/ttf/EBGaramond-Regular.ttf",
+      "bytes": 627304,
+      "sha256": "2028dc06d3c130b4761693481436a32a8e35ed500bf58c25c53de004106125b8",
+      "license": "OFL-1.1",
+      "revision": "106a4a6d377987459ae5e68673a4570f13b957fb",
+      "modified": false
+    },
+    {
+      "path": "fonts/EB Garamond/EBGaramond-Bold.ttf",
+      "url": "https://raw.githubusercontent.com/octaviopardo/EBGaramond12/106a4a6d377987459ae5e68673a4570f13b957fb/fonts/ttf/EBGaramond-Bold.ttf",
+      "bytes": 687396,
+      "sha256": "0cfed122e51e3fd44ccedaef7637efed6d5bdc4ad89a6117d70241510309a186",
+      "license": "OFL-1.1",
+      "revision": "106a4a6d377987459ae5e68673a4570f13b957fb",
+      "modified": false
+    },
+    {
+      "path": "fonts/EB Garamond/EBGaramond-Italic.ttf",
+      "url": "https://raw.githubusercontent.com/octaviopardo/EBGaramond12/106a4a6d377987459ae5e68673a4570f13b957fb/fonts/ttf/EBGaramond-Italic.ttf",
+      "bytes": 602136,
+      "sha256": "d4ad1d0a9390d26d6d3f176117a1d121441edb8c8632bfca52cfad084b9059cb",
+      "license": "OFL-1.1",
+      "revision": "106a4a6d377987459ae5e68673a4570f13b957fb",
+      "modified": false
+    },
+    {
+      "path": "fonts/EB Garamond/EBGaramond-BoldItalic.ttf",
+      "url": "https://raw.githubusercontent.com/octaviopardo/EBGaramond12/106a4a6d377987459ae5e68673a4570f13b957fb/fonts/ttf/EBGaramond-BoldItalic.ttf",
+      "bytes": 631696,
+      "sha256": "3437cf76a720b01580218614e7f0ce9d66035a075c34a98394cec9a888cf38d6",
+      "license": "OFL-1.1",
+      "revision": "106a4a6d377987459ae5e68673a4570f13b957fb",
+      "modified": false
+    },
+    {
+      "path": "fonts/EB Garamond/OFL",
+      "url": "https://raw.githubusercontent.com/octaviopardo/EBGaramond12/106a4a6d377987459ae5e68673a4570f13b957fb/OFL.txt",
+      "bytes": 4454,
+      "sha256": "058611bd968817d532cedeab6acaa055e882d365a88523df00e7917ad7a0f704",
+      "license": "OFL-1.1",
+      "revision": "106a4a6d377987459ae5e68673a4570f13b957fb",
+      "modified": false
+    },
+    {
+      "path": "fonts/Merriweather/Merriweather-Regular.ttf",
+      "url": "https://raw.githubusercontent.com/SorkinType/Merriweather/4481226b336843648b5b2ee64f75737f262ded15/fonts/ttf/Merriweather-Regular.ttf",
+      "bytes": 282844,
+      "sha256": "10ec10d1f7a9b5f0eb1a964e06348ce20587d478c661ea36728cce7b57f3de1c",
+      "license": "OFL-1.1",
+      "revision": "4481226b336843648b5b2ee64f75737f262ded15",
+      "modified": false
+    },
+    {
+      "path": "fonts/Merriweather/Merriweather-Bold.ttf",
+      "url": "https://raw.githubusercontent.com/SorkinType/Merriweather/4481226b336843648b5b2ee64f75737f262ded15/fonts/ttf/Merriweather-Bold.ttf",
+      "bytes": 282608,
+      "sha256": "a2fa4f57946c62036f79d9e8b4b642515001d65af1e6a98afc0b94bf669e3f11",
+      "license": "OFL-1.1",
+      "revision": "4481226b336843648b5b2ee64f75737f262ded15",
+      "modified": false
+    },
+    {
+      "path": "fonts/Merriweather/Merriweather-Italic.ttf",
+      "url": "https://raw.githubusercontent.com/SorkinType/Merriweather/4481226b336843648b5b2ee64f75737f262ded15/fonts/ttf/Merriweather-Italic.ttf",
+      "bytes": 272256,
+      "sha256": "1f73096441117e56bd867a437188e98bcf8ae7dcc7f676980da2ed2b6b51554d",
+      "license": "OFL-1.1",
+      "revision": "4481226b336843648b5b2ee64f75737f262ded15",
+      "modified": false
+    },
+    {
+      "path": "fonts/Merriweather/Merriweather-BoldItalic.ttf",
+      "url": "https://raw.githubusercontent.com/SorkinType/Merriweather/4481226b336843648b5b2ee64f75737f262ded15/fonts/ttf/Merriweather-BoldItalic.ttf",
+      "bytes": 272088,
+      "sha256": "f9bf9c32fc1297711b7d309cee9c9ba10ebb00148f4ceda21760f4b1b7e3e8ef",
+      "license": "OFL-1.1",
+      "revision": "4481226b336843648b5b2ee64f75737f262ded15",
+      "modified": false
+    },
+    {
+      "path": "fonts/Merriweather/OFL",
+      "url": "https://raw.githubusercontent.com/SorkinType/Merriweather/4481226b336843648b5b2ee64f75737f262ded15/OFL.txt",
+      "bytes": 4437,
+      "sha256": "a7ba785ad99b6eae0444ab89910e512d4af9865937fddbcb5c72c4f59f55d6ad",
+      "license": "OFL-1.1",
+      "revision": "4481226b336843648b5b2ee64f75737f262ded15",
+      "modified": false
+    },
+    {
+      "path": "fonts/Atkinson Hyperlegible/AtkinsonHyperlegible-Regular.ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/47d54ca1ebb14fd864695f1d39dc734f39017c33/ofl/atkinsonhyperlegible/AtkinsonHyperlegible-Regular.ttf",
+      "bytes": 54348,
+      "sha256": "7fb917c89019896d0b52ee84b7cbb3304c18cb90b19a62f5e32712bd23e97669",
+      "license": "OFL-1.1",
+      "revision": "47d54ca1ebb14fd864695f1d39dc734f39017c33",
+      "modified": false
+    },
+    {
+      "path": "fonts/Atkinson Hyperlegible/AtkinsonHyperlegible-Bold.ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/47d54ca1ebb14fd864695f1d39dc734f39017c33/ofl/atkinsonhyperlegible/AtkinsonHyperlegible-Bold.ttf",
+      "bytes": 55256,
+      "sha256": "5a3b0c8cc8ca545155150b4512a1fa248298df121c50d6557e651e61fbdab92f",
+      "license": "OFL-1.1",
+      "revision": "47d54ca1ebb14fd864695f1d39dc734f39017c33",
+      "modified": false
+    },
+    {
+      "path": "fonts/Atkinson Hyperlegible/AtkinsonHyperlegible-Italic.ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/47d54ca1ebb14fd864695f1d39dc734f39017c33/ofl/atkinsonhyperlegible/AtkinsonHyperlegible-Italic.ttf",
+      "bytes": 54892,
+      "sha256": "021beda4d3c6edfc78872e436d74009f9a1bcb294331908fe5747c61d3dcc514",
+      "license": "OFL-1.1",
+      "revision": "47d54ca1ebb14fd864695f1d39dc734f39017c33",
+      "modified": false
+    },
+    {
+      "path": "fonts/Atkinson Hyperlegible/AtkinsonHyperlegible-BoldItalic.ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/47d54ca1ebb14fd864695f1d39dc734f39017c33/ofl/atkinsonhyperlegible/AtkinsonHyperlegible-BoldItalic.ttf",
+      "bytes": 55288,
+      "sha256": "7a46f1b0ef2f64b61065c1a6b5a11fcb9b019b44062d88ba121a083cc39e86bf",
+      "license": "OFL-1.1",
+      "revision": "47d54ca1ebb14fd864695f1d39dc734f39017c33",
+      "modified": false
+    },
+    {
+      "path": "fonts/Atkinson Hyperlegible/OFL",
+      "url": "https://raw.githubusercontent.com/google/fonts/47d54ca1ebb14fd864695f1d39dc734f39017c33/ofl/atkinsonhyperlegible/OFL.txt",
+      "bytes": 4352,
+      "sha256": "f32d22b3908fcad2c86a74000614ec22e6a7f66ea7e867e616026a27aebdc143",
+      "license": "OFL-1.1",
+      "revision": "47d54ca1ebb14fd864695f1d39dc734f39017c33",
+      "modified": false
+    },
+    {
+      "path": "fonts/PT Serif/PT_Serif-Web-Regular.ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/47d54ca1ebb14fd864695f1d39dc734f39017c33/ofl/ptserif/PT_Serif-Web-Regular.ttf",
+      "bytes": 359048,
+      "sha256": "a4951fade06ff8f09b7673aa81ffb65a8cd409e24d3289a6dc670bc4dda2557a",
+      "license": "OFL-1.1",
+      "revision": "47d54ca1ebb14fd864695f1d39dc734f39017c33",
+      "modified": false
+    },
+    {
+      "path": "fonts/PT Serif/PT_Serif-Web-Bold.ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/47d54ca1ebb14fd864695f1d39dc734f39017c33/ofl/ptserif/PT_Serif-Web-Bold.ttf",
+      "bytes": 339996,
+      "sha256": "038ba7336bd7ea14f12ad155bed51a4345cac5153275d521dec3ba04021c526e",
+      "license": "OFL-1.1",
+      "revision": "47d54ca1ebb14fd864695f1d39dc734f39017c33",
+      "modified": false
+    },
+    {
+      "path": "fonts/PT Serif/PT_Serif-Web-Italic.ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/47d54ca1ebb14fd864695f1d39dc734f39017c33/ofl/ptserif/PT_Serif-Web-Italic.ttf",
+      "bytes": 375356,
+      "sha256": "f57e95ff9dc85691a3b2e193f2028db36f6663939a46c0fc4f286d618b80b7ce",
+      "license": "OFL-1.1",
+      "revision": "47d54ca1ebb14fd864695f1d39dc734f39017c33",
+      "modified": false
+    },
+    {
+      "path": "fonts/PT Serif/PT_Serif-Web-BoldItalic.ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/47d54ca1ebb14fd864695f1d39dc734f39017c33/ofl/ptserif/PT_Serif-Web-BoldItalic.ttf",
+      "bytes": 337580,
+      "sha256": "f003788ba08981eb0988b3557a6f224a53dab49c20e283e8b74d5af3c466f8be",
+      "license": "OFL-1.1",
+      "revision": "47d54ca1ebb14fd864695f1d39dc734f39017c33",
+      "modified": false
+    },
+    {
+      "path": "fonts/PT Serif/OFL",
+      "url": "https://raw.githubusercontent.com/google/fonts/47d54ca1ebb14fd864695f1d39dc734f39017c33/ofl/ptserif/OFL.txt",
+      "bytes": 4434,
+      "sha256": "ddf311c28ddf5a5ad9747649837346b67bed9d356789c3072bb27dbce49e514d",
+      "license": "OFL-1.1",
+      "revision": "47d54ca1ebb14fd864695f1d39dc734f39017c33",
+      "modified": false
+    },
+    {
+      "path": "fonts/Inter/Inter-Regular.ttf",
+      "url": "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip",
+      "bytes": 411640,
+      "sha256": "40d692fce188e4471e2b3cba937be967878f631ad3ebbbdcd587687c7ebe0c82",
+      "member": "extras/ttf/Inter-Regular.ttf",
+      "archiveSha256": "9883fdd4a49d4fb66bd8177ba6625ef9a64aa45899767dde3d36aa425756b11e",
+      "license": "OFL-1.1",
+      "revision": "v4.1",
+      "modified": false
+    },
+    {
+      "path": "fonts/Inter/Inter-Bold.ttf",
+      "url": "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip",
+      "bytes": 420428,
+      "sha256": "288316099b1e0a47a4716d159098005eef7c0066921f34e3200393dbdb01947f",
+      "member": "extras/ttf/Inter-Bold.ttf",
+      "archiveSha256": "9883fdd4a49d4fb66bd8177ba6625ef9a64aa45899767dde3d36aa425756b11e",
+      "license": "OFL-1.1",
+      "revision": "v4.1",
+      "modified": false
+    },
+    {
+      "path": "fonts/Inter/Inter-Italic.ttf",
+      "url": "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip",
+      "bytes": 417388,
+      "sha256": "bbc051dd204b5019a1aa0bc0ae2aa8a05ab13e7a3f979fa357631dc7feb6833a",
+      "member": "extras/ttf/Inter-Italic.ttf",
+      "archiveSha256": "9883fdd4a49d4fb66bd8177ba6625ef9a64aa45899767dde3d36aa425756b11e",
+      "license": "OFL-1.1",
+      "revision": "v4.1",
+      "modified": false
+    },
+    {
+      "path": "fonts/Inter/Inter-BoldItalic.ttf",
+      "url": "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip",
+      "bytes": 425296,
+      "sha256": "948405a16cdc62701da5f4005ed068ca5f4d27061d98f7974ccfc37831d9581d",
+      "member": "extras/ttf/Inter-BoldItalic.ttf",
+      "archiveSha256": "9883fdd4a49d4fb66bd8177ba6625ef9a64aa45899767dde3d36aa425756b11e",
+      "license": "OFL-1.1",
+      "revision": "v4.1",
+      "modified": false
+    },
+    {
+      "path": "fonts/Inter/OFL",
+      "url": "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip",
+      "bytes": 4380,
+      "sha256": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a",
+      "member": "LICENSE.txt",
+      "license": "OFL-1.1",
+      "revision": "v4.1",
+      "modified": false
+    },
+    {
+      "path": "fonts/Bitter/bitter-Bold.ttf",
+      "bytes": 101928,
+      "sha256": "dad61badd395a6085f89c108cfd36351f1b74f32a09e711f2a8623b0f8d9cbda",
+      "license": "OFL-1.1",
+      "origin": "Inherited CrossInk reference bundle; preserved without further modification",
+      "upstreamUrl": "https://github.com/solmatas/BitterPro"
+    },
+    {
+      "path": "fonts/Bitter/bitter-BoldItalic.ttf",
+      "bytes": 100540,
+      "sha256": "ae3af874b4a2ffe74fd95bab30b39c2ea620757363bde5c49a7af6135c485f08",
+      "license": "OFL-1.1",
+      "origin": "Inherited CrossInk reference bundle; preserved without further modification",
+      "upstreamUrl": "https://github.com/solmatas/BitterPro"
+    },
+    {
+      "path": "fonts/Bitter/bitter-Italic.ttf",
+      "bytes": 100628,
+      "sha256": "323293ce90d755ea1b9c0bde18fcd5f9bc89a20f807b09694a5e81d3773cd963",
+      "license": "OFL-1.1",
+      "origin": "Inherited CrossInk reference bundle; preserved without further modification",
+      "upstreamUrl": "https://github.com/solmatas/BitterPro"
+    },
+    {
+      "path": "fonts/Bitter/bitter-Regular.ttf",
+      "bytes": 118184,
+      "sha256": "a85aeacfc8eda2372a48eda9c51a1baded333607d4da4907cc355016456ff204",
+      "license": "OFL-1.1",
+      "origin": "Inherited CrossInk reference bundle; preserved without further modification",
+      "upstreamUrl": "https://github.com/solmatas/BitterPro"
+    },
+    {
+      "path": "fonts/Bitter/OFL",
+      "bytes": 4423,
+      "sha256": "9be0b0c8f58a3e7e48623a3d4b73912406143f92ddad9526de889845999b0e8d",
+      "license": "OFL-1.1",
+      "origin": "Inherited CrossInk reference bundle; preserved without further modification",
+      "upstreamUrl": "https://github.com/solmatas/BitterPro"
+    },
+    {
+      "path": "fonts/Lexend Deca/lexenddeca-Bold.ttf",
+      "bytes": 53284,
+      "sha256": "37ef5f022f1edfdfb4bbb33b2703a41a6417c6375e9a7919bd80d4c7ab249f9d",
+      "license": "OFL-1.1",
+      "origin": "Inherited CrossInk reference bundle; preserved without further modification",
+      "upstreamUrl": "https://github.com/googlefonts/lexend"
+    },
+    {
+      "path": "fonts/Lexend Deca/lexenddeca-BoldItalic.ttf",
+      "bytes": 57656,
+      "sha256": "f048461f7e0d2256b55879cc063260a77210662ffd3da3ccc8d791aa727232fd",
+      "license": "OFL-1.1",
+      "origin": "Inherited CrossInk reference bundle; preserved without further modification",
+      "upstreamUrl": "https://github.com/googlefonts/lexend"
+    },
+    {
+      "path": "fonts/Lexend Deca/lexenddeca-Italic.ttf",
+      "bytes": 57976,
+      "sha256": "27fee7ca40511306fee017c153e95f294a3af98823b5cbccbf5c01406cac22e6",
+      "license": "OFL-1.1",
+      "origin": "Inherited CrossInk reference bundle; preserved without further modification",
+      "upstreamUrl": "https://github.com/googlefonts/lexend"
+    },
+    {
+      "path": "fonts/Lexend Deca/lexenddeca-Regular.ttf",
+      "bytes": 69304,
+      "sha256": "e826505117fd4f764406df276b43456afaa4772b757a96cb7c8a7825df8f40f4",
+      "license": "OFL-1.1",
+      "origin": "Inherited CrossInk reference bundle; preserved without further modification",
+      "upstreamUrl": "https://github.com/googlefonts/lexend"
+    },
+    {
+      "path": "fonts/Lexend Deca/OFL",
+      "bytes": 4435,
+      "sha256": "2a130f43ec8e9c251dfd247a57dd9e7227abf6e4e1175422b2e75e36612f6333",
+      "license": "OFL-1.1",
+      "origin": "Inherited CrossInk reference bundle; preserved without further modification",
+      "upstreamUrl": "https://github.com/googlefonts/lexend"
+    }
+  ]
+}

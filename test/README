@@ -1,0 +1,15 @@
+Host-side gtest unit tests for crosspoint-reader.
+
+Build and run:
+
+  cmake -S test -B build/test
+  cmake --build build/test
+  ctest --test-dir build/test --output-on-failure -j
+
+Run a single suite directly:
+
+  cmake --build build/test --target StreamingJsonParserTest
+  build/test/streaming_json_parser/StreamingJsonParserTest --gtest_filter='*'
+
+Google Test is fetched via CMake FetchContent on first configure; the pinned
+version lives in test/CMakeLists.txt.

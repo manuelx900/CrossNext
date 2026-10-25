@@ -1,0 +1,117 @@
+name: Compile Release Candidate
+
+# FORK CHANGE: this workflow does nothing useful here, and reads as though it
+# does.
+#
+# It is dispatch-only, so nothing starts it by itself, and its one job is gated
+# on a ref name beginning with `release/`. The fork's work happens on `app/*`
+# and lands on `xteink`, so dispatching it from any branch anyone actually uses
+# produces a GREEN RUN WITH ZERO JOBS -- indistinguishable, on the Actions
+# page, from a release candidate that built.
+#
+# It is not unreachable, though: `release/1.5.0` still exists on this remote,
+# inherited from upstream, and a dispatch against that ref really would run the
+# job. What it would build is the point below.
+#
+# It also builds four upstream boards (gh_release_rc, sticky, x4pro,
+# papermono) with the RC envs, none of which is what this fork ships:
+# crossplay-release.yml owns v* tags and builds gh_release_x4pro and
+# gh_release_sticky.
+#
+# Kept rather than deleted because deleting it conflicts on every sync from
+# upstream, and left exactly as upstream wrote it for the same reason.
+on:
+  workflow_dispatch:
+
+jobs:
+  build-release-candidate:
+    if: github.repository == 'ma-r-s/crossplay'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - pio_env: gh_release_rc
+            asset: firmware.bin
+          - pio_env: sticky-gh_release_rc
+            asset: firmware-sticky.bin
+          - pio_env: x4pro-gh_release_rc
+            asset: firmware-x4pro.bin
+          - pio_env: x4c-gh_release_rc
+            asset: firmware-x4c.bin
+          - pio_env: papermono-gh_release_rc
+            asset: firmware-papermono.bin
+          - pio_env: metalio_eink4-gh_release_rc
+            asset: firmware-metalio_eink4.bin
+          - pio_env: eego_a4-gh_release_rc
+            asset: firmware-eego_a4.bin
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "latest"
+          enable-cache: false
+
+      - name: Install PlatformIO Core
+        run: |
+          uv pip install --system -U https://github.com/pioarduino/platformio-core/archive/refs/tags/v6.1.19.zip
+          # platform-espressif32's builder/main.py imports these unconditionally; its own
+          # penv bootstrap (builder/penv_setup.py) is supposed to install them automatically
+          # but isn't picking them up reliably in this runner image, so pin them explicitly.
+          uv pip install --system -U "littlefs-python>=0.16.0" "fatfs-ng>=0.1.14" "pyyaml>=6.0.2" \
+            "rich-click>=1.8.6" "zopfli>=0.2.2" "intelhex>=2.3.0" "rich>=14.0.0" "urllib3<2" \
+            "cryptography>=45.0.3" "certifi>=2025.8.3" "ecdsa>=0.19.1" "bitstring>=4.3.1" \
+            "reedsolo>=1.5.3,<1.8" "esp-idf-size>=2.0.0" "esp-coredump>=1.14.0"
+
+      - name: Cache PlatformIO packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-v2-${{ runner.os }}-${{ hashFiles('platformio.ini') }}
+          restore-keys: pio-v2-${{ runner.os }}-
+
+      - name: Pin pioarduino core inside the platform penv
+        run: |
+          set -euo pipefail
+          # Envs with custom_sdkconfig run a nested `pio run` from
+          # ~/.platformio/penv. Keep that core on the same version as the outer core.
+          # See https://github.com/pioarduino/platform-espressif32/issues/529
+          pio pkg install -e ${{ matrix.pio_env }}
+          uv pip install --python ~/.platformio/penv/bin/python "pioarduino==6.1.19"
+          ~/.platformio/penv/bin/pio --version
+
+      - name: Extract env
+        run: |
+          echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+          echo "BRANCH_SUFFIX=${GITHUB_REF_NAME#release/}" >> $GITHUB_ENV
+
+      - name: Build CrossPoint Release Candidate
+        env:
+          CROSSPOINT_RC_HASH: ${{ env.SHORT_SHA }}
+        run: pio run -e ${{ matrix.pio_env }} -j1
+
+      - name: Name release asset
+        run: |
+          if [ "${{ matrix.asset }}" != "firmware.bin" ]; then
+            cp ".pio/build/${{ matrix.pio_env }}/firmware.bin" \
+              ".pio/build/${{ matrix.pio_env }}/${{ matrix.asset }}"
+          fi
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: CrossPoint-RC-${{ env.BRANCH_SUFFIX }}-${{ matrix.pio_env }}
+          path: |
+            .pio/build/${{ matrix.pio_env }}/bootloader.bin
+            .pio/build/${{ matrix.pio_env }}/${{ matrix.asset }}
+            .pio/build/${{ matrix.pio_env }}/firmware.elf
+            .pio/build/${{ matrix.pio_env }}/firmware.map
+            .pio/build/${{ matrix.pio_env }}/partitions.bin

@@ -1,0 +1,269 @@
+#pragma once
+
+// Reader for the on-SD deck files. See docs/apps/study-deck-format.md for the
+// layout and the reasoning behind it.
+//
+// Freestanding C++17 -- no Arduino, no HalStorage, no heap. All I/O goes
+// through the ByteSource interface, which is what lets host-tests/study parse a
+// real converted deck on a laptop. The device supplies a HalStorage-backed
+// source; the tests supply one over a plain file.
+//
+// Nothing here allocates. A Note owns a small inline buffer and can borrow a
+// larger reusable activity-owned PSRAM buffer for native v4 decks. No per-card
+// allocation is needed.
+
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+
+#include "StudyFsrs.h"
+
+namespace study {
+
+// Random-access bytes. Returning false must mean "did not read `length`
+// bytes", never a short read, so callers can treat failure as fatal.
+class ByteSource {
+ public:
+  virtual ~ByteSource() = default;
+  virtual bool read(uint32_t offset, void* dst, uint32_t length) = 0;
+  virtual uint32_t size() const = 0;
+};
+
+// Writable source, for cards.dat. Split from ByteSource so deck.dat can be
+// opened through a handle that physically cannot write to it.
+class WritableByteSource : public ByteSource {
+ public:
+  virtual bool write(uint32_t offset, const void* src, uint32_t length) = 0;
+  virtual bool flush() = 0;
+};
+
+// Eight since deck.dat v3 added clozeQuestion. A v2 deck has seven and is
+// still read: the eighth simply comes back empty, which is exactly what a
+// vocabulary note writes anyway.
+inline constexpr int kFieldCount = 8;
+
+// Legacy notes fit inline. Native v4 imports may borrow one reusable S3 PSRAM
+// buffer for two uint16-length faces, without changing the index or card state.
+inline constexpr uint32_t kInlineNoteBytes = 8192;
+inline constexpr uint32_t kMaxNoteBytes = 2 * 65536 + 32;
+
+enum class Field : uint8_t {
+  Headword = 0,
+  Reading,
+  Meaning,
+  PartOfSpeech,
+  Sentence,
+  SentenceReading,
+  SentenceMeaning,
+  // The question face of a cloze card: the note's text with this card's hole
+  // shown as [...] (or as its hint) and every other card's hole filled in,
+  // which is what Anki's {{cloze:}} does. The answer face is `Sentence`, with
+  // the hole filled and the emphasis span over what was hidden -- so a cloze
+  // card reuses the sentence face, its font, its wrapping and its per-card
+  // font fallback rather than growing a second text path.
+  ClozeQuestion,
+};
+
+// Anki allows an arbitrary number of learning steps; six is well past what
+// anyone uses and keeps DeckMeta a fixed-size struct.
+inline constexpr int kMaxLearningSteps = 6;
+
+struct DeckMeta {
+  float params[kNumParams] = {};
+  float desiredRetention = 0.9f;
+  int32_t maximumInterval = 36500;
+  int32_t newPerDay = 20;
+  int32_t reviewsPerDay = 200;
+  int64_t collectionCreated = 0;  // epoch seconds of day zero
+  uint8_t rolloverHour = 4;
+  // Learning and relearning steps, in minutes, read out of the deck's Anki
+  // preset. Mario's is 1m/10m and 10m. They travel with the deck for the same
+  // reason the FSRS weights do: they are per-preset and he changes them.
+  float learnSteps[kMaxLearningSteps] = {};
+  float relearnSteps[kMaxLearningSteps] = {};
+  uint8_t learnStepCount = 0;
+  uint8_t relearnStepCount = 0;
+  char name[64] = {};
+
+  // Whether this deck's example sentence belongs on the question face as well
+  // as the answer. False for a vocabulary deck, where the sentence is part of
+  // what you are trying to recall; true for an HSK-style deck, where reading
+  // the word in a sentence IS the exercise. Written by the converter from the
+  // note type, because only the deck knows which kind it is: for its first
+  // year this was hardcoded on, so a Barron's SAT card showed its own example
+  // sentence while asking you to define the word.
+  bool sentenceOnQuestion = false;
+
+  // True when the deck shipped real optimized weights rather than zeros.
+  bool hasParams() const;
+};
+
+// One card's scheduling state. Mirrors the 32-byte record in cards.dat exactly;
+// see docs/apps/study-deck-format.md.
+struct CardState {
+  int64_t ankiCardId = 0;
+  float stability = 0.0f;
+  float difficulty = 0.0f;
+  int32_t dueDay = 0;
+  int32_t lastReviewDay = -1;
+  uint16_t reps = 0;
+  uint16_t lapses = 0;
+  uint8_t state = 0;      // 0 new, 1 learning, 2 review, 3 relearning
+  uint8_t stepIndex = 0;  // position in the learning or relearning step list
+  // Minutes since dueDay began. Only meaningful while the card is inside a step
+  // list, where "come back in ten minutes" cannot be said in day numbering.
+  uint16_t dueMinute = 0;
+
+  bool isNew() const { return state == 0; }
+  Memory memory() const;
+  void setMemory(const Memory& m);
+};
+
+inline constexpr uint32_t kCardRecordSize = 32;
+
+// One note's text. Fields are NUL-terminated in place so they can be handed
+// straight to drawText and snprintf without a copy: string_view would need a
+// conversion at every one of those call sites, and the C API boundary is where
+// this codebase has been bitten before.
+class Note {
+ public:
+  Note() = default;
+  Note(const Note&) = delete;
+  Note& operator=(const Note&) = delete;
+  // Borrowed for the caller's activity lifetime; nullptr restores inline storage.
+  void useBuffer(uint8_t* buffer, uint32_t bytes) {
+    external_ = buffer && bytes ? buffer : nullptr;
+    capacity_ = external_ ? bytes : kInlineNoteBytes;
+    std::memset(offsets_, 0, sizeof(offsets_));
+    std::memset(lengths_, 0, sizeof(lengths_));
+    data()[0] = 0;
+  }
+  const char* field(Field f) const;
+  uint16_t length(Field f) const;
+  bool empty(Field f) const { return length(f) == 0; }
+
+  // Where the example sentence emphasised its target word, in codepoints, or
+  // length 0 when it did not. Anki bolds it; there is no bold CJK face here,
+  // so the renderer underlines instead.
+  uint8_t emphasisOffset() const { return emphasisOffset_; }
+  uint8_t emphasisLength() const { return emphasisLength_; }
+
+  // A cloze card, told apart by the one thing only a cloze card has. No kind
+  // byte: the field is the marker, so a deck file stays a flat list of
+  // length-prefixed fields and every tool that walks it by the header's field
+  // count keeps working.
+  bool isCloze() const { return lengths_[static_cast<int>(Field::ClozeQuestion)] > 0; }
+
+ private:
+  friend class StudyDeck;
+  uint8_t* data() { return external_ ? external_ : bytes_; }
+  const uint8_t* data() const { return external_ ? external_ : bytes_; }
+  uint8_t bytes_[kInlineNoteBytes] = {};
+  uint8_t* external_ = nullptr;
+  uint32_t capacity_ = kInlineNoteBytes;
+  uint32_t offsets_[kFieldCount] = {};
+  uint16_t lengths_[kFieldCount] = {};
+  uint8_t emphasisOffset_ = 0;
+  uint8_t emphasisLength_ = 0;
+};
+
+class StudyDeck {
+ public:
+  // Parse meta.dat. Must succeed before the FSRS parameters are meaningful.
+  bool openMeta(ByteSource& meta);
+  // Parse deck.dat's header. The index stays on disk and is read per note:
+  // 5001 entries is 20KB, which is not worth holding to save one 4-byte read.
+  bool openDeck(ByteSource& deck);
+
+  int noteCount() const { return noteCount_; }
+  bool hasLongNotes() const { return recordLimit_ > kInlineNoteBytes; }
+  const DeckMeta& meta() const { return meta_; }
+
+  // Read one note's text. `index` is 0..noteCount-1, and is also the card's
+  // index in cards.dat -- the converter writes them in the same order so the
+  // review path never needs a lookup.
+  bool loadNote(ByteSource& deck, int index, Note& out) const;
+
+  // Read and write one card's scheduling state.
+  bool loadCard(ByteSource& cards, int index, CardState& out) const;
+  bool storeCard(WritableByteSource& cards, int index, const CardState& in) const;
+
+ private:
+  DeckMeta meta_;
+  int noteCount_ = 0;
+  uint8_t fieldCount_ = 0;
+  uint32_t recordLimit_ = kInlineNoteBytes;
+  uint32_t indexBase_ = 0;  // file offset of the note index
+};
+
+// Day numbering, shared with Anki: whole days since the collection was created,
+// counted from the deck's rollover hour. Keeping Anki's own numbering is what
+// lets a due date computed here and one computed on the phone agree without any
+// timezone conversation.
+int dayNumber(const DeckMeta& meta, int64_t nowEpochSeconds);
+
+// The card left open across a leave or a sleep. Kept freestanding, with the
+// SD read/write in StudyActivity.cpp (Arduino-only), so the two parts worth
+// getting wrong are host-tested: whether a saved record is well formed, and
+// whether the card it names is still the card at that position.
+//
+// There is no prompt. An unanswered card writes nothing, and the queue is
+// rebuilt in file order with the answered cards gone, so the card that was on
+// screen is the next one the scheduler hands out anyway; asking "continue?"
+// asked about a card that "not now" would show regardless. The one thing the
+// deck cannot restore is the face, so that is what the record is for, and it
+// names the card by its Anki id: a deck re-synced in between can reorder
+// cards.dat, and a position alone would resume a different card with no way
+// to tell. Version 3; older records are refused and the queue does its job.
+inline constexpr uint8_t kResumeRecordVersion = 3;
+inline constexpr uint32_t kResumeRecordBytes = 14;  // version + int64 ankiCardId + int32 index + face
+
+struct ResumeRecord {
+  int64_t ankiCardId = 0;  // 0 when the deck was built without Anki ids; then the index is all there is
+  int32_t cardIndex = -1;
+  uint8_t face = 0;  // 0 Question, 1 Answer
+};
+
+// False on a version mismatch, a malformed face byte, or an index outside
+// [0, noteCount). The caller then behaves as with no record at all.
+inline bool parseResumeRecord(const uint8_t* bytes, uint32_t length, int noteCount, ResumeRecord& out) {
+  if (length != kResumeRecordBytes) return false;
+  if (bytes[0] != kResumeRecordVersion) return false;
+  int64_t id;
+  std::memcpy(&id, bytes + 1, sizeof(id));
+  int32_t index;
+  std::memcpy(&index, bytes + 9, sizeof(index));
+  const uint8_t face = bytes[13];
+  if (face > 1) return false;
+  if (index < 0 || index >= noteCount) return false;
+  out.ankiCardId = id;
+  out.cardIndex = index;
+  out.face = face;
+  return true;
+}
+
+// Serializes exactly kResumeRecordBytes bytes, the inverse of parseResumeRecord.
+inline void writeResumeRecord(uint8_t* bytes, int64_t ankiCardId, int32_t cardIndex, uint8_t face) {
+  bytes[0] = kResumeRecordVersion;
+  std::memcpy(bytes + 1, &ankiCardId, sizeof(ankiCardId));
+  std::memcpy(bytes + 9, &cardIndex, sizeof(cardIndex));
+  bytes[13] = face;
+}
+
+// The index the record really names, or -1. `idAt(index)` reads the Anki id
+// of the card at a position (0 when it cannot). A record without an id (a
+// deck built from plain text) can only be trusted by position; with an id,
+// the position is a hint: checked first, then the deck is searched, and a
+// card that is nowhere any more is nobody's to resume.
+template <typename IdAt>
+inline int resolveResumeIndex(const ResumeRecord& record, int noteCount, IdAt idAt) {
+  if (record.cardIndex < 0 || record.cardIndex >= noteCount) return -1;
+  if (record.ankiCardId == 0) return record.cardIndex;
+  if (idAt(record.cardIndex) == record.ankiCardId) return record.cardIndex;
+  for (int i = 0; i < noteCount; ++i) {
+    if (i != record.cardIndex && idAt(i) == record.ankiCardId) return i;
+  }
+  return -1;
+}
+
+}  // namespace study

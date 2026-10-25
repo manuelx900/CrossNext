@@ -1,0 +1,34 @@
+[
+  {
+    "file": "2048-a.bin",
+    "sha256": "83c48cfda3c309d07727b82c8d15a3fd8da9c69440d80ddb9b4c56c6db3d34ae"
+  },
+  {
+    "file": "carnivoro.bin",
+    "sha256": "4f85024a37898b90e5dd15d4d2d69d07a17a5fedb0e1a5e4f98c4a51d3bbea12"
+  },
+  {
+    "file": "chess-puzzles-a.bin",
+    "sha256": "797c16be9e5795a394f8cfe7fa77e1d5deae8b605cfd1b29f6152db81d7feba7"
+  },
+  {
+    "file": "intercept.dat",
+    "sha256": "1319224b3f1778f5b341abc37478cce99e82c516528746bc3ca5500e5f7fcf6d"
+  },
+  {
+    "file": "murdle.sav",
+    "sha256": "5ff9bc6d500c55a94f3155b2b0714198cf05e431aca864c410b69c60955d8519"
+  },
+  {
+    "file": "picross-v7.sav",
+    "sha256": "6ddb0796b1247c706c86545e9915c8bfe56fcdb33e95b66446b9518e27b5dced"
+  },
+  {
+    "file": "pomodoro-a.bin",
+    "sha256": "3cc248b3c5b1f3aab2e5722e7977b4b36ad1f2c3a4556aae1123e3938d370965"
+  },
+  {
+    "file": "wordle-local-a.bin",
+    "sha256": "66b2e43da72c455fc24c951b5ddfe79e9944579e7ebf6d613ea18d87c7a2f877"
+  }
+]

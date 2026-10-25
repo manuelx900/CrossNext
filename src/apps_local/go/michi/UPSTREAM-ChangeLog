@@ -1,0 +1,85 @@
+---------------------------------------
+-- ChangeLog for the michi-c program --
+---------------------------------------
+
+1.4.2 Released May, 31 2017
+- bug correction in gogui-setup and gogui-play_sequence gtp commands
+- avoid avoid redondant fix_atari tests in mcplayout (small speed improvement)
+- handle seki in the tree
+- add a new mode : selfplay
+- new tests (very simple tsumegos)
+- check gtp command parameters
+- sgf.c : decode a few new properties, detect if input is not a SGF file
+- it is now possible to read a series of sgf files
+- bugs corrections
+
+1.4.1 Released February, 28 2016
+- respect the Superko rule (Positional)
+- add storesgf gtp command
+- add estimated best reply in the log
+- make zobrist hash initialization independant of user defined random seed
+- make board a self-contained module 
+- correction for reading sgf files coming from kgs
+- correct a bug with noticeable impact on michi-c strength (point_env8())
+- modifs to remove warnings with newer versions of gcc
+- use of "long long" to insure use of 64 bits integers (hash, random generator)
+- runtime check of the length of integers (runtime check for portability)
+- bugs correction
+
+1.4 Released August, 28 2015
+- read simple sgf files (no variations)
+- live gfx (specific for gogui)
+- early passing
+- specific version of random_int for 32 bits system (seems useful for windows)
+- use specifed color in play and genmove commands
+- preliminary (basic) version of dynamic komi
+- better modularization of the code
+- histogram of playout scores
+- new gtp commands for visualisation of the search results with gogui 
+    owner_map, principal_variation, best_moves, visit_count
+- new gtp commands
+    undo, final_score, final_status_list, kgs-genmove_cleanup, set_free_handicap
+	gogui-setup, gogui-setup_player, gg-undo
+- variable boardsize
+- works with limited stack size (512 K bytes OK)
+- better usage of memory
+- speed improvements
+- add a minimal documentation of the program structure 
+- bugs corrections
+
+1.3 Released June, 14 2015 (to play on CGOS)
+- time management (sudden death only) : partial implementation of Pachi method
+- option to play until the end
+- move the functions dedicated to user interface in ui.c
+- simplify command line interface (backward compatible)
+- parameters modifiable by gtp commands
+- add configuration file (gtp commands) 
+- add control of verbosity
+- cleanup the gtp loop
+- example files to play on CGOS
+
+1.2 Released June, 6 2015
+- modifications by Horace Ho for IOS app
+- removal of all calls to compute_block()
+- bug correction (saturation of blocks size to 255)
+- add a parameter (nsims) to michi mcdebug
+- choose_random_move() stops as soon as a playable move is found
+- plays about 2.5 faster in 19x19 than version 1.0 (mcplayout 3 times faster)
+- add gtp commands to modify the parameters of the engine
+- add gtp command to modify komi
+- boardsize still fixed at compilation time
+
+1.1 Released May, 28 2015 (Temporary version)
+
+- functional but not fully validated nor optimized
+- incremental update of blocks and liberties at each move (new board.c)
+- add regression tests for board
+- change color: BLACK and WHITE instead of X of x (to_play and other)
+- use blocks and liberties in make_list_neighbor_blocks_in_atari()
+
+1.0 Released May, 12 2015
+
+- exactly the same algorithms and parameters as in michi.py
+- single thread
+- almost 10 times faster in 13x13 games than michi.py (with pypy and 4 threads)
+- regression tests for fix_atari() and large patterns 

@@ -1,0 +1,441 @@
+#include "WallpapersCore.h"
+
+#include <I18n.h>
+
+#include <cctype>
+#include <cstdio>
+#include <cstring>
+
+namespace wallpapers {
+
+bool isSupportedWallpaper(std::string_view name) {
+  if (name.empty() || name.front() == '.') return false;
+  // Case-insensitive ".bmp" suffix. string_view, so no allocation and no
+  // assumption of null termination.
+  constexpr std::string_view kExt = ".bmp";
+  if (name.size() <= kExt.size()) return false;
+  const std::string_view tail = name.substr(name.size() - kExt.size());
+  for (size_t i = 0; i < kExt.size(); ++i) {
+    if (std::tolower(static_cast<unsigned char>(tail[i])) != kExt[i]) return false;
+  }
+  return true;
+}
+
+namespace {
+// filename stem (no extension, no path) -> the name people read.
+//
+// "Duerer", not "Durer" and not "Dürer". EVERY Toybox cut lacks U+00FC (checked:
+// toybox_10/14/20/30), and these strings are drawn in toybox_10 as the picker's
+// captions -- where a missing glyph is a HOLE, not a box, so "Dürer" would read
+// as "D rer" on the panel (typography-fold). "Duerer" is the accepted ASCII
+// transliteration; "Durer" is simply a misspelling of an artist's name on a
+// screen selling his work. The file STEMS stay `durer-*`: they are identifiers,
+// not display text, and renaming them would repack and invalidate the published
+// release asset. PROVENANCE.md keeps the real "Dürer" -- it is a citation read
+// in a browser, not on a panel with no umlaut.
+struct Entry {
+  const char* stem;
+  const char* full;
+  const char* brief;  // used when the cell is too narrow for `full`
+};
+constexpr Entry kBuiltIns[] = {
+    {"bauhaus", "Bauhaus", "Bauhaus"},
+    {"bulge", "Bulge", "Bulge"},
+    {"celestial", "Celestial Chart", "Celestial"},
+    {"checker", "Checker", "Checker"},
+    {"cubes", "Cubes", "Cubes"},
+    {"dragonflies", "Dragonflies", "Dragonflies"},
+    {"durer-eden", "Duerer: Adam and Eve", "Adam and Eve"},
+    {"durer-horsemen", "Duerer: Four Horsemen", "Four Horsemen"},
+    {"halftone", "Halftone", "Halftone"},
+    {"hatch", "Hatch", "Hatch"},
+    {"herringbone", "Herringbone", "Herringbone"},
+    {"houndstooth", "Houndstooth", "Houndstooth"},
+    {"orb", "Orb", "Orb"},
+    {"ornament", "Ornament", "Ornament"},
+    {"penrose", "Penrose", "Penrose"},
+    {"rings", "Rings", "Rings"},
+    {"sunburst", "Sunburst", "Sunburst"},
+    {"topography", "Topography", "Topography"},
+    {"truchet", "Truchet", "Truchet"},
+    {"vortex", "Vortex", "Vortex"},
+    {"waves", "Waves", "Waves"},
+};
+}  // namespace
+
+// The header publishes the count as a constant so sentences and size estimates
+// can be constexpr; this is what stops the two from drifting apart.
+static_assert(sizeof(kBuiltIns) / sizeof(kBuiltIns[0]) == kBuiltInCount,
+              "kBuiltInCount and the kBuiltIns table disagree -- update the constant with the table");
+
+size_t builtInCount() { return kBuiltInCount; }
+
+const char* builtInStem(const size_t index) {
+  if (index >= builtInCount()) return "";
+  return kBuiltIns[index].stem;
+}
+
+bool isBuiltInFile(const std::string_view fileName) {
+  std::string_view stem = fileName;
+  const size_t dot = stem.rfind('.');
+  if (dot != std::string_view::npos) stem = stem.substr(0, dot);
+  for (const Entry& e : kBuiltIns) {
+    if (stem == e.stem) return true;
+  }
+  return false;
+}
+
+bool sortsBefore(const std::string_view a, const std::string_view b) {
+  const bool ab = isBuiltInFile(a);
+  const bool bb = isBuiltInFile(b);
+  if (ab != bb) return !ab;  // a user's own wallpaper comes first
+  return a < b;
+}
+
+DisplayName displayName(std::string_view fileName) {
+  // Strip the extension: nobody wants ".bmp" under a picture.
+  std::string_view stem = fileName;
+  const size_t dot = stem.rfind('.');
+  if (dot != std::string_view::npos && dot > 0) stem = stem.substr(0, dot);
+  for (const Entry& e : kBuiltIns) {
+    if (stem.size() == std::strlen(e.stem) && stem.compare(e.stem) == 0) {
+      return DisplayName{e.full, e.brief};
+    }
+  }
+  std::string own(stem);
+  return DisplayName{own, own};
+}
+
+CellAction cellAction(bool heldLong, int index) {
+  if (index < 0) return CellAction::None;
+  if (heldLong) return CellAction::Sheet;
+  return CellAction::Preview;
+}
+
+std::string deleteConsequence(const bool builtIn, const bool isActive) {
+  std::string out;
+  if (builtIn) {
+    out += tr(STR_WALLPAPER_NOTE_217ABF35);
+  } else {
+    out += tr(STR_WALLPAPER_NOTE_17CD6FE0);
+  }
+  if (isActive) {
+    out += tr(STR_WALLPAPER_NOTE_B10AA7D0);
+  }
+  return out;
+}
+
+bool drawsPinnedSleep(const uint8_t sleepScreenMode, const bool quickResumeAfterTimeout, const bool fromTimeout,
+                      const bool fromReader) {
+  // 1. Quick resume short-circuits every mode, including the custom ones.
+  if (sleepScreenMode == kSleepQuickResume) return false;
+  if (fromTimeout && quickResumeAfterTimeout) return false;
+  // 2. The transparent mode has its own art (/sleep-overlay.*), not this file.
+  if (sleepScreenMode == kSleepTransparentCustom) return false;
+  // 3. and 4.
+  if (sleepScreenMode == kSleepCustom) return true;
+  if (sleepScreenMode == kSleepCoverCustom) return !fromReader;
+  // 5. DARK, LIGHT, COVER, BLANK, and NOTE, which draws a note, not this file.
+  return false;
+}
+
+Reach reachOfPinnedSleep(const uint8_t sleepScreenMode, const bool quickResumeAfterTimeout) {
+  // Every answer below is asked of drawsPinnedSleep rather than restated, so
+  // the classification cannot disagree with the predicate it describes.
+  const bool onTimeout = drawsPinnedSleep(sleepScreenMode, quickResumeAfterTimeout, true, false);
+  const bool onManual = drawsPinnedSleep(sleepScreenMode, quickResumeAfterTimeout, false, false);
+  if (!onTimeout && !onManual) return Reach::BlockedByMode;
+  if (!onTimeout) return Reach::BlockedByQuickResume;
+  return drawsPinnedSleep(sleepScreenMode, quickResumeAfterTimeout, true, true) ? Reach::Always
+                                                                                : Reach::OutsideReaderOnly;
+}
+
+bool saysOnSleepScreen(const bool isMarked, const Reach reach) {
+  if (!isMarked) return false;
+  return reach == Reach::Always || reach == Reach::OutsideReaderOnly;
+}
+
+const char* reachHint(const Reach reach) {
+  // Every sentence names the setting the way SETTINGS names it ("Sleep Screen",
+  // "Quick Resume on Timeout", english.yaml), because a hint that describes a
+  // setting the user then cannot find is not a hint.
+  switch (reach) {
+    case Reach::Always:
+      return nullptr;
+    case Reach::OutsideReaderOnly:
+      return tr(STR_WALLPAPER_NOTE_3217057E);
+    case Reach::BlockedByQuickResume:
+      return tr(STR_WALLPAPER_NOTE_884F69C1);
+    case Reach::BlockedByMode:
+      return tr(STR_WALLPAPER_NOTE_7118A0B7);
+  }
+  return nullptr;
+}
+
+const char* sleepScreenModeName(const uint8_t sleepScreenMode) {
+  switch (sleepScreenMode) {
+    case kSleepDark:
+      return tr(STR_WALLPAPER_NOTE_AE1EF014);
+    case kSleepLight:
+      return tr(STR_WALLPAPER_NOTE_A36EF8AB);
+    case kSleepCustom:
+      return tr(STR_WALLPAPER_NOTE_081AE3FD);
+    case kSleepCover:
+      return tr(STR_WALLPAPER_NOTE_8B656A5D);
+    case kSleepCoverCustom:
+      return tr(STR_WALLPAPER_NOTE_D6D54C7C);
+    case kSleepBlank:
+      // What Settings calls it: SettingsList.h maps BLANK to STR_NONE_OPT.
+      // Naming it "Blank" would send the user hunting for a value the menu
+      // does not have.
+      return tr(STR_WALLPAPER_NOTE_6EEF6648);
+    case kSleepQuickResume:
+      return tr(STR_WALLPAPER_NOTE_4EEE1CAB);
+    case kSleepTransparentCustom:
+      return tr(STR_WALLPAPER_NOTE_0491F7BD);
+    case kSleepNote:
+      return tr(STR_WALLPAPER_NOTE_2C924E30);
+    default:
+      return tr(STR_WALLPAPER_NOTE_BC7819B3);
+  }
+}
+
+SleepChoice choiceForSetWallpaper(const uint8_t sleepScreenMode, const bool quickResumeAfterTimeout) {
+  SleepChoice choice;
+  choice.previousMode = sleepScreenMode;
+
+  // A mode that already draws /sleep.bmp on a non-reader sleep is kept, so a
+  // deliberate COVER_CUSTOM is handed a new picture rather than replaced by
+  // one. Asked of the predicate rather than listed, so a mode upstream adds is
+  // classified by the rules and not by this function's memory of them.
+  const bool modeAlreadyShowsIt = drawsPinnedSleep(sleepScreenMode, /*quickResumeAfterTimeout=*/false,
+                                                   /*fromTimeout=*/true, /*fromReader=*/false);
+  // The cast is load-bearing under g++ -Wextra: `cond ? uint8_t : SleepScreenMode`
+  // is "enumerated and non-enumerated type in conditional expression", which is
+  // an error in CI and silent under clang (see the ci-gcc-clang-gap memory).
+  choice.sleepScreenMode = modeAlreadyShowsIt ? sleepScreenMode : static_cast<uint8_t>(kSleepCustom);
+  choice.tookOverMode = !modeAlreadyShowsIt && sleepScreenMode != kSleepCustom;
+
+  // The timeout flag always comes off. It is not a preference about sleep
+  // screens, it is a short-circuit ABOVE them: while it is on, the idle sleep
+  // -- the ordinary one -- shows the last screen and no wallpaper of any kind
+  // can appear. Leaving it on to keep wake fast is the trade the app used to
+  // make, and it cost the user the one thing they had just asked for.
+  choice.quickResumeAfterTimeout = false;
+  choice.clearedQuickResume = quickResumeAfterTimeout;
+  return choice;
+}
+
+namespace {
+// The mode-takeover half of the sentence. File-local: it is one branch of
+// stripLineAfterSelection, not an API.
+//
+// Terse on purpose. The strip resolves to toybox_14 (buildGridChrome pins
+// FONT_SLOT_SMALL) and leaves 446px for one line at the X4 Pro's bezel inset;
+// host-tests/wallcaption measures every sentence here against that.
+const char* modeTakeoverNote(const uint8_t previousMode) {
+  switch (previousMode) {
+    case kSleepDark:
+      return tr(STR_WALLPAPER_NOTE_27737EDE);
+    case kSleepLight:
+      return tr(STR_WALLPAPER_NOTE_7E85E726);
+    case kSleepCover:
+      return tr(STR_WALLPAPER_NOTE_A2BDEF33);
+    case kSleepBlank:
+      return tr(STR_WALLPAPER_NOTE_BDA00557);
+    case kSleepQuickResume:
+      return tr(STR_WALLPAPER_NOTE_EBA2427E);
+    case kSleepTransparentCustom:
+      return tr(STR_WALLPAPER_NOTE_375ED76A);
+    case kSleepNote:
+      return tr(STR_WALLPAPER_NOTE_9802A6AC);
+    default:
+      return nullptr;
+  }
+}
+}  // namespace
+
+StripLine stripLineAfterSelection(const SleepChoice& choice, const Reach reach) {
+  StripLine line;
+  const bool caveat = reach != Reach::Always;
+
+  // The four states a tap can leave behind, each with a sentence that names
+  // EVERY fact present. There is no fall-through: a combination with no
+  // sentence would silently drop one of them, which is the defect this shape
+  // exists to make impossible.
+  //
+  // Taking over the mode always ends at CUSTOM, which has no caveat, so
+  // "mode changed" and "caveat" cannot co-occur; the loop in
+  // host-tests/wallpapers is what establishes that rather than this comment.
+  if (choice.tookOverMode) {
+    if (choice.clearedQuickResume) {
+      line.text = tr(STR_WALLPAPER_NOTE_20F76567);
+      line.saysModeChanged = true;
+      line.saysQuickResumeCleared = true;
+      return line;
+    }
+    line.text = modeTakeoverNote(choice.previousMode);
+    line.saysModeChanged = line.text != nullptr;
+    return line;
+  }
+
+  if (choice.clearedQuickResume) {
+    if (caveat) {
+      // The case the first version lost: the mode was kept because it already
+      // draws the wallpaper (COVER_CUSTOM), the quick-resume flag came off, and
+      // the caveat that a book cover still wins inside a book STILL APPLIES.
+      // Both go in the line.
+      line.text = tr(STR_WALLPAPER_NOTE_C29BD05F);
+      line.saysQuickResumeCleared = true;
+      line.saysCaveat = true;
+      return line;
+    }
+    line.text = tr(STR_WALLPAPER_NOTE_1241E633);
+    line.saysQuickResumeCleared = true;
+    return line;
+  }
+
+  if (caveat) {
+    line.text = reachHint(reach);
+    line.saysCaveat = line.text != nullptr;
+    return line;
+  }
+  return line;
+}
+
+CardShape cardShapeFor(const int chosenCount) {
+  CardShape shape;
+  if (chosenCount <= 0) return shape;
+  if (chosenCount == 1) {
+    shape.pinned = true;
+    return shape;
+  }
+  shape.shuffled = true;
+  shape.files = chosenCount;
+  return shape;
+}
+
+ShuffleLine shuffleStripLine(const bool choosing, const int chosenCount, const bool shadowedSet, const Reach reach) {
+  ShuffleLine line;
+
+  // Nothing chosen and nothing hidden: there is nothing for a caveat to be
+  // ABOUT. Telling someone on a fresh device that Sleep Screen is not set to
+  // Custom, before they have picked anything and while their first pick is
+  // about to set it, displaces the one sentence that says what to do. Same rule
+  // the single-pin path has always had (currentSleepNote returns nothing when
+  // nothing is pinned).
+  const bool somethingToSpeakFor = chosenCount > 0 || shadowedSet;
+
+  // Otherwise the settings caveat wins the line outright: one 30px strip, and a
+  // sentence about which of the user's pictures appear is worth nothing on a
+  // device where none of them can.
+  if (somethingToSpeakFor && reach != Reach::Always) {
+    line.text = reachHint(reach);
+    line.saysCaveat = line.text != nullptr;
+    return line;
+  }
+
+  // Then the card's own contradiction. Said before any count, because the count
+  // would be a lie while it holds: the files are there and none of them shows.
+  if (shadowedSet) {
+    line.text = tr(STR_WALLPAPER_NOTE_A4BF9886);
+    line.saysShadow = true;
+    return line;
+  }
+
+  if (choosing) {
+    // Naming the OTHER half of the gesture matters more than the count, which
+    // the header carries: a mode whose taps toggle is a mode whose taps must be
+    // seen to un-toggle, or the first mistap reads as a set you cannot escape.
+    if (chosenCount <= 0) {
+      line.text = tr(STR_WALLPAPER_NOTE_511C658A);
+      return line;
+    }
+    // The count is HERE rather than in the band, and the render is why: the
+    // header holds the app name, the chip and one label, and at the display cut
+    // the third of those cut "WALLPAPERS" to "WALLPAPE...". The strip has the
+    // room and the count has to be somewhere -- four tiles fit a page and the
+    // library is six pages, so the marks alone cannot say how many are chosen.
+    if (chosenCount == 1) {
+      line.text = tr(STR_WALLPAPER_NOTE_AD932619);
+      line.wantsCount = true;
+      return line;
+    }
+    line.text = tr(STR_WALLPAPER_NOTE_3157035A);
+    line.wantsCount = true;
+    return line;
+  }
+
+  // Not choosing. Only a real set is worth a line -- one pinned wallpaper is
+  // what reachHint and stripLineAfterSelection already speak for.
+  //
+  // "Take turns", never "shuffle" or "random", and the word is load-bearing.
+  // selectRandomSleepFile excludes the last `min(recentFill, N-1)` images, and
+  // recentFill climbs to 16 and never resets, so for any set up to seventeen
+  // every member but one is excluded and the order is a strict cycle. A two-set
+  // alternates. Calling that shuffling would be a promise the platform does not
+  // keep.
+  if (chosenCount >= 2) {
+    line.text = tr(STR_WALLPAPER_NOTE_CBA12088);
+    line.wantsCount = true;
+    return line;
+  }
+  return line;
+}
+
+bool sameFileName(const std::string_view a, const std::string_view b) {
+  if (a.size() != b.size()) return false;
+  for (size_t i = 0; i < a.size(); ++i) {
+    if (std::tolower(static_cast<unsigned char>(a[i])) != std::tolower(static_cast<unsigned char>(b[i]))) return false;
+  }
+  return true;
+}
+
+std::string uploadFileName(const int slot) {
+  // CLAMPED to the range the handler really mints, because this is the one
+  // producer of a name isUploadName() has to accept: a slot outside it would
+  // make the pair disagree, and the predicate is what the screenshot harness
+  // and the host corpus both select by.
+  const int bounded = slot < 1 ? 1 : (slot > kMaxUploadSlot ? kMaxUploadSlot : slot);
+  // 24, not 16. The clamp above means only ten bytes are ever written, but the
+  // BUFFER is sized against what the FORMAT can print -- "%04d" takes an int,
+  // and host-tests/fmtwidth measures the format rather than trusting the
+  // caller. A buffer sized by what today's callers pass is one a new caller
+  // silently overruns.
+  char name[24];
+  std::snprintf(name, sizeof(name), "w%04d.bmp", bounded);
+  return std::string(name);
+}
+
+bool isUploadName(const std::string_view fileName) {
+  // Length, then shape. Four digits is what the format writes; a fifth would be
+  // a file this app did not make, and the handler stops at 9999 anyway.
+  if (fileName.size() != 9) return false;
+  if (fileName[0] != 'w' && fileName[0] != 'W') return false;
+  for (size_t i = 1; i < 5; ++i) {
+    if (fileName[i] < '0' || fileName[i] > '9') return false;
+  }
+  return sameFileName(fileName.substr(5), ".bmp");
+}
+
+int lastNewName(const std::vector<std::string>& before, const std::vector<std::string>& now) {
+  for (size_t i = now.size(); i > 0; --i) {
+    const std::string& candidate = now[i - 1];
+    bool known = false;
+    for (const std::string& old : before) {
+      if (sameFileName(old, candidate)) {
+        known = true;
+        break;
+      }
+    }
+    if (!known) return static_cast<int>(i - 1);
+  }
+  return -1;
+}
+
+Room roomFor(bool queryOk, uint64_t freeBytes, uint64_t floorBytes) {
+  if (!queryOk) return Room::Unknown;
+  return freeBytes >= floorBytes ? Room::Ok : Room::TooFull;
+}
+
+}  // namespace wallpapers

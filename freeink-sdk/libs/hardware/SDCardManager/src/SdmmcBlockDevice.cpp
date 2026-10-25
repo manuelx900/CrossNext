@@ -1,0 +1,189 @@
+#include "SdmmcBlockDevice.h"
+
+#if FREEINK_SD_SDMMC
+
+#include <Arduino.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "esp_heap_caps.h"
+
+#include "driver/gpio.h"
+#include "driver/sdmmc_host.h"
+#include "sdmmc_cmd.h"
+
+namespace freeink {
+
+bool SdmmcBlockDevice::begin(const BoardConfig::SdmmcPins& pins) {
+  if (pins.busWidth == 0) return false;
+
+#if FREEINK_DEVICE_METALIO_EINK4
+  if (BoardConfig::isMetalioEInk4()) {
+    // Vendor InitializeSdCard(): DAT3/CD must stay high during CMD0 even in
+    // 1-bit mode. GPIO46 has a reset pull-down and isn't touched by the slot
+    // driver when d3 is NC. Keep it INPUT, never add it as an SDMMC output.
+    gpio_hold_dis(static_cast<gpio_num_t>(metalio::SD_DAT3_GPIO));
+    gpio_config_t dat3 = {};
+    dat3.pin_bit_mask = uint64_t(1) << metalio::SD_DAT3_GPIO;
+    dat3.mode = GPIO_MODE_INPUT;
+    dat3.pull_up_en = GPIO_PULLUP_ENABLE;
+    dat3.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    dat3.intr_type = GPIO_INTR_DISABLE;
+    const esp_err_t err = gpio_config(&dat3);
+    if (err != ESP_OK) {
+      if (Serial) Serial.printf("[%lu] [SD] Metalio DAT3 pull-up failed: %s\n", millis(), esp_err_to_name(err));
+      return false;
+    }
+    delay(1);
+    if (Serial) Serial.printf("[%lu] [SD] Metalio DAT3/CD GPIO46=%d (expected 1)\n", millis(),
+                              gpio_get_level(static_cast<gpio_num_t>(metalio::SD_DAT3_GPIO)));
+  }
+#endif
+
+  // Host config matches the OEM (recovered from app1's mountSD via Ghidra): full
+  // default capability flags (0x37) with the actual width selected via slot.width
+  // only, and the data clock at 40 MHz. The read timeouts we chased earlier were a
+  // mount-sequencing problem, not a clock-margin one — see the retry loop below.
+  sdmmc_host_t host = SDMMC_HOST_DEFAULT();
+  host.max_freq_khz = SDMMC_FREQ_DEFAULT;  // 40 MHz
+
+  // Slot pin map. The ESP32-S3 routes SDMMC through the GPIO matrix, so the data
+  // and clock/command lines are assignable (unlike the classic ESP32's fixed slot).
+  sdmmc_slot_config_t slot = SDMMC_SLOT_CONFIG_DEFAULT();
+  slot.width = pins.busWidth;
+  slot.clk = static_cast<gpio_num_t>(pins.clk);
+  slot.cmd = static_cast<gpio_num_t>(pins.cmd);
+  slot.d0 = static_cast<gpio_num_t>(pins.d0);
+  slot.d1 = static_cast<gpio_num_t>(pins.d1);
+  slot.d2 = static_cast<gpio_num_t>(pins.d2);
+  slot.d3 = static_cast<gpio_num_t>(pins.d3);
+  slot.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
+
+  if (sdmmc_host_init() != ESP_OK) return false;
+  if (sdmmc_host_init_slot(host.slot, &slot) != ESP_OK) {
+    sdmmc_host_deinit();
+    return false;
+  }
+
+  // NOTE: we used to force gpio_pullup_en() on CMD/DAT0 here (the slot's
+  // INTERNAL_PULLUP flag doesn't always engage on GPIO-matrix SDMMC pins). It proved
+  // redundant once the GPIO5 power-cycle below was in place — old-batch units mount
+  // fine without it — and it deviated from the OEM (slot flag only), a suspected
+  // cause of "no card in" on newer socket revisions. Removed.
+
+  auto* card = static_cast<sdmmc_card_t*>(malloc(sizeof(sdmmc_card_t)));
+  if (!card) {
+    sdmmc_host_deinit();
+    return false;
+  }
+  // SD power/enable pin (sd.powerEnable: GPIO5 on X4 Pro, GPIO6 on X4C).
+  // OEM mountSD pulses it
+  // HIGH→LOW before each attempt and runs the card with the pin held LOW; it is an
+  // active-LOW enable that gates the card's data path, not a one-shot rail. Confirmed
+  // on hardware: pulsing then holding LOW mounts reliably, whereas driving it HIGH
+  // after init breaks every block read with 0x107.
+  const int8_t sdPwr = BoardConfig::ACTIVE.sd.powerEnable;
+  if (sdPwr >= 0) {
+    gpio_hold_dis(static_cast<gpio_num_t>(sdPwr));
+    pinMode(sdPwr, OUTPUT);
+  }
+  // Keep one DMA-capable bounce buffer for all block I/O. SdFat's own cache may
+  // live in PSRAM / at an unaligned address, while native SDMMC requires an
+  // internal-RAM DMA buffer. Limiting each transfer to eight sectors keeps the
+  // buffer bounded at 4 KiB and avoids heap churn in the USB-MSC callbacks.
+  _dmaBuffer = static_cast<uint8_t*>(heap_caps_malloc(kSectorSize * kMaxTransferSectors,
+                                                      MALLOC_CAP_DMA | MALLOC_CAP_8BIT));
+  if (!_dmaBuffer) {
+    free(card);
+    sdmmc_host_deinit();
+    return false;
+  }
+
+  // Retry the WHOLE mount — init AND a real sector-0 read — power-cycling the
+  // configured gate before
+  // each attempt, mirroring the OEM mountSD. Retrying only card_init leaves SdFat's
+  // first (un-retried) block read to hit a still-marginal data path and fail with
+  // 0x107; validating a real read here means _card is only published once genuine
+  // block I/O works, and the gate is left in the exact LOW state that read succeeded under.
+  esp_err_t mountErr = ESP_FAIL;
+  for (int attempt = 0; attempt < 4; attempt++) {
+    if (sdPwr >= 0) {
+      digitalWrite(sdPwr, HIGH);
+      delay(80);
+      digitalWrite(sdPwr, LOW);  // run with the enable held LOW
+      delay(120);
+    }
+    esp_err_t e = sdmmc_card_init(&host, card);
+    if (e != ESP_OK && card->csd.capacity == 0) {
+      mountErr = e;  // failed before CSD — nothing to read; power-cycle and retry
+      continue;
+    }
+    // CSD is valid (capacity known); prove real block I/O before committing.
+    e = sdmmc_read_sectors(card, _dmaBuffer, 0, 1);
+    mountErr = e;
+    if (e == ESP_OK) break;
+  }
+  if (mountErr != ESP_OK) {
+    if (Serial)
+      Serial.printf("[%lu] [SD] SDMMC mount failed after retries: %s\n", millis(), esp_err_to_name(mountErr));
+    heap_caps_free(_dmaBuffer);
+    _dmaBuffer = nullptr;
+    free(card);
+    sdmmc_host_deinit();
+    return false;
+  }
+  _card = card;
+  return true;
+}
+
+void SdmmcBlockDevice::end() {
+  if (_card) {
+    free(_card);
+    _card = nullptr;
+    sdmmc_host_deinit();
+  }
+  if (_dmaBuffer) {
+    heap_caps_free(_dmaBuffer);
+    _dmaBuffer = nullptr;
+  }
+}
+
+// esp-idf SDMMC uses DMA, which requires the transfer buffer to be in DMA-capable
+// internal RAM and word-aligned. SdFat's cache buffers aren't guaranteed to be
+// (PSRAM / arbitrary alignment), which makes sdmmc_read/write_sectors fail. Bounce
+// through a DMA-capable buffer. (heap_caps_aligned_alloc via MALLOC_CAP_DMA.)
+bool SdmmcBlockDevice::readSectors(Sector_t sector, uint8_t* dst, size_t ns) {
+  if (!_card || !_dmaBuffer || !dst || ns == 0) return false;
+  while (ns > 0) {
+    const size_t count = ns > kMaxTransferSectors ? kMaxTransferSectors : ns;
+    const size_t bytes = count * kSectorSize;
+    if (sdmmc_read_sectors(static_cast<sdmmc_card_t*>(_card), _dmaBuffer, sector, count) != ESP_OK) return false;
+    memcpy(dst, _dmaBuffer, bytes);
+    sector += count;
+    dst += bytes;
+    ns -= count;
+  }
+  return true;
+}
+
+bool SdmmcBlockDevice::writeSectors(Sector_t sector, const uint8_t* src, size_t ns) {
+  if (!_card || !_dmaBuffer || !src || ns == 0) return false;
+  while (ns > 0) {
+    const size_t count = ns > kMaxTransferSectors ? kMaxTransferSectors : ns;
+    const size_t bytes = count * kSectorSize;
+    memcpy(_dmaBuffer, src, bytes);
+    if (sdmmc_write_sectors(static_cast<sdmmc_card_t*>(_card), _dmaBuffer, sector, count) != ESP_OK) return false;
+    sector += count;
+    src += bytes;
+    ns -= count;
+  }
+  return true;
+}
+
+Sector_t SdmmcBlockDevice::sectorCount() {
+  return _card ? static_cast<Sector_t>(static_cast<sdmmc_card_t*>(_card)->csd.capacity) : 0;
+}
+
+}  // namespace freeink
+
+#endif  // FREEINK_SD_SDMMC

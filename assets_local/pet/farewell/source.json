@@ -1,0 +1,36 @@
+{
+  "sources": [
+    {
+      "species": "silva",
+      "file": "silva-farewell.png",
+      "sha256": "e18f86e89704b851e062b0068e3d868ba7a6e45c8960d05b4ab508e698a1d789",
+      "native_size": [
+        1254,
+        1254
+      ],
+      "tool": "User-supplied replacement, imported verbatim",
+      "reference_file": "codex-clipboard-dbf79b75-1bfb-4edd-a6a2-9801b302b478.png"
+    },
+    {
+      "species": "nox",
+      "file": "nox-farewell.png",
+      "sha256": "9a6812e7a9baf6a7adc82fcbf2d52244ded4d707133f3f88fecc390df6e51224",
+      "native_size": [
+        1254,
+        1254
+      ],
+      "tool": "image_gen.imagegen"
+    },
+    {
+      "species": "ember",
+      "file": "ember-farewell.png",
+      "sha256": "c739fbf7a2d16c54236d349cbd42e70d6258c12ecb946b3d4f25ce3de1277dc7",
+      "native_size": [
+        1254,
+        1254
+      ],
+      "tool": "image_gen.imagegen"
+    }
+  ],
+  "notes": "Silva uses the exact latest user-supplied illustration. All sources are converted by the normal deterministic monochrome and mask builder."
+}

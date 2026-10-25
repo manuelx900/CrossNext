@@ -1,0 +1,12 @@
+{
+  "name": "DevInput",
+  "version": "1.0.0",
+  "description": "Development input injection shared by serial and local transports",
+  "build": {
+    "srcDir": ".",
+    "includeDir": "."
+  },
+  "dependencies": {
+    "InputManager": "*"
+  }
+}

@@ -1,0 +1,170 @@
+#pragma once
+#include <HalStorage.h>
+
+#include <algorithm>
+#include <cstring>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "FootnoteEntry.h"
+#include "PageLink.h"
+#include "PageReadBudget.h"
+#include "blocks/ImageBlock.h"
+#include "blocks/TextBlock.h"
+
+enum PageElementTag : uint8_t {
+  TAG_PageLine = 1,
+  TAG_PageImage = 2,
+  TAG_PageHorizontalRule = 3,
+};
+
+// represents something that has been added to a page
+class PageElement {
+ public:
+  int16_t xPos;
+  int16_t yPos;
+  explicit PageElement(const int16_t xPos, const int16_t yPos) : xPos(xPos), yPos(yPos) {}
+  virtual ~PageElement() = default;
+  virtual void render(GfxRenderer& renderer, int fontId, int xOffset, int yOffset) = 0;
+  virtual bool serialize(Print& file) = 0;
+  virtual PageElementTag getTag() const = 0;  // Add type identification
+};
+
+// a line from a block element
+class PageLine final : public PageElement {
+  std::unique_ptr<TextBlock> block;
+
+ public:
+  PageLine(std::unique_ptr<TextBlock> block, const int16_t xPos, const int16_t yPos)
+      : PageElement(xPos, yPos), block(std::move(block)) {}
+  const TextBlock* getBlock() const { return block.get(); }
+  void render(GfxRenderer& renderer, int fontId, int xOffset, int yOffset) override;
+  bool serialize(Print& file) override;
+  PageElementTag getTag() const override { return TAG_PageLine; }
+  static std::unique_ptr<PageLine> deserialize(HalFile& file, PageReadBudget* budget = nullptr);
+};
+
+// New PageImage class
+class PageImage final : public PageElement {
+  std::unique_ptr<ImageBlock> imageBlock;
+
+ public:
+  PageImage(std::unique_ptr<ImageBlock> block, const int16_t xPos, const int16_t yPos)
+      : PageElement(xPos, yPos), imageBlock(std::move(block)) {}
+  void render(GfxRenderer& renderer, int fontId, int xOffset, int yOffset) override;
+  void renderPlaceholder(GfxRenderer& renderer, int xOffset, int yOffset) const;
+  bool serialize(Print& file) override;
+  PageElementTag getTag() const override { return TAG_PageImage; }
+  static std::unique_ptr<PageImage> deserialize(HalFile& file);
+  const ImageBlock& getImageBlock() const { return *imageBlock; }
+};
+
+class PageHorizontalRule final : public PageElement {
+  uint16_t width;
+  uint8_t thickness;
+
+ public:
+  PageHorizontalRule(uint16_t width, uint8_t thickness, const int16_t xPos, const int16_t yPos)
+      : PageElement(xPos, yPos), width(width), thickness(thickness) {}
+
+  void render(GfxRenderer& renderer, int fontId, int xOffset, int yOffset) override;
+  bool serialize(Print& file) override;
+  PageElementTag getTag() const override { return TAG_PageHorizontalRule; }
+  static std::unique_ptr<PageHorizontalRule> deserialize(HalFile& file);
+};
+
+class Page {
+ public:
+  // the list of block index and line numbers on this page
+  std::vector<std::unique_ptr<PageElement>> elements;
+  std::vector<FootnoteEntry> footnotes;
+  static constexpr uint16_t MAX_FOOTNOTES_PER_PAGE = 16;
+  std::vector<PageLink> links;
+  // 96 rather than 32: a Wikipedia lead runs one link per five words, and a
+  // link past the cap silently becomes plain text. Serialized as a count, so
+  // caches written under the old cap still load.
+  static constexpr uint16_t MAX_LINKS_PER_PAGE = 96;
+
+  // Zero-based visible-codepoint offset where this page starts. Not part of the serialized page
+  // body (it lives in the section's visible-offset LUT); Section::loadPage* fills it in from the
+  // build LUT or the on-disk LUT while the page file is already open, so the reader can persist
+  // progress without a second section-file open per page turn.
+  uint32_t visibleTextOffset = 0;
+
+  void addFootnote(const char* number, const char* href) {
+    if (footnotes.size() >= MAX_FOOTNOTES_PER_PAGE) return;  // Cap per-page footnotes
+    FootnoteEntry entry;
+    strncpy(entry.number, number, sizeof(entry.number) - 1);
+    entry.number[sizeof(entry.number) - 1] = '\0';
+    strncpy(entry.href, href, sizeof(entry.href) - 1);
+    entry.href[sizeof(entry.href) - 1] = '\0';
+    footnotes.push_back(entry);
+  }
+
+  bool addLink(const char* href, int16_t x, int16_t y, int16_t width, int16_t height) {
+    if (!href || width <= 0 || height <= 0 || links.size() >= MAX_LINKS_PER_PAGE) {
+      return false;
+    }
+    const size_t hrefLen = strnlen(href, sizeof(PageLink::href));
+    if (hrefLen == 0 || hrefLen == sizeof(PageLink::href)) {
+      return false;
+    }
+    links.emplace_back();
+    auto& link = links.back();
+    memcpy(link.href, href, hrefLen + 1);
+    link.x = x;
+    link.y = y;
+    link.width = width;
+    link.height = height;
+    return true;
+  }
+
+  void render(GfxRenderer& renderer, int fontId, int xOffset, int yOffset) const;
+  void renderImages(GfxRenderer& renderer, int fontId, int xOffset, int yOffset) const;
+  void renderWithImagePlaceholders(GfxRenderer& renderer, int fontId, int xOffset, int yOffset) const;
+  bool serialize(Print& file) const;
+  static std::unique_ptr<Page> deserialize(HalFile& file, PageReadBudget* budget = nullptr);
+
+  // Check if page contains any images (used to force full refresh)
+  bool hasImages() const {
+    return std::any_of(elements.begin(), elements.end(),
+                       [](const std::unique_ptr<PageElement>& el) { return el->getTag() == TAG_PageImage; });
+  }
+
+  bool hasImagesNeedingDecode() const {
+    return std::any_of(elements.begin(), elements.end(), [](const std::unique_ptr<PageElement>& element) {
+      return element->getTag() == TAG_PageImage &&
+             static_cast<const PageImage&>(*element).getImageBlock().needsDecode();
+    });
+  }
+
+  // Get bounding box of all images on the page (union of image rects)
+  // Returns false if no images. Coordinates are relative to page origin.
+  bool getImageBoundingBox(int16_t& outX, int16_t& outY, int16_t& outW, int16_t& outH) const {
+    bool found = false;
+    int16_t minX = INT16_MAX, minY = INT16_MAX, maxX = INT16_MIN, maxY = INT16_MIN;
+    for (const auto& el : elements) {
+      if (el->getTag() == TAG_PageImage) {
+        const auto& img = static_cast<const PageImage&>(*el);
+        int16_t x = img.xPos;
+        int16_t y = img.yPos;
+        int16_t right = x + img.getImageBlock().getWidth();
+        int16_t bottom = y + img.getImageBlock().getHeight();
+        minX = std::min(minX, x);
+        minY = std::min(minY, y);
+        maxX = std::max(maxX, right);
+        maxY = std::max(maxY, bottom);
+        found = true;
+      }
+    }
+    if (found) {
+      outX = minX;
+      outY = minY;
+      outW = maxX - minX;
+      outH = maxY - minY;
+    }
+    return found;
+  }
+};

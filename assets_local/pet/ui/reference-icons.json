@@ -1,0 +1,320 @@
+{
+  "SOAP": {
+    "source": "reference-health.png",
+    "crop": [
+      50,
+      1133,
+      193,
+      1308
+    ],
+    "size": [
+      64,
+      80
+    ],
+    "source_sha256": "6e5ed19aad006449b0b13babeecb2ff74a12439e6ce03d3f4df2fa8f69472f78"
+  },
+  "REMEDY_DONE": {
+    "source": "reference-health.png",
+    "crop": [
+      518,
+      1133,
+      652,
+      1308
+    ],
+    "size": [
+      64,
+      80
+    ],
+    "source_sha256": "6e5ed19aad006449b0b13babeecb2ff74a12439e6ce03d3f4df2fa8f69472f78"
+  },
+  "REMEDY": {
+    "source": "reference-health.png",
+    "crop": [
+      518,
+      1133,
+      652,
+      1308
+    ],
+    "clear": [
+      [
+        58,
+        0,
+        134,
+        51
+      ],
+      [
+        67,
+        51,
+        134,
+        80
+      ]
+    ],
+    "size": [
+      64,
+      80
+    ],
+    "source_sha256": "6e5ed19aad006449b0b13babeecb2ff74a12439e6ce03d3f4df2fa8f69472f78"
+  },
+  "MEDAL": {
+    "source": "reference-birth.png",
+    "crop": [
+      310,
+      955,
+      662,
+      1175
+    ],
+    "size": [
+      128,
+      80
+    ],
+    "source_sha256": "f989e57d908f7562b591435e043bef811e949515947e8efc3c54946c577f07a4"
+  },
+  "LOCK": {
+    "source": "reference-lock.png",
+    "crop": [
+      290,
+      350,
+      690,
+      838
+    ],
+    "size": [
+      64,
+      80
+    ],
+    "source_sha256": "c960472d445f16578b319a38d547fcf94af1eb8f03460beef6b91fa29ab17f93"
+  },
+  "EMPTY": {
+    "source": "reference-empty.png",
+    "crop": [
+      118,
+      700,
+      913,
+      1065
+    ],
+    "size": [
+      192,
+      96
+    ],
+    "source_sha256": "e85c5906be0752827e80de6be5e6a6c4fa31babaadcd73f39a21b74138dd2412"
+  },
+  "COMPLETE": {
+    "source": "reference-complete.png",
+    "crop": [
+      100,
+      690,
+      927,
+      1088
+    ],
+    "size": [
+      192,
+      96
+    ],
+    "source_sha256": "1981447b50647ce3ca708a4dfc74ac9913deb407946141e041db75fb7110aa4f"
+  },
+  "BOOK": {
+    "source": "reference-reward.png",
+    "crop": [
+      54,
+      216,
+      225,
+      333
+    ],
+    "size": [
+      64,
+      48
+    ],
+    "invert": true,
+    "source_sha256": "f420d94d589b69dde187c81a9e6309b656e5c6a0546ae83af85344e1644a8979"
+  },
+  "GOAL": {
+    "source": "reference-reward.png",
+    "crop": [
+      75,
+      1267,
+      207,
+      1389
+    ],
+    "size": [
+      64,
+      64
+    ],
+    "source_sha256": "f420d94d589b69dde187c81a9e6309b656e5c6a0546ae83af85344e1644a8979"
+  },
+  "SILVA_CELEBRATION": {
+    "source": "reference-silva_celebration.png",
+    "source_sha256": "65e5225ae8223a01a8f0faefb41a88071720258301367804a28a66a83b0aece3",
+    "crop": [
+      50,
+      530,
+      925,
+      1196
+    ],
+    "clear": [
+      [
+        48,
+        260,
+        150,
+        348
+      ]
+    ],
+    "copy": [
+      {
+        "crop": [
+          750,
+          588,
+          842,
+          674
+        ],
+        "at": [
+          52,
+          262
+        ]
+      }
+    ],
+    "size": [
+      256,
+      200
+    ]
+  },
+  "EMBER_CLEAN": {
+    "source": "reference-ember_clean.png",
+    "source_sha256": "bf322fa444a981251775c7bbef0a6fa2f8a9449947d2b8b500021761c37283c0",
+    "crop": [
+      50,
+      335,
+      510,
+      727
+    ],
+    "size": [
+      256,
+      224
+    ]
+  },
+  "SILVA_FED": {
+    "source": "reference-ember_clean.png",
+    "source_sha256": "bf322fa444a981251775c7bbef0a6fa2f8a9449947d2b8b500021761c37283c0",
+    "crop": [
+      598,
+      340,
+      1078,
+      727
+    ],
+    "size": [
+      256,
+      224
+    ]
+  },
+  "SILVA_AFFECTION": {
+    "source": "reference-ember_clean.png",
+    "source_sha256": "bf322fa444a981251775c7bbef0a6fa2f8a9449947d2b8b500021761c37283c0",
+    "crop": [
+      1184,
+      340,
+      1645,
+      727
+    ],
+    "size": [
+      256,
+      224
+    ]
+  },
+  "EMPTY_REST": {
+    "source": "reference-empty-home.png",
+    "source_sha256": "c3a676b3965838ae4bba8ddccd2d8f529fbce17e04b4d6d917de04599d27e7fc",
+    "crop": [
+      30,
+      38,
+      174,
+      156
+    ],
+    "size": [
+      64,
+      64
+    ]
+  },
+  "EMPTY_DECOR": {
+    "source": "reference-empty-home.png",
+    "source_sha256": "c3a676b3965838ae4bba8ddccd2d8f529fbce17e04b4d6d917de04599d27e7fc",
+    "crop": [
+      230,
+      17,
+      346,
+      156
+    ],
+    "size": [
+      64,
+      64
+    ]
+  },
+  "EMPTY_GAME": {
+    "source": "reference-empty-home.png",
+    "source_sha256": "c3a676b3965838ae4bba8ddccd2d8f529fbce17e04b4d6d917de04599d27e7fc",
+    "crop": [
+      423,
+      38,
+      553,
+      156
+    ],
+    "size": [
+      64,
+      64
+    ]
+  },
+  "EMPTY_SCENE": {
+    "source": "reference-empty-home.png",
+    "source_sha256": "c3a676b3965838ae4bba8ddccd2d8f529fbce17e04b4d6d917de04599d27e7fc",
+    "crop": [
+      602,
+      25,
+      744,
+      156
+    ],
+    "size": [
+      64,
+      64
+    ]
+  },
+  "EMPTY_PROJECT": {
+    "source": "reference-empty-home.png",
+    "source_sha256": "c3a676b3965838ae4bba8ddccd2d8f529fbce17e04b4d6d917de04599d27e7fc",
+    "crop": [
+      30,
+      295,
+      211,
+      478
+    ],
+    "size": [
+      64,
+      64
+    ]
+  },
+  "BOOK_STACK": {
+    "source": "reference-album.png",
+    "source_sha256": "b22ff56682424316d8a54a5cd63798b85d889cdec2d1a211e4ffffa2f93acbaa",
+    "crop": [
+      190,
+      968,
+      783,
+      1334
+    ],
+    "size": [
+      256,
+      160
+    ]
+  },
+  "MEMORIES": {
+    "source": "reference-album-actions.png",
+    "source_sha256": "4990c8f646edb40c02086d3d65cc582ac1fae2e5cd8730fc5d30631c79a6f64f",
+    "crop": [
+      49,
+      15,
+      104,
+      59
+    ],
+    "size": [
+      40,
+      32
+    ],
+    "invert": true
+  }
+}

@@ -1,0 +1,256 @@
+{
+  "story0": {
+    "prompt": "Create an illustration-story production sprite atlas for a monochrome e-ink interactive story set in 1942 Bletchley Park. EXACT 3 columns by 4 rows, twelve equal rectangular panels on a landscape canvas, no gutters, no captions, no lettering, no UI. Each panel a DIFFERENT dramatic scene listed in strict row-major order. Consistent detailed black and white pen-and-ink woodcut with restrained stipple, crisp silhouettes, generous white contrast, readable at 280x160 pixels. Period civilian men and wartime British codebreaking offices, never modern devices. Scene list: 1. A locked wooden intelligence hut in rain; 2. An accused cryptanalyst facing a cold investigator and chess board; 3. Harris arriving with teacup and secret file; 4. A metal Bombe component concealed in a coat lining; 5. An interviewee weighing the cup window and file; 6. Dizziness and blurred teacup during interrogation; 7. A hand firmly pushing away a teacup; 8. Investigators questioning an empty chair beside a missing reel diagram; 9. Metal cipher component lying between two men; 10. A guard studying a witness ledger; 11. A high window overlooking wet huts; 12. A second visitor silhouetted in the doorway. Fill every cell edge to edge. No panel borders. No grayscale gradients.",
+    "file": "story0.png"
+  },
+  "story1": {
+    "prompt": "Create an illustration-story production sprite atlas for a monochrome e-ink interactive story set in 1942 Bletchley Park. EXACT 3 columns by 4 rows, twelve equal rectangular panels on a landscape canvas, no gutters, no captions, no lettering, no UI. Each panel a DIFFERENT dramatic scene listed in strict row-major order. Consistent detailed black and white pen-and-ink woodcut with restrained stipple, crisp silhouettes, generous white contrast, readable at 280x160 pixels. Period civilian men and wartime British codebreaking offices, never modern devices. Scene list: 1. Harris being called back along the corridor; 2. Hooper recognized across an interrogation table; 3. A folded blackmail letter held secretly; 4. A tense accusation without evidence; 5. A witness ledger a machine part and a note on desk; 6. An investigator offering one last chance; 7. Two contradictory handwritten schedules under lamplight; 8. Silent suspect with folded arms and a closed file; 9. Broken window glass and a guard raising a whistle; 10. A fugitive slipping between wet wooden huts; 11. A hand miming chess moves over an empty desk; 12. Hooper confronted face to face. Fill every cell edge to edge. No panel borders. No grayscale gradients.",
+    "file": "story1.png"
+  },
+  "story2": {
+    "prompt": "Create an illustration-story production sprite atlas for a monochrome e-ink interactive story set in 1942 Bletchley Park. EXACT 3 columns by 4 rows, twelve equal rectangular panels on a landscape canvas, no gutters, no captions, no lettering, no UI. Each panel a DIFFERENT dramatic scene listed in strict row-major order. Consistent detailed black and white pen-and-ink woodcut with restrained stipple, crisp silhouettes, generous white contrast, readable at 280x160 pixels. Period civilian men and wartime British codebreaking offices, never modern devices. Scene list: 1. Hooper reaching for the suspicious teacup; 2. A teacup isolated as forensic evidence; 3. Harris standing under a harsh lamp as suspicion turns on him; 4. A witness giving a complete precise account; 5. Two interrogators seeing through a failed bluff; 6. An intercepted coded sheet and radio equipment; 7. A wartime Bombe machine turning as the suspect walks free; 8. A worker handing in revoked access papers; 9. A guard leading a prisoner into custody; 10. A fugitive crossing a dark outer path; 11. Hooper's deserted office with crossword papers; 12. An exposed chess king on a tactical chessboard. Fill every cell edge to edge. No panel borders. No grayscale gradients.",
+    "file": "story2.png"
+  },
+  "story3": {
+    "prompt": "Create an illustration-story production sprite atlas for a monochrome e-ink interactive story set in 1942 Bletchley Park. EXACT 3 columns by 4 rows, twelve equal rectangular panels on a landscape canvas, no gutters, no captions, no lettering, no UI. Each panel a DIFFERENT dramatic scene listed in strict row-major order. Consistent detailed black and white pen-and-ink woodcut with restrained stipple, crisp silhouettes, generous white contrast, readable at 280x160 pixels. Period civilian men and wartime British codebreaking offices, never modern devices. Scene list: 1. Hooper dropping his guarded expression in private conversation; 2. Hooper confessing while Harris watches; 3. A metal component traded across a table; 4. Harris listening carefully and checking a notebook; 5. A figure escaping beyond a moonlit perimeter fence; 6. A guard patrol catching a fugitive; 7. A schedule and blackmail note discovered inside a desk; 8. Two men making a final arrangement beside a file; 9. Technicians recovering a reel beside the Bombe machine; 10. Harris waiting under a single lamp for the final question; 11. Moonlit exterior of the codebreaking huts; 12. A teacup beside a final closed intelligence dossier. Fill every cell edge to edge. No panel borders. No grayscale gradients.",
+    "file": "story3.png"
+  },
+  "head": {
+    "prompt": "Production sprite sheet EXACTLY FIVE COLUMNS AND TEN ROWS, 50 equally spaced isolated objects, pure white background. No letters no grid lines. Full objects fully inside individual equal cells with white margins. Draw 50 DISTINCT hats helmets crowns hoods and other HEAD gear for a semi-realistic fantasy bookkeeper RPG. Fine black/white pixel/stipple ink rendering, coherent classic fantasy illustration style, not anime, not chibi. Strong silhouette readable at 64px. Each row 5 different items. Top rows simple apprentice/traveler equipment; lower rows increasingly detailed wizard/ranger/archmage/royal/legendary equipment with ornate cloth folds, buckles and trim. Equipment is worn by a slim human with natural proportions, front view, no humans inside garments. Tall portrait 1:2 aspect sheet, maintain exact regular FIVE by TEN layout.",
+    "file": "head.png",
+    "rowCuts": [
+      0,
+      149,
+      298,
+      452,
+      605,
+      777,
+      964,
+      1133,
+      1319,
+      1512,
+      1774
+    ]
+  },
+  "body": {
+    "prompt": "Production sprite sheet EXACTLY FIVE COLUMNS AND TEN ROWS, 50 equally spaced isolated objects, pure white background. No letters no grid lines. Full objects fully inside individual equal cells with white margins. Draw 50 DISTINCT front-facing coats tunics robes armor and BODY garments for a semi-realistic fantasy bookkeeper RPG. Fine black/white pixel/stipple ink rendering, coherent classic fantasy illustration style, not anime, not chibi. Strong silhouette readable at 64px. Each row 5 different items. Top rows simple apprentice/traveler equipment; lower rows increasingly detailed wizard/ranger/archmage/royal/legendary equipment with ornate cloth folds, buckles and trim. Equipment is worn by a slim human with natural proportions, front view, no humans inside garments. Tall portrait 1:2 aspect sheet, maintain exact regular FIVE by TEN layout.",
+    "file": "body.png",
+    "rowCuts": [
+      0,
+      153,
+      304,
+      458,
+      612,
+      787,
+      987,
+      1205,
+      1409,
+      1590,
+      1774
+    ]
+  },
+  "feet": {
+    "prompt": "Production sprite sheet EXACTLY FIVE COLUMNS AND TEN ROWS, 50 equally spaced isolated objects, pure white background. No letters no grid lines. Full objects fully inside individual equal cells with white margins. Draw 50 DISTINCT pairs of boots shoes greaves and other FOOTWEAR for a semi-realistic fantasy bookkeeper RPG. Fine black/white pixel/stipple ink rendering, coherent classic fantasy illustration style, not anime, not chibi. Strong silhouette readable at 64px. Each row 5 different items. Top rows simple apprentice/traveler equipment; lower rows increasingly detailed wizard/ranger/archmage/royal/legendary equipment with ornate cloth folds, buckles and trim. Equipment is worn by a slim human with natural proportions, front view, no humans inside garments. Tall portrait 1:2 aspect sheet, maintain exact regular FIVE by TEN layout.",
+    "file": "feet.png",
+    "rowCuts": [
+      0,
+      149,
+      309,
+      466,
+      642,
+      811,
+      994,
+      1174,
+      1354,
+      1541,
+      1774
+    ]
+  },
+  "accessories": {
+    "prompt": "A production game sprite contact sheet with EXACTLY 10 columns and 20 rows, all 200 cells filled, evenly aligned on pure white. Each isolated small accessory fits with white margin inside its cell. No labels no borders. Cute chibi fantasy RPG equipment, monochrome bold ink outlines and minimal stipple for an e-ink screen. 200 visibly different accessories, a diverse mix of rings, pendants, necklaces, brooches, satchels, books, staffs, wands, shields, belts, spectacles, gloves, lanterns, cloaks pins, magic orbs, feathers, potions and charms. Every row ten different variations. Progress top to bottom from plain beginner items through increasingly ornate legendary magical objects. Crisp silhouettes, no background decorations. Tall portrait.",
+    "file": "accessories.png",
+    "rowCuts": [
+      0,
+      80,
+      159,
+      238,
+      318,
+      398,
+      481,
+      568,
+      660,
+      752,
+      844,
+      936,
+      1032,
+      1120,
+      1212,
+      1304,
+      1398,
+      1490,
+      1582,
+      1675,
+      1774
+    ]
+  },
+  "petsV2": {
+    "prompt": "Production game sprite atlas for a semi-realistic fantasy RPG on a monochrome e-ink reader. EXACTLY 5 columns by 5 rows of equal square cells on pure white, no text borders or shadows. Detailed black/white pixel and stipple ink style like a classic fantasy storybook engraving; natural animal anatomy, small natural eyes, NEVER anime/chibi/cute baby proportions. Each full-body animal isolated with white margins, strong legible silhouette at 64px. Strict row-major species: cat, dog, rabbit, songbird, hamster; fox, owl, squirrel, turtle, hedgehog; wolf, raven, red panda, deer, snow leopard; unicorn, griffin, phoenix, pegasus, wyvern; eastern dragon, western dragon, moon dragon, crystal dragon, celestial dragon. Animals face 3/4 left as companions of a human bookkeeper. Upper rows simple everyday companions, lower rows regal ornate legendary creatures. No human characters or props.",
+    "file": "petsV2.png",
+    "bounds": [
+      [
+        10,
+        0,
+        195,
+        192
+      ],
+      [
+        211,
+        0,
+        399,
+        192
+      ],
+      [
+        401,
+        0,
+        574,
+        192
+      ],
+      [
+        586,
+        10,
+        799,
+        192
+      ],
+      [
+        805,
+        10,
+        996,
+        192
+      ],
+      [
+        0,
+        191,
+        219,
+        380
+      ],
+      [
+        222,
+        193,
+        395,
+        380
+      ],
+      [
+        402,
+        200,
+        582,
+        380
+      ],
+      [
+        587,
+        236,
+        800,
+        380
+      ],
+      [
+        798,
+        231,
+        1000,
+        380
+      ],
+      [
+        0,
+        377,
+        221,
+        577
+      ],
+      [
+        215,
+        389,
+        400,
+        580
+      ],
+      [
+        405,
+        419,
+        601,
+        583
+      ],
+      [
+        590,
+        370,
+        782,
+        589
+      ],
+      [
+        789,
+        390,
+        1000,
+        580
+      ],
+      [
+        0,
+        575,
+        220,
+        790
+      ],
+      [
+        205,
+        574,
+        408,
+        790
+      ],
+      [
+        401,
+        572,
+        600,
+        791
+      ],
+      [
+        595,
+        570,
+        798,
+        790
+      ],
+      [
+        790,
+        575,
+        1000,
+        790
+      ],
+      [
+        0,
+        784,
+        203,
+        999
+      ],
+      [
+        211,
+        784,
+        400,
+        999
+      ],
+      [
+        407,
+        780,
+        600,
+        999
+      ],
+      [
+        598,
+        788,
+        797,
+        999
+      ],
+      [
+        795,
+        786,
+        999,
+        999
+      ]
+    ]
+  },
+  "heroesV2": {
+    "prompt": "Use attached image ONLY as a style reference. Create original production paper-doll game art, black and white pixel/stipple ink on white for e-ink. EXACT two equal square cells side by side, no text/borders. Left masculine apprentice, right feminine apprentice. Both full-body FRONT-facing neutral standing pose, 5 heads tall, small natural eyes and youthful semi-realistic face, no anime huge eyes, no chibi oversized head. Human proportions like reference. Same shoulders waist feet positions for wearable equipment layering, relaxed arms slightly away from torso. No hat no staff no book. Plain fitted linen tunic, trousers and plain low boots so hats/coats/boots can be overlaid. Feminine character with medium tied-back hair, masculine short tousled hair. Sharp appealing detailed pixel artwork, visible cloth folds, clean white margins. Match pixel fantasy reference's understated faces.",
+    "file": "heroesV2.png"
+  }
+}

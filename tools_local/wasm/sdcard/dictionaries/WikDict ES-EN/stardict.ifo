@@ -1,0 +1,8 @@
+StarDict's dict ifo file
+version=3.0.0
+bookname=español-English FreeDict+WikDict dictionary (es-en)
+wordcount=21952
+idxfilesize=400286
+sametypesequence=h
+date=2026-06-23
+description=Publisher: Karl Bartel<br>Licensed under the <a href="https://creativecommons.org/licenses/by-sa/4.0/legalcode">Creative Commons Attribution-ShareAlike 4.0 International</a> license<br>Automatic creation of this bilingual dictionary by <a href="http://www.wikdict.com/">WikDict</a>.<br>Base data from <a href="https://www.wiktionary.org/">Wiktionary.org</a> via <a href="http://kaiko.getalp.org/about-dbnary/">DBnary</a>.<br>This dictionary comes to you through nice people<br>making it available for free and for good. It is part of<br>the FreeDict project, http://www.freedict.org/. This<br>project aims to make available many translating<br>dictionaries for free. Your contributions are welcome!

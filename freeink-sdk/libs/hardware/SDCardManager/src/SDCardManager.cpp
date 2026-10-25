@@ -1,0 +1,596 @@
+#include "SDCardManager.h"
+
+#include <BoardConfig.h>
+#include <driver/gpio.h>
+#include <esp_task_wdt.h>
+#include <SPI.h>
+#include <new>
+
+#include "SdmmcBlockDevice.h"  // no-op unless FREEINK_SD_SDMMC
+
+#if FREEINK_DEVICE_PAPERMONO
+#include <PaperMonoBoard.h>
+#endif
+
+SDCardManager SDCardManager::instance;
+
+#if FREEINK_SD_SDMMC
+SDCardManager::SDCardManager() {}
+
+bool SDCardManager::begin() {
+  if (initialized) return true;
+#if FREEINK_DEVICE_METALIO_EINK4
+  if (BoardConfig::isMetalioEInk4() && !freeink::metalio::ensureBooted()) return false;
+#endif
+
+  // Native SDMMC: SdFat can't drive SDIO, so mount a plain FsVolume on the esp-idf
+  // SDMMC block device. FsFile from this volume is the same type the SPI path
+  // returns, so the public API and consumers are unchanged.
+  if (_powerHook) _powerHook();  // board brings up its SD rail (e.g. PMIC) if needed
+#if FREEINK_DEVICE_PAPERMONO
+  // Paper Mono's TF rail is switched by the IOE1 expander (PYB_TF_EN), not an
+  // ESP GPIO, and the boot bring-up leaves it LOW. Direct call rather than the
+  // weak-ref consumer hook, same as EpdBus's Paper Mono path.
+  freeink::papermono::setSdPower(true);
+#endif
+  // The SD power-enable (sd.powerEnable) is driven by SdmmcBlockDevice itself, which
+  // reproduces the OEM's timed HIGH->LOW power-cycle around each mount attempt — do
+  // NOT assert it here (holding it HIGH going in breaks that reset sequence).
+  if (_dev) {
+    // detachFilesystemForRawAccess() intentionally keeps the host and card
+    // alive for USB-MSC. Tear that session down before mounting the volume
+    // again, otherwise sdmmc_host_init() rejects the second initialization.
+    _dev->end();
+  } else {
+    _dev = new (std::nothrow) freeink::SdmmcBlockDevice();
+    if (!_dev) {
+      if (Serial) Serial.printf("[%lu] [SD] SDMMC block-device allocation failed\n", millis());
+      return false;
+    }
+  }
+  if (!_dev->begin(BoardConfig::ACTIVE.sdmmc)) {
+    if (Serial) Serial.printf("[%lu] [SD] SDMMC init failed\n", millis());
+    initialized = false;
+    cachedTotalBytes = 0;
+    cachedUsedBytesValid = false;
+    return false;
+  }
+  if (!_vol.begin(_dev)) {
+    if (Serial) Serial.printf("[%lu] [SD] SDMMC volume mount failed\n", millis());
+    initialized = false;
+    cachedTotalBytes = 0;
+    cachedUsedBytesValid = false;
+    return false;
+  }
+  if (Serial) Serial.printf("[%lu] [SD] SDMMC card mounted\n", millis());
+  initialized = true;
+  cachedTotalBytes = static_cast<uint64_t>(vol().clusterCount()) * vol().bytesPerCluster();
+  cachedUsedBytesValid = false;
+  return initialized;
+}
+
+FsBlockDeviceInterface* SDCardManager::rawBlockDevice() { return _dev; }
+
+FsBlockDeviceInterface* SDCardManager::detachFilesystemForRawAccess() {
+  if (!initialized || !_dev) return nullptr;
+  _vol.end();
+  initialized = false;
+  cachedTotalBytes = 0;
+  cachedUsedBytes = 0;
+  cachedUsedBytesValid = false;
+  return _dev;
+}
+
+void SDCardManager::shutdown() {
+  if (!initialized || !_dev) return;
+  // FsVolume::end() flushes SdFat's cached FAT/directory sectors; SDMMC block
+  // writes are synchronous, so the card is consistent once it returns.
+  _vol.end();
+  _dev->end();  // frees the card and runs sdmmc_host_deinit()
+  // sdmmc_host_deinit() leaves the bus pads in their last GPIO-matrix state:
+  // CLK/CMD/D0-D3 idle high and back-feed the card's VDD net through the bus
+  // pull-ups for the whole sleep (VDD measures 3.3 V with the enable gate
+  // driven off). Float the pads so the net can fall; the sleep path's
+  // esp_sleep_config_gpio_isolate() keeps them isolated.
+  const BoardConfig::SdmmcPins& p = BoardConfig::ACTIVE.sdmmc;
+  for (const int8_t pin : {p.clk, p.cmd, p.d0, p.d1, p.d2, p.d3}) {
+    if (pin < 0) continue;
+    const auto g = static_cast<gpio_num_t>(pin);
+    gpio_set_direction(g, GPIO_MODE_INPUT);
+    gpio_pullup_dis(g);
+    gpio_pulldown_dis(g);
+  }
+  initialized = false;
+  cachedTotalBytes = 0;
+  cachedUsedBytes = 0;
+  cachedUsedBytesValid = false;
+}
+#else
+SDCardManager::SDCardManager() : sd() {}
+
+bool SDCardManager::begin() {
+  // Profiles whose SD CS is not yet known leave it unassigned so the card stays
+  // dormant — bail out before any pin is touched, or SdFat drives "pin 255" and
+  // floods the log. (Native-SDMMC boards like the X4 Pro take the #if branch above.)
+  if (BoardConfig::ACTIVE.sd.cs < 0) {
+    if (Serial) Serial.printf("[%lu] [SD] SD disabled: CS unassigned in the %s profile\n", millis(), BoardConfig::ACTIVE.name);
+    initialized = false;
+    cachedTotalBytes = 0;
+    cachedUsedBytesValid = false;
+    return false;
+  }
+
+  // Pins/clock come from the runtime-active profile (board-overridable via
+  // BoardConfig::ACTIVE.sd.spiHz; 0 = default). Read after device selection.
+  const uint8_t SD_CS = BoardConfig::ACTIVE.sd.cs;
+  const int8_t SD_SCLK = BoardConfig::ACTIVE.sd.sclk >= 0 ? BoardConfig::ACTIVE.sd.sclk
+                                                          : (BoardConfig::ACTIVE.sd.separateSpi ? -1
+                                                                                                : BoardConfig::ACTIVE.display.sclk);
+  const int8_t SD_MOSI = BoardConfig::ACTIVE.sd.mosi >= 0 ? BoardConfig::ACTIVE.sd.mosi
+                                                          : (BoardConfig::ACTIVE.sd.separateSpi ? -1
+                                                                                                : BoardConfig::ACTIVE.display.mosi);
+  const int8_t SD_MISO = BoardConfig::ACTIVE.sd.miso;
+  const uint32_t SPI_FQ = BoardConfig::ACTIVE.sd.spiHz != 0 ? BoardConfig::ACTIVE.sd.spiHz : 40000000;
+
+  if (_powerHook) _powerHook();  // board brings up its SD rail (e.g. PMIC) if needed
+
+  // Boards that gate the SD rail with a plain GPIO (e.g. Sticky's SD_PWR_EN on
+  // GPIO10) must power it before probing. Active-high enable + a brief settle.
+  // No-op when unassigned, and complements _powerHook for PMIC-gated boards.
+  // gpio_hold_dis first: the sleep path holds this pin LOW and the hold survives
+  // the deep-sleep wake reset; the HIGH write is a no-op until it is released.
+  if (BoardConfig::ACTIVE.sd.powerEnable >= 0) {
+    gpio_hold_dis(static_cast<gpio_num_t>(BoardConfig::ACTIVE.sd.powerEnable));
+    pinMode(BoardConfig::ACTIVE.sd.powerEnable, OUTPUT);
+    // ON level: HIGH for active-high enables, LOW for active-low ones.
+    digitalWrite(BoardConfig::ACTIVE.sd.powerEnable, BoardConfig::ACTIVE.sd.powerActiveHigh ? HIGH : LOW);
+    delay(BoardConfig::isOnePage() ? 80 : 10);
+  }
+
+  // Shared SPI bus: when the display controller sits on the same SCLK as the SD
+  // card (e.g. M5Paper's IT8951 on 14/12/13), deselect it (CS high) before
+  // probing the card. SD init runs before the display driver's begin(), so a
+  // powered, never-deselected panel can drive the shared MISO and break
+  // detection. Harmless when the display is on a separate bus or has no CS pin.
+  if (BoardConfig::ACTIVE.display.cs >= 0 && BoardConfig::ACTIVE.display.sclk == SD_SCLK) {
+    pinMode(BoardConfig::ACTIVE.display.cs, OUTPUT);
+    digitalWrite(BoardConfig::ACTIVE.display.cs, HIGH);
+  }
+
+  // A board with a dedicated SD SPI bus (separateSpi) MUST NOT reconfigure the
+  // global SPI object: that bus belongs to the display, and Arduino's second
+  // SPI.begin() won't remap its pins, so the panel would end up transmitting on
+  // the SD pins. Give SD its own HSPI instance and leave the global SPI for the
+  // display. Other boards keep sharing the global SPI as before.
+  bool cardReady = false;
+#if FREEINK_MCU_S3 || FREEINK_MCU_ESP32
+  if (BoardConfig::ACTIVE.sd.separateSpi && SD_SCLK >= 0 && SD_MOSI >= 0 && SD_MISO >= 0) {
+    static SPIClass dedicatedSdSpi(HSPI);
+    cardReady = dedicatedSdSpi.begin(SD_SCLK, SD_MISO, SD_MOSI, SD_CS) &&
+                sd.begin(SdSpiConfig(SD_CS, SHARED_SPI | USER_SPI_BEGIN, SPI_FQ, &dedicatedSdSpi));
+  } else {
+#endif
+    if (SD_SCLK >= 0 && SD_MOSI >= 0 && SD_MISO >= 0) {
+      SPI.begin(SD_SCLK, SD_MISO, SD_MOSI, SD_CS);
+    }
+    // Other boards keep the single attempt so a missing card fails fast.
+    const int attempts = BoardConfig::isOnePage() ? 5 : 1;
+    for (int attempt = 0; attempt < attempts; ++attempt) {
+      cardReady = sd.begin(SD_CS, SPI_FQ);
+      if (cardReady || attempt + 1 == attempts) break;
+      delay(80);
+    }
+#if FREEINK_MCU_S3 || FREEINK_MCU_ESP32
+  }
+#endif
+
+  if (!cardReady) {
+    if (Serial)
+      Serial.printf("[%lu] [SD] SD card not detected (err=0x%02X data=0x%02X cs=%d sclk=%d miso=%d mosi=%d clk=%luHz)\n",
+                    millis(), sd.sdErrorCode(), sd.sdErrorData(), SD_CS, SD_SCLK,
+                    SD_MISO, SD_MOSI, (unsigned long)SPI_FQ);
+    initialized = false;
+    cachedTotalBytes = 0;
+    cachedUsedBytesValid = false;
+  } else {
+    if (Serial) Serial.printf("[%lu] [SD] SD card detected\n", millis());
+    initialized = true;
+    cachedTotalBytes = static_cast<uint64_t>(vol().clusterCount()) * vol().bytesPerCluster();
+    cachedUsedBytesValid = false;
+  }
+
+  return initialized;
+}
+
+// SdFat's card object already IS a block device: with USE_BLOCK_DEVICE_INTERFACE
+// (or HAS_SDIO_CLASS) set, SdSpiCard derives from FsBlockDeviceInterface and
+// implements the same readSector(s)/writeSector(s) contract SdmmcBlockDevice
+// does. So the SPI path needs no second driver for USB-MSC — it only needs the
+// volume dropped while the card session stays up.
+//
+// Without that option SdSpiCard is a plain concrete class with no such base, so
+// there is nothing to hand out. The build hook (inject_build_flags.py) turns the
+// option on whenever FREEINK_CAP_USB_MSC is set, so the stubs below are what a
+// board that never asked for USB Drive links.
+#if USE_BLOCK_DEVICE_INTERFACE || HAS_SDIO_CLASS
+
+FsBlockDeviceInterface* SDCardManager::rawBlockDevice() { return initialized ? sd.card() : nullptr; }
+
+FsBlockDeviceInterface* SDCardManager::detachFilesystemForRawAccess() {
+  if (!initialized) return nullptr;
+  auto* const card = sd.card();
+  if (!card) return nullptr;
+  // FsVolume::end() ONLY — deliberately not sd.end(), which would also call
+  // SdCard::end() and tear down the card session the USB host is about to read
+  // through. The card stays initialized and selected; remounting later goes
+  // back through begin(), whose sd.begin() re-runs SdCard::begin() on the same
+  // (factory-owned, statically allocated) card object.
+  sd.FsVolume::end();
+  initialized = false;
+  cachedTotalBytes = 0;
+  cachedUsedBytes = 0;
+  cachedUsedBytesValid = false;
+  return card;
+}
+
+#else  // USE_BLOCK_DEVICE_INTERFACE || HAS_SDIO_CLASS
+
+FsBlockDeviceInterface* SDCardManager::rawBlockDevice() { return nullptr; }
+FsBlockDeviceInterface* SDCardManager::detachFilesystemForRawAccess() { return nullptr; }
+
+#endif  // USE_BLOCK_DEVICE_INTERFACE || HAS_SDIO_CLASS
+#endif  // FREEINK_SD_SDMMC
+
+bool SDCardManager::ready() const {
+  return initialized;
+}
+
+std::vector<String> SDCardManager::listFiles(const char* path, const int maxFiles) {
+  std::vector<String> ret;
+  if (!initialized) {
+    if (Serial) Serial.printf("[%lu] [SD] not initialized, returning empty list\n", millis());
+    return ret;
+  }
+
+  auto root = vol().open(path);
+  if (!root) {
+    if (Serial) Serial.printf("[%lu] [SD] Failed to open directory\n", millis());
+    return ret;
+  }
+  if (!root.isDirectory()) {
+    if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
+    root.close();
+    return ret;
+  }
+
+  int count = 0;
+  char name[128];
+  for (auto f = root.openNextFile(); f && count < maxFiles; f = root.openNextFile()) {
+    if (f.isDirectory()) {
+      f.close();
+      continue;
+    }
+    f.getName(name, sizeof(name));
+    ret.emplace_back(name);
+    f.close();
+    count++;
+  }
+  root.close();
+  return ret;
+}
+
+String SDCardManager::readFile(const char* path) {
+  if (!initialized) {
+    if (Serial) Serial.printf("[%lu] [SD] not initialized; cannot read file\n", millis());
+    return {""};
+  }
+
+  FsFile f;
+  if (!openFileForRead("SD", path, f)) {
+    return {""};
+  }
+
+  String content = "";
+  constexpr size_t maxSize = 50000;  // Limit to 50KB
+  size_t readSize = 0;
+  while (f.available() && readSize < maxSize) {
+    const char c = static_cast<char>(f.read());
+    content += c;
+    readSize++;
+  }
+  f.close();
+  return content;
+}
+
+bool SDCardManager::readFileToStream(const char* path, Print& out, const size_t chunkSize) {
+  if (!initialized) {
+    if (Serial) Serial.println("SDCardManager: not initialized; cannot read file");
+    return false;
+  }
+
+  FsFile f;
+  if (!openFileForRead("SD", path, f)) {
+    return false;
+  }
+
+  constexpr size_t localBufSize = 256;
+  uint8_t buf[localBufSize];
+  const size_t toRead = (chunkSize == 0) ? localBufSize : (chunkSize < localBufSize ? chunkSize : localBufSize);
+
+  // A big file streams for longer than the task watchdog allows, and nothing in
+  // this loop ever blocks long enough for the caller to feed it. Measured on a
+  // LilyGo T5 S3 Pro, 2026-09-06: a 733 kB file served over WebDAV reset the
+  // board 16 s into the transfer, 545 kB of it already delivered, with
+  // `task_wdt: - loopTask (CPU 1)` and this function in the backtrace.
+  //
+  // The yield belongs here rather than in the caller, which sees one call and
+  // has no place to put it. Budgeted by time, not per chunk: chunks are 256
+  // bytes, so that file is ~2900 iterations and a tick of delay on each would
+  // add ~2.9 s to every large read. Every 100 ms costs ~160 ms in total.
+  //
+  // `esp_task_wdt_reset()` is what actually feeds the watchdog -- `vTaskDelay`
+  // does not -- but it logs an error when the calling task is not subscribed,
+  // so ask once, quietly, instead of on every pass.
+  constexpr uint32_t yieldIntervalMs = 100;
+  const bool watchdogWatchesThisTask = (esp_task_wdt_status(nullptr) == ESP_OK);
+  uint32_t lastYieldMs = millis();
+
+  uint64_t remaining = f.fileSize();
+  while (remaining > 0) {
+    const size_t want = remaining < toRead ? static_cast<size_t>(remaining) : toRead;
+    const int r = f.read(buf, want);
+    if (r <= 0) {
+      if (Serial) Serial.printf("SDCardManager: incomplete read of %s\n", path);
+      f.close();
+      return false;
+    }
+
+    const size_t count = static_cast<size_t>(r);
+    size_t sent = 0;
+    while (sent < count) {
+      const size_t written = out.write(buf + sent, count - sent);
+      if (written == 0 || written > count - sent) {
+        if (Serial) Serial.printf("SDCardManager: incomplete write while streaming %s\n", path);
+        f.close();
+        return false;
+      }
+      sent += written;
+
+      if (millis() - lastYieldMs >= yieldIntervalMs) {
+        if (watchdogWatchesThisTask) {
+          esp_task_wdt_reset();
+        }
+        vTaskDelay(1);  // let every other task on this core run
+        lastYieldMs = millis();
+      }
+    }
+    remaining -= count;
+  }
+
+  f.close();
+  return true;
+}
+
+size_t SDCardManager::readFileToBuffer(const char* path, char* buffer, const size_t bufferSize, const size_t maxBytes) {
+  if (!buffer || bufferSize == 0)
+    return 0;
+  if (!initialized) {
+    if (Serial) Serial.println("SDCardManager: not initialized; cannot read file");
+    buffer[0] = '\0';
+    return 0;
+  }
+
+  FsFile f;
+  if (!openFileForRead("SD", path, f)) {
+    buffer[0] = '\0';
+    return 0;
+  }
+
+  const size_t maxToRead = (maxBytes == 0) ? (bufferSize - 1) : min(maxBytes, bufferSize - 1);
+  size_t total = 0;
+
+  while (f.available() && total < maxToRead) {
+    constexpr size_t chunk = 64;
+    const size_t want = maxToRead - total;
+    const size_t readLen = (want < chunk) ? want : chunk;
+    const int r = f.read(buffer + total, readLen);
+    if (r > 0) {
+      total += static_cast<size_t>(r);
+    } else {
+      break;
+    }
+  }
+
+  buffer[total] = '\0';
+  f.close();
+  return total;
+}
+
+bool SDCardManager::writeFile(const char* path, const String& content) {
+  if (!initialized) {
+    if (Serial) Serial.println("SDCardManager: not initialized; cannot write file");
+    return false;
+  }
+
+  // Write beside the target and swap in only a complete copy: a short write or
+  // failed flush leaves the previous file untouched, never a truncated one.
+  const String tmp = String(path) + ".tmp";
+  FsFile f;
+  if (!openFileForWrite("SD", tmp.c_str(), f)) {
+    if (Serial) Serial.printf("Failed to open file for write: %s\n", tmp.c_str());
+    return false;
+  }
+  const bool complete = f.print(content) == content.length();
+  if (!f.close() || !complete) {
+    if (Serial) Serial.printf("Short write, keeping previous %s\n", path);
+    vol().remove(tmp.c_str());
+    return false;
+  }
+
+  // ponytail: a power cut between replaceFile's remove and rename leaves only
+  // the complete .tmp; recover it on read if that window ever matters.
+  if (!replaceFile(tmp.c_str(), path)) {
+    vol().remove(tmp.c_str());
+    return false;
+  }
+  return true;
+}
+
+bool SDCardManager::ensureDirectoryExists(const char* path) {
+  if (!initialized) {
+    if (Serial) Serial.println("SDCardManager: not initialized; cannot create directory");
+    return false;
+  }
+
+  if (vol().exists(path)) {
+    FsFile dir = vol().open(path);
+    if (dir && dir.isDirectory()) {
+      dir.close();
+      return true;
+    }
+    dir.close();
+  }
+
+  if (vol().mkdir(path)) {
+    return true;
+  }
+  if (Serial) Serial.printf("Failed to create directory: %s\n", path);
+  return false;
+}
+
+bool SDCardManager::openFileForRead(const char* moduleName, const char* path, FsFile& file) {
+  file = vol().open(path, O_RDONLY);
+  if (!file) {
+    if (Serial) Serial.printf("[%lu] [%s] Failed to open file for reading: %s\n", millis(), moduleName, path);
+    return false;
+  }
+  return true;
+}
+
+bool SDCardManager::openFileForRead(const char* moduleName, const std::string& path, FsFile& file) {
+  return openFileForRead(moduleName, path.c_str(), file);
+}
+
+bool SDCardManager::openFileForRead(const char* moduleName, const String& path, FsFile& file) {
+  return openFileForRead(moduleName, path.c_str(), file);
+}
+
+bool SDCardManager::openFileForWrite(const char* moduleName, const char* path, FsFile& file) {
+  file = vol().open(path, O_RDWR | O_CREAT | O_TRUNC);
+  if (!file) {
+    if (Serial) Serial.printf("[%lu] [%s] Failed to open file for writing: %s\n", millis(), moduleName, path);
+    return false;
+  }
+  return true;
+}
+
+bool SDCardManager::openFileForWrite(const char* moduleName, const std::string& path, FsFile& file) {
+  return openFileForWrite(moduleName, path.c_str(), file);
+}
+
+bool SDCardManager::openFileForWrite(const char* moduleName, const String& path, FsFile& file) {
+  return openFileForWrite(moduleName, path.c_str(), file);
+}
+
+uint64_t SDCardManager::sdTotalBytes() const { return cachedTotalBytes; }
+
+// Shared by sdUsedBytes() and sdFreeBytes() so both read ONE cached answer.
+// freeClusterCount() walks the FAT on FAT32 without a valid FSInfo, which is
+// seconds on a large card, so it must not run twice for one question.
+bool SDCardManager::refreshFreeClusters() {
+  if (!initialized) return false;
+  const uint32_t now = millis();
+  if (cachedUsedBytesValid && (now - cachedUsedBytesAt) < USED_BYTES_CACHE_TTL_MS) {
+    return cachedFreeBytesValid;
+  }
+  const int32_t freeClusters = vol().freeClusterCount();
+  const uint64_t clusterCount = vol().clusterCount();
+  cachedUsedBytesAt = now;
+  if (freeClusters < 0) {
+    // sdUsedBytes() reports this as 0 used, which is also what an empty card
+    // reports. Nothing in this fork reads it, and sdFreeBytes() below refuses
+    // to conflate the two, but a future caller reaching past it would get a
+    // plausible number. Say so out loud rather than leaving the trace to the
+    // absence of one.
+    //
+    // This used to read "and it is cached as a valid answer for the whole TTL,
+    // so a retry inside the window gets the same confident zero". That was
+    // true, and it was the bug fixed just below: the failure is no longer
+    // memoised, so a retry re-queries. The log line is therefore once per
+    // FAILED ATTEMPT rather than once per TTL -- user-paced, since only a
+    // button press drives it.
+    if (Serial) Serial.printf("[%lu] [SD] free-cluster query FAILED; used-bytes will read 0, which is a lie\n", millis());
+    cachedUsedBytes = 0;
+    cachedFreeBytes = 0;
+    cachedFreeBytesValid = false;
+    // Do NOT memoise the failure. A cache stores ANSWERS, and "the card did not
+    // answer" is not one -- caching it made the guard above return the stale
+    // false for the whole TTL without re-querying, so an app's TRY AGAIN could
+    // not succeed for 20 seconds. That is worst on a NO ROOM screen: the user
+    // deletes a book, retries inside the window, is told there is still no
+    // room, and reasonably concludes deleting did not help. The screen punishes
+    // the correct response, and no wording rescues a button that cannot work.
+    //
+    // Chosen over a force flag on the retry path: a flag puts cache knowledge
+    // in every caller and can be used to defeat the TTL entirely, which is the
+    // seconds-long walk this cache exists to prevent. Leaving a failure
+    // uncached costs one re-query per user-paced button press.
+    cachedUsedBytesValid = false;
+    return false;
+  }
+  cachedUsedBytesValid = true;
+  const uint64_t cappedFree =
+      (static_cast<uint64_t>(freeClusters) > clusterCount) ? clusterCount : static_cast<uint64_t>(freeClusters);
+  cachedUsedBytes = (clusterCount - cappedFree) * vol().bytesPerCluster();
+  cachedFreeBytes = cappedFree * vol().bytesPerCluster();
+  cachedFreeBytesValid = true;
+  return true;
+}
+
+bool SDCardManager::sdFreeBytes(uint64_t& out) {
+  if (!refreshFreeClusters()) return false;
+  out = cachedFreeBytes;
+  return true;
+}
+
+uint64_t SDCardManager::sdUsedBytes() {
+  // Unchanged contract: 0 when the volume cannot answer, which several callers
+  // already treat as "unknown or empty". sdFreeBytes() is the one that tells
+  // those two apart.
+  refreshFreeClusters();
+  return cachedUsedBytes;
+}
+
+bool SDCardManager::removeDir(const char* path) {
+  auto dir = vol().open(path);
+  if (!dir) {
+    return false;
+  }
+  if (!dir.isDirectory()) {
+    return false;
+  }
+
+  auto file = dir.openNextFile();
+  char name[128];
+  while (file) {
+    String filePath = path;
+    if (!filePath.endsWith("/")) {
+      filePath += "/";
+    }
+    file.getName(name, sizeof(name));
+    filePath += name;
+
+    if (file.isDirectory()) {
+      if (!removeDir(filePath.c_str())) {
+        return false;
+      }
+    } else {
+      if (!vol().remove(filePath.c_str())) {
+        return false;
+      }
+    }
+    file = dir.openNextFile();
+  }
+
+  return vol().rmdir(path);
+}

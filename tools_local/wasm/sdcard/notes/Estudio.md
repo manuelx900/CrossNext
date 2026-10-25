@@ -1,0 +1,2 @@
+- [ ] Repasar notas
+- [ ] Resolver un ejercicio

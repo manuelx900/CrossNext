@@ -1,0 +1,138 @@
+.pio
+.idea
+.DS_Store
+.vscode
+.zed
+open-x4-sdk
+fs_
+fs_*/
+lib/EpdFont/fontsrc
+lib/I18n/I18nKeys.h
+lib/I18n/I18nStrings.h
+lib/I18n/I18nStrings.cpp
+*.generated.h
+.vs
+build
+**/__pycache__/
+/compile_commands.json
+/.cache
+.history/
+/.venv
+/.venv-study
+*.local*
+*.cpfont
+# ...except the browser demo's card, which is a shipped asset rather than a
+# build artifact, exactly like tools_local/wasm/sdcard/xkcd/images.dat next to
+# it. Without this a fresh worktree rebuilds the web card 1.3MB lighter and the
+# Study app draws no Chinese at all -- silently, because nothing fails.
+!tools_local/wasm/sdcard/study/fonts/KaiTi/*.cpfont
+lib/EpdFont/scripts/downloaded_fonts/
+lib/EpdFont/scripts/instanced_fonts/
+lib/EpdFont/scripts/output/
+# Claude Code: share project skills with the team, keep local agent state
+# (worktrees, scheduled-task locks, settings.local, scout CLEANUP.md) out.
+.claude/*
+!.claude/skills/
+/managed_components
+/.dummy
+/CMakeLists.txt
+/dependencies.lock
+/sdkconfig.*
+sdkconfig.sticky
+sdkconfig.x4pro
+
+# fork-local: simulator screenshots and logs (scripts_local/)
+qa-artifacts/
+# A screenshot dropped at the tree ROOT, which is what sim-shot.sh does when it
+# is given a bare filename instead of a path under qa-artifacts/. Anchored with
+# a leading slash so the 24 real .bmp files under site/wallpapers/starter stay
+# tracked. A 6MB why.bmp reached a commit this way.
+/*.bmp
+
+# Generated browser bundles belong in release assets, not source history.
+# Start-Simulator.cmd rebuilds the local bundle from this checkout.
+/site/emulator/
+
+# Tool cache. It holds an account id and an email address and has no business
+# in a public repo.
+.cloudflare/
+.ruff_cache/
+
+# upstream (1.6.0rc): nix flake outputs
+flake.*
+
+# scratch for tools_local/trivia/rate_local.py: corpus, venv, per-model runs
+.rate/
+
+# scratch for tools_local/trivia/assemble_pack.py: corpus snapshot, built packs
+.pack/
+
+# scratch snapshots copied out of a live rating run; derived, large, not history
+.panel/
+wallpapers.dat
+# Wikipedia pack tool: fetched Vital Articles data, never committed
+tools_local/wikipedia/cache/
+
+# The Wikipedia page's mock pack: 12 MB of seeded noise that
+# site/wikipedia/mock/make_mock.py regenerates byte for byte. The manifest it
+# writes is committed; the data it names is not.
+site/wikipedia/mock/*.zst
+site/wikipedia/mock/*.idx
+site/wikipedia/mock/*.dir
+site/wikipedia/mock/shards/
+
+# scripts_local/ship.sh assembles the release here. Not committed, and
+# ignored so a finished run does not leave the tree dirty -- which would
+# make the NEXT ship.sh die at its own preflight until somebody cleared it.
+dist/
+.pio/
+
+# Generated microSD distribution; inputs remain in assets_local and tools_local.
+/resources/
+
+# Local build caches and previous submission/output scratch.
+/.pio-cache/
+/outputs/
+/playground-submission/
+# Original upload; extracted PET build assets are kept in assets_local/pet/.
+/pet-pixel-bw-v1.zip
+/PET-HOGAR-ILUSTRACIONES-v1.zip
+# Downloaded reference repositories; build sources are kept in lib/ and src/.
+/CrossDiTo/
+/cpr-vcodex-master (1)/
+# Local visual QA pages and generated screenshots.
+/site/qa-*/
+/site/qa-*.html
+.env
+.env.*
+!.env.example
+
+# Local instructions and private publication notes.
+**/.agents/
+**/.claude/
+**/.codex/
+**/.cursor/
+**/.windsurf/
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.cursorrules
+.windsurfrules
+/docs/github-publication.md
+/docs/games-at-scale.md
+/docs/workflow/
+/tools_local/themesweep/review-brief.md
+/.github/copilot-instructions.md
+
+# Local source uploads, operator notes and rating workspace.
+/PET-HOGAR-GPT-v1.zip
+/.board/
+/.wrangler/
+/tools_local/trivia/local_panel/
+/docs/apps/instapaper-plan.md
+/docs/apps/study-installer-plan.md
+/docs/apps/study-sync-bridge-plan.md
+/docs/apps/wikipedia-plan.md
+/docs/apps/xkcd-viewing-plan.md
+/docs/apps/wavelength-teams.md
+/tools_local/trivia/us_shift_check.py

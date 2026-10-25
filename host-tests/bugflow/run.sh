@@ -1,0 +1,1037 @@
+#!/bin/bash
+# The hooks that make the workspace rules physical, and the board they read.
+#
+# Every rule below is asserted in both directions: the thing that must be
+# refused is refused, and the thing that must be allowed is allowed. A guard
+# that blocks everything passes a one-sided test as easily as a guard that
+# blocks nothing, and this suite exists because the previous enforcement was
+# prose that nobody could test at all.
+#
+#   host-tests/bugflow/run.sh
+set -uo pipefail
+
+HERE="$(cd "$(dirname "$0")" && pwd)"
+GUARD="$HERE/../../scripts_local/hooks/guard.py"
+BOARD="$HERE/../../tools_local/board/board.py"
+# The repository this suite lives in, as opposed to $ROOT, the throwaway
+# workspace it builds. Two checks below compare a literal in board.py against
+# the same literal in a file that never sees it.
+ROOT_REAL="$(cd "$HERE/../.." && pwd)"
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+
+[ -f "$GUARD" ] || { echo "FAIL cannot find $GUARD"; exit 1; }
+[ -f "$BOARD" ] || { echo "FAIL cannot find $BOARD"; exit 1; }
+
+PASS=0; FAIL=0
+ok()  { PASS=$((PASS+1)); echo "  ok   $1"; }
+bad() { FAIL=$((FAIL+1)); echo "  FAIL $1"; }
+
+# A fake workspace: the two directories the root is recognised by, a worker
+# tree, and an armed board. Nothing here touches the real .board.
+ROOT="$WORK/ws"
+mkdir -p "$ROOT/firmware-next/src" "$ROOT/wt/x/src" "$ROOT/.board"
+export BOARD_ROOT="$ROOT"
+# The CLI warns on stderr when the checkout it runs from is a day behind
+# trunk. That is a fact about THIS repository, so it would make every
+# assertion below depend on when the tree was last pulled; the check itself
+# is driven directly against a throwaway repository at the end of this file.
+export BOARD_NO_FRESHNESS=1
+board() { python3 "$BOARD" "$@"; }
+
+WORKER="aaaa-worker"; ORCH="bbbb-orch"; INTEG="cccc-integ"
+
+# guard <mode> <json>  -> prints the exit code
+guard() { printf '%s' "$2" | python3 "$GUARD" "$1" >"$WORK/out" 2>"$WORK/err"; echo $?; }
+expect() { # expect <label> <want-exit> <mode> <json>
+  local got; got=$(guard "$3" "$4")
+  if [ "$got" = "$2" ]; then ok "$1"; else bad "$1 (exit $got, wanted $2; stderr: $(head -c 160 "$WORK/err"))"; fi
+}
+
+echo "hooks are inert until armed"
+expect "unarmed: firmware-next edit passes" 0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$ROOT/firmware-next/src/a.cpp\"}}"
+touch "$ROOT/.board/enabled"
+board init >/dev/null
+board orchestrator --name Main --session "$ORCH" >/dev/null
+board integrator --session "$INTEG" >/dev/null
+# wt/x is the worker's: the record board bind would leave, written directly here
+python3 - "$ROOT/.board/trees/x.json" "$WORKER" <<'PY'
+import json, os, sys, time
+os.makedirs(os.path.dirname(sys.argv[1]), exist_ok=True)
+json.dump({"tree": "wt/x", "card": 0, "actor": sys.argv[2] + ":main", "session": sys.argv[2], "agent": "main", "renewed_at": time.time(), "lease_until": time.time() + 2700, "gen": 1}, open(sys.argv[1], "w"))
+PY
+
+echo "the guard fails open on its own trouble"
+printf 'not json' | python3 "$GUARD" pretool >/dev/null 2>&1; [ $? -eq 0 ] && ok "unreadable input is no opinion" || bad "unreadable input blocked"
+printf '{"session_id":"x","tool_name":"Bash","tool_input":{"command":"ls"}}' | BOARD_ROOT=/nonexistent python3 "$GUARD" pretool >/dev/null 2>&1; [ $? -eq 0 ] && ok "a missing board is no opinion" || bad "a missing board blocked"
+
+board pulse 2>&1 | grep -q "needs the Supabase store" && ok "pulse on the file store says what it needs" || bad "pulse on the file store did not explain itself"
+echo "the integration tree"
+expect "worker edit in firmware-next refused"   2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$ROOT/firmware-next/src/a.cpp\"}}"
+grep -q "integrator --session $WORKER" "$WORK/err" && ok "the refusal carries the remedy with the session id filled in" || bad "refusal lacks the substituted remedy: $(head -c 200 "$WORK/err")"
+expect "worker write in firmware-next refused"  2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$ROOT/firmware-next/docs/x.md\"}}"
+expect "integrator edit in firmware-next allowed" 0 pretool "{\"session_id\":\"$INTEG\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$ROOT/firmware-next/src/a.cpp\"}}"
+expect "worker edit in its own tree allowed"    0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$ROOT/wt/x/src/a.cpp\"}}"
+expect "worker bash write into firmware-next refused" 2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"cd $ROOT/firmware-next && git merge app/x\"}}"
+expect "worker bash read of firmware-next allowed"    0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git -C $ROOT/firmware-next log --oneline -5\"}}"
+expect "reading the tree with 2>&1 is not a write"  0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"cd $ROOT/firmware-next && git fetch -q origin 2>&1 | tail -3\"}}"
+expect "git log -C the tree to /dev/null is fine"   0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git -C $ROOT/firmware-next log --oneline -5 >/dev/null 2>&1\"}}"
+expect "a redirect into the tree is a write"        2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"echo x > $ROOT/firmware-next/docs/x.md\"}}"
+expect "a relative redirect after cd into the tree is a write" 2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"cd $ROOT/firmware-next && cat a > docs/x.md\"}}"
+expect "cp into the tree is a write"                2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"cp /tmp/a.h $ROOT/firmware-next/src/a.h\"}}"
+expect "a heredoc that merely mentions the tree is data" 0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"python3 - <<'EOF'\\ncmd = 'cd firmware-next && git merge app/x'\\nprint(cmd)\\nEOF\"}}"
+expect "cd out of the tree ends the tree context"   0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"cd $ROOT/firmware-next && git status && cd $ROOT/wt/x && git commit -am x\"}}"
+expect "integrator bash merge allowed"          0 pretool "{\"session_id\":\"$INTEG\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"cd $ROOT/firmware-next && git merge app/x\"}}"
+
+echo "the build lock"
+expect "grep -ln on the tree is a read, not ln"     0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"grep -ln schedule: $ROOT/firmware-next/.github/workflows/x.yml\"}}"
+expect "a quoted 'sed -i' pattern is a read"         0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"grep -n \\\"sed -i\\\" $ROOT/firmware-next/scripts/x.sh\"}}"
+expect "sed -i with a quoted tree path is a write"   2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"sed -i '' \\\"$ROOT/firmware-next/src/a.cpp\\\"\"}}"
+expect "raw pio run refused"                    2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"cd wt/x && pio run -e x4pro\"}}"
+expect "check.sh allowed"                       0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"cd wt/x && ./scripts_local/check.sh --tests\"}}"
+expect "pio in a word is not pio run"           0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"grep -rn 'pio run' docs\"}}"
+
+# Publishing by hand.
+#
+# scripts_local/ship.sh is the only path from a green gate to a release since
+# the GitHub builds were removed, and it is the only one that bumps the
+# version BEFORE the build. platformio.ini compiles the version into both
+# release envs and OtaUpdater compares a release's tag against that compiled
+# string, so a hand-cut tag over older images leaves every device offering an
+# update it already installed -- silently, and on every device at once.
+#
+# Read-only gh release verbs stay allowed: refusing `gh release list` would
+# make the guard something to work around rather than something to obey.
+echo "releases are cut by ship.sh"
+expect "gh release create refused"              2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"gh release create v1.2.3 dist/*\"}}"
+expect "gh release create after a cd refused"   2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"cd wt/x && gh release create v1.2.3\"}}"
+expect "gh release upload refused"              2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"gh release upload v1.2.3 firmware.bin\"}}"
+expect "a version tag refused"                  2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git tag v1.13.12\"}}"
+expect "an annotated version tag refused"       2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git tag -a v1.13.12 -m release\"}}"
+expect "pushing a version tag refused"          2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git push origin v1.13.12\"}}"
+expect "ship.sh allowed"                        0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"cd wt/x && ./scripts_local/ship.sh\"}}"
+expect "gh release list allowed"                0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"gh release list --repo ma-r-s/crossplay\"}}"
+expect "gh release view allowed"                0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"gh release view v1.13.11\"}}"
+expect "listing tags allowed"                   0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git tag --list 'v1.13.*'\"}}"
+expect "pushing a work branch allowed"          0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git push origin app/shipfast\"}}"
+expect "a non-version tag allowed"              0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git tag baseline-before-sync\"}}"
+
+# The bypasses a cold review found on the first version, all of which worked:
+# the anchor was not re.MULTILINE so any multi-line command walked through,
+# and the ship.sh escape was a SUBSTRING test, so a trailing `# ship.sh`
+# disabled the guard -- one copy-paste from the refusal text, which tells you
+# to run ./scripts_local/ship.sh.
+expect "a newline is a command separator too" 2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"cd wt/x\\ngh release create v1.2.3\"}}"
+expect "mentioning ship.sh is not running it" 2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"gh release create v1.2.3  # ship.sh says no\"}}"
+expect "a quoted version tag refused"         2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git tag \\\"v1.2.3\\\"\"}}"
+expect "pushing refs/tags/v refused"          2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git push origin refs/tags/v1.2.3\"}}"
+expect "git push --tags refused"              2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git push origin --tags\"}}"
+
+# UNDOING a bad publish must stay possible. A guard that blocks recovery is a
+# guard people disable, and the moment you need these is right after
+# something went wrong.
+expect "deleting a bad release allowed"       0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"gh release delete v1.2.3\"}}"
+expect "deleting a bad tag allowed"           0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git tag -d v1.2.3\"}}"
+expect "deleting a remote tag allowed"        0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git push origin :v1.2.3\"}}"
+expect "git tag --contains allowed"           0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git tag --contains HEAD\"}}"
+
+echo "quotes are stripped before the command is split"
+bashjson() { python3 -c 'import json,sys; print(json.dumps({"session_id": sys.argv[1], "tool_name": "Bash", "tool_input": {"command": sys.argv[2]}}))' "$WORKER" "$1"; }
+expect "a pipe inside quotes does not cut the quotes"     0 pretool "$(bashjson "cd $ROOT/firmware-next && echo \"in: \$(git tag --contains abc | tr '\\n' ' ')\"")"
+expect "git tag --contains is a read"                     0 pretool "$(bashjson "cd $ROOT/firmware-next && git tag --contains abc")"
+expect "git tag <name> is still a write"                  2 pretool "$(bashjson "cd $ROOT/firmware-next && git tag v9")"
+expect "a quoted redirect target in the tree is a write"  2 pretool "$(bashjson "echo x > \"$ROOT/firmware-next/docs/x.md\"")"
+
+echo "who may talk to whom"
+expect "worker to orchestrator allowed"         0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"SendMessage\",\"tool_input\":{\"to\":\"Main\",\"message\":\"blocked\"}}"
+expect "worker to orchestrator with ref allowed" 0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"SendMessage\",\"tool_input\":{\"to\":\"Main [1a2b3c]\",\"message\":\"blocked\"}}"
+expect "worker to a peer refused"               2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"SendMessage\",\"tool_input\":{\"to\":\"xteink-ff\",\"message\":\"who owns 1.12.5\"}}"
+expect "worker to a peer via the app refused"   2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"mcp__ccd_session_mgmt__send_message\",\"tool_input\":{\"session_id\":\"local_dddd-peer\",\"message\":\"hi\"}}"
+expect "worker to its own subagent allowed"        0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"SendMessage\",\"tool_input\":{\"to\":\"aaab5d61709dbe8a4\",\"message\":\"apply the review\"}}"
+expect "worker to the orchestrator's app id, unregistered, refused" 2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"mcp__ccd_session_mgmt__send_message\",\"tool_input\":{\"session_id\":\"local_bbbb-app\",\"message\":\"hi\"}}"
+board orchestrator --name Main --session "$ORCH" --app-id local_bbbb-app >/dev/null
+expect "worker to the orchestrator's app id, registered, allowed" 0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"mcp__ccd_session_mgmt__send_message\",\"tool_input\":{\"session_id\":\"local_bbbb-app\",\"message\":\"hi\"}}"
+board orchestrator --name Main --session "bbbb-orch-restarted" >/dev/null
+expect "a re-registration without --app-id keeps the app id" 0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"mcp__ccd_session_mgmt__send_message\",\"tool_input\":{\"session_id\":\"local_bbbb-app\",\"message\":\"hi\"}}"
+board orchestrator --name Main --session "$ORCH" --app-id local_bbbb-app >/dev/null
+expect "the orchestrator is still known by its hook id" 0 pretool "{\"session_id\":\"$ORCH\",\"tool_name\":\"SendMessage\",\"tool_input\":{\"to\":\"xteink-ff\",\"message\":\"card #3 is yours\"}}"
+expect "worker to orchestrator via the app allowed" 0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"mcp__ccd_session_mgmt__send_message\",\"tool_input\":{\"session_id\":\"local_$ORCH\",\"message\":\"hi\"}}"
+DISP="dddd-dispatch"; board dispatcher --name Dispatch --session "$DISP" >/dev/null
+expect "the dispatcher may message an owner"      0 pretool "{\"session_id\":\"$DISP\",\"tool_name\":\"SendMessage\",\"tool_input\":{\"to\":\"xteink-ff\",\"message\":\"card #3 is yours\"}}"
+expect "the dispatcher may still not ask Mario itself" 2 pretool "{\"session_id\":\"$DISP\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"board ask 3 --ask 'ship?' --default hold\"}}"
+expect "a heredoc mentioning the ask verb is data"  0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"python3 - <<'EOF'\\nprint('board ask 3')\\nEOF\"}}"
+expect "orchestrator to anyone allowed"         0 pretool "{\"session_id\":\"$ORCH\",\"tool_name\":\"SendMessage\",\"tool_input\":{\"to\":\"xteink-ff\",\"message\":\"take it\"}}"
+expect "worker asking Mario refused"            2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"board ask 3 --ask 'ship?' --default hold\"}}"
+expect "orchestrator asking Mario allowed"      0 pretool "{\"session_id\":\"$ORCH\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"board ask 3 --ask 'ship?' --default hold\"}}"
+
+echo "two open pull requests that touch one file"
+OVERLAP="$ROOT/tools_local/board/overlap.py"
+[ -f "$OVERLAP" ] || OVERLAP="$(dirname "$BOARD")/overlap.py"
+python3 "$OVERLAP" --from-json "$HERE/fixtures/prs.json" >"$WORK/overlap.out" 2>&1
+grep -q "#10 (app/render) and #11 (app/browser) both touch:" "$WORK/overlap.out" && ok "the overlapping pair is named with its branches" || bad "overlap: pair not named: $(cat "$WORK/overlap.out")"
+grep -q "    src/apps_local/link/LinkPlay.cpp" "$WORK/overlap.out" && ok "and the shared file" || bad "overlap: shared file missing"
+grep -q "crossplay.wasm" "$WORK/overlap.out" && bad "overlap: CI's emulator artefact counted as a shared file" || ok "the emulator artefact both carry is not an overlap"
+grep -q "#12" "$WORK/overlap.out" && bad "overlap: a pull request sharing nothing was named" || ok "a pull request sharing nothing is not named"
+grep -q "1 overlapping pair(s) among 3 open" "$WORK/overlap.out" && ok "the count is right" || bad "overlap: count line wrong: $(tail -1 "$WORK/overlap.out")"
+printf '[]' >"$WORK/none.json"; python3 "$OVERLAP" --from-json "$WORK/none.json" | grep -q "no two touch the same file" && ok "no pull requests is said plainly" || bad "overlap: empty input not handled"
+
+echo "ending a turn"
+T="$WORK/transcript.jsonl"
+mk_transcript() { # mk_transcript "<last assistant text>"
+  printf '{"type":"user","message":{"content":"go"}}\n' > "$T"
+  printf '{"type":"assistant","message":{"content":[{"type":"text","text":%s}]}}\n' "$(python3 -c 'import json,sys;print(json.dumps(sys.argv[1]))' "$1")" >> "$T"
+}
+mk_transcript "Fixed and gated. Want me to also port the picker fix, or leave it?"
+expect "hand-back with no card refused"          2 stop "{\"session_id\":\"$WORKER\",\"transcript_path\":\"$T\",\"stop_hook_active\":false}"
+[ -s "$ROOT/.board/refusals.log" ] && grep -q " $WORKER Bash " "$ROOT/.board/refusals.log" && grep -q " $WORKER stop " "$ROOT/.board/refusals.log" && ok "every refusal leaves a line in refusals.log with the session and the tool" || bad "refusals.log is missing a line for a Bash or a Stop refusal"
+grep -q "board.py bind" "$WORK/err" && ok "refusal tells it to bind" || bad "refusal does not tell it to bind"
+expect "stop_hook_active never loops"            0 stop "{\"session_id\":\"$WORKER\",\"transcript_path\":\"$T\",\"stop_hook_active\":true}"
+expect "the dispatcher may end on its one question"  0 stop "{\"session_id\":\"$DISP\",\"transcript_path\":\"$T\",\"stop_hook_active\":false}"
+expect "orchestrator may hand back"              0 stop "{\"session_id\":\"$ORCH\",\"transcript_path\":\"$T\",\"stop_hook_active\":false}"
+mk_transcript "Fixed, gated, pushed. PR open; card moved to review."
+expect "a finished turn passes"                  0 stop "{\"session_id\":\"$WORKER\",\"transcript_path\":\"$T\",\"stop_hook_active\":false}"
+
+CID=$(board new "Sudoku loses the puzzle from the difficulty menu" --from sudoku --kind bug | sed 's/^#\([0-9]*\).*/\1/')
+board bind "$CID" --session "$WORKER" --tree wt/x --branch app/x >/dev/null
+echo "a tree is its holder's, and nobody else's"
+expect "the worker that bound wt/x writes there"          0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$ROOT/wt/x/src/a.cpp\"}}"
+expect "another session editing wt/x is refused"          2 pretool "{\"session_id\":\"other-session\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$ROOT/wt/x/src/a.cpp\"}}"
+grep -q "wt/x is held by $WORKER:main for card #$CID" "$WORK/err" && ok "the refusal names the tree, its holder and the card" || bad "refusal lacks the holder: $(head -c 240 "$WORK/err")"
+grep -q "lease live for another" "$WORK/err" && grep -q "wt.sh new" "$WORK/err" && ok "and says the lease is live and how to get a tree of its own" || bad "refusal lacks the lease or the remedy: $(head -c 300 "$WORK/err")"
+expect "a subagent of the holding session is another actor"  2 pretool "{\"session_id\":\"$WORKER\",\"agent_id\":\"a1111111111111111\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$ROOT/wt/x/src/a.cpp\"}}"
+expect "the orchestrator is not exempt"                      2 pretool "{\"session_id\":\"$ORCH\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$ROOT/wt/x/src/a.cpp\"}}"
+expect "a tree nobody bound refuses writes too"              2 pretool "{\"session_id\":\"other-session\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$ROOT/wt/free/src/a.cpp\"}}"
+grep -q "has no holder" "$WORK/err" && grep -q "bind <card>" "$WORK/err" && ok "and says to bind first" || bad "no-holder refusal lacks the bind remedy: $(head -c 200 "$WORK/err")"
+expect "wt/x2 is not wt/x (segment-exact)"                   2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$ROOT/wt/x2/src/a.cpp\"}}"
+grep -q "wt/x2 has no holder" "$WORK/err" && ok "the neighbour is judged on its own record" || bad "wt/x2 was confused with wt/x: $(head -c 160 "$WORK/err")"
+expect "a write from inside the tree by another session is refused" 2 pretool "{\"session_id\":\"other-session\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"sed -i '' src/a.cpp\"},\"cwd\":\"$ROOT/wt/x\"}"
+expect "a read from inside the tree by another session is fine"     0 pretool "{\"session_id\":\"other-session\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"grep -rn foo src\"},\"cwd\":\"$ROOT/wt/x\"}"
+expect "a write naming the tree from elsewhere is refused"          2 pretool "{\"session_id\":\"other-session\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"cp /tmp/a.h $ROOT/wt/x/src/a.h\"},\"cwd\":\"$ROOT\"}"
+expect "a write naming the tree inside bash -c quotes is refused"   2 pretool "{\"session_id\":\"other-session\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"bash -c 'cd wt/x && rm -rf src'\"},\"cwd\":\"$ROOT\"}"
+expect "cd into the tree then a commit is refused (semicolon)"      2 pretool "{\"session_id\":\"other-session\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"cd wt/x;git commit -am wip\"},\"cwd\":\"$ROOT\"}"
+expect "a relative cd into a neighbour's tree is followed"          2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"cd ../free && git commit -am wip\"},\"cwd\":\"$ROOT/wt/x\"}"
+expect "git -C into another actor's tree is a write"               2 pretool "{\"session_id\":\"other-session\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git -C $ROOT/wt/x rebase origin/xteink\"},\"cwd\":\"$ROOT\"}"
+expect "a commit in another actor's tree is refused"               2 pretool "{\"session_id\":\"other-session\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git -C $ROOT/wt/x commit -am 'work preserved'\"},\"cwd\":\"$ROOT\"}"
+# A tree NAMED in a message is not a tree written to. The rule's first refusal
+# in the real workspace, minutes after it went live, was a printf whose format
+# string mentioned a tree, redirected into a memory file outside every tree.
+expect "a commit message naming another tree is not a write into it"   0 pretool "{\"session_id\":\"other-session\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git commit -m 'fix for wt/x'\"},\"cwd\":\"$ROOT\"}"
+expect "a printf naming a tree, into a file elsewhere, is no write into it" 0 pretool "{\"session_id\":\"other-session\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"printf 'note on wt/x' >> $ROOT/notes.md\"},\"cwd\":\"$ROOT\"}"
+expect "a quoted PATH into the tree is still a write"                   2 pretool "{\"session_id\":\"other-session\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"echo x >> \\\"$ROOT/wt/x/a.txt\\\"\"},\"cwd\":\"$ROOT\"}"
+expect "git -C a quoted tree path is a write, whatever the message says" 2 pretool "{\"session_id\":\"other-session\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git -C \\\"$ROOT/wt/x\\\" commit -am 'msg about wt/y'\"},\"cwd\":\"$ROOT\"}"
+expect "removing another actor's worktree is refused"              2 pretool "{\"session_id\":\"$ORCH\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git worktree remove --force wt/x\"},\"cwd\":\"$ROOT\"}"
+expect "the holder commits from inside its tree"                    0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git commit -am x\"},\"cwd\":\"$ROOT/wt/x\"}"
+python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert d["actor"]=="'"$WORKER"':main" and d["card"]=='"$CID"', d' "$ROOT/.board/trees/x.json" && ok "bind wrote the tree record with the actor" || bad "tree record wrong or missing"
+printf '{"session_id":"%s","tool_name":"Bash","tool_input":{"command":"ls"}}' "$WORKER" | python3 "$GUARD" pretool >/dev/null 2>&1
+echo '{"actor": "'"$WORKER"':main", "card": '"$CID"', "gen": "garbage"}' >"$ROOT/.board/trees/x.json"
+expect "a garbage record refuses rather than allows"                2 pretool "{\"session_id\":\"other-session\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$ROOT/wt/x/src/a.cpp\"}}"
+board bind "$CID" --session "$WORKER" --tree wt/x --branch app/x >/dev/null
+
+echo "session start"
+guard session-start "{\"session_id\":\"$WORKER\",\"cwd\":\"$ROOT\"}" >/dev/null
+grep -q "session id is $WORKER" "$WORK/out" && ok "prints the session id" || bad "no session id printed"
+grep -q "orchestrator is: Main" "$WORK/out" && ok "names the orchestrator" || bad "does not name the orchestrator"
+grep -q "Your card: #$CID" "$WORK/out" && ok "names the bound card" || bad "does not name the bound card"
+grep -q "worker contract" "$WORK/out" && ok "prints the contract" || bad "does not print the contract"
+guard session-start "{\"session_id\":\"$ORCH\",\"cwd\":\"$ROOT\"}" >/dev/null
+grep -q "ORCHESTRATOR" "$WORK/out" && ok "the orchestrator is told it is one" || bad "orchestrator not told"
+
+echo "the board"
+board inbox | grep -q "Nothing needs you" && ok "inbox empty when nothing needs Mario" || bad "inbox not empty"
+board ask "$CID" --ask "Keep the latch or delete it?" --default "deleted" >/dev/null
+board inbox | grep -q "Need from you: Keep the latch" && ok "an ask reaches the inbox" || bad "ask missing from inbox"
+board inbox | grep -q "If you do nothing: deleted" && ok "the default is shown" || bad "default missing"
+board answer "$CID" "keep" >/dev/null
+board ask "$CID" --ask "Flash it and look at the door" --default "unverified" --steps "1. Flash v1.12.10 over Wi-Fi
+2. Open Sudoku
+3. Tap DIFFICULTY four times" >/dev/null
+board inbox | grep -q "How: 2. Open Sudoku" && ok "an ask carries its steps into the inbox" || bad "steps missing from the inbox"
+board show "$CID" | grep -q "how: 1. Flash" && ok "show prints the steps" || bad "show lacks steps"
+board answer "$CID" "delete it" --note "less code" >/dev/null
+board inbox | grep -q "Nothing needs you" && ok "an answer clears the inbox" || bad "answer did not clear"
+board show "$CID" | grep -q "closed: delete it" && ok "the answer is on the card" || bad "answer not on card"
+board state "$CID" review >/dev/null
+board list | grep -q "review" && ok "state moves" || bad "state did not move"
+printf '## Trivia: play the new build\nbody one\n\n## Hacker News: keep anything?\nbody two\n' > "$WORK/import.md"
+board import "$WORK/import.md" | grep -q "imported 2 cards" && ok "import makes one card per heading" || bad "import failed"
+board list | grep -q "trivia" && ok "import derives the app from the heading" || bad "app not derived"
+printf '## Anki: a card with a labelled body\nYou were building: sync.\nSince then: proven end to end.\n' > "$WORK/import2.md"
+board import "$WORK/import2.md" >/dev/null
+board ask 4 --ask "use it once" --default "unverified" >/dev/null
+board inbox | grep -q "Since: proven end to end" && ok "inbox strips the since label" || bad "inbox repeats the since label"
+board inbox | grep -q "Since: Since" && bad "inbox doubled the label" || ok "no doubled label"
+board owner sudoku --session "$WORKER" --tree wt/x >/dev/null
+board route "$CID" | grep -q "owner session $WORKER" && ok "a card routes to its app's owner" || bad "route did not find the owner"
+board route 2 | grep -q "no owner" && ok "an app with no owner says so" || bad "no-owner case wrong"
+board owner sudoku | grep -q "session $WORKER" && ok "owner lookup without flags" || bad "owner lookup failed"
+cat > "$WORK/issues.json" <<'JSON'
+[{"number":7,"title":"sometimes Slow Reader (especially page turning)","body":"4.2 s per page turn","labels":[],"url":"https://github.com/ma-r-s/crossplay/issues/7","author":{"login":"gitlias"}},
+ {"number":9,"title":"Sudoku loses my puzzle","body":"","labels":[{"name":"bug"}],"url":"https://github.com/ma-r-s/crossplay/issues/9","author":{"login":"x"}}]
+JSON
+board issues --from-json "$WORK/issues.json" | grep -q "2 new card" && ok "open issues become cards" || bad "issues did not become cards"
+board issues --from-json "$WORK/issues.json" | grep -q "0 new card" && ok "a second sweep makes no duplicates" || bad "issues sweep duplicated cards"
+board list | grep -q "reader .*Slow Reader" && ok "an issue about page turns lands on the reader" || bad "reader issue not routed to reader"
+
+echo "what agents learn stays on the card"
+board note "$CID" "repro: open the menu, press back, open it again" | grep -q "#$CID noted" && ok "a note is accepted" || bad "note refused"
+board show "$CID" | grep -q "note: repro: open the menu" && ok "the note is a history line on the card" || bad "note missing from show"
+board note "$CID" "Seen on unit B as well." --body >/dev/null
+board show "$CID" | grep -q "Seen on unit B as well" && ok "--body appends the note to the card body" || bad "--body did not append"
+board list --state review | grep -q "#$CID" && ok "list --state filters to the state" || bad "list --state missed the card"
+board list --state parked | grep -q "no cards" && ok "list --state on an empty state says so" || bad "list --state parked printed cards"
+if board new "Sudoku: the puzzle is lost from the difficulty menu" --from sudoku --kind bug >"$WORK/dup.out" 2>&1; then bad "a reworded duplicate was filed"; else grep -q "looks like an open card" "$WORK/dup.out" && grep -q "#$CID" "$WORK/dup.out" && ok "a reworded duplicate is stopped and the open card named" || bad "duplicate refusal lacks the card: $(cat "$WORK/dup.out")"; fi
+grep -q "board note $CID" "$WORK/dup.out" && ok "the refusal says how to add to the existing card" || bad "refusal lacks the note remedy"
+board new "Sudoku: the puzzle is lost from the difficulty menu" --from sudoku --kind bug --anyway | grep -q "^#" && ok "--anyway files it regardless" || bad "--anyway did not file"
+board new "Chess clock drifts by a second every minute" --from chess --kind bug | grep -q "^#" && ok "a different title is filed without ceremony" || bad "an unrelated title was stopped"
+board block "$CID" --session "$WORKER" --need desk --ask "Does the fix hold on unit B?" --default "ships unverified on B" >/dev/null
+if board state "$CID" released >"$WORK/rel.out" 2>&1; then bad "a card with an open desk blocker was released"; else grep -q "open blocker" "$WORK/rel.out" && grep -q "Does the fix hold on unit B" "$WORK/rel.out" && ok "settling a card with an open desk blocker is refused and the blocker named" || bad "refusal lacks the blocker: $(cat "$WORK/rel.out")"; fi
+board show "$CID" | grep -q "^#$CID *review" && ok "the card stayed in review" || bad "the card moved anyway"
+board state "$CID" released --with-blockers | grep -q "#$CID released" && ok "--with-blockers settles it on purpose" || bad "--with-blockers refused"
+board state "$CID" review >/dev/null
+board list | grep -q "sudoku .*Sudoku loses my puzzle" && ok "an issue names its app from the owners" || bad "sudoku issue not routed to sudoku"
+
+# Every assertion above hands the sweep a file, so the branch that actually
+# runs in production -- shelling out to `gh` -- had never been executed by a
+# test. A stub `gh` on PATH exercises it and records what it was asked.
+echo "the github sweep, through gh itself"
+mkdir -p "$WORK/bin"
+cat > "$WORK/bin/gh" <<'SH'
+#!/bin/bash
+printf '%s\n' "$*" >> "$GH_LOG"
+[ "$2" = "list" ] && cat "$GH_ISSUES" || echo "closed"
+SH
+chmod +x "$WORK/bin/gh"
+export GH_LOG="$WORK/gh.log" GH_ISSUES="$WORK/live.json"
+# A subshell, not a `PATH=... board ...` prefix: bash 3.2 (which is /bin/bash
+# here) leaves an assignment made in front of a *function* call set afterwards,
+# and the stub gh would then serve the rest of the suite.
+ghboard() { ( PATH="$WORK/bin:$PATH"; python3 "$BOARD" "$@" ); }
+cat > "$WORK/live.json" <<'JSON'
+[{"number":31,"title":"Checkers drops the ninth capture in a chain","body":"uint8_t[3]","labels":[{"name":"bug"}],"url":"https://github.com/ma-r-s/crossplay/issues/31","author":{"login":"stranger"}}]
+JSON
+SWEEP=$(ghboard issues)
+grep -q "issue #31" <<< "$SWEEP" && ok "a sweep with no --from-json shells out to gh" || bad "the live gh path made no card: $SWEEP"
+GID=$(sed -n 's/^#\([0-9]*\) <- issue #31.*/\1/p' <<< "$SWEEP")
+grep -q -- "--state open" "$GH_LOG" && ok "it asks gh for open issues only" || bad "gh was not asked for open issues: $(cat "$GH_LOG")"
+ghboard issues | grep -q "0 new card" && ok "the live path dedupes on a second sweep" || bad "the live path duplicated a card"
+ghboard tick | grep -q "0 new card" && ok "tick sweeps and then lists" || bad "tick did not sweep"
+ghboard tick | grep -q "#$GID " && ok "tick prints the open board after the sweep" || bad "tick printed no board"
+
+# --close-released had no test at all: the half of the flow that reaches out
+# and changes something on GitHub was the untested half.
+echo "a released card closes its issue"
+board state "$GID" released >/dev/null
+: > "$GH_LOG"
+ghboard issues --close-released | grep -q "1 issue(s) closed" && ok "a released card closes its GitHub issue" || bad "close-released closed nothing"
+grep -q "issue close 31 " "$GH_LOG" && ok "it closes the issue its card came from" || bad "close-released named the wrong issue: $(cat "$GH_LOG")"
+grep -q -- "--comment" "$GH_LOG" && ok "the close carries a comment" || bad "the issue was closed silently"
+board show "$GID" | grep -q "closed GitHub issue #31" && ok "the close is recorded on the card" || bad "the close left no history"
+: > "$GH_LOG"
+ghboard tick | grep -q "close 31" && bad "tick closed an issue" || ok "tick never closes anything"
+board state "$GID" triaged >/dev/null
+
+PID=$(board new "Analytics everywhere" --from tooling | sed 's/^#\([0-9]*\).*/\1/')
+KID=$(board new "Firmware heartbeat" --from firmware --parent "$PID" | sed 's/^#\([0-9]*\).*/\1/')
+board parent "$CID" --of "$PID" >/dev/null
+board list | grep -q "^    #$KID " && ok "a child lists indented under its parent" || bad "child not indented"
+board list | grep -q "^    #$CID " && ok "board parent moves an existing card under one" || bad "parent command failed"
+board show "$PID" | grep -q "#$KID " && ok "show lists the children" || bad "show lacks children"
+board parent "$PID" --of "$PID" >/dev/null 2>&1 && bad "a card became its own parent" || ok "a card cannot be its own parent"
+board integrator --session "$WORKER" >/dev/null 2>&1 && bad "a second integrator claim succeeded" || ok "a held integration claim refuses a second claimant"
+board integrator --session "$WORKER" --release >/dev/null 2>&1 && bad "a stranger released the claim" || ok "only the holder releases the claim"
+board integrator --session "$INTEG" --release >/dev/null && ok "the holder releases the claim" || bad "holder cannot release"
+
+# Mario reads his inbox and nothing else, the inbox is the open `mario`
+# blockers and nothing else, and a card is not a blocker. So a card filed on
+# app `mario` -- the app that by convention already means "only Mario can
+# decide this" -- reached him only if somebody also remembered to block on it.
+# Twice nobody did: cards 75 and 84 were his decisions and aged a day in
+# `reported` while his inbox said nothing needs you. Card #209 made the rule
+# physical, and this is where it is watched holding.
+echo "a card addressed to Mario is an inbox item by construction"
+MID=$(board new "Retire Main and open a fresh orchestrator" --from mario | sed 's/^#\([0-9]*\).*/\1/')
+board inbox | grep -q "Need from you: Retire Main and open a fresh orchestrator" \
+  && ok "a card filed on app mario reaches the inbox, asking its title" || bad "a card filed on app mario never reached the inbox"
+board inbox | grep -q "If you do nothing: nothing happens until he answers" \
+  && ok "the blocker it opens says what happens if he never answers" || bad "the auto blocker states no default"
+board new "Archive the four dead apps" --from mario --default "they stay on the shelf" >/dev/null
+board inbox | grep -q "If you do nothing: they stay on the shelf" \
+  && ok "a filer-supplied default wins over the honest fallback" || bad "the filer's default was dropped"
+OID=$(board new "Sudoku keeps its own puzzle" --from sudoku | sed 's/^#\([0-9]*\).*/\1/')
+board show "$OID" | grep -q "BLOCKED(mario)" && bad "a card on another app opened a mario blocker" || ok "only app mario opens one"
+
+# Moved there, not only filed there: the orchestrator retargets cards, and a
+# decision that becomes Mario's on Tuesday is as invisible as one that was his
+# on Monday.
+board app "$OID" mario --default "the puzzle stays where it is" >/dev/null
+board inbox | grep -q "Need from you: Sudoku keeps its own puzzle" \
+  && ok "moving a card to app mario reaches the inbox" || bad "a move to app mario never reached the inbox"
+board show "$OID" | grep -q "moved to app mario" && ok "the move is on the card" || bad "the move left no history"
+board app "$OID" mario >/dev/null
+board app "$OID" mario >/dev/null
+[ "$(board show "$OID" | grep -c '^  blocker ')" = 1 ] \
+  && ok "moving it there again files no second blocker" || bad "repeated moves multiplied the blocker"
+board inbox | grep -q "If you do nothing: the puzzle stays where it is" \
+  && ok "a repeat move keeps the default the filer gave" || bad "a repeat move overwrote the default"
+board app "$OID" sudoku >/dev/null
+board app "$OID" mario >/dev/null
+[ "$(board show "$OID" | grep -c '^  blocker ')" = 1 ] \
+  && ok "a round trip through another app files no second blocker" || bad "a round trip multiplied the blocker"
+board answer "$MID" "retire it" >/dev/null
+board show "$MID" | grep -q "closed: retire it" && ok "he answers the auto blocker like any other" || bad "the auto blocker cannot be answered"
+
+# A decision already taken is not one to ask again. The rule and the backfill
+# in the migration have to agree about this, or a board restored by INSERTing
+# a dump opens one blocker per settled decision it ever held.
+DID=$(board new "A decision he already took" --from tooling | sed 's/^#\([0-9]*\).*/\1/')
+board state "$DID" done >/dev/null
+board app "$DID" mario >/dev/null
+board show "$DID" | grep -q "BLOCKED(mario)" && bad "a done card was put back in the inbox" || ok "a settled card moved to app mario opens nothing"
+board new "A decision long since parked" --from mario >/dev/null
+SID2=$(board list | grep "A decision long since parked" | sed 's/^#\([0-9]*\).*/\1/')
+board state "$SID2" parked >/dev/null
+
+# The words the filer typed must not vanish in silence. This is the one case
+# where they cannot be used: the card is already asking him something else, and
+# overwriting THAT blocker's default would be worse than not applying these.
+EID=$(board new "Archive the empty duplicate" --from tooling | sed 's/^#\([0-9]*\).*/\1/')
+board block "$EID" --session "$WORKER" --need mario --ask "Archive it or keep it?" --default "it stays" >/dev/null
+board app "$EID" mario --default "THESE WORDS SHOULD MATTER" 2>&1 | grep -q -- "--default not applied" \
+  && ok "a --default that cannot be used says so out loud" || bad "a --default was dropped in silence"
+board show "$EID" | grep -q "if nothing: it stays" \
+  && ok "and the blocker already there keeps its own words" || bad "the existing blocker's default was overwritten"
+
+# Two open mario blockers on one card. Rare before this rule; routine once
+# every card on app mario carries one of its own. The inbox prints two lines,
+# and an answer typed against one of them must not land on the other -- which
+# is what `board answer` did, silently, by keeping the last match.
+FID=$(board new "Wavelength retail deck" --from mario --default "the deck ships" | sed 's/^#\([0-9]*\).*/\1/')
+board block "$FID" --session "$WORKER" --need mario --ask "Do we have permission for the retail deck?" --default "we assume not" >/dev/null
+board inbox | grep -q -- "board answer $FID '<choice>' --n 2" \
+  && ok "the inbox names the blocker in the command it prints" || bad "the inbox prints an ambiguous answer command"
+# Into a file, not a pipe: an ambiguous answer is REFUSED, so `board` exits 1,
+# and under `set -o pipefail` that non-zero status is the pipeline's however
+# well grep matched. A refusal read as a missing message is the one shape this
+# assertion must not have.
+board answer "$FID" "yes" > "$WORK/amb" 2>&1
+grep -q "say which with --n" "$WORK/amb" \
+  && ok "an ambiguous answer is refused rather than guessed" || bad "an ambiguous answer picked one silently: $(head -c 120 "$WORK/amb")"
+board answer "$FID" "we have it" --n 2 >/dev/null
+board show "$FID" | grep -q "blocker 2 \[mario, closed: we have it\]" \
+  && ok "--n answers the blocker it names" || bad "--n answered the wrong blocker"
+board show "$FID" | grep -q "blocker 1 \[mario, open\]" \
+  && ok "and leaves the other one open" || bad "--n closed a blocker it did not name"
+
+# Moving a card off his desk does not withdraw what he was asked: taking an
+# item out of his inbox with no answer is the dropped message this whole rule
+# is about. It is said out loud and left for a person.
+board app "$FID" tooling 2>&1 | grep -q "still in Mario.s inbox" \
+  && ok "moving a card off app mario says what it leaves in his inbox" || bad "a card left the app and its inbox item went unmentioned"
+board inbox | grep -q "Need from you: Wavelength retail deck" \
+  && ok "and does not silently withdraw it" || bad "the move withdrew an unanswered question"
+
+# Filed by heading, and by the GitHub sweep: same rule, same wording.
+printf '## mario: Which of the three layouts ships\nbody\n' > "$WORK/import3.md"
+board import "$WORK/import3.md" >/dev/null
+board inbox | grep -q "Need from you: Which of the three layouts ships" \
+  && ok "an imported card on app mario reaches the inbox" || bad "import skipped the rule"
+board new "Capital App" --from MARIO >/dev/null
+board list | grep -q "^#[0-9]* *reported *mario *Capital App" \
+  && ok "the app name is lowercased on the way in" || bad "board new stored a mixed-case app the SQL trigger would miss"
+
+# Filing on app mario is not the orchestrator-only `board ask`: a worker
+# already records `--need mario` blockers on its own card by the contract, so
+# the same worker may file the decision as a card. The gate that stays shut is
+# `board ask`, asserted above.
+expect "a worker may file a card on app mario" 0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"board new 'Which layout ships' --from mario\"}}"
+
+echo "emulator staleness, one answer for check.sh and CI"
+STALE="$HERE/../../scripts_local/emulator-stale.sh"
+E="$WORK/emu"; mkdir -p "$E/src" "$E/site/emulator"; ( cd "$E" && git init -q -b xteink && git config user.email t@t && git config user.name t \
+  && echo a > src/a.cpp && echo w > site/emulator/crossplay.wasm && git add -A && git commit -qm "both" \
+  && sleep 1 && echo b > src/a.cpp && git add -A && git commit -qm "source moved" )
+bash "$STALE" "$E" >/dev/null && ok "a newer source makes the emulator stale" || bad "stale not detected"
+( cd "$E" && sleep 1 && echo w2 > site/emulator/crossplay.wasm && git add -A && git commit -qm "chore: emulator rebuilt" )
+bash "$STALE" "$E" >/dev/null && bad "a rebuilt emulator still reads stale" || ok "a rebuilt emulator reads fresh"
+# A herestring, not a pipe. Under `set -o pipefail`, `grep -q` exits on its
+# first match and the producer's remaining write gets EPIPE, so the pipeline
+# returns 141 and an intact list reads as a missing one. It only loses that
+# race when the machine is busy, which is exactly inside check.sh. A
+# herestring has no producer process to kill, and keeps the -x exact match.
+PATHS="$(bash "$STALE" --paths)"
+grep -qx "src" <<< "$PATHS" && grep -qx "tools_local/wasm" <<< "$PATHS" \
+  && ok "--paths names the source list" || bad "--paths is missing sources"
+grep -q 'emulator-stale.sh' "$HERE/../../scripts_local/check.sh" && ok "check.sh asks the shared script" || bad "check.sh still carries its own staleness test"
+
+# The artefact is now a POINTER, not the bytes. crossplay-emulator.yml publishes
+# the wasm to a GitHub release and commits site/emulator-manifest.json; the bytes
+# under site/emulator/ are frozen at the last revision that was ever committed
+# and never move again. A staleness test that only watched the directory would
+# therefore call every rebuild stale forever, and check.sh fails on stale on the
+# deploy branch -- a permanently red gate on the branch that matters most.
+( cd "$E" && sleep 1 && echo c > src/a.cpp && git add -A && git commit -qm "source moved again" )
+bash "$STALE" "$E" >/dev/null && ok "a source change after a rebuild reads stale again" || bad "stale not detected after a rebuild"
+( cd "$E" && sleep 1 && echo '{"files":[]}' > site/emulator-manifest.json && git add -A && git commit -qm "chore: emulator rebuilt" )
+bash "$STALE" "$E" >/dev/null && bad "a manifest-only rebuild still reads stale, so the deploy branch's gate is permanently red" || ok "a manifest-only rebuild reads fresh"
+
+echo "the emulator rebuild's commit subject, spelled in two workflows"
+# crossplay-autorelease.yml tells an emulator rebuild from a real merge that
+# moved the tip past what CI verified by MATCHING THE SUBJECT. Reword it in
+# crossplay-emulator.yml and every release silently stops: the gate decides the
+# tip moved, declines, and says so in a log nobody reads. Nothing links the two
+# files, so this is the link.
+AR="$HERE/../../.github/workflows/crossplay-autorelease.yml"
+EM="$HERE/../../.github/workflows/crossplay-emulator.yml"
+# COMMENT LINES DROPPED FIRST. A subject match that has been replaced by
+# something better is usually left in the file as the comment explaining what it
+# replaced, and a check that reads it there goes on passing while guarding a
+# dead line -- which is worse than going red, because it looks like coverage.
+subject="$(grep -vE '^[[:space:]]*#' "$AR" | grep -oE "grep -vq '\^[^']+'" | sed -E "s/.*'\^//; s/'$//")"
+if [ -z "$subject" ]; then
+  # Not a failure. It means the gate stopped settling a question about content
+  # by reading a title, which is the right direction; there is then no subject
+  # for crossplay-emulator.yml to keep in step with.
+  ok "crossplay-autorelease.yml no longer keys off the commit subject, so there is nothing here to keep in step"
+else
+  ok "autorelease matches the subject '$subject'"
+  grep -q -- "-m \"$subject" "$EM" \
+    && ok "crossplay-emulator.yml still commits under that subject" \
+    || bad "crossplay-emulator.yml's commit subject no longer starts with '$subject', so autorelease will read every rebuild as a moved tip and stop releasing"
+fi
+
+echo "what the rebuild commits, against what CI ignores"
+# crossplay-ci.yml's paths-ignore exists so the rebuild's own push does not
+# start a second CrossPlay run -- one that CANCELS the merge's run and takes
+# the autorelease with it, because a cancelled run is not a success. That cost
+# two full builds per merge on 2026-09-04. The filter names paths; the rebuild
+# picks them. Nothing links the two, and the failure is a doubled build and a
+# skipped release, neither of which says why.
+CI="$HERE/../../.github/workflows/crossplay-ci.yml"
+added="$(grep -oE '^ *git add [^|&;]+' "$EM" | sed -E 's/^ *git add //' | tr -s ' ' '\n' | grep -v '^$' | sort -u)"
+if [ -z "$added" ]; then
+  bad "crossplay-emulator.yml stages nothing; the check cannot tell what CI must ignore"
+else
+  ok "the rebuild stages: $(printf '%s' "$added" | tr '\n' ' ')"
+  ignored="$(sed -n '/paths-ignore:/,/^  [a-z_]*:/p' "$CI" | grep -oE "'[^']+'" | tr -d "'")"
+  # Since 2026-09-21 crossplay-ci.yml is a nightly audit with no push trigger,
+  # so the rebuild's commit starts nothing and there is nothing to ignore. The
+  # pairing below is kept and re-arms by itself if a push trigger returns:
+  # host-tests/ci asserts that it does not, and this is the second half of the
+  # same invariant seen from the emulator's side.
+  ci_triggers="$(sed -n '/^on:/,/^[a-z]/p' "$CI")"
+  case "$ci_triggers" in
+    *"  push:"*) ;;
+    *) ok "crossplay-ci.yml has no push trigger, so the rebuild's commit starts no run to ignore"
+       added="" ;;
+  esac
+  for path in $added; do
+    match=no
+    for pat in $ignored; do
+      case "$path" in ${pat%/\*\*}|${pat%/\*\*}/*|$pat) match=yes;; esac
+    done
+    [ "$match" = yes ] \
+      && ok "crossplay-ci.yml ignores $path" \
+      || bad "crossplay-emulator.yml commits $path and crossplay-ci.yml's paths-ignore does not cover it, so every rebuild starts a second CI run that cancels the merge's own and skips the release"
+  done
+fi
+
+echo "the shared scratchpad"
+# Card #314. The agent scratchpad is described as session-specific and is not:
+# several agents run under one session id, and every one of them independently
+# reaches for gate.log, pr.md, out.txt, check.log. Three runs were corrupted in
+# one evening and one reached GitHub -- an agent wrote its pull request body to
+# scratchpad/pr.md, another session overwrote that exact path, and the first
+# pushed the second's text into PR #117.
+#
+# A convention cannot fix this, because the failure mode IS every agent
+# independently choosing the same obvious name. So the flat top level is
+# refused and the refusal names the subdirectory to use instead. Asserted in
+# both directions throughout: a guard that refuses the whole scratchpad would
+# pass a one-sided test exactly as well, and would make the remedy unusable.
+SP="$WORK/scratchpad"
+mkdir -p "$SP/x"
+WT="$ROOT/wt/x"
+# the record may have been cleared by a settled card above; these tests are about
+# the scratch rule, so wt/x is the worker's again
+python3 - "$ROOT/.board/trees/x.json" "$WORKER" <<'PY'
+import json, os, sys, time
+os.makedirs(os.path.dirname(sys.argv[1]), exist_ok=True)
+json.dump({"tree": "wt/x", "card": 0, "actor": sys.argv[2] + ":main", "session": sys.argv[2], "agent": "main", "bound_at": "fixture", "gen": 1}, open(sys.argv[1], "w"))
+PY
+
+expect "a write to the flat scratchpad root is refused" 2 pretool \
+  "{\"session_id\":\"$WORKER\",\"cwd\":\"$WT\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$SP/pr.md\"}}"
+grep -q "$SP/x" "$WORK/err" \
+  && ok "the refusal names this tree's own subdirectory" \
+  || bad "refusal does not name the namespaced path: $(head -c 200 "$WORK/err")"
+grep -q "pr.md" "$WORK/err" \
+  && ok "the refusal keeps the filename the agent chose" \
+  || bad "refusal drops the filename, so the remedy has to be reconstructed"
+
+expect "a write INSIDE the namespaced subdirectory is allowed" 0 pretool \
+  "{\"session_id\":\"$WORKER\",\"cwd\":\"$WT\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$SP/x/pr.md\"}}"
+expect "and so is anything deeper" 0 pretool \
+  "{\"session_id\":\"$WORKER\",\"cwd\":\"$WT\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$SP/x/notes/pr.md\"}}"
+expect "an Edit of the flat root is refused too" 2 pretool \
+  "{\"session_id\":\"$WORKER\",\"cwd\":\"$WT\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$SP/gate.log\"}}"
+
+# The three incidents were all shell redirects, not Write calls: the gate was
+# backgrounded with `> scratchpad/gate.log`, and the PR body was a heredoc.
+expect "a redirect into the flat root is refused" 2 pretool \
+  "{\"session_id\":\"$WORKER\",\"cwd\":\"$WT\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"./scripts_local/check.sh --committed > $SP/gate.log 2>&1\"}}"
+expect "a tee into the flat root is refused" 2 pretool \
+  "{\"session_id\":\"$WORKER\",\"cwd\":\"$WT\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"./scripts_local/check.sh | tee $SP/out.txt\"}}"
+expect "a cd into the scratchpad then a heredoc is refused" 2 pretool \
+  "{\"session_id\":\"$WORKER\",\"cwd\":\"$WT\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"cd $SP && cat > pr.md\"}}"
+expect "a redirect into the namespaced subdirectory is allowed" 0 pretool \
+  "{\"session_id\":\"$WORKER\",\"cwd\":\"$WT\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"./scripts_local/check.sh --committed > $SP/x/gate.log 2>&1\"}}"
+# A redirect that sits AFTER the `<<` on a heredoc's opening line. Dropping the
+# whole construct as data -- which is what the firmware-next guard does -- loses
+# exactly this, and it is one of the two spellings an agent writes a PR body in.
+expect "a redirect on a heredoc's opening line is refused" 2 pretool \
+  "{\"session_id\":\"$WORKER\",\"cwd\":\"$WT\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"python3 - <<'PY' > $SP/out.json\\nprint(1)\\nPY\"}}"
+# ...and the body itself stays data. A path named inside a heredoc is text being
+# written, not a file being opened, and refusing it would make the guard fire on
+# documents that merely describe the rule.
+expect "a path named inside a heredoc body is not a write" 0 pretool \
+  "{\"session_id\":\"$WORKER\",\"cwd\":\"$WT\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"cat <<'EOF'\\nnever write to $SP/gate.log\\nEOF\"}}"
+
+# The other direction, which is the half a blocking guard passes for free.
+expect "an ordinary redirect in the tree is untouched" 0 pretool \
+  "{\"session_id\":\"$WORKER\",\"cwd\":\"$WT\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"ls > $WT/out.txt\"}}"
+expect "> /dev/null is not a write into anything" 0 pretool \
+  "{\"session_id\":\"$WORKER\",\"cwd\":\"$WT\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"./scripts_local/check.sh > /dev/null 2>&1\"}}"
+expect "reading a scratchpad path is not a write" 0 pretool \
+  "{\"session_id\":\"$WORKER\",\"cwd\":\"$WT\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"grep -c CHECKSH-VERDICT $SP/gate.log\"}}"
+expect "a repo path that merely contains the word is untouched" 0 pretool \
+  "{\"session_id\":\"$WORKER\",\"cwd\":\"$WT\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$WT/src/scratchpad_notes.md\"}}"
+
+# The namespace has to come from something that actually differs between the
+# colliding agents. It is the worktree, because one card, one branch, one
+# worktree is the workflow's own rule -- and because on 2026-09-05 the working
+# directory was the ONLY thing that told four concurrently running gates apart.
+guard session-start "{\"session_id\":\"$WORKER\",\"cwd\":\"$WT\"}" >/dev/null
+grep -q "scratchpad is SHARED" "$WORK/out" \
+  && ok "session start says the scratchpad is shared" \
+  || bad "session start does not warn that the scratchpad is shared"
+grep -q "<scratchpad>/x/" "$WORK/out" \
+  && ok "session start names this tree's subdirectory" \
+  || bad "session start does not name the subdirectory: $(grep -i scratchpad "$WORK/out" | head -2)"
+
+# A session with no worktree still gets a name of its own rather than sharing a
+# fallback with every other one. Asserted on the NAME, never on "<scratchpad>/":
+# that prefix is constant text in the message and matches with the namespace
+# empty, which is the one outcome this has to catch.
+guard session-start "{\"session_id\":\"$ORCH\",\"cwd\":\"$ROOT\"}" >/dev/null
+grep -qE "<scratchpad>/[A-Za-z0-9_.-]+/" "$WORK/out" \
+  && ok "a session outside any worktree still gets a namespace of its own" \
+  || bad "a session outside a worktree got an EMPTY namespace: $(grep -o '<scratchpad>[^ ]*' "$WORK/out")"
+
+# The two directions that matter for the guard's false-positive risk: a `>`
+# inside a quoted string is TEXT. writes_into_tree refused four read-only
+# commands in 2026-09 for exactly this, and a wrong refusal here blocks every
+# session in the workspace, which is worse than a missed write.
+expect "a > inside a quoted grep pattern is not a redirect" 0 pretool \
+  "{\"session_id\":\"$WORKER\",\"cwd\":\"$WT\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git log --grep='check.sh > $SP/gate.log'\"}}"
+expect "a > inside an echo argument is not a redirect either" 0 pretool \
+  "{\"session_id\":\"$WORKER\",\"cwd\":\"$WT\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"echo 'never write to $SP/gate.log' >> $WT/notes.md\"}}"
+# ...but a QUOTED target is still a target. Deleting quoted strings outright --
+# which is how the firmware-next guard solves the same problem -- would lose
+# this, and quoting a path is the ordinary way to write one.
+expect "a quoted scratchpad target is still refused" 2 pretool \
+  "{\"session_id\":\"$WORKER\",\"cwd\":\"$WT\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"./scripts_local/check.sh > '$SP/gate.log' 2>&1\"}}"
+# A subshell or a brace group is the same cd.
+expect "a cd inside a subshell carries" 2 pretool \
+  "{\"session_id\":\"$WORKER\",\"cwd\":\"$WT\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"(cd $SP && cat > pr.md)\"}}"
+grep -q "$SP/pr.md is at the top" "$WORK/err" \
+  && ok "and the refusal prints the path without the shell's closing paren" \
+  || bad "the refusal named a path the reader cannot paste: $(grep -o "$SP[^ ]*" "$WORK/err" | head -1)"
+
+echo
+echo "the claimant note, the lease, the handoff, the takeover, the release"
+mkdir -p "$ROOT/wt/gone" && ( cd "$ROOT/wt/gone" && git init -q && git config user.email t@t && git config user.name t && echo a > a.txt && git add -A && git commit -qm base ) >/dev/null 2>&1
+GONE=$(board new "Jaipur: the market never refills after a bonus" --from jaipur --kind bug --anyway | sed 's/^#\([0-9]*\).*/\1/')
+# the guard sees the bind command pass with agent id a2222... (with a redirect and a pipe around it); the CLI's bind then finds that note
+printf '{"session_id":"held-c","agent_id":"a2222222222222222","tool_use_id":"tu1","tool_name":"Bash","cwd":"'"$ROOT"'/wt/gone","tool_input":{"command":"python3 '"$BOARD"' bind '"$GONE"' --session held-c --tree wt/gone --branch app/gone 2>&1 | tail -1"}}' | python3 "$GUARD" pretool >"$WORK/claim.out" 2>&1
+ls "$ROOT/.board/claimants/$GONE|gone.json" >/dev/null 2>&1 && ok "the guard leaves a claimant note keyed on the card and the tree" || bad "no claimant note: $(head -c 200 "$WORK/claim.out")"
+printf '{"session_id":"other","tool_name":"Bash","tool_input":{"command":"echo board bind 999 --tree wt/gone"}}' | python3 "$GUARD" pretool >/dev/null 2>&1
+ls "$ROOT/.board/claimants/999|gone.json" >/dev/null 2>&1 && bad "an echo mentioning a bind left a note" || ok "a command that merely mentions a bind leaves no note"
+board bind "$GONE" --session held-c --tree wt/gone --branch app/gone | grep -q "bound to held-c:a2222222222222222 in wt/gone" && ok "bind records the actor the guard saw, agent and all" || bad "bind did not pick up the claimant"
+ls "$ROOT/.board/claimants/"*.json >/dev/null 2>&1 && bad "the claimant note was not consumed" || ok "the note is consumed once"
+expect "that agent writes in its tree"                       0 pretool "{\"session_id\":\"held-c\",\"agent_id\":\"a2222222222222222\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$ROOT/wt/gone/a.txt\"}}"
+expect "the same session's main conversation does not write there" 2 pretool "{\"session_id\":\"held-c\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$ROOT/wt/gone/a.txt\"}}"
+board bind "$GONE" --session held-c --tree wt/gone | grep -q "bound to held-c:main in wt/gone" && ok "the session's conversation takes its subagent's tree back without ceremony" || bad "handoff within the session refused"
+board show "$GONE" | grep -q "handed within the session from held-c:a2222222222222222 to held-c:main" && ok "and the card says so" || bad "no handoff line"
+board bind "$GONE" --session held-c --tree wt/gone 2>&1 | grep -q "the guard left no note" && ok "a bind the guard did not see says the holder is the conversation" || bad "no-note line missing"
+printf '{"session_id":"held-c","agent_id":"a3333333333333333","tool_name":"Bash","tool_input":{"command":"python3 '"$BOARD"' bind '"$GONE"' --session held-c --tree wt/gone"}}' | python3 "$GUARD" pretool >/dev/null 2>&1
+board bind "$GONE" --session held-c --tree wt/gone | grep -q "bound to held-c:a3333333333333333" && ok "the conversation hands the tree to another subagent" || bad "handoff to a subagent refused"
+printf '{"session_id":"held-c","agent_id":"a4444444444444444","tool_name":"Bash","tool_input":{"command":"python3 '"$BOARD"' bind '"$GONE"' --session held-c --tree wt/gone"}}' | python3 "$GUARD" pretool >/dev/null 2>&1
+if board bind "$GONE" --session held-c --tree wt/gone >"$WORK/sib.out" 2>&1; then bad "a sibling subagent took a live sibling's tree"; else grep -q "is held by held-c:a3333333333333333" "$WORK/sib.out" && ok "two subagents of one session do not share a tree" || bad "wrong refusal: $(cat "$WORK/sib.out")"; fi
+touch -t 202001010000 "$ROOT/.board/trees/gone.json"
+board tree gone >"$WORK/tree.out" 2>&1; grep -q "lease expired" "$WORK/tree.out" && grep -q "free to take" "$WORK/tree.out" && ok "board tree reports an expired lease on a quiescent tree as free to take" || bad "board tree: $(cat "$WORK/tree.out")"
+printf '{"session_id":"held-c","agent_id":"a3333333333333333","tool_name":"Bash","tool_input":{"command":"ls"}}' | python3 "$GUARD" pretool >/dev/null 2>&1
+{ board tree gone 2>&1 || true; } | grep -q "lease LIVE" && ok "one tool call by the holder renews the lease" || bad "the lease was not renewed by a tool call"
+if board bind "$GONE" --session held-d --tree wt/gone --take >"$WORK/take.out" 2>&1; then bad "--take took a tree whose holder is live"; else grep -q "lease live for another" "$WORK/take.out" && ok "--take is refused while the holder is live, saying how long" || bad "wrong refusal: $(cat "$WORK/take.out")"; fi
+touch -t 202001010000 "$ROOT/.board/trees/gone.json"
+GONE2=$(board new "Jaipur: a second card that inherits the tree" --from jaipur --kind task --anyway | sed 's/^#\([0-9]*\).*/\1/')
+if board bind "$GONE2" --session held-d --tree wt/gone >"$WORK/take.out" 2>&1; then bad "a plain bind took an expired tree without --take"; else grep -q -- "--take" "$WORK/take.out" && grep -q "lease expired" "$WORK/take.out" && ok "an expired tree is not taken without --take, and the command is named" || bad "wrong refusal: $(cat "$WORK/take.out")"; fi
+echo dirty >> "$ROOT/wt/gone/a.txt"
+if board bind "$GONE2" --session held-d --tree wt/gone --take >"$WORK/take.out" 2>&1; then bad "--take took a tree with uncommitted work whose session lives"; else grep -q "uncommitted change" "$WORK/take.out" && ok "--take is refused while the tree has uncommitted work and its session lives" || bad "wrong refusal: $(cat "$WORK/take.out")"; fi
+{ board tree gone 2>&1 || true; } | grep -q "NOT quiescent" && ok "board tree never calls a dirty tree free" || bad "board tree called a dirty tree free"
+printf '{"session_id":"held-c"}' | python3 "$GUARD" session-end >/dev/null 2>&1
+board bind "$GONE2" --session held-d --tree wt/gone --take | grep -q "bound to held-d:main in wt/gone" && ok "--take inherits a dirty tree once its session has ended" || bad "an ended session's dirty tree could not be inherited"
+board show "$GONE2" | grep -q "took over wt/gone from held-c:a3333333333333333" && grep -q "inherited with 1 uncommitted" <(board show "$GONE2") && ok "the taker's card says whom it took the tree from and what came with it" || bad "no takeover line on the taker: $(board show "$GONE2" | tail -3)"
+board show "$GONE" | grep -q "wt/gone was taken over by held-d:main" && ok "and the displaced card is told" || bad "the displaced card was not told"
+( cd "$ROOT/wt/gone" && git checkout -q -- a.txt )
+expect "the displaced actor is refused now"                  2 pretool "{\"session_id\":\"held-c\",\"agent_id\":\"a3333333333333333\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$ROOT/wt/gone/a.txt\"}}"
+# a gate still verifying the tree keeps it in use whatever the lease says
+GATE_TAG="$(python3 -c 'import hashlib,pathlib,sys; print(hashlib.sha1(str(pathlib.Path(sys.argv[1]).resolve()).encode()).hexdigest()[:8])' "$ROOT/wt/gone")"
+export TMPDIR="$WORK"
+bash -c 'exec -a check.sh sleep 30' & GATEPID=$!
+sleep 0.2; echo "$GATEPID" >"$WORK/xteink-check-$GATE_TAG.running"
+touch -t 202001010000 "$ROOT/.board/trees/gone.json"
+if board bind "$GONE" --session held-e --tree wt/gone --take >"$WORK/take.out" 2>&1; then bad "--take took a tree with a running gate"; else grep -q "check.sh still verifying it (pid $GATEPID)" "$WORK/take.out" && ok "--take is refused while a gate runs on the tree, naming it" || bad "wrong refusal: $(cat "$WORK/take.out")"; fi
+{ board tree gone 2>&1 || true; } | grep -q "gate: running, pid $GATEPID" && ok "board tree names the running gate" || bad "board tree misses the gate"
+kill "$GATEPID" 2>/dev/null; wait "$GATEPID" 2>/dev/null
+unset TMPDIR
+board state "$GONE2" done >/dev/null
+[ -e "$ROOT/.board/trees/gone.json" ] && bad "a settled card's tree record outlived it" || ok "settling the card clears its tree record"
+board bind "$GONE" --session held-f --tree wt/gone >/dev/null 2>&1
+board tree gone --release --session held-f | grep -q "released" && ok "the holder releases its tree" || bad "release refused the holder"
+[ -e "$ROOT/.board/trees/gone.json" ] && bad "release left the record" || ok "and the record is gone"
+# A record whose DIRECTORY is gone guards nothing, however live its lease: the
+# holder's tool calls keep renewing it after wt.sh removed the tree. 34 such
+# records, all LIVE, sat on the board the first day prune asked it.
+python3 - "$ROOT/.board/trees/vanished.json" <<'PY2'
+import json, sys, time
+json.dump({"tree": "wt/vanished", "card": 0, "actor": "held-q:main", "session": "held-q", "agent": "main", "bound_at": "x", "gen": 1}, open(sys.argv[1], "w"))
+PY2
+board trees | grep -q "no longer exists.*vanished" && ok "board trees names a record whose tree is gone" || bad "board trees hid the gone record: $(board trees)"
+board tree vanished --release --session held-z | grep -q "released (no such directory" && ok "a record with no directory is released by anyone, lease or not" || bad "release of a gone tree refused a stranger"
+[ -e "$ROOT/.board/trees/vanished.json" ] && bad "the gone record survived" || ok "and it is gone"
+board trees | grep -q "missing" && ok "board trees counts open cards with a tree and no record" || bad "board trees said nothing"
+board trees --seed | grep -q "written" && ok "--seed writes the missing records (the rollout step)" || bad "--seed wrote nothing"
+{ board tree gone 2>&1 || true; } | grep -q "held by held-f:main" && ok "a seeded record names the session's conversation" || bad "seeded record wrong: $(board tree gone 2>&1 | head -1)"
+
+echo
+echo "who reported a card"
+# Mario asked "what have I reported?" and the board could not answer: source
+# said by what MECHANISM a card arrived, never whose observation it was. The
+# rule that matters most here is the default: a card filed without --reporter
+# must read `unknown`, NOT `session`, so a path that forgets to stamp is
+# visible instead of quietly crediting one of our own sessions.
+NOSTAMP=$(board new "Checkers: a crowned piece keeps moving like a man" --from checkers --kind bug | sed 's/^#\([0-9]*\).*/\1/')
+board show "$NOSTAMP" | grep -q "reported by unknown" \
+  && ok "a card filed without --reporter is unknown, never session" \
+  || bad "an unstamped card did not read unknown: $(board show "$NOSTAMP" | head -2)"
+MINE=$(board new "Yahtzee: the dice sit under the header rule" --from yahtzee --kind bug --reporter mario | sed 's/^#\([0-9]*\).*/\1/')
+OURS=$(board new "Yahtzee: contentTop derives from the constant, not the chrome" --from yahtzee --kind bug --reporter session --session reporter-suite --anyway | sed 's/^#\([0-9]*\).*/\1/')
+THEIRS=$(board new "Study: pairing says the bridge is invitation-only" --from study --kind bug --reporter user | sed 's/^#\([0-9]*\).*/\1/')
+board show "$MINE" | grep -q "reported by mario" && ok "--reporter mario is recorded" || bad "--reporter mario was not stored"
+board show "$THEIRS" | grep -q "reported by user" && ok "--reporter user is recorded" || bad "--reporter user was not stored"
+
+# The address the report form has always asked for. api/report.js validated it,
+# stored it as reporter_email and used it to tell Mario's own reports from a
+# stranger's from the first day the field existed -- and `board show` printed
+# every other thing about the card and not that, so #426 (someone offering to
+# send us games) and #389 (owed a pairing code) read as unreachable strangers
+# while their addresses sat in the column. There is no CLI flag to set one: the
+# public form is the only writer, so the card is seeded the way the form's
+# function writes it.
+WROTE=$(board new "Instapaper: no code came back from the sync server" --from instapaper --kind bug --reporter user | sed 's/^#\([0-9]*\).*/\1/')
+python3 - "$ROOT/.board/cards/$WROTE.json" <<'PY'
+import json, sys
+p = sys.argv[1]
+c = json.load(open(p))
+c["reporter_email"] = "ojuergens@gmx.de"
+json.dump(c, open(p, "w"), indent=2)
+PY
+board show "$WROTE" | grep -q "ojuergens@gmx.de" \
+  && ok "board show prints the address a reporter left" \
+  || bad "board show hides reporter_email, so nobody can answer the person: $(board show "$WROTE" | sed -n 2p)"
+board show "$WROTE" | grep -q "reported by user <ojuergens@gmx.de>" \
+  && ok "and puts it beside who reported it" \
+  || bad "the address is not on the reporter line: $(board show "$WROTE" | sed -n 2p)"
+# A card nobody left an address on must not grow an empty pair of brackets.
+board show "$THEIRS" | grep -q "reported by user  created" \
+  && ok "a card with no address says only who reported it" \
+  || bad "a card without an address gained an empty address: $(board show "$THEIRS" | sed -n 2p)"
+
+# The address was not the only thing collected and never shown. A report brings
+# the board it was made on, the version the person looked up in Settings >
+# About, and sometimes a photo of the broken screen; `board show` printed none
+# of them, so the one field that named the device did so only as prose inside a
+# history line. Same rule as the address: shown when there, absent when not.
+SENT=$(board new "Trivia: the answer row draws through the header" --from trivia --kind bug --reporter user | sed 's/^#\([0-9]*\).*/\1/')
+python3 - "$ROOT/.board/cards/$SENT.json" <<'PY'
+import json, sys
+p = sys.argv[1]
+c = json.load(open(p))
+c.update(device="sticky", version="1.12.11", photo_path="photos/%s.jpg" % c["id"])
+json.dump(c, open(p, "w"), indent=2)
+PY
+board show "$SENT" >"$WORK/sent.out" 2>&1
+grep -q "device sticky" "$WORK/sent.out" && ok "board show names the board the report came from" || bad "the device is invisible: $(cat "$WORK/sent.out")"
+grep -q "version 1.12.11" "$WORK/sent.out" && ok "and the version the reporter looked up" || bad "the version a reporter went and found is invisible: $(cat "$WORK/sent.out")"
+grep -q "photo photos/$SENT.jpg" "$WORK/sent.out" && ok "and says a photo came with it" || bad "an attached photo is invisible, so nobody knows to look: $(cat "$WORK/sent.out")"
+# A card carrying none of them gains no empty line for them.
+board show "$THEIRS" | grep -qE "^  (device|version|photo|issue) " \
+  && bad "a card with no device, version or photo grew a line for them anyway: $(board show "$THEIRS")" \
+  || ok "a card carrying none of them shows no line for them"
+
+# The question he actually asked, as one command.
+board list --from-mario >"$WORK/mine.out" 2>&1
+grep -q "#$MINE " "$WORK/mine.out" && ok "--from-mario lists his card" || bad "--from-mario missed his card: $(cat "$WORK/mine.out")"
+grep -q "#$OURS " "$WORK/mine.out" && bad "--from-mario listed a session's find" || ok "and leaves a session's find out"
+grep -q "#$THEIRS " "$WORK/mine.out" && bad "--from-mario listed another person's report" || ok "and another person's report out"
+grep -q "#$NOSTAMP " "$WORK/mine.out" && bad "--from-mario listed an unstamped card" || ok "and an unstamped card out"
+board list --reporter unknown | grep -q "#$NOSTAMP " && ok "--reporter unknown finds what nobody stamped" || bad "--reporter unknown missed the unstamped card"
+board list --reporter session | grep -q "#$OURS " && ok "--reporter session finds a session's own find" || bad "--reporter session missed it"
+
+# Mario's report is frequently the CHILD of a session's card (#262 under #261,
+# #257 under #253), and `board list` prints children nested under their parent.
+# A filtered-out parent must not take its matching child with it.
+KID=$(board new "Wavelength: the front door offers a score that does not exist" --from wavelength --kind bug --reporter mario --anyway | sed 's/^#\([0-9]*\).*/\1/')
+board parent "$KID" --of "$OURS" >/dev/null
+board list --from-mario | grep -q "#$KID " && ok "a child of a session's card still shows under --from-mario" || bad "the reporter filter lost a nested card"
+
+# An empty answer from a filter is a different fact from an empty board. One
+# sentence for both is how a filter that matched nothing reads as one that was
+# never applied -- and "no cards" would say Mario has reported nothing.
+board list --reporter user >"$WORK/u.out" 2>&1
+board state "$THEIRS" done >/dev/null
+board list --reporter user | grep -q "#$THEIRS " && ok "a settled card is still attributed" || bad "settling a card lost its reporter"
+# A GitHub issue was written by a person, and that person is not Mario. The
+# sweep above filed some; nobody passed --reporter, so this is the derivation
+# doing its job rather than a caller remembering.
+board list --reporter user | grep -q "Slow Reader" \
+  && ok "a card from a GitHub issue is a user's without anyone saying so" \
+  || bad "a github-sourced card was not attributed to a user: $(board list --reporter user)"
+
+# Settle every open `user` card first, whatever earlier sections of this suite
+# left behind -- the github sweep above files its issues as `user` too, so an
+# assertion that assumed an empty set would pass or fail on section order.
+for uid in $(board list --open --reporter user | sed -n 's/^#\([0-9][0-9]*\) .*/\1/p'); do
+  board state "$uid" parked --with-blockers >/dev/null 2>&1
+done
+board list --open --reporter user >"$WORK/none.out" 2>&1
+grep -q "no cards reported by user" "$WORK/none.out" \
+  && ok "a filter that matches nothing says so, rather than 'no cards'" \
+  || bad "an empty filter reads as an empty board: $(cat "$WORK/none.out")"
+
+board new "Sudoku: the notes pad forgets a digit" --from sudoku --kind bug --reporter nobody >"$WORK/bad.out" 2>&1 \
+  && bad "an unknown reporter value was accepted" \
+  || ok "a reporter the board does not know is refused"
+
+echo
+echo "a report from a person is not a session's blocker, and the inbox says so"
+# Mario, 2026-09-07: "I can't find a way to read from the inbox issues that
+# people have reported via the website, they are all mixed with low priority
+# automated ones." They were not mixed in: they had no way into the inbox at
+# all. The inbox is open `mario` blockers, a blocker means a session cannot
+# proceed, and nobody is blocked on "nice firmware, thanks" -- so three reports
+# sat in `reported` for a day while the page he reads said two sessions needed
+# him. Every assertion below is one half of that: unmissable, and not a blocker.
+#
+# On its own board, because what is asserted here is what the WHOLE inbox says
+# with only a report in it, and the sections above leave eight of Mario's own
+# asks open. A filter over a shared board could not tell "the reports section
+# is absent" from "it is buried".
+export BOARD_ROOT="$ROOT/ws2"
+board init >/dev/null
+THEM=$(board new "Istapaoper: i didnt get a code from the sync Server to link my Sticky." --from unknown --kind bug --reporter user --body "Istapaoper: i didnt get a code from the sync Server to link my Sticky." | sed 's/^#\([0-9]*\).*/\1/')
+board inbox >"$WORK/in.out" 2>&1
+grep -q "1 person wrote to you" "$WORK/in.out" && ok "a person's report reaches the inbox" || bad "a report from a person never reached the inbox: $(cat "$WORK/in.out")"
+grep -q "didnt get a code from the sync Server" "$WORK/in.out" && ok "in their own words, not just the title" || bad "the inbox showed no body"
+grep -q "board seen $THEM" "$WORK/in.out" && ok "and says how to clear it" || bad "the inbox printed no way to read it"
+# Not a blocker: no `mario` blocker was opened. Making a report one would have
+# been free to build and would have cost inbox_latency and asks_to_mario their
+# meaning -- both count how long a SESSION waits on him.
+board show "$THEM" | grep -q "BLOCKED(mario)" && bad "a report opened a blocker" || ok "and opens no blocker"
+grep -q "No session is waiting on you." "$WORK/in.out" \
+  && ok "an inbox holding only reports does not claim nothing needs him" \
+  || bad "the inbox said nothing needs him under a person's report: $(cat "$WORK/in.out")"
+
+# `unknown` is not `user`. Most cards are `session`; `unknown` means the origin
+# could not be established, and showing those as people's reports would flood
+# exactly what this section fixes.
+NOBODY=$(board new "Checkers: the crowned piece keeps moving like a man" --from checkers --kind bug | sed 's/^#\([0-9]*\).*/\1/')
+MINE2=$(board new "Sudoku: the notes pad forgets a digit" --from sudoku --kind bug --reporter mario | sed 's/^#\([0-9]*\).*/\1/')
+board inbox >"$WORK/in.out" 2>&1
+grep -q "1 person wrote to you" "$WORK/in.out" && ok "an unstamped card is not a person's report" || bad "unknown was counted as a user: $(head -2 "$WORK/in.out")"
+grep -q "#$NOBODY " "$WORK/in.out" && bad "an unknown-reporter card reached the reports section" || ok "and never appears in it"
+grep -q "#$MINE2 " "$WORK/in.out" && bad "one of Mario's own cards reached the reports section" || ok "nor does one of his own"
+
+# A closed report is not one that needs him. #13 is a user's report and was
+# released days ago; showing it would be asking him to act on finished work.
+DONEREP=$(board new "Slow page turns, 4.2 s against 1 s on stock" --from reader --kind bug --reporter user | sed 's/^#\([0-9]*\).*/\1/')
+board state "$DONEREP" released >/dev/null
+board inbox | grep -q "#$DONEREP " && bad "a released report was shown as needing him" || ok "a settled report never appears"
+
+# Read once. A report nobody triages must not sit in his face forever (that is
+# how an inbox becomes wallpaper), and one triaged an hour after it lands must
+# not vanish before he sees it -- so `state` cannot carry this and
+# `mario_seen_at` does. His note goes on the card for whoever triages it.
+board seen "$THEM" --note "the pairing code never arrives; file it against the bridge" >/dev/null
+board inbox >"$WORK/in.out" 2>&1
+grep -q "wrote to you" "$WORK/in.out" && bad "a report he has read came back" || ok "board seen clears a report"
+grep -q "Nothing needs you." "$WORK/in.out" && ok "and the empty inbox reads as empty again" || bad "the inbox did not go quiet: $(cat "$WORK/in.out")"
+# History is not where triage looks: no view selects it, no command surfaces
+# it, no step of the runbook visits it. A note filed only there means he sees
+# the report once, writes down what should happen, and nobody reads it -- the
+# same message dropped one step later. The BODY is what a triager reads.
+board show "$THEM" >"$WORK/card.out" 2>&1
+grep -q "Mario, on reading this: the pairing code never arrives" "$WORK/card.out" \
+  && ok "his note lands on the card body, attributed to him" \
+  || bad "the note is not on the body: $(cat "$WORK/card.out")"
+grep -qE "^#$THEM +triaged" "$WORK/card.out" \
+  && ok "and a report he answered leaves the triage queue" \
+  || bad "an answered report is still in reported: $(head -1 "$WORK/card.out")"
+# ...and a report he read WITHOUT saying anything has not been triaged by him.
+SILENT=$(board new "the frontlight flickers at the lowest step" --from unknown --kind bug --reporter user | sed 's/^#\([0-9]*\).*/\1/')
+board seen "$SILENT" >/dev/null
+board show "$SILENT" >"$WORK/silent.out" 2>&1
+grep -q "Mario, on reading this" "$WORK/silent.out" && bad "an empty note was written onto the card" || ok "reading without a note writes nothing onto the card"
+grep -qE "^#$SILENT +reported" "$WORK/silent.out" && ok "and leaves it in the ordinary triage queue" || bad "a silent read moved the card anyway: $(head -1 "$WORK/silent.out")"
+board inbox | grep -q "#$SILENT " && bad "a report he read came back" || ok "but it still leaves his inbox"
+board seen "$NOBODY" >"$WORK/seen.out" 2>&1 \
+  && bad "board seen accepted a card no person reported" \
+  || ok "board seen refuses a card that is not a person's report"
+grep -q "reported by unknown" "$WORK/seen.out" && ok "and names what it is instead" || bad "the refusal did not say why: $(cat "$WORK/seen.out")"
+
+
+# The other half of "not a firehose": a session's ask and a person's report
+# are two different facts, and one line for both is how the rare one
+# disappears into the routine one.
+board block "$NOBODY" --session "$WORKER" --need mario --ask "Ship it or hold it?" --default "it ships" >/dev/null
+SECOND=$(board new "Codenames and/or Codenames Duet would be an excellent fit for this!" --from unknown --kind feature --reporter user | sed 's/^#\([0-9]*\).*/\1/')
+board inbox >"$WORK/both.out" 2>&1
+grep -q "1 person wrote to you" "$WORK/both.out" && ok "a report and an ask are counted apart" || bad "the two were conflated: $(cat "$WORK/both.out")"
+grep -q "Need from you: Ship it or hold it?" "$WORK/both.out" && ok "and the ask still reaches him" || bad "the ask was lost under the reports"
+[ "$(grep -n "wrote to you" "$WORK/both.out" | cut -d: -f1)" -lt "$(grep -n "Need from you" "$WORK/both.out" | head -1 | cut -d: -f1)" ] \
+  && ok "the person comes first" || bad "a session's ask was printed above a person's report"
+export BOARD_ROOT="$ROOT"
+
+# And no session may run it at all. `board seen` is the only thing that takes a
+# report out of the one place Mario looks, so a session that runs it has not
+# triaged the card, it has deleted the message. Both directions: reading the
+# board is exactly what a session should be doing with a report.
+expect "board seen from a worker refused" 2 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"board seen 425 --note done\"}}"
+grep -q "only he can say that" "$WORK/err" && ok "and says whose act it is" || bad "the refusal did not say why: $(head -c 200 "$WORK/err")"
+expect "board seen from the orchestrator refused too" 2 pretool "{\"session_id\":\"$ORCH\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"board seen 425\"}}"
+expect "reading a person's report is allowed" 0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"board list --reporter user\"}}"
+expect "and triaging its card is allowed"     0 pretool "{\"session_id\":\"$WORKER\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"board state 425 triaged\"}}"
+
+echo
+echo "a CLI quietly running last week's code"
+# `board` is /opt/homebrew/bin/board resolving into the integration tree, so it
+# runs whatever that tree has checked out. On 2026-09-07 that was 332 commits
+# behind trunk: `board list --reporter` had merged the night before and simply
+# did not exist on the command line, and nothing said so -- the flag was an
+# unrecognised argument. Behind by a few commits is the normal state of an
+# integration tree while other trees land work, so the threshold is TIME.
+GITREPO="$WORK/repo"
+mkdir -p "$GITREPO"
+git -C "$GITREPO" init -q -b main
+git -C "$GITREPO" config user.email t@t
+git -C "$GITREPO" config user.name t
+export GIT_AUTHOR_DATE="2026-08-01T00:00:00Z" GIT_COMMITTER_DATE="2026-08-01T00:00:00Z"
+: >"$GITREPO/a"; git -C "$GITREPO" add a; git -C "$GITREPO" commit -qm a
+git -C "$GITREPO" checkout -q -b oldtrunk
+: >"$GITREPO/b"; git -C "$GITREPO" add b; git -C "$GITREPO" commit -qm b
+unset GIT_AUTHOR_DATE GIT_COMMITTER_DATE
+git -C "$GITREPO" checkout -q -b newtrunk main
+: >"$GITREPO/c"; git -C "$GITREPO" add c; git -C "$GITREPO" commit -qm c
+git -C "$GITREPO" checkout -q main
+# "<missing commits> <hours old> <the warning, or -»" for one trunk ref.
+fresh() { BOARD_NO_FRESHNESS="${2:-}" python3 "$HERE/fixtures/freshness.py" "$BOARD" "$GITREPO" "$1"; }
+fresh oldtrunk >"$WORK/f.out" 2>&1
+grep -q "^1 " "$WORK/f.out" && ok "a checkout behind trunk counts what it is missing" || bad "the gap was not seen: $(cat "$WORK/f.out")"
+grep -q "commits behind oldtrunk" "$WORK/f.out" && ok "a gap a day old warns" || bad "an old gap did not warn: $(cat "$WORK/f.out")"
+grep -q "merge --ff-only oldtrunk" "$WORK/f.out" \
+  && ok "the warning carries a fix that names the ref it measured" \
+  || bad "the warning names no remedy, or names a pull (wrong in a worktree on a feature branch): $(cat "$WORK/f.out")"
+# The other direction, and the one that decides whether this gets disabled: a
+# gap made of commits from the last minute is a tree doing its job.
+fresh newtrunk >"$WORK/f2.out" 2>&1
+grep -q "^1 0 -$" "$WORK/f2.out" && ok "a gap of today's commits stays quiet" || bad "a fresh gap warned: $(cat "$WORK/f2.out")"
+fresh main | grep -q "^0 0 -$" && ok "a current checkout says nothing" || bad "a current checkout warned"
+fresh nosuchref | grep -q "^0 0 -$" && ok "a trunk ref that does not exist is silent, never an error" || bad "a missing ref was not survived"
+python3 "$HERE/fixtures/freshness.py" "$BOARD" "$WORK" oldtrunk | grep -q "^0 0 -$" && ok "a directory that is not a repository is silent" || bad "a non-repository was not survived"
+fresh oldtrunk 1 | grep -q -- "-$" && ok "BOARD_NO_FRESHNESS=1 turns the line off" || bad "the escape hatch did not work"
+
+# The path the incident actually took, and the one a direct call cannot reach.
+# `board list --reporter user` against a stale CLI is an UNRECOGNISED ARGUMENT:
+# argparse answers with sys.exit(2) from inside parse_args, so a check placed
+# after parse_args prints nothing in the single case it exists for. The first
+# version of this check was placed exactly there and no test noticed, because
+# every fixture called the functions directly.
+BOARD_NO_FRESHNESS="" python3 "$HERE/fixtures/freshness.py" "$BOARD" "$GITREPO" oldtrunk --through-main >"$WORK/m.out" 2>&1
+grep -q "unrecognized arguments" "$WORK/m.out" && ok "an unknown flag still reports itself" || bad "argparse stopped complaining: $(cat "$WORK/m.out")"
+grep -q "commits behind oldtrunk" "$WORK/m.out" \
+  && ok "and a stale CLI says so on the flag-does-not-exist path" \
+  || bad "the staleness check cannot fire in the case it was written for: $(cat "$WORK/m.out")"
+[ "$(grep -n "error:" "$WORK/m.out" | head -1 | cut -d: -f1)" -lt "$(grep -n "commits behind" "$WORK/m.out" | head -1 | cut -d: -f1)" ] \
+  && ok "printed under the error, not above the usage dump" \
+  || bad "the freshness line landed above the usage text, where it gets scrolled past"
+BOARD_NO_FRESHNESS="" python3 "$HERE/fixtures/freshness.py" "$BOARD" "$GITREPO" newtrunk --through-main 2>&1 \
+  | grep -q "commits behind" && bad "a fresh gap warned on the error path" || ok "and a fresh CLI stays quiet there too"
+
+# One list of settled states, spelled in board.py and again in the migration's
+# WHERE clause. Nothing compared them, and a card state added to one and not
+# the other would show closed reports in his inbox or hide open ones.
+SQL="$ROOT_REAL/server/board/supabase/migrations/20260907000100_reports_from_people.sql"
+PY_SETTLED=$(python3 -c "
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location('board', '$BOARD')
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+print(','.join(sorted(m.SETTLED)))")
+SQL_SETTLED=$(grep -o "state not in ([^)]*)" "$SQL" | tr -d "'" | sed "s/state not in (//;s/)//;s/ //g" | tr ',' '\n' | sort | paste -sd, -)
+[ "$PY_SETTLED" = "$SQL_SETTLED" ] \
+  && ok "board.py and the view agree on which states are settled" \
+  || bad "settled states differ: board.py has $PY_SETTLED, the view has $SQL_SETTLED"
+
+# And the prefix Mario's note is filed under, spelled in board.py and again in
+# api/inbox.js. Two writers, one card body: if they drift, a triager reading
+# one card cannot tell which sentence is his.
+JS_SAID=$(grep -o 'MARIO_SAID = "[^"]*"' "$ROOT_REAL/site/api/inbox.js" | head -1 | sed 's/.*= "//;s/"$//')
+PY_SAID=$(python3 -c "
+import importlib.util
+spec = importlib.util.spec_from_file_location('board', '$BOARD')
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+print(m.MARIO_SAID)")
+[ -n "$JS_SAID" ] && [ "$JS_SAID" = "$PY_SAID" ] \
+  && ok "the CLI and the page file his note under the same prefix" \
+  || bad "his note is prefixed '$PY_SAID' by the CLI and '$JS_SAID' by the page"
+
+echo "what a session notices is a notice, not a card"
+# 2026-09-20: 547 cards in 17 days, 145 of the 203 open ones filed by sessions
+# "for later", which on a board where nothing is worked without Mario's word
+# means for never. A session's observation is now one line that expires; a
+# card a session files for itself is work that starts in the same call.
+CARDS_BEFORE="$(ls "$ROOT/.board/cards" | wc -l | tr -d ' ')"
+if board new "The shelf draws one pixel into the bezel on the last row" --from shelf --kind bug --reporter session >"$WORK/n.out" 2>&1; then bad "a session's unbound observation was filed as a card"; else grep -q "board noticed" "$WORK/n.out" && ok "a session's unbound card is refused, and the refusal names board noticed" || bad "wrong refusal: $(cat "$WORK/n.out")"; fi
+[ "$(ls "$ROOT/.board/cards" | wc -l | tr -d ' ')" = "$CARDS_BEFORE" ] && ok "and nothing was filed" || bad "the refused card exists"
+board noticed "The shelf draws one pixel into the bezel on the last row" --from shelf --session note-a | grep -q "^noticed (n" && ok "board noticed takes the line" || bad "board noticed refused a line"
+[ "$(ls "$ROOT/.board/cards" | wc -l | tr -d ' ')" = "$CARDS_BEFORE" ] && ok "without making a card" || bad "a notice made a card"
+board noticed "Last row of the shelf draws a pixel into the bezel" --from shelf --session note-b | grep -q "noticed again, 2 times" && ok "the same thing in other words counts up instead of adding a line" || bad "a rewording was a second notice"
+board noticed "shelf: the last row draws one pixel into the bezel" --from shelf --session note-c | grep -q "3 times now.*shown to Mario" && ok "seen three times, it is shown to Mario" || bad "the third sighting did not surface"
+board notices | grep -q "x3 .*shelf" && ok "board notices lists it, most seen first" || bad "board notices: $(board notices)"
+board new "Yahtzee scores a full house of five sixes as zero" --from yahtzee --kind bug --reporter mario >/dev/null
+board noticed "Yahtzee: a full house of five sixes scores zero" --from yahtzee | grep -q "already a card" && ok "what is already a card is not noticed a second time" || bad "a notice duplicated an open card"
+NID="$(board notices | head -1 | sed 's/^n\([0-9]*\).*/\1/')"
+board promote "n$NID" --reporter mario | grep -q "^#" && ok "a person asking for it turns the notice into a card" || bad "promote failed"
+board notices | grep -q "bezel" && bad "a promoted notice is still listed" || ok "and the notice is gone from the list"
+OUT="$(board new "Fix the gate's stale sweep now" --from tooling --kind bug --reporter session --session note-d)"
+NEWID="$(printf '%s' "$OUT" | sed 's/^#\([0-9]*\).*/\1/')"
+board show "$NEWID" | grep -q "working" && board show "$NEWID" | grep -q "note-d" && ok "a card a session files WITH its id is its own work, bound and working at once" || bad "new --session did not bind: $(board show "$NEWID" | head -3)"
+python3 - "$ROOT/.board/notices.json" <<'PY'
+import json, sys
+rows = json.load(open(sys.argv[1]))
+rows.append({"id": 999, "app": "x", "what": "an old line nobody saw again since then", "seen": 1, "sessions": [], "last_seen": "2020-01-01T00:00:00+00:00", "expires_at": "2020-01-15T00:00:00+00:00"})
+json.dump(rows, open(sys.argv[1], "w"))
+PY
+board notices | grep -q "old line nobody" && bad "an expired notice is still listed" || ok "a notice past its date is not listed: expiry needs nobody"
+
+echo "$((PASS+FAIL)) checks, $FAIL failed"
+[ "$FAIL" -eq 0 ]

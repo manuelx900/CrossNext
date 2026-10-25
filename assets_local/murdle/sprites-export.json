@@ -1,0 +1,770 @@
+[
+  {
+    "category": "weapons",
+    "id": "AXE",
+    "symbol": "WeaponAxe",
+    "source_crop": [
+      39,
+      60,
+      270,
+      283
+    ],
+    "scaled_size": [
+      88,
+      85
+    ],
+    "sha256": "18ba67ab874f86f33c966ef024b69f0b612ff2ed137bca6f9bd316c5eb39e693"
+  },
+  {
+    "category": "weapons",
+    "id": "BAT",
+    "symbol": "WeaponBat",
+    "source_crop": [
+      336,
+      60,
+      544,
+      283
+    ],
+    "scaled_size": [
+      82,
+      88
+    ],
+    "sha256": "178f0c14081965fef3b52dd91c34b69a3f820161d2e2d04bb43ca5df57c8f5b0"
+  },
+  {
+    "category": "weapons",
+    "id": "CANE",
+    "symbol": "WeaponCane",
+    "source_crop": [
+      642,
+      60,
+      822,
+      290
+    ],
+    "scaled_size": [
+      69,
+      88
+    ],
+    "sha256": "d49efac92bab08bd641157f07750937c003bf69b00724e63ed8486970d775e4d"
+  },
+  {
+    "category": "weapons",
+    "id": "DAGGER",
+    "symbol": "WeaponDagger",
+    "source_crop": [
+      908,
+      67,
+      1111,
+      283
+    ],
+    "scaled_size": [
+      83,
+      88
+    ],
+    "sha256": "e38b439d4c3485aac6455059b61dd81611d3033014dd180620488127af8aa628"
+  },
+  {
+    "category": "weapons",
+    "id": "FORK",
+    "symbol": "WeaponFork",
+    "source_crop": [
+      1200,
+      60,
+      1397,
+      297
+    ],
+    "scaled_size": [
+      73,
+      88
+    ],
+    "sha256": "05e9d5a0d4cee72e8de2bb82e8de46b7d2f2ef2c28f04137f67e71595741ff9a"
+  },
+  {
+    "category": "weapons",
+    "id": "GUN",
+    "symbol": "WeaponGun",
+    "source_crop": [
+      39,
+      339,
+      261,
+      535
+    ],
+    "scaled_size": [
+      88,
+      78
+    ],
+    "sha256": "31bf3df00fd09ad088d749f9f32c4260f19e39eeefd909ebf946b3026ca794f4"
+  },
+  {
+    "category": "weapons",
+    "id": "HAMMER",
+    "symbol": "WeaponHammer",
+    "source_crop": [
+      330,
+      308,
+      553,
+      549
+    ],
+    "scaled_size": [
+      81,
+      88
+    ],
+    "sha256": "8d69015ee8b5f57494320c15642ae3662dd8c7fef41b32b628e8de161024999d"
+  },
+  {
+    "category": "weapons",
+    "id": "IRON",
+    "symbol": "WeaponIron",
+    "source_crop": [
+      596,
+      356,
+      886,
+      542
+    ],
+    "scaled_size": [
+      88,
+      56
+    ],
+    "sha256": "0389e8e17ce61c7b8845cf3bc58492ac435b0122fad2ec9299024554082e38e4"
+  },
+  {
+    "category": "weapons",
+    "id": "JAR",
+    "symbol": "WeaponJar",
+    "source_crop": [
+      922,
+      325,
+      1125,
+      542
+    ],
+    "scaled_size": [
+      82,
+      88
+    ],
+    "sha256": "45591a963e66649a155b5d04a77b5692077f4d7d5922f6211d16ff92ede5f37d"
+  },
+  {
+    "category": "weapons",
+    "id": "KNIFE",
+    "symbol": "WeaponKnife",
+    "source_crop": [
+      1190,
+      328,
+      1410,
+      542
+    ],
+    "scaled_size": [
+      88,
+      86
+    ],
+    "sha256": "0385b2886ac9b8f70e47fb2a7683cb6521239cbdc1a8526c8c3b0856662b2913"
+  },
+  {
+    "category": "weapons",
+    "id": "LAMP",
+    "symbol": "WeaponLamp",
+    "source_crop": [
+      62,
+      568,
+      244,
+      787
+    ],
+    "scaled_size": [
+      73,
+      88
+    ],
+    "sha256": "1ab3dc2a0224d5287a2dcaa9b29c1c1d9c8b83a9a63556174fb32afd42d7d217"
+  },
+  {
+    "category": "weapons",
+    "id": "MUG",
+    "symbol": "WeaponMug",
+    "source_crop": [
+      327,
+      617,
+      562,
+      787
+    ],
+    "scaled_size": [
+      88,
+      64
+    ],
+    "sha256": "8d068557bdc3266127295e2984372f803a70e66a8f71d8a0e194c9d843e36d16"
+  },
+  {
+    "category": "weapons",
+    "id": "NAIL",
+    "symbol": "WeaponNail",
+    "source_crop": [
+      653,
+      587,
+      809,
+      787
+    ],
+    "scaled_size": [
+      69,
+      88
+    ],
+    "sha256": "4a9c83c4b3ed751a14f94e9ef164c0b5511f9ad7a88dc4e6f533bfbfa57380c5"
+  },
+  {
+    "category": "weapons",
+    "id": "OAR",
+    "symbol": "WeaponOar",
+    "source_crop": [
+      893,
+      568,
+      1126,
+      798
+    ],
+    "scaled_size": [
+      88,
+      87
+    ],
+    "sha256": "500f39060b82a9813d82f0737ef72218d44e21890f1381a9d027e075def8a5c3"
+  },
+  {
+    "category": "weapons",
+    "id": "PAN",
+    "symbol": "WeaponPan",
+    "source_crop": [
+      1177,
+      582,
+      1410,
+      795
+    ],
+    "scaled_size": [
+      88,
+      80
+    ],
+    "sha256": "e5dc2ed95d0ae1591ef754d91a5ac4c58a699ff4757c6c4ce3330b10ae87cbed"
+  },
+  {
+    "category": "weapons",
+    "id": "ROPE",
+    "symbol": "WeaponRope",
+    "source_crop": [
+      29,
+      824,
+      283,
+      1045
+    ],
+    "scaled_size": [
+      88,
+      77
+    ],
+    "sha256": "aa61e5d412a07f8b784d1443501edf9b412175c2604504b5d62ad023dea75963"
+  },
+  {
+    "category": "weapons",
+    "id": "SPADE",
+    "symbol": "WeaponSpade",
+    "source_crop": [
+      328,
+      802,
+      554,
+      1038
+    ],
+    "scaled_size": [
+      84,
+      88
+    ],
+    "sha256": "7288c153a9d937157023dd76c4fdadbe36756d07bd25d6a165cce1d71f3ce28f"
+  },
+  {
+    "category": "weapons",
+    "id": "TORCH",
+    "symbol": "WeaponTorch",
+    "source_crop": [
+      596,
+      846,
+      878,
+      1002
+    ],
+    "scaled_size": [
+      88,
+      49
+    ],
+    "sha256": "3f7a5013339df49ec35572364f1190492cf7d8a23f52437b8aff0efaeaa65174"
+  },
+  {
+    "category": "weapons",
+    "id": "VASE",
+    "symbol": "WeaponVase",
+    "source_crop": [
+      936,
+      825,
+      1097,
+      1045
+    ],
+    "scaled_size": [
+      64,
+      88
+    ],
+    "sha256": "9c0624cd11c7c2c94d7ca7805a745295a9cad0d07d9bbcf79dbc3fdd300f16a4"
+  },
+  {
+    "category": "weapons",
+    "id": "WIRE",
+    "symbol": "WeaponWire",
+    "source_crop": [
+      1173,
+      825,
+      1418,
+      1042
+    ],
+    "scaled_size": [
+      88,
+      78
+    ],
+    "sha256": "ecf574eea2f8c4d7cbce12447f82a2f9112091c435490bf6c570c0e964ed234e"
+  },
+  {
+    "category": "places",
+    "id": "ATTIC",
+    "symbol": "PlaceAttic",
+    "source_crop": [
+      52,
+      49,
+      358,
+      290
+    ],
+    "scaled_size": [
+      88,
+      69
+    ],
+    "sha256": "eb782b994ae1ee1e5c98392012ad92d35e6eb56fa66cd7c0673b3d6274bcc20c"
+  },
+  {
+    "category": "places",
+    "id": "BARN",
+    "symbol": "PlaceBarn",
+    "source_crop": [
+      395,
+      49,
+      700,
+      286
+    ],
+    "scaled_size": [
+      88,
+      68
+    ],
+    "sha256": "f9b22e705828210f91efbf912a1dfd3876c436054d06cfbb5a618b4dfce9d254"
+  },
+  {
+    "category": "places",
+    "id": "CAVE",
+    "symbol": "PlaceCave",
+    "source_crop": [
+      732,
+      54,
+      1070,
+      291
+    ],
+    "scaled_size": [
+      88,
+      62
+    ],
+    "sha256": "cce2c2f7c6763e53a21283c041d873b841a540695d194eb34b6593cf89c9bdb2"
+  },
+  {
+    "category": "places",
+    "id": "DOCK",
+    "symbol": "PlaceDock",
+    "source_crop": [
+      1097,
+      89,
+      1409,
+      290
+    ],
+    "scaled_size": [
+      88,
+      57
+    ],
+    "sha256": "f4db6568af5e1a0cbc48cf2041f047a0abf69aa4719cd7ec27d259a4eeda442d"
+  },
+  {
+    "category": "places",
+    "id": "FARM",
+    "symbol": "PlaceFarm",
+    "source_crop": [
+      28,
+      325,
+      369,
+      554
+    ],
+    "scaled_size": [
+      88,
+      59
+    ],
+    "sha256": "1ed726f25404777dd754e7ce58a467555033e4922a484972e6494d5df2ffc194"
+  },
+  {
+    "category": "places",
+    "id": "GARDEN",
+    "symbol": "PlaceGarden",
+    "source_crop": [
+      396,
+      311,
+      711,
+      565
+    ],
+    "scaled_size": [
+      88,
+      71
+    ],
+    "sha256": "e4759702ce5ccd1f937e82fd735655175b8ec4f602404e8b2fed12f3bfb76d8a"
+  },
+  {
+    "category": "places",
+    "id": "HALL",
+    "symbol": "PlaceHall",
+    "source_crop": [
+      738,
+      327,
+      1075,
+      559
+    ],
+    "scaled_size": [
+      88,
+      61
+    ],
+    "sha256": "7991bfcbba2883794e2380e8d0f46e621eae76b6dbce9bbe5bf4cfb193b05e35"
+  },
+  {
+    "category": "places",
+    "id": "INN",
+    "symbol": "PlaceInn",
+    "source_crop": [
+      1102,
+      311,
+      1421,
+      568
+    ],
+    "scaled_size": [
+      88,
+      71
+    ],
+    "sha256": "24edb10f357d8af6b5a28541f53f884596bab6f524ebb7e55978845900776f03"
+  },
+  {
+    "category": "places",
+    "id": "KITCHEN",
+    "symbol": "PlaceKitchen",
+    "source_crop": [
+      45,
+      583,
+      353,
+      811
+    ],
+    "scaled_size": [
+      88,
+      65
+    ],
+    "sha256": "19598b2f39f1ae7375c8fc6eaeac4d4b319036e31a7b1a385782345febd18c8a"
+  },
+  {
+    "category": "places",
+    "id": "LAKE",
+    "symbol": "PlaceLake",
+    "source_crop": [
+      389,
+      602,
+      711,
+      816
+    ],
+    "scaled_size": [
+      88,
+      58
+    ],
+    "sha256": "e75987b4d22a113d224fc8316c67f71bd3c1f31f98787d474c415a55b65da175"
+  },
+  {
+    "category": "places",
+    "id": "MILL",
+    "symbol": "PlaceMill",
+    "source_crop": [
+      739,
+      576,
+      1061,
+      822
+    ],
+    "scaled_size": [
+      88,
+      67
+    ],
+    "sha256": "4af2fbdde44585a7652ca690301331d90f604b9f23eb1f2d013a5ba51a075fe4"
+  },
+  {
+    "category": "places",
+    "id": "OFFICE",
+    "symbol": "PlaceOffice",
+    "source_crop": [
+      1090,
+      576,
+      1404,
+      822
+    ],
+    "scaled_size": [
+      88,
+      69
+    ],
+    "sha256": "856bc2505dcb98aad88719167a6db697b4045ed39c2cf4bd165cd6c6a1e53c2a"
+  },
+  {
+    "category": "places",
+    "id": "PARK",
+    "symbol": "PlacePark",
+    "source_crop": [
+      30,
+      820,
+      372,
+      1062
+    ],
+    "scaled_size": [
+      88,
+      62
+    ],
+    "sha256": "c56f66d87d5d47707af31be2580187a9fb5aef64aa43ee4fb87fc3264f752a22"
+  },
+  {
+    "category": "places",
+    "id": "ROOF",
+    "symbol": "PlaceRoof",
+    "source_crop": [
+      390,
+      864,
+      711,
+      1063
+    ],
+    "scaled_size": [
+      88,
+      55
+    ],
+    "sha256": "d6c9e511df7b5b0180e47af0b6a81a8d659927aad454672213cdc674b05e2148"
+  },
+  {
+    "category": "places",
+    "id": "STUDY",
+    "symbol": "PlaceStudy",
+    "source_crop": [
+      732,
+      849,
+      1054,
+      1068
+    ],
+    "scaled_size": [
+      88,
+      60
+    ],
+    "sha256": "8460c8e21c610bfabf8b778136691190df7afd3dd5436c3098d08ebc9f632239"
+  },
+  {
+    "category": "places",
+    "id": "TOWER",
+    "symbol": "PlaceTower",
+    "source_crop": [
+      1139,
+      833,
+      1406,
+      1062
+    ],
+    "scaled_size": [
+      88,
+      75
+    ],
+    "sha256": "1079eae6f4b9100acceae9c3f2e5645bf035833634e9a2ea17cc006ac1589531"
+  },
+  {
+    "category": "motives",
+    "id": "ANGER",
+    "symbol": "MotiveAnger",
+    "source_crop": [
+      43,
+      66,
+      347,
+      366
+    ],
+    "scaled_size": [
+      88,
+      87
+    ],
+    "sha256": "49ea4dc210d7a854c7246a9729d18607bf268c4fbddf925a5a15ed915eb7c568"
+  },
+  {
+    "category": "motives",
+    "id": "DEBT",
+    "symbol": "MotiveDebt",
+    "source_crop": [
+      398,
+      102,
+      707,
+      374
+    ],
+    "scaled_size": [
+      88,
+      77
+    ],
+    "sha256": "722ce44e8e6359a49020a495931d7c57a72c3012d4203f012cc5ab1c932e9a72"
+  },
+  {
+    "category": "motives",
+    "id": "ENVY",
+    "symbol": "MotiveEnvy",
+    "source_crop": [
+      750,
+      130,
+      1058,
+      342
+    ],
+    "scaled_size": [
+      88,
+      61
+    ],
+    "sha256": "37f5ba0c2b9110de607db5b7e47494006eb1381ad30a67b3e45182221bfbebb6"
+  },
+  {
+    "category": "motives",
+    "id": "FEAR",
+    "symbol": "MotiveFear",
+    "source_crop": [
+      1118,
+      92,
+      1403,
+      367
+    ],
+    "scaled_size": [
+      88,
+      85
+    ],
+    "sha256": "f56f408759eea29b75d4997cfa708c3027bd9f3b1bd59d3139f33ce93bdf07ad"
+  },
+  {
+    "category": "motives",
+    "id": "GREED",
+    "symbol": "MotiveGreed",
+    "source_crop": [
+      39,
+      426,
+      355,
+      700
+    ],
+    "scaled_size": [
+      88,
+      76
+    ],
+    "sha256": "de7444bc6061e7ada486ce4bab8cb1b1d0e2685fda3843534fb6565bfba9934f"
+  },
+  {
+    "category": "motives",
+    "id": "HATE",
+    "symbol": "MotiveHate",
+    "source_crop": [
+      400,
+      411,
+      697,
+      691
+    ],
+    "scaled_size": [
+      88,
+      83
+    ],
+    "sha256": "4ef711e50de5a8434edf58df542f16129f94dbac4e8a2ffa385af4c616953c80"
+  },
+  {
+    "category": "motives",
+    "id": "JUSTICE",
+    "symbol": "MotiveJustice",
+    "source_crop": [
+      740,
+      401,
+      1069,
+      693
+    ],
+    "scaled_size": [
+      88,
+      78
+    ],
+    "sha256": "95f8975738b47f3815488b118ae773aed9cc9e1ccce00d7a7bdbe8e81411b6d3"
+  },
+  {
+    "category": "motives",
+    "id": "LOVE",
+    "symbol": "MotiveLove",
+    "source_crop": [
+      1119,
+      412,
+      1413,
+      678
+    ],
+    "scaled_size": [
+      88,
+      80
+    ],
+    "sha256": "7af1b72619a9492a70adcee38a2a92396f81e1357c2ef00a15f6aac592c353da"
+  },
+  {
+    "category": "motives",
+    "id": "MERCY",
+    "symbol": "MotiveMercy",
+    "source_crop": [
+      46,
+      766,
+      347,
+      1011
+    ],
+    "scaled_size": [
+      88,
+      72
+    ],
+    "sha256": "065fd71af2cfdd5946e2af3062dcf0f357bcbde15ab1673e066193c6ccc1dd4f"
+  },
+  {
+    "category": "motives",
+    "id": "POWER",
+    "symbol": "MotivePower",
+    "source_crop": [
+      396,
+      742,
+      688,
+      1011
+    ],
+    "scaled_size": [
+      88,
+      81
+    ],
+    "sha256": "9618ccfe6a714e588ceb5a8c8df997333111811db7c26d499cdf42932cdb5f56"
+  },
+  {
+    "category": "motives",
+    "id": "REVENGE",
+    "symbol": "MotiveRevenge",
+    "source_crop": [
+      747,
+      721,
+      1025,
+      1018
+    ],
+    "scaled_size": [
+      82,
+      88
+    ],
+    "sha256": "4c11e0993f688ddc87e851ec1bb94ffee4b9d093b4aa033a9e95ae9c90c48347"
+  },
+  {
+    "category": "motives",
+    "id": "SHAME",
+    "symbol": "MotiveShame",
+    "source_crop": [
+      1113,
+      757,
+      1396,
+      1004
+    ],
+    "scaled_size": [
+      88,
+      77
+    ],
+    "sha256": "28440f2cf0658c7d01a0e67e0c03c2a2b845fc828adcd74456b919f946dc9699"
+  }
+]

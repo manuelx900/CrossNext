@@ -1,0 +1,18 @@
+Lucide icons, https://github.com/lucide-icons/lucide/tree/7b0196e249ca09ca27c584c497aca9a8cab8a7f5/icons
+ISC license, see LICENSE. Raster derivatives generated at 32 and 64 pixels.
+
+reading-book.svg and reading-flame.svg are original local symbols for Reading Quest.
+
+calendar.svg, cards.svg, chart.svg, check.svg, checked.svg, unchecked.svg,
+clock.svg, list.svg, notes.svg, speed.svg and trophy.svg are original local
+interface symbols, distributed under this project's MIT license.
+
+dumbbell.svg, drop.svg, food.svg and moon.svg are original local MIT symbols.
+
+monitor.svg and information.svg are original local MIT interface symbols.
+dashboard-*.svg are original local MIT interface symbols.
+carnivoro-*.svg are original local MIT interface symbols.
+
+light-on.svg, light-off.svg, warm-on.svg, warm-off.svg, rotate-ccw.svg and
+wallpaper-set.svg are original local MIT interface symbols. lock.svg and
+power.svg preserve the existing local bitmap symbols as reproducible SVG sources.

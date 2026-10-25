@@ -1,0 +1,924 @@
+{
+  "source": "pet-pixel-bw-v1.zip",
+  "sha256": "098a161c481bdac5a0633d6599bef9cc1ff6283da832205065be9e63636ada27",
+  "images": [
+    {
+      "filename": "silva-egg.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "7058e01a7a07302abdb887e6f3c4d959f96c602db9180e4397851b5a1bb57179",
+      "reused_from": null
+    },
+    {
+      "filename": "nox-egg.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "4cd5e543d52c35aa559ba2ba4cbd4b27edc545b1605bbba06c1b24a4f582ba98",
+      "reused_from": null
+    },
+    {
+      "filename": "ember-egg.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "cab191c3c8420066b6a0efa2860c480db6980cdad54317f9fe74e08c5ccffc33",
+      "reused_from": null
+    },
+    {
+      "filename": "silva-newborn-normal.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "389cb800754d8e7e20f2766859128817af12dfb9afab33d8be3a78040517496f",
+      "reused_from": null
+    },
+    {
+      "filename": "silva-newborn-happy.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "89c389066663c63c720c04be29005dd00dc721a71b34e33acd944519c1eb193f",
+      "reused_from": null
+    },
+    {
+      "filename": "silva-newborn-hungry.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "4a09a52340981ef27aa59b6f8aecfca2a383eee3d66b9bd6af0c34c1db5fdc12",
+      "reused_from": null
+    },
+    {
+      "filename": "silva-newborn-tired.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "4252a61b3425964c8796207024ae2f37c6fc2829cd45cfe41df6e486952e0352",
+      "reused_from": null
+    },
+    {
+      "filename": "silva-baby-normal.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "e0b3512522bb6fac4e31a1ad4d15a907b3de852df39c9ca393cc5d26ce4c9b9e",
+      "reused_from": null
+    },
+    {
+      "filename": "silva-baby-happy.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "8b1fd38f7c83ccc4274863479c47508db032ec6a4fbf47753d4f25e44913dcdf",
+      "reused_from": null
+    },
+    {
+      "filename": "silva-baby-hungry.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "e7f51ee331b416f25164210a9333852073c7a35076215d8e05c408003aa0974c",
+      "reused_from": null
+    },
+    {
+      "filename": "silva-baby-tired.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "6b3967114d228df53d2783abe1fa281148baf58250c9e175be1f00b09d0380ea",
+      "reused_from": null
+    },
+    {
+      "filename": "silva-juvenile-normal.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "d9ad38485e2ec7ce4446240b5f60616037b86f9586a390fda4c5f43625591dcb",
+      "reused_from": null
+    },
+    {
+      "filename": "silva-juvenile-happy.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "9241b68b4b9bcd7328d62852868ee78c4d266edff2295715c9bd392c6e4201d9",
+      "reused_from": null
+    },
+    {
+      "filename": "silva-juvenile-hungry.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "7dc4ac3bb71dc4c7b371ff60fa1a3156c392f023d531ad5600f63f50817aedab",
+      "reused_from": null
+    },
+    {
+      "filename": "silva-juvenile-tired.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "4314c314b23e7ff31972bb50991600a0f39d1784547f01bc03bb602d45df2902",
+      "reused_from": null
+    },
+    {
+      "filename": "silva-adult-normal.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "9d16ba92a83b27bee8813209634c445d16f2e1feb089cdcafdb09b1db4e914b4",
+      "reused_from": null
+    },
+    {
+      "filename": "silva-adult-happy.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "81c09abbf57a81f8ed9e8343cb546cd7d03ec5eac3de66a26e3c35eea65ee715",
+      "reused_from": null
+    },
+    {
+      "filename": "silva-adult-hungry.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "fcd87dcce9601a867bad80ffa68cad58d47b4e08a0e08af1020a1e74f8f60485",
+      "reused_from": null
+    },
+    {
+      "filename": "silva-adult-tired.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "78edf07724fd05a14d25c3cdde5b1b34aa059a5ad6e5346e60211dde58fa9d21",
+      "reused_from": null
+    },
+    {
+      "filename": "nox-newborn-normal.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "ec70642d37f7c8a83740c39f28151dcc76b1aefdb3e7620371223d237f5cdd81",
+      "reused_from": null
+    },
+    {
+      "filename": "nox-newborn-happy.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "fcc0cddd1d06b4881937f9c8b06003743df31b1384335e4202dab206e2fb664a",
+      "reused_from": null
+    },
+    {
+      "filename": "nox-newborn-hungry.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "20da28f1a23ae5a293cedf15f2f05dd86e97c80aa2a432f83c4c51c6b40490f0",
+      "reused_from": null
+    },
+    {
+      "filename": "nox-newborn-tired.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "374c6a1a5932cfde4d46a263d09b4109f896698e946b40363045ddccff37a63b",
+      "reused_from": null
+    },
+    {
+      "filename": "nox-baby-normal.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "279323ba5421d912903e029ac9525b2b08180e4fa43f89394ad02f4d543cace0",
+      "reused_from": null
+    },
+    {
+      "filename": "nox-baby-happy.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "398ba5628259d04d86a2af450ccfbd4057fb4fd5cdd8e02c3efc0c29044713f4",
+      "reused_from": null
+    },
+    {
+      "filename": "nox-baby-hungry.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "65243810528d29ea3547b8e4254ced12f1e5f2b3ae557a5b797d3216551876cf",
+      "reused_from": null
+    },
+    {
+      "filename": "nox-baby-tired.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "c5a1d5fc29114019898863707a13d06619263785e1f7db98cc4a71388e43937b",
+      "reused_from": null
+    },
+    {
+      "filename": "nox-juvenile-normal.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "b5d1ec2b2c82e51ef18e5b77d7a55b1ee6e42eab33c44ee1af6b89d86e039243",
+      "reused_from": null
+    },
+    {
+      "filename": "nox-juvenile-happy.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "a64a09c8f31a5ccc88dc26e3f2772c835228b300aa9fd1eeacfcf61530b0cb68",
+      "reused_from": null
+    },
+    {
+      "filename": "nox-juvenile-hungry.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "ba3edf3aab2cb8985d3c8a1985742f3975ae80d21c38eeb91b0dccba424377cd",
+      "reused_from": null
+    },
+    {
+      "filename": "nox-juvenile-tired.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "2183229ac8fd4e6aff0fa426251becbc617649bbd7ecf4c5af3ec813b6990012",
+      "reused_from": null
+    },
+    {
+      "filename": "nox-adult-normal.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "e8ff95c026bf88399f9de50dc4acc2cc8c6966879befc00a6776c36445a6c389",
+      "reused_from": null
+    },
+    {
+      "filename": "nox-adult-happy.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "ef2a786e5ed5f09cb03dbaebfac656e2d5a307ba2756cc210e67c818c93d1baf",
+      "reused_from": null
+    },
+    {
+      "filename": "nox-adult-hungry.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "45a29aa834807a0b9c8945ad74e39cb4c8b3bc8566282f4ca78014c7679afef1",
+      "reused_from": null
+    },
+    {
+      "filename": "nox-adult-tired.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "d0d6b5f80eb2069d26d0ef2dab4893a2d9abaa452462790119af64affe3c1129",
+      "reused_from": null
+    },
+    {
+      "filename": "ember-newborn-normal.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "70ee508fea064a0907fd97ddfa9cdac39e638069c8d1af165dce8116067a717e",
+      "reused_from": null
+    },
+    {
+      "filename": "ember-newborn-happy.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "47717e91d6c5a952c2a74f84f3ae35cd57dbbbae6f0409417d032311e3cfee5e",
+      "reused_from": null
+    },
+    {
+      "filename": "ember-newborn-hungry.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "7210aac16e74b114e3decb74aee896dcfe4478eabe58f69e75936b4ebb463b60",
+      "reused_from": null
+    },
+    {
+      "filename": "ember-newborn-tired.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "6cd18a119dc96b5f7029331c523e71bd329ce476649404cf1874cff6de1cd53d",
+      "reused_from": null
+    },
+    {
+      "filename": "ember-baby-normal.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "0265c57c37becac7dd69bf58ca5b93a38922f043dde3fa63317a65468b813a8f",
+      "reused_from": null
+    },
+    {
+      "filename": "ember-baby-happy.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "dff860a16e06f096c782600f08062935cd142c2b8385a97c9db7d3881257791d",
+      "reused_from": null
+    },
+    {
+      "filename": "ember-baby-hungry.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "01e1995e4b5362c5d6f5b85067ca96ed7240c9bc2b5cd3025d02553d7a6c7240",
+      "reused_from": null
+    },
+    {
+      "filename": "ember-baby-tired.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "e1c289a8570c535caa19dc25e2b0418109ffcb2b005186aa8903952ce8efd326",
+      "reused_from": null
+    },
+    {
+      "filename": "ember-juvenile-normal.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "b6f1dd592897fb13bf36d8b1363da56509df21f1dfd37efcbaf9ddb7e4538a22",
+      "reused_from": null
+    },
+    {
+      "filename": "ember-juvenile-happy.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "23169692278ff107b17091cd2cc4bf395d862bc33ae29df8c4578f538979de59",
+      "reused_from": null
+    },
+    {
+      "filename": "ember-juvenile-hungry.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "f68680ffbe187af81b491003849116bacdbe898cd56b8b216d112e4a05cc95bf",
+      "reused_from": null
+    },
+    {
+      "filename": "ember-juvenile-tired.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "d77e4a1a530de5e8716bcd1b101025c04b8f0d63d8bd21edb8f3f4ab31e3db1f",
+      "reused_from": null
+    },
+    {
+      "filename": "ember-adult-normal.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "b25512ce78722bbcc1578db98e45094e154eae10ab32ed944440024ab5f8fe6c",
+      "reused_from": null
+    },
+    {
+      "filename": "ember-adult-happy.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "5981ef947e0736f6d7c9e64b752b4c866dd3e0591cd6739e1682422ef48f00cd",
+      "reused_from": null
+    },
+    {
+      "filename": "ember-adult-hungry.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "9014b1dd4f0a3f6c4add6fa91bf84e0606ec28d967ae67bd1209f4ab57c6c5f1",
+      "reused_from": null
+    },
+    {
+      "filename": "ember-adult-tired.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "3fa63b1f55a8c1ab590f50eb876d87e08268a241c86ea123d3ee8e5bbde2cbae",
+      "reused_from": null
+    },
+    {
+      "filename": "object-bed.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "14c969a85e3210b6e15a5a381b924a9d8ea3532297fc68d4c03e99f29b9c1c10",
+      "reused_from": null
+    },
+    {
+      "filename": "object-hammock.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "d0acc883b8469d27e636eb8b1bab88448d5e5dd46d01b4347815eecf0e704838",
+      "reused_from": null
+    },
+    {
+      "filename": "object-shelter.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "aceadb5fe7d4a3733b8fa87df1f6fd5f5320556d64f0d10279ec7ab9853dcff7",
+      "reused_from": null
+    },
+    {
+      "filename": "object-plant.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "f44f8fe692f31f84cf822113dbb7236e73e44bda1ddcd0b7a41dbe184ffc7264",
+      "reused_from": null
+    },
+    {
+      "filename": "object-lamp.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "5af0fcfdb71f3122c78692acd4b984143a89306aabe20ddaf8e8b1369908f2c1",
+      "reused_from": null
+    },
+    {
+      "filename": "object-leaf-mobile.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "e8fc9696a04e66fc624918ccdf88b64836565192b89b983de7b30bc497c18cab",
+      "reused_from": null
+    },
+    {
+      "filename": "object-ball.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "7702b5aa15ccac587ebcb33d1aebb0d8d15b45f387739b2ac3a5a032d367e1c5",
+      "reused_from": null
+    },
+    {
+      "filename": "object-tunnel.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "834e99c799e91f944deaa67f419d839404e73e2b364ce661b494e3fbdf0b6f7f",
+      "reused_from": null
+    },
+    {
+      "filename": "object-ring.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "3854592b96ef84b3dc56b6231c8f6f3ee3663738f90275ebad0456ad91fe8ce8",
+      "reused_from": null
+    },
+    {
+      "filename": "object-leaves.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "583169f831364ef35caa104ff5ce268f4c0f72cfd854ff94c17b9c39986936b1",
+      "reused_from": null
+    },
+    {
+      "filename": "object-stars.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "07b3fe186e9e49a00dd49f0e3d299366704b4adf3422dc2d32bfc3a18d055154",
+      "reused_from": null
+    },
+    {
+      "filename": "object-stones.png",
+      "package": "graphics.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "b9edbc330c25e91178dc51eaaa3dba4f29fbf75ec79b534c526ed48fe8aec444",
+      "reused_from": null
+    },
+    {
+      "filename": "home-silva-egg.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "7058e01a7a07302abdb887e6f3c4d959f96c602db9180e4397851b5a1bb57179",
+      "reused_from": "silva-egg.png"
+    },
+    {
+      "filename": "home-nox-egg.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "4cd5e543d52c35aa559ba2ba4cbd4b27edc545b1605bbba06c1b24a4f582ba98",
+      "reused_from": "nox-egg.png"
+    },
+    {
+      "filename": "home-ember-egg.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "cab191c3c8420066b6a0efa2860c480db6980cdad54317f9fe74e08c5ccffc33",
+      "reused_from": "ember-egg.png"
+    },
+    {
+      "filename": "home-silva-newborn-awake.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "389cb800754d8e7e20f2766859128817af12dfb9afab33d8be3a78040517496f",
+      "reused_from": "silva-newborn-normal.png"
+    },
+    {
+      "filename": "home-silva-newborn-resting.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "2e24b1307db8ef575ecb5fe8856a71bfbb6fd7d2d80c1348b68b0d0d01472256",
+      "reused_from": null
+    },
+    {
+      "filename": "home-silva-newborn-sick.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "d12330c257f0de4f8f2bc9073bcb53aef465a81ccf3bdc5a2eb61234ce6afc5e",
+      "reused_from": null
+    },
+    {
+      "filename": "home-silva-baby-awake.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "e0b3512522bb6fac4e31a1ad4d15a907b3de852df39c9ca393cc5d26ce4c9b9e",
+      "reused_from": "silva-baby-normal.png"
+    },
+    {
+      "filename": "home-silva-baby-resting.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "92e7f05b84d1d234ce3b24b5fd93f4490e693088d293196e77404af0ff9c0caf",
+      "reused_from": null
+    },
+    {
+      "filename": "home-silva-baby-sick.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "7793d7769c875814f3d05e61751fd660a815fd437dc5581dfc638f93bcdc7696",
+      "reused_from": null
+    },
+    {
+      "filename": "home-silva-juvenile-awake.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "d9ad38485e2ec7ce4446240b5f60616037b86f9586a390fda4c5f43625591dcb",
+      "reused_from": "silva-juvenile-normal.png"
+    },
+    {
+      "filename": "home-silva-juvenile-resting.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "2ba8d17dfd25f5a9e225524c4b9f3ade9b2cb19ccbd5d2cbea20e9bef33b004c",
+      "reused_from": null
+    },
+    {
+      "filename": "home-silva-juvenile-sick.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "4e70d6bbb58f96f179a05e59a28ae4d2f25fe69c450cf3732faa63c07cf356fe",
+      "reused_from": null
+    },
+    {
+      "filename": "home-silva-adult-awake.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "9d16ba92a83b27bee8813209634c445d16f2e1feb089cdcafdb09b1db4e914b4",
+      "reused_from": "silva-adult-normal.png"
+    },
+    {
+      "filename": "home-silva-adult-resting.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "3b0285166f4c2fc6eab485267931b6b77ed874ebbefca5bedfe3cd93d734a496",
+      "reused_from": null
+    },
+    {
+      "filename": "home-silva-adult-sick.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "468a19fe12bf1b91e045b0b213ec4c3512decd05939e213f38e23ad84020bf5e",
+      "reused_from": null
+    },
+    {
+      "filename": "home-nox-newborn-awake.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "ec70642d37f7c8a83740c39f28151dcc76b1aefdb3e7620371223d237f5cdd81",
+      "reused_from": "nox-newborn-normal.png"
+    },
+    {
+      "filename": "home-nox-newborn-resting.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "f74754c8447a90a2cf57f9654b46564c666916cbe114fe9c489a53c4d3dfdda1",
+      "reused_from": null
+    },
+    {
+      "filename": "home-nox-newborn-sick.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "110be733af5c408fd0770d0f71ae18e85c8e9c59f9c4afdd25436b07b0b071b7",
+      "reused_from": null
+    },
+    {
+      "filename": "home-nox-baby-awake.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "279323ba5421d912903e029ac9525b2b08180e4fa43f89394ad02f4d543cace0",
+      "reused_from": "nox-baby-normal.png"
+    },
+    {
+      "filename": "home-nox-baby-resting.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "f441bc1175cc87997ffbfc8bcfc4f36292bd08f2904ca3b9b662f0f8c0d6c878",
+      "reused_from": null
+    },
+    {
+      "filename": "home-nox-baby-sick.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "c9fd58c92535be0a0df382cb09f49f9ad095dad65b6dc203a32b65af72d485a8",
+      "reused_from": null
+    },
+    {
+      "filename": "home-nox-juvenile-awake.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "b5d1ec2b2c82e51ef18e5b77d7a55b1ee6e42eab33c44ee1af6b89d86e039243",
+      "reused_from": "nox-juvenile-normal.png"
+    },
+    {
+      "filename": "home-nox-juvenile-resting.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "c2a3b7e998c86b1da76b8d70caeb94632f2f22fa2b932b32d39a0bf542b8d8ee",
+      "reused_from": null
+    },
+    {
+      "filename": "home-nox-juvenile-sick.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "4f374e4f978d4107e931f2a79cdf09ebac6892786dc44eeb73010718c9e860fe",
+      "reused_from": null
+    },
+    {
+      "filename": "home-nox-adult-awake.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "e8ff95c026bf88399f9de50dc4acc2cc8c6966879befc00a6776c36445a6c389",
+      "reused_from": "nox-adult-normal.png"
+    },
+    {
+      "filename": "home-nox-adult-resting.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "f7b48ab828f2a95b161763eb28f74010f17946ff9086ac323c8bbfc1595c0797",
+      "reused_from": null
+    },
+    {
+      "filename": "home-nox-adult-sick.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "ef1eda7a94c10da4e5f1547d94cc3bd16a93c3b914e558b6425e0a6abd569688",
+      "reused_from": null
+    },
+    {
+      "filename": "home-ember-newborn-awake.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "70ee508fea064a0907fd97ddfa9cdac39e638069c8d1af165dce8116067a717e",
+      "reused_from": "ember-newborn-normal.png"
+    },
+    {
+      "filename": "home-ember-newborn-resting.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "c89347e73e17c24eacccd75098ebc29e6a028c3da5ace4d31cdcb11fb3ffcd67",
+      "reused_from": null
+    },
+    {
+      "filename": "home-ember-newborn-sick.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "08c3885f025c2b3d31c5155e6eef3ceb33f721364c4106258e6181fec35febd4",
+      "reused_from": null
+    },
+    {
+      "filename": "home-ember-baby-awake.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "0265c57c37becac7dd69bf58ca5b93a38922f043dde3fa63317a65468b813a8f",
+      "reused_from": "ember-baby-normal.png"
+    },
+    {
+      "filename": "home-ember-baby-resting.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "fc84d776cbb623fd75022fca4609929251948040f3713cbe50e09dd2b2581e17",
+      "reused_from": null
+    },
+    {
+      "filename": "home-ember-baby-sick.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "4ebd83ea8a54cf90149dd1e29a0e9a3a7d5a875b98999bc58220f27cdd0928b6",
+      "reused_from": null
+    },
+    {
+      "filename": "home-ember-juvenile-awake.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "b6f1dd592897fb13bf36d8b1363da56509df21f1dfd37efcbaf9ddb7e4538a22",
+      "reused_from": "ember-juvenile-normal.png"
+    },
+    {
+      "filename": "home-ember-juvenile-resting.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "f3d2421e8e4a0f137dd6565859a1779b01a99dbee43c46b6b831e88f3cca928e",
+      "reused_from": null
+    },
+    {
+      "filename": "home-ember-juvenile-sick.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "ac2ad12248a9017ab15b63e7a2be83b38dc378232948eabbe82e119fc6d43e5b",
+      "reused_from": null
+    },
+    {
+      "filename": "home-ember-adult-awake.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "b25512ce78722bbcc1578db98e45094e154eae10ab32ed944440024ab5f8fe6c",
+      "reused_from": "ember-adult-normal.png"
+    },
+    {
+      "filename": "home-ember-adult-resting.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "58fa9b55b4a3a3f3a507a02351d86d6010cf169b635c367de4342e22ee7fdff6",
+      "reused_from": null
+    },
+    {
+      "filename": "home-ember-adult-sick.png",
+      "package": "home.bin",
+      "width": 256,
+      "height": 256,
+      "mode": "1",
+      "sha256": "721d56e1ccd734cd6e3adcd4fe212173bddab9515f86f7ec1d61ea1bd4ef06a1",
+      "reused_from": null
+    }
+  ]
+}

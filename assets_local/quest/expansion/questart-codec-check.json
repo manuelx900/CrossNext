@@ -1,0 +1,10 @@
+{
+  "groups": {
+    "items": 375,
+    "masks": 375,
+    "heroes": 2
+  },
+  "sha256": "6c7a38c40ff3acd2dd963846e6a3e7e92efd93f6f7da437d50139741ed765f32",
+  "decodedBytes": 143292,
+  "packedBytes": 63569
+}

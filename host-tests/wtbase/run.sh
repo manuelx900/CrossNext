@@ -1,0 +1,190 @@
+#!/bin/bash
+# wt.sh cuts new trees from origin/xteink, and reports against it.
+#
+# The bug this exists for: `wt.sh new` defaulted to the LOCAL xteink branch.
+# firmware-next's local xteink carries a release train's commits for the whole
+# bump-to-push window, so a tree cut during a train silently adopted somebody
+# else's unpushed release. On 2026-08-30 a session gated another session's
+# unpushed release notes that way and filed the resulting failure as its own
+# discovery, and two branches in the workspace were sitting on an in-flight
+# train's commits at the moment this was written.
+#
+# The same constant was wrong twice more, in `list` and in `drop`, where it made
+# every tree's "commits ahead" column read high while any train was in flight --
+# a status column that lies exactly when the workspace is busiest.
+#
+# The test drives the REAL wt.sh against a synthetic workspace whose local
+# branch is deliberately ahead of its origin, rather than asserting against the
+# text of the script: a grep for "origin/xteink" would pass on a script that
+# mentioned it in a comment.
+#
+#   host-tests/wtbase/run.sh
+set -uo pipefail
+
+HERE="$(cd "$(dirname "$0")" && pwd)"
+WT="$HERE/../../scripts_local/wt.sh"
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+
+[ -f "$WT" ] || { echo "FAIL cannot find $WT"; exit 1; }
+
+PASS=0; FAIL=0
+ok()   { PASS=$((PASS+1)); echo "  ok   $1"; }
+bad()  { FAIL=$((FAIL+1)); echo "  FAIL $1"; }
+is()   { [ "$2" = "$3" ] && ok "$1" || bad "$1 (want '$3', got '$2')"; }
+
+# Runs a command quietly. It does NOT prepend git: an earlier version did, so
+# every "q git clone" ran "git git clone", every setup step failed silently, the
+# cd into the fixture failed, and the rest of the script drove wt.sh against the
+# REAL workspace -- creating a branch and a worktree in it. Hence also the hard
+# cd guard below: in a script that builds a sandbox, a cd that fails must stop
+# the run, not continue it somewhere else.
+q() { "$@" >/dev/null 2>&1; }
+
+cdd() { cd "$1" || { echo "FAIL cannot enter $1 -- refusing to run outside the fixture"; exit 1; }; }
+
+# A workspace marker so wt.sh's find_workspace puts wt/ under $WORK and not
+# somewhere inside the real one. Without this the test would create trees in
+# Mario's actual workspace, which is a far worse failure than a red suite.
+touch "$WORK/.xteink-workspace"
+
+# origin: a bare repo whose xteink is one commit BEHIND the integration clone.
+q git init --bare -b xteink "$WORK/origin.git"
+q git clone "$WORK/origin.git" "$WORK/integration"
+cdd "$WORK/integration"
+q git config user.email t@t; q git config user.name t
+mkdir -p scripts_local
+echo published > file.txt
+q git add -A; q git commit -m "published"
+q git push -u origin xteink
+PUBLISHED="$(git rev-parse HEAD)"
+
+# The train: one commit that exists only locally, exactly like a version bump
+# and its release notes sitting between the merge and the push.
+echo unpushed >> file.txt
+q git add -A; q git commit -m "chore: unpushed release train"
+UNPUSHED="$(git rev-parse HEAD)"
+
+cp "$WT" scripts_local/wt.sh
+chmod +x scripts_local/wt.sh
+q git add -A; q git commit -m "wt.sh"
+# Committing wt.sh moved local xteink again; origin still has only PUBLISHED,
+# so the local branch is now two ahead. That is the state under test.
+LOCAL_TIP="$(git rev-parse HEAD)"
+
+# If any of the setup above did not take, stop. Driving wt.sh from the wrong
+# directory is not a failed test, it is a mutation of Mario's workspace.
+case "$PWD" in
+  "$WORK"/*) ;;
+  *) echo "FAIL fixture not in place (cwd $PWD)"; exit 1 ;;
+esac
+[ -f "$WORK/.xteink-workspace" ] || { echo "FAIL workspace marker missing"; exit 1; }
+
+echo "wt.sh base"
+
+./scripts_local/wt.sh new probe >/dev/null 2>&1
+BASE="$(git rev-parse app/probe 2>/dev/null || echo missing)"
+is "new cuts from origin/xteink, not the local branch" "$BASE" "$PUBLISHED"
+[ "$BASE" = "$UNPUSHED" ] && bad "new inherited the train's unpushed commit"
+[ "$BASE" = "$LOCAL_TIP" ] && bad "new inherited the local tip"
+
+# The status column must not count the train's commits against every tree.
+LIST="$(./scripts_local/wt.sh list 2>/dev/null | grep '^probe ')"
+case "$LIST" in
+  *"commit(s) ahead"*) bad "list counts a clean tree as ahead: $LIST" ;;
+  *)                   ok  "list reports a freshly cut tree as level" ;;
+esac
+
+# A tree that really is ahead must still say so, or the fix has just blinded
+# the column in the other direction.
+cdd "$WORK/wt/probe"
+q git config user.email t@t; q git config user.name t
+echo work >> file.txt
+q git add -A; q git commit -m "real work"
+cdd "$WORK/integration"
+case "$(./scripts_local/wt.sh list 2>/dev/null | grep '^probe ')" in
+  *"1 commit(s) ahead of origin/xteink"*) ok "list still reports genuine unmerged work" ;;
+  *) bad "list lost a genuinely ahead tree: $(./scripts_local/wt.sh list 2>/dev/null | grep '^probe ')" ;;
+esac
+
+# --from must still win, or a deliberate stack on another branch is impossible.
+./scripts_local/wt.sh new stacked --from app/probe >/dev/null 2>&1
+is "--from still overrides the default" \
+   "$(git rev-parse app/stacked 2>/dev/null || echo missing)" \
+   "$(git rev-parse app/probe)"
+
+echo "wt.sh prune"
+
+# Four trees: probe and stacked carry a commit not in origin (kept), merged1 is
+# level and clean (goes), dirtyone is level with an edit (kept). prune must
+# never remove anything it cannot recreate.
+./scripts_local/wt.sh new merged1 >/dev/null 2>&1
+./scripts_local/wt.sh new dirtyone >/dev/null 2>&1
+echo edit >> "$WORK/wt/dirtyone/file.txt"
+# Age merged1 past the activity window. `git worktree add` stamps every file
+# with the current time, so a tree is "recently written to" the instant it
+# exists -- prune keeps it, correctly, because a tree somebody just made is a
+# tree somebody is about to use. The fixture has to say "abandoned" out loud
+# rather than relying on merged-and-clean, which a QA tree is by definition
+# and permanently. That gap is what deleted wt/usertest twice mid-run.
+find "$WORK/wt/merged1" -exec touch -t 202001010000 {} + 2>/dev/null || true
+DRY="$(./scripts_local/wt.sh prune --dry-run 2>&1)"
+case "$DRY" in
+  *"would drop merged1"*) ok "dry run names the merged, clean tree" ;;
+  *) bad "dry run did not name merged1: $DRY" ;;
+esac
+[ -d "$WORK/wt/merged1" ] && ok "dry run removes nothing" || bad "dry run removed merged1"
+OUT="$(./scripts_local/wt.sh prune 2>&1)"
+[ ! -d "$WORK/wt/merged1" ] && ok "prune drops the merged, clean tree" || bad "prune kept merged1: $OUT"
+git rev-parse -q --verify app/merged1 >/dev/null 2>&1 && bad "prune left the merged branch behind" || ok "and its branch"
+[ -d "$WORK/wt/probe" ] && [ -d "$WORK/wt/stacked" ] && ok "prune keeps trees with unmerged commits" || bad "prune dropped an unmerged tree: $OUT"
+[ -d "$WORK/wt/dirtyone" ] && ok "prune keeps a dirty tree" || bad "prune dropped a dirty tree: $OUT"
+case "$OUT" in
+  *"1 dropped, 3 kept"*) ok "and says what it did" ;;
+  *) bad "summary line wrong: $OUT" ;;
+esac
+
+# A tree somebody is WORKING IN is merged and clean the whole time it is being
+# worked in. A QA or review tree never commits -- reading, building and
+# screenshotting is the job -- so merged-and-clean is its permanent state and
+# every other keep-condition says "safe to delete". wt/usertest and
+# wt/usertest2 were deleted mid-run this way, twice, taking their screenshots.
+#
+# Written from the other side deliberately: the fixture above has to be AGED to
+# be droppable, so without this a rule that ignored activity entirely would
+# still pass every check in this file.
+./scripts_local/wt.sh new livetree >/dev/null 2>&1
+OUT2="$(./scripts_local/wt.sh prune 2>&1)"
+[ -d "$WORK/wt/livetree" ] && ok "prune keeps a tree written to just now" \
+  || bad "prune dropped a live tree: $OUT2"
+
+echo "wt.sh asks the board, and clears the record of what it drops"
+
+# With a board.py in the integration tree, prune asks it before calling a tree
+# abandoned: a record with a live lease keeps an aged, merged, clean tree; an
+# expired one does not. And a dropped tree's record must go WITH it, or the
+# holder's tool calls keep renewing a lease on a path that no longer exists
+# (34 such records on 2026-09-07). Records are written directly, as the guard
+# suite does; the lease is the file's mtime.
+mkdir -p "$WORK/integration/tools_local/board" "$WORK/.board/trees"
+cp "$HERE/../../tools_local/board/board.py" "$WORK/integration/tools_local/board/board.py"
+export BOARD_ROOT="$WORK"
+record() { printf '{"tree":"wt/%s","card":0,"actor":"someone:main","session":"someone","agent":"main","bound_at":"x","gen":1}' "$1" > "$WORK/.board/trees/$1.json"; }
+./scripts_local/wt.sh new heldtree >/dev/null 2>&1
+./scripts_local/wt.sh new droptree >/dev/null 2>&1
+find "$WORK/wt/heldtree" -exec touch -t 202001010000 {} + 2>/dev/null || true
+record heldtree
+OUT3="$(./scripts_local/wt.sh prune 2>&1)"
+[ -d "$WORK/wt/heldtree" ] && ok "prune keeps an aged tree whose board record is live" || bad "prune dropped a held tree: $OUT3"
+touch -t 202001010000 "$WORK/.board/trees/heldtree.json"
+OUT4="$(./scripts_local/wt.sh prune 2>&1)"
+[ ! -d "$WORK/wt/heldtree" ] && ok "and drops it once the lease has expired" || bad "prune kept an expired tree: $OUT4"
+[ -e "$WORK/.board/trees/heldtree.json" ] && bad "prune left the dropped tree's record behind" || ok "prune clears the record of the tree it dropped"
+record droptree
+./scripts_local/wt.sh drop droptree >/dev/null 2>&1
+[ ! -d "$WORK/wt/droptree" ] && ok "drop removes a merged, clean tree another session's record names" || bad "drop refused droptree"
+[ -e "$WORK/.board/trees/droptree.json" ] && bad "drop left the record behind" || ok "and clears its record"
+unset BOARD_ROOT
+
+echo "$((PASS+FAIL)) checks, $FAIL failed"
+[ "$FAIL" -eq 0 ]

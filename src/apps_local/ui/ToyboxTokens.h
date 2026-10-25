@@ -1,0 +1,319 @@
+#pragma once
+
+// Toybox expressed as FreeInkUI theme tokens.
+//
+// Freestanding on purpose: FreeInkUI plus plain constants, no GfxRenderer and
+// no Arduino. Screen builders include this, so they compile in a host test as
+// readily as on the device. The renderer-side half (binding real fonts to the
+// three slots) lives in ToyboxTheme.h.
+//
+// Toybox.h holds the drawing vocabulary; this header is the binding that lets
+// FreeInkUI's components draw in it. The split follows the SDK's own advice:
+// the SDK owns the in-memory types, the app owns what goes in them, and new
+// styling is expressed as tokens rather than as another hand-rolled helper.
+
+#include <FreeInkUI.h>
+
+#include <cstdint>
+
+#include "ToyboxMetrics.h"
+
+namespace toybox {
+
+namespace fui = freeink::ui;
+
+// Solid black, knocked-out label. The header never repaints, so by the ink
+// budget rule its black is free.
+inline fui::StyleSet invertedStyles() {
+  fui::StyleSet styles;
+  styles.explicitlySet = true;
+  styles.normal.background = fui::Paint::solid(fui::Color::Black);
+  styles.normal.foreground = fui::Paint::solid(fui::Color::White);
+  styles.selected = styles.normal;
+  styles.focused = styles.normal;
+  styles.active = styles.normal;
+  styles.disabled = styles.normal;
+  return styles;
+}
+
+// A control ON the header band, in its two states. The band is solid black, so
+// neither of the pairs above will do: invertedStyles() is that same black and
+// leaves a chip that IS the band with a glyph floating on it, and rowStyles()
+// is a white fill whose black hairline vanishes into the paper it is drawn on.
+// Both were tried, on two different screens, and the second of them shipped
+// backwards for two cold testers (one removed an article believing they had
+// kept it).
+//
+// So: present, chosen, on -- the white chip. Absent, available, off -- the
+// outline, drawn in paper, because a black hairline on a black band is nothing
+// at all. It is the same filled-versus-outlined language the page marks use one
+// screen down, which is what lets a person read a chip they have never tapped.
+inline fui::StyleSet bandFilledStyles() {
+  fui::StyleSet styles;
+  styles.explicitlySet = true;
+  styles.normal.background = fui::Paint::solid(fui::Color::White);
+  styles.normal.foreground = fui::Paint::solid(fui::Color::Black);
+  styles.selected = styles.normal;
+  styles.focused = styles.normal;
+  styles.active = styles.normal;
+  styles.disabled = styles.normal;
+  return styles;
+}
+
+inline fui::StyleSet bandOutlineStyles() {
+  fui::StyleSet styles;
+  styles.explicitlySet = true;
+  styles.normal.background = fui::Paint::solid(fui::Color::Black);
+  styles.normal.foreground = fui::Paint::solid(fui::Color::White);
+  styles.normal.border = fui::Paint::solid(fui::Color::White);
+  styles.normal.borderWidth = kHairline;
+  styles.selected = styles.normal;
+  styles.focused = styles.normal;
+  styles.active = styles.normal;
+  styles.disabled = styles.normal;
+  return styles;
+}
+
+// A settings row: hairline outline at rest, inverted when selected. Same two
+// states menuRow() drew by hand.
+inline fui::StyleSet rowStyles() {
+  fui::StyleSet styles;
+  styles.explicitlySet = true;
+  styles.normal.background = fui::Paint::solid(fui::Color::White);
+  styles.normal.foreground = fui::Paint::solid(fui::Color::Black);
+  styles.normal.border = fui::Paint::solid(fui::Color::Black);
+  styles.normal.borderWidth = kHairline;
+  styles.selected.background = fui::Paint::solid(fui::Color::Black);
+  styles.selected.foreground = fui::Paint::solid(fui::Color::White);
+  // Focus is what the buttons move and touch does not, so it has to look like
+  // selection rather than like a third state: this screen only ever has one
+  // current row however you got to it.
+  styles.focused = styles.selected;
+  styles.active = styles.selected;
+  styles.disabled = styles.normal;
+  styles.disabled.foreground = fui::Paint::dither(fui::Color::DarkGray);
+  return styles;
+}
+
+// Why a big label drifts low in a small box, and the one fix for it.
+//
+// `GfxRendererTarget::text` centres the font's LINE BOX (advanceY), not the
+// ink, and it clamps: `rect.y + max(0, (rect.height - lineHeight) / 2)`. Jersey
+// carries a lot of leading -- the display cut is a 63px line box around a 38px
+// digit -- so the moment a box is shorter than the line box, that max() pins
+// the offset at zero and the label stops being centred at all. It lands
+// `ascender - inkHeight` below the top of the box and its foot runs out of the
+// bottom.
+//
+// The error therefore grows as the box gets SMALLER, which is why it looks like
+// an intermittent font problem rather than a rule. Measured on a 50px Sudoku
+// cell: the 20px cut (42px line box, still fits) sits 12 above and 13 below,
+// and the 30px cut (63px line box, does not) sits 13 above and 0 below with the
+// digit crossing the cell border.
+//
+// `inkCentred` hands the component a rect that makes the ink land where you
+// meant: exactly one line box tall, positioned so the clamp is a no-op. Use it
+// for any centre-aligned label in a box shorter than its own line height.
+struct CutMetrics {
+  int16_t lineHeight;  // EpdFontData::advanceY
+  int16_t ascender;    // EpdFontData::ascender
+  int16_t inkHeight;   // the 'H' glyph's height, which is also its `top` here
+};
+
+// The cuts this fork ships, straight out of the generated headers in
+// ui/fonts/. ToyboxFonts.cpp checks these against the real font data at startup
+// and logs an error if a regenerated cut ever moves, so they cannot rot in
+// silence -- which matters because nothing else here can see a font.
+constexpr CutMetrics kTileCut{21, 17, 13};     // toybox_10
+constexpr CutMetrics kButtonCut{29, 24, 18};   // toybox_14
+constexpr CutMetrics kUiCut{42, 34, 25};       // toybox_20
+constexpr CutMetrics kDisplayCut{63, 51, 38};  // toybox_30
+constexpr CutMetrics kLargeCut{92, 74, 57};    // toybox_44
+constexpr CutMetrics kHugeCut{133, 108, 82};   // toybox_64
+
+// Connections speaks Instrument Serif, so its three cuts need the same
+// treatment: the serif line boxes are proportionally taller still, and a 26px
+// status band under a 35px line box is the same clamp as everywhere else.
+constexpr CutMetrics kSerifSmallCut{27, 21, 15};  // instrument_10
+constexpr CutMetrics kSerifTileCut{35, 27, 20};   // instrument_13
+constexpr CutMetrics kSerifTitleCut{65, 50, 36};  // instrument_24
+
+// The reading cuts, which the prose apps bind to their body slot. Listed so
+// verifyCutMetrics() guards every cut this fork registers rather than most of
+// them -- but only sound for an all-caps or all-digit run. These faces have
+// real descenders, and inkCentred centres the CAP band, so mixed-case prose
+// set with it hangs its descenders below the box. Leave prose alone.
+constexpr CutMetrics kReadingSmallCut{31, 25, 17};      // reading_serif_11
+constexpr CutMetrics kReadingCut{40, 32, 21};           // reading_serif_14
+constexpr CutMetrics kReadingBoldSmallCut{34, 27, 18};  // reading_serif_bold_12
+constexpr CutMetrics kReadingBoldCut{45, 36, 23};       // reading_serif_bold_16
+
+// Only sound for glyphs that sit on the baseline with nothing below it, which
+// is every capital and every digit in these cuts (their `top` equals their
+// height). A face with descending figures would need the glyph's own top.
+constexpr fui::Rect inkCentred(const fui::Rect& box, const CutMetrics& cut) {
+  return fui::Rect{box.x, static_cast<int16_t>(box.y + (box.height + cut.inkHeight) / 2 - cut.ascender), box.width,
+                   cut.lineHeight};
+}
+
+// The cut a line height belongs to, or nullptr for one this fork does not ship.
+//
+// Matched on lineHeight because that is the one metric a DrawTarget will
+// answer for a bound font -- the same handle fittedTitle uses to order its
+// rungs. Needed wherever ink has to be placed rather than merely drawn: the
+// component centres a LINE BOX, and a line box carries `ascender - inkHeight`
+// of air above the capitals, so anything centring by eye needs the real
+// numbers.
+constexpr const CutMetrics* cutForLineHeight(const int16_t lineHeight) {
+  const CutMetrics* all[] = {&kTileCut,    &kButtonCut,           &kUiCut,         &kDisplayCut,    &kLargeCut,
+                             &kHugeCut,    &kSerifSmallCut,       &kSerifTileCut,  &kSerifTitleCut, &kReadingSmallCut,
+                             &kReadingCut, &kReadingBoldSmallCut, &kReadingBoldCut};
+  for (const CutMetrics* cut : all) {
+    if (cut->lineHeight == lineHeight) return cut;
+  }
+  return nullptr;
+}
+
+// Font slots by name. Screens should not spell the slot numbers.
+constexpr fui::FontId kSmallFont = fui::FONT_SLOT_SMALL;
+constexpr fui::FontId kUiFont = fui::FONT_SLOT_BODY;
+// Same slot, named for what a tile uses it as: the step down when a word will
+// not fit at the full size.
+constexpr fui::FontId kBodyFont = fui::FONT_SLOT_BODY;
+constexpr fui::FontId kDisplayFont = fui::FONT_SLOT_TITLE;
+// The tile cut lives in the SMALL slot: the adapter has exactly three, and
+// nothing else in this fork needs a distinct small face. Note that the theme's
+// smallText role is deliberately NOT this slot (see themeTokens) -- a list's
+// right-hand value is a label, not tile art, and must stay at UI size.
+constexpr fui::FontId kTileFont = fui::FONT_SLOT_SMALL;
+
+// A button label, for an app whose body slot carries something other than
+// Jersey. A button is the device speaking rather than the app, so it takes the
+// small slot -- which readingChromeFaces() binds to the UI cut for exactly this.
+//
+// The alignment is named because it has to be: FONT_SLOT_SMALL is 0, and
+// textStyleUnset() reads a style whose font is 0 and whose every other field is
+// default as unset, so Screen would helpfully substitute the theme's body style
+// and the button would come back in the wrong face.
+inline fui::TextStyle buttonText(const fui::ThemeTokens& tokens) {
+  fui::TextStyle text = tokens.bodyText;
+  text.font = fui::FONT_SLOT_SMALL;
+  text.align = fui::TextAlign::Center;
+  return text;
+}
+
+// Vertical air between two stacked blocks that are not rows: half a gutter, so
+// it reads as a join rather than as a new section.
+constexpr int spaceBetween = kGutter / 2;
+
+// An action that is present but cannot be used right now. Dithered rather than
+// hidden: a control that vanishes moves everything next to it, and on e-ink
+// that costs a repaint of the whole bar.
+inline fui::StyleSet disabledButtonStyles() {
+  fui::StyleSet styles = invertedStyles();
+  styles.normal.background = fui::Paint::dither(fui::Color::DarkGray);
+  styles.selected = styles.normal;
+  styles.focused = styles.normal;
+  styles.active = styles.normal;
+  styles.disabled = styles.normal;
+  return styles;
+}
+
+// A stepper arrow with nothing left to step to. Outline and glyph both dithered
+// rather than solid, so it reads as a control that is spent rather than one that
+// is broken -- and rather than vanishing, which on a 1-bit screen is hard to
+// tell from a drawing bug.
+inline fui::StyleSet disabledStepperStyles() {
+  fui::StyleSet styles;
+  styles.explicitlySet = true;
+  // The DITHER HAS TO BE IN THE FILL. GfxRendererTarget::text() decides ink with
+  // `style.color != Color::White`, so every non-white text colour draws solid
+  // black -- there is no grey type on this renderer, and dimming a glyph is not
+  // a thing that can work. A dithered background is how SUBMIT greys out, and it
+  // is the only mechanism that actually reads as spent.
+  styles.normal.background = fui::Paint::dither(fui::Color::LightGray);
+  styles.normal.foreground = fui::Paint::solid(fui::Color::Black);
+  styles.normal.border = fui::Paint::dither(fui::Color::DarkGray);
+  styles.normal.borderWidth = kHairline;
+  styles.selected = styles.normal;
+  styles.focused = styles.normal;
+  styles.active = styles.normal;
+  styles.disabled = styles.normal;
+  return styles;
+}
+
+// One palette, built once, handed out by reference.
+//
+// ThemeTokens is 2712 bytes. Returned by value it landed on the caller's stack,
+// and toybox::Screen then copied it a second time; between them they were most
+// of the 8192-byte render task, which is how v1.0.0 crashed on the first device
+// that ran it (issue #1). Nothing ever varied: every one of the 22 call sites
+// asked for this same palette.
+//
+// The static also makes the reference safe by construction. Screen used to own
+// a copy precisely because a reference could outlive a temporary; a function
+// -local static outlives everything, so the guarantee is kept and the copy is
+// not needed to get it.
+inline const fui::ThemeTokens& themeTokens() {
+  static const fui::ThemeTokens instance = [] {
+    fui::ThemeTokens tokens = fui::defaultThemeTokens(fui::FONT_SLOT_SMALL, fui::FONT_SLOT_BODY, fui::FONT_SLOT_TITLE);
+
+    tokens.spaceXs = 4;
+    // Screen::takeRow() uses spaceSm as the gap between rows, so it has to be
+    // the row gap, not a generic small space.
+    tokens.spaceSm = 4;
+    tokens.spaceMd = kGutter;
+    tokens.spaceLg = kMargin;
+    tokens.rowHeight = kRowHeight;
+    tokens.headerHeight = kHeaderHeight;
+    tokens.footerHeight = kPillHeight;
+    tokens.minTouchSize = 44;
+
+    tokens.listRowGap = 4;
+    // Lists stopped reading rowHeight. Screen::resolveListProps() sizes a row
+    // from its label font, its padding and the device touch minimum, and then
+    // clamps up to listMinRowHeight -- rowHeight above is not consulted at all.
+    // Toybox's rows are deliberately 62 and its gap deliberately 4, so both
+    // have to be stated in the tokens that function DOES read. Left unsaid, a
+    // touch device resolves 56 and 6 instead, and every fork helper that
+    // positions something on a row from theme().rowHeight (toybox::listRowRect,
+    // and so every icon drawn by iconAtRowRight) lands it 4px per row out of
+    // place, the last one outside the band entirely.
+    tokens.listMinRowHeight = kRowHeight;
+    tokens.listTouchRowGap = tokens.listRowGap;
+    tokens.listSidePadding = kGutter;
+    // Zero, not kMargin: the screen's content rect already carries the page
+    // margin, and listInset is applied on top of it. Setting both indents the
+    // rows twice.
+    tokens.listInset = 0;
+    tokens.listSelectionStyle = fui::SelectionStyle::InvertFill;
+
+    tokens.headerSidePadding = kMargin;
+    // Toybox draws its own rule under the header, offset from the band, so the
+    // component must not draw one flush against it.
+    tokens.headerUnderline = 0;
+    tokens.headerTitleAlign = fui::TextAlign::Left;
+
+    tokens.titleText.font = fui::FONT_SLOT_BODY;
+    // The display cut is only ever set on the header band, and that band is
+    // always solid black, so the title colour belongs to the token rather than to
+    // each caller. `header()` uses the title style as given instead of resolving
+    // it against the band's foreground, so leaving this at its Black default
+    // paints the title black on black and it simply disappears.
+    tokens.titleText.color = fui::Color::White;
+    tokens.bodyText.font = fui::FONT_SLOT_BODY;
+    // UI cut, not the small slot: that slot holds the Connections tile face, and
+    // list values would shrink to 13px if this followed it.
+    tokens.smallText.font = kUiFont;
+
+    tokens.listRow = rowStyles();
+    tokens.button = rowStyles();
+    // Screen::header() takes the band's StyleSet from the popup slot, which is
+    // the SDK's convention for "chrome surface" rather than an oversight.
+    tokens.popup = invertedStyles();
+    return tokens;
+  }();
+  return instance;
+}
+
+}  // namespace toybox

@@ -1,0 +1,14 @@
+{
+  "name": "dragon",
+  "title": "Dragón",
+  "prompt": "Create ONE production-style BLACK AND WHITE PIXEL ART companion sprite. Images1 and2 are the USER-APPROVED PET STYLE, image3 is the exact HERO. Match their expressive block-shaped eyes, firm stepped pixel contours, clear flat black/white shapes and very sparse interior detail. The animal must look like a creature from the SAME SPRITE SET as this hero and these two pets. Important: actual coarse square pixel clusters, not an ink illustration with pixelated edges. No smooth line art, fine fur strands, realistic anatomy shading, hairline decoration, grayscale, dithering, texture or antialiasing. A charming stylized animal with coherent readable proportions like the approved cat/dog. True transparent outside and opaque black/white within the sprite. Full body, all ears/wings/paws/tail complete, safe margins. No human, UI, scene, floor, external shadow, labels or frame. Preserve a confident contour that matches the HERO at the intended final display size; larger creatures need more pixels and detail, NOT a magnified thick outline from a tiny sprite. Subject: an original DRAGON standing tall in three-quarter pose, two raised wings, four strong legs, curved long tail, modest angular snout and two horns. Adapt the approved cat/dog and hero's friendly expressive black pixel eyes and compact sprite shapes to a majestic fantasy creature. Strong grown proportions with a moderate head, neither baby toy nor realistic dragon drawing. Intended LARGE native sprite272x340, taller than the256px hero. Firm THREE final pixel outer contour, equal in physical thickness to the hero despite the larger body. Build from visible square pixel clusters and clean stair steps, not smooth thin ink outlines. Very simple wings: only2 broad structural divisions each, substantial black shadow clusters at wing roots, neck/chest and legs, balanced white highlights. No individual scales, tendril details, long thin claws, fur or tiny ornament. Same visual family as the approved pets, just a larger fantasy companion.",
+  "references": [
+    "codex-clipboard-d5967640-dbff-49a4-bbd3-a6b70e96e51f.png",
+    "codex-clipboard-fbadf95b-bf11-4ea5-8db2-bb2ff1acb838.png",
+    "figure-0.png"
+  ],
+  "source": "exec-dc8025fd-5d3f-444d-b863-f6d205ec8a5c.png",
+  "file": "pet-47.png",
+  "id": 47,
+  "approvedPrototype": true
+}

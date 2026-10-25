@@ -1,0 +1,50 @@
+[
+  {
+    "path": "Bitter/bitter-Regular.ttf",
+    "sha256": "a85aeacfc8eda2372a48eda9c51a1baded333607d4da4907cc355016456ff204",
+    "bytes": 118184,
+    "license": "SIL OFL 1.1"
+  },
+  {
+    "path": "Bitter/bitter-Bold.ttf",
+    "sha256": "dad61badd395a6085f89c108cfd36351f1b74f32a09e711f2a8623b0f8d9cbda",
+    "bytes": 101928,
+    "license": "SIL OFL 1.1"
+  },
+  {
+    "path": "Bitter/bitter-Italic.ttf",
+    "sha256": "323293ce90d755ea1b9c0bde18fcd5f9bc89a20f807b09694a5e81d3773cd963",
+    "bytes": 100628,
+    "license": "SIL OFL 1.1"
+  },
+  {
+    "path": "Bitter/bitter-BoldItalic.ttf",
+    "sha256": "ae3af874b4a2ffe74fd95bab30b39c2ea620757363bde5c49a7af6135c485f08",
+    "bytes": 100540,
+    "license": "SIL OFL 1.1"
+  },
+  {
+    "path": "Lexend Deca/lexenddeca-Regular.ttf",
+    "sha256": "e826505117fd4f764406df276b43456afaa4772b757a96cb7c8a7825df8f40f4",
+    "bytes": 69304,
+    "license": "SIL OFL 1.1"
+  },
+  {
+    "path": "Lexend Deca/lexenddeca-Bold.ttf",
+    "sha256": "37ef5f022f1edfdfb4bbb33b2703a41a6417c6375e9a7919bd80d4c7ab249f9d",
+    "bytes": 53284,
+    "license": "SIL OFL 1.1"
+  },
+  {
+    "path": "Lexend Deca/lexenddeca-Italic.ttf",
+    "sha256": "27fee7ca40511306fee017c153e95f294a3af98823b5cbccbf5c01406cac22e6",
+    "bytes": 57976,
+    "license": "SIL OFL 1.1"
+  },
+  {
+    "path": "Lexend Deca/lexenddeca-BoldItalic.ttf",
+    "sha256": "f048461f7e0d2256b55879cc063260a77210662ffd3da3ccc8d791aa727232fd",
+    "bytes": 57656,
+    "license": "SIL OFL 1.1"
+  }
+]

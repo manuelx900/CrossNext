@@ -1,0 +1,2 @@
+- [ ] Preparar material
+- [ ] Revisar avances

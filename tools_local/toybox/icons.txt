@@ -1,0 +1,459 @@
+# WARNING before regenerating: the committed ToyboxIcons.h holds two icons this
+# manifest cannot rebuild. icon_yahtzee_32 and icon_connectfour_32 match no SVG
+# in the vendored Lucide pin (checked against every icon in it), so their source
+# was never committed and a straight regeneration drops them from the shelf.
+# Until the sources are recovered, regenerate to a scratch file and splice new
+# icons in by hand, the way seasalt's were.
+
+# Icons for the shelf, generated into src/apps_local/ui/ToyboxIcons.h by
+# tools_local/toybox/gen_toybox_icons.sh. Format: alias = lucide-name.
+#
+# The label already says what the app is, so the icon's job is to be
+# recognisable and distinct at a glance in a 62px row -- not to be literal.
+# Picked for silhouette: a crown, a hull, a grid and a suit share no shape.
+
+chess       = crown       # the king. Lucide has no chess piece; `castle` is the
+                          # rook by name but a detailed building at 32px.
+battleship  = ship
+connections = grid-2x2    # four cells, four groups
+solitaire   = spade       # the card suit reads instantly at any size
+
+# HEARTS is the second card game on the shelf and the second suit in this list,
+# which is the one place the "no two silhouettes alike" rule bends. It bends
+# because a heart and a spade are the two most distinguishable shapes in the
+# deck -- one convex, one with a stem -- and because a trick-taking game named
+# after a suit that is not the one on its icon would be worse than the
+# repetition. `heart-crack` reads as a break-up and `diamond` is the wrong suit.
+hearts      = heart
+
+# WAVELENGTH's board IS a fader: a vertical strip with one heavy bar on it, and
+# the bar is the whole game. `sliders-vertical` is that shape rather than a
+# metaphor for it. `audio-waveform` was the obvious pun on the name and was
+# rejected for reading as a media player, and `gauge` for reading as a dial the
+# panel deliberately does not have.
+wavelength  = sliders-vertical
+
+# The multiplayer mark. One symbol, everywhere two devices talk to each other:
+# the PLAY NEARBY row of every game and the shared link screen. Recognition is
+# the whole point, so it is never used for anything else.
+#
+# `radio` is symmetric arcs from a point -- a thing here, signalling both ways.
+# That is the shape the DS used for local play. `wifi` was rejected for reading
+# as the internet, `radio-tower` as one-to-many broadcast, and the topology
+# icons (share-2, waypoints, network) as diagrams rather than marks.
+nearby      = radio
+
+# The two shelf rows on Home. Upstream's UIIcon palette is thirteen reading
+# icons -- folder, book, wifi, library, sun -- so both rows drew the same folder
+# and nothing distinguished them. Adding enum variants would mean editing
+# BaseTheme.h and LyraTheme.cpp, which upstream touched 7 and 3 times in the
+# last 60 commits, so these are drawn over the rows instead.
+# gamepad-2 was the obvious pick and it is mush at 32px in one bit: the D-pad
+# and buttons blob into the body. A joystick is a ball, a shaft and a base --
+# three shapes, no interior detail, and the same line weight as the folder and
+# book icons it sits under. Rejected alongside it: puzzle (reads as a browser
+# extension), swords (diagonal, fights the column), target (reads as a goal),
+# dices (heavier than its neighbours).
+games       = joystick
+apps        = layout-grid
+
+# The shelf's player bar. Without an affordance, a bar carrying a face and a
+# name reads as a status line rather than as somewhere you can go -- and the
+# thing it opens is the only settings screen in the fork, so being missable is
+# the whole failure. A chevron is the least it can be and still say "opens".
+opens       = chevron-right
+
+# Hacker News. `newspaper` shares no silhouette with the crown, hull, grid,
+# suit or joystick already on the shelf, and a folded broadsheet reads as
+# "things to read" without needing the label.
+hackernews  = newspaper
+
+# The mark for a link this device cannot show as text: a PDF, a video, a page
+# that is only JavaScript. It appears on a story row and on the screen that
+# offers the comments instead, and it is never used for anything else.
+#
+# `eye-off` is a negation with one unmistakable diagonal, which is all 1-bit at
+# 32px reliably carries. Rejected: file-x and square-x (the X is interior
+# detail inside an outline, the same mush that ruled out gamepad-2), ban (reads
+# as forbidden rather than unavailable, and blames the reader), image-off (says
+# pictures, when the missing thing is words).
+unreadable  = eye-off
+
+# The flashcard trainer. `languages` is Lucide's A-over-CJK-glyph mark, which
+# is what this app actually is: one script standing in for another. It is also
+# the only silhouette in the shelf built from letterforms, so it cannot be
+# confused with the crown, the hull, the grid or the suit at 32px.
+#
+# Rejected: graduation-cap (a triangle on a stem, too close to the crown at
+# this size), layers and gallery-vertical-end (a stack of cards is the
+# mechanism, not the subject, and both read as generic list icons), brain
+# (memory is the mechanism too, and it is mush at 32px).
+study       = languages
+
+# D&Diagrams. A folded map is the only silhouette on the shelf built
+# from a zigzag, so it cannot be confused with the crown, hull, grid, suit,
+# joystick, newspaper or letterforms already there -- and the game is literally
+# the drawing of one.
+#
+# Rejected: brick-wall and castle (both grids of small rectangles at 32px, which
+# is where connections' grid-2x2 and the apps folder's layout-grid already
+# live), skull (it is the monster inside the game, and a mark should not also be
+# a piece), swords and pickaxe (diagonal, fighting the column, the same reason
+# swords lost to joystick).
+dungeon     = map
+
+# Insider. The same mask the Insider's own role card carries at 96px, so the
+# row on the shelf and the card handed round the table are the one shape -- the
+# game is named after that person and the icon should be them.
+#
+# A horizontal double lobe with a notch between the eyes shares nothing with the
+# crown, hull, grid, suit, joystick, newspaper, letterforms or folded map, and
+# it was checked at 32px rather than assumed: the eye slits are thin but they
+# survive the threshold. Rejected: eye (the fork already means something by an
+# eye -- `unreadable` is eye-off -- and a bare eye says nothing about hiding),
+# drama (two overlapping masks is the interior detail that turned gamepad-2 to
+# mush), glasses (reads as spectacles, which is a different idea entirely).
+insider     = venetian-mask
+
+# Jaipur. A cut gem: diamonds are the top of the game's economy and the card
+# every round is fought over, so the mark is the thing you are playing for.
+#
+# A faceted lozenge shares no silhouette with the crown, hull, grid, suit,
+# joystick, newspaper, letterforms, folded map or mask already on the shelf, and
+# the interior facet lines are three straight strokes rather than the small
+# rectangles that turned gamepad-2 and castle to mush at 32px. Rejected: coins
+# (overlapping discs, no distinct outline at this size), scale (a merchant's
+# balance is the theme but reads as justice), package and shopping-basket (both
+# say commerce generically and neither says which game).
+jaipur      = gem
+# The xkcd app. A comic is a row of panels, so the mark is the panel itself:
+# `gallery-vertical-end` is a stack of framed rectangles, which is both the
+# shape of a strip and the shape of the reader's own stepping. Rejected:
+# `image` (every app that shows anything could claim it), `smile` (says
+# "comedy" rather than "comic", and the fork already spends faces on the
+# player avatar), `newspaper` (taken by Hacker News, and two apps that both
+# read as "a page of text" is the one thing a 62px row cannot disambiguate).
+xkcd        = gallery-vertical-end
+# Murdle: a murder-mystery logic grid. `footprints` -- two shoe soles, and
+# nothing else on this shelf is that shape. `fingerprint` was the first choice
+# and this lucide pin does not carry it; of what is here, `puzzle` is a jigsaw
+# tab and this is not a jigsaw, `user-search` and `file-search` are both a
+# magnifying glass with interior detail that blobs at 32px in one bit, and
+# `drama` was already rejected for Insider for the same reason. A skull would
+# announce the wrong tone for a game that is arithmetic.
+murdle      = footprints
+
+# ---------------------------------------------------------------------------
+# The four axes of Murdle's deduction grid, at 24px.
+#
+# These replace the single letters S/W/P/M that used to label the axes. The
+# letters worked, but they cost four letters out of the twenty-six the *items*
+# are labelled with -- and worse, S meant both "the suspects axis" and STABLE,
+# which is exactly the ambiguity the single-letter labels exist to remove. An
+# icon is not a letter, so it collides with nothing.
+#
+# Picked for silhouette at 24px in one bit, and for being unmistakable next to
+# each other: a head, a tool, a pin and a heart share no outline.
+murdle_suspects = user      # a head and shoulders; `users` is two heads and mush at 24px
+murdle_weapons  = hammer    # `axe` reads as woodcutting and `swords` is two crossed
+                            # blades that blur into an X at this size
+murdle_places   = map-pin   # the universal "a place". `house` is one kind of place
+                            # and half the table is outdoors
+murdle_motives  = heart     # why, rather than what. `brain` is detail that fills in
+                            # at 24px, `flame` reads as danger rather than motive
+
+
+# ---------------------------------------------------------------------------
+# The three faces of a case, at 24px, drawn white on the header band.
+#
+# The header used to carry one label that named the NEXT face and cycled. On a
+# panel that takes a second to redraw, reaching the third face meant two full
+# refreshes and a guess about which order they came in. Two icons go straight
+# there, and a picture survives the 40px of band left beside the title where a
+# word would not.
+#
+# Picked to be unmistakable from each other at a glance rather than to be
+# beautiful: horizontal rules, a lattice, and a rectangle with a corner.
+murdle_face_clues = list        # the numbered lines. `scroll-text` is a curl of
+                                # paper that blurs shut at 24px in one bit
+murdle_face_grid  = grid-2x2    # four cells, which is literally the board.
+                                # `table` reads as a header row plus body
+murdle_face_info  = folder      # the case file that holds the cast. `users` is
+                                # two heads and mush, and the page is not only
+                                # people -- it is weapons and places too
+
+# Checkers. `circle-dot` is a disc inside a ring, which is exactly what a
+# crowned checker is: two pieces stacked. Rejected: `grid-3x3` (connections owns
+# the grid), `crown` (chess owns it), `circle` (a plain disc says nothing).
+checkers = circle-dot
+# Knucklebones. A die is the game: you roll one every turn and the whole board
+# is made of them, so the mark is the object rather than a metaphor for it.
+# `dice-5` over the other faces because five pips are symmetric and read as a
+# die at 32px, where `dice-1` is a dot in a box and `dice-6` fills in.
+#
+# Rejected: `swords` (diagonal, and already rejected for the games folder for
+# fighting the column), `skull` (Cult of the Lamb's tone, not this device's),
+# `grid-3x3` (that is the board, and connections already owns a grid).
+knucklebones = dice-5
+# Minesweeper. `bomb` is the object the whole game is about avoiding, and a
+# sphere with a lit fuse is a silhouette nothing else on the shelf has.
+# Rejected: `flag` (that is the tool, not the game, and the game is not about
+# flags), `grid-3x3` (connections owns the grid), `land-mine` is not in this
+# lucide pin.
+minesweeper = bomb
+
+# Minesweeper's flag. Hand-drawn three times and wrong three times: the pennant
+# and the pole kept ending up the same height, so no flag could emerge from the
+# geometry at any size. The fork already vendors Lucide and generates from it,
+# and `flag` is there. Solitaire's pips went the same way after three rounds of
+# hand-drawing.
+mineflag = flag
+
+# Yahtzee. NOT a die, and that is the whole point: Knucklebones' mark is a die
+# and the two sit on consecutive rows of the same folder, where they read as the
+# same icon. A game's icon has to separate it from its NEIGHBOURS, not just be a
+# fair picture of the game -- the same lesson Connect Four learned when its 2x2
+# of discs read as a checkerboard directly under CHECKERS.
+#
+# So: the CARD. Thirteen boxes filled once each is what makes Yahtzee Yahtzee
+# rather than "a dice game", and the card is literally the screen. Two boxes
+# written in and one still waiting, which is the game in one picture.
+# Rejected: five small dice (illegible at 32px, and still dice), a dice cup (too
+# much detail), a single die with a different pip count (still the neighbour's
+# mark with a typo).
+
+# Sea Salt & Paper. `origami` -- the game is origami sea creatures, and Lucide's
+# origami is the folded crane: an angular bird built from three straight folds.
+# Nothing else on the shelf is made of folds, so it cannot be confused with the
+# gem, the die, the bomb, the card or the disc that surround it in the folder.
+# Rejected: `shell` (it is a card *inside* the game, and a mark should not also
+# be a piece -- the same rule that kept the skull off the dungeon), `waves` (not
+# in this pin), `ship` (battleship owns the hull).
+seasalt     = origami
+
+toybattle = share-2
+# Toy Battle is the only game on this shelf whose board is a GRAPH: bases with
+# paths between them, and the whole game is which ones you hold and whether a
+# line still runs home. So the mark is three bases and the paths joining them.
+#
+# It has to survive its neighbours. `crown` is chess, `circle-dot` is checkers,
+# `dice-5` is knucklebones, `bomb` is minesweeper -- all of them a single object,
+# none of them a network, so a node-link mark is unmistakable in that row.
+# Rejected: `castle` (that is Castle Field, one terrain out of eight, and the
+# game is not about castles), `flag` (already the minesweeper flag), `swords`
+# (not vendored), `network` (its box reads as a device, not a board),
+# `git-fork` (a branch, and branches are exactly what this board is not --
+# its paths rejoin).
+
+# Sudoku. `hash` -- four open strokes, which is the frame everyone already draws
+# a Sudoku inside, and the only mark here made of LINES rather than of a shape.
+# That is the whole reason for it: `grid-3x3` is the literal choice and it is
+# indistinguishable from connections' `grid-2x2` at 32px in one bit, which is
+# exactly the confusion this file exists to avoid. Rejected alongside it:
+# `table` and `table-2` (same boxed-grid silhouette), `pencil` (a tool, not a
+# game, and every game here is played with one), `brain` (mush at 32px).
+sudoku      = hash
+
+# GO. Nine dots in a three by three: stones standing ON the crossings, which is
+# the one thing about this board that is not true of any other board on the
+# shelf -- every other game here puts its pieces INSIDE squares. `grip` is that
+# arrangement and nothing else.
+#
+# It has to survive its neighbours, and the circle family is crowded:
+# `circle-dot` is checkers and `circle-small` beside it is the same silhouette
+# one size down. Rejected: `grid-3x3` and `hash` (lines, and `hash` is sudoku),
+# `chart-scatter` (its axes read as a chart), `target` and `donut` (concentric
+# rings, which is checkers' mark with more strokes), `atom` and `orbit` (a
+# diagram of a different subject).
+go          = grip
+underhand   = skull       # the cult; a hand in the name, a skull on the shelf
+
+# GO's in-app marks. Rows in this fork carry an icon on the right, and these
+# six are chosen so the icon says something the label cannot: the three signal
+# bars ARE the level, and the opponent mark changes between a machine and two
+# people. An icon that only restates its label is decoration.
+#
+# Spliced into ToyboxIcons.h by hand, like every icon since the yahtzee and
+# connectfour sources went missing (see the warning at the top of this file).
+go_play      = play
+go_settings  = settings
+go_computer  = bot          # a machine with a face; `cpu` is a chip, which is
+                            # the part rather than the player
+go_humans    = users        # two of them, because that is what the row means
+go_colour    = contrast     # a disc half black and half white, which IS the
+                            # choice the row offers
+go_level     = gauge        # a dial: HOW HARD, which is what the row asks.
+go_handicap  = circle-plus  # stones ADDED before the game starts, which is what
+                            # a handicap is. `dices` was rejected for reading as
+                            # chance, which a handicap emphatically is not.
+go_board     = grid-3x3     # the board itself, at the one size a 32px mark can
+                            # draw a grid at. The row says 9x9 or 13x13 in
+                            # words; the mark only has to say "the board".
+go_trash     = trash-2      # the square button on the RESUME row. It throws the
+                            # game in progress away, so it is the one destructive
+                            # control in the app and it looks like nothing else.
+                            # `signal-low/medium/high` was the first choice --
+                            # an icon that grades itself is better than one that
+                            # restates its label -- and it had to go: at 32px in
+                            # one bit those are 3px bars in the bottom third of
+                            # the box, and `signal-low` is a single speck that
+                            # reads as a rendering fault. The VALUE already says
+                            # EASY, MEDIUM or HARD, and it says it loudly.
+
+# PICROSS. The reward is a revealed PICTURE, so `image` -- a framed picture --
+# rather than another grid. `grid-2x2`/`hash` are already spoken for and read as
+# the same boxed lattice; `pencil`/`paintbrush` are tools, which this file bans
+# for a game (see the sudoku note above).
+picross     = image
+
+# ---------------------------------------------------------------------------
+# FOREHEAD, and its seventeen category marks.
+#
+# The game itself is `hourglass`. Not a face and not a mask: `venetian-mask` is
+# Insider's and the two are both party games in the same folder, which is
+# exactly the collision Yahtzee and Knucklebones had to resolve. A bowtie of two
+# triangles meeting at a point shares no outline with the crown, hull, grid,
+# suit, joystick, map, mask, gem, footprints, disc, die, bomb, origami, node
+# graph or hash around it, it has no interior detail at all to mush at 32px, and
+# the sixty-second clock is what the game IS -- every other guessing game on
+# this shelf lets you think. Rejected: `smile` and `drama` (faces, and the fork
+# spends faces on the player avatar; drama was already turned down twice here
+# for interior detail), `megaphone` (a cone with arcs, too near `radio`, which
+# is the multiplayer mark and must never be echoed), `lightbulb` (says "idea",
+# which is every puzzle in the folder).
+forehead = hourglass
+trivia   = brain            # the one thing every question is asking you for
+
+# The category marks, 32px, drawn in the picker's rows the way the shelf draws
+# an app's. They have to separate from EACH OTHER rather than from the shelf,
+# which is what ruled out the obvious set: `baby` for the children's list is a
+# head, `user-round` is a head, and `person-standing` is a figure, so three of
+# seventeen rows would have read as the same person.
+cat_animals = paw-print
+cat_act     = person-standing   # a whole figure, mid-stride
+cat_sound   = volume-2
+cat_food    = utensils-crossed
+cat_movies  = clapperboard
+cat_people  = user-round        # a bust: the only head in the set once kids moved off `baby`
+cat_music   = music
+cat_jobs    = briefcase
+cat_sports  = trophy
+cat_house   = lamp
+cat_places  = map-pin
+cat_nature  = trees
+cat_science = rocket            # not `atom`: three crossed ellipses is interior
+                                # detail, and this list is read at a glance
+cat_myths   = ghost
+cat_story   = book-open
+cat_kids    = toy-brick         # a studded block, not a baby's head
+cat_tricky  = puzzle            # the one list with nothing you can point at
+
+# Instapaper, in APPS. `bookmark` -- a ribbon with a notch, and the only
+# downward pennant on the shelf. It has to separate from its NEIGHBOURS rather
+# than from the games: STUDY is letterforms, HACKER NEWS a folded broadsheet,
+# XKCD a stack of frames. A ribbon shares an
+# outline with none of them, and "saved to come back to" is exactly what the
+# app holds.
+#
+# Rejected: `book-marked` (a book with a ribbon -- the book half is GET BOOKS'
+# territory and the two would read as the same row at 32px), `scroll-text`
+# (a curl of paper that blurs shut at this size, already turned down once for
+# murdle's clue face), `clock` and `hourglass` (the hourglass is FOREHEAD's,
+# and "later" as a clock says timer rather than reading), `newspaper` (Hacker
+# News owns it, and two apps that both read as "a page of text" is the one
+# thing a 62px row cannot disambiguate).
+instapaper  = bookmark
+
+# Hacker News: the reader's band mark for a saved article.
+saved       = bookmark
+
+# Instapaper's account/disconnect control, on the queue footer beside SYNC.
+# `circle-user-round` is the classic account avatar -- a head inside a ring --
+# and it shares no outline with the bookmark ribbon it sits next to. It is a
+# secondary control, not a shelf mark, so it never has to separate from the
+# games; it only has to read as "your account" at 32px, which a bust in a
+# circle does. Spliced by hand into ToyboxIcons.h, never regenerated (see the
+# warning at the top of this file).
+account     = circle-user-round
+
+# The Wallpapers app. `image` is Lucide's framed picture -- a rounded rectangle
+# with a sun and a mountain line -- which is exactly what this app manages, and
+# nothing else on the shelf is a framed landscape. Rejected: `wallpaper` (not in
+# this lucide pin), `image-plus`/`gallery-thumbnails` (interior detail that
+# blobs at 32px in one bit, the gamepad-2 failure), `panels-top-left` (reads as
+# a UI layout, not a picture). NOTE: spliced into ToyboxIcons.h by hand -- a
+# straight regen still drops icon_yahtzee_32 and icon_connectfour_32 (see top).
+wallpapers  = image
+# WAVELENGTH's two in-app marks. Spliced into ToyboxIcons.h at the cut each is
+# drawn at (never regenerate the manifest in place -- it drops icon_yahtzee_32
+# and icon_connectfour_32, whose SVG sources were never committed). The pass
+# arrow points the way the device travels; the eye is the peek's hero.
+wl_pass = arrow-big-left   # icon_wl_pass_96
+wl_look = eye              # icon_wl_look_120
+
+# WIKIPEDIA: the globe, because the pitch is all the knowledge in the world in
+# your pocket; `book-open` reads as the reader itself.
+wikipedia   = globe
+
+# The article band's way back: the previous article, or the search. Left of
+# the title, where every reader puts it.
+wiki_back   = chevron-left
+# The article band's CONTENTS: the list, because a word in the reader's
+# small cut took 151 of the band's 448 and left a one-word title cut.
+wiki_contents = list
+
+# The shelf chooser's tick. The BOX around it is drawn from primitives (a
+# filled slab or a hairline outline, which is already this screen's language
+# for "this one of these" -- see the page marks); only the tick is an asset,
+# because a hand-drawn one goes the way solitaire's pips and minesweeper's
+# flag went. Lucide's plain `check` is a single stroke with no interior
+# detail, which is the one thing that survives being knocked out of a 32px
+# slab in one bit.
+#
+# `tick`, not `check`: src/components/icons/listIcons.h -- the OTHER generated
+# icon header, upstream's side of the fence -- already defines icon_check_24
+# and icon_check_32, and both headers declare their icons `static const` at
+# namespace scope. Nothing includes both today, so the collision would have
+# waited quietly until the first file that did. It is the only name the two
+# manifests have ever shared.
+tick = check
+
+# The calculator's shelf row. Lucide's own `calculator`: a slab with a display
+# band and a four-by-something key field, which is the silhouette of the thing
+# and shares no shape with any other row in Apps.
+calculator = calculator
+
+# ---------------------------------------------------------------------------
+# LIVE, the fridge screen. Four marks at 24px, and 24 is the size because every
+# one of them sits BESIDE A WORD -- three in a 64px button, one at the end of a
+# list row. A 32px mark there crowds the label it is paired with.
+#
+# None of them is alone. WallpapersScreens.cpp already learned on the Add screen
+# that a graphic tells a person nothing by itself (the address is drawn in words
+# next to the QR, and the comment there says why): an e-ink panel has no hover
+# and no tooltip, so a bare glyph is a guess. One short word removes the guess.
+live_check  = rotate-cw   # ask the website now rather than at the next check.
+                          # `refresh-cw` is two arcs chasing each other and they
+                          # blur together at 24px in one bit; one arrow with one
+                          # head survives.
+live_power  = power       # the universal mark, and the one control here that
+                          # stops the reader fetching at all.
+live_add    = plus        # `user-plus` was the literal choice and its head and
+                          # shoulders is mush at this weight. A bare plus has no
+                          # interior detail to lose.
+live_remove = x           # the end of a sender row. `trash-2` is a drawn object
+                          # -- lid, body, three lines -- and it fills in at 24px
+                          # in one bit. An X is two strokes, and it is what every
+                          # list in the world puts at the end of a row you can
+                          # take out. The word is not repeated per row: the
+                          # confirm behind it NAMES who is going, which is the
+                          # sentence that matters and the one place it can be
+                          # read without shrinking four rows to fit it.
+# WORDLE is five letter tiles, and no Lucide icon is a row of tiles that does not
+# read as a text field. `spell-check` is letters with a tick under them: a word
+# checked, which is what every guess is. Spliced in by hand (see the warning at
+# the top of this file).
+wordle        = spell-check
+# The keyboard's delete key: Lucide's `delete` is a backspace key, which is the
+# thing on every phone keyboard, where an arrow alone read as "go back".
+wordle_delete = delete

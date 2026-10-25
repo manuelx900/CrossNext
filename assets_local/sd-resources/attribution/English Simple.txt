@@ -1,0 +1,18 @@
+English Simple - dictionary data
+
+Copyright: Wiktionary contributors.
+Data license: Creative Commons Attribution-ShareAlike 4.0 International.
+Original text and contributor histories: https://simple.wiktionary.org/
+For an individual entry, search its headword there and open View history.
+Conversion and distribution: xxyzz / wiktionary_stardict.
+Source: https://github.com/xxyzz/wiktionary_stardict/releases/tag/20261018
+Snapshot: 2026-10-01; packaged upstream on 2026-10-18.
+CrossNext preserves the dictionary, index, synonyms and metadata bytes.
+No entry text was edited. Images are not included.
+The accompanying CSS is source code from xxyzz/wiktionary_stardict,
+licensed GPL-3.0-or-later; its complete corresponding source is the .css
+file beside this notice. Source project: https://github.com/xxyzz/wiktionary_stardict
+See LICENSE-CC-BY-SA-4.0.txt and LICENSE-GPL-3.0.txt.
+When redistributing, retain attribution and license notices. If adapting the
+dictionary data, identify your changes and use the same or a compatible license.
+This collection does not relicense the firmware or other resources.

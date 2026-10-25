@@ -1,0 +1,607 @@
+{
+  "figures": [
+    {
+      "id": 0,
+      "gearIndex": 0,
+      "gender": 0,
+      "sha256": "d01dcd91c1d5723211837b33b15adf446b5b6e6cfd080e82e3909e95920c9c57"
+    },
+    {
+      "id": 1,
+      "gearIndex": 0,
+      "gender": 1,
+      "sha256": "c2d70342fc582d98375a340aca33d369b61e46f8cf9cafc74ff0937750fd632d"
+    },
+    {
+      "id": 2,
+      "gearIndex": 1,
+      "gender": 0,
+      "sha256": "c3c9958ef34dd91b312d5e3b992ed6f1feea06252e44d7bf05f7cf60d07d090e"
+    },
+    {
+      "id": 3,
+      "gearIndex": 1,
+      "gender": 1,
+      "sha256": "9ed9ae5cb8c428fbfc38d0d2b59077ff7c9f10915d4457e9775592831c16679a"
+    },
+    {
+      "id": 4,
+      "gearIndex": 2,
+      "gender": 0,
+      "sha256": "ca26a47148dc3f5f8c3e757ea6a604367df4629196917def4022c848fcc1d147"
+    },
+    {
+      "id": 5,
+      "gearIndex": 2,
+      "gender": 1,
+      "sha256": "51cc6ba143bf3f41d599dcf31fba54284a5537fdb4c9b4d4fe9aeadf3bf830af"
+    },
+    {
+      "id": 6,
+      "gearIndex": 3,
+      "gender": 0,
+      "sha256": "5d1514ef9dade13229e2bea9d6f2f36c186dc0bc7d8b1cda280004552799894f"
+    },
+    {
+      "id": 7,
+      "gearIndex": 3,
+      "gender": 1,
+      "sha256": "a3d2247aa481910ae1fbc341c9309a07a032c0226c11254458e6d8b040fba1cb"
+    },
+    {
+      "id": 8,
+      "gearIndex": 4,
+      "gender": 0,
+      "sha256": "a4a4e8bb6a2b70ef9bb73ed395d6d0e306561eb607b6b9b4ba9c3000d423f0e0"
+    },
+    {
+      "id": 9,
+      "gearIndex": 4,
+      "gender": 1,
+      "sha256": "0cf823835643ccc0a0b81064e01ed5f5773746a38958866c474d9f72286b58c5"
+    },
+    {
+      "id": 10,
+      "gearIndex": 5,
+      "gender": 0,
+      "sha256": "f28065bc95620b75d8ac1f9557e104bf942399db48488c4471f3911d94e04a2f"
+    },
+    {
+      "id": 11,
+      "gearIndex": 5,
+      "gender": 1,
+      "sha256": "64a2e538c0f0f1c39eabbc18fd037a8999d4747027bcf56b47b81d0c82c7bc53"
+    },
+    {
+      "id": 12,
+      "gearIndex": 6,
+      "gender": 0,
+      "sha256": "f625bb54a4d515d4d6ed6ec3a24e05fff8ec0ad5f73f913193c506e21b39740a"
+    },
+    {
+      "id": 13,
+      "gearIndex": 6,
+      "gender": 1,
+      "sha256": "e04099713158d16a9bbb2e54b8635d86946602d0f3d4f5bae6a7a5402b7e8239"
+    },
+    {
+      "id": 14,
+      "gearIndex": 7,
+      "gender": 0,
+      "sha256": "ba1cc346349296dad4e16a1605281fff9e1714fdffa93e7e3b78a66165016ebd"
+    },
+    {
+      "id": 15,
+      "gearIndex": 7,
+      "gender": 1,
+      "sha256": "e7d964ad892d155ad0d17fac0d0ac00a04464d4f79f106be44757d2df6b74bd4"
+    },
+    {
+      "id": 16,
+      "gearIndex": 8,
+      "gender": 0,
+      "sha256": "ccbb0a42ffff6650e8569c6f38e05856d2ead02f80dfe6502bc8aed952bb202d"
+    },
+    {
+      "id": 17,
+      "gearIndex": 8,
+      "gender": 1,
+      "sha256": "d9c2760d6470b0bf44ca2fe455bc2a282d5460f696f841d453d068820c9ff81d"
+    },
+    {
+      "id": 18,
+      "gearIndex": 9,
+      "gender": 0,
+      "sha256": "b79f315677bfc1c8178ebb0141f0584927aa6a2d9738243b8793c515c1432015"
+    },
+    {
+      "id": 19,
+      "gearIndex": 9,
+      "gender": 1,
+      "sha256": "2a5db3d6b017ce45790dc8f502302dff66a7a96c0385b9f3a9d1fcee982f6ae2"
+    },
+    {
+      "id": 20,
+      "gearIndex": 10,
+      "gender": 0,
+      "sha256": "3b9573628612b8903123d2d9aa12636dc184ea235c8b2fef664bac8dfdf0d876"
+    },
+    {
+      "id": 21,
+      "gearIndex": 10,
+      "gender": 1,
+      "sha256": "81a69f664ff09ffdf86539bea463f6b4c3d453cfc29eaa899096ee322d41c9ed"
+    },
+    {
+      "id": 22,
+      "gearIndex": 11,
+      "gender": 0,
+      "sha256": "f5e2bb839e00b733f00034b99d79ccf9a1d44d0f61e0f5a60faaf22441550eb0"
+    },
+    {
+      "id": 23,
+      "gearIndex": 11,
+      "gender": 1,
+      "sha256": "70a4ab8abaf4cbb29d0845c7fabfa8bec2eafe06b53cadce595578fd2ee5c4b4"
+    },
+    {
+      "id": 24,
+      "gearIndex": 12,
+      "gender": 0,
+      "sha256": "508f04e5aed378d4453cc355db4248431c496c4eb329dbf21d831c7f512e1836"
+    },
+    {
+      "id": 25,
+      "gearIndex": 12,
+      "gender": 1,
+      "sha256": "5f985c97545d53e0456f4b00bfcfb8a84f96048275533c18d3545c9d377d12a5"
+    },
+    {
+      "id": 26,
+      "gearIndex": 13,
+      "gender": 0,
+      "sha256": "40474216f8847556b25cf3d0290e1259ad1484f30b60a23e07828ad93c11f7e1"
+    },
+    {
+      "id": 27,
+      "gearIndex": 13,
+      "gender": 1,
+      "sha256": "26f801abd97057528f087a6186724e89096cc9db0b58ad53316a1a7aa2bff510"
+    },
+    {
+      "id": 28,
+      "gearIndex": 14,
+      "gender": 0,
+      "sha256": "6032d52f80cc5b020fbc92b321cfce5b68862a00aacbdf8cfdeae835b953715e"
+    },
+    {
+      "id": 29,
+      "gearIndex": 14,
+      "gender": 1,
+      "sha256": "f1da0b99d638175036aeba9a9a99c0bc80b61a81d334f77e17aa0dd569f83dbb"
+    },
+    {
+      "id": 30,
+      "gearIndex": 15,
+      "gender": 0,
+      "sha256": "22ddb8ede16ef7fefc7e06e05c6869ed2dc6b5337cc55d298d0816ca712993cc"
+    },
+    {
+      "id": 31,
+      "gearIndex": 15,
+      "gender": 1,
+      "sha256": "672ef262d98f801ed773aee7873f1e6ec9863a84d8d9f6d0a8f4c6a6149de22c"
+    },
+    {
+      "id": 32,
+      "gearIndex": 16,
+      "gender": 0,
+      "sha256": "cf4af1dffec0e64f650efb08a1631305f8e099e0c8df5102924fdea9eff7563a"
+    },
+    {
+      "id": 33,
+      "gearIndex": 16,
+      "gender": 1,
+      "sha256": "a3bd445c166758494c3081f3a2d141e98164cb5157d93280af3bf5f9154877ea"
+    },
+    {
+      "id": 34,
+      "gearIndex": 17,
+      "gender": 0,
+      "sha256": "24b0d1a00dcae343a8a628ffc7e1048d47573ccaff29166dd72e6c2d32a95d75"
+    },
+    {
+      "id": 35,
+      "gearIndex": 17,
+      "gender": 1,
+      "sha256": "57e2134d6407f2816815e1aee36f433678f76e23d1f8932ba84eed6be8fff1c8"
+    },
+    {
+      "id": 36,
+      "gearIndex": 18,
+      "gender": 0,
+      "sha256": "4595ef3edd4448abe70e923f0927638629386e6b1b688e1c83288f625545ae98"
+    },
+    {
+      "id": 37,
+      "gearIndex": 18,
+      "gender": 1,
+      "sha256": "55cc710e26b0d46ce6da6b01dba0a123a1931cd9a7b09d70cf6c5c2dfe0312dd"
+    },
+    {
+      "id": 38,
+      "gearIndex": 19,
+      "gender": 0,
+      "sha256": "e0683029e195a8629a8092495fea92b70b950c4f97cad33e882e1e306cad5abc"
+    },
+    {
+      "id": 39,
+      "gearIndex": 19,
+      "gender": 1,
+      "sha256": "7e6baa3f9cc6102c6e1b5d0ff281a9527ff989faaaff7965e4ec2633a56d412b"
+    },
+    {
+      "id": 40,
+      "gearIndex": 20,
+      "gender": 0,
+      "sha256": "803e95412fa9eb11c422915f874267dad564c8f6efb8112a02cb14e083d330b2"
+    },
+    {
+      "id": 41,
+      "gearIndex": 20,
+      "gender": 1,
+      "sha256": "7604cd55bbd2ab430cebd78ccb943065fa706956ae53e50ad6d77b9c986cedaf"
+    },
+    {
+      "id": 42,
+      "gearIndex": 21,
+      "gender": 0,
+      "sha256": "960e10ac045a20f0c5c3e09c177e33b446f74128829d56bfc172a7e26e403e94"
+    },
+    {
+      "id": 43,
+      "gearIndex": 21,
+      "gender": 1,
+      "sha256": "5044b3108fcdd2fcbeb866819fe92d676247976aa3565cb542037585641f7d91"
+    },
+    {
+      "id": 44,
+      "gearIndex": 22,
+      "gender": 0,
+      "sha256": "664da29387749ace038a5221ba72bec6ab18ec5f3d29b0a1699678321ac110e9"
+    },
+    {
+      "id": 45,
+      "gearIndex": 22,
+      "gender": 1,
+      "sha256": "f80380bdd9877af69fc50c4833ddac9a61e684cc826252dd50e99ed5e56fc269"
+    },
+    {
+      "id": 46,
+      "gearIndex": 23,
+      "gender": 0,
+      "sha256": "69b76da13156c2421a5c654cb783bb0e027ad061cccdf5aace0ed8fc05b31bc2"
+    },
+    {
+      "id": 47,
+      "gearIndex": 23,
+      "gender": 1,
+      "sha256": "b5506c4b65cb27b45742313f859583994c36075d45244004c79e6e823105aea3"
+    },
+    {
+      "id": 48,
+      "gearIndex": 24,
+      "gender": 0,
+      "sha256": "99b820fcddecc05f1035548b2eaca639115779b308ce45a8a3551dd547e7ba81"
+    },
+    {
+      "id": 49,
+      "gearIndex": 24,
+      "gender": 1,
+      "sha256": "cec09a7552e1c82ba9eb77e61d51f312b60da90a0ecb871b730a1a0b704bd679"
+    },
+    {
+      "id": 50,
+      "gearIndex": 25,
+      "gender": 0,
+      "sha256": "2b1de4af35ec33c27e58ffda1c465f94858a6e9288d29ec1ae3dd01df76a8a14"
+    },
+    {
+      "id": 51,
+      "gearIndex": 25,
+      "gender": 1,
+      "sha256": "440893219e7d61bee9945d67b64d057d05b92e96ba5ff38c86115004d421ebea"
+    },
+    {
+      "id": 52,
+      "gearIndex": 26,
+      "gender": 0,
+      "sha256": "a131893e0d11d5154890ddb441188813d5cdda44c98f312f78a8782c9d6cef5e"
+    },
+    {
+      "id": 53,
+      "gearIndex": 26,
+      "gender": 1,
+      "sha256": "3ae7182bc123f73382cc4ce82db0334c02e7391581b71e36d31c091ad48a7a77"
+    },
+    {
+      "id": 54,
+      "gearIndex": 27,
+      "gender": 0,
+      "sha256": "6ec791ec1d3a840904610cc4df72fceeb4ff68a2309729d8a0bc318360a5e110"
+    },
+    {
+      "id": 55,
+      "gearIndex": 27,
+      "gender": 1,
+      "sha256": "1f7b9d5643f6cb26c4c6b5ea41e616038f287eed0049535d0e39839eae000ddf"
+    },
+    {
+      "id": 56,
+      "gearIndex": 28,
+      "gender": 0,
+      "sha256": "400b4a6ac1776c9bebf31b95bfc44da920916f5ab9aa16767049f5ce393ab6a2"
+    },
+    {
+      "id": 57,
+      "gearIndex": 28,
+      "gender": 1,
+      "sha256": "5eaf6ff11866a82faced94b3db8a6ffa819f021e33a9ff418f6e8b5f4356bcac"
+    },
+    {
+      "id": 58,
+      "gearIndex": 29,
+      "gender": 0,
+      "sha256": "ddcdc8364e494ab61eea34080f3fda9c70623030be4b35ddfbb78c7cf5550550"
+    },
+    {
+      "id": 59,
+      "gearIndex": 29,
+      "gender": 1,
+      "sha256": "d9dd246674fb0ee1d722c9828c175d7fc8a386a96137a893b16118f86b25b312"
+    },
+    {
+      "id": 60,
+      "gearIndex": 30,
+      "gender": 0,
+      "sha256": "27792df6219f37ebb8b617d475f075382d3a10a3a1a231136b41bc17800dc217"
+    },
+    {
+      "id": 61,
+      "gearIndex": 30,
+      "gender": 1,
+      "sha256": "1d5ed0de35732ff9728387b213c45d49ae6738e3384ccafa97c2e716a1131ff9"
+    },
+    {
+      "id": 62,
+      "gearIndex": 31,
+      "gender": 0,
+      "sha256": "e6df16c8738d8967c0001c27441cb30b632fc8985e66ce989adfc44ff57fb440"
+    },
+    {
+      "id": 63,
+      "gearIndex": 31,
+      "gender": 1,
+      "sha256": "2621a1060113f47c7fd316d901901f20ce251b72556a307693dde387c2ed9d0a"
+    },
+    {
+      "id": 64,
+      "gearIndex": 32,
+      "gender": 0,
+      "sha256": "1631bcd139b5b1246af98cf86b8b1907407e889161028cf1678897549821aa54"
+    },
+    {
+      "id": 65,
+      "gearIndex": 32,
+      "gender": 1,
+      "sha256": "f765581e768139557344446c7d72de7ba6616dd5d403142716897e2f674f629d"
+    },
+    {
+      "id": 66,
+      "gearIndex": 33,
+      "gender": 0,
+      "sha256": "b0c32d00c1dc0e494531c236fef676fb043574e0284eb4d5ca0db6347a14a74b"
+    },
+    {
+      "id": 67,
+      "gearIndex": 33,
+      "gender": 1,
+      "sha256": "3e4e29a916972f21c4c2ba390e969228dc91438e8e5b73534812d3e3efe630d3"
+    },
+    {
+      "id": 68,
+      "gearIndex": 34,
+      "gender": 0,
+      "sha256": "8204f95a208b7065b40c352887ec95a4e0629a25af9515f975c8c3bd06829b0c"
+    },
+    {
+      "id": 69,
+      "gearIndex": 34,
+      "gender": 1,
+      "sha256": "db78eed4fc05504c97854248c7b3602012a21f9d8a17d6489f328a75fc02a958"
+    },
+    {
+      "id": 70,
+      "gearIndex": 35,
+      "gender": 0,
+      "sha256": "3aec71a017d065974c294fe20f272a14ddd1a6529c13eb883d87de3984890ba3"
+    },
+    {
+      "id": 71,
+      "gearIndex": 35,
+      "gender": 1,
+      "sha256": "63dd58e281466f8ae5f6f4fc3ed8c5981aa065376b929519e933be623df52338"
+    },
+    {
+      "id": 72,
+      "gearIndex": 36,
+      "gender": 0,
+      "sha256": "cfb002e2fdbf44f5a597168fbeaa6a74c510b1d02eaa61ae1382e4b1873586f2"
+    },
+    {
+      "id": 73,
+      "gearIndex": 36,
+      "gender": 1,
+      "sha256": "c07ad0438dc307da40f7b417bf0d833329dfae1d77bc6513258a6599ec650eda"
+    },
+    {
+      "id": 74,
+      "gearIndex": 37,
+      "gender": 0,
+      "sha256": "23eab82926d237a954a2fb88e17fc1a106273c3c0d53fbce232bb92b3fa7754b"
+    },
+    {
+      "id": 75,
+      "gearIndex": 37,
+      "gender": 1,
+      "sha256": "468b7b2c99f4935fc59fdccb2bf83bf194ba091c2daaedafa54eaa939930613d"
+    },
+    {
+      "id": 76,
+      "gearIndex": 38,
+      "gender": 0,
+      "sha256": "2758ba8a400e6780e0b9e91ecb287d4e2458d6a0f6b6765f773086f622af36df"
+    },
+    {
+      "id": 77,
+      "gearIndex": 38,
+      "gender": 1,
+      "sha256": "ecea012072619a91814c8f4aa97d24dc54c356e59658d65782871ee2b19ca176"
+    },
+    {
+      "id": 78,
+      "gearIndex": 39,
+      "gender": 0,
+      "sha256": "31429f0f768473e4ece784644a5ef659825562e0d92f7b36e60cd2806a876849"
+    },
+    {
+      "id": 79,
+      "gearIndex": 39,
+      "gender": 1,
+      "sha256": "c29982bb2a69d7f8f83b216bfae5c634d5322c2ea6d3756eb9bff62573ec06ae"
+    },
+    {
+      "id": 80,
+      "gearIndex": 40,
+      "gender": 0,
+      "sha256": "d49a17f360851e5f27908a1cd9e146ce3df5a436c19b25f31c21bbd80d840b87"
+    },
+    {
+      "id": 81,
+      "gearIndex": 40,
+      "gender": 1,
+      "sha256": "e9032c9e31dc519c5889fd0a090af9bac2020716491bffa6a563561551772e51"
+    },
+    {
+      "id": 82,
+      "gearIndex": 41,
+      "gender": 0,
+      "sha256": "35e4f448774a6b6809fa073da956aa1cff319953f7de8c8b59b71df5bface02b"
+    },
+    {
+      "id": 83,
+      "gearIndex": 41,
+      "gender": 1,
+      "sha256": "68fbebd8598cabd8f01ec270715d4f68eb4bcc18c82fbdae96c23347a1a1b4c2"
+    },
+    {
+      "id": 84,
+      "gearIndex": 42,
+      "gender": 0,
+      "sha256": "c003e83207c55a2f80768444ec48766006d234ff0547bfd301dae9735d6b9fc7"
+    },
+    {
+      "id": 85,
+      "gearIndex": 42,
+      "gender": 1,
+      "sha256": "ddf670be777b17a137437c07853007a5217bb77afb380568dfe43b8c58152b60"
+    },
+    {
+      "id": 86,
+      "gearIndex": 43,
+      "gender": 0,
+      "sha256": "477221c3fd849d5b53a2cc00920d2f9b2a43000dad54acb570a20a42b84a03af"
+    },
+    {
+      "id": 87,
+      "gearIndex": 43,
+      "gender": 1,
+      "sha256": "b622bf8f44977ae81a2dcb9cdfd7020a85d341d753886910e01bb5a7894fad62"
+    },
+    {
+      "id": 88,
+      "gearIndex": 44,
+      "gender": 0,
+      "sha256": "8102efab59e60c7831190d220dba20270e0a34e3199c14b8bc01c7acb1e6ea4e"
+    },
+    {
+      "id": 89,
+      "gearIndex": 44,
+      "gender": 1,
+      "sha256": "8d961348208e8e951c2dc3c03918fbf4d16e108a552770be230f616b94fa65ff"
+    },
+    {
+      "id": 90,
+      "gearIndex": 45,
+      "gender": 0,
+      "sha256": "efcf455bc1eadb28d8e692fabcd94ee1f96b67f0570735be2dd436522991eae5"
+    },
+    {
+      "id": 91,
+      "gearIndex": 45,
+      "gender": 1,
+      "sha256": "29da418eb20200a61946bd618638ad5280ddf3bb828bc6289eb7a8269abf7d16"
+    },
+    {
+      "id": 92,
+      "gearIndex": 46,
+      "gender": 0,
+      "sha256": "e39d2e9b53db9912c56d70266fdd0bd784a1b2a429a81db6eb45bd9467441797"
+    },
+    {
+      "id": 93,
+      "gearIndex": 46,
+      "gender": 1,
+      "sha256": "7c779726ecfac409e2e5ca36aeb569b9610284484f9951a9b8e76d0e252bcdbb"
+    },
+    {
+      "id": 94,
+      "gearIndex": 47,
+      "gender": 0,
+      "sha256": "604d92e6de1e666d0c5a326c128d662fe7cbb225ed23e8290797e67b6969999c"
+    },
+    {
+      "id": 95,
+      "gearIndex": 47,
+      "gender": 1,
+      "sha256": "f51b6cafc41f0b06c619aa0b0f6c5628922db57ffdd4f66f1ad2b3caa6fde96a"
+    },
+    {
+      "id": 96,
+      "gearIndex": 48,
+      "gender": 0,
+      "sha256": "cf46bea676b8256aa0c87a4bcb75cd92fbbffb18dc88354ec54e61d07911a7d9"
+    },
+    {
+      "id": 97,
+      "gearIndex": 48,
+      "gender": 1,
+      "sha256": "00c8155ab92c2e4fb201f34d4cd87e70290a2c3f849952702fbc4f34ff1696e3"
+    },
+    {
+      "id": 98,
+      "gearIndex": 49,
+      "gender": 0,
+      "sha256": "cf894a22db5c4b9ca76c03908b3fb73c35681fe5e2c8421dfd414a54242cc567"
+    },
+    {
+      "id": 99,
+      "gearIndex": 49,
+      "gender": 1,
+      "sha256": "b1a64669ab040b32f2a081371d1a7cc44412915aad67a1b4cd56dcc966cedaea"
+    }
+  ],
+  "packedBytes": 395685,
+  "rawBytes": 933984,
+  "footwearLayer": false
+}
