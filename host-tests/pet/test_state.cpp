@@ -232,18 +232,41 @@ int main() {
     returning.created = true;
     returning.readingSeconds = 72000;
     for (unsigned n = 0; n < 12; ++n) pet::own(returning, n);
-    const auto credit = pet::projectReading(returning);
     const auto foodBefore = pet::food(returning);
-    for (unsigned n = 12; n < 23; ++n) {
+    for (unsigned n = 12; n < 24; ++n) {
+      const auto credit = pet::projectReading(returning);
       assert(pet::chooseProject(returning, n));
+      assert(!pet::owns(returning, n) && pet::projectRemaining(returning) == 3600);
+      assert(!pet::chooseProject(returning, n) && pet::projectProgressSeconds(returning) == 0);
+      assert(pet::addReading(returning, returning.readingSeconds + 3599) && !pet::owns(returning, n));
+      assert(pet::projectProgressSeconds(returning) == 3599 && pet::projectRemaining(returning) == 1);
+      assert(pet::addReading(returning, returning.readingSeconds + 1));
       assert(pet::owns(returning, n) && pet::ownedCount(returning) == n + 1);
-      assert(pet::projectReading(returning) == credit && pet::food(returning) == foodBefore);
+      assert(pet::projectReading(returning) == credit + 3600 && pet::food(returning) == foodBefore);
     }
-    assert(pet::chooseProject(returning, 23));
-    assert(!pet::owns(returning, 23) && pet::projectRemaining(returning) == 3600);
-    assert(pet::addReading(returning, 75599) && !pet::owns(returning, 23));
-    assert(pet::addReading(returning, 75600) && pet::owns(returning, 23));
     for (unsigned n = 0; n < 12; ++n) assert(pet::owns(returning, n));
+    pet::Profile imported, roundTrip;
+    imported.created = true;
+    imported.readingSeconds = 10440ULL * 60;
+    for (unsigned n = 0; n < 180; ++n) pet::own(imported, n);
+    assert(pet::chooseProject(imported, 180));
+    assert(pet::projectProgressSeconds(imported) == 0 && pet::projectRemaining(imported) == 3600);
+    uint8_t saved[pet::STATE_BYTES];
+    pet::encode(imported, saved);
+    assert(pet::decode(saved, roundTrip) && roundTrip.projectStartedSeconds == imported.readingSeconds);
+    assert(pet::addReading(roundTrip, imported.readingSeconds + 600));
+    pet::encode(roundTrip, saved);
+    assert(pet::decode(saved, roundTrip) && pet::projectProgressSeconds(roundTrip) == 600);
+    assert(pet::chooseProject(roundTrip, 181) && pet::projectProgressSeconds(roundTrip) == 0);
+    // Old PET7 records have no project trailer; their surplus/deficit never enlarges a goal.
+    pet::encode(imported, saved);
+    std::memset(saved + 618, 0, 9);
+    const auto crc = pet::checksum(saved, pet::STATE_BYTES - 4);
+    for (unsigned b = 0; b < 4; ++b) saved[pet::STATE_BYTES - 4 + b] = uint8_t(crc >> (b * 8));
+    assert(pet::decode(saved, roundTrip) && pet::projectProgressSeconds(roundTrip) == 0);
+    assert(pet::projectRemaining(roundTrip) == 3600);
+    for (unsigned n = 0; n < pet::OBJECT_COUNT; ++n)
+      assert(pet::projectRequiredSeconds(n) >= 600 && pet::projectRequiredSeconds(n) <= 3600);
   }
   testReadingChronology();
   testMoments();
@@ -292,12 +315,12 @@ int main() {
   const auto seconds = p.readingSeconds;
   assert(pet::chooseProject(p, 0));
   assert(p.readingSeconds == seconds);
-  assert(pet::addReading(p, 6800));
+  assert(pet::addReading(p, p.baselineSeconds + p.readingSeconds + pet::projectRemaining(p)));
   assert(p.owned & 1);
   assert(p.equipped[0] == 0);
   assert(pet::projectThreshold(0) == 600 && pet::projectThreshold(1) == 1500);
   assert(pet::chooseProject(p, 6));
-  assert(pet::projectRemaining(p) == 900);
+  assert(pet::projectRemaining(p) == 1200);
   assert(!pet::chooseProject(p, pet::OBJECT_COUNT));
   std::strcpy(p.name, "LUNA SOL");
   p.sequence = 49;

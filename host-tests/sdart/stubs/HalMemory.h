@@ -7,6 +7,7 @@
 namespace sdartMemory {
 inline bool available = true;
 inline bool denyAllocation = false;
+inline size_t allocationLimit = size_t(-1);
 inline size_t liveBytes = 0;
 inline size_t peakBytes = 0;
 }  // namespace sdartMemory
@@ -16,7 +17,7 @@ inline HalMemory::HeapStats HalMemory::getPsramHeap() {
                                 : HeapStats{};
 }
 inline HalMemory::PsramBuffer HalMemory::allocatePsram(size_t bytes) {
-  if (!sdartMemory::available || sdartMemory::denyAllocation) return {};
+  if (!sdartMemory::available || sdartMemory::denyAllocation || bytes > sdartMemory::allocationLimit) return {};
   auto* data = static_cast<uint8_t*>(std::malloc(bytes));
   if (data) {
     sdartMemory::liveBytes += bytes;

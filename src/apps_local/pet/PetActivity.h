@@ -24,6 +24,8 @@ class PetActivity final : public Activity {
   bool allowsEdgeBack() const override { return view != pet::View::Play || game.kind != pet::Game::Puzzle; }
 
  private:
+  // Reused source sprites in PSRAM, not a display buffer; released with each pack on exit.
+  static constexpr size_t ART_PIXEL_CACHE_BYTES = 64 * 1024;
   pet::Profile profile, draft;
   pet::GameState game;
   pet::Store store;
@@ -34,6 +36,7 @@ class PetActivity final : public Activity {
   pet::Affection affection;
   sdart::Pack art, homeArt, habitatArt, sleepArt, farewellArt, collectionArt;
   petsleep::Clock sleepClock;
+  bool animationRebasePending = true;
   petinput::PendingTap pendingTap;
   petinput::PendingSlide pendingSlide;
   uint32_t viewRevision = 1;

@@ -68,19 +68,20 @@ the actual change and one food spent only after a successful save. Focus reverse
 white text and icons. The shared row geometry and a 128-byte static gamepad
 icon add no explicit app heap allocation, task, timer or persisted field.
 
-PET aligns the Home project and Daily goal bars. A pending project shows minutes
-since the previous collection threshold over the next decoration's interval;
-owned decorations show Ready instead of an invented historical cost. Switching
-unowned decorations shares the same collection progress. The current increments
-are 10, 15, 20, 30, 45, then 60 minutes each. At 20 hours, 23 earned objects
-leave 0/60 minutes toward the twenty-fourth. The first decoration becomes
-available when Home opens at hatching (20 minutes); incubation credit is kept.
-Existing objects and reading credit survive the shorter curve without a save
-format change. If prior reading already covers the next threshold, choosing an
-unowned decoration unlocks it immediately; only that chosen item is awarded.
-Older or externally seeded collections below their reading threshold show
-cumulative collection credit over the full target, keeping remaining time
-accurate without revoking objects.
+PET aligns the Home project and Daily goal bars. Selecting a different unowned
+decoration starts its reading goal at zero. Requirements depend on how many
+objects the collection already contains: 10, 15, 20, 30 and 45 minutes for the
+first five, then 60 minutes per object. The requirement never exceeds 60 minutes,
+including inherited or imported collections. For example, selecting an object
+with 10,440 minutes of previous reading shows 0/60, then 30/60 after another
+30 minutes. Prior reading does not instantly buy a newly selected object.
+Reopening the same project preserves its progress; choosing a different one
+starts that goal over. Growth, reading statistics and owned objects are preserved.
+The first default project can use incubation reading and becomes available when
+Home opens at hatching (20 minutes). Old saves retain valid progress up to the
+new requirement, without revoking objects or demanding a cumulative deficit.
+The optional versioned project-start trailer uses reserved bytes in the existing
+640-byte PET7 record; the date preference and memory records are unchanged.
 
 The four tabs have distinct purposes:
 
@@ -247,8 +248,8 @@ The supplied catalog contains 240 objects, sixty in each of four slots: rest,
 decor, toy and environment. The chooser has category buttons and discrete pages;
 the Home slot shows the actual equipped artwork. The chooser uses a compact title
 and an explicit **Back to Home** button beside its paginator. Reading counts
-for growth and projects together; choosing another project does not spend or
-lose progress. Objects unlock at increasing lifetime reading thresholds.
+for growth and the selected project together. A different unowned selection
+starts a new goal; earned objects and overall reading statistics remain intact.
 
 After all 240 objects are owned, the next-objective card in PET and Home becomes
 a trophy button marked **Home complete!**, with a 240 / 240 count and **View trophy**.
@@ -263,8 +264,8 @@ The approved artwork and prompt live in `assets_local/pet/collection/`.
 `tools_local/pet/build_collection.py` converts it to the required
 `/apps/pet/collection.bin` SD pack (one 280 x 210 BW1 record; 7,390 bytes).
 The activity validates it on entry, then opens it on the complete-collection window and on completed PET/Home
-panels after hatching. It reuses the cache between these views and closes it on
-other views or activity exit. The existing fixed pack scratch is 1,059 bytes plus handle/metadata;
+panels after hatching. Once opened, the pack and cache remain available until
+activity exit. The existing fixed pack scratch is 1,059 bytes plus handle/metadata;
 the bounded pack cache may use 4,112 PSRAM bytes;
 allocation failure uses its small-read fallback. A missing or invalid pack
 blocks entry with the resource-installation notice. The illustration is not compiled into firmware. Labels,
@@ -489,11 +490,11 @@ Home catalogue cards open a static preview: an enlarged object and the room with
 
 Preview arrows browse the current category and Owned/Unowned filter without saving. The counter identifies the current item; arrows stop at the first and last item. Back opens the catalogue page containing the item just previewed. Read-only browsing remains available.
 
-Confirming Place or Choose project keeps Preview open after the guarded save. An equipped object shows its saved status and offers Remove; a pending project's confirmation is disabled. An immediately unlocked project is already placed by the existing project rule; its preview switches to Owned before locating its page. A pending project stays in To earn. Back returns to the catalogue page containing that item. In Owned, the equipped object appears first; all remaining objects keep their canonical order, so replacing it restores the previous object to its normal position. This order is derived and is not saved.
+Confirming Place or Choose project keeps Preview open after the guarded save. An equipped object shows its saved status and offers Remove; a pending project's confirmation is disabled. A different unowned selection starts its reading goal at zero and stays in To earn until completed through reading. Back returns to the catalogue page containing that item. In Owned, the equipped object appears first; all remaining objects keep their canonical order, so replacing it restores the previous object to its normal position. This order is derived and is not saved.
 
 At full satiety, Feed stays disabled and explains that the companion is already full, even with no provisions left. Wake warns that ending early forfeits the cycle bonus; current energy remains in its separate metric. Rest shows the two-hour cycle and an upper bound on its energy bonus before starting. Successful cleaning shows actual hygiene and capped mood changes and is free. Successful healing shows the hygiene change and the one remedy spent. Results are temporary activity state, created only after a successful save and cleared on leaving their notice; save errors never show a successful result. Remedy rewards and healing use a medicine bottle icon, while hearts continue to mean mood and affection. These refinements add six bytes of result data to each UI model/activity instance and a fixed 128-byte monochrome icon, with no new save fields, heap buffers, timers or SD packs.
 
-This delivery updates the browser simulator and gallery only; native firmware and device refresh/consumption remain unverified.
+Firmware and host-rendered UI checks cover these behaviors; device refresh and consumption require hardware verification.
 
 ### Care guidance and readable progress
 
@@ -780,3 +781,16 @@ format. Short card dates use a two-digit year; life details use a four-digit yea
 PET animation advances every 750 ms while an animated PET screen is visible.
 Menus and historical pictures remain static. The shorter interval requests more
 frequent display updates; the panel's refresh time determines the visible cadence.
+
+PET's four main artwork packs can retain up to sixteen verified source sprites
+within a 64 KiB PSRAM budget per pack (256 KiB total additional pixels). Cached
+draws reuse those bytes without microSD reads or seeks. Allocation happens when
+opening the app and is released on exit; allocation failure retains the existing
+read-ahead/small-read path. Other apps keep the default uncached pixel path.
+The trophy pack stays open after its first use until PET closes. Selecting the
+already-visible main section does not request another repaint. These changes
+reduce avoidable work; actual transition time still includes the e-paper refresh.
+Black and white artwork is drawn as horizontal ink runs rather than individual
+pixels, with the existing nearest-neighbour sampling and clipping preserved.
+After a section becomes visible, its first animation update waits one frame
+interval; entering the section does not cause a second immediate animation repaint.

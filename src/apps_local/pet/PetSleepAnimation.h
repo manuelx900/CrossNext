@@ -86,6 +86,11 @@ inline constexpr unsigned HEAD_HEIGHT = 78;
 
 class Clock {
  public:
+  void restart(uint32_t now) {
+    at = now;
+    current = 0;
+    running = true;
+  }
   bool update(uint32_t now, bool enabled) {
     if (!enabled) {
       running = false;

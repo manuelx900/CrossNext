@@ -16,7 +16,7 @@ struct Image {
 };
 class Pack {
  public:
-  bool open(const char* path, uint32_t expectedCount);
+  bool open(const char* path, uint32_t expectedCount, size_t pixelCacheBytes = 0);
   void close();
   bool ready() const { return valid; }
   Image image(uint32_t index);
@@ -30,6 +30,11 @@ class Pack {
   uint8_t row[(MAX_WIDTH + 7) / 8]{};
   static constexpr size_t READ_AHEAD_BYTES = 4096;
   HalMemory::PsramBuffer cache;
+  struct CachedImage {
+    uint32_t index = 0, offset = 0;
+  } cachedImages[16]{};
+  size_t pixelCapacity = 0, pixelUsed = 0;
+  unsigned cachedCount = 0;
   uint32_t count = 0, fileBytes = 0;
   uint8_t recordBytes = RECORD_BYTES;
   bool perImageChecksums = false;
@@ -39,6 +44,7 @@ class Pack {
   bool fail(const char* reason);
   Image decodeRecord(const uint8_t* record);
   bool verify(uint32_t index, const Image& image);
+  const uint8_t* pixels(uint32_t index, const Image& image);
   uint8_t* readBuffer() { return cache ? cache.get() + count * recordBytes : buffer; }
   size_t readBufferBytes() const { return cache ? READ_AHEAD_BYTES : sizeof(buffer); }
 };

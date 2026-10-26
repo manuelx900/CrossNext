@@ -431,11 +431,8 @@ struct ProjectProgress {
 };
 inline ProjectProgress projectProgress(const pet::Profile& p) {
   if (pet::owns(p, p.project)) return {1, 1};
-  const auto owned = pet::ownedCount(p);
-  const uint64_t reading = pet::projectReading(p), previous = owned ? pet::projectThreshold(owned - 1) : 0;
-  // Older or imported collections may predate their reading credit.
-  const uint64_t start = reading >= previous ? previous : 0;
-  return {reading - start, pet::projectThreshold(owned) - start};
+  const auto target = pet::projectRequiredSeconds(pet::ownedCount(p));
+  return {std::min(pet::projectProgressSeconds(p), target), target};
 }
 inline void project(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, bool prominent = false) {
   const auto& p = *m.profile;

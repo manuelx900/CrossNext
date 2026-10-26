@@ -592,9 +592,10 @@ static void progressPixels() {
   }
   pet::own(p, 0);
   const auto project = fui::makeRect(12, 20, 225, 132);
+  p.projectStartedSeconds = 1200;
   for (unsigned percent : {0u, 50u, 100u}) {
     std::fill(c->pixels.begin(), c->pixels.end(), 255);
-    p.readingSeconds = 1200 + 300 * percent / 100;
+    p.readingSeconds = 1200 + 900 * percent / 100;
     petui::widget::objective(c->screen, m, w, project);
     const unsigned pixels = darkPixels(*c, fui::makeRect(project.x + 9, project.bottom() - 11, project.width - 18, 9));
     if (percent) CHECK(pixels > previous);
@@ -792,6 +793,8 @@ void communicationScreens() {
   instant.project = 5;
   CHECK(petui::catalogCount(instant, 0, petui::CatalogFilter::Unowned) == 60);
   CHECK(pet::chooseProject(instant, 0));
+  CHECK(!pet::owns(instant, 0) && pet::projectRemaining(instant) == 900);
+  CHECK(pet::addReading(instant, instant.readingSeconds + 900));
   CHECK(pet::owns(instant, 0) && instant.equipped[0] == 0);
   CHECK(!petui::catalogMatches(instant, 0, petui::CatalogFilter::Unowned));
   CHECK(petui::catalogCount(instant, 0, petui::CatalogFilter::Unowned) == 59);
@@ -801,6 +804,8 @@ void communicationScreens() {
     if (item != 1) pet::own(instant, item);
   CHECK(petui::catalogCount(instant, 0, petui::CatalogFilter::Unowned) == 1);
   CHECK(pet::chooseProject(instant, 1));
+  CHECK(!pet::owns(instant, 1) && pet::projectRemaining(instant) == 3600);
+  CHECK(pet::addReading(instant, instant.readingSeconds + 3600));
   CHECK(petui::catalogCount(instant, 0, petui::CatalogFilter::Unowned) == 0);
   for (unsigned slot = 0; slot < pet::SLOT_COUNT; ++slot) {
     pet::Profile catalog;
@@ -1123,7 +1128,9 @@ void guidanceScreens() {
       m.previewItem = 0;
       p.owned = uint16_t(1u << 5);
       p.project = 5;
-      expect(tr(STR_PET_PROJECT_CAN_GET));
+      petui::widget::remainingDuration(value, sizeof(value), 900);
+      std::snprintf(expected, sizeof(expected), tr(STR_PET_READING_LEFT_TIME), value);
+      expect(expected);
     }
   }
 }
@@ -1253,8 +1260,21 @@ static void consistencyScreens() {
       project.readingSeconds = seconds;
       const auto progress = petui::widget::projectProgress(project);
       CHECK(progress.target > 0);
+      CHECK(progress.target <= 3600);
       CHECK(progress.target - std::min(progress.value, progress.target) == pet::projectRemaining(project));
     }
+  }
+  {
+    pet::Profile project;
+    project.created = true;
+    project.readingSeconds = 10440ULL * 60;
+    for (unsigned id = 0; id < 180; ++id) pet::own(project, id);
+    CHECK(pet::chooseProject(project, 180));
+    auto progress = petui::widget::projectProgress(project);
+    CHECK(progress.value == 0 && progress.target == 3600);
+    CHECK(pet::addReading(project, project.readingSeconds + 1800));
+    progress = petui::widget::projectProgress(project);
+    CHECK(progress.value == 1800 && progress.target == 3600);
   }
   for (const auto area :
        {fui::makeRect(50, 200, 372, 400), fui::makeRect(260, 220, 200, 180), fui::makeRect(20, 80, 280, 140)}) {

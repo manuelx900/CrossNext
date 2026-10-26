@@ -32,6 +32,7 @@ void Pack::close() {
   valid = false;
   count = fileBytes = 0;
   cache.reset();
+  pixelCapacity = pixelUsed = cachedCount = 0;
   std::memset(verified, 0, sizeof(verified));
   file.close();
 }
@@ -41,7 +42,7 @@ bool Pack::fail(const char* reason) {
   return false;
 }
 bool Pack::read(void* out, size_t bytes) { return file.read(out, bytes) == int(bytes) || fail("Short resource read"); }
-bool Pack::open(const char* path, uint32_t expectedCount) {
+bool Pack::open(const char* path, uint32_t expectedCount, size_t pixelCacheBytes) {
   close();
   if (!Storage.openFileForRead("SDART", path, file)) return fail("Resource pack missing");
   uint8_t header[HEADER_BYTES];
@@ -58,9 +59,15 @@ bool Pack::open(const char* path, uint32_t expectedCount) {
   const uint32_t expectedCrc = le32(header + (perImageChecksums ? 20 : 16));
   const uint32_t indexBytes = count * recordBytes;
   // The activity reuses one PSRAM allocation for the index and read-ahead.
-  // 18,496 bytes for Quest v2; bounded to 69,632, too large for stack/internal RAM.
+  // Base cache is bounded to 69,632 bytes; optional retained sprites add at most 64 KiB.
   if (HalMemory::getPsramHeap().totalBytes > 0) {
-    cache = HalMemory::allocatePsram(indexBytes + READ_AHEAD_BYTES);
+    pixelCapacity = std::min<size_t>(pixelCacheBytes, 64 * 1024);
+    cache = HalMemory::allocatePsram(indexBytes + READ_AHEAD_BYTES + pixelCapacity);
+    if (!cache && pixelCapacity) {
+      LOG_ERR("SDART", "OOM: %u-byte sprite cache; using read-ahead only", unsigned(pixelCapacity));
+      pixelCapacity = 0;
+      cache = HalMemory::allocatePsram(indexBytes + READ_AHEAD_BYTES);
+    }
     if (!cache)
       LOG_ERR("SDART", "OOM: %u-byte PSRAM cache; using small reads", unsigned(indexBytes + READ_AHEAD_BYTES));
   }
@@ -145,13 +152,34 @@ bool Pack::verify(uint32_t index, const Image& image) {
   verified[index >> 3] |= uint8_t(1u << (index & 7));
   return true;
 }
+const uint8_t* Pack::pixels(uint32_t index, const Image& image) {
+  if (!cache || image.bytes > pixelCapacity) return nullptr;
+  auto* const data = cache.get() + count * recordBytes + READ_AHEAD_BYTES;
+  for (unsigned i = 0; i < cachedCount; ++i)
+    if (cachedImages[i].index == index) return data + cachedImages[i].offset;
+  if (cachedCount == sizeof(cachedImages) / sizeof(cachedImages[0]) || image.bytes > pixelCapacity - pixelUsed) {
+    pixelUsed = 0;
+    cachedCount = 0;
+  }
+  if (!file.seek(image.offset)) {
+    fail("Cannot seek cached resource pixels");
+    return nullptr;
+  }
+  auto* const result = data + pixelUsed;
+  if (!read(result, image.bytes)) return nullptr;
+  cachedImages[cachedCount++] = {index, uint32_t(pixelUsed)};
+  pixelUsed += image.bytes;
+  return result;
+}
 void Pack::draw(freeink::ui::DrawTarget& target, freeink::ui::Rect area, uint32_t index, freeink::ui::BitmapMode mode,
                 freeink::ui::Color color) {
   namespace fui = freeink::ui;
   if (!valid || area.empty()) return;
   const auto entry = image(index);
   if (!valid || !verify(index, entry)) return;
-  if (!file.seek(entry.offset)) {
+  const auto* const retained = pixels(index, entry);
+  if (!valid) return;
+  if (!retained && !file.seek(entry.offset)) {
     fail("Cannot seek resource pixels");
     return;
   }
@@ -166,7 +194,7 @@ void Pack::draw(freeink::ui::DrawTarget& target, freeink::ui::Rect area, uint32_
   uint32_t remaining = entry.bytes;
   const int stride = (entry.width + 7) / 8;
   for (int y = 0; y < entry.height; ++y) {
-    for (int b = 0; b < stride; ++b) {
+    for (int b = 0; !retained && b < stride; ++b) {
       if (cursor == available) {
         available = std::min<size_t>(remaining, readBufferBytes());
         if (!read(io, available)) return;
@@ -177,9 +205,27 @@ void Pack::draw(freeink::ui::DrawTarget& target, freeink::ui::Rect area, uint32_
     }
     const int top = rect.y + y * rect.height / entry.height;
     const int bottom = rect.y + (y + 1) * rect.height / entry.height;
-    if (bottom > top)
-      target.bitmap(fui::makeRect(rect.x, top, rect.width, bottom - top), {row, entry.width, 1, fui::BitmapFormat::BW1},
-                    fui::BitmapMode::Stretch, fui::Paint::solid(color));
+    if (bottom <= top) continue;
+    const auto* const source = retained ? retained + y * stride : row;
+    if (color == fui::Color::Black || color == fui::Color::White) {
+      for (int x = 0; x < entry.width;) {
+        if (!(source[x / 8] & (0x80u >> (x % 8)))) {
+          ++x;
+          continue;
+        }
+        const int start = x++;
+        while (x < entry.width && (source[x / 8] & (0x80u >> (x % 8)))) ++x;
+        // Ceil boundaries preserve bitmap Stretch's floor-based source sampling.
+        const int left = (start * rect.width + entry.width - 1) / entry.width;
+        const int right = (x * rect.width + entry.width - 1) / entry.width;
+        if (right > left)
+          target.fill(fui::makeRect(rect.x + left, top, right - left, bottom - top), fui::Paint::solid(color));
+      }
+    } else {
+      target.bitmap(fui::makeRect(rect.x, top, rect.width, bottom - top),
+                    {source, entry.width, 1, fui::BitmapFormat::BW1}, fui::BitmapMode::Stretch,
+                    fui::Paint::solid(color));
+    }
   }
 }
 }  // namespace sdart

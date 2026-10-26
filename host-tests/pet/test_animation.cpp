@@ -121,5 +121,13 @@ int main() {
         p.energy = 100;
       }
     }
-  std::puts("PET animation: PASS (timing, catch-up, wrap, all ages/poses, slot bounds, pending tap)");
+  petsleep::Clock transition;
+  transition.restart(1000);
+  assert(transition.step() == 0 && !transition.update(1000, true));
+  assert(!transition.update(1749, true) && transition.update(1750, true) && transition.step() == 1);
+  transition.restart(2000);
+  assert(transition.step() == 0 && !transition.update(2000, true));
+  assert(!transition.update(2749, true) && transition.update(2750, true));
+  std::puts(
+      "PET animation: PASS (timing, navigation rebase, catch-up, wrap, all ages/poses, slot bounds, pending tap)");
 }

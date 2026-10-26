@@ -10,6 +10,8 @@ namespace {
 constexpr unsigned NAME_OFFSET = 144, OWNED_OFFSET = 176, DEATH_NOTICE_OFFSET = 204;
 constexpr unsigned MOMENT_MASK_OFFSET = 214, MOMENT_RECORDS_OFFSET = 218, MOMENT_RECORD_BYTES = 16;
 constexpr unsigned PROVISIONS_OFFSET = MOMENT_RECORDS_OFFSET + MOMENT_COUNT * MOMENT_RECORD_BYTES;
+constexpr unsigned PROJECT_STARTED_OFFSET = PROVISIONS_OFFSET + 32, PROJECT_VERSION_OFFSET = PROJECT_STARTED_OFFSET + 8;
+static_assert(PROJECT_VERSION_OFFSET < STATE_BYTES - 4);
 static_assert(PROVISIONS_OFFSET + 32 <= STATE_BYTES - 4);
 static_assert(OWNED_OFFSET + EXTRA_OWNED_BYTES <= DEATH_NOTICE_OFFSET);
 static_assert(DEATH_NOTICE_OFFSET < STATE_BYTES - 4);
@@ -32,7 +34,7 @@ uint32_t random(uint32_t& seed) {
 }
 bool unlockProject(Profile& p) {
   if (!homeUnlocked(p) || p.project >= OBJECT_COUNT || owns(p, p.project) ||
-      projectReading(p) < projectThreshold(ownedCount(p)))
+      projectProgressSeconds(p) < projectRequiredSeconds(ownedCount(p)))
     return false;
   own(p, p.project);
   p.equipped[objectSlot(p.project)] = p.project;
@@ -70,10 +72,18 @@ uint64_t projectThreshold(unsigned owned) {
   for (unsigned i = 0; i <= owned; ++i) minutes += i < sizeof(FIRST_MINUTES) ? FIRST_MINUTES[i] : 60;
   return minutes * 60;
 }
+uint64_t projectRequiredSeconds(unsigned owned) {
+  static constexpr uint8_t FIRST_MINUTES[] = {10, 15, 20, 30, 45};
+  return uint64_t(owned < sizeof(FIRST_MINUTES) ? FIRST_MINUTES[owned] : 60) * 60;
+}
+uint64_t projectProgressSeconds(const Profile& p) {
+  const auto reading = projectReading(p);
+  return reading > p.projectStartedSeconds ? reading - p.projectStartedSeconds : 0;
+}
 uint64_t projectRemaining(const Profile& p) {
   if (owns(p, p.project)) return 0;
-  const auto target = projectThreshold(ownedCount(p));
-  return target > projectReading(p) ? target - projectReading(p) : 0;
+  const auto target = projectRequiredSeconds(ownedCount(p)), progress = projectProgressSeconds(p);
+  return target > progress ? target - progress : 0;
 }
 uint64_t food(const Profile& p) { return p.earnedFood > p.spentFood ? p.earnedFood - p.spentFood : 0; }
 unsigned dailyFood(uint32_t seconds) {
@@ -119,6 +129,7 @@ bool chooseProject(Profile& p, unsigned item) {
   if (item >= OBJECT_COUNT) return false;
   if (owns(p, item)) return equip(p, item);
   const bool changed = p.project != item;
+  if (changed) p.projectStartedSeconds = projectReading(p);
   p.project = uint8_t(item);
   return unlockProject(p) || changed;
 }
@@ -396,6 +407,8 @@ void encode(const Profile& p, uint8_t* out) {
   put(out + PROVISIONS_OFFSET + 8, p.earnedMedicine, 8);
   put(out + PROVISIONS_OFFSET + 16, p.noticedFood, 8);
   put(out + PROVISIONS_OFFSET + 24, p.noticedMedicine, 8);
+  put(out + PROJECT_STARTED_OFFSET, p.projectStartedSeconds, 8);
+  out[PROJECT_VERSION_OFFSET] = 1;
   std::memcpy(out + OWNED_OFFSET, p.ownedExtra, EXTRA_OWNED_BYTES);
   put(out + 4, p.sequence, 4);
   put(out + 8, p.baselineSeconds, 8);
@@ -561,6 +574,16 @@ bool decode(const uint8_t* in, Profile& p, size_t bytes) {
     const auto previous = p.heritageSeconds + std::min(p.noticedSeconds, p.readingSeconds);
     p.noticedFood = previous / 300;
     p.noticedMedicine = previous / 900;
+  }
+  if (provisions && in[PROJECT_VERSION_OFFSET]) {
+    if (in[PROJECT_VERSION_OFFSET] != 1) return false;
+    p.projectStartedSeconds = get(in + PROJECT_STARTED_OFFSET, 8);
+    if (p.projectStartedSeconds > projectReading(p)) return false;
+  } else {
+    const auto owned = ownedCount(p);
+    const auto reading = projectReading(p), previous = owned ? projectThreshold(owned - 1) : 0;
+    const auto progress = reading > previous ? std::min(reading - previous, projectRequiredSeconds(owned)) : 0;
+    p.projectStartedSeconds = reading - progress;
   }
   return (!p.deathAcknowledged || p.lifeStatus == LifeStatus::Lost) && p.noticedSeconds <= p.readingSeconds &&
          p.spentFood <= p.earnedFood && p.spentMedicine <= 1 + p.earnedMedicine + p.bonusMedicine &&

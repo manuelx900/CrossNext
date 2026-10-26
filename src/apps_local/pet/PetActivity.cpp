@@ -50,16 +50,18 @@ void PetActivity::onEnter() {
 }
 bool PetActivity::openResources() {
   if (Storage.exists(petui::ART_PATH)) {
-    pettingHandAvailable = art.open(petui::ART_PATH, petui::ART_COUNT);
-    if (!pettingHandAvailable) art.open(petui::ART_PATH, petui::LEGACY_ART_COUNT);
+    pettingHandAvailable = art.open(petui::ART_PATH, petui::ART_COUNT, ART_PIXEL_CACHE_BYTES);
+    if (!pettingHandAvailable) art.open(petui::ART_PATH, petui::LEGACY_ART_COUNT, ART_PIXEL_CACHE_BYTES);
   }
   portraitBackgroundsAvailable = false;
   if (Storage.exists(petui::HOME_ART_PATH)) {
-    portraitBackgroundsAvailable = homeArt.open(petui::HOME_ART_PATH, petui::HOME_BACKGROUNDS_COUNT);
-    if (!portraitBackgroundsAvailable) homeArt.open(petui::HOME_ART_PATH, petui::HOME_ART_COUNT);
+    portraitBackgroundsAvailable =
+        homeArt.open(petui::HOME_ART_PATH, petui::HOME_BACKGROUNDS_COUNT, ART_PIXEL_CACHE_BYTES);
+    if (!portraitBackgroundsAvailable) homeArt.open(petui::HOME_ART_PATH, petui::HOME_ART_COUNT, ART_PIXEL_CACHE_BYTES);
   }
-  if (Storage.exists(petui::HABITAT_ART_PATH)) habitatArt.open(petui::HABITAT_ART_PATH, petui::HABITAT_ART_COUNT);
-  if (Storage.exists(petsleep::ART_PATH)) sleepArt.open(petsleep::ART_PATH, petsleep::ART_COUNT);
+  if (Storage.exists(petui::HABITAT_ART_PATH))
+    habitatArt.open(petui::HABITAT_ART_PATH, petui::HABITAT_ART_COUNT, ART_PIXEL_CACHE_BYTES);
+  if (Storage.exists(petsleep::ART_PATH)) sleepArt.open(petsleep::ART_PATH, petsleep::ART_COUNT, ART_PIXEL_CACHE_BYTES);
   const bool farewellReady = farewellArt.open(petui::FAREWELL_ART_PATH, petui::FAREWELL_ART_COUNT);
   farewellArt.close();
   const bool collectionReady = collectionArt.open(petui::COLLECTION_ART_PATH, petui::COLLECTION_ART_COUNT);
@@ -93,6 +95,8 @@ void PetActivity::show(pet::View next) {
   pendingTap.clear();
   pendingSlide.clear();
   view = next;
+  sleepClock.restart(millis());
+  animationRebasePending = true;
   syncCollectionArt();
   ready = false;
   interactions.setFocusedIndex(-1);
@@ -120,8 +124,6 @@ void PetActivity::syncCollectionArt() {
       view == pet::View::Collection || ((view == pet::View::Home || view == pet::View::Dashboard) &&
                                         pet::collectionComplete(profile) && pet::homeUnlocked(profile));
   if (!visible) {
-    if (collectionArtTried) collectionArt.close();
-    collectionArtTried = false;
     return;
   }
   if (collectionArtTried) return;
@@ -329,6 +331,7 @@ void PetActivity::changeTab(int value) {
   if (!profile.created || value < 0 || value >= 4) return;
   tab = pet::Tab(value);
   static constexpr pet::View pages[] = {pet::View::Dashboard, pet::View::Care, pet::View::Home, pet::View::Album};
+  if (view == pages[value]) return;
   show(pages[value]);
 }
 void PetActivity::acknowledge() {
@@ -453,6 +456,8 @@ void PetActivity::createCompanion() {
   draft.species = chosenSpecies;
   draft.generation = profile.created ? profile.generation + 1 : 1;
   draft.heritageSeconds = pet::projectReading(profile);
+  draft.project = profile.project;
+  draft.projectStartedSeconds = profile.projectStartedSeconds;
   draft.earnedFood = draft.noticedFood = profile.earnedFood;
   draft.earnedMedicine = draft.noticedMedicine = profile.earnedMedicine;
   draft.spentFood = profile.spentFood;
@@ -993,5 +998,10 @@ void PetActivity::render(RenderLock&&) {
   ready = true;
   toybox::reportOverflow(interactions, "Pet", &renderer);
   renderer.displayBuffer();
+  if (animationRebasePending) {
+    // Let the newly visible section settle before its first animation refresh.
+    sleepClock.restart(millis());
+    animationRebasePending = false;
+  }
   paintedRevision.store(viewRevision, std::memory_order_release);
 }

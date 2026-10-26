@@ -44,7 +44,10 @@ inline void projectPreview(toybox::Screen& s, const Model& m, Work& w, fui::Rect
   frame(s, room);
   w.previewProfile = p;
   w.previewProfile.equipped[slot] = uint8_t(id);
-  if (!owned) w.previewProfile.project = uint8_t(id);
+  if (!owned) {
+    w.previewProfile.project = uint8_t(id);
+    if (!current) w.previewProfile.projectStartedSeconds = pet::projectReading(p);
+  }
   {
     Model scene = m;
     scene.profile = &w.previewProfile;

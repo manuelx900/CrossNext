@@ -52,12 +52,13 @@ int main() {
     Selection instant;
     instant.renderer.width = width;
     instant.select(instant.previewItem);
-    assert(instant.saves == 1 && instant.view == pet::View::ProjectPreview);
+    assert(instant.saves == 1 && !pet::owns(instant.profile, instant.previewItem));
+    assert(pet::projectRemaining(instant.profile) == pet::projectRequiredSeconds(2));
+    assert(instant.view == pet::View::ProjectPreview && instant.catalogFilter == petui::CatalogFilter::Unowned);
+    assert(pet::addReading(instant.profile, instant.profile.readingSeconds + pet::projectRemaining(instant.profile)));
     assert(pet::owns(instant.profile, instant.previewItem));
     assert(instant.profile.equipped[1] == instant.previewItem);
-    assert(instant.catalogFilter == petui::CatalogFilter::Owned && instant.page == 0);
-    assert(petui::catalogOrdinal(instant.profile, 1, instant.catalogFilter, instant.previewItem) == 0);
-    assert(petui::catalogAdjacent(instant.profile, 1, instant.catalogFilter, instant.previewItem, 1) == pet::objectAt(1, 0));
+    assert(!petui::catalogMatches(instant.profile, instant.previewItem, instant.catalogFilter));
     Selection pending;
     pending.renderer.width = width;
     pending.profile.readingSeconds = 1200;
@@ -115,7 +116,7 @@ int main() {
     stale.select(stale.previewItem + 1);
     assert(!stale.saves);
   }
-  std::puts("PET selection: immediate/pending/owned, remove/restore, persisted empty slot, failed saves, read-only and stale input passed in both layouts");
+  std::puts("PET selection: fresh project budgets, completion/owned, remove/restore, persisted empty slot, failed saves, read-only and stale input passed in both layouts");
 }
 '''.replace("BRANCH", branch)
 (OUT / "selection.cpp").write_text(program, "utf-8")

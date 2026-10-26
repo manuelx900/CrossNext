@@ -84,6 +84,8 @@ struct Profile {
   char name[NAME_BYTES]{};
   uint32_t sequence = 0, spentMedicine = 0, bonusMedicine = 0, generation = 1;
   uint64_t heritageSeconds = 0;
+  // Total reading credit at selection, including inherited seconds.
+  uint64_t projectStartedSeconds = 0;
   uint64_t earnedFood = 0, earnedMedicine = 0, noticedFood = 0, noticedMedicine = 0;
   int64_t lastReadAt = 0, endedAt = 0;
   // Legacy encounter fields remain readable for save compatibility.
@@ -136,6 +138,8 @@ bool owns(const Profile&, unsigned item);
 void own(Profile&, unsigned item);
 unsigned ownedCount(const Profile&);
 uint64_t projectThreshold(unsigned owned);
+uint64_t projectRequiredSeconds(unsigned owned);
+uint64_t projectProgressSeconds(const Profile&);
 uint64_t projectRemaining(const Profile&);
 uint64_t food(const Profile&);
 unsigned dailyFood(uint32_t seconds);

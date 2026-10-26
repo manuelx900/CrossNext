@@ -28,7 +28,7 @@ def method(name):
 
 prefix = method("action").split("  switch (action) {", 1)[0]
 prefix += "  if (action == petui::Back) back();\n}\n"
-methods = "\n".join(method(n) for n in ["scan", "finishScan", "updateHabits", "archiveDraft", "updateCare", "commit", "back", "show", "drawPetArt"])
+methods = "\n".join(method(n) for n in ["scan", "finishScan", "updateHabits", "archiveDraft", "updateCare", "commit", "back", "show", "drawPetArt", "changeTab", "createCompanion"])
 program = r'''
 #include <HalStorage.h>
 #include <algorithm>
@@ -36,8 +36,10 @@ program = r'''
 #include <climits>
 #include <cstdio>
 #include <ctime>
+#include <memory>
 #include <vector>
 #include "src/apps_local/pet/PetState.h"
+#include "src/apps_local/pet/PetSleepAnimation.h"
 #include "src/apps_local/pet/PetStore.h"
 #include "src/apps_local/pet/PetHistory.h"
 #include "src/apps_local/pet/PetReadingTimeline.h"
@@ -47,6 +49,7 @@ namespace fui { using ActionId = uint16_t; constexpr ActionId NO_ACTION = 0; str
 namespace petui { enum class NoticeKind { Information, Fed }; struct FeedResult { uint8_t before=0,after=0; bool visible=false; }; constexpr fui::ActionId Back = 1, Read = 2, AcknowledgeDeath = 4; constexpr unsigned PETTING_HAND_ART = 63; }
 namespace shelf { void leave(int, int) {} }
 struct Settings { bool weekStartsSunday = false; } SETTINGS;
+inline uint32_t millis() { return 1000; }
 namespace readingstats { enum class ScanResult { Record, More, Finished, Error }; }
 struct Journal {
   std::vector<readingstats::Record> records;
@@ -67,11 +70,15 @@ struct ProfileStore {
   }
 };
 struct PetActivity {
+  petsleep::Clock sleepClock;
+  bool animationRebasePending = false;
   struct ArtProbe { unsigned draws=0, count=63; } art;
   bool pettingHandAvailable=false;
   static bool drawArt(void* p, fui::DrawTarget&, fui::Rect, uint32_t id, bool) { auto& a=*static_cast<ArtProbe*>(p); ++a.draws; return id<a.count; }
   static bool drawPetArt(void*, fui::DrawTarget&, fui::Rect, uint32_t, bool);
   pet::Profile profile, draft;
+  pet::Species chosenSpecies=pet::Species::Silva;
+  char nameDraft[pet::NAME_BYTES]{};
   pet::History history, historyDraft;
   pet::HistoryStore historyStore;
   ProfileStore store;
@@ -100,7 +107,7 @@ struct PetActivity {
   void notice(const char*, pet::View next, petui::NoticeKind kind=petui::NoticeKind::Information) { noticeKind=kind; if(next!=pet::View::Notice)noticeReturn=next;show(pet::View::Notice); }
   void syncFarewellArt() {}
   void acknowledge() {}
-  void changeTab(int) {}
+  void changeTab(int); void createCompanion();
   bool refreshDay() { return updateCare(); }
   bool resourcesReady() const { return true; }
   void requestUpdate() {}
@@ -133,6 +140,28 @@ void seed(PetActivity& app, bool egg=false) {
   if(!egg)app.readings.records.push_back(reading(app.profile.lastReadAt-1200,1200));
 }
 int main() {
+  {
+    auto owned=std::make_unique<PetActivity>(); auto& app=*owned;
+    app.profile.created=true; app.viewRevision=10;
+    app.changeTab(0); assert(app.viewRevision==10);
+    app.changeTab(1); assert(app.viewRevision==11 && app.view==pet::View::Care);
+    app.changeTab(1); assert(app.viewRevision==11);
+    app.changeTab(0); assert(app.viewRevision==12 && app.view==pet::View::Dashboard);
+    assert(app.animationRebasePending && !app.sleepClock.update(1000,true));
+  }
+  {
+    auto owned=std::make_unique<PetActivity>(); auto& app=*owned; seed(app);
+    app.profile.readingSeconds=7200;
+    app.profile.project=9; app.profile.projectStartedSeconds=6000;
+    for(unsigned id=0;id<5;++id)pet::own(app.profile,id);
+    app.profile.lifeStatus=pet::LifeStatus::Retired; app.profile.endedAt=std::time(nullptr);
+    app.draft=app.profile; app.summary.seconds=10000; app.view=pet::View::Name;
+    app.createCompanion();
+    assert(app.profile.generation==2 && app.profile.project==9);
+    assert(pet::projectProgressSeconds(app.profile)==1200 && pet::projectRemaining(app.profile)==2400);
+    assert(pet::ownedCount(app.profile)==5 && app.view==pet::View::Dashboard);
+    assert(pet::addReading(app.profile,app.profile.baselineSeconds+2400) && pet::owns(app.profile,9));
+  }
   for(unsigned sat : {0u,55u,90u,99u}) for(bool failed : {false,true}) {
     PetActivity app; seed(app); app.profile.mode=pet::Mode::Relaxed;
     app.profile.readingSeconds=72000; app.profile.earnedFood=240; app.profile.saciety=uint8_t(sat); app.view=pet::View::Care;
