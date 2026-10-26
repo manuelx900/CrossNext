@@ -48,6 +48,68 @@ class LibraryBuilderTest : public ::testing::Test {
 
 }  // namespace
 
+TEST_F(LibraryBuilderTest, XtcAndXtchUseEmbeddedTitlesAndAuthors) {
+  fake::add("/Comics/one.xtc");
+  fake::add("/Comics/two.xtch");
+  bookMetadata["/Comics/one.xtc"] = {"Go Problems", "Cho Chikun", true};
+  bookMetadata["/Comics/two.xtch"] = {"Sakata no Go", "Sakata Eio", true};
+  initial();
+
+  {
+    LibraryIndexFile index;
+    ASSERT_TRUE(index.open(INDEX));
+    ASSERT_EQ(index.header().bookCount, 4u);
+    int found = 0;
+    for (uint16_t n = 0; n < index.header().bookCount; ++n) {
+      ClixRecord record{};
+      std::string path, title, author;
+      ASSERT_TRUE(index.readRecord(n, record));
+      ASSERT_TRUE(index.readPath(record, path));
+      if (path != "/Comics/one.xtc" && path != "/Comics/two.xtch") continue;
+      ASSERT_TRUE(index.readTitle(record, title));
+      ASSERT_TRUE(index.readAuthor(record, author));
+      EXPECT_EQ(title, bookMetadata[path].title);
+      EXPECT_EQ(author, bookMetadata[path].author);
+      ++found;
+    }
+    EXPECT_EQ(found, 2);
+  }
+  fake::parses = 0;
+  ASSERT_TRUE(buildLibraryIndex("/", stats, true));
+  EXPECT_EQ(fake::parses, 0u);
+  EXPECT_EQ(stats.metadataReused, 4u);
+  EXPECT_FALSE(stats.indexReplaced);
+}
+
+TEST_F(LibraryBuilderTest, XtchIsListedWithMetadataDisabledAndEnrichedWhenEnabled) {
+  fake::add("/Comics/one.xtch");
+  bookMetadata["/Comics/one.xtch"] = {"A Manga", "A Writer", true};
+  ASSERT_TRUE(buildLibraryIndex("/", stats, false));
+  EXPECT_EQ(fake::parses, 0u);
+  {
+    LibraryIndexFile index;
+    ASSERT_TRUE(index.open(INDEX));
+    EXPECT_EQ(index.header().bookCount, 3u);
+  }
+  ASSERT_TRUE(buildLibraryIndex("/", stats, true));
+  LibraryIndexFile index;
+  ASSERT_TRUE(index.open(INDEX));
+  bool found = false;
+  for (uint16_t n = 0; n < index.header().bookCount; ++n) {
+    ClixRecord record{};
+    std::string path, title, author;
+    ASSERT_TRUE(index.readRecord(n, record));
+    ASSERT_TRUE(index.readPath(record, path));
+    if (path != "/Comics/one.xtch") continue;
+    ASSERT_TRUE(index.readTitle(record, title));
+    ASSERT_TRUE(index.readAuthor(record, author));
+    EXPECT_EQ(title, "A Manga");
+    EXPECT_EQ(author, "A Writer");
+    found = true;
+  }
+  EXPECT_TRUE(found);
+}
+
 TEST_F(LibraryBuilderTest, UnchangedRebuildReusesMetadataAndDoesNotReplaceIndex) {
   initial();
   const auto old = fake::files[INDEX]->bytes;

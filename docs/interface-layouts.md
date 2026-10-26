@@ -30,7 +30,7 @@ Games and Apps use the same nine-row page limit, previous/current-total/next con
 
 ## Device checks
 
-On X4 Pro, change both Home layouts, hide/add shortcuts up to six items, rename Settings, reorder entries including Settings, restart and confirm the saved order. Exercise empty history, one book, ten books, missing files, long titles and all orientations. Compare carousel selection with the book opened, including neighboring-cover taps and both ends. Repeated menu selection must not retain more B/W snapshots; watch internal heap, largest block, PSRAM and stack high-water.
+On X4 Pro, change both Home layouts, hide/add shortcuts from one through eight items, rename Settings, reorder entries including Settings, restart and confirm the saved order. Check that Carousel centers the visible shortcuts and Framed closes the last row with a bottom divider. Exercise empty history, one book, ten books, missing files, long titles and all orientations. Compare carousel selection with the book opened, including neighboring-cover taps and both ends. Repeated menu selection must not retain more B/W snapshots; watch internal heap, largest block, PSRAM and stack high-water.
 
 In Library, toggle views, restart, page through more than thirty indexed files, search, sort, hold/delete/remove and rebuild. Recent must stop at thirty and Title/Author must retain access to the rest. Test EPUB/XTC covers and TXT placeholders, missing SD, thumbnail generation failure and rotation while a cover is queued.
 

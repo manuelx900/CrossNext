@@ -3,8 +3,7 @@
 #include <algorithm>
 
 namespace {
-constexpr uint32_t MIN_DWELL_SECONDS = 2;
-constexpr uint32_t MAX_DWELL_SECONDS = 1800;
+constexpr uint32_t MAX_DWELL_MS = 30 * 60 * 1000;
 }  // namespace
 
 uint16_t ReaderSession::clampProgress(const int progressBp) {
@@ -13,21 +12,22 @@ uint16_t ReaderSession::clampProgress(const int progressBp) {
 
 void ReaderSession::noteTurn(const bool forward, const bool succeeded) { pendingForward = forward && succeeded; }
 
+uint32_t ReaderSession::durationSeconds() const {
+  // The journal stores whole seconds; round once per session, never per page.
+  return pages ? static_cast<uint32_t>(std::clamp<uint64_t>((durationMs + 999) / 1000, 1, UINT32_MAX)) : 0;
+}
+
 void ReaderSession::onRenderComplete(const uint32_t monotonicMs, const int64_t trustedEpoch, const int progressBp) {
   const uint16_t progress = clampProgress(progressBp);
   if (pendingForward && hasAnchor && anchorEpoch > 0) {
-    const uint32_t elapsedSeconds = (monotonicMs - anchorMs) / 1000;
-    if (elapsedSeconds >= MIN_DWELL_SECONDS) {
-      const uint32_t contribution = std::min(elapsedSeconds, MAX_DWELL_SECONDS);
-      if (duration == 0) {
-        startEpoch = anchorEpoch;
-        startProgress = anchorProgress;
-        endProgress = anchorProgress;
-      }
-      duration += contribution;
-      if (pages < UINT32_MAX) ++pages;
-      endProgress = std::max(endProgress, progress);
+    if (pages == 0) {
+      startEpoch = anchorEpoch;
+      startProgress = anchorProgress;
+      endProgress = anchorProgress;
     }
+    durationMs += std::min(monotonicMs - anchorMs, MAX_DWELL_MS);
+    if (pages < UINT32_MAX) ++pages;
+    endProgress = std::max(endProgress, progress);
   }
 
   anchorMs = monotonicMs;
@@ -41,7 +41,7 @@ void ReaderSession::reset() {
   anchorMs = 0;
   anchorEpoch = 0;
   startEpoch = 0;
-  duration = 0;
+  durationMs = 0;
   pages = 0;
   anchorProgress = 0;
   startProgress = 0;

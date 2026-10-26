@@ -10,10 +10,10 @@ class ReaderSession {
   void onRenderComplete(uint32_t monotonicMs, int64_t trustedEpoch, int progressBp);
   void reset();
 
-  bool isEmitWorthy() const { return startEpoch > 0 && duration >= 10 && endTime() > startEpoch; }
+  bool isEmitWorthy() const { return startEpoch > 0 && pages > 0; }
   int64_t startTime() const { return startEpoch; }
-  int64_t endTime() const { return startEpoch > 0 ? startEpoch + duration : 0; }
-  uint32_t durationSeconds() const { return duration; }
+  int64_t endTime() const { return startEpoch > 0 ? startEpoch + durationSeconds() : 0; }
+  uint32_t durationSeconds() const;
   uint32_t pagesRead() const { return pages; }
   uint16_t startProgressBp() const { return startProgress; }
   uint16_t endProgressBp() const { return endProgress; }
@@ -24,7 +24,7 @@ class ReaderSession {
   uint32_t anchorMs = 0;
   int64_t anchorEpoch = 0;
   int64_t startEpoch = 0;
-  uint32_t duration = 0;
+  uint64_t durationMs = 0;
   uint32_t pages = 0;
   uint16_t anchorProgress = 0;
   uint16_t startProgress = 0;

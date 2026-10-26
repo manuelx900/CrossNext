@@ -72,13 +72,15 @@ All values are strings in the event's `vars` object:
 | `end_progress_bp` | monotonic-clamped final progress, 0..10000 basis points |
 | `progress_scale` | literal `10000` |
 
-Only successful ordinary forward turns count. A displayed page contributes
-when it remains visible for at least 2 seconds; one dwell is capped at 1800
-seconds. Reverse turns, chapter skips, failed turns, and shorter displays are
-excluded and re-anchor the timer. At least 10 active seconds and a trustworthy
-positive start time are required. EPUB retains basis-point precision; TXT/XTC
-may report whole-percent steps. The document hash is calculated lazily only
-when an emit-worthy summary and a subscriber both exist.
+Only successful ordinary forward turns count, including subsecond page turns.
+There is no minimum dwell or session length. Active dwell accumulates in
+milliseconds and rounds up once per session to whole seconds, with a minimum
+stored duration of one second for a session containing pages. One dwell is
+capped at 1800 seconds. Reverse turns, chapter skips and failed turns are
+excluded and re-anchor the timer. A trustworthy positive start time is required.
+EPUB retains basis-point precision; TXT/XTC may report whole-percent steps.
+The document hash is calculated lazily when a session containing pages is
+flushed, for the local statistics journal and any plugin subscriber.
 
 `end_time` is deliberately not the wall-clock time of the last interaction.
 Idle gaps are removed, so it always equals `start_time + duration_seconds` and

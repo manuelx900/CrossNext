@@ -21,7 +21,7 @@ const Config& config() {
 bool Store::read(int index) {
   HalFile file;
   if (!Storage.openFileForRead("HOME-MENU", kPaths[index], file)) return false;
-  if (file.read(buffer, 4) == 4 && !std::memcmp(buffer, "HMC", 3) && buffer[3] > '3') readOnly = true;
+  if (file.read(buffer, 4) == 4 && !std::memcmp(buffer, "HMC", 3) && buffer[3] > kSaveVersion) readOnly = true;
   readLength = file.size();
   return (readLength == kSaveBytes || readLength == kLegacySaveBytes) && file.seek(0) &&
          file.read(buffer, readLength) == static_cast<int>(readLength);
@@ -33,7 +33,7 @@ void Store::load() {
   for (int n = 0; n < 2; ++n) {
     existed |= Storage.exists(kPaths[n]);
     if (!read(n)) continue;
-    if (!std::memcmp(buffer, "HMC", 3) && buffer[3] > '3') {
+    if (!std::memcmp(buffer, "HMC", 3) && buffer[3] > kSaveVersion) {
       readOnly = true;
       continue;
     }

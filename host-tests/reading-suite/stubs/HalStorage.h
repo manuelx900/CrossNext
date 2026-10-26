@@ -40,6 +40,8 @@ class HalFile {
     return true;
   }
   size_t size() const { return data ? data->size() : 0; }
+  uint64_t fileSize64() const { return size(); }
+  bool isOpen() const { return data != nullptr; }
   int read(void* out, size_t count) {
     if (!data || testStorage.refuseReads) return -1;
     const size_t length = std::min(count, data->size() - cursor);

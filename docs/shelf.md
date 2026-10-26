@@ -12,7 +12,7 @@ the fork exists at all.
 
 ```
 Home
-  Browse Files / Recent Books / Reading Stats / Games / Apps / Settings
+  Browse Files / Recent Books / File Transfer / Reading Stats / Games / Apps / Settings
   Games >    chess, battleship, connections, solitaire
   Apps  >    flashcards, calendar, clock, quotes, counter, notes, ...
 ```
@@ -454,7 +454,7 @@ build when you have not decided what the device is for.
 
 ## The Home seam
 
-Home uses `src/apps_local/home/HomeMenuCore` for visible row count and identifier/index conversion. Browse Files, Recent Books, Reading Stats, Games, Apps and Settings are enabled by default. Settings stays enabled; the other rows can be renamed or hidden from Settings > System > Home Menu, with at most six enabled. The optional File Transfer, Plugins/OPDS and selected game/app shortcuts count toward the same limit. + Add Game / + Add App open separate catalogue selectors. A shortcut uses the shelf launcher with Home origin and returns directly Home, including after sleep/reboot. See [reading-stats.md](reading-stats.md).
+Home uses `src/apps_local/home/HomeMenuCore` for visible row count and identifier/index conversion. Browse Files, Recent Books, File Transfer, Reading Stats, Games, Apps and Settings are enabled by default. Settings stays enabled; the other rows can be renamed or hidden from Settings > System > Home Menu, with at most eight enabled. Optional Plugins/OPDS and selected game/app shortcuts count toward the same limit. + Add Game / + Add App open separate catalogue selectors. A shortcut uses the shelf launcher with Home origin and returns directly Home, including after sleep/reboot. See [reading-stats.md](reading-stats.md).
 
 Recent-book cover tiles precede these menu rows and are subtracted once before dispatch. Shelf return uses stable Games/Apps identifiers, so changing visibility does not change which folder opens. `HomeShelfRows.h` is retained only as a legacy test fixture; production Home no longer derives shelf offsets from upstream row positions.
 

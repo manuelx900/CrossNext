@@ -9,6 +9,7 @@
 #include <Logging.h>
 #include <Memory.h>
 #include <Utf8.h>
+#include <Xtc.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -188,7 +189,7 @@ void clearLibraryIndexDirty() {
 
 bool isBookName(const std::string& name) {
   return FsHelpers::checkFileExtension(name, ".epub") || FsHelpers::checkFileExtension(name, ".txt") ||
-         FsHelpers::checkFileExtension(name, ".md") || FsHelpers::checkFileExtension(name, ".xtc");
+         FsHelpers::checkFileExtension(name, ".md") || FsHelpers::hasXtcExtension(name);
 }
 
 // macOS AppleDouble sidecars and hidden entries. The file browser already hides
@@ -306,7 +307,8 @@ int findPrior(WalkState& st, const uint64_t pathHash) {
   entry.pathHash = clixPathHash(fullPath.data(), fullPath.size());
   const int priorIndex = findPrior(st, entry.pathHash);
 
-  const bool extractionExpected = st.readMetadata && FsHelpers::hasEpubExtension(name);
+  const bool isXtc = FsHelpers::hasXtcExtension(name);
+  const bool extractionExpected = st.readMetadata && (FsHelpers::hasEpubExtension(name) || isXtc);
   const uint8_t expectedStatus = extractionExpected ? CLIX_METADATA_EXTRACTED : CLIX_METADATA_NOT_ATTEMPTED;
   bool reuseMetadata = false;
   ClixRecord priorRecord{};
@@ -341,14 +343,23 @@ int findPrior(WalkState& st, const uint64_t pathHash) {
     st.stats->metadataReused++;
   }
 
-  // Prefer the reader's existing cache. For an unopened book, loadMetadata()
-  // reuses the same EPUB parser but stops before the manifest, so this never
-  // builds spine, TOC, CSS, cover, or section caches during the library walk.
+  // Metadata extraction never builds cover, bitmap, or reader-section caches.
   if (!reuseMetadata && extractionExpected) {
     st.stats->parsed++;
-    Epub epub(fullPath, CACHE_DIR);
     std::string bookTitle;
-    if (epub.loadMetadata(bookTitle, author)) {
+    bool loaded = false;
+    if (isXtc) {
+      Xtc xtc(fullPath, CACHE_DIR);
+      loaded = xtc.load();
+      if (loaded) {
+        bookTitle = xtc.getTitle();
+        author = xtc.getAuthor();
+      }
+    } else {
+      Epub epub(fullPath, CACHE_DIR);
+      loaded = epub.loadMetadata(bookTitle, author);
+    }
+    if (loaded) {
       entry.record.metadataStatus = CLIX_METADATA_EXTRACTED;
       if (!bookTitle.empty()) {
         title = std::move(bookTitle);

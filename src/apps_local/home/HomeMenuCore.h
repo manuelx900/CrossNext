@@ -23,7 +23,8 @@ enum class Id : uint8_t {
 constexpr int kCount = static_cast<int>(Id::Count);
 constexpr int kBaseCount = static_cast<int>(Id::Shortcut0);
 constexpr int kShortcutCount = kCount - kBaseCount;
-constexpr int kMaxVisible = 6;
+constexpr int kMaxVisible = 8;
+constexpr char kSaveVersion = '4';
 constexpr size_t kLabelBytes = 49;
 constexpr size_t kItemBytes = 64;
 constexpr size_t kLegacySaveBytes = 416;
@@ -33,11 +34,11 @@ struct Shortcut {
   char title[kItemBytes]{};
 };
 struct Config {
-  uint16_t visible = 0x3f;
+  uint16_t visible = 0x7f;
   char labels[kCount][kLabelBytes]{};
   Shortcut shortcuts[kShortcutCount]{};
-  Id order[kCount] = {Id::Files,     Id::Recent,    Id::Stats,     Id::Games,     Id::Apps,
-                      Id::Transfer,  Id::Services,  Id::Shortcut0, Id::Shortcut1, Id::Shortcut2,
+  Id order[kCount] = {Id::Files,     Id::Recent,    Id::Transfer,  Id::Stats,     Id::Games,
+                      Id::Apps,      Id::Services,  Id::Shortcut0, Id::Shortcut1, Id::Shortcut2,
                       Id::Shortcut3, Id::Shortcut4, Id::Settings};
 };
 bool isShortcut(Id id);

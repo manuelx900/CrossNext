@@ -182,13 +182,20 @@ Layout layout(const fui::DeviceContext& device, int count, Style style) {
     out.rows[n] = fui::makeRect(out.menu.x, top, out.menu.width, bottom - top);
     if (style == Style::Carousel) {
       if (!wide) {
-        const int left = out.menu.x + out.menu.width * n / std::max(6, out.count);
-        const int right = out.menu.x + out.menu.width * (n + 1) / std::max(6, out.count);
+        const int slots = std::max(6, out.count);
+        const int groupLeft = out.menu.x + (out.menu.width - out.menu.width * out.count / slots) / 2;
+        const int left = groupLeft + out.menu.width * n / slots;
+        const int right = groupLeft + out.menu.width * (n + 1) / slots;
         out.rows[n] = fui::makeRect(left, out.menu.y, right - left, out.menu.height);
-      } else
-        out.rows[n] = fui::makeRect(out.menu.x + n % 2 * out.menu.width / 2,
-                                    out.menu.y + n / 2 * out.menu.height / ((std::max(6, out.count) + 1) / 2),
-                                    out.menu.width / 2, out.menu.height / ((std::max(6, out.count) + 1) / 2));
+      } else {
+        const int rowHeight = out.menu.height / ((std::max(6, out.count) + 1) / 2);
+        const int usedRows = (out.count + 1) / 2;
+        const int rowItems = std::min(2, out.count - n / 2 * 2);
+        const int groupTop = out.menu.y + (out.menu.height - usedRows * rowHeight) / 2;
+        const int groupLeft = out.menu.x + (out.menu.width - rowItems * (out.menu.width / 2)) / 2;
+        out.rows[n] = fui::makeRect(groupLeft + n % 2 * (out.menu.width / 2), groupTop + n / 2 * rowHeight,
+                                    out.menu.width / 2, rowHeight);
+      }
     }
   }
   return out;
@@ -230,9 +237,11 @@ void drawMenuRow(fui::DrawTarget& target, const Model& model, const Layout& geom
     target.bitmap(art, model.rows[n].shortcutIcon, fui::BitmapMode::Contain, selected ? white : black);
   else
     icon(target, art, model.rows[n].icon, selected);
-  text(target, fui::makeRect(row.x + 96, row.y + 4, row.width - 112, row.height - 8), model.rows[n].label, kBody, 1,
+  const auto font = geometry.count == kMaxRows ? kCarouselTitle : kBody;
+  text(target, fui::makeRect(row.x + 88, row.y + 4, row.width - 104, row.height - 8), model.rows[n].label, font, 1,
        selected ? fui::Color::White : fui::Color::Black);
   if (n > 0) target.fill(fui::makeRect(row.x, row.y, row.width, kBorder), black);
+  if (n == geometry.count - 1) target.fill(fui::makeRect(row.x, row.bottom() - kBorder, row.width, kBorder), black);
 }
 
 void draw(fui::DrawTarget& target, const Model& model, const Layout& geometry) {

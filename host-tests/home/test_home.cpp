@@ -91,24 +91,36 @@ int main(int argc, char** argv) {
   homeui::formatDate(model.date, sizeof(model.date), 2026, 10, 15);
   CHECK(std::string(model.date) == "15 OCT");
   model.battery = 100;
+  model.progress = 67;
+  model.recentCount = 3;
   model.selected = 1;
   homeui::copyLabel(model.title, sizeof(model.title), "Alice's Adventures in Wonderland");
   homeui::copyLabel(model.author, sizeof(model.author), "Lewis Carroll");
   homeui::copyLabel(model.continueLabel, sizeof(model.continueLabel), "Continue reading");
   homeui::copyLabel(model.emptyTitle, sizeof(model.emptyTitle), "No open book");
   homeui::copyLabel(model.emptyHelp, sizeof(model.emptyHelp), "Start reading a book to see it here.");
-  static constexpr const char* labels[] = {"Browse Files", "Recent Books", "File Transfer", "Settings",
-                                           "Games",        "Apps",         "Plugins",       "OPDS"};
+  static constexpr const char* labels[] = {"Browse Files", "Recent Books", "File Transfer", "Reading Stats",
+                                           "Games",        "Apps",         "Settings",      "PET"};
   static constexpr homeui::Icon icons[] = {homeui::Icon::Files,    homeui::Icon::Library, homeui::Icon::Transfer,
-                                           homeui::Icon::Settings, homeui::Icon::Games,   homeui::Icon::Apps,
-                                           homeui::Icon::Plugins,  homeui::Icon::Plugins};
+                                           homeui::Icon::Stats,    homeui::Icon::Games,   homeui::Icon::Apps,
+                                           homeui::Icon::Settings, homeui::Icon::Apps};
   for (int n = 0; n < 8; ++n) {
     homeui::copyLabel(model.rows[n].label, sizeof(model.rows[n].label), labels[n]);
     model.rows[n].icon = icons[n];
   }
   for (auto dimensions : {std::pair<int, int>{480, 800}, {800, 480}}) {
-    for (int count : {6, 7, 8})
+    for (int count : {1, 2, 3, 4, 5, 6, 7, 8})
       for (bool book : {true, false}) {
+        for (int n = 0; n < homeui::kMaxRows; ++n) {
+          homeui::copyLabel(model.rows[n].label, sizeof(model.rows[n].label), labels[n]);
+          model.rows[n].icon = icons[n];
+        }
+        homeui::copyLabel(model.rows[6].label, sizeof(model.rows[6].label), count == 8 ? "Wordle" : "Settings");
+        model.rows[6].icon = count == 8 ? homeui::Icon::Games : homeui::Icon::Settings;
+        homeui::copyLabel(model.rows[7].label, sizeof(model.rows[7].label), "Settings");
+        model.rows[7].icon = homeui::Icon::Settings;
+        homeui::copyLabel(model.rows[count - 1].label, sizeof(model.rows[count - 1].label), "Settings");
+        model.rows[count - 1].icon = homeui::Icon::Settings;
         Canvas canvas(dimensions.first, dimensions.second);
         model.count = count;
         model.hasBook = book;
@@ -126,6 +138,9 @@ int main(int argc, char** argv) {
             },
             &context);
         app.render();
+        const auto last = geometry.rows[count - 1];
+        for (int x = last.x; x < last.right(); ++x)
+          CHECK((canvas.pixels[(last.bottom() - 1) * ((canvas.width + 7) / 8) + x / 8] & (0x80 >> (x % 8))) == 0);
         auto tap = [&](int x, int y) {
           fui::InputSnapshot input;
           input.touchReleased = true;
@@ -295,7 +310,7 @@ int main(int argc, char** argv) {
   }
   for (auto style : {homeui::Style::Carousel})
     for (auto size : {std::pair<int, int>{480, 800}, {800, 480}})
-      for (int count : {1, 6}) {
+      for (int count : {1, 2, 3, 4, 5, 6, 7, 8}) {
         Canvas canvas(size.first, size.second);
         model.style = style;
         model.count = count;
@@ -315,6 +330,17 @@ int main(int argc, char** argv) {
         for (int n = 0; n < count; ++n) {
           const auto row = geometry.rows[n];
           CHECK(row.width >= 44 && row.height >= 44 && row.right() <= canvas.width && row.bottom() <= canvas.height);
+        }
+        if (size.first < size.second) {
+          CHECK(std::abs((geometry.rows[0].x - geometry.menu.x) -
+                         (geometry.menu.right() - geometry.rows[count - 1].right())) <= 1);
+        } else {
+          CHECK(std::abs((geometry.rows[0].y - geometry.menu.y) -
+                         (geometry.menu.bottom() - geometry.rows[count - 1].bottom())) <= 1);
+          for (int n = 0; n < count; n += 2) {
+            const auto right = geometry.rows[std::min(n + 1, count - 1)].right();
+            CHECK(std::abs((geometry.rows[n].x - geometry.menu.x) - (geometry.menu.right() - right)) <= 1);
+          }
         }
         model.canPrevious = model.canNext = true;
         struct HitContext {
@@ -367,7 +393,7 @@ int main(int argc, char** argv) {
       }
   for (auto style : {homeui::Style::Framed, homeui::Style::Carousel})
     for (auto size : {fui::Size{480, 800}, fui::Size{800, 480}})
-      for (int count : {6, 7, 8})
+      for (int count : {1, 2, 3, 4, 5, 6, 7, 8})
         for (bool book : {false, true}) {
           model.style = style;
           model.hasBook = book;

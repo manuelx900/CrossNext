@@ -1,6 +1,6 @@
 # Offline study and reading tools
 
-The CrossNext X4 Pro build includes Flashcards, Calendar, Clock, Quotes, Counter, To Do List and Reading Quest. Apps is paginated. Notes, Habits, Pomodoro and Wallpapers remain. Calculator, Study, Hacker News, XKCD, Instapaper and Wikipedia are absent from the app registry; source and conversion tools are retained where reused. Trivia, Connections, Insider, Sea Salt, Yahtzee, Knucklebones, Wavelength and Underhand are excluded from the game registry and device/simulator compilation. Existing app shortcuts resolve by title, so removed apps no longer launch from Home. Settings stays visible and last, within the six-item Home limit.
+The CrossNext X4 Pro build includes Flashcards, Calendar, Clock, Quotes, Counter, To Do List and Reading Quest. Apps is paginated. Notes, Habits, Pomodoro and Wallpapers remain. Calculator, Study, Hacker News, XKCD, Instapaper and Wikipedia are absent from the app registry; source and conversion tools are retained where reused. Trivia, Connections, Insider, Sea Salt, Yahtzee, Knucklebones, Wavelength and Underhand are excluded from the game registry and device/simulator compilation. Existing app shortcuts resolve by title, so removed apps no longer launch from Home. Settings stays visible within the eight-item Home limit; the default menu has seven entries.
 
 ## Flashcards
 

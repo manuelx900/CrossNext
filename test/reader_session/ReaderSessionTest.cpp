@@ -15,13 +15,33 @@ void turnAndRender(ReaderSession& session, bool forward, bool succeeded, uint32_
   session.onRenderComplete(ms, epoch, progress);
 }
 
-TEST(ReaderSession, IgnoresDwellsUnderTwoSeconds) {
+TEST(ReaderSession, CountsDwellsUnderTwoSeconds) {
   ReaderSession session;
   anchor(session, 1000, 100, 1000);
   turnAndRender(session, true, true, 2999, 102, 1100);
 
-  EXPECT_EQ(session.durationSeconds(), 0u);
-  EXPECT_FALSE(session.isEmitWorthy());
+  EXPECT_EQ(session.durationSeconds(), 2u);
+  EXPECT_EQ(session.pagesRead(), 1u);
+  EXPECT_TRUE(session.isEmitWorthy());
+}
+
+TEST(ReaderSession, AccumulatesSubsecondPagesWithoutRoundingEachTurn) {
+  ReaderSession session;
+  anchor(session, 1000, 100, 0);
+  for (uint32_t n = 1; n <= 10; ++n) turnAndRender(session, true, true, 1000 + n * 100, 101, n * 100);
+  EXPECT_EQ(session.pagesRead(), 10u);
+  EXPECT_EQ(session.durationSeconds(), 1u);
+  EXPECT_EQ(session.endTime(), 101);
+  EXPECT_TRUE(session.isEmitWorthy());
+}
+
+TEST(ReaderSession, KeepsPagesInASubsecondSession) {
+  ReaderSession session;
+  anchor(session, 1000, 100, 100);
+  turnAndRender(session, true, true, 1100, 100, 200);
+  EXPECT_EQ(session.pagesRead(), 1u);
+  EXPECT_EQ(session.durationSeconds(), 1u);
+  EXPECT_TRUE(session.isEmitWorthy());
 }
 
 TEST(ReaderSession, AccumulatesSuccessfulForwardDwellsAndCompactsEndTime) {
@@ -81,7 +101,7 @@ TEST(ReaderSession, ClampsProgressRangeAndMonotonicEnd) {
   EXPECT_EQ(session.endProgressBp(), 10000);
 }
 
-TEST(ReaderSession, RequiresTenSecondsAndTrustedStart) {
+TEST(ReaderSession, RequiresTrustedStartWithoutMinimumDuration) {
   ReaderSession session;
   anchor(session, 1000, 0, 1000);
   turnAndRender(session, true, true, 11000, 10, 1100);
@@ -89,7 +109,7 @@ TEST(ReaderSession, RequiresTenSecondsAndTrustedStart) {
 
   turnAndRender(session, true, true, 20000, 19, 1200);
   EXPECT_EQ(session.durationSeconds(), 9u);
-  EXPECT_FALSE(session.isEmitWorthy());
+  EXPECT_TRUE(session.isEmitWorthy());
 
   turnAndRender(session, true, true, 22000, 21, 1300);
   EXPECT_EQ(session.durationSeconds(), 11u);

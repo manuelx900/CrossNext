@@ -19,6 +19,8 @@ The integration base is CrossPlay **1.14.2**, with CrossPoint **1.6.5**. This is
 a source derivative even when published as a new GitHub repository with a clean
 initial history. Keep the inherited copyright and permission notices.
 
+XTC/XTCH Library metadata support adapts [CrossPoint PR #4023](https://github.com/crosspoint-reader/crosspoint-reader/pull/4023) by [Eszter Schuffert](https://github.com/eszter007): XTCH files are indexed, and both formats contribute embedded titles and authors.
+
 The local CrossNext source adds or adapts these flows:
 
 - PET reading companion: care, reading-based stages, four minigames, 240 home
@@ -102,4 +104,4 @@ by the maintainer live in `docs/images/` and are used by both README versions.
 - Wallpaper All toggles only the selection; Done asks before saving. Invalid
   images are excluded, valid image dimensions are preserved, and the ordinary
   gallery uses the space occupied by the selection instruction while choosing.
-- Carnivore uses its English name while retaining compatible saved-game IDs.
+- Carnivore keeps its English title and appears as Carnívoro in Spanish, retaining compatible saved-game IDs.

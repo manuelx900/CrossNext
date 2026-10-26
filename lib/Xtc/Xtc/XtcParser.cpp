@@ -161,13 +161,16 @@ XtcError XtcParser::readHeader() {
 }
 
 XtcError XtcParser::readTitle() {
-  constexpr auto titleOffset = 0x38;
-  if (!m_file.seek(titleOffset)) {
+  // Some older generators omitted the offset and used the fixed metadata block.
+  const uint64_t titleOffset = m_header.metadataOffset ? m_header.metadataOffset : sizeof(XtcHeader);
+  const uint64_t fileSize = m_file.fileSize64();
+  if (titleOffset < XTC_LEGACY_HEADER_SIZE || titleOffset > fileSize || 128 > fileSize - titleOffset ||
+      !m_file.seek64(titleOffset)) {
     return XtcError::READ_ERROR;
   }
 
   char titleBuf[128] = {0};
-  m_file.read(titleBuf, sizeof(titleBuf) - 1);
+  if (m_file.read(titleBuf, sizeof(titleBuf) - 1) != sizeof(titleBuf) - 1) return XtcError::READ_ERROR;
   m_title = titleBuf;
 
   LOG_DBG("XTC", "Title: %s", m_title.c_str());
@@ -176,13 +179,15 @@ XtcError XtcParser::readTitle() {
 
 XtcError XtcParser::readAuthor() {
   // Read author as null-terminated UTF-8 string with max length 64, directly following title
-  constexpr auto authorOffset = 0xB8;
-  if (!m_file.seek(authorOffset)) {
+  const uint64_t metadataOffset = m_header.metadataOffset ? m_header.metadataOffset : sizeof(XtcHeader);
+  const uint64_t fileSize = m_file.fileSize64();
+  if (metadataOffset < XTC_LEGACY_HEADER_SIZE || metadataOffset > fileSize || 192 > fileSize - metadataOffset ||
+      !m_file.seek64(metadataOffset + 128)) {
     return XtcError::READ_ERROR;
   }
 
   char authorBuf[64] = {0};
-  m_file.read(authorBuf, sizeof(authorBuf) - 1);
+  if (m_file.read(authorBuf, sizeof(authorBuf) - 1) != sizeof(authorBuf) - 1) return XtcError::READ_ERROR;
   m_author = authorBuf;
 
   LOG_DBG("XTC", "Author: %s", m_author.c_str());
