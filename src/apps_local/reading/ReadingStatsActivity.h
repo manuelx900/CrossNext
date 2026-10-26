@@ -5,6 +5,8 @@
 #include "../../activities/Activity.h"
 #include "../ui/SectionNavigation.h"
 #include "../ui/ToyboxScreen.h"
+#include "ReadingStatsCloud.h"
+#include "ReadingStatsProjection.h"
 #include "ReadingStatsScreens.h"
 #include "ReadingStatsStore.h"
 
@@ -22,13 +24,20 @@ class ReadingStatsActivity final : public Activity {
   void render(RenderLock&&) override;
 
  private:
-  enum class Load { Anchor, Summary, Day, Period, Streak, Books, Detail, Ready, Failed };
+  enum class Load { Anchor, Summary, Day, Period, Streak, Books, Detail, Cloud, Ready, Failed };
   void scan();
   bool beginScan(bool reverse = false);
   void loadPage(int page);
   void loadPeriod(readingstats::Period next, int day);
   void action(freeink::ui::ActionId action, int value);
   void back();
+  void importHistory();
+  void loadCloud();
+  int bookTotal() const;
+  readingstats::Source source = readingstats::Source::Local;
+  std::unique_ptr<readingstats::cloud::Reader> cloud;
+  std::unique_ptr<readingstats::cloud::Projection> combined;
+  bool cloudAvailable = false, cloudDayKnown = false, cloudPeriodKnown = false;
   // Fixed workspaces; no container grows with the journal or library.
   readingstats::Summary summary;
   readingstats::PeriodStats dayStats, periodStats;

@@ -75,6 +75,8 @@ previa comienza en **inglés**; se puede elegir español en Ajustes > Idioma.
 
 ![Lecturas y estadísticas](docs/images/statistics.png)
 
+La sincronización opcional con **CrossPoint Sync** reúne el historial de tu cuenta y las nuevas lecturas locales en una sola vista de estadísticas. Lee sin conexión y usa el atajo junto a la batería para sincronizar. El icono solo aparece al configurar una cuenta compatible. Consulta la [guía de estadísticas](docs/reading-stats.md#crosspoint-sync).
+
 ### Juegos
 
 ![Juegos](docs/images/games.png)

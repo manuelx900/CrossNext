@@ -5,6 +5,8 @@
 #include "ReadingStatsCore.h"
 
 namespace readingstats {
+inline constexpr const char* kJournalPath = "/.crosspoint/reading-history/sessions.bin";
+inline constexpr uint8_t kJournalHeader[16] = {'C', 'R', 'S', '1', 0x80, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 enum class ScanResult { More, Record, Finished, Error };
 class Repository {
  public:

@@ -13,8 +13,6 @@
 namespace readingstats {
 namespace {
 constexpr const char* kRoot = "/.crosspoint/reading-history";
-constexpr const char* kLog = "/.crosspoint/reading-history/sessions.bin";
-constexpr uint8_t kHeader[16] = {'C', 'R', 'S', '1', 0x80, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 void cachePath(char* path, size_t size, const char* document) { snprintf(path, size, "%s/%s.idx", kRoot, document); }
 uint64_t getOffset(const uint8_t* bytes) {
   uint64_t v = 0;
@@ -32,9 +30,9 @@ int today() {
   return dayIndex({local.tm_year + 1900, local.tm_mon + 1, local.tm_mday});
 }
 bool Repository::header(HalFile& input) {
-  uint8_t bytes[sizeof(kHeader)];
+  uint8_t bytes[sizeof(kJournalHeader)];
   return input.seek(0) && input.read(bytes, sizeof(bytes)) == static_cast<int>(sizeof(bytes)) &&
-         !std::memcmp(bytes, kHeader, sizeof(bytes));
+         !std::memcmp(bytes, kJournalHeader, sizeof(bytes));
 }
 bool Repository::begin(bool reverse, uint8_t* ahead, uint32_t aheadBytes) {
   close();
@@ -43,12 +41,12 @@ bool Repository::begin(bool reverse, uint8_t* ahead, uint32_t aheadBytes) {
   damaged = false;
   backwards = reverse;
   if (!Storage.ensureDirectoryExists(kRoot)) return false;
-  if (!Storage.exists(kLog)) {
+  if (!Storage.exists(kJournalPath)) {
     end = 16;
     cursor = 16;
     return true;
   }
-  if (!Storage.openFileForRead("READ-STATS", kLog, file) || !header(file)) {
+  if (!Storage.openFileForRead("READ-STATS", kJournalPath, file) || !header(file)) {
     close();
     return false;
   }
@@ -131,23 +129,23 @@ bool Repository::loadBook(const char* document, Book& book) {
 }
 bool Repository::append(const Record& record) {
   if (!Storage.ensureDirectoryExists(kRoot)) return false;
-  if (!Storage.exists(kLog)) {
+  if (!Storage.exists(kJournalPath)) {
     HalFile fresh;
-    if (!Storage.openFileForWrite("READ-STATS", kLog, fresh) ||
-        fresh.write(kHeader, sizeof(kHeader)) != sizeof(kHeader))
+    if (!Storage.openFileForWrite("READ-STATS", kJournalPath, fresh) ||
+        fresh.write(kJournalHeader, sizeof(kJournalHeader)) != sizeof(kJournalHeader))
       return false;
   }
   uint64_t offset = 0;
   {
     HalFile output;
-    if (!Storage.openFileForUpdate("READ-STATS", kLog, output) || !header(output)) return false;
+    if (!Storage.openFileForUpdate("READ-STATS", kJournalPath, output) || !header(output)) return false;
     const auto length = static_cast<uint64_t>(output.size());
     offset = 16 + (length - 16) / kRecordBytes * kRecordBytes;
     if (offset != length && !output.truncate(offset)) return false;
     encode(record, buffer);
     if (!output.seek64(offset) || output.write(buffer, sizeof(buffer)) != sizeof(buffer)) return false;
   }
-  if (!Storage.openFileForRead("READ-STATS", kLog, file) || !readAt(offset, scratch)) {
+  if (!Storage.openFileForRead("READ-STATS", kJournalPath, file) || !readAt(offset, scratch)) {
     close();
     return false;
   }

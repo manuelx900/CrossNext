@@ -273,6 +273,16 @@ void today(Context& s, fui::Rect r, const Model& m) {
   }
   r.y += 60;
   r.height -= 60;
+  if (m.source == readingstats::Source::Unified) {
+    if (m.dailyKnown)
+      timePanel(s, fui::makeRect(r.x, r.y, r.width, r.height * 2 / 3), tr(STR_READING_TOTAL),
+                m.periodStats ? m.periodStats->seconds : 0);
+    else
+      prose(s, fui::makeRect(r.x + 12, r.y + 16, r.width - 24, r.height / 2), tr(STR_READING_SYNC_NO_DAILY));
+    prose(s, fui::makeRect(r.x + 12, r.y + r.height * 2 / 3 + 8, r.width - 24, r.height / 3 - 8),
+          tr(STR_READING_SYNC_DETAILS));
+    return;
+  }
   const auto main =
       fui::makeRect(r.x, r.y, wide ? r.width * 38 / 100 - 6 : r.width, wide ? r.height : r.height * 37 / 100);
   const uint64_t seconds = m.periodStats ? m.periodStats->seconds : 0;
@@ -424,7 +434,12 @@ void calendar(Context& s, fui::Rect r, const Model& m) {
     const auto box = cell(area, 7 + offset + d - 1, 7, 7);
     const uint32_t seconds = m.summary->onDay(first + d - 1);
     const auto inner = box.inset(fui::Insets{2, 2, 2, 2});
-    if (seconds) s.target().fill(inner, seconds >= 1800 ? black : fui::Paint::dither(fui::Color::LightGray));
+    const int importedOffset = m.importedAnchor - (first + d - 1);
+    const bool activeImported = m.importedActive && importedOffset >= 0 &&
+                                importedOffset < readingstats::kHistoryDays &&
+                                (m.importedActive[importedOffset / 8] & (1u << (importedOffset % 8)));
+    if (seconds || activeImported)
+      s.target().fill(inner, seconds >= 1800 ? black : fui::Paint::dither(fui::Color::LightGray));
     if (first + d - 1 == m.today) {
       frame(s, box, 2);
       frame(s, inner.inset(fui::Insets{2, 2, 2, 2}), 1);
@@ -505,6 +520,17 @@ void periodDetails(Context& s, fui::Rect r, const Model& m) {
   const bool wide = r.width > r.height;
   button(s, fui::makeRect(r.x, r.y, wide ? 190 : r.width, 40),
          m.periodFromPicker ? tr(STR_STATS_BACK_PERIODS) : tr(STR_STATS_BACK_CALENDAR), BackToCalendar);
+  if (m.source == readingstats::Source::Unified) {
+    r.y += 52;
+    r.height -= 52;
+    if (m.dailyKnown)
+      timePanel(s, fui::makeRect(r.x, r.y, r.width, r.height * 2 / 3), tr(STR_READING_TOTAL), v.seconds);
+    else
+      prose(s, fui::makeRect(r.x + 12, r.y + 20, r.width - 24, r.height / 2), tr(STR_READING_SYNC_NO_DAILY));
+    prose(s, fui::makeRect(r.x + 12, r.y + r.height * 2 / 3 + 8, r.width - 24, r.height / 3 - 8),
+          tr(STR_READING_SYNC_DETAILS));
+    return;
+  }
   if (!wide) {
     r.y += 50;
     r.height -= 50;
@@ -627,7 +653,10 @@ void bookDetails(Context& s, fui::Rect r, const Model& m) {
   r.y += titleH;
   r.height -= titleH;
   char label[64];
-  std::snprintf(label, sizeof(label), "%u%%", b.progressBp / 100);
+  if (m.source == readingstats::Source::Unified && !b.completed)
+    std::snprintf(label, sizeof(label), "--");
+  else
+    std::snprintf(label, sizeof(label), "%u%%", b.progressBp / 100);
   prose(s, fui::makeRect(r.x, r.y, r.width - 70, 28), tr(STR_READING_PROGRESS), fui::TextAlign::Left, 0);
   prose(s, fui::makeRect(r.right() - 70, r.y, 70, 28), label, fui::TextAlign::Right, 0);
   dashboard::bar(s.screen, fui::makeRect(r.x, r.y + 32, r.width, 20), b.progressBp, 10000);
@@ -684,12 +713,17 @@ void books(Context& s, fui::Rect r, const Model& m) {
   const bool finished = m.filter == readingstats::BookFilter::Finished, wide = r.width > r.height;
   const int half = r.width / 2, filterH = wide ? 42 : 48;
   button(s, fui::makeRect(r.x, r.y, half, filterH), tr(STR_STATS_FINISHED_FILTER), Filter, 0, finished);
-  button(s, fui::makeRect(r.x + half, r.y, r.width - half, filterH), tr(STR_LIBRARY_TAB_RECENT), Filter, 1, !finished);
+  button(s, fui::makeRect(r.x + half, r.y, r.width - half, filterH),
+         m.source == readingstats::Source::Unified ? tr(STR_READING_SYNC_UNFINISHED) : tr(STR_LIBRARY_TAB_RECENT),
+         Filter, 1, !finished);
   r.y += filterH + 14;
   r.height -= filterH + 14;
   if (!wide) {
     text(s, fui::makeRect(r.x, r.y, r.width - 48, 32),
-         finished ? tr(STR_STATS_FINISHED_BOOKS) : tr(STR_STATS_RECENT_BOOKS), 1, fui::TextAlign::Left);
+         finished                                    ? tr(STR_STATS_FINISHED_BOOKS)
+         : m.source == readingstats::Source::Unified ? tr(STR_READING_SYNC_UNFINISHED)
+                                                     : tr(STR_STATS_RECENT_BOOKS),
+         1, fui::TextAlign::Left);
     count(s, fui::makeRect(r.right() - 40, r.y + 2, 32, 28), m.bookTotal);
     s.target().line({r.x, int16_t(r.y + 38)}, {r.right(), int16_t(r.y + 38)}, 2, black);
     r.y += 50;
@@ -704,7 +738,8 @@ void books(Context& s, fui::Rect r, const Model& m) {
   const int columns = 1, rows = wide ? 3 : 5, gap = 10, footerH = 44;
   const int rowH = std::min(108, (r.height - footerH - 16) / rows), rowW = (r.width - (columns - 1) * gap) / columns;
   for (int n = 0; n < m.count; ++n) {
-    const auto row = fui::makeRect(r.x + (n % columns) * (rowW + gap), r.y + (n / columns) * rowH, rowW, rowH - 10);
+    const auto row =
+        fui::makeRect(r.x + (n % columns) * (rowW + gap), r.y + (n / columns) * rowH, rowW, rowH - (wide ? 8 : 10));
     const auto& b = m.books[n];
     frame(s, row, n == m.selected ? 3 : 2);
     dashboard::hit(s.screen, row, OpenBook, n);
@@ -759,7 +794,11 @@ void build(toybox::Screen& screen, const Model& m, Work& work) {
   header.battery = m.battery;
   header.charging = m.charging;
   header.showPercent = m.showPercent;
-  pixelui::header(s.target(), s.device(), header);
+  if (!m.bookOnly && m.syncAvailable) {
+    header.mark = fui::bitmapFromIcon(icon_live_check_24);
+    header.markAction = ImportHistory;
+  }
+  pixelui::header(screen, header);
   backui::publish(header.back, pixelui::geometry(s.device()).back);
   if (!m.bookOnly) {
     auto& tabs = work.items;
@@ -827,5 +866,46 @@ void build(toybox::Screen& screen, const Model& m, Work& work) {
     default:
       break;
   }
+}
+
+void buildImport(toybox::Screen& screen, const ImportModel& m, Work& work) {
+  Context s{screen, work};
+  pixelui::begin(screen);
+  pixelui::Header header;
+  header.title = tr(STR_READING_SYNC_TITLE);
+  header.back = true;
+  header.battery = m.battery;
+  pixelui::header(s.target(), s.device(), header);
+  backui::publish(true, pixelui::geometry(s.device()).back);
+  const auto body = s.body();
+  const int footer = m.setup ? 108 : 54;
+  const auto hero = fui::makeRect(body.x, body.y, body.width, body.height - footer - 12);
+  frame(s, hero, 2);
+  const char* title = m.state == ImportState::Done        ? tr(STR_READING_SYNC_DONE)
+                      : m.state == ImportState::Importing ? tr(STR_READING_SYNC_BUSY)
+                                                          : tr(STR_READING_SOURCE_CLOUD);
+  const int side = std::min(112, std::min(hero.width / 3, hero.height / 2));
+  art(s, fui::makeRect(hero.x + 20, hero.y + 20, side, side), statsart::sparkBook);
+  text(s, fui::makeRect(hero.x + side + 38, hero.y + 20, hero.width - side - 56, side), title, 1, fui::TextAlign::Left,
+       fui::Color::Black, 2);
+  const int textTop = hero.y + side + 42;
+  const char* message = m.message                      ? m.message
+                        : m.state == ImportState::Done ? tr(STR_READING_SYNC_SAFE)
+                                                       : tr(STR_READING_SYNC_HELP);
+  prose(s, fui::makeRect(hero.x + 20, textTop, hero.width - 40, std::max(32, hero.bottom() - textTop - 64)), message);
+  if (m.state == ImportState::Importing || m.state == ImportState::Done) {
+    char label[96];
+    std::snprintf(label, sizeof(label), "%s: %lu", tr(STR_READING_BOOKS), static_cast<unsigned long>(m.books));
+    text(s, fui::makeRect(hero.x + 16, hero.bottom() - 52, hero.width - 32, 36), label, 0);
+  }
+  if (m.setup)
+    button(s, fui::makeRect(body.x, body.bottom() - 108, body.width, 44), tr(STR_READING_SYNC_ACCOUNT), ImportSetup);
+  if (m.state == ImportState::Importing)
+    button(s, fui::makeRect(body.x, body.bottom() - 48, body.width, 48), tr(STR_CANCEL), ImportDone);
+  else if (m.state == ImportState::Done)
+    button(s, fui::makeRect(body.x, body.bottom() - 48, body.width, 48), tr(STR_DONE), ImportDone, 0, true);
+  else
+    button(s, fui::makeRect(body.x, body.bottom() - 48, body.width, 48), tr(STR_READING_SYNC_IMPORT), ImportStart, 0,
+           true);
 }
 }  // namespace readingui

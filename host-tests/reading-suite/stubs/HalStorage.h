@@ -40,6 +40,7 @@ class HalFile {
     return true;
   }
   size_t size() const { return data ? data->size() : 0; }
+  size_t position() const { return cursor; }
   uint64_t fileSize64() const { return size(); }
   bool isOpen() const { return data != nullptr; }
   int read(void* out, size_t count) {

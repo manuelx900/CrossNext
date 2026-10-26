@@ -22,7 +22,11 @@ enum : freeink::ui::ActionId {
   PickerMonth,
   SelectYear,
   SelectChartDay,
-  BackToData
+  BackToData,
+  ImportHistory,
+  ImportStart,
+  ImportDone,
+  ImportSetup
 };
 struct Model {
   const readingstats::Summary* summary = nullptr;
@@ -41,6 +45,10 @@ struct Model {
   bool bookOnly = false;
   bool pickerVisible = false, periodFromPicker = false;
   int pickerYear = 2026;
+  readingstats::Source source = readingstats::Source::Local;
+  const uint8_t* importedActive = nullptr;
+  int importedAnchor = 0;
+  bool importedAvailable = false, dailyKnown = true, syncAvailable = false;
 };
 int capacity(const freeink::ui::DeviceContext& device);
 struct Work {
@@ -53,5 +61,14 @@ struct Work {
 };
 int calendarDayAt(const Work& work, int month, bool sunday, int x, int y);
 void build(toybox::Screen& screen, const Model& model, Work& work);
+enum class ImportState { Ready, Importing, Done, Error };
+struct ImportModel {
+  ImportState state = ImportState::Ready;
+  const char* message = nullptr;
+  uint32_t books = 0;
+  bool setup = false;
+  int battery = -1;
+};
+void buildImport(toybox::Screen& screen, const ImportModel& model, Work& work);
 void duration(uint64_t seconds, char* out, size_t size);
 }  // namespace readingui

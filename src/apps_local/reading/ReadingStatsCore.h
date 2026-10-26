@@ -10,6 +10,7 @@ constexpr int kBooksPerPage = 5;
 constexpr int kRecentBooks = 10;
 enum class Period { Calendar, Day, Week, Month, Year };
 enum class BookFilter { Finished, Recent };
+enum class Source { Local, Unified };
 struct Date {
   int year = 0, month = 0, day = 0;
 };

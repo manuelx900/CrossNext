@@ -82,6 +82,8 @@ settings; an existing installation keeps its saved language.
 
 ![Reading statistics](docs/images/statistics.png)
 
+Optional **CrossPoint Sync** keeps your account history and new local reading in one statistics view. Read offline, then use the sync shortcut beside the battery to upload new reading and refresh the account history. The shortcut appears only after configuring a compatible sync account. See [reading statistics](docs/reading-stats.md#crosspoint-sync).
+
 ### Games
 
 ![Games](docs/images/games.png)

@@ -2,19 +2,23 @@
 
 #include <CrossPointSettings.h>
 #include <I18n.h>
+#include <Memory.h>
 #include <RecentBooksStore.h>
 
 #include <algorithm>
 #include <cstring>
 
 #include "../ui/PixelMenuTheme.h"
+#include "ReadingStatsCloudClient.h"
 #include "ReadingStatsScreens.h"
+#include "ReadingStatsSyncActivity.h"
 #include "components/SideButtonNavigation.h"
 
 namespace fui = freeink::ui;
 bool ReadingStatsActivity::beginScan(bool reverse) { return repository.begin(reverse, readAhead, sizeof(readAhead)); }
 void ReadingStatsActivity::onEnter() {
   Activity::onEnter();
+  source = readingstats::Source::Local;
   navigation.begin(mappedInput.isPressed(MappedInputManager::Button::NavNext) ||
                    mappedInput.isPressed(MappedInputManager::Button::NavPrevious));
   toybox::ensureFonts(renderer);
@@ -29,7 +33,12 @@ void ReadingStatsActivity::onEnter() {
   pickerYear = date.year;
   summary.anchorDay = currentDay;
   finishedCapacity = pageSize;
-  loading = beginScan(currentDay == 0) ? (currentDay ? Load::Summary : Load::Anchor) : Load::Failed;
+  if (!*initialBook && readingstats::cloud::Client::configured()) {
+    cloud = makeUniqueNoThrow<readingstats::cloud::Reader>();
+    if (!cloud) LOG_ERR("STATS", "OOM: imported history reader");
+    loading = cloud ? Load::Cloud : Load::Failed;
+  } else
+    loading = beginScan(currentDay == 0) ? (currentDay ? Load::Summary : Load::Anchor) : Load::Failed;
   if (*initialBook) {
     std::snprintf(detail.document, sizeof(detail.document), "%s", initialBook);
     tab = 3;
@@ -41,6 +50,8 @@ void ReadingStatsActivity::onEnter() {
 }
 void ReadingStatsActivity::onExit() {
   repository.close();
+  if (combined) combined->close();
+  if (cloud) cloud->close();
   Activity::onExit();
 }
 void ReadingStatsActivity::back() {
@@ -90,6 +101,14 @@ void ReadingStatsActivity::loadPage(int next) {
   selected = 0;
   ready = false;
   repository.close();
+  if (source == readingstats::Source::Unified) {
+    const int total = bookTotal();
+    page = std::clamp(page, 0, std::max(0, (total - 1) / pageSize));
+    loading =
+        !cloudAvailable || combined->page(filter, page, finishedBooks, pageSize, count) ? Load::Ready : Load::Failed;
+    requestUpdate();
+    return;
+  }
   if (filter == readingstats::BookFilter::Recent || (finishedPage == page && finishedCapacity == pageSize)) {
     if (filter == readingstats::BookFilter::Recent) {
       page = std::clamp(page, 0, std::max(0, (recentCount - 1) / pageSize));
@@ -122,6 +141,11 @@ void ReadingStatsActivity::loadPeriod(readingstats::Period next, int day) {
     streakPassFirst = periodStats.consistency.first;
   }
   ready = false;
+  if (source == readingstats::Source::Unified) {
+    loading = cloudAvailable && combined->project(periodStats, &cloudPeriodKnown) ? Load::Ready : Load::Failed;
+    requestUpdate();
+    return;
+  }
   loading = beginScan(true) ? Load::Period : Load::Failed;
   requestUpdate();
 }
@@ -220,12 +244,19 @@ void ReadingStatsActivity::scan() {
         break;
       case Load::Ready:
       case Load::Failed:
+      case Load::Cloud:
         return;
     }
   }
 }
 void ReadingStatsActivity::action(fui::ActionId action, int value) {
+  if (source == readingstats::Source::Unified && !cloudAvailable && action != readingui::ImportHistory &&
+      action != readingui::Tab)
+    return;
   switch (action) {
+    case readingui::ImportHistory:
+      importHistory();
+      return;
     case readingui::ChoosePeriod:
       if (!clockKnown || currentDay < readingstats::dayIndex({2020, 1, 1})) return;
       pickerVisible = true;
@@ -270,7 +301,10 @@ void ReadingStatsActivity::action(fui::ActionId action, int value) {
       readingstats::setPeriod(dayStats, readingstats::Period::Day, displayedDay, SETTINGS.weekStartsSunday);
       dayReady = false;
       ready = false;
-      loading = beginScan() ? Load::Day : Load::Failed;
+      if (source == readingstats::Source::Unified)
+        loading = cloudAvailable && combined->project(dayStats, &cloudDayKnown) ? Load::Ready : Load::Failed;
+      else
+        loading = beginScan() ? Load::Day : Load::Failed;
       requestUpdate();
       return;
     case readingui::Tab:
@@ -288,7 +322,10 @@ void ReadingStatsActivity::action(fui::ActionId action, int value) {
       else {
         if (tab == 0 && clockKnown && !dayReady) {
           readingstats::setPeriod(dayStats, readingstats::Period::Day, displayedDay, SETTINGS.weekStartsSunday);
-          loading = beginScan() ? Load::Day : Load::Failed;
+          if (source == readingstats::Source::Unified)
+            loading = cloudAvailable && combined->project(dayStats, &cloudDayKnown) ? Load::Ready : Load::Failed;
+          else
+            loading = beginScan() ? Load::Day : Load::Failed;
         }
         ready = false;
         requestUpdate();
@@ -306,20 +343,19 @@ void ReadingStatsActivity::action(fui::ActionId action, int value) {
         ready = false;
         requestUpdate();
       } else if (tab == 3) {
-        const int pages = std::max(
-            1, static_cast<int>(
-                   ((filter == readingstats::BookFilter::Recent ? recentCount : summary.completed) + pageSize - 1) /
-                   pageSize));
+        const int pages = std::max(1, static_cast<int>((bookTotal() + pageSize - 1) / pageSize));
         const int next = std::clamp(page + value, 0, pages - 1);
         if (next != page) loadPage(next);
       }
       return;
     case readingui::OpenBook:
       if (value < 0 || value >= count) return;
-      detail = filter == readingstats::BookFilter::Recent ? books[value + page * pageSize] : finishedBooks[value];
+      detail = source == readingstats::Source::Unified      ? finishedBooks[value]
+               : filter == readingstats::BookFilter::Recent ? books[value + page * pageSize]
+                                                            : finishedBooks[value];
       details = true;
       ready = false;
-      loading = beginScan(true) ? Load::Detail : Load::Failed;
+      loading = source == readingstats::Source::Unified ? Load::Ready : beginScan(true) ? Load::Detail : Load::Failed;
       requestUpdate();
       return;
     case readingui::SelectChartDay:
@@ -366,6 +402,17 @@ void ReadingStatsActivity::loop() {
   if (!navigation.capture(mappedInput, millis())) LOG_ERR("STATS", "Navigation queue full");
   RenderLock lock(RenderLock::Mode::Try);
   if (!lock.ownsLock()) return;
+  if (loading == Load::Cloud) {
+    lock.unlock();
+    requestUpdateAndWait();
+    loadCloud();
+    return;
+  }
+  if (!*initialBook && readingstats::cloud::Client::configured() &&
+      mappedInput.wasLongPressed(MappedInputManager::Button::Right, 700)) {
+    importHistory();
+    return;
+  }
   sectionnav::Input::Event command;
   bool navigated = false;
   while (navigation.pop(command)) {
@@ -413,7 +460,17 @@ void ReadingStatsActivity::loop() {
     scan();
     return;
   }
-  if (loading == Load::Failed) return;
+  if (loading == Load::Failed) {
+    int x = 0, y = 0;
+    if (ready && mappedInput.wasScreenTapped(x, y)) {
+      fui::InputSnapshot input;
+      input.touchReleased = true;
+      input.touchX = x;
+      input.touchY = y;
+      if (interactions.route(input).action == readingui::ImportHistory) importHistory();
+    }
+    return;
+  }
   if (ready && !details) {
     if (const int direction = sidebuttons::horizontalStep(mappedInput)) {
       if (pickerVisible)
@@ -483,6 +540,8 @@ void ReadingStatsActivity::render(RenderLock&&) {
   bool unicode = I18N.getLanguage() != Language::EN;
   for (const auto& b : books)
     for (unsigned char c : b.title) unicode |= c >= 0x80;
+  for (const auto& b : finishedBooks)
+    for (unsigned char c : b.title) unicode |= c >= 0x80;
   for (unsigned char c : detail.title) unicode |= c >= 0x80;
   pixelui::bindFonts(target, renderer, unicode);
   const fui::InputSnapshot noInput{};
@@ -499,9 +558,11 @@ void ReadingStatsActivity::render(RenderLock&&) {
   model.periodStats = tab == 0 ? &dayStats : &periodStats;
   model.period = period;
   model.filter = filter;
-  model.bookTotal = filter == readingstats::BookFilter::Recent ? recentCount : summary.completed;
+  model.bookTotal = bookTotal();
   model.weekStartsSunday = SETTINGS.weekStartsSunday;
-  model.books = filter == readingstats::BookFilter::Recent ? books + page * pageSize : finishedBooks;
+  model.books = source == readingstats::Source::Unified      ? finishedBooks
+                : filter == readingstats::BookFilter::Recent ? books + page * pageSize
+                                                             : finishedBooks;
   model.detail = details ? &detail : nullptr;
   model.bookOnly = *initialBook;
   model.periodFromPicker = periodFromPicker;
@@ -518,8 +579,104 @@ void ReadingStatsActivity::render(RenderLock&&) {
                   (tab == 3 && !details && pageSize != readingui::capacity(target.deviceContext()));
   model.failed = loading == Load::Failed;
   model.damaged = damaged;
+  model.source = source;
+  model.syncAvailable = readingstats::cloud::Client::configured();
+  model.importedAvailable = cloudAvailable;
+  model.importedActive = cloudAvailable ? combined->data().active : nullptr;
+  model.importedAnchor = cloudAvailable ? combined->data().summary.anchorDay : 0;
+  model.dailyKnown = tab == 0 ? cloudDayKnown : cloudPeriodKnown;
   readingui::build(screen, model, uiWork);
   ready = true;
   toybox::reportOverflow(interactions, "ReadingStats");
   renderer.displayBuffer();
+}
+
+int ReadingStatsActivity::bookTotal() const {
+  if (source == readingstats::Source::Unified) {
+    if (!cloudAvailable) return 0;
+    const auto& h = combined->data();
+    return filter == readingstats::BookFilter::Finished ? h.finished : h.books - h.finished;
+  }
+  return filter == readingstats::BookFilter::Recent ? recentCount : summary.completed;
+}
+void ReadingStatsActivity::importHistory() {
+  if (*initialBook || !readingstats::cloud::Client::configured()) return;
+  auto next = makeUniqueNoThrow<ReadingStatsSyncActivity>(renderer, mappedInput);
+  if (!next) {
+    LOG_ERR("STATS", "OOM: import activity");
+    return;
+  }
+  repository.close();
+  cloudAvailable = false;
+  if (combined) combined.reset();
+  if (cloud) cloud->close();
+  startActivityForResult(std::move(next), [this](const ActivityResult& result) {
+    (void)result;
+    auto replacement = makeUniqueNoThrow<ReadingStatsActivity>(renderer, mappedInput);
+    if (replacement)
+      activityManager.replaceActivity(std::move(replacement));
+    else {
+      LOG_ERR("STATS", "OOM: imported history");
+      activityManager.goHome(HomeMenuItem::READING_STATS);
+    }
+  });
+}
+void ReadingStatsActivity::loadCloud() {
+  const auto status = cloud->open();
+  const bool available = status == readingstats::cloud::Result::Success &&
+                         cloud->data().account == readingstats::cloud::Client::accountId();
+  auto projected = readingstats::cloud::Result::Success;
+  if (available) {
+    combined = makeUniqueNoThrow<readingstats::cloud::Projection>();
+    if (combined)
+      projected = combined->open(cloud.get(), currentDay, readingstats::cloud::Client::deviceTag());
+    else {
+      LOG_ERR("STATS", "OOM: combined projection");
+      projected = readingstats::cloud::Result::LowMemory;
+    }
+  }
+  RenderLock lock;
+  cloudAvailable = available && projected == readingstats::cloud::Result::Success;
+  if (!available) {
+    cloud->close();
+    source = readingstats::Source::Local;
+    if (status == readingstats::cloud::Result::LowMemory || status == readingstats::cloud::Result::NewerCache) {
+      loading = Load::Failed;
+      ready = false;
+      requestUpdate();
+      return;
+    }
+    loading = beginScan(currentDay == 0) ? (currentDay ? Load::Summary : Load::Anchor) : Load::Failed;
+    ready = false;
+    requestUpdate();
+    return;
+  }
+  if (projected != readingstats::cloud::Result::Success) {
+    loading = Load::Failed;
+    ready = false;
+    requestUpdate();
+    return;
+  }
+  source = readingstats::Source::Unified;
+  summary = combined->data().summary;
+  if (!clockKnown) {
+    currentDay = summary.anchorDay;
+    displayedDay = currentDay;
+    const auto date = readingstats::dateFromDay(currentDay);
+    month = date.year * 12 + date.month - 1;
+    pickerYear = date.year;
+  }
+  if (clockKnown) {
+    readingstats::setPeriod(dayStats, readingstats::Period::Day, displayedDay, SETTINGS.weekStartsSunday);
+    if (!combined->project(dayStats, &cloudDayKnown)) {
+      loading = Load::Failed;
+      requestUpdate();
+      return;
+    }
+  }
+  summaryReady = true;
+  dayReady = true;
+  loading = Load::Ready;
+  ready = false;
+  requestUpdate();
 }

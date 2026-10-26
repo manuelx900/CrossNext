@@ -1,6 +1,8 @@
-# CrossNext v1.1.3 — Home menu and fast-page reading · Xteink X4 Pro
+# CrossNext v1.1.3 — Unified reading statistics and Home improvements · Xteink X4 Pro
 
 ## English
+
+- **CrossPoint Sync statistics.** Recover your account history, read offline and upload new reading on the next manual sync. Reading Stats shows one combined history without adding the same local sessions twice. The circular-arrow shortcut beside the battery appears only after configuring a compatible account. Existing reader position sync stays available separately.
 
 - **File Transfer on Home by default.** The Framed menu starts with Browse Files, Recent Books, File Transfer, Reading Stats, Games, Apps and Settings. You can enable up to eight entries. Existing customized menus keep their choices.
 - **More balanced Home layouts.** Framed uses slightly smaller labels with eight entries and closes the last visible row with a bottom divider. Carousel centers the remaining shortcuts when entries are hidden.
@@ -12,6 +14,8 @@
 Enable **Settings > Reading > Reading Formats > XTC / XTCH** to include these formats in statistics. Sessions save when leaving a book or preparing for sleep. A synchronized device clock is still required; time displays in whole minutes may show zero for a shorter saved session.
 
 ## Español
+
+- **Estadísticas con CrossPoint Sync.** Recupera el historial de tu cuenta, lee sin conexión y sube las nuevas lecturas en la siguiente sincronización manual. Estadísticas muestra un historial combinado sin sumar dos veces las mismas sesiones locales. El atajo circular junto a la batería solo aparece al configurar una cuenta compatible. La sincronización de la posición del libro sigue disponible por separado.
 
 - **Enviar archivos en Inicio por defecto.** Framed muestra Archivos, Biblioteca, Enviar archivos, Estadísticas, Juegos, Apps y Ajustes. Puedes activar hasta ocho opciones. Los menús ya personalizados conservan su selección.
 - **Inicio mejor equilibrado.** Framed reduce ligeramente la letra con ocho opciones y añade la línea inferior al último selector visible. Carrusel centra los accesos restantes al ocultar opciones.
