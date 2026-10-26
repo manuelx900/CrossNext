@@ -7,6 +7,7 @@
 - **More than Recent Books.** The position pass includes EPUB, XTC/XTCH, TXT and Markdown in visible book folders, including books outside Recents and files not yet opened locally when matching cloud progress exists. Books that have never been started remain unread. Book files themselves are not downloaded.
 - **Recoverable interruptions.** If positions cannot finish after statistics have synced, the screen reports partial completion. Completed changes are kept; retrying skips positions already equal and does not add the same local statistics twice.
 - **Safer microSD error handling.** New XTC/XTCH save folders are created when needed, and directory or document-ID read failures are reported instead of being mistaken for successful synchronization.
+- **Wi-Fi stays enabled when leaving its settings.** Returning from Wi-Fi or closing the control center no longer switches the radio off. The switch reflects its actual state. Sleep, restart and network apps retain their existing connection lifecycle; this does not add automatic connection on wake.
 
 The individual book's Sync Progress command remains available for explicit local/remote choices. Bulk sync keeps the furthest mapped position. Use the same book edition on both devices.
 
@@ -17,6 +18,7 @@ The individual book's Sync Progress command remains available for explicit local
 - **Incluye libros fuera de Recientes.** Se sincronizan EPUB, XTC/XTCH, TXT y Markdown de las carpetas de libros visibles, incluidos archivos que todavía no hayas abierto en este lector cuando exista progreso coincidente en la nube. Los libros que nadie haya empezado siguen sin empezar. No se descargan los archivos de los libros.
 - **Reintentos tras una interrupción.** Si las estadísticas terminan y quedan posiciones pendientes, aparece un aviso de finalización parcial. Los cambios completados se conservan; al reintentar se omiten las posiciones ya iguales y no se vuelven a sumar las mismas estadísticas locales.
 - **Mejor gestión de errores de la microSD.** Las carpetas de guardado XTC/XTCH se crean cuando hacen falta. Los errores al leer directorios o identificadores se notifican, en lugar de confundirse con una sincronización completada.
+- **Wi-Fi conserva su estado al salir de sus ajustes.** Volver de Wi-Fi o cerrar el centro de control ya no apaga la radio. El interruptor refleja su estado real. El reposo, el reinicio y las aplicaciones de red conservan su gestión de conexión; este cambio no añade conexión automática al despertar.
 
 La sincronización individual de cada libro sigue disponible para elegir explícitamente entre la posición local y la remota. La sincronización conjunta conserva la posición más adelantada. Utiliza la misma edición del libro en ambos dispositivos.
 

@@ -30,7 +30,6 @@ class FrontlightPanelActivity final : public Activity, private UiAppHost {
   // touched-by-the-user flag: onExit() must not persist a mirror that never
   // reflected user intent in the first place.
   bool lightOnChanged = false;
-  bool ownsWifi = false;
   bool draggingSlider = false;
   unsigned long lastClockPoll = 0;
   int shownMinute = -1;

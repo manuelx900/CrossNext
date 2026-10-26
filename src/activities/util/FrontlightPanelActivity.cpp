@@ -90,10 +90,6 @@ void FrontlightPanelActivity::persistLightSettings() {
 
 void FrontlightPanelActivity::onExit() {
   persistLightSettings();
-  if (ownsWifi) {
-    WiFi.disconnect(true);
-    WiFi.mode(WIFI_OFF);
-  }
   Activity::onExit();
 }
 
@@ -176,7 +172,6 @@ void FrontlightPanelActivity::runTile(const int idx) {
       break;
     case quickui::Shortcut::Wifi:
       persistLightSettings();
-      ownsWifi |= WiFi.getMode() == WIFI_MODE_NULL;
       if (auto next =
               makeUniqueNoThrow<WifiSelectionActivity>(renderer, mappedInput, false, WifiSelectionPurpose::Manage))
         startActivityForResult(std::move(next), [this](const ActivityResult&) { requestUpdate(); });
