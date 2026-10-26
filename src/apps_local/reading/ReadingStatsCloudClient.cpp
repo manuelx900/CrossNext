@@ -55,6 +55,8 @@ Result Client::send(const char* method, const char* path, const char* body, cons
   }
   const auto base = KOREADER_STORE.getBaseUrl();
   if (base.size() > 512 || !path || std::strlen(path) > 1663) return Result::LimitExceeded;
+  const bool progressGet = std::strcmp(method, "GET") == 0 && std::strncmp(path, "/syncs/progress/", 16) == 0;
+  const bool progressPut = std::strcmp(method, "PUT") == 0 && std::strcmp(path, "/syncs/progress") == 0;
   if (!http) {
     // One checked client per import; keep-alive avoids a TLS handshake per page.
     http = makeUniqueNoThrow<freeink::SecureHttpClient>();
@@ -73,7 +75,7 @@ Result Client::send(const char* method, const char* path, const char* body, cons
   HalFile output;
   if (!Storage.openFileForWrite("STATS-SYNC", destination, output)) return Result::StorageError;
   // Download directly to SD. JSON's filtered parser, not the HTTP body, owns RAM.
-  constexpr size_t maximumBytes = 2 * 1024 * 1024;
+  const size_t maximumBytes = progressGet || progressPut ? 16384 : 2 * 1024 * 1024;
   size_t received = 0;
   bool stopped = false, storageFailed = false, tooLarge = false;
   const int status = http->sendRequest(
@@ -103,8 +105,9 @@ Result Client::send(const char* method, const char* path, const char* body, cons
   if (storageFailed) return Result::StorageError;
   if (tooLarge) return Result::LimitExceeded;
   if (status == 401 || status == 403) return Result::AuthFailed;
+  if (progressGet && (status == 404 || status == 204)) return Result::Empty;
   if (status == 404 || status == 405) return Result::Unsupported;
-  if (status != 200 || !complete) return Result::NetworkError;
+  if (!(progressPut ? status >= 200 && status < 300 : status == 200) || !complete) return Result::NetworkError;
   return Result::Success;
 }
 }  // namespace readingstats::cloud

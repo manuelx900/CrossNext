@@ -2,6 +2,7 @@
 
 #include <FS.h>  // need to be included before SdFat.h for compatibility with FS.h's File class
 #include <Logging.h>
+#include <Memory.h>
 #include <SDCardManager.h>
 #include <esp_heap_caps.h>
 #if FREEINK_CAP_USB_MSC
@@ -317,6 +318,20 @@ HalFile HalFile::openNextFile() {
   HalStorage::StorageLock lock;
   assert(impl != nullptr);
   return HalFile(std::make_unique<Impl>(impl->file.openNextFile()));
+}
+HalFile HalFile::openNextFile(bool& ioError) {
+  HalStorage::StorageLock lock;
+  assert(impl != nullptr);
+  // The returned handle owns this Impl beyond the call; allocation failure is
+  // an enumeration error, never an apparent end of the directory.
+  auto next = makeUniqueNoThrow<Impl>(impl->file.openNextFile());
+  if (!next) {
+    LOG_ERR("STORAGE", "OOM: directory entry handle");
+    ioError = true;
+    return HalFile();
+  }
+  ioError = impl->file.getError() != 0;
+  return HalFile(std::move(next));
 }
 bool HalFile::isOpen() const { return impl != nullptr && impl->file.isOpen(); }  // already thread-safe, no need to wrap
 HalFile::operator bool() const { return isOpen(); }

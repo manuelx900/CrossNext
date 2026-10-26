@@ -109,6 +109,29 @@ def require_all_applied():
     raise SystemExit("\n".join(lines))
 
 
+def patch_checked_enumeration(src):
+    patch(
+        src / "HalStorage.h",
+        "  HalFile openNextFile();",
+        "  HalFile openNextFile();\n  HalFile openNextFile(bool &ioError);",
+        "HalFile::openNextFile checked overload (header)",
+        marker="openNextFile(bool &ioError)",
+    )
+    patch(
+        src / "HalStorage.cpp",
+        "bool HalFile::isOpen() const {",
+        "HalFile HalFile::openNextFile(bool &ioError) {\n"
+        "  errno = 0;\n"
+        "  auto next = openNextFile();\n"
+        "  ioError = errno != 0;\n"
+        "  return next;\n"
+        "}\n"
+        "bool HalFile::isOpen() const {",
+        "HalFile::openNextFile checked overload (implementation)",
+        marker="HalFile::openNextFile(bool &ioError)",
+    )
+
+
 def patch_file_lifetime(src):
     # Impl owns both descriptor kinds, including when move-assignment replaces it.
     patch(
@@ -897,6 +920,8 @@ def main(env):
 
     # -- the seam, checked rather than remembered -------------------------------
     #
+    patch_checked_enumeration(src)
+
     # lib/hal/HalStorage.h declares one surface; the simulator ships a SECOND
     # implementation of the same class, and platformio.sim.ini's `lib_ignore = hal`
     # means a library's own headers shadow ours. Nothing in lib/hal says so. Add a

@@ -27,9 +27,10 @@ class JsonBudget final : public ArduinoJson::Allocator {
     size_t bytes;
   };
   size_t used = 0;
-  static constexpr size_t maximum = 2 * 1024 * 1024;
+  const size_t maximum;
 
  public:
+  explicit JsonBudget(size_t limit = 2 * 1024 * 1024) : maximum(limit) {}
   void* allocate(size_t size) override {
     if (size > maximum - sizeof(Block) || size + sizeof(Block) > maximum - used) return nullptr;
     const auto total = size + sizeof(Block);

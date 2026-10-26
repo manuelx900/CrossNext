@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../activities/Activity.h"
+#include "ReadingProgressSync.h"
 #include "ReadingStatsCloudClient.h"
 #include "ReadingStatsScreens.h"
 #include "ReadingStatsUpload.h"
@@ -19,7 +20,9 @@ class ReadingStatsSyncActivity final : public Activity {
   readingstats::cloud::Client client;
   std::unique_ptr<readingstats::cloud::Importer> importer;
   std::unique_ptr<readingstats::cloud::Uploader> uploader;
-  bool downloading = false;
+  std::unique_ptr<readingstats::cloud::ProgressSync> progress;
+  enum class Phase { UploadStats, DownloadStats, Progress };
+  Phase phase = Phase::UploadStats;
   readingstats::cloud::Result result = readingstats::cloud::Result::Idle;
   readingui::Work work;
   toybox::Interactions interactions;

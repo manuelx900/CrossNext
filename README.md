@@ -45,7 +45,7 @@ egg, name your pet and watch it grow as you read.
 
 Install **CrossNext-Resources.zip** on the microSD to use PET.
 See [PET's guide](docs/apps/pet.md) and
-[what's new in v1.1.3](docs/releases/CrossNext-v1.1.3.md).
+[what's new in v1.1.4](docs/releases/CrossNext-v1.1.4.md).
 
 ## Read, study and play
 
@@ -82,7 +82,7 @@ settings; an existing installation keeps its saved language.
 
 ![Reading statistics](docs/images/statistics.png)
 
-Optional **CrossPoint Sync** keeps your account history and new local reading in one statistics view. Read offline, then use the sync shortcut beside the battery to upload new reading and refresh the account history. The shortcut appears only after configuring a compatible sync account. See [reading statistics](docs/reading-stats.md#crosspoint-sync).
+Optional **CrossPoint Sync** keeps your account history and new local reading in one statistics view. Read offline, then use the sync shortcut beside the battery to synchronize statistics and book positions together. Each book on the microSD keeps the furthest position from the reader or your account. The shortcut appears only after configuring a compatible sync account. See [reading statistics](docs/reading-stats.md#crosspoint-sync).
 
 ### Games
 
@@ -110,7 +110,7 @@ Choose the package matching the device:
 
 | Model | ZIP | Application / SD update | Factory / USB installation |
 | --- | --- | --- | --- |
-| X4 Pro | `CrossNext-X4PRO-Firmware-v1.1.3.zip` | `CrossNext-X4PRO-Firmware-v1.1.3.bin` | `CrossNext-X4PRO-Firmware-v1.1.3-factory.bin` |
+| X4 Pro | `CrossNext-X4PRO-Firmware-v1.1.4.zip` | `CrossNext-X4PRO-Firmware-v1.1.4.bin` | `CrossNext-X4PRO-Firmware-v1.1.4-factory.bin` |
 
 Generated ZIPs are in `dist/`, and raw images in `dist/CrossNext/`.
 Each firmware ZIP includes SHA-256 checksums, model-specific images and notes.
@@ -172,7 +172,7 @@ CrossPlay supplies the app/game shelf and implementations; CrossPoint supplies
 the e-reader foundation. [CrossNext changes](docs/crossnext-changes.md) describes
 this fork's adaptations without claiming those inherited projects as new work.
 
-[What’s new in v1.1.3](docs/releases/CrossNext-v1.1.3.md)
+[What’s new in v1.1.4](docs/releases/CrossNext-v1.1.4.md)
 
 ## Support CrossNext
 

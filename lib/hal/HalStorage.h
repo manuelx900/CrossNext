@@ -148,6 +148,8 @@ class HalFile : public Print {
   void rewindDirectory();
   bool close();  // returns false on a never-assigned handle
   HalFile openNextFile();
+  // Checked enumeration distinguishes end-of-directory from an SD read failure.
+  HalFile openNextFile(bool& ioError);
   bool isOpen() const;
   operator bool() const;
 };

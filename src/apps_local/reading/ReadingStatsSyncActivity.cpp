@@ -31,6 +31,10 @@ void ReadingStatsSyncActivity::onExit() {
     uploader->cancel();
     uploader.reset();
   }
+  if (progress) {
+    progress->cancel();
+    progress.reset();
+  }
   client.close();
   Activity::onExit();
   if (ownsWifi && !devmode::holdsRadio()) {
@@ -39,6 +43,8 @@ void ReadingStatsSyncActivity::onExit() {
   }
 }
 const char* ReadingStatsSyncActivity::message() const {
+  if (phase == Phase::Progress && result != Result::Idle && result != Result::Busy && result != Result::Success)
+    return tr(STR_READING_SYNC_PROGRESS_FAILED);
   switch (result) {
     case Result::Idle:
       return tr(STR_READING_SYNC_HELP);
@@ -85,6 +91,13 @@ void ReadingStatsSyncActivity::done() {
 void ReadingStatsSyncActivity::start() {
   if (result == Result::Busy) return;
   client.close();
+  importer.reset();
+  uploader.reset();
+  progress.reset();
+  {
+    RenderLock lock;
+    phase = Phase::UploadStats;
+  }
   cancelFlag = false;
   if (!KOREADER_STORE.hasCredentials()) {
     RenderLock lock;
@@ -133,8 +146,8 @@ void ReadingStatsSyncActivity::beginDownload() {
   }
   const auto next = uploader->begin(readingstats::today(), client.deviceTag(), client.accountId(),
                                     &readingstats::cloud::Client::exchange, &client);
-  downloading = false;
   RenderLock lock;
+  phase = Phase::UploadStats;
   result = next;
   books = 0;
   ready = false;
@@ -193,8 +206,10 @@ void ReadingStatsSyncActivity::loop() {
     if (cancelFlag) {
       if (importer) importer->cancel();
       if (uploader) uploader->cancel();
+      if (progress) progress->cancel();
       importer.reset();
       uploader.reset();
+      progress.reset();
       client.close();
       RenderLock lock;
       result = Result::Cancelled;
@@ -203,24 +218,64 @@ void ReadingStatsSyncActivity::loop() {
       return;
     }
     WifiPowerSaveGuard power;
-    auto next = downloading ? importer->step() : uploader->step();
-    if (!downloading && next == Result::Success) {
-      importer = makeUniqueNoThrow<readingstats::cloud::Importer>();
-      if (importer) {
-        importer->setDevice(uploader->deviceId());
-        next = importer->begin(readingstats::today(), trustedtime::trustedNow(), client.accountId(),
-                               &readingstats::cloud::Client::fetch, &client, &uploader->data());
-        downloading = true;
-      } else {
-        LOG_ERR("STATS-SYNC", "OOM: download workspace");
-        next = Result::LowMemory;
-      }
+    Result next = Result::Busy;
+    uint32_t count = 0;
+    switch (phase) {
+      case Phase::UploadStats:
+        next = uploader->step();
+        count = uploader->data().count();
+        if (next == Result::Success) {
+          importer = makeUniqueNoThrow<readingstats::cloud::Importer>();
+          if (importer) {
+            importer->setDevice(uploader->deviceId());
+            next = importer->begin(readingstats::today(), trustedtime::trustedNow(), client.accountId(),
+                                   &readingstats::cloud::Client::fetch, &client, &uploader->data());
+            {
+              RenderLock lock;
+              phase = Phase::DownloadStats;
+            }
+          } else {
+            LOG_ERR("STATS-SYNC", "OOM: download workspace");
+            next = Result::LowMemory;
+          }
+        }
+        break;
+      case Phase::DownloadStats:
+        next = importer->step();
+        count = importer->booksRead();
+        if (next == Result::Success) {
+          importer.reset();
+          uploader.reset();
+          // Release the statistics projection before the single-book workspace.
+          progress = makeUniqueNoThrow<readingstats::cloud::ProgressSync>(renderer);
+          {
+            RenderLock lock;
+            phase = Phase::Progress;
+          }
+          if (progress) {
+            next = progress->begin(&readingstats::cloud::Client::exchange, &client);
+            count = 0;
+          } else {
+            LOG_ERR("STATS-SYNC", "OOM: progress workspace");
+            next = Result::LowMemory;
+          }
+          {
+            RenderLock lock;
+            ready = false;
+            requestUpdate();
+          }
+        }
+        break;
+      case Phase::Progress:
+        next = progress->step();
+        count = progress->processed();
+        break;
     }
-    const auto count = downloading ? importer->booksRead() : uploader->data().count();
     if (next != Result::Busy) {
       client.close();
       importer.reset();
       uploader.reset();
+      progress.reset();
     }
     RenderLock lock;
     if (next != result || count != books) {
@@ -257,6 +312,7 @@ void ReadingStatsSyncActivity::render(RenderLock&&) {
                                             : readingui::ImportState::Error;
   model.message = message();
   model.books = books;
+  model.progress = phase == Phase::Progress;
   model.setup = !KOREADER_STORE.hasCredentials() || result == Result::AuthFailed;
   GUI.applyHeaderStatus(renderer, work.status);
   model.battery = work.status.status.battery.percent;

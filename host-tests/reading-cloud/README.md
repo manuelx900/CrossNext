@@ -9,6 +9,8 @@ python host-tests/reading-cloud/run_http.py --emxx /path/to/em++
 
 These execute the production C++ snapshot store, parser, cumulative uploader, offline projection and screen code under Node. HAL stubs replace storage/PSRAM. Tests cover repeat uploads, a lost acknowledgement, interrupted download, unchanged local journal bytes, account-origin replacement, journal rollback/corruption, PSRAM failure, more than twenty dates, completed/unfinished paging, and English/Spanish touch bounds in portrait and landscape. The sync shortcut is checked both with and without a configured account.
 
+The same Sync action also handles book positions. Run `python host-tests/reading-progress/run.py` for its scanner/state-machine tests. The official-server harness below includes the position flow after the statistics flow; EPUB/XTC pagination uses deterministic fixtures there.
+
 The HTTP harness uses curl over loopback and substitutes the SDK transport boundary; it does not simulate device TLS. For integration against the official server, prepare a separate checkout of `crosspoint-reader/crosspoint-sync`, install its dependencies with `npm ci --ignore-scripts`, then run:
 
 ```sh

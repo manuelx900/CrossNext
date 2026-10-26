@@ -43,6 +43,7 @@ Result sync() {
   for (int n = 0; n < 100 && result == Result::Busy; ++n) result = download.step();
   return result;
 }
+int testProgressServer();
 int main(int argc, char** argv) {
   if (argc != 2) return 2;
   credentials.url = argv[1];
@@ -75,5 +76,5 @@ int main(int argc, char** argv) {
   check(sync() == Result::Success);
   total(450);
   std::printf("Official CrossPoint Sync + production client: %d checks, %d failed\n", checks, failed);
-  return failed ? 1 : 0;
+  return (failed || testProgressServer()) ? 1 : 0;
 }

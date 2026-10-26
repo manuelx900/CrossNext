@@ -164,6 +164,20 @@ sc.patch_notification_drain(tmp)
 ok(task.read_text() == first and not sc._UNAPPLIED,
    "notification drain patch is idempotent")
 
+# Checked enumeration must apply to pristine dependencies and remain idempotent.
+reset()
+(tmp / "HalStorage.h").write_text("class HalFile {\n  HalFile openNextFile();\n};\n")
+(tmp / "HalStorage.cpp").write_text("bool HalFile::isOpen() const { return true; }\n")
+sc.patch_checked_enumeration(tmp)
+header = (tmp / "HalStorage.h").read_text()
+source = (tmp / "HalStorage.cpp").read_text()
+ok("openNextFile(bool &ioError)" in header and "ioError = errno != 0;" in source,
+   "checked enumeration patches pristine simulator headers and implementation")
+sc.patch_checked_enumeration(tmp)
+ok((tmp / "HalStorage.h").read_text() == header and
+   (tmp / "HalStorage.cpp").read_text() == source and not sc._UNAPPLIED,
+   "checked enumeration patches are idempotent")
+
 print(f"{PASS + FAIL} checks, {FAIL} failed")
 raise SystemExit(1 if FAIL else 0)
 PY

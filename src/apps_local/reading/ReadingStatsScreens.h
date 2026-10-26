@@ -67,6 +67,7 @@ struct ImportModel {
   const char* message = nullptr;
   uint32_t books = 0;
   bool setup = false;
+  bool progress = false;
   int battery = -1;
 };
 void buildImport(toybox::Screen& screen, const ImportModel& model, Work& work);

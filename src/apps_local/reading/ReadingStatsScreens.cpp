@@ -881,9 +881,10 @@ void buildImport(toybox::Screen& screen, const ImportModel& m, Work& work) {
   const int footer = m.setup ? 108 : 54;
   const auto hero = fui::makeRect(body.x, body.y, body.width, body.height - footer - 12);
   frame(s, hero, 2);
-  const char* title = m.state == ImportState::Done        ? tr(STR_READING_SYNC_DONE)
-                      : m.state == ImportState::Importing ? tr(STR_READING_SYNC_BUSY)
-                                                          : tr(STR_READING_SOURCE_CLOUD);
+  const char* title = m.state == ImportState::Importing && m.progress ? tr(STR_READING_SYNC_PROGRESS_BUSY)
+                      : m.state == ImportState::Done                  ? tr(STR_READING_SYNC_DONE)
+                      : m.state == ImportState::Importing             ? tr(STR_READING_SYNC_BUSY)
+                                                                      : tr(STR_READING_SOURCE_CLOUD);
   const int side = std::min(112, std::min(hero.width / 3, hero.height / 2));
   art(s, fui::makeRect(hero.x + 20, hero.y + 20, side, side), statsart::sparkBook);
   text(s, fui::makeRect(hero.x + side + 38, hero.y + 20, hero.width - side - 56, side), title, 1, fui::TextAlign::Left,

@@ -190,20 +190,22 @@ int main(int argc, char** argv) {
           }
         }
       for (int state = 0; state < 4; ++state)
-        for (bool setup : {false, true}) {
-          Canvas c(size.first, size.second);
-          readingui::Work work;
-          readingui::ImportModel m;
-          m.state = static_cast<readingui::ImportState>(state);
-          m.setup = setup;
-          m.books = 139;
-          m.battery = 100;
-          readingui::buildImport(c.screen, m, work);
-          c.checkHits();
-          if (argc > 1 && !setup)
-            c.write(std::string(argv[1]) + "/import-" + std::to_string(int(language)) + "-" +
-                    std::to_string(size.first) + "-" + std::to_string(state) + ".pbm");
-        }
+        for (bool setup : {false, true})
+          for (bool progress : {false, true}) {
+            Canvas c(size.first, size.second);
+            readingui::Work work;
+            readingui::ImportModel m;
+            m.state = static_cast<readingui::ImportState>(state);
+            m.setup = setup;
+            m.progress = progress;
+            m.books = 139;
+            m.battery = 100;
+            readingui::buildImport(c.screen, m, work);
+            c.checkHits();
+            if (argc > 1 && !setup)
+              c.write(std::string(argv[1]) + "/import-" + std::to_string(int(language)) + "-" +
+                      std::to_string(size.first) + "-" + std::to_string(state) + ".pbm");
+          }
     }
   }
   std::printf("reading cloud UI: %d checks, %d failed\n", checks, failures);

@@ -14,6 +14,7 @@ class Server(BaseHTTPRequestHandler):
         if mode=='auth':status=401
         elif mode=='unsupported':status=404
         elif mode=='redirect':status=302
+        elif mode=='empty':status=204
         summary={'seconds':600,'sessions':2,'pages':15,'completed':1,'daily':[{'date':'2026-10-26','seconds':600}]}
         item={'document':'00000000000000000000000000000001','device_id':'device-a','title':'HTTP book','stats':{'seconds':600,'sessions':2,'pages':15,'completed':True}}
         payload=summary if self.path.endswith('summary') else {'items':[item],'next':None}
@@ -22,6 +23,14 @@ class Server(BaseHTTPRequestHandler):
         if mode=='large':body=b'x'*(2*1024*1024+1)
         self.send_response(status);self.send_header('Content-Length',str(len(body)+(100 if mode=='partial' else 0)));self.end_headers()
         self.wfile.write(body);self.close_connection=True
+    def do_PUT(self):
+        assert self.headers.get('x-auth-user')=='test-user'
+        assert self.headers.get('x-auth-key')=='test-hash'
+        self.calls.append(self.path)
+        body=self.rfile.read(int(self.headers.get('Content-Length','0')))
+        assert json.loads(body)['document']=='00000000000000000000000000000001'
+        status=201 if self.path.startswith('/created/') else 204
+        self.send_response(status);self.send_header('Content-Length','0');self.end_headers()
 parser=argparse.ArgumentParser();parser.add_argument('--emxx',default=str(root/'.venv/emsdk/upstream/emscripten/em++.exe'));args=parser.parse_args()
 with tempfile.TemporaryDirectory(prefix='crossnext-sync-') as out:
     target=Path(out)/'http.cjs'

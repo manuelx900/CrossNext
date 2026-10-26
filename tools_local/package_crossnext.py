@@ -7,7 +7,7 @@ import shutil
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-FIRMWARE_VERSION = "1.1.3"
+FIRMWARE_VERSION = "1.1.4"
 OTA_ASSET = "CrossNext-X4PRO-OTA.bin"
 
 

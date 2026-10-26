@@ -47,6 +47,16 @@ int main(int argc, char** argv) {
   check(Client::fetch(&missing, "/api/v1/stats/summary", kResponse) == Result::Unsupported);
   credentials.profile = KOReaderServerType::CROSSPOINT;
   check(Client::configured());
+  for (const char* mode : {"unsupported", "empty"}) {
+    credentials.url = base + "/" + mode;
+    check(Client::fetch(&missing, "/syncs/progress/00000000000000000000000000000001", kResponse) == Result::Empty);
+  }
+  for (const char* mode : {"created", "no-content"}) {
+    credentials.url = base + "/" + mode;
+    check(Client::exchange(&missing, "PUT", "/syncs/progress", "{\"document\":\"00000000000000000000000000000001\"}",
+                           kResponse) == Result::Success);
+  }
+  credentials.url = base + "/ok";
   int calls = 0;
   Client cancelled([](void* p) { return ++*static_cast<int*>(p) > 1; }, &calls);
   check(Client::fetch(&cancelled, "/api/v1/stats/summary", kResponse) == Result::Cancelled);

@@ -3,6 +3,7 @@
 #include <HalStorage.h>
 #include <Logging.h>
 #include <MD5Builder.h>
+#include <Memory.h>
 
 namespace {
 // Extract filename from path (everything after last '/')
@@ -56,7 +57,12 @@ std::string KOReaderDocumentId::calculate(const std::string& filePath) {
   md5.begin();
 
   // Buffer for reading chunks
-  uint8_t buffer[CHUNK_SIZE];
+  // One hash operation owns this 1 KiB scratch buffer; keep it off the task stack.
+  auto buffer = makeUniqueNoThrow<uint8_t[]>(CHUNK_SIZE);
+  if (!buffer) {
+    LOG_ERR("KODoc", "OOM: %u byte hash buffer", unsigned(CHUNK_SIZE));
+    return "";
+  }
   size_t totalBytesRead = 0;
 
   // Read from each offset (i = -1 to 10)
@@ -70,18 +76,20 @@ std::string KOReaderDocumentId::calculate(const std::string& filePath) {
 
     // Seek to offset
     if (!file.seekSet(offset)) {
-      LOG_DBG("KODoc", "Failed to seek to offset %zu", offset);
-      continue;
+      LOG_ERR("KODoc", "Failed to seek to offset %zu", offset);
+      return "";
     }
 
     // Read up to CHUNK_SIZE bytes
     const size_t bytesToRead = std::min(CHUNK_SIZE, fileSize - offset);
-    const size_t bytesRead = file.read(buffer, bytesToRead);
+    const int bytesRead = file.read(buffer.get(), bytesToRead);
 
-    if (bytesRead > 0) {
-      md5.add(buffer, bytesRead);
-      totalBytesRead += bytesRead;
+    if (bytesRead != static_cast<int>(bytesToRead)) {
+      LOG_ERR("KODoc", "Incomplete hash read at %zu: %d/%zu", offset, bytesRead, bytesToRead);
+      return "";
     }
+    md5.add(buffer.get(), static_cast<size_t>(bytesRead));
+    totalBytesRead += static_cast<size_t>(bytesRead);
   }
 
   // Calculate final hash
