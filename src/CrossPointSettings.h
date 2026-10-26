@@ -253,6 +253,8 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   uint8_t clockUtcOffsetQ = 48;
   // Clock display format: 0 = 24-hour, 1 = 12-hour
   uint8_t clockFormat = 0;
+  // 0 = day-month-year, 1 = month-day-year, 2 = year-month-day.
+  uint8_t dateFormat = 0;
   // Index into the timezone table (src/util/Timezones.cpp, append-only).
   // 255 = never chosen; falls back to the legacy UTC offset, then Punta Arenas.
   uint8_t clockTimezone = 255;

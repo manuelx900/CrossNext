@@ -15,6 +15,7 @@
 #include "apps_local/tools/ManualClockActivity.h"
 #include "apps_local/ui/PixelMenuTheme.h"
 #include "components/UITheme.h"
+#include "util/DateFormat.h"
 #include "util/Timezones.h"
 
 namespace fui = freeink::ui;
@@ -25,13 +26,14 @@ enum MenuItem {
   ITEM_TIMEZONE,
   ITEM_DST,
   ITEM_FORMAT,
+  ITEM_DATE_FORMAT,
   ITEM_SHOW_ON_HOME,
   ITEM_SYNC,
 };
 
 const StrId menuNames[ClockSettingsActivity::ITEM_COUNT] = {
-    StrId::STR_CLOCK_MANUAL, StrId::STR_TIMEZONE,        StrId::STR_CLOCK_DST,
-    StrId::STR_CLOCK_FORMAT, StrId::STR_CLOCK_IN_HEADER, StrId::STR_CLOCK_SYNC_NOW,
+    StrId::STR_CLOCK_MANUAL, StrId::STR_TIMEZONE,        StrId::STR_CLOCK_DST,      StrId::STR_CLOCK_FORMAT,
+    StrId::STR_DATE_FORMAT,  StrId::STR_CLOCK_IN_HEADER, StrId::STR_CLOCK_SYNC_NOW,
 };
 
 const StrId dstNames[CrossPointSettings::CLOCK_DST_MODE_COUNT] = {StrId::STR_CLOCK_DST_AUTO, StrId::STR_STATE_ON,
@@ -75,6 +77,9 @@ void ClockSettingsActivity::activateIndex(const int index) {
     case ITEM_FORMAT:
       SETTINGS.clockFormat = (SETTINGS.clockFormat + 1) % 2;
       break;
+    case ITEM_DATE_FORMAT:
+      SETTINGS.dateFormat = (SETTINGS.dateFormat + 1) % dateformat::COUNT;
+      break;
     case ITEM_SHOW_ON_HOME:
       SETTINGS.clockShowInHeader = (SETTINGS.clockShowInHeader + 1) % 2;
       break;
@@ -104,6 +109,7 @@ void ClockSettingsActivity::buildScreen(UiScreen& screen) {
   const uint8_t dst = SETTINGS.clockDst < CrossPointSettings::CLOCK_DST_MODE_COUNT ? SETTINGS.clockDst : uint8_t{0};
   rowItems_[ITEM_DST].subtitle = I18N.get(dstNames[dst]);
   rowItems_[ITEM_FORMAT].subtitle = SETTINGS.clockFormat == 1 ? tr(STR_CLOCK_FORMAT_12H) : tr(STR_CLOCK_FORMAT_24H);
+  rowItems_[ITEM_DATE_FORMAT].subtitle = dateformat::label(dateformat::fromStored(SETTINGS.dateFormat));
   GUI.setCheckboxRow(rowItems_[ITEM_SHOW_ON_HOME], SETTINGS.clockShowInHeader);
   // The sync row's value is the current time itself: it confirms the sync,
   // previews format/zone changes, and reads "Not Set" until the first sync.

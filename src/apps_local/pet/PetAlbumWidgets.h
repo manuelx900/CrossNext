@@ -81,22 +81,18 @@ inline void vignette(toybox::Screen& s, const Model& m, fui::Rect r, unsigned id
       age == pet::Stage::Egg ? species : 3 + species * 16 + (unsigned(age) - 1) * 4 + std::min(pose, 3u);
   art(s, m, picture, graphic, speciesIcon(m.profile->species), false);
 }
-inline void memoryDate(char* out, size_t bytes, const pet::Profile& p, unsigned id, bool compact = false) {
+inline void memoryDate(char* out, size_t bytes, const pet::Profile& p, unsigned id, dateformat::Order order,
+                       bool compact = false) {
   const int day = id < pet::MOMENT_COUNT && p.momentDays[id] ? p.momentDays[id] : id == 2 ? p.bornDay : 0;
   if (day > 0 && day <= readingstats::dayIndex({2199, 12, 31})) {
     const auto date = readingstats::dateFromDay(day);
-    if (I18N.getLanguage() == Language::ES)
-      std::snprintf(out, bytes, compact ? tr(STR_PET_MEMORY_DATE_SHORT) : tr(STR_PET_MEMORY_DATE), unsigned(date.day),
-                    unsigned(date.month), unsigned(compact ? date.year % 100 : date.year));
-    else
-      std::snprintf(out, bytes, compact ? tr(STR_PET_MEMORY_DATE_SHORT) : tr(STR_PET_MEMORY_DATE),
-                    unsigned(compact ? date.year % 100 : date.year), unsigned(date.month), unsigned(date.day));
+    dateformat::format(out, bytes, unsigned(date.day), unsigned(date.month), unsigned(date.year), order, compact);
   } else
     std::snprintf(out, bytes, "%s", tr(STR_PET_MEMORY_DATE_UNKNOWN));
 }
-inline void memoryHeading(char* out, size_t bytes, const pet::Profile& p, unsigned id) {
+inline void memoryHeading(char* out, size_t bytes, const pet::Profile& p, unsigned id, dateformat::Order order) {
   char date[48], generation[32];
-  memoryDate(date, sizeof(date), p, id, true);
+  memoryDate(date, sizeof(date), p, id, order, true);
   std::snprintf(generation, sizeof(generation), tr(STR_PET_GENERATION), static_cast<unsigned long>(p.generation));
   std::snprintf(out, bytes, tr(STR_PET_MEMORY_HEADING), date, generation);
 }
@@ -165,7 +161,7 @@ inline void memoryCard(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, 
   const bool owned = memoryOwned(*m.profile, id);
   const bool inverse = button(s, w, r, "", OpenMemory, int(id));
   if (owned)
-    memoryHeading(w.label, sizeof(w.label), *m.profile, id);
+    memoryHeading(w.label, sizeof(w.label), *m.profile, id, m.dateOrder);
   else
     std::snprintf(w.label, sizeof(w.label), "%s",
                   memoryUnrecorded(*m.profile, id) ? tr(STR_PET_MEMORY_UNRECORDED) : tr(STR_PET_MEMORY_UPCOMING));

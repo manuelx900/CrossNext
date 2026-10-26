@@ -948,6 +948,7 @@ void PetActivity::render(RenderLock&&) {
   model.lifeReturn = lifeReturn;
   model.selectedMode = selectedMode;
   model.selectedGoal = selectedGoal;
+  model.dateOrder = dateformat::fromStored(SETTINGS.dateFormat);
   model.selectedGame = selectedGame;
   model.now = std::time(nullptr);
   model.today = today;

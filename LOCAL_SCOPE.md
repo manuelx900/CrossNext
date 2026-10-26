@@ -516,3 +516,8 @@ are separate SD stores; the 4 KiB zoom band exists only while enlarged. Reading
 Quest CNART002 validates its index and checks each sprite before its first draw.
 Counter queues same-screen input while rendering. This delivery builds X4 Pro;
 other inherited board environments are outside its release verification.
+
+The global date-order preference is persisted by CrossPointSettings through
+SettingsList and exposed by ClockSettingsActivity. The freestanding
+src/util/DateFormat.h formatter supplies PET memory and historical-life dates
+through the render model; PET binary save formats are unchanged.

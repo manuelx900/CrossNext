@@ -45,7 +45,7 @@ egg, name your pet and watch it grow as you read.
 
 Install **CrossNext-Resources.zip** on the microSD to use PET.
 See [PET's guide](docs/apps/pet.md) and
-[what's new in v1.1.0](docs/releases/CrossNext-v1.1.0.md).
+[what's new in v1.1.1](docs/releases/CrossNext-v1.1.1.md).
 
 ## Read, study and play
 
@@ -108,7 +108,7 @@ Choose the package matching the device:
 
 | Model | ZIP | Application / SD update | Factory / USB installation |
 | --- | --- | --- | --- |
-| X4 Pro | `CrossNext-X4PRO-Firmware-v1.1.0.zip` | `CrossNext-X4PRO-Firmware-v1.1.0.bin` | `CrossNext-X4PRO-Firmware-v1.1.0-factory.bin` |
+| X4 Pro | `CrossNext-X4PRO-Firmware-v1.1.1.zip` | `CrossNext-X4PRO-Firmware-v1.1.1.bin` | `CrossNext-X4PRO-Firmware-v1.1.1-factory.bin` |
 
 Generated ZIPs are in `dist/`, and raw images in `dist/CrossNext/`.
 Each firmware ZIP includes SHA-256 checksums, model-specific images and notes.
@@ -170,7 +170,7 @@ CrossPlay supplies the app/game shelf and implementations; CrossPoint supplies
 the e-reader foundation. [CrossNext changes](docs/crossnext-changes.md) describes
 this fork's adaptations without claiming those inherited projects as new work.
 
-[What’s new in v1.1.0](docs/releases/CrossNext-v1.1.0.md)
+[What’s new in v1.1.1](docs/releases/CrossNext-v1.1.1.md)
 
 ## Support CrossNext
 

@@ -102,6 +102,7 @@ struct PetActivity {
   void acknowledge() {}
   void changeTab(int) {}
   bool refreshDay() { return updateCare(); }
+  bool resourcesReady() const { return true; }
   void requestUpdate() {}
   bool ready=false;
   void action(fui::ActionId, int=0);

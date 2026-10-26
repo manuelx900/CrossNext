@@ -276,6 +276,8 @@ inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* regist
                                                 const std::vector<DictionaryEntry>* dictionaries = nullptr,
                                                 bool forPersistence = false) {
   static const std::vector<SettingInfo> baseList = [] {
+    static constexpr StrId dateFormatValues[] = {StrId::STR_DATE_FORMAT_DMY, StrId::STR_DATE_FORMAT_MDY,
+                                                 StrId::STR_DATE_FORMAT_YMD};
     // Enum settings are persisted as numeric values. Assign these labels by enum
     // value so a reordered menu or enum cannot silently swap their behavior.
     std::vector<StrId> sleepScreenValues(CrossPointSettings::SLEEP_SCREEN_MODE_COUNT);
@@ -616,6 +618,8 @@ inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* regist
         SettingInfo::Enum(StrId::STR_CLOCK_FORMAT, &CrossPointSettings::clockFormat,
                           {StrId::STR_CLOCK_FORMAT_24H, StrId::STR_CLOCK_FORMAT_12H}, "clockFormat",
                           StrId::STR_CUSTOMISE_STATUS_BAR),
+        SettingInfo::StaticEnum(StrId::STR_DATE_FORMAT, &CrossPointSettings::dateFormat, dateFormatValues,
+                                "dateFormat"),
         // Index into the append-only table in src/util/Timezones.cpp; 255 = unset.
         SettingInfo::Value(StrId::STR_TIMEZONE, &CrossPointSettings::clockTimezone, {0, 255, 1}, "clockTimezone",
                            StrId::STR_CUSTOMISE_STATUS_BAR),

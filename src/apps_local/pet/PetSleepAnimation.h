@@ -4,7 +4,7 @@
 #include "PetState.h"
 
 namespace petsleep {
-inline constexpr uint32_t FRAME_MS = 1500;
+inline constexpr uint32_t FRAME_MS = 750;
 inline constexpr unsigned POSES = 12, FRAMES = 3, HEAD_OFFSET = POSES * FRAMES * 2,
                           BODY_OFFSET = HEAD_OFFSET + POSES * 2;
 enum class Pose : uint8_t { Normal, Happy, Hungry, Tired, Sick };

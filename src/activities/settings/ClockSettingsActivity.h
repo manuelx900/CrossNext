@@ -8,7 +8,7 @@ class ClockSettingsActivity final : public UiListActivity {
  public:
   explicit ClockSettingsActivity(GfxRenderer& renderer, MappedInputManager& mappedInput);
 
-  static constexpr int ITEM_COUNT = 6;
+  static constexpr int ITEM_COUNT = 7;
 
   void onEnter() override;
 

@@ -375,7 +375,7 @@ the existing fixed small-read fallback on allocation failure. Original atlases,
 prompts and provenance are in `assets_local/pet/animation/`; regenerate with
 `tools_local/pet/build_breathing.py`. The activity owns and closes the pack.
 
-Breathing uses phases 0/1/2/1, with 1.5 seconds between steps, while an active,
+Breathing uses phases 0/1/2/1, with 0.75 seconds between steps, while an active,
 hatched pet is visible on PET, Home, Reward or Evolution. PET and Home share
 one pose selection for happy, hungry, tired, sick and sleeping companions.
 PET always shows the complete body; Home alone may crop to a shelter head.
@@ -765,3 +765,18 @@ centered name, followed by a black check-marked Placed / Colocado status band an
 separate Remove action. The status band has no action. Read-only previews keep
 their saving-unavailable explanation. Catalogue current-item borders use the
 same solid 8-pixel stroke as the selected egg, without an inner outline.
+
+Previous-generation cards show an illustration of the archived species at its
+last life stage, alongside its name, generation, end date and reading time.
+Portrait cards center the illustration; landscape rows place it beside the name.
+These are illustrations from the installed PET artwork, not saved screenshots.
+
+**Settings > System > Clock > Date format** selects Day-Month-Year (the default),
+Month-Day-Year or Year-Month-Day. PET uses this preference for memory dates,
+previous-generation cards and life details, independently of interface language.
+The preference is kept in the firmware settings; existing PET saves retain their
+format. Short card dates use a two-digit year; life details use a four-digit year.
+
+PET animation advances every 750 ms while an animated PET screen is visible.
+Menus and historical pictures remain static. The shorter interval requests more
+frequent display updates; the panel's refresh time determines the visible cadence.

@@ -7,19 +7,15 @@
 namespace petui {
 using namespace widget;
 namespace {
-void endedDate(char* out, size_t bytes, int64_t timestamp) {
+void endedDate(char* out, size_t bytes, int64_t timestamp, dateformat::Order order) {
   const auto value = time_t(timestamp);
   std::tm date{};
   if (timestamp < 1577836800 || timestamp > 7258118399LL || !localtime_r(&value, &date)) {
     std::snprintf(out, bytes, "%s", tr(STR_PET_MEMORY_DATE_UNKNOWN));
     return;
   }
-  if (I18N.getLanguage() == Language::ES)
-    std::snprintf(out, bytes, tr(STR_PET_MEMORY_DATE_SHORT), unsigned(date.tm_mday), unsigned(date.tm_mon + 1),
-                  unsigned((date.tm_year + 1900) % 100));
-  else
-    std::snprintf(out, bytes, tr(STR_PET_MEMORY_DATE_SHORT), unsigned((date.tm_year + 1900) % 100),
-                  unsigned(date.tm_mon + 1), unsigned(date.tm_mday));
+  dateformat::format(out, bytes, unsigned(date.tm_mday), unsigned(date.tm_mon + 1), unsigned(date.tm_year + 1900),
+                     order, true);
 }
 }  // namespace
 void lifeDetails(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
@@ -58,12 +54,9 @@ void lifeDetails(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
          life.reason == pet::LifeStatus::Lost ? tr(STR_PET_LIFE_REASON_LOST) : tr(STR_PET_LIFE_REASON_RETIRED), 0);
     if (m.lifeEndedDay > 0) {
       const auto date = readingstats::dateFromDay(m.lifeEndedDay);
-      if (I18N.getLanguage() == Language::ES)
-        std::snprintf(w.label, sizeof(w.label), tr(STR_PET_LIFE_ENDED_DATE), unsigned(date.day), unsigned(date.month),
-                      unsigned(date.year));
-      else
-        std::snprintf(w.label, sizeof(w.label), tr(STR_PET_LIFE_ENDED_DATE), unsigned(date.year), unsigned(date.month),
-                      unsigned(date.day));
+      dateformat::format(w.secondary, sizeof(w.secondary), unsigned(date.day), unsigned(date.month),
+                         unsigned(date.year), m.dateOrder);
+      std::snprintf(w.label, sizeof(w.label), tr(STR_PET_LIFE_ENDED_ON), w.secondary);
       text(s, rect(copy.x, copy.y + 54, copy.width, 24), w.label, 3);
     }
     duration(w.label, sizeof(w.label), life.readingSeconds);
@@ -93,24 +86,32 @@ void lifeDetails(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
       const auto box = wide ? rect(grid.x, grid.y + i * (rowH + GAP), grid.width, rowH)
                             : cell(rect(grid.x, grid.y + (i / 2) * (rowH + GAP), grid.width, rowH), i % 2, 2);
       const bool inverse = button(s, w, box, "", OpenLife, index);
+      const auto age = pet::stage(life.readingSeconds);
+      const unsigned pictureId =
+          age == pet::Stage::Egg ? unsigned(life.species) : 3 + unsigned(life.species) * 16 + (unsigned(age) - 1) * 4;
       if (wide) {
-        text(s, rect(box.x + 8, box.y + 3, box.width * 30 / 100 - 16, box.height - 6),
+        const int side = std::min(48, int(box.height) - 8);
+        art(s, m, rect(box.x + 8, box.y + (box.height - side) / 2, side, side), pictureId, speciesIcon(life.species),
+            false, inverse);
+        text(s, rect(box.x + side + 16, box.y + 3, box.width * 35 / 100 - side - 20, box.height - 6),
              displayName(life.name, life.species), 0, inverse);
         std::snprintf(w.label, sizeof(w.label), tr(STR_PET_GENERATION), static_cast<unsigned long>(life.generation));
-        text(s, rect(box.x + box.width * 30 / 100, box.y + 3, box.width * 15 / 100, box.height - 6), w.label, 3,
+        text(s, rect(box.x + box.width * 35 / 100, box.y + 3, box.width * 15 / 100, box.height - 6), w.label, 3,
              inverse, fui::TextAlign::Center);
-        endedDate(w.label, sizeof(w.label), life.endedAt);
-        text(s, rect(box.x + box.width * 45 / 100, box.y + 3, box.width * 25 / 100, box.height - 6), w.label, 3,
+        endedDate(w.label, sizeof(w.label), life.endedAt, m.dateOrder);
+        text(s, rect(box.x + box.width * 50 / 100, box.y + 3, box.width * 25 / 100, box.height - 6), w.label, 3,
              inverse, fui::TextAlign::Center);
         duration(w.label, sizeof(w.label), life.readingSeconds);
-        text(s, rect(box.x + box.width * 70 / 100, box.y + 3, box.width * 30 / 100 - 8, box.height - 6), w.label, 3,
+        text(s, rect(box.x + box.width * 75 / 100, box.y + 3, box.width * 25 / 100 - 8, box.height - 6), w.label, 3,
              inverse, fui::TextAlign::Right);
         continue;
       }
       text(s, rect(box.x + 8, box.y + 8, box.width - 16, 31), displayName(life.name, life.species), 1, inverse);
       std::snprintf(w.label, sizeof(w.label), tr(STR_PET_GENERATION), static_cast<unsigned long>(life.generation));
       text(s, rect(box.x + 8, box.y + 43, box.width - 16, 24), w.label, 3, inverse);
-      endedDate(w.label, sizeof(w.label), life.endedAt);
+      art(s, m, rect(box.x + 12, box.y + 73, box.width - 24, box.height - 143), pictureId, speciesIcon(life.species),
+          false, inverse);
+      endedDate(w.label, sizeof(w.label), life.endedAt, m.dateOrder);
       text(s, rect(box.x + 8, box.bottom() - 62, box.width - 16, 23), w.label, 3, inverse);
       duration(w.label, sizeof(w.label), life.readingSeconds);
       text(s, rect(box.x + 8, box.bottom() - 33, box.width - 16, 27), w.label, 0, inverse);

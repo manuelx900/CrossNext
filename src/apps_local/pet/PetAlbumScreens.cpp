@@ -69,7 +69,7 @@ void memoryDetails(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   const bool wide = r.width > r.height;
   if (m.view == pet::View::Memory) {
     const unsigned id = unsigned(std::clamp(m.memory, 0, int(MEMORY_COUNT - 1)));
-    memoryHeading(w.label, sizeof(w.label), *m.profile, id);
+    memoryHeading(w.label, sizeof(w.label), *m.profile, id, m.dateOrder);
     text(s, rect(r.x + 8, r.y, r.width - 16, 44), w.label, 0, false, fui::TextAlign::Center);
     const auto image =
         wide ? rect(r.x, r.y + 54, r.width * 47 / 100, r.height - 116) : rect(r.x + 12, r.y + 60, r.width - 24, 270);

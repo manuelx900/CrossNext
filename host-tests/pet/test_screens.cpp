@@ -2064,7 +2064,114 @@ static void resourcesRequiredScreens(const char* output) {
     }
   }
 }
+void previousGenerationChecks(const char* output = nullptr) {
+  ArtFixture graphics("resources/apps/pet/graphics.bin");
+  struct Trace {
+    ArtFixture* graphics;
+    std::array<uint32_t, 4> ids{};
+    std::array<bool, 4> inverse{};
+    unsigned count = 0;
+    static bool draw(void* context, fui::DrawTarget& target, fui::Rect area, uint32_t id, bool inverse) {
+      auto& trace = *static_cast<Trace*>(context);
+      CHECK(trace.count < trace.ids.size());
+      if (trace.count < trace.ids.size()) {
+        trace.ids[trace.count] = id;
+        trace.inverse[trace.count++] = inverse;
+      }
+      return ArtFixture::draw(trace.graphics, target, area, id, inverse);
+    }
+  } trace{&graphics};
+  for (auto language : {Language::ES, Language::EN}) {
+    I18N.setLanguage(language);
+    char date[32];
+    pet::Profile p;
+    p.created = true;
+    p.species = pet::Species::Ember;
+    p.readingSeconds = pet::stageStart(pet::Stage::Adult);
+    p.momentDays[0] = readingstats::dayIndex({2026, 10, 22});
+    const char* full[] = {"22-10-2026", "10-22-2026", "2026-10-22"};
+    const char* compact[] = {"22-10-26", "10-22-26", "26-10-22"};
+    CHECK(dateformat::fromStored(255) == dateformat::Order::DayMonthYear);
+    for (unsigned order = 0; order < dateformat::COUNT; ++order) {
+      petui::albumwidget::memoryDate(date, sizeof(date), p, 0, dateformat::Order(order));
+      CHECK(!std::strcmp(date, full[order]));
+      petui::albumwidget::memoryDate(date, sizeof(date), p, 0, dateformat::Order(order), true);
+      CHECK(!std::strcmp(date, compact[order]));
+    }
+    for (unsigned orientation = 0; orientation < 4; ++orientation) {
+      const int width = orientation % 2 ? 800 : 480, height = orientation % 2 ? 480 : 800;
+      auto c = std::make_unique<Canvas>(width, height);
+      c->device.orientation = fui::Orientation(orientation);
+      for (unsigned count : {0u, 1u, 4u, 5u, 12u}) {
+        pet::History history;
+        history.count = uint8_t(count);
+        for (unsigned i = 0; i < count; ++i) {
+          auto& life = history.records[i];
+          life.generation = i + 1;
+          life.species = pet::Species(i % 3);
+          life.readingSeconds = pet::stageStart(pet::Stage(i % 5));
+          life.endedAt = 1792692000;
+          std::strcpy(life.name, i % 2 ? "ORBIT" : "WILLOW");
+        }
+        const unsigned pages = std::max(1u, (count + 3) / 4);
+        for (unsigned page = 0; page < pages; ++page) {
+          petui::Model m;
+          m.profile = &p;
+          m.history = &history;
+          m.art = {&trace, Trace::draw};
+          m.view = pet::View::Lives;
+          m.tab = pet::Tab::Album;
+          m.page = int(page);
+          petui::Work w;
+          for (bool focused : {false, true}) {
+            int focusedIndex = -1;
+            if (focused && count)
+              for (size_t i = 0; i < c->interactions.count(); ++i)
+                if (c->interactions.data()[i].action == petui::OpenLife) {
+                  focusedIndex = int(i);
+                  break;
+                }
+            c->interactions.setFocusedIndex(-1);
+            if (focusedIndex >= 0) {
+              fui::InputSnapshot nextFocus;
+              nextFocus.focusNext = true;
+              for (size_t i = 0; i < c->interactions.count() &&
+                                 (!c->interactions.hasButtonFocus() || c->interactions.focusedIndex() != focusedIndex);
+                   ++i)
+                c->interactions.route(nextFocus);
+              CHECK(c->interactions.hasButtonFocus() && c->interactions.focusedIndex() == focusedIndex);
+            }
+            trace.count = 0;
+            c->paint(m, w);
+            c->checkHits();
+            const unsigned visible = count ? std::min(4u, count - page * 4) : 0;
+            CHECK(trace.count == visible);
+            for (unsigned i = 0; i < visible; ++i) {
+              const auto& life = history.records[count - 1 - page * 4 - i];
+              const auto age = pet::stage(life.readingSeconds);
+              const unsigned expected = age == pet::Stage::Egg
+                                            ? unsigned(life.species)
+                                            : 3 + unsigned(life.species) * 16 + (unsigned(age) - 1) * 4;
+              CHECK(trace.ids[i] == expected);
+              CHECK(trace.inverse[i] == (focused && i == 0));
+            }
+            if (output && count == 4 && !page && !focused)
+              c->write(std::string(output) + "/lives-" + (language == Language::ES ? "es-" : "en-") +
+                       std::to_string(orientation) + ".pbm");
+          }
+        }
+      }
+    }
+  }
+}
+
 int main(int argc, char** argv) {
+  if (argc > 1 && !std::strcmp(argv[1], "--lives-only")) {
+    previousGenerationChecks(argc > 2 ? argv[2] : nullptr);
+    std::printf("PET previous generations and dates: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  previousGenerationChecks();
   if (argc > 1 && !std::strcmp(argv[1], "--memories-only")) {
     referenceOverhaulChecks();
     memoryProgressionChecks(argc > 2 ? argv[2] : nullptr);

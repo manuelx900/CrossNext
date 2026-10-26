@@ -2,6 +2,7 @@
 
 #include <I18n.h>
 
+#include "../../util/DateFormat.h"
 #include "../ui/ToyboxScreen.h"
 #include "../ui/WordleKeyboard.h"
 #include "PetHistory.h"
@@ -103,6 +104,7 @@ struct Model {
   pet::View memoryReturn = pet::View::Memories, lifeReturn = pet::View::Lives;
   pet::Mode selectedMode = pet::Mode::Relaxed;
   uint8_t selectedGoal = 1;
+  dateformat::Order dateOrder = dateformat::Order::DayMonthYear;
   pet::Game selectedGame = pet::Game::Pairs;
   CatalogFilter catalogFilter = CatalogFilter::Unowned;
   uint8_t previewItem = pet::OBJECT_COUNT;

@@ -10,16 +10,17 @@ int main() {
   assert(!clock.update(100, false));
   assert(clock.update(100, true));
   assert(clock.step() == 0);
-  assert(!clock.update(1599, true));
-  assert(clock.update(1600, true) && clock.step() == 1);
-  assert(clock.update(3100, true) && clock.step() == 2);
-  assert(clock.update(4600, true) && clock.step() == 3);
-  assert(clock.update(6100, true) && clock.step() == 0);
-  assert(!clock.update(12100, true));
-  assert(!clock.update(12101, false) && clock.step() == 0);
+  assert(petsleep::FRAME_MS == 750);
+  assert(!clock.update(849, true));
+  assert(clock.update(850, true) && clock.step() == 1);
+  assert(clock.update(1600, true) && clock.step() == 2);
+  assert(clock.update(2350, true) && clock.step() == 3);
+  assert(clock.update(3100, true) && clock.step() == 0);
+  assert(!clock.update(6100, true));
+  assert(!clock.update(6101, false) && clock.step() == 0);
   assert(clock.update(UINT32_MAX - 100, true));
-  assert(!clock.update(1398, true));
-  assert(clock.update(1399, true) && clock.step() == 1);
+  assert(!clock.update(648, true));
+  assert(clock.update(649, true) && clock.step() == 1);
   assert(petsleep::frame(0) == 0 && petsleep::frame(1) == 1 && petsleep::frame(2) == 2 && petsleep::frame(3) == 1);
 
   pet::Profile p;
