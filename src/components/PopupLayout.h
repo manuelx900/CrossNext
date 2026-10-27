@@ -10,6 +10,16 @@ struct Layout {
   fui::Rect body, text;
   fui::TextStyle style;
 };
+inline void paintChrome(fui::DrawTarget& target, const Layout& popup, int frame, int radius) {
+  const bool rounded = radius > 0;
+  const auto border = fui::Paint::solid(popup.style.color);
+  // Corner geometry must not change the foreground/background contrast.
+  const auto background =
+      fui::Paint::solid(popup.style.color == fui::Color::Black ? fui::Color::White : fui::Color::Black);
+  target.fill(popup.body.inset({int16_t(-frame), int16_t(-frame), int16_t(-frame), int16_t(-frame)}), border,
+              rounded ? radius + frame : 0);
+  target.fill(popup.body, background, radius);
+}
 inline Layout layout(const fui::DrawTarget& target, fui::Rect safe, const char* message, fui::TextStyle style,
                      int marginX, int marginY, int frame, int preferredY) {
   safe = safe.inset(fui::Insets{int16_t(frame + 12), int16_t(frame + 12), int16_t(frame + 12), int16_t(frame + 12)});

@@ -792,15 +792,7 @@ Rect BaseTheme::drawPopup(const GfxRenderer& renderer, const char* message) cons
   const auto& box = popup.body;
   const int x = box.x, y = box.y, w = box.width, h = box.height;
 
-  const bool useRoundedPopup = metrics.popupCornerRadius > 0;
-  if (useRoundedPopup) {
-    renderer.fillRoundedRect(x - frameThickness, y - frameThickness, w + frameThickness * 2, h + frameThickness * 2,
-                             metrics.popupCornerRadius + frameThickness, Color::White);
-    renderer.fillRoundedRect(x, y, w, h, metrics.popupCornerRadius, Color::Black);
-  } else {
-    renderer.fillRect(x - frameThickness, y - frameThickness, w + frameThickness * 2, h + frameThickness * 2, true);
-    renderer.fillRect(x, y, w, h, false);
-  }
+  popupui::paintChrome(target, popup, frameThickness, metrics.popupCornerRadius);
 
   const auto family = metrics.popupTextBold ? EpdFontFamily::BOLD : EpdFontFamily::REGULAR;
   freeink::ui::layoutText(target, popup.text, message, popup.style, [&](const char* line, freeink::ui::Rect run) {
