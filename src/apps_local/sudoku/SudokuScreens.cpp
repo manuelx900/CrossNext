@@ -223,7 +223,8 @@ void buildMenu(toybox::Screen& s, const MenuModel& m) {
   const bool resume = sk::canResume(m.game, m.hasGame, m.level);
   const int count = resume ? 4 : 3, gap = 8;
   const int h = std::min(62, (controls.height - 34 - gap * (count - 1)) / count);
-  int y = controls.bottom() - count * h - gap * (count - 1);
+  int y = wide ? gamepanel::centeredBlock(controls, count * h + gap * (count - 1)).y
+               : controls.bottom() - count * h - gap * (count - 1);
   if (resume) {
     action(s, rect(controls.x, y, controls.width, h), tr(STR_UI_RESUME_A26A6E), ActionPlay, gamepanel::Mark::Play,
            true);

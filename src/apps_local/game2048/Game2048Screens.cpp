@@ -153,11 +153,13 @@ void build(toybox::Screen& s, const Model& m, Work&) {
     const char* labels[] = {tr(STR_2048_RESUME), tr(STR_2048_NEW), tr(STR_2048_HELP)};
     const fui::ActionId actions[] = {Play, New, Help};
     const gamepanel::Mark marks[] = {gamepanel::Mark::Play, gamepanel::Mark::New, gamepanel::Mark::Help};
-    const int y = wide ? right.y + (right.height - 3 * (menuH + 10) - 38) / 2 : right.y;
+    const int menuHeight = 3 * menuH + 20;
+    const int y = wide ? gamepanel::centeredBlock(right, menuHeight + 44).y : right.y;
     for (int n = 0; n < 3; ++n)
       gamepanel::row(s, fui::makeRect(right.x, y + n * (menuH + 10), right.width, menuH), labels[n], actions[n], 0,
                      marks[n], n == m.selected);
-    dashboard::text(s, fui::makeRect(right.x, right.bottom() - 28, right.width, 28), tr(STR_REDESIGN_2048_HINT), 3);
+    dashboard::text(s, fui::makeRect(right.x, wide ? y + menuHeight + 16 : right.bottom() - 28, right.width, 28),
+                    tr(STR_REDESIGN_2048_HINT), 3);
     return;
   }
   const auto r = boardRect(s.device());

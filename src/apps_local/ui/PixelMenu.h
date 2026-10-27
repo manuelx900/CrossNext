@@ -77,7 +77,8 @@ void begin(Screen& screen, int bottomReserve = 0) {
 }
 
 template <typename Screen>
-void tabs(Screen& screen, const fui::TabItem* items, int count, fui::ActionId action, fui::FontId font = 3) {
+void tabs(Screen& screen, const fui::TabItem* items, int count, fui::ActionId action, fui::FontId font = 3,
+          int height = 52, int gap = 10) {
   fui::TabBarProps props;
   props.tabs = items;
   props.count = static_cast<uint8_t>(count);
@@ -90,7 +91,7 @@ void tabs(Screen& screen, const fui::TabItem* items, int count, fui::ActionId ac
   props.tabInset = {};
   props.contentInset = {};
   props.minTouchSize = 0;
-  const auto band = screen.takeTop(52, 10);
+  const auto band = screen.takeTop(height, gap);
   fui::tabBar(screen.frame(), band, props);
   screen.target().stroke(band, fui::Paint::solid(fui::Color::Black), kBorder);
 }

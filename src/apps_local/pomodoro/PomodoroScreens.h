@@ -2,6 +2,7 @@
 #include "../ui/ToyboxScreen.h"
 #include "PomodoroCore.h"
 namespace pomodoroui {
+void drawCountdown(freeink::ui::DrawTarget& target, freeink::ui::Rect box, const char* value, int maxInkHeight = 82);
 enum class View : uint8_t { Timer, Settings, ConfirmReset };
 enum : freeink::ui::ActionId {
   Toggle = 1,

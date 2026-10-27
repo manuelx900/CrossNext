@@ -10,6 +10,31 @@
 #include "../ui/PixelMenu.h"
 namespace pomodoroui {
 namespace fui = freeink::ui;
+void drawCountdown(fui::DrawTarget& target, fui::Rect box, const char* value, int maxInkHeight) {
+  if (!value || box.empty()) return;
+  constexpr int digitAdvance = 65, digitHeight = 82;
+  int total = 0;
+  for (const char* p = value; *p; ++p) {
+    if (*p != ':' && (*p < '0' || *p > '9')) return;
+    total += *p == ':' ? 29 : digitAdvance;
+  }
+  if (!total) return;
+  const int scale = std::min(int(box.width) * 1024 / total,
+                             std::min(std::clamp(maxInkHeight, 1, 96), int(box.height)) * 1024 / digitHeight);
+  const int x = box.x + (box.width - total * scale / 1024) / 2;
+  const int y = box.y + (box.height - digitHeight * scale / 1024) / 2;
+  int advance = 0;
+  for (const char* p = value; *p; ++p) {
+    const auto& glyph = *numerals::glyph(static_cast<unsigned char>(*p));
+    const int width = *p == ':' ? 29 : digitAdvance;
+    const char run[] = {*p, 0};
+    numerals::draw(target,
+                   fui::makeRect(x + advance * scale / 1024, y + (digitHeight - glyph.top) * scale / 1024,
+                                 width * scale / 1024, glyph.height * scale / 1024),
+                   run);
+    advance += width;
+  }
+}
 namespace {
 constexpr auto ink = fui::Paint::solid(fui::Color::Black);
 void button(toybox::Screen& screen, Work& work, fui::Rect box, const char* label, fui::ActionId action, int value = 0,
@@ -93,19 +118,19 @@ void build(toybox::Screen& screen, const Model& model, Work& work) {
     button(screen, work, fui::makeRect(body.x, body.bottom() - 64, body.width, 60), tr(STR_UI_DONE_E782E7), Done);
     return;
   }
-  const auto timeline = fui::makeRect(body.x, body.y, body.width, 80);
-  screen.target().stroke(timeline, ink, pixelui::kBorder);
+  const int timelineH = wide ? 56 : 80;
+  const auto timeline = fui::makeRect(body.x, body.y, body.width, timelineH);
   const int stages = 2 * s.config.rounds, page = std::clamp(model.stagePage, 0, (stages - 1) / 3);
-  const auto previous = fui::makeRect(timeline.x + 4, timeline.y + 4, 44, timeline.height - 8);
-  const auto next = fui::makeRect(timeline.right() - 48, timeline.y + 4, 44, timeline.height - 8);
+  constexpr int border = pixelui::kBorder;
+  const auto previous = fui::makeRect(timeline.x + border, timeline.y + border, 46, timeline.height - 2 * border);
+  const auto next = fui::makeRect(timeline.right() - 46 - border, previous.y, 46, previous.height);
   pixelui::text(screen.target(), previous, "<", 0, fui::Color::Black, fui::TextAlign::Center);
   pixelui::text(screen.target(), next, ">", 0, fui::Color::Black, fui::TextAlign::Center);
-  screen.target().fill(fui::makeRect(previous.right(), timeline.y + 4, 2, timeline.height - 8), ink);
-  screen.target().fill(fui::makeRect(next.x - 2, timeline.y + 4, 2, timeline.height - 8), ink);
   screen.frame().hit(previous, StagePage, -1, fui::InputTouch);
   screen.frame().hit(next, StagePage, 1, fui::InputTouch);
-  const int slot = (timeline.width - 104) / 3;
-  for (int n = 0; n < 3 && page * 3 + n < stages; ++n) {
+  const int stageLeft = previous.right() + border, stageWidth = next.x - border - stageLeft;
+  const int visibleStages = std::min(3, stages - page * 3);
+  for (int n = 0; n < visibleStages; ++n) {
     const int index = page * 3 + n;
     const auto phase = pomodoro::phaseAt(s.config, index);
     std::snprintf(work.label, sizeof(work.label), tr(STR_POMODORO_STAGE_FORMAT), index / 2 + 1,
@@ -113,9 +138,12 @@ void build(toybox::Screen& screen, const Model& model, Work& work) {
                   : phase == pomodoro::Phase::LongBreak ? tr(STR_POMODORO_STAGE_LONG)
                                                         : tr(STR_POMODORO_STAGE_BREAK),
                   static_cast<unsigned long>(pomodoro::duration(s.config, phase) / 60000));
-    const auto cell = fui::makeRect(timeline.x + 52 + n * slot, timeline.y + 4, slot, 72);
+    const int left = stageLeft + stageWidth * n / visibleStages;
+    const int right = stageLeft + stageWidth * (n + 1) / visibleStages;
+    const auto cell = fui::makeRect(left, previous.y, right - left, previous.height);
     work.button = {};
     work.button.styles = pixelui::rowStyles();
+    work.button.borderEdges = fui::EdgesNone;
     work.button.label = nullptr;
     work.button.text.font = 3;
     work.button.text.maxLines = 2;
@@ -127,15 +155,25 @@ void build(toybox::Screen& screen, const Model& model, Work& work) {
     screen.button(work.button, cell);
     char* minutesLabel = std::strchr(work.label, '\n');
     if (minutesLabel) *minutesLabel++ = 0;
-    const auto color = index == s.stage ? fui::Color::White : fui::Color::Black;
-    pixelui::text(screen.target(), fui::makeRect(cell.x + 3, cell.y + 8, cell.width - 6, 24), work.label, 3, color,
-                  fui::TextAlign::Center);
+    const auto state = screen.frame().stateFor(SelectStage, index, work.button.state);
+    const bool inverse = fui::hasState(state, fui::StateSelected) || fui::hasState(state, fui::StateFocused) ||
+                         fui::hasState(state, fui::StateActive);
+    const auto color = inverse ? fui::Color::White : fui::Color::Black;
+    pixelui::text(screen.target(), fui::makeRect(cell.x + 3, cell.y + (wide ? 2 : 8), cell.width - 6, wide ? 20 : 24),
+                  work.label, 3, color, fui::TextAlign::Center);
     if (minutesLabel)
-      pixelui::text(screen.target(), fui::makeRect(cell.x + 3, cell.y + 36, cell.width - 6, 24), minutesLabel, 3, color,
-                    fui::TextAlign::Center);
+      pixelui::text(screen.target(),
+                    fui::makeRect(cell.x + 3, cell.y + (wide ? 24 : 36), cell.width - 6, wide ? 20 : 24), minutesLabel,
+                    3, color, fui::TextAlign::Center);
   }
-  body.y += 96;
-  body.height -= 96;
+  screen.target().stroke(timeline, ink, border);
+  screen.target().fill(fui::makeRect(previous.right(), previous.y, border, previous.height), ink);
+  screen.target().fill(fui::makeRect(next.x - border, previous.y, border, previous.height), ink);
+  for (int n = 1; n < visibleStages; ++n)
+    screen.target().fill(fui::makeRect(stageLeft + stageWidth * n / visibleStages, previous.y, border, previous.height),
+                         ink);
+  body.y += timelineH + 12;
+  body.height -= timelineH + 12;
   const auto timer = wide ? fui::makeRect(body.x, body.y, body.width - 244, body.height)
                           : fui::makeRect(body.x, body.y, body.width, body.height - 238);
   dashboard::frame(screen, timer, 4);
@@ -145,10 +183,12 @@ void build(toybox::Screen& screen, const Model& model, Work& work) {
   const uint32_t seconds = (s.remainingMs + 999) / 1000;
   std::snprintf(work.label, sizeof(work.label), "%02lu:%02lu", static_cast<unsigned long>(seconds / 60),
                 static_cast<unsigned long>(seconds % 60));
-  dashboard::digits(screen,
-                    fui::makeRect(timer.x + 18, timer.y + 90, timer.width - 36, std::max(14, timer.height - 216)),
-                    work.label);
-  dashboard::text(screen, fui::makeRect(timer.x + 8, timer.bottom() - 116, timer.width - 16, 34),
+  const int countdownTop = timer.y + 80;
+  const int noticeTop = timer.bottom() - 116;
+  drawCountdown(screen.target(),
+                fui::makeRect(timer.x + 18, countdownTop, timer.width - 36, std::max(1, noticeTop - countdownTop - 8)),
+                work.label, wide ? 96 : 82);
+  dashboard::text(screen, fui::makeRect(timer.x + 8, noticeTop, timer.width - 16, 34),
                   s.notice    ? tr(STR_UI_TIME_FOR_A_NEW_SESSION_305DE9)
                   : s.running ? tr(STR_UI_IN_PROGRESS_BF8144)
                               : tr(STR_UI_READY_WHEN_YOU_ARE_31EF54),

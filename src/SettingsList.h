@@ -685,11 +685,14 @@ inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* regist
             v.end());
   }
   if (BoardConfig::hasHomeKey()) {
-    v.reserve(v.size() + 3);
+    v.reserve(v.size() + 4);
     for (unsigned i = 0; i < 3; ++i) {
       v.push_back(SettingInfo::StaticEnum(home_button::GESTURE_LABELS[i], home_button::FIELDS[i],
                                           home_button::ACTION_LABELS, home_button::KEYS[i], StrId::STR_CAT_CONTROLS));
     }
+    v.push_back(SettingInfo::StaticEnum(StrId::STR_HOME_TAP_INTERVAL, &CrossPointSettings::homeButtonDoubleTapTiming,
+                                        home_button::TIMING_LABELS, "homeButtonDoubleTapTiming",
+                                        StrId::STR_CAT_CONTROLS));
   }
   if (BoardConfig::hasTouch()) {
     v.erase(std::remove_if(v.begin(), v.end(),

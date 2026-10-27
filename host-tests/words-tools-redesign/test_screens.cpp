@@ -13,6 +13,7 @@
 #include "../../src/apps_local/tools/ToolState.h"
 #include "../../src/apps_local/tools/ToolsScreens.h"
 #include "../../src/apps_local/wallpapers/WallpapersScreens.h"
+#include "../../src/apps_local/words/DictionaryScreen.h"
 #include "../../src/apps_local/words/WordsScreens.h"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
@@ -370,6 +371,27 @@ int main(int argc, char** argv) {
           c.write(path);
         }
       };
+      {
+        Canvas c(w, h);
+        dictionaryui::Model model;
+        dictionaryui::Work work;
+        model.word = "world";
+        model.saveLabel = tr(STR_WORD_SAVE);
+        model.page = 2;
+        model.pages = 3;
+        dictionaryui::build(c.screen, model, work);
+        const auto area = dictionaryui::layout(c.device);
+        CHECK(area.body.y >= area.header.bottom() + 12);
+        CHECK(area.body.bottom() + 12 <= area.footer.y);
+        CHECK(c.has(dictionaryui::Back) && c.has(dictionaryui::Save));
+        CHECK(c.has(dictionaryui::Previous) && c.has(dictionaryui::Next));
+        for (const auto& label : c.target.labels)
+          if (label.value == model.saveLabel) {
+            CHECK(label.box.y >= area.header.y);
+            CHECK(label.box.bottom() <= area.header.bottom());
+          }
+        save(c, "dictionary-chrome");
+      }
       for (auto kind : {toolsui::Kind::Clock, toolsui::Kind::Calendar, toolsui::Kind::Counter}) {
         for (int variant = 0; variant < 3; ++variant) {
           Canvas c(w, h);
@@ -463,6 +485,15 @@ int main(int argc, char** argv) {
             c.target.setFont(3, c.library.font);
           }
           wordsui::build(c.screen, m, g, work);
+          if (view == wordsui::View::Waiting) {
+            bool help = false;
+            for (const auto& line : c.target.labels) {
+              if (line.value != tr(STR_WORDS_WAIT_HELP)) continue;
+              CHECK(line.box.bottom() + 12 <= g.buttons[wordsui::Back].y);
+              help = true;
+            }
+            CHECK(help && c.has(wordsui::Back));
+          }
           if (view == wordsui::View::Detail || view == wordsui::View::Review) {
             bool term = false, prefix = false;
             for (const auto& line : c.target.labels) {
@@ -561,8 +592,9 @@ int main(int argc, char** argv) {
       }
       Canvas wall(w, h);
       const auto grid = wallpapersui::gridGeom(wall.device);
-      CHECK(grid.cols == 3 && grid.rows == 3 && grid.perPage == 9);
-      for (int n = 0; n < 9; ++n) {
+      CHECK(grid.cols == (w > h ? 4 : 3) && grid.rows == (w > h ? 1 : 3));
+      CHECK(grid.perPage == (w > h ? 4 : 9));
+      for (int n = 0; n < grid.perPage; ++n) {
         const auto r = wallpapersui::thumbRect(grid, n);
         CHECK(r.width > 0 && r.height > 0);
         CHECK(wallpapersui::cellAt(grid, r.x + r.width / 2, r.y + r.height / 2) == n);

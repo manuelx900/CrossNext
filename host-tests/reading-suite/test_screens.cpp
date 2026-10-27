@@ -458,7 +458,7 @@ int main(int argc, char** argv) {
       Canvas c(size.first, size.second);
       readertext::Model model;
       readertext::Work work;
-      model.fontView = readertext::FontView::Families;
+      model.view = readertext::SheetView::Families;
       model.fontPage = page;
       model.fontCount = 130;
       model.fontLabel = [](const void*, int index) -> const char* { return index == 2 ? "BITTER" : "LEXEND DECA"; };

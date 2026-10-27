@@ -97,7 +97,7 @@ void LibraryListActivity::onEnter() {
           self->toggleView();
           return;
         }
-        const int target = (event.value - 1) * 9;
+        const int target = (event.value - 1) * self->gridPageSize();
         if (target >= 0 && target < self->listCount()) self->moveRingTo(target + 1);
       },
       this);
@@ -810,7 +810,10 @@ void LibraryListActivity::moveRingTo(const int ringIndex) {
   UiTabListActivity::moveRingTo(ringIndex);
 }
 bool LibraryListActivity::loadPendingCover() {
-  if (!gridView() || gridFirst != std::max(0, selectedEntry()) / 9 * 9 || !gridMissingCovers) return false;
+  const int pageSize = gridPageSize();
+  if (!gridView() || gridFirst != std::max(0, selectedEntry()) / pageSize * pageSize ||
+      gridOrientation != static_cast<uint8_t>(renderer.getOrientation()) || !gridMissingCovers)
+    return false;
   int slot = 0;
   while (!(gridMissingCovers & (1u << slot))) ++slot;
   gridMissingCovers &= ~(1u << slot);
@@ -876,10 +879,11 @@ bool LibraryListActivity::handleCustomInput() {
     const auto swipe = mappedInput.wasSwipe();
     if (!mappedInput.wasReleased(MappedInputManager::Button::Back) &&
         (swipe == MappedInputManager::SwipeDir::Left || swipe == MappedInputManager::SwipeDir::Right)) {
-      const int page = std::max(0, selectedEntry()) / 9;
+      const int pageSize = gridPageSize();
+      const int page = std::max(0, selectedEntry()) / pageSize;
       const int next = std::clamp(page + (swipe == MappedInputManager::SwipeDir::Left ? 1 : -1), 0,
-                                  std::max(0, (listCount() - 1) / 9));
-      moveRingTo(next * 9 + 1);
+                                  std::max(0, (listCount() - 1) / pageSize));
+      moveRingTo(next * pageSize + 1);
       return true;
     }
   }
@@ -1058,20 +1062,21 @@ void LibraryListActivity::buildRows(UiScreen& screen) {
           rows > 0 ? winItems[0].label : "<none>");
 }
 
+int LibraryListActivity::gridPageSize() const {
+  return libraryui::gridCapacity(renderer.getScreenWidth(), renderer.getScreenHeight());
+}
 void LibraryListActivity::buildGrid(UiScreen& screen) {
   windowTop = -1;
   auto& nav = activeNav();
-  const int count = listCount(), first = std::max(0, selectedEntry()) / 9 * 9;
-  auto area = screen.body();
-  const int pages = std::max(1, (count + 8) / 9);
-  const auto pager = fui::makeRect(area.x, area.bottom() - 52, area.width, 48);
-  area.height = std::max(1, int(area.height) - 64);
-  pageui::build(screen, pager, first / 9 + 1, pages, ACTION_GRID_PAGE, first / 9, ACTION_GRID_PAGE, first / 9 + 2,
-                pixelui::kSmall, 48);
-  const int cols = 3, rows = 3;
-  const int gap = 12, width = (area.width - (cols - 1) * gap) / cols, height = (area.height - (rows - 1) * gap) / rows;
+  const auto grid = libraryui::gridLayout(screen.device(), screen.body());
+  const int pageSize = grid.capacity();
+  const int count = listCount(), first = std::max(0, selectedEntry()) / pageSize * pageSize;
+  const auto area = grid.area;
+  const int pages = std::max(1, (count + pageSize - 1) / pageSize);
+  pageui::build(screen, grid.pager, first / pageSize + 1, pages, ACTION_GRID_PAGE, first / pageSize, ACTION_GRID_PAGE,
+                first / pageSize + 2, pixelui::kSmall, 48);
   nav.top = first;
-  nav.visibleRows = nav.drawnRows = 9;
+  nav.visibleRows = nav.drawnRows = pageSize;
   nav.drawnCount = count;
   nav.followOnBuild = false;
   const auto orientation = static_cast<uint8_t>(renderer.getOrientation());
@@ -1098,13 +1103,9 @@ void LibraryListActivity::buildGrid(UiScreen& screen) {
     // Borrow the invalid cache as a sequential BMP read buffer, then replace it with the finished grid.
     gridCoverBitmap.setReadAheadBuffer(gridCache.get(), gridCache ? 4096 : 0);
   }
-  const int bookWidth = std::min(width, height * 2 / 3);
-  const auto cardFor = [&](int n) {
-    return fui::makeRect(area.x + n % cols * (width + gap) + (width - bookWidth) / 2,
-                         area.y + n / cols * (height + gap), bookWidth, height);
-  };
+  const auto cardFor = [&](int n) { return grid.card(n); };
   const auto ink = fui::Paint::solid(fui::Color::Black);
-  for (int n = 0; n < 9 && first + n < count; ++n) {
+  for (int n = 0; n < pageSize && first + n < count; ++n) {
     const int entry = first + n;
     const auto card = cardFor(n);
     screen.frame().hit(card, ACTION_ROW, entry, fui::InputTouch | fui::InputLongPress);
@@ -1157,7 +1158,7 @@ void LibraryListActivity::buildGrid(UiScreen& screen) {
     gridCacheValid =
         renderer.copyRegionToBuffer(area.x, area.y, area.width, area.height, gridCache.get(), GRID_CACHE_BYTES);
   const int selected = selectedEntry() - first;
-  if (buttonCursorVisible && selected >= 0 && selected < std::min(9, count - first)) {
+  if (buttonCursorVisible && selected >= 0 && selected < std::min(pageSize, count - first)) {
     const auto card = cardFor(selected);
     screen.target().stroke(card.inset(fui::Insets{3, 3, 3, 3}), fui::Paint::solid(fui::Color::White), 8);
     screen.target().stroke(card.inset(fui::Insets{2, 2, 2, 2}), ink, 5);

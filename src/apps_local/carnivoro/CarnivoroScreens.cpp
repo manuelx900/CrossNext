@@ -165,7 +165,8 @@ void analysis(fui::DrawTarget& t, Geometry& g, fui::Rect band, const carnivoro::
        guilt == carnivoro::GuiltNote::Innocent ? tr(STR_CAR_INNOCENT_NOTE) : tr(STR_CAR_SUSPECT_SHORT), 3);
   hit(g, mark, CycleGuilt, suspect);
 }
-int statementHeight(fui::DrawTarget& t, const carnivoro::Case& c, Model& m, int width, int suspect, bool reveal) {
+int statementHeight(fui::DrawTarget& t, const carnivoro::Case& c, Model& m, int width, int suspect, bool reveal,
+                    bool compact = false) {
   statement(c, suspect, m.formatted, sizeof(m.formatted));
   fui::TextStyle style;
   style.font = 4;
@@ -173,15 +174,17 @@ int statementHeight(fui::DrawTarget& t, const carnivoro::Case& c, Model& m, int 
   int lines = 0;
   fui::layoutText(t, fui::makeRect(0, 0, width - 140, 1000), m.formatted, style,
                   [&](const char*, fui::Rect) { ++lines; });
-  return std::max(104, 40 + lines * t.lineHeight(4) + 8) + (reveal ? 34 : 42);
+  return std::max(compact ? 88 : 104, (compact ? 32 : 40) + lines * t.lineHeight(4) + (compact ? 4 : 8)) +
+         (reveal ? 34 : 42);
 }
-int statementCapacity(fui::DrawTarget& t, const carnivoro::Case& c, Model& m, int width, int height, bool reveal) {
+int statementCapacity(fui::DrawTarget& t, const carnivoro::Case& c, Model& m, int width, int height, bool reveal,
+                      bool compact = false) {
   for (int capacity = 3; capacity > 1; --capacity) {
     bool fits = true;
     for (int first = 0; first < c.count; first += capacity) {
       int required = 0;
       for (int i = first; i < std::min(first + capacity, int(c.count)); ++i)
-        required += statementHeight(t, c, m, width, i, reveal) + (i == first ? 0 : 8);
+        required += statementHeight(t, c, m, width, i, reveal, compact) + (i == first ? 0 : 8);
       if (required > height) fits = false;
     }
     if (fits) return capacity;
@@ -229,19 +232,19 @@ void overview(fui::DrawTarget& t, Geometry& g, fui::Rect box, const carnivoro::C
   }
 }
 void statementCard(fui::DrawTarget& t, Geometry& g, Model& m, const carnivoro::Case& c, fui::Rect box, int suspect,
-                   bool reveal) {
+                   bool reveal, bool compact = false) {
   const auto& state = *m.state;
   t.stroke(box, black, 2);
   const int bodyH = box.height - (reveal ? 34 : 42), side = std::min(80, std::max(32, bodyH - 24));
   portrait(t, fui::makeRect(box.x + 6 + (116 - side) / 2, box.y + 4, side, side), suspect);
   const int x = box.x + 130, width = box.right() - x - 10;
-  text(t, fui::makeRect(x, box.y + 2, width - 66, 34), animalName(suspect), 1);
+  text(t, fui::makeRect(x, box.y + 2, width - 66, compact ? 28 : 34), animalName(suspect), compact ? 0 : 1);
   static constexpr int heights[] = {180, 165, 195, 172, 205, 188, 198};
   std::snprintf(m.formatted, sizeof(m.formatted), "%d cm", heights[suspect]);
   text(t, fui::makeRect(box.right() - 66, box.y + 5, 58, 21), m.formatted, 3, 1, fui::TextAlign::Right);
   text(t, fui::makeRect(box.x + 3, box.y + bodyH - 22, 120, 22), diet(suspect), 3, 1, fui::TextAlign::Center);
   statement(c, suspect, m.formatted, sizeof(m.formatted));
-  text(t, fui::makeRect(x, box.y + 40, width, bodyH - 40), m.formatted, 4, 6);
+  text(t, fui::makeRect(x, box.y + (compact ? 32 : 40), width, bodyH - (compact ? 32 : 40)), m.formatted, 4, 6);
   if (reveal) {
     const auto label = fui::makeRect(x, box.bottom() - 30, std::min(116, width), 26);
     t.stroke(label, black, 2);
@@ -504,9 +507,9 @@ void draw(fui::DrawTarget& t, const fui::DeviceContext& device, Model& m, Geomet
   }
   if (m.view == View::Statements || m.view == View::Solution) {
     const int footer = reveal ? (explainSolution ? 224 : 160) : 124;
-    if (!wide)
-      g.suspectCapacity =
-          statementCapacity(t, *c, m, content.width, content.height - footer - (explainSolution ? 10 : 20), reveal);
+    g.suspectCapacity =
+        statementCapacity(t, *c, m, content.width - (wide ? 244 : 0),
+                          content.height - (wide ? 0 : footer + (explainSolution ? 10 : 20)), reveal, wide);
     if (m.openSuspect >= 0) {
       m.page = m.openSuspect / g.suspectCapacity;
       m.openSuspect = -1;
@@ -698,7 +701,7 @@ void draw(fui::DrawTarget& t, const fui::DeviceContext& device, Model& m, Geomet
     int required = 8 * (capacity - 1);
     for (int n = 0; n < capacity; ++n) {
       const int id = m.page * capacity + n;
-      required += id < c->count ? statementHeight(t, *c, m, cardWidth, id, reveal) : (reveal ? 138 : 146);
+      required += id < c->count ? statementHeight(t, *c, m, cardWidth, id, reveal, wide) : (reveal ? 138 : 146);
     }
     const int padding =
         wide ? 0 : std::max(0, (controls.y - content.y - (explainSolution ? 10 : 20) - required) / capacity);
@@ -706,8 +709,8 @@ void draw(fui::DrawTarget& t, const fui::DeviceContext& device, Model& m, Geomet
     for (int n = 0; n < capacity; ++n) {
       const int id = m.page * capacity + n;
       if (id >= c->count) break;
-      const int height = statementHeight(t, *c, m, cardWidth, id, reveal) + padding;
-      statementCard(t, g, m, *c, fui::makeRect(content.x, y, cardWidth, height), id, reveal);
+      const int height = statementHeight(t, *c, m, cardWidth, id, reveal, wide) + padding;
+      statementCard(t, g, m, *c, fui::makeRect(content.x, y, cardWidth, height), id, reveal, wide);
       y += height + 8;
     }
     if (explainSolution) {

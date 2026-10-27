@@ -147,19 +147,20 @@ void build(toybox::Screen& s, const Model& m, Work& w) {
     const auto right = wide ? fui::makeRect(left.right() + 18, b.y, b.right() - left.right() - 18, b.height)
                             : fui::makeRect(b.x, left.y + artH + 98, b.width, b.bottom() - left.y - artH - 98);
     const int row = std::min(66, (int(right.height) - 72) / 3) - 4;
+    const int groupTop = wide ? gamepanel::centeredBlock(right, 3 * row + 20 + 16 + 62).y : right.y;
     const char* labels[] = {state.choices ? tr(STR_INTERCEPT_CONTINUE) : tr(STR_WORDLE_PLAY), tr(STR_INTERCEPT_NEW),
                             tr(STR_ABOUT)};
     const fui::ActionId ids[] = {Play, New, About};
     const gamepanel::Mark marks[] = {gamepanel::Mark::Play, gamepanel::Mark::Restart, gamepanel::Mark::Help};
     for (int n = 0; n < 3; ++n) {
-      const auto box = fui::makeRect(right.x, right.y + n * (row + 10), right.width, row);
+      const auto box = fui::makeRect(right.x, groupTop + n * (row + 10), right.width, row);
       if (n == 2)
         dashboard::action(s, box, labels[n], ids[n], &extra_information_32, n == m.selected);
       else
         menu(s, box, labels[n], ids[n], n == m.selected, marks[n]);
     }
-    guided(s, fui::makeRect(right.x + 8, right.bottom() - 62, right.width - 16, 62), tr(STR_REDESIGN_INTERCEPT_TAGLINE),
-           3, fui::TextAlign::Center, 4);
+    guided(s, fui::makeRect(right.x + 8, wide ? groupTop + 3 * row + 36 : right.bottom() - 62, right.width - 16, 62),
+           tr(STR_REDESIGN_INTERCEPT_TAGLINE), 3, fui::TextAlign::Center, 4);
     return;
   }
   const auto chapter = fui::makeRect(b.x, b.y, b.width, 42);

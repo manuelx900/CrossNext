@@ -1,6 +1,9 @@
 #pragma once
+#include <atomic>
+
 #include "../../activities/Activity.h"
 #include "../ui/SectionNavigation.h"
+#include "PomodoroInput.h"
 #include "PomodoroScreens.h"
 #include "PomodoroStore.h"
 class PomodoroActivity final : public Activity {
@@ -17,6 +20,9 @@ class PomodoroActivity final : public Activity {
 
  private:
   sectionnav::Input navigation;
+  pomodoro::PendingTap pendingTap;
+  uint32_t viewRevision = 1;
+  std::atomic<uint32_t> paintedRevision{0};
   int stagePage = 0;
   void save();
   void pause();

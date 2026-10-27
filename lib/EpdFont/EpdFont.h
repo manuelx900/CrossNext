@@ -12,9 +12,9 @@ class EpdFont {
 
   const EpdGlyph* getGlyph(uint32_t cp) const;
 
-  /// Like getGlyph(), but supplies metrics for missing solid block symbols.
-  /// If the returned pointer is &solidFallback, draw a filled rectangle;
-  /// it has no bitmap. The caller owns the fallback storage.
+  /// Like getGlyph(), but supplies metrics for missing synthetic symbols.
+  /// When the returned pointer is &solidFallback, paint syntheticGlyph::ink();
+  /// it has no font bitmap. The caller owns the fallback storage.
   const EpdGlyph* getGlyphMetrics(uint32_t cp, EpdGlyph& solidFallback) const;
 
   /// Returns true if this font covers `cp`: either via its in-RAM interval

@@ -13,6 +13,7 @@
 #include "../../components/icons/transfer.h"
 #include "../ui/PixelText.h"
 #include "../ui/ToyboxIcons.h"
+#include "../ui/ToyboxTokens.h"
 
 namespace homeui {
 namespace {
@@ -22,12 +23,14 @@ constexpr auto black = fui::Paint::solid(fui::Color::Black);
 constexpr auto white = fui::Paint::solid(fui::Color::White);
 
 void text(fui::DrawTarget& target, fui::Rect rect, const char* value, fui::FontId font, int lines = 1,
-          fui::Color color = fui::Color::Black, fui::TextAlign align = fui::TextAlign::Left) {
+          fui::Color color = fui::Color::Black, fui::TextAlign align = fui::TextAlign::Left, bool compact = false) {
   fui::TextStyle style;
   style.font = font;
   style.color = color;
   style.align = align;
   style.maxLines = static_cast<uint8_t>(std::max(1, std::min(lines, int(rect.height / target.lineHeight(font)))));
+  if (compact && style.maxLines == 1 && rect.height < target.lineHeight(font))
+    if (const auto* cut = toybox::cutForLineHeight(target.lineHeight(font))) rect = toybox::inkCentred(rect, *cut);
   target.text(rect, value, style);
 }
 
@@ -118,12 +121,12 @@ Layout layout(const fui::DeviceContext& device, int count, Style style) {
   }
   const auto inner = out.card.inset(fui::Insets{12, 12, 12, 12});
   if (wide) {
-    const int coverHeight = std::min(176, inner.height / 2);
+    const int coverHeight = std::max(64, int(inner.height) - 110);
     const int coverWidth = coverHeight * 2 / 3;
-    out.badge = fui::makeRect(inner.x, inner.y, inner.width, 28);
+    out.badge = fui::makeRect(inner.x, inner.y, inner.width, 44);
     out.cover =
         fui::makeRect(inner.x + (inner.width - coverWidth) / 2, out.badge.bottom() + 10, coverWidth, coverHeight);
-    out.author = fui::makeRect(inner.x, inner.bottom() - 32, inner.width, 32);
+    out.author = fui::makeRect(inner.x, inner.bottom() - 24, inner.width, 24);
     out.title = fui::makeRect(inner.x, out.cover.bottom() + 6, inner.width, out.author.y - out.cover.bottom() - 10);
   } else {
     const int coverWidth = std::min(int(inner.width * 35 / 100), inner.height * 2 / 3);
@@ -137,8 +140,10 @@ Layout layout(const fui::DeviceContext& device, int count, Style style) {
   out.next = fui::makeRect(out.badge.right() - 44, out.badge.y, 44, 44);
   out.badge.width -= 100;
   out.badge.height = 44;
-  out.title.y += 16;
-  out.title.height -= 16;
+  if (!wide) {
+    out.title.y += 16;
+    out.title.height -= 16;
+  }
   if (style != Style::Framed) {
     if (!wide) {
       const int menuHeight = 100;
@@ -153,8 +158,10 @@ Layout layout(const fui::DeviceContext& device, int count, Style style) {
     out.badge = fui::makeRect(card.x, card.y, card.width - 100, 44);
     out.previous = fui::makeRect(card.right() - 92, card.y, 44, 44);
     out.next = fui::makeRect(card.right() - 44, card.y, 44, 44);
-    const int extraTop = wide ? 12 : 28;
-    const int top = 52 + extraTop, footer = 134;
+    const int extraTop = wide ? 0 : 28;
+    const int footer = wide ? 92 : 134;
+    const int top = wide ? extraTop : 52 + extraTop;
+    if (wide) out.badge = out.previous = out.next = {};
     const int artHeight = std::max(64, int(card.height) - top - footer);
     out.coverRegion = fui::makeRect(card.x, card.y + top, card.width, artHeight);
     const int coverWidth = std::min(card.width * 68 / 100, artHeight * 2 / 3);
@@ -167,9 +174,9 @@ Layout layout(const fui::DeviceContext& device, int count, Style style) {
     out.sides[2] = fui::makeRect(out.cover.right() - 8, out.cover.y + artHeight / 20, nearW, artHeight * 9 / 10);
     out.sides[3] = fui::makeRect(std::min(int(card.right() - farW), int(out.cover.right() + nearW - 16)),
                                  out.cover.y + artHeight / 8, farW, artHeight * 3 / 4);
-    out.title = fui::makeRect(card.x + 4, out.cover.bottom() + 18, card.width - 8, 48);
-    out.author = fui::makeRect(card.x + 4, out.title.bottom() + 2, card.width - 8, 28);
-    out.progress = fui::makeRect(card.x + 8, card.bottom() - 26, card.width - 16, 24);
+    out.title = fui::makeRect(card.x + 4, out.cover.bottom() + (wide ? 20 : 18), card.width - 8, wide ? 22 : 48);
+    out.author = fui::makeRect(card.x + 4, out.title.bottom() + 2, card.width - 8, wide ? 18 : 28);
+    out.progress = fui::makeRect(card.x + 8, card.bottom() - (wide ? 22 : 26), card.width - 16, 24);
     out.bookProgress = fui::makeRect(out.cover.right() - std::min(58, int(out.cover.width) - 8) - 4, out.cover.y + 4,
                                      std::min(58, int(out.cover.width) - 8), 28);
   } else {
@@ -272,23 +279,31 @@ void draw(fui::DrawTarget& target, const Model& model, const Layout& geometry) {
   }
   if (model.style != Style::Carousel) target.stroke(geometry.card, black, kBorder);
   if (model.hasBook) {
-    target.fill(geometry.badge, black);
-    text(target, geometry.badge.inset(fui::Insets{0, 7, 0, 7}), model.continueLabel, 3, 1, fui::Color::White);
-    for (int n = 0; n < 2; ++n) {
-      const auto box = n ? geometry.next : geometry.previous;
-      const auto ink = (n ? model.canNext : model.canPrevious) ? black : fui::Paint::solid(fui::Color::LightGray);
-      target.stroke(box, ink, 3);
-      const int cx = box.x + box.width / 2, cy = box.y + box.height / 2;
-      const int direction = n ? 1 : -1;
-      target.line({int16_t(cx - direction * 5), int16_t(cy - 10)}, {int16_t(cx + direction * 5), int16_t(cy)}, 4, ink);
-      target.line({int16_t(cx + direction * 5), int16_t(cy)}, {int16_t(cx - direction * 5), int16_t(cy + 10)}, 4, ink);
+    if (!geometry.badge.empty()) {
+      target.fill(geometry.badge, black);
+      text(target, geometry.badge.inset(fui::Insets{0, 7, 0, 7}), model.continueLabel, 3, 1, fui::Color::White);
+      for (int n = 0; n < 2; ++n) {
+        const auto box = n ? geometry.next : geometry.previous;
+        const auto ink = (n ? model.canNext : model.canPrevious) ? black : fui::Paint::solid(fui::Color::LightGray);
+        target.stroke(box, ink, 3);
+        const int cx = box.x + box.width / 2, cy = box.y + box.height / 2;
+        const int direction = n ? 1 : -1;
+        target.line({int16_t(cx - direction * 5), int16_t(cy - 10)}, {int16_t(cx + direction * 5), int16_t(cy)}, 4,
+                    ink);
+        target.line({int16_t(cx + direction * 5), int16_t(cy)}, {int16_t(cx - direction * 5), int16_t(cy + 10)}, 4,
+                    ink);
+      }
     }
     const bool hasAuthor = model.author[std::strspn(model.author, " \t\r\n")] != '\0';
     auto title = geometry.title;
     if (!hasAuthor) title.height = geometry.author.bottom() - title.y;
-    text(target, title, model.title, model.style == Style::Carousel ? kCarouselTitle : kBody,
+    const bool wide = geometry.menu.x > geometry.card.x;
+    text(target, title, model.title,
+         wide                             ? kSmall
+         : model.style == Style::Carousel ? kCarouselTitle
+                                          : kBody,
          hasAuthor ? (model.style == Style::Carousel ? 2 : 3) : 6, fui::Color::Black,
-         model.style == Style::Framed ? fui::TextAlign::Left : fui::TextAlign::Center);
+         model.style == Style::Framed && !wide ? fui::TextAlign::Left : fui::TextAlign::Center, wide);
     if (model.style != Style::Framed) {
       const int dots = std::min(10, model.recentCount), unit = 14;
       const int left = geometry.coverRegion.x + (geometry.coverRegion.width - dots * unit) / 2;
@@ -315,8 +330,8 @@ void draw(fui::DrawTarget& target, const Model& model, const Layout& geometry) {
       }
     }
     if (hasAuthor)
-      text(target, geometry.author, model.author, kSmall, 1, fui::Color::Black,
-           model.style == Style::Framed ? fui::TextAlign::Left : fui::TextAlign::Center);
+      text(target, geometry.author, model.author, wide ? fui::FontId{3} : kSmall, 1, fui::Color::Black,
+           model.style == Style::Framed && !wide ? fui::TextAlign::Left : fui::TextAlign::Center, wide);
     target.stroke(geometry.cover, black, 1);
   } else {
     const auto inner = geometry.card.inset(fui::Insets{20, 20, 20, 20});

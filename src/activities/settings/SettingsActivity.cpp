@@ -861,8 +861,7 @@ void SettingsActivity::buildScreen(UiScreen& screen) {
   props.rtl =
       (I18N.getLanguage() == Language::AR || I18N.getLanguage() == Language::FA || I18N.getLanguage() == Language::HE);
   syncTabListViewport(screen, props);
-  const bool trailingPreview = !categoryHome && (selectedCategoryIndex == 1 || selectedCategoryIndex == 2);
-  pixelui::list(screen, props, categoryHome, !categoryHome, pixelui::kBorder, trailingPreview);
+  pixelui::list(screen, props, categoryHome, !categoryHome, pixelui::kBorder, true);
 }
 
 void SettingsActivity::drawChrome() {

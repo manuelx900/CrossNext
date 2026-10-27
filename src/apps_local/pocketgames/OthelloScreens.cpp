@@ -64,7 +64,8 @@ void scores(toybox::Screen& s, fui::Rect r, const pg::Othello& g, bool compact =
                   (n + 1) == human ? tr(STR_OT_YOU) : tr(STR_OT_MACHINE), 0);
     char value[8];
     std::snprintf(value, sizeof(value), "%d", pg::disks(g, n + 1));
-    dashboard::digits(s, rect(box.right() - 36, box.y + 8, 28, box.height - 16), value);
+    const int valueH = std::min(32, int(box.height) - 16);
+    dashboard::digits(s, rect(box.right() - 36, box.y + (box.height - valueH) / 2, 28, valueH), value);
   }
 }
 struct Layout {
@@ -80,11 +81,12 @@ Layout layout(const fui::DeviceContext& d, bool review = false) {
     const int cell = std::min((w * 60 / 100) / 8, (bottom - top) / 8);
     l.board = rect(x, top, cell * 8, cell * 8);
     const int right = l.board.right() + 18, rw = safe.right() - 12 - right;
-    l.score = rect(right, top, rw, 64);
-    l.status = rect(right, top + 74, rw, 48);
-    l.prompt = rect(right, top + 132, rw, 72);
-    l.menu = rect(right, bottom - 58, rw, 58);
-    l.restart = rect(right, bottom - 126, rw, 58);
+    const int groupY = top + (bottom - top - 300) / 2;
+    l.prompt = rect(right, groupY, rw, 60);
+    l.score = rect(right, groupY + 72, rw, 60);
+    l.status = rect(right, groupY + 140, rw, 44);
+    l.restart = rect(right, groupY + 192, rw, 50);
+    l.menu = rect(right, groupY + 250, rw, 50);
   } else {
     l.score = rect(x, top, w, 64);
     l.status = rect(x, top + 74, w, 34);
@@ -111,7 +113,7 @@ void board(toybox::Screen& s, const Model& m) {
   const auto& g = m.state->othello;
   const bool review = m.view == View::Review;
   const auto l = layout(s.device(), review);
-  scores(s, l.score, g, false, m.humanColour);
+  scores(s, l.score, g, s.device().width > s.device().height, m.humanColour);
   s.target().fill(l.status, dashboard::ink);
   pixelui::text(s.target(), l.status, m.botSquare >= 0 ? tr(STR_OT_PLACING) : status(g, m.humanColour), 1,
                 fui::Color::White, fui::TextAlign::Center);
@@ -192,21 +194,24 @@ void result(toybox::Screen& s, const Model& m) {
   const bool won = pg::disks(g, m.humanColour) > pg::disks(g, 3 - m.humanColour), draw = black == white;
   const auto left = wide ? rect(b.x, b.y, b.width * 45 / 100, b.height) : b;
   const int artH = wide ? 82 : 100;
+  const int leftTop = left.y + (wide ? (left.height - 244) / 2 : 0);
   if (draw)
-    equal(s, rect(left.x, left.y + 12, left.width, artH));
+    equal(s, rect(left.x, leftTop + 12, left.width, artH));
   else
-    othelloart::draw(s, rect(left.x, left.y + 12, left.width, artH), won ? othelloart::Trophy : othelloart::Flag);
-  title(s, rect(left.x, left.y + artH + 28, left.width, 60),
+    othelloart::draw(s, rect(left.x, leftTop + 12, left.width, artH), won ? othelloart::Trophy : othelloart::Flag);
+  title(s, rect(left.x, leftTop + artH + 28, left.width, 60),
         draw  ? tr(STR_UI_DRAW_7AAB1B)
         : won ? tr(STR_OT_WON)
               : tr(STR_OT_MACHINE_WINS));
-  text(s, rect(left.x + 6, left.y + artH + 96, left.width - 12, 54),
+  text(s, rect(left.x + 6, leftTop + artH + 96, left.width - 12, 54),
        draw  ? tr(STR_OT_DRAW_COPY)
        : won ? tr(STR_OT_WIN_COPY)
              : tr(STR_OT_LOSS_COPY),
        4, 2);
-  const int x = wide ? left.right() + 18 : b.x, w = wide ? b.right() - x : b.width, y = wide ? b.y : b.y + 260;
-  const auto panel = rect(x, y, w, wide ? b.height - 218 : 180);
+  const int row = wide ? 48 : 56, controlsH = 3 * row + 20, groupH = std::min(384, int(b.height));
+  const int x = wide ? left.right() + 18 : b.x, w = wide ? b.right() - x : b.width,
+            y = wide ? b.y + (b.height - groupH) / 2 : b.y + 260;
+  const auto panel = rect(x, y, w, wide ? groupH - controlsH - 80 : 180);
   dashboard::frame(s, panel);
   const auto heading = rect(x + 6, y + 6, w - 12, 44);
   if (!won && !draw) s.target().fill(heading, dashboard::ink);
@@ -234,14 +239,14 @@ void result(toybox::Screen& s, const Model& m) {
     s.target().stroke(badge.inset({3, 3, 3, 3}), dashboard::paper, 1);
     pixelui::text(s.target(), badge, tr(STR_OT_VICTORY), 1, fui::Color::White, fui::TextAlign::Center);
   } else {
-    text(s, rect(x, panel.bottom() + 10, w, 38),
+    text(s, rect(x, panel.bottom() + 10, w, wide ? 56 : 38),
          m.saveFailed ? tr(STR_UI_COULD_NOT_SAVE_GAME_615E7A)
          : draw       ? tr(STR_OT_NO_WINNER)
          : won        ? tr(STR_OT_VICTORY)
                       : tr(STR_OT_TRY_AGAIN),
          4, 2);
   }
-  const int row = wide ? 54 : 56, first = b.bottom() - 3 * row - 20;
+  const int first = wide ? y + groupH - controlsH : b.bottom() - controlsH;
   const char* labels[] = {tr(STR_UI_NEW_GAME_F6F041), tr(STR_OT_VIEW_BOARD), tr(STR_UI_BACK_TO_MENU_398BBB)};
   static constexpr fui::ActionId actions[] = {New, ViewBoard, Menu};
   for (int n = 0; n < 3; ++n)

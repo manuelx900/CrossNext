@@ -21,6 +21,7 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#include "../../lib/EpdFont/builtinFonts/notosans_8_regular.h"
 #include "../../lib/EpdFont/builtinFonts/ubuntu_10_regular.h"
 #include "../../src/apps_local/ui/fonts/reading_serif_14.h"
 #include "../../src/apps_local/ui/fonts/toybox_10.h"
@@ -137,7 +138,7 @@ struct Canvas {
   int width, height;
   std::vector<uint8_t> pixels;
   FontBridge tiny{toybox_10}, small{toybox_14}, body{toybox_20}, title{toybox_30}, library{ubuntu_10_regular},
-      prose{ui_prose_14}, reading{reading_serif_14};
+      caption{notosans_8_regular}, prose{ui_prose_14}, reading{reading_serif_14};
   RecordingTarget target;
   fui::DeviceContext device;
   fui::InputSnapshot input{};
@@ -348,16 +349,14 @@ int main(int argc, char** argv) {
         m.rows = rows;
         m.count = m.totalDecks = 3;
         m.today = 37;
+        c.target.setFont(4, c.caption.font);
         flashui::library(c.screen, m);
-        for (const auto& l : c.target.labels)
-          if (l.value == tr(STR_FLASH_FILES_AT))
-            for (size_t n = 0; n < c.interactions.count(); ++n)
-              if (c.interactions.data()[n].action == flashui::Help)
-                CHECK(l.box.y >= c.interactions.data()[n].rect.bottom() + 8);
+        for (const auto& l : c.target.labels) CHECK(l.value.find("/flashcards") == std::string::npos);
         saveScreen(c, "library");
       }
       {
         Canvas c(w, h);
+        c.target.setFont(4, c.caption.font);
         flashui::library(c.screen, {});
         saveScreen(c, "empty");
       }
@@ -370,6 +369,7 @@ int main(int argc, char** argv) {
         m.pages = 3;
         m.page = 1;
         m.today = 37;
+        c.target.setFont(4, c.caption.font);
         flashui::library(c.screen, m);
         saveScreen(c, "library-paged");
       }

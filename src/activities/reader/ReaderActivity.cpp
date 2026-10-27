@@ -83,6 +83,11 @@ void ReaderActivity::onEnter() {
     if (!handleLoadFailure()) finish();
     return;
   }
+  const auto document = KOReaderDocumentId::calculate(bookPath);
+  bool completed = false, manuallyUnfinished = false;
+  if (readingstats::validDocument(document.c_str()) &&
+      readingstats::completionStatus(document.c_str(), completed, manuallyUnfinished))
+    bookFinished.store(completed, std::memory_order_release);
 
   requestUpdate();
 }
@@ -141,10 +146,13 @@ bool ReaderActivity::flushReaderSession() {
       });
   bool saved = true;
   if (validDocument) {
-    if (readingstats::enabledFormat(bookPath.c_str(), SETTINGS.readingFormats))
+    if (readingstats::enabledFormat(bookPath.c_str(), SETTINGS.readingFormats)) {
+      bool completed = isBookFinished();
       saved = readingstats::recordSession(document.c_str(), getBookTitle().c_str(), getBookAuthor().c_str(),
                                           readerSession.startTime(), readerSession.durationSeconds(),
-                                          readerSession.pagesRead(), readerSession.endProgressBp());
+                                          readerSession.pagesRead(), readerSession.endProgressBp(), &completed);
+      if (saved) bookFinished.store(completed, std::memory_order_release);
+    }
     if (!pluginevents::anySubscriber(pluginevents::Event::ReaderSession)) {
       readerSession.reset();
       return saved;
@@ -184,14 +192,16 @@ void ReaderActivity::showFinishBookError(const char* message) {
 
 void ReaderActivity::requestFinishBook() {
   // The activity stack owns the modal; cancel leaves the reading position untouched.
-  auto dialog = makeUniqueNoThrow<ConfirmationActivity>(renderer, mappedInput, tr(STR_READER_FINISH_BOOK),
-                                                        tr(STR_READER_FINISH_CONFIRM));
+  const bool reopen = isBookFinished() && !finishedPositionPending;
+  auto dialog = makeUniqueNoThrow<ConfirmationActivity>(
+      renderer, mappedInput, reopen ? tr(STR_READER_MARK_UNFINISHED) : tr(STR_READER_FINISH_BOOK),
+      reopen ? tr(STR_READER_UNFINISH_CONFIRM) : tr(STR_READER_FINISH_CONFIRM));
   if (!dialog) {
     LOG_ERR("READER", "OOM: finish-book confirmation");
     requestUpdate();
     return;
   }
-  startActivityForResult(std::move(dialog), [this](const ActivityResult& result) {
+  startActivityForResult(std::move(dialog), [this, reopen](const ActivityResult& result) {
     if (result.isCancelled) {
       requestUpdate();
       return;
@@ -203,17 +213,47 @@ void ReaderActivity::requestFinishBook() {
       const auto document = KOReaderDocumentId::calculate(bookPath);
       if (!now)
         error = tr(STR_READER_FINISH_CLOCK);
-      else if (!readingstats::validDocument(document.c_str()) || !flushReaderSession() ||
-               !readingstats::recordCompletion(document.c_str(), getBookTitle().c_str(), getBookAuthor().c_str(), now))
+      else if (!readingstats::validDocument(document.c_str()) || !flushReaderSession())
         error = tr(STR_READER_FINISH_FAILED);
-      else if (!saveFinishedPosition())
-        error = tr(STR_READER_FINISH_POSITION_FAILED);
+      else {
+        const bool saved = reopen ? readingstats::recordReopening(
+                                        document.c_str(), getBookTitle().c_str(), getBookAuthor().c_str(), now,
+                                        static_cast<uint16_t>(std::clamp(getProgressBasisPoints(), 0, 9999)))
+                                  : readingstats::recordCompletion(document.c_str(), getBookTitle().c_str(),
+                                                                   getBookAuthor().c_str(), now);
+        if (!saved)
+          error = tr(STR_READER_FINISH_FAILED);
+        else {
+          bookFinished.store(!reopen, std::memory_order_release);
+          finishedPositionPending = !reopen && !saveFinishedPosition();
+          if (finishedPositionPending) error = tr(STR_READER_FINISH_POSITION_FAILED);
+        }
+      }
     }
     if (error)
       showFinishBookError(error);
     else
       requestUpdate();
   });
+}
+
+void ReaderActivity::recordEndOfBook() {
+  if (!endRenderedPending.exchange(false, std::memory_order_acquire)) return;
+  RenderLock lock(*this);
+  if (!readingstats::enabledFormat(bookPath.c_str(), SETTINGS.readingFormats)) return;
+  if (!isAtEndOfBook()) {
+    endCompletionAttempted = false;
+    return;
+  }
+  if (endCompletionAttempted || isBookFinished()) return;
+  endCompletionAttempted = true;
+  const auto now = trustedtime::trustedNow();
+  const auto document = KOReaderDocumentId::calculate(bookPath);
+  if (now && readingstats::validDocument(document.c_str()) && flushReaderSession() &&
+      readingstats::recordCompletion(document.c_str(), getBookTitle().c_str(), getBookAuthor().c_str(), now))
+    bookFinished.store(true, std::memory_order_release);
+  else
+    LOG_ERR("READER", "Could not record end-of-book completion");
 }
 
 bool ReaderActivity::handleBackNavigation() {
@@ -225,6 +265,7 @@ void ReaderActivity::clearEndOfBookOptionsIfNeeded() {
   if (isAtEndOfBook() || !endOfBookOptionsReady.load(std::memory_order_acquire)) return;
 
   RenderLock lock(*this);
+  endCompletionAttempted = false;
   endOfBookOptionsReady.store(false, std::memory_order_release);
   endOfBookOptions.reset();
 }
@@ -238,11 +279,7 @@ bool ReaderActivity::handleEndOfBookMenu(const bool suppressConfirmRelease) {
     return false;
   }
 
-  std::string openPath;
-  switch (endOfBookOptions->handleMenuInput(mappedInput, &openPath)) {
-    case EndOfBookOptions::Action::OpenBook:
-      activityManager.goToReader(openPath);
-      return true;
+  switch (endOfBookOptions->handleMenuInput(mappedInput)) {
     case EndOfBookOptions::Action::GoHome:
       onGoHome();
       return true;
@@ -277,6 +314,7 @@ bool ReaderActivity::handleEndOfBookPageTurn(const bool prevTriggered, const boo
 
 void ReaderActivity::loop() {
   rememberBookOnceRendered();
+  if (pageRendered.load(std::memory_order_acquire)) recordEndOfBook();
   clearEndOfBookOptionsIfNeeded();
   if (handleEndOfBookMenu()) return;
   if (handleFormatInput()) return;
@@ -309,16 +347,17 @@ void ReaderActivity::render(RenderLock&&) {
     }
     renderer.clearScreen();
     if (endOfBookOptions) {
-      endOfBookOptions->loadOnce(bookPath);
+      endOfBookOptions->loadOnce();
       // Release-publish AFTER loadOnce() so the main task's acquire load can't
-      // observe an object whose names/selector are still being populated.
+      // observe an object whose screen and input handlers are still being set up.
       endOfBookOptionsReady.store(true, std::memory_order_release);
-      endOfBookOptions->render(renderer, mappedInput);
+      endOfBookOptions->render();
     }
     renderer.displayBuffer();
     onEndOfBookRendered();
     markPageRendered();
     readerSession.onRenderComplete(millis(), trustedtime::trustedNow(), getProgressBasisPoints());
+    endRenderedPending.store(true, std::memory_order_release);
     return;
   }
 

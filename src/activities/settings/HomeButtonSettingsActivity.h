@@ -9,7 +9,7 @@ class HomeButtonSettingsActivity final : public UiListActivity {
       : UiListActivity("HomeButtonSettings", renderer, input, false, true) {}
 
  private:
-  enum class Page : uint8_t { Gestures, Actions, Apps };
+  enum class Page : uint8_t { Gestures, Actions, Apps, Timing };
   static constexpr int GESTURE_COUNT = 3;
   static constexpr int ACTION_COUNT = int(HomeButtonAction::OpenShortcut) + 1;
   freeink::ui::ListItem rows[ACTION_COUNT]{};

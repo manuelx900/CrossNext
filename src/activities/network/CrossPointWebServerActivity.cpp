@@ -16,6 +16,7 @@
 #include "SilentRestart.h"
 #include "WifiSelectionActivity.h"
 #include "activities/network/CalibreConnectActivity.h"
+#include "apps_local/ui/NetworkLandscape.h"
 #include "apps_local/ui/PixelMenuTheme.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
@@ -509,7 +510,31 @@ void CrossPointWebServerActivity::renderServerRunning() const {
                     connectedSSID.c_str());
 
   if (!isApMode) {
-    renderWifiIndicator(metrics.topPadding + metrics.headerHeight);
+    renderWifiIndicator(pixelui::geometry(toybox::makeTarget(renderer).deviceContext()).header.bottom() + 4);
+  }
+
+  if (pageWidth > renderer.getScreenHeight()) {
+    auto target = toybox::makeTarget(renderer);
+    pixelui::bindFonts(target, renderer);
+    const auto layout = networkui::transferLayout(target.deviceContext(), metrics.tabBarHeight, isApMode);
+    const std::string hostnameUrl = std::string("http://") + devicehost::mdnsName() + ".local/";
+    const std::string ipUrl = std::string("http://") + connectedIP + "/";
+    networkui::transferText(target, layout, isApMode, connectedSSID.c_str(),
+                            isApMode ? hostnameUrl.c_str() : ipUrl.c_str(),
+                            isApMode ? ipUrl.c_str() : hostnameUrl.c_str());
+    const auto drawQr = [&](freeink::ui::Rect r, const std::string& value) {
+      QrUtils::drawQrCode(renderer, Rect{r.x, r.y, r.width, r.height}, value);
+    };
+    if (isApMode) {
+      const std::string wifiConfig = std::string("WIFI:T:nopass;S:") + connectedSSID + ";;";
+      drawQr(layout.firstQr, wifiConfig);
+      drawQr(layout.secondQr, hostnameUrl);
+    } else {
+      drawQr(layout.firstQr, ipUrl);
+    }
+    const auto labels = mappedInput.mapLabels(tr(STR_EXIT), "", "", "");
+    GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);
+    return;
   }
 
   int startY = metrics.topPadding + metrics.headerHeight + metrics.tabBarHeight + metrics.verticalSpacing * 2;

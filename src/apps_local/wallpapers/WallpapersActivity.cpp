@@ -1107,18 +1107,8 @@ bool WallpapersActivity::deleteWallpaper() {
   return true;
 }
 
-// The wallpaper at 1:1, and nothing else. No chrome, no button hints, no border:
-// what is on the panel here is what the sleep screen puts there, which is the
-// whole question Mario asked ("a way to preview the wallpaper without turning
-// off the device"). Anything drawn over it would be answering a different one.
-//
-// The placement arithmetic is SleepActivity's non-oversize branch, reproduced
-// rather than called: calculateBitmapPlacement is file-local to SleepActivity
-// (upstream's file, not ours to widen). It is the identity for every wallpaper
-// this app ships or produces -- kWallpaperFileBytes pins them all at 480x800,
-// exactly the panel -- so the two agree on every file that can be here. A
-// stray hand-copied BMP of another size centres instead of cropping; it is
-// still the picture, and it is not a file any path in this app creates.
+// A full-screen preview without chrome. The complete image fits the oriented
+// display without stretching, cropping or upscaling smaller source images.
 void WallpapersActivity::renderPreview() {
   const int pageWidth = renderer.getScreenWidth();
   const int pageHeight = renderer.getScreenHeight();
@@ -1140,18 +1130,17 @@ void WallpapersActivity::renderPreview() {
     if (bitmap.parseHeaders() == BmpReaderError::Ok) {
       const int w = bitmap.getWidth();
       const int h = bitmap.getHeight();
-      const int x = w <= pageWidth ? (pageWidth - w) / 2 : 0;
-      const int y = h <= pageHeight ? (pageHeight - h) / 2 : 0;
-      renderer.drawBitmap(bitmap, x, y, pageWidth, pageHeight, 0.0f, 0.0f);
+      const auto box = wallpapersui::previewRect(pageWidth, pageHeight, w, h);
+      drawn = !box.empty() && renderer.drawBitmap(bitmap, box.x, box.y, box.width, box.height, 0.0f, 0.0f);
       // The cover filter, because the sheet PROMISES "exactly as the sleep
       // screen draws it" and renderBitmapSleepScreen inverts here
       // (SleepActivity.cpp:631). The setting is user-reachable, and without
       // this the one user who chose it is shown the negative of their
       // wallpaper and told it is the real thing.
-      if (SETTINGS.sleepScreenCoverFilter == CrossPointSettings::SLEEP_SCREEN_COVER_FILTER::INVERTED_BLACK_AND_WHITE) {
+      if (drawn &&
+          SETTINGS.sleepScreenCoverFilter == CrossPointSettings::SLEEP_SCREEN_COVER_FILTER::INVERTED_BLACK_AND_WHITE) {
         renderer.invertScreen();
       }
-      drawn = true;
     }
     file.close();
   }
@@ -1169,6 +1158,7 @@ void WallpapersActivity::renderPreview() {
   toybox::Frame frame(target, device, noInput, interactions_, nullptr, toybox::headerStatus(renderer));
   toybox::Screen surface(frame, toybox::themeTokens());
   if (!drawn) {
+    renderer.clearScreen();
     LOG_ERR("WALL", "preview: cannot draw %s", path.c_str());
     if (view_ == View::Preview) {
       wallpapersui::NoticeModel model;
@@ -1197,6 +1187,11 @@ void WallpapersActivity::renderPreview() {
   painted_ = true;
 }
 
+bool WallpapersActivity::gridCacheMatches(const wallpapersui::GridGeom& geom) const {
+  return cachedPage_ == page_ && cachedPerPage_ == geom.perPage && cachedCellW_ == geom.cellW &&
+         cachedCellH_ == geom.cellH && !thumbs_.empty();
+}
+
 void WallpapersActivity::loop() {
   if (job_ != Job::None) {
     if (mappedInput.wasReleased(MappedInputManager::Button::Back)) {
@@ -1219,9 +1214,14 @@ void WallpapersActivity::loop() {
   }
   if (view_ == View::Grid) {
     const auto geom = wallpapersui::gridGeom(toybox::makeTarget(renderer).deviceContext(), selecting_);
-    if (cachedPage_ != page_ || cachedPerPage_ != geom.perPage || cachedCellW_ != geom.cellW ||
-        cachedCellH_ != geom.cellH || thumbs_.empty()) {
+    if (!gridCacheMatches(geom)) {
       RenderLock lock;
+      if (cachedPerPage_ > 0 && cachedPerPage_ != geom.perPage) {
+        page_ =
+            wallpapersui::pageAfterResize(cachedPage_, cachedPerPage_, geom.perPage, static_cast<int>(names_.size()));
+        interactionsReady_ = false;
+      }
+      clampPage();
       ensureThumbsForPage();
       requestUpdate();
       return;
@@ -1515,6 +1515,12 @@ void WallpapersActivity::loop() {
 
 void WallpapersActivity::render(RenderLock&&) {
   const uint32_t tPaint = millis();
+  if (view_ == View::Grid &&
+      !gridCacheMatches(wallpapersui::gridGeom(toybox::makeTarget(renderer).deviceContext(), selecting_))) {
+    // The loop owns thumbnail decoding and remaps the old page before clamping.
+    interactionsReady_ = false;
+    return;
+  }
   clampPage();
   // Before anything toybox: the preview draws no chrome and takes no theme.
   if (view_ == View::Preview || view_ == View::Sheet) {

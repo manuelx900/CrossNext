@@ -57,11 +57,13 @@ BoardLayout layout(const fui::DeviceContext& d, bool review = false) {
     g.grid = rect(x, top + (review ? 0 : 48), g.cell * 7, g.cell * 6);
     g.slots = rect(x, top, g.cell * 7, 42);
     const int right = g.grid.right() + 18, rw = safe.right() - 12 - right;
-    g.status = rect(right, top, rw, 80);
-    g.legend = rect(right, top + 90, rw, 48);
-    g.prompt = rect(right, top + 146, rw, 76);
-    g.menu = rect(right, bottom - 58, rw, 58);
-    g.again = rect(right, bottom - 126, rw, 58);
+    const int groupHeight = review ? 324 : 256;
+    const int groupY = top + (bottom - top - groupHeight) / 2;
+    g.prompt = rect(right, groupY, rw, 60);
+    g.legend = rect(right, groupY + 72, rw, 48);
+    g.status = rect(right, groupY + 128, rw, review ? 76 : 68);
+    g.again = rect(right, groupY + (review ? 212 : 204), rw, 50);
+    g.menu = rect(right, groupY + (review ? 274 : 204), rw, 50);
   } else {
     g.status = rect(x, top, width, review ? 80 : 54);
     const int slotTop = g.status.bottom() + 20;
@@ -259,7 +261,8 @@ void buildBoard(toybox::Screen& s, const BoardModel& m) {
     dashboard::button(s, g.menu, tr(STR_C4_BACK_RESULT), ActionReturnResult, 0, false, nullptr, 1);
   } else {
     dashboard::button(s, g.menu, tr(STR_C4_MENU), ActionDone, 0, true, nullptr, 1);
-    gamepanel::mark(s, rect(g.menu.x + g.menu.width / 2 - 92, g.menu.y + 15, 30, 30), gamepanel::Mark::Menu, true);
+    gamepanel::mark(s, rect(g.menu.x + g.menu.width / 2 - 92, g.menu.y + (g.menu.height - 30) / 2, 30, 30),
+                    gamepanel::Mark::Menu, true);
   }
 }
 void buildResult(toybox::Screen& s, const ResultModel& m) {
@@ -267,7 +270,7 @@ void buildResult(toybox::Screen& s, const ResultModel& m) {
   const bool wide = s.device().width > s.device().height;
   const bool draw = m.outcome == c4::Outcome::Draw,
              won = !draw && ((m.outcome == c4::Outcome::LightWins) == (m.seat == c4::kLight));
-  const int footer = wide ? 0 : 190, topH = wide ? 110 : 190;
+  const int footer = wide ? 0 : 226, topH = wide ? 158 : 210;
   auto upper = wide ? rect(a.x, a.y, a.width * 55 / 100, a.height) : rect(a.x, a.y, a.width, topH);
   const auto emblem = rect(upper.x, upper.y, upper.width, wide ? 58 : 88);
   if (draw)
@@ -285,7 +288,7 @@ void buildResult(toybox::Screen& s, const ResultModel& m) {
        : m.local ? tr(STR_C4_FOUR_DETAIL)
        : won     ? tr(STR_C4_WIN_DETAIL)
                  : tr(STR_C4_LOSS_DETAIL));
-  auto middle = wide ? rect(a.x, a.y + topH + 25, a.width * 55 / 100, a.height - topH - 35)
+  auto middle = wide ? rect(a.x, a.y + topH + 12, a.width * 55 / 100, a.height - topH - 24)
                      : rect(a.x, a.y + topH + 12, a.width, a.height - topH - footer - 24);
   dashboard::frame(s, middle, 4);
   if (draw) {
@@ -299,21 +302,23 @@ void buildResult(toybox::Screen& s, const ResultModel& m) {
   }
   auto controls = wide ? rect(a.x + a.width * 58 / 100, a.y, a.width * 42 / 100, a.height)
                        : rect(a.x, a.bottom() - footer, a.width, footer);
+  const int gap = 8, h = wide ? 58 : 44, groupH = 66 + 12 + 3 * h + 2 * gap;
+  const int groupTop = controls.y + (wide ? (controls.height - groupH) / 2 : 0);
   if (won && !m.local) {
     const char* labels[] = {tr(STR_C4_VICTORIES), tr(STR_C4_STREAK)};
-    dashboard::frame(s, rect(controls.x, controls.y, controls.width, 66));
+    dashboard::frame(s, rect(controls.x, groupTop, controls.width, 66));
     for (int n = 0; n < 2; ++n) {
       const int x = controls.x + n * controls.width / 2;
-      if (n) s.target().line({int16_t(x), int16_t(controls.y)}, {int16_t(x), int16_t(controls.y + 66)}, 2, black);
-      title(s, rect(x, controls.y + 4, controls.width / 2, 26), labels[n], 0);
+      if (n) s.target().line({int16_t(x), int16_t(groupTop)}, {int16_t(x), int16_t(groupTop + 66)}, 2, black);
+      title(s, rect(x, groupTop + 4, controls.width / 2, 26), labels[n], 0);
       char count[12];
       std::snprintf(count, sizeof(count), "%d", n ? m.streak : m.wins);
-      dashboard::digits(s, rect(x + 8, controls.y + 32, controls.width / 2 - 16, 28), count);
+      dashboard::digits(s, rect(x + 8, groupTop + 32, controls.width / 2 - 16, 28), count);
     }
   } else
-    copy(s, rect(controls.x, controls.y, controls.width, 62),
+    copy(s, rect(controls.x, groupTop, controls.width, 66),
          m.local || draw ? tr(STR_C4_TRY_STRATEGY) : tr(STR_C4_TRY_AGAIN));
-  const int gap = 8, h = wide ? 58 : 36, y = wide ? controls.bottom() - 3 * h - 2 * gap : controls.y + 72;
+  const int y = groupTop + 78;
   const char* labels[] = {tr(STR_C4_AGAIN), tr(STR_C4_VIEW_BOARD), tr(STR_C4_BACK_MENU)};
   const fui::ActionId actions[] = {ActionAgain, ActionViewBoard, ActionDone};
   for (int n = 0; n < 3; ++n)
@@ -402,9 +407,9 @@ void buildHowTo(toybox::Screen& s, const HowToModel& m) {
       legend(s, rect(detail.x, detail.y, detail.width, 44), c4::kLight, true);
       copy(s, rect(detail.x, detail.y + 50, detail.width, detail.height - 50), tr(STR_C4_TURNS), 4, 3);
     } else {
-      dashboard::frame(s, rect(detail.x, detail.y, detail.width, detail.height - 48));
+      dashboard::frame(s, detail);
       title(s, rect(detail.x + 8, detail.y + 16, detail.width - 16, 32), tr(STR_C4_NOBODY_WINS), 1);
-      copy(s, rect(detail.x + 10, detail.y + 50, detail.width - 20, detail.height - 62), tr(STR_C4_DRAW_RULE), 4, 3);
+      copy(s, rect(detail.x + 10, detail.y + 54, detail.width - 20, detail.height - 66), tr(STR_C4_DRAW_RULE), 4, 3);
     }
   }
 }

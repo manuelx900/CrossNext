@@ -4,6 +4,7 @@
 #include <cstring>
 
 #include "../../src/apps_local/pomodoro/PomodoroCore.h"
+#include "../../src/apps_local/pomodoro/PomodoroInput.h"
 #include "../../src/apps_local/pomodoro/PomodoroStore.h"
 namespace p = pomodoro;
 namespace {
@@ -18,6 +19,20 @@ int checks = 0, failures = 0;
     }                                             \
   } while (0)
 int main() {
+  p::PendingTap tap;
+  int x = 0, y = 0;
+  CHECK(!tap.hasPending() && !tap.take(1, x, y));
+  tap.capture(120, 410, 1);
+  CHECK(tap.hasPending());
+  // Several busy render frames do not replace the first released contact.
+  tap.capture(310, 720, 1);
+  CHECK(tap.take(1, x, y) && x == 120 && y == 410);
+  CHECK(!tap.hasPending() && !tap.take(1, x, y));
+  tap.capture(120, 410, 1);
+  CHECK(!tap.take(2, x, y) && !tap.hasPending());
+  tap.capture(120, 410, 2);
+  tap.clear();
+  CHECK(!tap.take(2, x, y));
   p::State s;
   CHECK(p::valid(s) && s.remainingMs == 1500000 && !s.running);
   CHECK(!p::advance(s, 60000) && s.remainingMs == 1500000);

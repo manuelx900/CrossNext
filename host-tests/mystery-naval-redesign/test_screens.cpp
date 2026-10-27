@@ -215,11 +215,11 @@ int main(int argc, char** argv) {
         bshipui::buildBoardChrome(b.screen, m, &after);
         CHECK(before.target.x == after.target.x && before.target.y == after.target.y);
         CHECK(before.target.width == after.target.width && before.target.height == after.target.height);
-        CHECK(before.target.bottom() < h - 80);
-        CHECK(after.target.bottom() < h - 80);
+        CHECK(before.target.bottom() <= (w > h ? a.device.safeRect().bottom() : h - 80));
+        CHECK(after.target.bottom() <= (w > h ? b.device.safeRect().bottom() : h - 80));
         for (int cell = 0; cell < 100; ++cell) {
           const int y = before.target.y + cell / 10 * (before.target.height / 10);
-          CHECK(y + before.target.height / 10 <= h - 80);
+          CHECK(y + before.target.height / 10 <= (w > h ? a.device.safeRect().bottom() : h - 80));
         }
       }
       for (int node : {31, 32}) {
@@ -251,8 +251,11 @@ int main(int argc, char** argv) {
         m.myTurn = true;
         bshipui::buildBoardChrome(c.screen, m);
         bool complete = false;
-        for (const auto& label : c.target.labels)
-          complete |= label.value.find(lang == Language::ES ? "HUNDIDO" : "SUNK") != std::string::npos;
+        for (const auto& label : c.target.labels) {
+          char caption[192];
+          pixelui::copyCaps(caption, sizeof(caption), label.value.c_str());
+          complete |= std::strstr(caption, lang == Language::ES ? "HUNDIDO" : "SUNK") != nullptr;
+        }
         CHECK(complete);
       }
       for (int turn : {0, 1}) {
@@ -333,7 +336,7 @@ int main(int argc, char** argv) {
       const auto* one = carnivoro::getCase(0);
       for (auto view : {carnivoroui::View::Menu, carnivoroui::View::Cases, carnivoroui::View::Intro,
                         carnivoroui::View::Statements, carnivoroui::View::Accuse, carnivoroui::View::Help})
-        for (int page = 0; page < (view == carnivoroui::View::Help ? (w > h ? 8 : 4) : 1); ++page) {
+        for (int page = 0; page < (view == carnivoroui::View::Help ? (w > h ? 10 : 5) : 1); ++page) {
           Canvas c(w, h);
           c.target.setFont(3, c.tiny.font);
           c.target.setFont(4, c.library.font);
@@ -347,7 +350,7 @@ int main(int argc, char** argv) {
           carnivoroui::build(c.screen, m, g, wrap);
           for (auto& label : c.target.labels) CHECK(label.value != "TU ANÁLISIS" && label.value != "Your analysis");
           if (view == carnivoroui::View::Help) {
-            CHECK(m.textPages == (w > h ? 8 : 4));
+            CHECK(m.textPages == (w > h ? 10 : 5));
             const auto body = pixelui::geometry(c.device).body;
             for (const auto& label : c.target.labels)
               if (label.font == 4) {

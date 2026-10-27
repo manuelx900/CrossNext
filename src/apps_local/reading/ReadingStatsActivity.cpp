@@ -50,6 +50,8 @@ void ReadingStatsActivity::onEnter() {
 }
 void ReadingStatsActivity::onExit() {
   repository.close();
+  completionIndex.reset();
+  completionMemory.reset();
   if (combined) combined->close();
   if (cloud) cloud->close();
   Activity::onExit();
@@ -173,7 +175,7 @@ void ReadingStatsActivity::scan() {
       }
       if (loading == Load::Anchor || loading == Load::Summary) {
         summaryReady = true;
-        finishedPage = 0;
+        finishedPage = -1;
         dayReady = clockKnown;
       } else if (loading == Load::Day)
         dayReady = true;
@@ -186,6 +188,24 @@ void ReadingStatsActivity::scan() {
       return;
     }
     if (status != readingstats::ScanResult::Record) continue;
+    if (loading == Load::Summary && (record.firstCompletion || record.kind == readingstats::RecordKind::Reopen)) {
+      if (!completionMemory) {
+        const auto slots = readingstats::CompletionIndex::slotsFor(repository.recordCount());
+        completionMemory = HalMemory::allocatePsram(slots * sizeof(readingstats::CompletionIndex::Entry));
+        if (completionMemory)
+          completionIndex.reset(reinterpret_cast<readingstats::CompletionIndex::Entry*>(completionMemory.get()), slots);
+        else
+          LOG_ERR("STATS", "OOM: completion-event index");
+      }
+      if (!completionMemory || !completionIndex.apply(record, repository.recordOffset())) {
+        LOG_ERR("STATS", "Completion-event index unavailable or full");
+        repository.close();
+        loading = Load::Failed;
+        requestUpdate();
+        return;
+      }
+    }
+    const bool currentCompletion = loading == Load::Books && completionIndex.current(record, repository.recordOffset());
     switch (loading) {
       case Load::Anchor: {
         currentDay =
@@ -202,12 +222,6 @@ void ReadingStatsActivity::scan() {
         summary.add(record);
         if (clockKnown) dayStats.add(record);
         readingstats::addRecent(books, recentCount, record.book);
-        if (record.firstCompletion) {
-          const int last = std::min(finishedCount, pageSize - 1);
-          for (int at = last; at > 0; --at) finishedBooks[at] = finishedBooks[at - 1];
-          finishedBooks[0] = record.book;
-          finishedCount = std::min(pageSize, finishedCount + 1);
-        }
         break;
       case Load::Day:
         dayStats.add(record);
@@ -221,7 +235,7 @@ void ReadingStatsActivity::scan() {
       case Load::Books:
         if (filter == readingstats::BookFilter::Recent) {
           readingstats::addRecent(books, recentCount, record.book);
-        } else if (record.firstCompletion && skipped++ >= page * pageSize) {
+        } else if (currentCompletion && skipped++ >= page * pageSize) {
           finishedBooks[count++] = record.book;
           if (count == pageSize) {
             damaged |= repository.hadDamage();

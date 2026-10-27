@@ -26,12 +26,16 @@ enum class HomeButtonAction : uint8_t {
 class HomeButtonInput {
  public:
   static constexpr uint32_t DOUBLE_TAP_MS = 350;
+  static constexpr uint16_t TAP_WINDOWS_MS[] = {350, 450, 550, 650, 750};
+  static constexpr unsigned TAP_WINDOW_COUNT = sizeof(TAP_WINDOWS_MS) / sizeof(TAP_WINDOWS_MS[0]);
+  static constexpr uint32_t windowFor(unsigned index) { return TAP_WINDOWS_MS[index < TAP_WINDOW_COUNT ? index : 0]; }
+  void setWindow(unsigned index) { doubleTapMs = windowFor(index); }
 
   uint32_t nextActionDelayMs(uint32_t now, uint32_t maximum) const {
     if (!pending || secondContact) return maximum;
     const uint32_t elapsed = now - tappedAt;
     // update() emits the single tap strictly after the double-tap window.
-    const uint32_t remaining = elapsed > DOUBLE_TAP_MS ? 0 : DOUBLE_TAP_MS + 1 - elapsed;
+    const uint32_t remaining = elapsed > doubleTapMs ? 0 : doubleTapMs + 1 - elapsed;
     return remaining < maximum ? remaining : maximum;
   }
 
@@ -46,7 +50,7 @@ class HomeButtonInput {
       // A locked touchscreen must always have a physical way out.
       return touchLocked ? HomeButtonAction::ToggleTouchscreen : longPress;
     }
-    if (pending && !secondContact && now - tappedAt > DOUBLE_TAP_MS) {
+    if (pending && !secondContact && now - tappedAt > doubleTapMs) {
       pending = tapped;
       tappedAt = now;
       return tap;
@@ -72,6 +76,7 @@ class HomeButtonInput {
   }
 
  private:
+  uint32_t doubleTapMs = DOUBLE_TAP_MS;
   uint32_t tappedAt = 0;
   bool pending = false;
   bool secondContact = false;

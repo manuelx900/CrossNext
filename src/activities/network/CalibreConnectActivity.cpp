@@ -10,6 +10,7 @@
 #include "MappedInputManager.h"
 #include "SilentRestart.h"
 #include "WifiSelectionActivity.h"
+#include "apps_local/ui/NetworkLandscape.h"
 #include "apps_local/ui/PixelMenuTheme.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
@@ -202,6 +203,24 @@ void CalibreConnectActivity::render(RenderLock&&) {
                       Rect{0, pixelui::geometry(toybox::makeTarget(renderer).deviceContext()).header.bottom() + 4,
                            pageWidth, metrics.tabBarHeight},
                       connectedSSID.c_str(), (std::string(tr(STR_IP_ADDRESS_PREFIX)) + connectedIP).c_str());
+
+    if (pageWidth > pageHeight) {
+      auto target = toybox::makeTarget(renderer);
+      pixelui::bindFonts(target, renderer);
+      const auto layout = networkui::calibreLayout(target.deviceContext(), metrics.tabBarHeight);
+      const bool receiving = lastProgressTotal > 0 && lastProgressReceived <= lastProgressTotal;
+      const bool completed = lastCompleteAt > 0 && (millis() - lastCompleteAt) < 6000;
+      networkui::calibreText(target, layout, receiving, currentUploadName.c_str(),
+                             completed ? lastCompleteName.c_str() : nullptr);
+      if (receiving)
+        GUI.drawProgressBar(renderer,
+                            Rect{layout.progress.x, layout.progress.y, layout.progress.width, layout.progress.height},
+                            lastProgressReceived, lastProgressTotal);
+      const auto labels = mappedInput.mapLabels(tr(STR_EXIT), "", "", "");
+      GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);
+      renderer.displayBuffer();
+      return;
+    }
 
     int y = metrics.topPadding + metrics.headerHeight + metrics.tabBarHeight + metrics.verticalSpacing * 4;
     const auto heightText12 = renderer.getTextHeight(UI_12_FONT_ID);

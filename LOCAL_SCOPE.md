@@ -477,7 +477,7 @@ shelf state adds an optional Home launch-origin line for wake. No app carries
 its own destination or adds a background task. Firmware file selection shares
 the regular document rows used by Books/Library. The reader chapter sheet uses
 that regular document face and four portrait rows, with its existing numeral
-face and two landscape rows.
+face and four landscape rows.
 
 The library speed correction keeps a single bounded 40 KiB cover-region cache in PSRAM through HalMemory, owned and released by LibraryListActivity; allocation failure keeps direct rendering. It reuses Bitmap read-ahead and GfxRenderer region copies, without a new task/framebuffer or persistent catalog format. The XTC/XTCH reading-direction toggle extends the existing SettingsList/CrossPointSettings persistence and ReaderUtils touch mapping, with the format check in ReaderActivity. It reverses swipes and page tap zones only; the fixed reader sheet retains shared row rendering. See [library performance](docs/library-performance.md).
 
@@ -526,3 +526,38 @@ The global date-order preference is persisted by CrossPointSettings through
 SettingsList and exposed by ClockSettingsActivity. The freestanding
 src/util/DateFormat.h formatter supplies PET memory and historical-life dates
 through the render model; PET binary save formats are unchanged.
+
+The X4 Pro landscape layout owns small presentation seams in LibraryListActivity
+(adaptive grid capacity and thumbnail invalidation), KeyboardEntryActivity
+(compact keys and a cursor-centered text viewport), CrossPointWebServerActivity
+and CalibreConnectActivity (bounded side-by-side network content), and
+OtaUpdateActivity (version details below the shared header). Geometry lives in
+local LibraryMenu, KeyboardViewport and NetworkLandscape helpers. No save or
+network protocol changes, continuous framebuffer or task is introduced. See
+[interface layouts](docs/interface-layouts.md).
+
+The Home Button Gestures interval picker extends the existing global input
+state machine and settings store: one byte selects five fixed windows, starting
+at the unchanged 350 ms default. The input object retains one 32-bit interval;
+there is no additional task, timer, dynamic buffer or per-gesture SD write.
+
+
+The end-of-book adapter in `src/activities/reader/EndOfBookOptions` uses the existing
+UiAppHost lifecycle and render/input publication gate. Its local
+`apps_local/readertext/EndOfBookScreen.h` owns the illustration, Home action and
+last-page arrow. No directory scan, suggestion list, worker or framebuffer is added.
+ReaderActivity caches the durable completion state, and both reader More menus
+switch between finishing and reopening. The statistics journal appends a zero-time
+Reopen record instead of rewriting reading history. Reserved bytes in each 384-byte
+record hold the finished local day, reversal day and explicit
+unfinished flag. Older firmware ignores the new record kind and cannot display
+this reversible status correctly; keep the current firmware when using it.
+Statistics builds a non-owning completion-event index during its existing summary
+scan. Its single PSRAM allocation is sized from the record-count upper bound,
+capped at 32,768 entries (768 KiB), and released with the activity. Books without
+completion events need no entry; page scans resolve current finishes in memory
+without nested SD reads. A failed allocation or full index reports unavailable
+statistics and leaves the journal untouched. Period projections retain
+bounded cancellation counters so reverse scans remove completions from their
+original period. The unified projection honors explicit local reversals, counts
+finished books once across devices and preserves cumulative reading totals.

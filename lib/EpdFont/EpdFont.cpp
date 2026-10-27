@@ -264,7 +264,7 @@ bool EpdFont::hasCodepoint(const uint32_t cp) const {
 }
 
 const EpdGlyph* EpdFont::getGlyphMetrics(const uint32_t cp, EpdGlyph& solidFallback) const {
-  if (!syntheticGlyph::isSolid(cp) || hasCodepoint(cp)) return getGlyph(cp);
+  if (!syntheticGlyph::isSupported(cp) || hasCodepoint(cp)) return getGlyph(cp);
 
   // Match the current font's em width and ascender without allocating a bitmap.
   const EpdGlyph* emGlyph = hasCodepoint('M') ? getGlyph('M') : nullptr;
@@ -274,10 +274,12 @@ const EpdGlyph* EpdFont::getGlyphMetrics(const uint32_t cp, EpdGlyph& solidFallb
                                : static_cast<uint16_t>(fp4::fromPixel(std::max(1, (ascender * 3 + 3) / 4)));
   const int advancePx = std::max(1, fp4::toPixel(advance));
   const bool square = cp == syntheticGlyph::BLACK_SQUARE;
-  const int height = std::clamp(square ? (ascender * 2 + 2) / 3 : ascender, 1, 255);
-  const int width = std::min(255, square ? std::min(height, advancePx) : advancePx);
-  const int left = square ? std::max(0, (advancePx - width) / 2) : 0;
-  const int top = square ? height + std::max(0, (ascender - height) / 2) : height;
+  const bool symbol = syntheticGlyph::isSymbol(cp);
+  const int emHeight = std::clamp(square ? (ascender * 2 + 2) / 3 : ascender, 1, 255);
+  const int width = std::min(255, square || symbol ? std::min(emHeight, advancePx) : advancePx);
+  const int height = symbol ? width : emHeight;
+  const int left = square || symbol ? std::max(0, (advancePx - width) / 2) : 0;
+  const int top = square || symbol ? height + std::max(0, (ascender - height) / 2) : height;
   solidFallback = {static_cast<uint8_t>(width),
                    static_cast<uint8_t>(height),
                    advance,

@@ -20,7 +20,9 @@ const shelf::Item* shortcutAt(int index) {
 int HomeButtonSettingsActivity::listCount() const {
   switch (page) {
     case Page::Gestures:
-      return GESTURE_COUNT;
+      return GESTURE_COUNT + 1;
+    case Page::Timing:
+      return HomeButtonInput::TAP_WINDOW_COUNT;
     case Page::Actions:
       return ACTION_COUNT;
     case Page::Apps: {
@@ -35,6 +37,8 @@ const char* HomeButtonSettingsActivity::headerTitle() const {
   switch (page) {
     case Page::Gestures:
       return tr(STR_HOME_BUTTON);
+    case Page::Timing:
+      return tr(STR_HOME_TAP_INTERVAL);
     case Page::Actions:
       return I18N.get(home_button::GESTURE_LABELS[gesture]);
     case Page::Apps:
@@ -61,6 +65,9 @@ void HomeButtonSettingsActivity::onBackButton() {
     case Page::Apps:
       show(Page::Actions, int(HomeButtonAction::OpenShortcut));
       return;
+    case Page::Timing:
+      show(Page::Gestures, GESTURE_COUNT);
+      return;
   }
 }
 bool HomeButtonSettingsActivity::saveAction(HomeButtonAction action, const char* target) {
@@ -86,6 +93,10 @@ void HomeButtonSettingsActivity::activateIndex(int index) {
   app.clearTapFlash();
   switch (page) {
     case Page::Gestures: {
+      if (index == GESTURE_COUNT) {
+        show(Page::Timing, SETTINGS.homeButtonDoubleTapTiming);
+        return;
+      }
       gesture = index;
       const auto action = HomeButtonAction(SETTINGS.*home_button::FIELDS[gesture]);
       show(Page::Actions, home_button::opensShortcut(action) ? int(HomeButtonAction::OpenShortcut) : int(action));
@@ -106,6 +117,17 @@ void HomeButtonSettingsActivity::activateIndex(int index) {
     case Page::Apps:
       if (const auto* item = shortcutAt(index)) saveAction(home_button::shortcutAction(gesture), item->title);
       return;
+    case Page::Timing: {
+      const auto previous = SETTINGS.homeButtonDoubleTapTiming;
+      SETTINGS.homeButtonDoubleTapTiming = static_cast<uint8_t>(index);
+      saveFailed = !SETTINGS.saveToFile();
+      if (saveFailed) {
+        SETTINGS.homeButtonDoubleTapTiming = previous;
+        requestUpdate();
+      } else
+        show(Page::Gestures, GESTURE_COUNT);
+      return;
+    }
   }
 }
 void HomeButtonSettingsActivity::shortcutRow(void*, uint16_t index, fui::ListItem& row) {
@@ -127,6 +149,17 @@ void HomeButtonSettingsActivity::buildScreen(UiScreen& screen) {
     for (int i = 0; i < listCount(); ++i) {
       rows[i] = {};
       rows[i].actionValue = i;
+      if (page == Page::Timing || (page == Page::Gestures && i == GESTURE_COUNT)) {
+        const unsigned current = SETTINGS.homeButtonDoubleTapTiming < HomeButtonInput::TAP_WINDOW_COUNT
+                                     ? SETTINGS.homeButtonDoubleTapTiming
+                                     : 0;
+        rows[i].label = I18N.get(page == Page::Timing ? home_button::TIMING_LABELS[i] : StrId::STR_HOME_TAP_INTERVAL);
+        if (page == Page::Timing)
+          rows[i].toggleChecked = unsigned(i) == current;
+        else
+          rows[i].subtitle = I18N.get(home_button::TIMING_LABELS[current]);
+        continue;
+      }
       if (page == Page::Gestures) {
         const auto action = HomeButtonAction(SETTINGS.*home_button::FIELDS[i]);
         rows[i].label = I18N.get(home_button::GESTURE_LABELS[i]);

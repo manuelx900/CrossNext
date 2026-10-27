@@ -348,6 +348,16 @@ inline void room(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, Palett
        p.lifeStatus == pet::LifeStatus::Lost ? tr(STR_PET_DIED_STATUS) : stageName(pet::stage(p.readingSeconds)), 3);
   habitat(s, m, r, stacked ? 72 : 47, scope.inverted());
 }
+inline void metricLine(toybox::Screen& s, Work& w, fui::Rect r, const char* label, unsigned value,
+                       const freeink::Icon& mark) {
+  s.target().stroke(r, ink, 1);
+  icon(s, rect(r.x + 8, r.y + 7, 24, 24), mark);
+  const int valueWidth = s.target().measureText(3, "100 / 100", {}).width + 4;
+  prose(s, rect(r.x + 40, r.y + 4, r.width - valueWidth - 56, 28), label, 1);
+  std::snprintf(w.label, sizeof(w.label), "%u / 100", value);
+  text(s, rect(r.right() - valueWidth - 8, r.y + 4, valueWidth, 28), w.label, 3, false, fui::TextAlign::Right);
+  dashboard::bar(s, rect(r.x + 9, r.bottom() - 11, r.width - 18, 6), value, 100);
+}
 inline void metric(toybox::Screen& s, Work& w, fui::Rect r, const char* label, unsigned value,
                    const freeink::Icon& mark, bool locked = false) {
   s.target().stroke(r, ink, 1);

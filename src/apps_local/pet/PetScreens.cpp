@@ -252,31 +252,34 @@ void care(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
     const int font = s.target().measureText(0, w.secondary, {}).width <= copy.width ? 0 : 3;
     text(s, copy, w.secondary, font);
   }
-  const int metricH = wide ? std::min(60, (int(r.height) - stock.height - GAP * 3) / 3) : 76;
-  auto metrics = rect(r.x, stock.bottom() + GAP, leftW, wide ? metricH * 3 + GAP * 2 : metricH);
+  const int metricH = wide ? (int(r.height) - stock.height - GAP * 4) / 4 : 76;
+  auto metrics = rect(r.x, stock.bottom() + GAP, leftW, wide ? metricH * 4 + GAP * 3 : metricH);
   auto area = wide ? rect(stock.right() + 16, r.y, r.right() - stock.right() - 16, r.height)
                    : rect(r.x, metrics.bottom() + 12, r.width, r.bottom() - metrics.bottom() - 12);
   const int hygieneW = (area.width - GAP * 2) / 3;
-  const auto hygiene = rect(area.x, area.y, hygieneW, metricH);
-  const auto note = rect(hygiene.right() + GAP, area.y, area.right() - hygiene.right() - GAP, metricH);
+  const auto hygiene = wide ? rect(metrics.x, metrics.y + (metricH + GAP) * 3, metrics.width, metricH)
+                            : rect(area.x, area.y, hygieneW, metricH);
+  const auto note = wide ? rect(area.x, area.y, area.width, std::max(60, metricH))
+                         : rect(hygiene.right() + GAP, area.y, area.right() - hygiene.right() - GAP, metricH);
   const int top = note.bottom() + GAP;
   const auto actions = rect(area.x, top, area.width, r.bottom() - top);
   const int height = (actions.height - GAP * (wide ? 2 : 4)) / (wide ? 3 : 5);
   const auto healthBox = rect(actions.x, actions.y, actions.width, height);
   const auto first = rect(actions.x, healthBox.bottom() + GAP, actions.width, height);
   if (wide) {
-    metric(s, w, rect(metrics.x, metrics.y, metrics.width, metricH), tr(STR_PET_SACIETY), p.saciety,
-           careicons::SACIETY);
-    metric(s, w, rect(metrics.x, metrics.y + metricH + GAP, metrics.width, metricH), tr(STR_PET_JOY), p.joy,
-           careicons::JOY);
-    metric(s, w, rect(metrics.x, metrics.y + (metricH + GAP) * 2, metrics.width, metricH), tr(STR_PET_ENERGY), p.energy,
-           careicons::ENERGY);
+    metricLine(s, w, rect(metrics.x, metrics.y, metrics.width, metricH), tr(STR_PET_SACIETY), p.saciety,
+               careicons::SACIETY);
+    metricLine(s, w, rect(metrics.x, metrics.y + metricH + GAP, metrics.width, metricH), tr(STR_PET_JOY), p.joy,
+               careicons::JOY);
+    metricLine(s, w, rect(metrics.x, metrics.y + (metricH + GAP) * 2, metrics.width, metricH), tr(STR_PET_ENERGY),
+               p.energy, careicons::ENERGY);
+    metricLine(s, w, hygiene, tr(STR_PET_HYGIENE), p.hygiene, careicons::HYGIENE);
   } else {
     metric(s, w, cell(metrics, 0, 3), tr(STR_PET_SACIETY), p.saciety, careicons::SACIETY);
     metric(s, w, cell(metrics, 1, 3), tr(STR_PET_JOY), p.joy, careicons::JOY);
     metric(s, w, cell(metrics, 2, 3), tr(STR_PET_ENERGY), p.energy, careicons::ENERGY);
   }
-  metric(s, w, hygiene, tr(STR_PET_HYGIENE), p.hygiene, careicons::HYGIENE);
+  if (!wide) metric(s, w, hygiene, tr(STR_PET_HYGIENE), p.hygiene, careicons::HYGIENE);
   const bool treatment = p.illness != pet::Illness::Healthy;
   const auto noteAction = treatment || advisedCare(p, m.today) == OpenHealth ? OpenHealth : fui::NO_ACTION;
   const bool noteInverse = button(s, w, note, "", noteAction, 0, false, nullptr, noteAction != fui::NO_ACTION);

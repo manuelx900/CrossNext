@@ -189,7 +189,7 @@ Result Projection::open(Reader* source, int today, uint64_t device, const Header
           }
         }
       }
-      entry->finished |= record.book.completed;
+      entry->finished = record.book.manuallyUnfinished ? false : entry->finished || record.book.completed;
       yieldIo((at - 16) / kRecordBytes);
     }
     current.hash = fingerprint;
@@ -202,6 +202,8 @@ Result Projection::open(Reader* source, int today, uint64_t device, const Header
   header.books = countBooks;
   header.finished = 0;
   for (uint32_t n = 0; n < countBooks; ++n) header.finished += entries[order[n]].finished;
+  // Completion is a book state, including explicit local reversals, not a sum across devices.
+  header.summary.completed = header.finished;
   header.summary.anchorDay = anchor;
   auto& s = header.summary;
   s.totalDays = 0;
@@ -256,7 +258,9 @@ bool Projection::merge(const Entry& e, Book& out) {
       out.firstEpoch = latest.firstEpoch;
     out.lastEpoch = std::max(out.lastEpoch, latest.lastEpoch);
     out.finishedEpoch = std::max(out.finishedEpoch, latest.finishedEpoch);
-    out.completed |= latest.completed;
+    out.completed = latest.manuallyUnfinished ? false : out.completed || latest.completed;
+    out.manuallyUnfinished = latest.manuallyUnfinished;
+    if (latest.manuallyUnfinished) out.finishedEpoch = 0;
     if (e.latest >= cutoff) out.progressBp = latest.progressBp;
   }
   if (out.completed) out.progressBp = 10000;

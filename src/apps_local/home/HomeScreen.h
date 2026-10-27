@@ -74,11 +74,12 @@ void build(Screen& screen, const Model& model, const Layout& geometry, fui::Butt
         fui::makeRect(previous.right(), previous.y, next.x - previous.right(), previous.height),
         fui::makeRect(next.right(), previous.y, card.right() - next.right(), previous.height)};
     for (int n = 0; n < 5; ++n)
-      if ((model.style == Style::Framed || n != 1) && !regions[n].empty())
+      if (!geometry.badge.empty() && (model.style == Style::Framed || n != 1) && !regions[n].empty())
         screen.frame().hit(regions[n], kSelect, 0, fui::InputTouch);
     if (model.style != Style::Framed) {
       const auto art = geometry.coverRegion;
-      const auto above = fui::makeRect(card.x, previous.bottom(), card.width, art.y - previous.bottom());
+      const int controlsBottom = geometry.badge.empty() ? card.y : previous.bottom();
+      const auto above = fui::makeRect(card.x, controlsBottom, card.width, art.y - controlsBottom);
       const auto below = fui::makeRect(card.x, art.bottom(), card.width, card.bottom() - art.bottom());
       if (!above.empty()) screen.frame().hit(above, kSelect, 0, fui::InputTouch);
       if (!below.empty()) screen.frame().hit(below, kSelect, 0, fui::InputTouch);
@@ -92,9 +93,9 @@ void build(Screen& screen, const Model& model, const Layout& geometry, fui::Butt
             kNextBook, fui::InputTouch);
     }
     hit.value = kPreviousBook;
-    if (model.canPrevious) screen.button(hit, geometry.previous);
+    if (model.canPrevious && !geometry.previous.empty()) screen.button(hit, geometry.previous);
     hit.value = kNextBook;
-    if (model.canNext) screen.button(hit, geometry.next);
+    if (model.canNext && !geometry.next.empty()) screen.button(hit, geometry.next);
   }
   for (int n = 0; n < geometry.count; ++n) {
     hit.value = static_cast<int16_t>(n + (model.hasBook ? 1 : 0));

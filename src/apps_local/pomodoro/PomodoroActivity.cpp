@@ -7,7 +7,6 @@
 
 #include "../Shelf.h"
 #include "../ui/PixelMenuTheme.h"
-#include "components/SideButtonNavigation.h"
 #include "util/LoopDeadline.h"
 std::unique_ptr<Activity> PomodoroActivity::create(GfxRenderer& renderer, MappedInputManager& input) {
   // The activity stack owns the fixed UI/save workspace for this screen's lifetime.
@@ -47,6 +46,8 @@ void PomodoroActivity::onExit() {
 }
 void PomodoroActivity::prepareForSleep() { pause(); }
 void PomodoroActivity::action(freeink::ui::ActionId action, int value) {
+  const auto previousView = view;
+  const int previousPage = stagePage;
   switch (action) {
     case pomodoroui::SelectStage:
       if (value < 0 || value >= 2 * state.config.rounds || value == state.stage) return;
@@ -106,11 +107,18 @@ void PomodoroActivity::action(freeink::ui::ActionId action, int value) {
     saveSoon = true;
     saveRequestedAt = millis();
   }
+  if (previousView != view || previousPage != stagePage) {
+    ++viewRevision;
+    pendingTap.clear();
+  }
   ready = false;
   requestUpdate();
 }
 void PomodoroActivity::loop() {
   if (!navigation.capture(mappedInput, millis())) LOG_ERR("APP-NAV", "Navigation queue full");
+  int tapX = 0, tapY = 0;
+  if (mappedInput.wasScreenTapped(tapX, tapY))
+    pendingTap.capture(tapX, tapY, paintedRevision.load(std::memory_order_acquire));
   RenderLock lock(RenderLock::Mode::Try);
   if (!lock.ownsLock()) return;
   sectionnav::Input::Event navCommand{};
@@ -125,6 +133,8 @@ void PomodoroActivity::loop() {
     const bool complete = pomodoro::advance(state, now - lastTick);
     dirty = true;
     if (complete) {
+      ++viewRevision;
+      pendingTap.clear();
       stagePage = state.stage / 3;
       save();
       ready = false;
@@ -133,6 +143,8 @@ void PomodoroActivity::loop() {
   }
   lastTick = now;
   if (navBack) {
+    pendingTap.clear();
+    ++viewRevision;
     pause();
     if (view == pomodoroui::View::Timer) {
       shelf::leave(renderer, mappedInput);
@@ -151,19 +163,20 @@ void PomodoroActivity::loop() {
     }
   }
   int x = 0, y = 0;
-  if (ready && sidebuttons::poll(interactions, mappedInput, x, y, false)) {
+  if (ready && pendingTap.take(viewRevision, x, y)) {
+    interactions.setFocusedIndex(-1);
     freeink::ui::InputSnapshot tap;
     tap.touchReleased = true;
     tap.touchX = x;
     tap.touchY = y;
-    const auto event = sidebuttons::route(interactions, tap, mappedInput, *this, false);
+    const auto event = interactions.route(tap);
     if (event.action) {
       action(event.action, event.value);
       return;
     }
   }
   if (ready && view == pomodoroui::View::Timer &&
-      (!interactions.hasButtonFocus() && mappedInput.wasReleased(MappedInputManager::Button::Confirm))) {
+      (!interactions.hasButtonFocus() && hasNavCommand && navCommand.kind == sectionnav::Input::Kind::Confirm)) {
     action(pomodoroui::Toggle, 0);
     return;
   }
@@ -172,7 +185,7 @@ void PomodoroActivity::loop() {
   if (state.running && seconds != shownSeconds) requestUpdate();
 }
 std::optional<uint32_t> PomodoroActivity::nextLoopWakeDelayMs(const uint32_t now) const {
-  if (!ready || navigation.hasPending()) return loopdeadline::LEGACY_POLL_MS;
+  if (!ready || navigation.hasPending() || pendingTap.hasPending()) return loopdeadline::LEGACY_POLL_MS;
   loopdeadline::Deadline next(now);
   if (state.running) {
     const uint32_t elapsed = now - lastTick;
@@ -198,4 +211,5 @@ void PomodoroActivity::render(RenderLock&&) {
   shownSeconds = (state.remainingMs + 999) / 1000;
   ready = true;
   renderer.displayBuffer(++paints % 60 == 0 ? HalDisplay::HALF_REFRESH : HalDisplay::FAST_REFRESH);
+  paintedRevision.store(viewRevision, std::memory_order_release);
 }

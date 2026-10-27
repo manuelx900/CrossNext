@@ -36,7 +36,8 @@ struct Context {
 };
 const auto black = fui::Paint::solid(fui::Color::Black);
 void text(Context& s, fui::Rect r, const char* value, fui::FontId font = pixelui::kSmall,
-          fui::TextAlign align = fui::TextAlign::Center, fui::Color color = fui::Color::Black, int lines = 1) {
+          fui::TextAlign align = fui::TextAlign::Center, fui::Color color = fui::Color::Black, int lines = 1,
+          bool scaleDown = true) {
   if (r.empty()) return;
   char copy[192];
   pixelui::copyCaps(copy, sizeof(copy), value);
@@ -46,7 +47,7 @@ void text(Context& s, fui::Rect r, const char* value, fui::FontId font = pixelui
   style.color = color;
   if (lines == 1) {
     static constexpr fui::FontId smaller[] = {3, 0, 1};
-    while (style.font < 3 && s.target().measureText(style.font, copy, style).width > r.width)
+    while (scaleDown && style.font < 3 && s.target().measureText(style.font, copy, style).width > r.width)
       style.font = smaller[style.font];
     style.maxLines = 1;
     pixelui::fitLabel(s.target(), copy, r.width, style);
@@ -63,10 +64,11 @@ void text(Context& s, fui::Rect r, const char* value, fui::FontId font = pixelui
   }
 }
 void button(Context& s, fui::Rect r, const char* label, fui::ActionId action, int value = 0, bool selected = false) {
+  const bool back = action == BackToCalendar || action == BackToBooks || action == BackToData;
   auto& p = s.work.button;
   p = {};
   pixelui::copyCaps(s.work.buttonLabel, sizeof(s.work.buttonLabel), label);
-  p.label = label ? s.work.buttonLabel : nullptr;
+  p.label = label && !back ? s.work.buttonLabel : nullptr;
   p.action = action;
   p.value = value;
   p.text.font =
@@ -76,10 +78,25 @@ void button(Context& s, fui::Rect r, const char* label, fui::ActionId action, in
   p.minTouchSize = 0;
   p.state = selected ? fui::StateSelected : fui::StateNormal;
   s.button(p, r);
-  if (action == BackToCalendar || action == BackToBooks || action == BackToData)
-    dashboard::chevron(s.target(), fui::makeRect(r.x + 8, r.y, 20, r.height), false, true);
+  if (back) {
+    dashboard::chevron(s.target(), fui::makeRect(r.x + 8, r.y, 24, r.height), selected, true);
+    text(s, fui::makeRect(r.x + 44, r.y, r.width - 54, r.height), label, 0, fui::TextAlign::Left,
+         selected ? fui::Color::White : fui::Color::Black);
+  }
 }
 void frame(Context& s, fui::Rect r, int weight = pixelui::kBorder) { s.target().stroke(r, black, weight); }
+void gridFrame(Context& s, fui::Rect r, int columns, int rows) {
+  frame(s, r, 2);
+
+  for (int n = 1; n < columns; ++n) {
+    const int x = r.x + r.width * n / columns;
+    s.target().fill(fui::makeRect(x, r.y, 2, r.height), black);
+  }
+  for (int n = 1; n < rows; ++n) {
+    const int y = r.y + r.height * n / rows;
+    s.target().fill(fui::makeRect(r.x, y, r.width, 2), black);
+  }
+}
 fui::Rect cell(fui::Rect r, int n, int columns, int rows) {
   const int x = r.x + (n % columns) * r.width / columns, y = r.y + (n / columns) * r.height / rows;
   return fui::makeRect(x, y, r.x + (n % columns + 1) * r.width / columns - x,
@@ -120,7 +137,8 @@ void prose(Context& s, fui::Rect r, const char* value, fui::TextAlign align = fu
   s.target().text(style.maxLines == 1 && cut ? toybox::inkCentred(r, *cut) : r, value, style);
 }
 void number(Context& s, fui::Rect r, const char* value) {
-  const int h = std::min(int(r.height), 52);
+  const int cap = s.device().width > s.device().height ? 40 : 52;
+  const int h = std::min(int(r.height), cap);
   r.y += (r.height - h) / 2;
   r.height = h;
   numerals::draw(s.target(), r, value);
@@ -136,7 +154,7 @@ void arrow(Context& s, fui::Rect r, fui::ActionId action, int value) {
   dashboard::hit(s.screen, r, action, value);
 }
 // Digits share an ink height; translated units sit on their baseline.
-void timeValue(Context& s, fui::Rect r, uint64_t seconds, bool precise = false) {
+void timeValue(Context& s, fui::Rect r, uint64_t seconds, bool precise = false, int maxInkHeight = 52) {
   char first[24], second[8];
   const bool hours = seconds >= 3600;
   const bool pair = hours || (precise && seconds % 60);
@@ -146,13 +164,13 @@ void timeValue(Context& s, fui::Rect r, uint64_t seconds, bool precise = false) 
   const char* unit1 = hours ? tr(STR_STATS_UNIT_H) : tr(STR_STATS_UNIT_MIN);
   const char* unit2 = hours ? tr(STR_STATS_UNIT_MIN) : tr(STR_STATS_UNIT_S);
   fui::TextStyle style;
-  const int font = r.height >= 64 ? 1 : 0;
+  const int font = r.height >= 64 && maxInkHeight > 40 ? 1 : 0;
   style.font = font;
   const int u1 = s.target().measureText(font, unit1, style).width;
   const int u2 = pair ? s.target().measureText(font, unit2, style).width : 0;
   const int digits = int(std::strlen(first) + (pair ? std::strlen(second) : 0));
   const int gap = r.height >= 64 ? 8 : 4;
-  const int h = std::max(8, std::min(std::min(int(r.height), 60),
+  const int h = std::max(8, std::min(std::min(int(r.height), maxInkHeight),
                                      (r.width - u1 - u2 - gap * (pair ? 3 : 1)) * 10 / std::max(1, digits * 7)));
   const int w1 = int(std::strlen(first)) * h * 7 / 10, w2 = pair ? int(std::strlen(second)) * h * 7 / 10 : 0;
   const int width = w1 + u1 + gap + (pair ? w2 + u2 + 2 * gap : 0);
@@ -170,19 +188,38 @@ void timeValue(Context& s, fui::Rect r, uint64_t seconds, bool precise = false) 
 void timePanel(Context& s, fui::Rect r, const char* label, uint64_t seconds, bool today = false,
                bool labelAbove = false) {
   frame(s, r, 2);
+  const auto safe = s.device().safeRect();
+  const bool wide = safe.width > safe.height;
+  const int valueHeight = wide ? 40 : 52;
+  if (r.height < 140) {
+    const int valueH = std::max(12, int(r.height) - 38), icon = std::min(32, valueH);
+    art(s, fui::makeRect(r.x + 12, r.y + 6 + (valueH - icon) / 2, icon, icon), statsart::clock);
+    timeValue(s, fui::makeRect(r.x + icon + 24, r.y + 6, r.width - icon - 36, valueH), seconds, false, valueHeight);
+    text(s, fui::makeRect(r.x + 8, r.bottom() - 28, r.width - 16, 24), label, 3);
+    return;
+  }
+  if (labelAbove && wide && r.height >= 190) {
+    const int groupH = 146, availableH = r.height - (today ? 34 : 0);
+    const int top = r.y + (availableH - groupH) / 2;
+    art(s, fui::makeRect(r.x + (r.width - 36) / 2, top, 36, 36), statsart::clock);
+    text(s, fui::makeRect(r.x + 8, top + 48, r.width - 16, 30), label, 0);
+    timeValue(s, fui::makeRect(r.x + 20, top + 86, r.width - 40, 60), seconds, false, valueHeight);
+    if (today) text(s, fui::makeRect(r.x + 8, r.bottom() - 34, r.width - 16, 28), tr(STR_TODAY), 0);
+    return;
+  }
   const int icon = std::min(40, r.height / 5), pad = r.height > 150 ? 14 : 8;
   art(s, fui::makeRect(r.x + (r.width - icon) / 2, r.y + pad, icon, icon), statsart::clock);
   const int labelH = 30;
   const int top = r.y + icon + pad + (labelAbove ? labelH + 4 : 10);
   const int bottom = r.bottom() - (today || !labelAbove ? 34 : 14);
   if (labelAbove) text(s, fui::makeRect(r.x + 8, r.y + icon + pad + 6, r.width - 16, labelH), label, 0);
-  timeValue(s, fui::makeRect(r.x + 20, top, r.width - 40, std::max(12, bottom - top)), seconds);
+  timeValue(s, fui::makeRect(r.x + 20, top, r.width - 40, std::max(12, bottom - top)), seconds, false, valueHeight);
   if (!labelAbove) text(s, fui::makeRect(r.x + 8, r.bottom() - 34, r.width - 16, 28), label, 0);
   if (today) text(s, fui::makeRect(r.x + 8, r.bottom() - 34, r.width - 16, 28), tr(STR_TODAY), 0);
 }
 void metric(Context& s, fui::Rect r, const char* label, const char* value, const fui::BitmapRef& icon,
-            bool vertical = false) {
-  frame(s, r, 2);
+            bool vertical = false, bool outlined = true) {
+  if (outlined) frame(s, r, 2);
   const int side = std::min(38, r.height / (vertical ? 4 : 2));
   char caps[96];
   pixelui::copyCaps(caps, sizeof(caps), label);
@@ -190,7 +227,9 @@ void metric(Context& s, fui::Rect r, const char* label, const char* value, const
   probe.font = 3;
   const int labelH = s.target().measureText(3, caps, probe).width > r.width - 12 ? 42 : 26;
   fui::Rect valueArea;
-  if (vertical) {
+  if (!icon.data) {
+    valueArea = fui::makeRect(r.x + 10, r.y + 9, r.width - 20, r.height - labelH - 18);
+  } else if (vertical) {
     art(s, fui::makeRect(r.x + (r.width - side) / 2, r.y + 10, side, side), icon);
     valueArea = fui::makeRect(r.x + 10, r.y + side + 17, r.width - 20, r.height - side - labelH - 22);
   } else {
@@ -202,17 +241,18 @@ void metric(Context& s, fui::Rect r, const char* label, const char* value, const
        fui::Color::Black, 2);
 }
 void numberMetric(Context& s, fui::Rect r, const char* label, uint64_t value, const fui::BitmapRef& icon,
-                  bool vertical = false) {
+                  bool vertical = false, bool outlined = true) {
   char labelValue[24];
   std::snprintf(labelValue, sizeof(labelValue), "%llu", static_cast<unsigned long long>(value));
-  metric(s, r, label, labelValue, icon, vertical);
+  metric(s, r, label, labelValue, icon, vertical, outlined);
 }
-void timeMetric(Context& s, fui::Rect r, const char* label, uint64_t seconds, bool precise = false) {
-  frame(s, r, 2);
+void timeMetric(Context& s, fui::Rect r, const char* label, uint64_t seconds, bool precise = false,
+                bool outlined = true) {
+  if (outlined) frame(s, r, 2);
   const int side = std::min(38, r.height / 2);
   art(s, fui::makeRect(r.x + 12, r.y + std::max(4, (r.height - 28 - side) / 2), side, side), statsart::clock);
   const auto value = fui::makeRect(r.x + side + 22, r.y + 10, r.width - side - 34, std::max(16, r.height - 45));
-  timeValue(s, value, seconds, precise);
+  timeValue(s, value, seconds, precise, s.device().width > s.device().height ? 40 : 52);
   text(s, fui::makeRect(r.x + 6, r.bottom() - 28, r.width - 12, 24), label, 3);
 }
 void summary(Context& s, fui::Rect r, const Model& m) {
@@ -227,33 +267,37 @@ void summary(Context& s, fui::Rect r, const Model& m) {
     art(s, fui::makeRect(action.x + 8, action.y + 5, 30, 30), statsart::calendar);
     dashboard::hit(s.screen, main, ChoosePeriod);
   }
-  const auto stats = wide ? fui::makeRect(main.right() + gap, r.y, r.right() - main.right() - gap, r.height * 54 / 100)
+  const auto stats = wide ? fui::makeRect(main.right() + gap, r.y, r.right() - main.right() - gap, r.height * 46 / 100)
                           : fui::makeRect(r.x, main.bottom() + gap, r.width, r.height * 34 / 100);
-  numberMetric(s, cell(stats, 0, 2, 2), tr(STR_READING_SESSIONS), v.sessions, statsart::book, !wide);
+  gridFrame(s, stats, 2, 2);
+  numberMetric(s, cell(stats, 0, 2, 2), tr(STR_READING_SESSIONS), v.sessions, statsart::book, !wide, false);
   if (wide)
-    timeMetric(s, cell(stats, 1, 2, 2), tr(STR_READING_AVERAGE), v.sessions ? v.seconds / v.sessions : 0);
+    timeMetric(s, cell(stats, 1, 2, 2), tr(STR_READING_AVERAGE), v.sessions ? v.seconds / v.sessions : 0, false, false);
   else {
     auto box = cell(stats, 1, 2, 2);
-    frame(s, box, 2);
     art(s, fui::makeRect(box.x + (box.width - 36) / 2, box.y + 10, 36, 36), statsart::clock);
     timeValue(s, fui::makeRect(box.x + 12, box.y + 54, box.width - 24, box.height - 86),
               v.sessions ? v.seconds / v.sessions : 0);
     text(s, fui::makeRect(box.x + 4, box.bottom() - 28, box.width - 8, 24), tr(STR_READING_AVERAGE), 3);
   }
-  numberMetric(s, cell(stats, 2, 2, 2), tr(STR_READING_PAGES), v.pages, statsart::page, !wide);
+  numberMetric(s, cell(stats, 2, 2, 2), tr(STR_READING_PAGES), v.pages, wide ? fui::BitmapRef{} : statsart::page, !wide,
+               false);
   char speed[24];
   std::snprintf(speed, sizeof(speed), "%.1f", v.seconds ? v.pages * 60.0 / v.seconds : 0.0);
   localizeDecimal(speed);
-  metric(s, cell(stats, 3, 2, 2), tr(STR_READING_SPEED), speed, statsart::speed, !wide);
+  metric(s, cell(stats, 3, 2, 2), tr(STR_READING_SPEED), speed, statsart::speed, !wide, false);
   const auto rest = wide ? fui::makeRect(stats.x, stats.bottom() + gap, stats.width, r.bottom() - stats.bottom() - gap)
                          : fui::makeRect(r.x, stats.bottom() + gap, r.width, r.bottom() - stats.bottom() - gap);
-  text(s, fui::makeRect(rest.x, rest.y, rest.width, 30), tr(STR_STATS_CONSISTENCY), 0, fui::TextAlign::Left);
-  const int finishedH = wide ? 36 : 46, streakH = rest.height - 40 - finishedH - gap;
-  const auto streak = fui::makeRect(rest.x, rest.y + 34, rest.width, streakH);
+  const int headingH = wide ? 24 : 30;
+  text(s, fui::makeRect(rest.x, rest.y, rest.width, headingH), tr(STR_STATS_CONSISTENCY), 0, fui::TextAlign::Left);
+  const int finishedH = wide ? 36 : 46, streakTop = wide ? 28 : 34;
+  const int streakH = rest.height - (wide ? streakTop : 40) - finishedH - gap;
+  const auto streak = fui::makeRect(rest.x, rest.y + streakTop, rest.width, streakH);
+  gridFrame(s, streak, 3, 1);
   numberMetric(s, cell(streak, 0, 3, 1), tr(STR_READING_CURRENT_STREAK), v.currentStreak(m.today), statsart::flame,
-               !wide);
-  numberMetric(s, cell(streak, 1, 3, 1), tr(STR_READING_BEST_STREAK), v.longest, statsart::trophy, !wide);
-  numberMetric(s, cell(streak, 2, 3, 1), tr(STR_READING_DAYS), v.daysRead(), statsart::calendar, !wide);
+               !wide, false);
+  numberMetric(s, cell(streak, 1, 3, 1), tr(STR_READING_BEST_STREAK), v.longest, statsart::trophy, !wide, false);
+  numberMetric(s, cell(streak, 2, 3, 1), tr(STR_READING_DAYS), v.daysRead(), statsart::calendar, !wide, false);
   const auto finished = fui::makeRect(rest.x, rest.bottom() - finishedH, rest.width, finishedH);
   frame(s, finished, 2);
   art(s, fui::makeRect(finished.x + 10, finished.y + 6, 34, finishedH - 12), statsart::book);
@@ -293,8 +337,8 @@ void today(Context& s, fui::Rect r, const Model& m) {
   const auto band = fui::makeRect(rest.x, rest.y, rest.width, metricH);
   numberMetric(s, cell(band, 0, 3, 1), tr(STR_READING_SESSIONS), m.periodStats ? m.periodStats->sessions : 0,
                statsart::sessions, !wide);
-  numberMetric(s, cell(band, 1, 3, 1), tr(STR_READING_PAGES), m.periodStats ? m.periodStats->pages : 0, statsart::page,
-               true);
+  numberMetric(s, cell(band, 1, 3, 1), tr(STR_READING_PAGES), m.periodStats ? m.periodStats->pages : 0,
+               wide ? fui::BitmapRef{} : statsart::page, !wide);
   numberMetric(s, cell(band, 2, 3, 1), tr(STR_READING_FINISHED), m.periodStats ? m.periodStats->completed : 0,
                statsart::book, !wide);
   const auto session = fui::makeRect(rest.x, band.bottom() + 10, rest.width, rest.bottom() - band.bottom() - 10);
@@ -383,7 +427,7 @@ void bars(Context& s, fui::Rect r, const Model& m, bool monthly) {
   }
 }
 void periodPicker(Context& s, fui::Rect r, const Model& m) {
-  button(s, fui::makeRect(r.x, r.y, r.width, 40), tr(STR_STATS_BACK_DATA), BackToData);
+  button(s, fui::makeRect(r.x, r.y, r.width, 44), tr(STR_STATS_BACK_DATA), BackToData);
   r.y += 50;
   r.height -= 50;
   const bool wide = r.width > r.height;
@@ -518,7 +562,8 @@ void periodDetails(Context& s, fui::Rect r, const Model& m) {
   if (!m.periodStats) return;
   const auto& v = *m.periodStats;
   const bool wide = r.width > r.height;
-  button(s, fui::makeRect(r.x, r.y, wide ? 190 : r.width, 40),
+  const int backWidth = wide ? r.width / 2 - 6 : r.width;
+  button(s, fui::makeRect(r.x, r.y, backWidth, 44),
          m.periodFromPicker ? tr(STR_STATS_BACK_PERIODS) : tr(STR_STATS_BACK_CALENDAR), BackToCalendar);
   if (m.source == readingstats::Source::Unified) {
     r.y += 52;
@@ -556,7 +601,7 @@ void periodDetails(Context& s, fui::Rect r, const Model& m) {
       else {
         char start[24];
         dashboard::date(start, sizeof(start), first.year, first.month, first.day);
-        std::snprintf(label, sizeof(label), "%s – %s", start, end);
+        std::snprintf(label, sizeof(label), "%s - %s", start, end);
       }
       std::snprintf(subtitle, sizeof(subtitle), tr(STR_STATS_WEEK_NUMBER), readingstats::isoWeek(v.first + 3));
       break;
@@ -568,12 +613,12 @@ void periodDetails(Context& s, fui::Rect r, const Model& m) {
       std::snprintf(label, sizeof(label), "%s %d", I18N.get(months[first.month - 1]), first.year);
       break;
   }
-  const int tx = wide ? r.x + 202 : r.x, tw = r.right() - tx,
-            titleH = wide ? 68 : (m.period == readingstats::Period::Month ? 56 : 82);
+  const int tx = wide ? r.x + backWidth + 12 : r.x, tw = r.right() - tx,
+            titleH = wide ? 56 : (m.period == readingstats::Period::Month ? 56 : 82);
   arrow(s, fui::makeRect(tx, r.y, 44, 44), PeriodPage, -1);
   arrow(s, fui::makeRect(r.right() - 44, r.y, 44, 44), PeriodPage, 1);
   text(s, fui::makeRect(tx + 52, r.y, tw - 104, 44), label, 1);
-  if (*subtitle) prose(s, fui::makeRect(tx + 52, r.y + 42, tw - 104, 28), subtitle, fui::TextAlign::Center, 0);
+  if (*subtitle && !wide) prose(s, fui::makeRect(tx + 52, r.y + 42, tw - 104, 28), subtitle, fui::TextAlign::Center, 0);
   r.y += titleH;
   r.height -= titleH;
   const auto metrics =
@@ -584,7 +629,8 @@ void periodDetails(Context& s, fui::Rect r, const Model& m) {
   const auto cards = fui::makeRect(metrics.x, metrics.y + mainH + gap, metrics.width, metrics.height - mainH - gap);
   const int w = (cards.width - gap) / 2, h = (cards.height - gap) / 2;
   numberMetric(s, fui::makeRect(cards.x, cards.y, w, h), tr(STR_READING_SESSIONS), v.sessions, statsart::sessions);
-  numberMetric(s, fui::makeRect(cards.x + w + gap, cards.y, w, h), tr(STR_READING_PAGES), v.pages, statsart::page);
+  numberMetric(s, fui::makeRect(cards.x + w + gap, cards.y, w, h), tr(STR_READING_PAGES), v.pages,
+               wide ? fui::BitmapRef{} : statsart::page);
   numberMetric(s, fui::makeRect(cards.x, cards.y + h + gap, w, h), tr(STR_STATS_FINISHED_BOOKS), v.completed,
                statsart::book);
   const int through = std::min(v.last, m.today);
@@ -637,7 +683,7 @@ void bookDetails(Context& s, fui::Rect r, const Model& m) {
   const auto& b = *m.detail;
   const bool wide = r.width > r.height;
   if (!m.bookOnly) {
-    button(s, fui::makeRect(r.x, r.y, wide ? 240 : r.width, 40), tr(STR_STATS_BACK_BOOKS), BackToBooks);
+    button(s, fui::makeRect(r.x, r.y, wide ? 240 : r.width, 44), tr(STR_STATS_BACK_BOOKS), BackToBooks);
     r.y += 50;
     r.height -= 50;
   }
@@ -685,14 +731,18 @@ void bookDetails(Context& s, fui::Rect r, const Model& m) {
   const auto dates = wide ? r : fui::makeRect(r.x, metrics.bottom() + 12, r.width, r.bottom() - metrics.bottom() - 12);
   text(s, fui::makeRect(dates.x, dates.y, dates.width, 28), tr(STR_STATS_READING_PERIOD), 0, fui::TextAlign::Left);
   const int rowH = (dates.height - 36) / 2;
+  gridFrame(s, fui::makeRect(dates.x, dates.y + 36, dates.width, 2 * rowH), 1, 2);
   for (int n = 0; n < 2; ++n) {
     const auto box = fui::makeRect(dates.x, dates.y + 36 + n * rowH, dates.width, rowH);
-    frame(s, box, 2);
     const char* caption = n ? (b.completed ? tr(STR_STATS_FINISHED) : tr(STR_STATS_LAST_READ)) : tr(STR_STATS_STARTED);
     date(n ? (b.completed ? b.finishedEpoch : b.lastEpoch) : b.firstEpoch, label, sizeof(label));
     if (wide) {
-      prose(s, fui::makeRect(box.x + 8, box.y, 70, box.height), caption, fui::TextAlign::Left, 3);
-      text(s, fui::makeRect(box.x + 84, box.y, box.width - 92, box.height), label, 3, fui::TextAlign::Right);
+      const bool tall = box.height >= 66;
+      const int captionH = tall ? 28 : 18, dateH = tall ? 28 : 24, gap = tall ? 4 : 2;
+      const int top = box.y + (box.height - captionH - gap - dateH) / 2, icon = tall ? 32 : 24;
+      art(s, fui::makeRect(box.x + 12, box.y + (box.height - icon) / 2, icon, icon), statsart::calendar);
+      prose(s, fui::makeRect(box.x + 56, top, box.width - 68, captionH), caption, fui::TextAlign::Left, tall ? 4 : 3);
+      text(s, fui::makeRect(box.x + 56, top + captionH + gap, box.width - 68, dateH), label, 0, fui::TextAlign::Left);
     } else {
       art(s, fui::makeRect(box.x + 14, box.y + (box.height - 32) / 2, 32, 32), statsart::calendar);
       prose(s, fui::makeRect(box.x + 64, box.y + 4, box.width - 72, 22), caption, fui::TextAlign::Left);
@@ -748,7 +798,7 @@ void books(Context& s, fui::Rect r, const Model& m) {
     const int x = row.x + side + 28, width = divider - x - 10;
     const int titleY = wide ? row.y + (row.height - 38) / 2 : row.y + 8;
     text(s, fui::makeRect(x, titleY, width, wide ? 18 : row.height / 2 - 8), b.title, wide ? 3 : 0,
-         fui::TextAlign::Left, fui::Color::Black, wide ? 1 : 2);
+         fui::TextAlign::Left, fui::Color::Black, 1, false);
     char label[48], dateValue[32];
     date(finished ? b.finishedEpoch : b.lastEpoch, dateValue, sizeof(dateValue));
     if (finished)

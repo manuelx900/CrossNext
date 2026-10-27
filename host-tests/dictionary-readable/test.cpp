@@ -131,6 +131,12 @@ void htmlTests() {
   std::string styled = "<style>.bad {}</style><script>bad()</script><DIV title='a > b'>sí</DIV>";
   vocabulary::prepareDictionaryHtml(styled);
   CHECK(styled == "<p>sí</p>");
+  std::string symbols = "<p><a href='bword://earth'>🜨</a> and <a href='bword://earth'>♁</a></p>";
+  vocabulary::prepareDictionaryHtml(symbols);
+  CHECK(symbols.find("🜨") != symbols.npos && symbols.find("♁") != symbols.npos);
+  std::string spanishSymbol = "<section lang='es'><a href='x'>♁</a></section>";
+  vocabulary::prepareDictionaryHtml(spanishSymbol);
+  CHECK(spanishSymbol.find("♁") != spanishSymbol.npos);
 }
 void wordBoundaries() {
   for (const size_t length : {1u, 63u, 64u, 65u, 254u, 255u}) {

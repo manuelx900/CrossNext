@@ -190,7 +190,8 @@ void heroPanel(toybox::Screen& s, Work& w, fui::Rect r, const quest::Profile& p,
 }
 void statsCard(toybox::Screen& s, Work& w, fui::Rect r, unsigned value, const char* label, bool streak) {
   s.target().stroke(r, ink, 3);
-  const auto icon = fui::makeRect(r.x + 8, r.y + 10, 40, r.height - 20);
+  const bool wide = s.device().width > s.device().height;
+  const auto icon = fui::makeRect(r.x + 8, r.y + 10, 40, wide ? 36 : r.height - 20);
   if (streak)
     questicons::flame(s.target(), icon);
   else
@@ -200,7 +201,10 @@ void statsCard(toybox::Screen& s, Work& w, fui::Rect r, unsigned value, const ch
   else
     std::snprintf(w.label, sizeof(w.label), "%u", value);
   text(s, fui::makeRect(r.x + 52, r.y + 3, r.width - 58, 31), w.label, 1);
-  text(s, fui::makeRect(r.x + 52, r.y + 34, r.width - 58, r.height - 37), label, 3);
+  text(s,
+       wide ? fui::makeRect(r.x + 8, r.y + 48, r.width - 16, r.height - 52)
+            : fui::makeRect(r.x + 52, r.y + 34, r.width - 58, r.height - 37),
+       label, 3);
 }
 void pager(toybox::Screen& s, Work& w, fui::Rect r, int page, int pages) {
   w.page = page;
@@ -304,7 +308,8 @@ void build(toybox::Screen& s, const Model& m, Work& w) {
     pixelui::copyCaps(w.tabLabels[n], sizeof(w.tabLabels[n]), I18N.get(names[n]));
     w.tabs[n] = fui::tabItem(n, m.tab == n, true, w.tabLabels[n]);
   }
-  pixelui::tabs(s, w.tabs, 3, Tab, 0);
+  const bool landscape = s.device().width > s.device().height;
+  pixelui::tabs(s, w.tabs, 3, Tab, 0, landscape ? 44 : 52, landscape ? 6 : 10);
   auto body = s.body();
   if (m.loading) {
     text(s, body, tr(STR_READING_LOADING));
@@ -332,11 +337,13 @@ void build(toybox::Screen& s, const Model& m, Work& w) {
         wide ? fui::makeRect(heroBox.right() + gap, body.y, body.right() - heroBox.right() - gap, body.height)
              : fui::makeRect(body.x, heroBox.bottom() + gap, body.width, 194);
     const int half = (info.width - gap) / 2;
-    statsCard(s, w, fui::makeRect(info.x, info.y, half, 64), stats.currentStreak(m.today), tr(STR_QUEST_CURRENT_STREAK),
-              true);
-    statsCard(s, w, fui::makeRect(info.x + half + gap, info.y, info.width - half - gap, 64), stats.completed,
+    const int statsHeight = wide ? 88 : 64;
+    const int infoTop = wide ? info.y + std::max(0, (int(info.height) - statsHeight - 130) / 2) : info.y;
+    statsCard(s, w, fui::makeRect(info.x, infoTop, half, statsHeight), stats.currentStreak(m.today),
+              tr(STR_QUEST_CURRENT_STREAK), true);
+    statsCard(s, w, fui::makeRect(info.x + half + gap, infoTop, info.width - half - gap, statsHeight), stats.completed,
               tr(STR_QUEST_BOOKS_LABEL), false);
-    dailyCard(s, w, fui::makeRect(info.x, info.y + 72, info.width, 122), m);
+    dailyCard(s, w, fui::makeRect(info.x, infoTop + statsHeight + gap, info.width, 122), m);
     return;
   }
   const auto pages = s.takeBottom(m.tab == 1 ? 66 : 44, 8);
@@ -429,7 +436,7 @@ void build(toybox::Screen& s, const Model& m, Work& w) {
     pixelui::copyCaps(w.tabLabels[n], sizeof(w.tabLabels[n]), I18N.get(categories[n]));
     w.tabs[n] = fui::tabItem(n, m.category == n, true, w.tabLabels[n]);
   }
-  pixelui::tabs(s, w.tabs, quest::kSlotCount, Category, 0);
+  pixelui::tabs(s, w.tabs, quest::kSlotCount, Category, 0, landscape ? 44 : 52, landscape ? 6 : 10);
   {
     const auto band = s.takeTop(44, 8);
     const int half = (band.width - 8) / 2;

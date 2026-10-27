@@ -1,5 +1,7 @@
 #pragma once
 
+#include <I18n.h>
+
 #include <atomic>
 #include <memory>
 #include <string>
@@ -20,6 +22,16 @@ class ReaderActivity : public Activity {
   ReaderSession readerSession;
   std::atomic<bool> pageRendered{false};
   bool bookRemembered = false;
+  std::atomic<bool> bookFinished{false};
+  std::atomic<bool> endRenderedPending{false};
+  bool endCompletionAttempted = false;
+  bool finishedPositionPending = false;
+  bool isBookFinished() const { return bookFinished.load(std::memory_order_acquire); }
+  StrId completionMenuLabelId() const {
+    return finishedPositionPending ? StrId::STR_READER_RETRY_FINISH_POSITION
+           : isBookFinished()      ? StrId::STR_READER_MARK_UNFINISHED
+                                   : StrId::STR_READER_FINISH_BOOK;
+  }
   void markPageRendered() { pageRendered.store(true, std::memory_order_release); }
   void rememberBookOnceRendered();
 
@@ -58,7 +70,7 @@ class ReaderActivity : public Activity {
   virtual void onEndOfBookRendered() {}
 
   bool handleBackNavigation();
-  /** True while the end-of-book suggestion menu is on screen and owning input. */
+  /** True while the end-of-book screen owns input. */
   bool endOfBookMenuActive() const;
   bool handleEndOfBookMenu(bool suppressConfirmRelease = false);
   bool handleEndOfBookPageTurn(bool prevTriggered, bool nextTriggered);
@@ -67,6 +79,7 @@ class ReaderActivity : public Activity {
   void notePageTurn(bool forward, bool succeeded);
   bool flushReaderSession();
   void requestFinishBook();
+  void recordEndOfBook();
   void showFinishBookError(const char* message);
 
  public:

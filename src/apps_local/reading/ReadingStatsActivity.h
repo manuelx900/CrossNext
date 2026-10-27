@@ -5,6 +5,7 @@
 #include "../../activities/Activity.h"
 #include "../ui/SectionNavigation.h"
 #include "../ui/ToyboxScreen.h"
+#include "ReadingCompletionIndex.h"
 #include "ReadingStatsCloud.h"
 #include "ReadingStatsProjection.h"
 #include "ReadingStatsScreens.h"
@@ -42,9 +43,11 @@ class ReadingStatsActivity final : public Activity {
   readingstats::Summary summary;
   readingstats::PeriodStats dayStats, periodStats;
   readingstats::Repository repository;
+  HalMemory::PsramBuffer completionMemory;
+  readingstats::CompletionIndex completionIndex;
   readingstats::Record record;
   readingstats::Book books[readingstats::kRecentBooks], detail;
-  // The summary pass also projects both book tabs; no journal reread on a tab switch.
+  // Recent is projected during Summary; Finished uses one bounded reverse scan per page.
   readingstats::Book finishedBooks[readingstats::kBooksPerPage];
   uint8_t readAhead[readingstats::kRecordBytes * 8]{};
   int finishedPage = -1, finishedCount = 0, finishedCapacity = readingstats::kBooksPerPage;

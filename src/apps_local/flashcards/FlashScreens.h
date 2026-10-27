@@ -21,6 +21,8 @@ struct LibraryModel {
   int count = 0, totalDecks = 0, today = 0, page = 0, pages = 1;
   bool error = false;
 };
+inline constexpr int kMaxLibraryRows = 8;
+int libraryCapacity(const fui::DeviceContext&);
 struct HistoryRow {
   const char* deck = "";
   const char* date = "";

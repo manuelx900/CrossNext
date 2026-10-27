@@ -65,6 +65,7 @@ void NetworkModeSelectionActivity::activateIndex(const int index) {
 
 void NetworkModeSelectionActivity::buildScreen(UiScreen& screen) {
   pixelui::FontScope fonts(uiTarget, renderer, I18N.getLanguage() != Language::EN);
+  useCompactSettingsRows();
   const int hints = mappedInput.hasTouch() ? 0 : UITheme::getInstance().getMetrics().buttonHintsHeight;
   pixelui::begin(screen, hints);
 

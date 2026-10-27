@@ -14,9 +14,13 @@ class Repository {
   ScanResult next(Record& record);
   void close();
   bool record(const char* document, const char* title, const char* author, int64_t epoch, uint32_t seconds,
-              uint32_t pages, uint16_t progressBp);
+              uint32_t pages, uint16_t progressBp, bool* completed = nullptr);
   bool loadBook(const char* document, Book& book);
   bool complete(const char* document, const char* title, const char* author, int64_t epoch);
+  bool reopen(const char* document, const char* title, const char* author, int64_t epoch, uint16_t progressBp);
+  bool completionStatus(const char* document, bool& completed, bool& manuallyUnfinished);
+  uint64_t recordOffset() const { return backwards ? cursor : cursor - kRecordBytes; }
+  uint64_t recordCount() const { return end >= 16 ? (end - 16) / kRecordBytes : 0; }
   bool hadDamage() const { return damaged; }
 
  private:
@@ -35,6 +39,8 @@ class Repository {
 };
 int today();
 bool recordSession(const char* document, const char* title, const char* author, int64_t epoch, uint32_t seconds,
-                   uint32_t pages, uint16_t progressBp);
+                   uint32_t pages, uint16_t progressBp, bool* completed = nullptr);
 bool recordCompletion(const char* document, const char* title, const char* author, int64_t epoch);
+bool recordReopening(const char* document, const char* title, const char* author, int64_t epoch, uint16_t progressBp);
+bool completionStatus(const char* document, bool& completed, bool& manuallyUnfinished);
 }  // namespace readingstats

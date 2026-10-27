@@ -262,4 +262,17 @@ namespace syntheticGlyph {
 constexpr uint32_t FULL_BLOCK = 0x2588;
 constexpr uint32_t BLACK_SQUARE = 0x25A0;
 constexpr bool isSolid(uint32_t cp) { return cp == FULL_BLOCK || cp == BLACK_SQUARE; }
+constexpr bool isSymbol(uint32_t cp) { return cp == 0x2641 || cp == 0x1F728; }
+constexpr bool isSupported(uint32_t cp) { return isSolid(cp) || isSymbol(cp); }
+// One-bit fallback shapes, sampled in glyph coordinates at the current em size.
+inline bool ink(uint32_t cp, int x, int y, int width, int height) {
+  if (isSolid(cp)) return true;
+  if (!isSymbol(cp) || width <= 0 || height <= 0 || x < 0 || y < 0 || x >= width || y >= height) return false;
+  static constexpr uint16_t ORB[] = {0x0180, 0x0180, 0x07E0, 0x0180, 0x0180, 0x03C0, 0x0C30, 0x1818,
+                                     0x1008, 0x1008, 0x1008, 0x1008, 0x1818, 0x0C30, 0x03C0, 0x0000};
+  static constexpr uint16_t CIRCLED_CROSS[] = {0x0000, 0x07E0, 0x1818, 0x2184, 0x4182, 0x4182, 0x4182, 0x7FFE,
+                                               0x7FFE, 0x4182, 0x4182, 0x4182, 0x2184, 0x1818, 0x07E0, 0x0000};
+  const auto* rows = cp == 0x2641 ? ORB : CIRCLED_CROSS;
+  return (rows[y * 16 / height] & (uint16_t(0x8000) >> (x * 16 / width))) != 0;
+}
 }  // namespace syntheticGlyph

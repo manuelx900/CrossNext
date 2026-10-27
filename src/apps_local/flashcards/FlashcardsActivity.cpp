@@ -201,7 +201,9 @@ bool FlashcardsActivity::handleCustomInput() {
       if (view == View::Help)
         helpPage = std::clamp(helpPage + direction, 0, 1);
       else
-        page = std::clamp(page + direction, 0, std::max(0, (int(entries.size()) - 1) / 3));
+        page = std::clamp(page + direction, 0,
+                          std::max(0, (int(entries.size()) - 1) /
+                                          flashui::libraryCapacity(toybox::makeTarget(renderer).deviceContext())));
       requestUpdate();
       return true;
     }
@@ -217,7 +219,7 @@ bool FlashcardsActivity::handleCustomInput() {
       auto child = FlashSettingsActivity::create(renderer, mappedInput);
       if (child) startActivityForResult(std::move(child), [this](const ActivityResult&) { requestUpdate(); });
     } else if (event.action == flashui::OpenDeck)
-      activateIndex(page * 3 + event.value);
+      activateIndex(page * flashui::libraryCapacity(toybox::makeTarget(renderer).deviceContext()) + event.value);
     else if (event.action == flashui::History) {
       auto child = FlashHistoryActivity::create(renderer, mappedInput);
       if (child) startActivityForResult(std::move(child), [this](const ActivityResult&) { scan(); });
@@ -229,7 +231,9 @@ bool FlashcardsActivity::handleCustomInput() {
       if (view == View::Help)
         helpPage = std::clamp(helpPage + event.value, 0, 1);
       else
-        page = std::clamp(page + event.value, 0, std::max(0, (int(entries.size()) - 1) / 3));
+        page = std::clamp(page + event.value, 0,
+                          std::max(0, (int(entries.size()) - 1) /
+                                          flashui::libraryCapacity(toybox::makeTarget(renderer).deviceContext())));
       requestUpdate();
     } else if (event.action == flashui::Back)
       onBackButton();
@@ -244,7 +248,9 @@ bool FlashcardsActivity::handleCustomInput() {
     if (view == View::Help)
       helpPage = std::clamp(helpPage + delta, 0, 1);
     else
-      page = std::clamp(page + delta, 0, std::max(0, (int(entries.size()) - 1) / 3));
+      page = std::clamp(page + delta, 0,
+                        std::max(0, (int(entries.size()) - 1) /
+                                        flashui::libraryCapacity(toybox::makeTarget(renderer).deviceContext())));
     requestUpdate();
   }
   return true;
@@ -259,13 +265,16 @@ void FlashcardsActivity::render(RenderLock&&) {
   toybox::Screen screen(frame);
   interactionsReady = false;
   if (view == View::Browse) {
+    target.setFont(4, SMALL_FONT_ID);
     flashui::LibraryModel model;
     model.error = error;
     model.totalDecks = entries.size();
+    const int capacity = flashui::libraryCapacity(target.deviceContext());
+    model.pages = std::max(1, (int(entries.size()) + capacity - 1) / capacity);
+    page = std::clamp(page, 0, model.pages - 1);
     model.page = page;
-    model.pages = std::max(1, (int(entries.size()) + 2) / 3);
     for (const auto& d : entries) model.today += d.due + d.fresh;
-    for (int n = page * 3; n < int(entries.size()) && n < page * 3 + 3; ++n) {
+    for (int n = page * capacity; n < int(entries.size()) && n < page * capacity + capacity; ++n) {
       const auto& d = entries[n];
       deckRows[model.count++] = {d.name.c_str(), d.total, d.due, d.fresh, d.ready, d.folder};
     }

@@ -5,10 +5,13 @@
 #include <Memory.h>
 #include <WiFi.h>
 
+#include <algorithm>
+
 #include "DevMode.h"
 #include "MappedInputManager.h"
 #include "SilentRestart.h"
 #include "activities/network/WifiSelectionActivity.h"
+#include "apps_local/ui/FitText.h"
 #include "apps_local/ui/PixelMenuTheme.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
@@ -143,11 +146,24 @@ void OtaUpdateActivity::render(RenderLock&&) {
   } else if (state == WAITING_CONFIRMATION) {
     // Version info sits in the upper part of the screen so the centered
     // Cancel/Update popup doesn't cover it (same layout as ConfirmationActivity).
-    const int infoTop = pageHeight / 6;
-    renderer.drawText(UI_10_FONT_ID, metrics.contentSidePadding, infoTop,
-                      (std::string(tr(STR_CURRENT_VERSION)) + CROSSPOINT_VERSION).c_str());
-    renderer.drawText(UI_10_FONT_ID, metrics.contentSidePadding, infoTop + height + metrics.verticalSpacing,
-                      (std::string(tr(STR_NEW_VERSION)) + updater.getLatestVersion()).c_str());
+    const int infoTop =
+        std::max(pageHeight / 6, pixelui::geometry(toybox::makeTarget(renderer).deviceContext()).body.y + 8);
+    if (pageWidth > pageHeight) {
+      auto target = toybox::makeTarget(renderer);
+      pixelui::bindFonts(target, renderer);
+      target.setFont(4, UI_10_FONT_ID);
+      const auto body = pixelui::geometry(target.deviceContext()).body;
+      const int width = (body.width - 24) / 2;
+      fittext::draw(target, freeink::ui::makeRect(body.x, infoTop, width, height),
+                    (std::string(tr(STR_CURRENT_VERSION)) + CROSSPOINT_VERSION).c_str(), 4, 1);
+      fittext::draw(target, freeink::ui::makeRect(body.x + width + 24, infoTop, width, height),
+                    (std::string(tr(STR_NEW_VERSION)) + updater.getLatestVersion()).c_str(), 4, 1);
+    } else {
+      renderer.drawText(UI_10_FONT_ID, metrics.contentSidePadding, infoTop,
+                        (std::string(tr(STR_CURRENT_VERSION)) + CROSSPOINT_VERSION).c_str());
+      renderer.drawText(UI_10_FONT_ID, metrics.contentSidePadding, infoTop + height + metrics.verticalSpacing,
+                        (std::string(tr(STR_NEW_VERSION)) + updater.getLatestVersion()).c_str());
+    }
 
     if (confirmPopup.processRender(renderer, mappedInput)) return;
   } else if (state == UPDATE_IN_PROGRESS) {

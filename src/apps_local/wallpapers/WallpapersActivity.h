@@ -109,6 +109,7 @@ class WallpapersActivity final : public Activity {
                  Thumb* reuse = nullptr);
   void drawThumbInto(const Thumb& t, const freeink::ui::Rect& box, bool crop = false) const;
   void drawGrid(const wallpapersui::GridGeom& geom);
+  bool gridCacheMatches(const wallpapersui::GridGeom& geom) const;
   void drawMarker(const freeink::ui::Rect& th) const;
 
   // Which wallpaper the sheet, the confirm and the preview are about. Held as a

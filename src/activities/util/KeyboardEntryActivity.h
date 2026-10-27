@@ -156,6 +156,9 @@ class KeyboardEntryActivity : public Activity {
   static size_t utf8Next(const std::string& s, size_t pos);
 
   freeink::ui::Rect keyboardRect() const;
+  int inputFieldTop() const;
+  int inputFieldLines() const;
+  int inputWindowStart(std::string& displayText, int width) const;
 
   static constexpr uint16_t LONG_PRESS_MS = 500;
   static constexpr uint16_t DEL_LONG_PRESS_MS = 1500;

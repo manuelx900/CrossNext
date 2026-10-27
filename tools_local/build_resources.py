@@ -56,6 +56,34 @@ def assemble(output, dictionaries, staging):
     for entry in catalog["files"]:
         if hashlib.sha256((staging / entry["path"]).read_bytes()).hexdigest() != entry["sha256"]:
             raise ValueError(f"Resource differs from its provenance record: {entry['path']}")
+    spec = importlib.util.spec_from_file_location("compact_dictionaries", ROOT / "tools_local/compact_dictionaries.py")
+    compact = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(compact)
+    changes = []
+    for directory in sorted((staging / "dictionaries").iterdir()):
+        if directory.is_dir():
+            changes.extend(compact.compact_dictionary(directory))
+    by_input = {change["input"].relative_to(staging).as_posix(): change for change in changes}
+    for entry in catalog["files"]:
+        change = by_input.get(entry["path"])
+        if not change:
+            continue
+        entry["sourceSha256"] = change["sourceSha256"]
+        entry["path"] = change["output"].relative_to(staging).as_posix()
+        entry["bytes"] = change["output"].stat().st_size
+        entry["sha256"] = hashlib.sha256(change["output"].read_bytes()).hexdigest()
+        entry["modified"] = True
+        entry["modifications"] = entry.get("modifications", "") + (
+            " Compact reading layout: web styles, pronunciation, syllabification, repeated headword/inflection rows "
+            "and etymology metadata omitted; "
+            "Bilingual target equivalents retained in sense groups; source-language glosses omitted, "
+            "category labels localized to the destination language, source grammatical gender omitted. "
+            "Dictionary order and synonym pointers retained." if change["targetLanguage"] else
+            " Compact reading layout: web styles, pronunciation, syllabification, repeated headword/inflection rows "
+            "and etymology metadata omitted; "
+            "definitions, examples, symbols and lexical relations retained. Dictionary order and synonym pointers retained.")
+        if entry["path"].startswith("dictionaries/WikDict EN-ES/"):
+            entry["modifications"] += " EN-ES private (noun): incorrect cabo equivalent removed; soldado raso retained."
     (staging / "SOURCES.json").write_text(json.dumps(catalog, indent=2) + "\n", encoding="utf-8")
     for directory in (staging / "dictionaries").iterdir():
         if not directory.is_dir():
@@ -81,6 +109,10 @@ def assemble(output, dictionaries, staging):
         "Atkinson Hyperlegible, Merriweather, EB Garamond, PT Serif and Inter.\n"
         + dictionary_description +
         "EN/ES interface languages automatically choose installed definition/translation defaults.\n"
+        "Dictionary entries use compact numbered meanings, synonyms and examples when supplied by the source.\n"
+        "The eight bundled WikDict translators show destination-language equivalents and categories, grouped by sense.\n"
+        "Their source-language explanations and gender metadata are omitted. Custom dictionaries retain their language.\n"
+        "No meanings or examples are generated. Web styles and pronunciation/etymology metadata are omitted.\n"
         "Manual dictionary selections, including None, take precedence.\n"
         "App resources: apps/reading-adventure, apps/pet and apps/intercept.\n"
         "Install compatible firmware for your device separately. This ZIP contains no firmware.\n"

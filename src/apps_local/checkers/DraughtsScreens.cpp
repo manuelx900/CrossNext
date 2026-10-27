@@ -111,7 +111,7 @@ void build(toybox::Screen& s, const Model& m) {
                       m.saveFailed ? tr(STR_WORDLE_SAVE_FAILED) : label, 3);
       const bool continuing = m.active && m.result == Outcome::Playing;
       const int rows = continuing ? 4 : 3;
-      const int actionY = wide ? right.y + 34 : body.bottom() - rows * 70 + 8;
+      const int actionY = wide ? gamepanel::centeredBlock(right, rows * 70 - 8).y : body.bottom() - rows * 70 + 8;
       const auto area =
           fui::makeRect(left.x, left.y + 86, left.width, (wide ? left.bottom() : actionY - 16) - left.y - 86);
       const int cell = std::max(1, std::min(int(area.width), int(area.height)) / size);
@@ -183,7 +183,7 @@ void build(toybox::Screen& s, const Model& m) {
                                                   draughts::Rules::International, draughts::Rules::English};
       const bool wide = body.width > body.height;
       const int page = std::clamp(m.helpPage, 0, wide ? 7 : 3);
-      const auto summary = fui::makeRect(body.x, body.y, wide ? 180 : body.width, body.height);
+      const auto summary = fui::makeRect(body.x, body.y, wide ? body.width * 32 / 100 : body.width, body.height);
       const auto lessons =
           wide ? fui::makeRect(summary.right() + 16, body.y, body.width - summary.width - 16, body.height) : body;
       const auto rule = order[wide ? page / 2 : page];
@@ -191,21 +191,22 @@ void build(toybox::Screen& s, const Model& m) {
                                             StrId::STR_DRAUGHTS_HELP_INTERNATIONAL, StrId::STR_DRAUGHTS_HELP_ENGLISH};
       const bool international = rule == draughts::Rules::International, english = rule == draughts::Rules::English;
       const bool forward = english || rule == draughts::Rules::Spanish;
-      auto title = fui::makeRect(summary.x, summary.y, summary.width, wide ? 36 : 44);
-      pixelui::text(s.target(), title, tr(STR_WORDLE_HELP), pixelui::kTitle);
-      pixelui::text(s.target(), fui::makeRect(summary.x, title.bottom(), summary.width, 28),
-                    I18N.get(helpNames[wide ? page / 2 : page]), pixelui::kBody);
       char label[160];
+      auto title = fui::makeRect(summary.x, summary.y, summary.width, wide ? 36 : 44);
+      fittext::draw(s.target(), title, tr(STR_WORDLE_HELP), wide ? 0 : pixelui::kTitle, 1);
+      pixelui::copyCaps(label, sizeof(label), I18N.get(helpNames[wide ? page / 2 : page]));
+      fittext::draw(s.target(), fui::makeRect(summary.x, title.bottom(), summary.width, wide ? 58 : 28), label,
+                    pixelui::kBody, wide ? 2 : 1);
       const int size = international ? 10 : 8;
       std::snprintf(label, sizeof(label), tr(STR_DRAUGHTS_PIECES), size, size, international ? 20 : 12);
-      const auto badge = fui::makeRect(summary.x, title.bottom() + 28, summary.width, wide ? 52 : 28);
+      const auto badge = fui::makeRect(summary.x, title.bottom() + (wide ? 66 : 28), summary.width, wide ? 68 : 28);
       dashboard::frame(s, badge, 2);
-      dashboard::text(s, badge, label, 3);
+      fittext::draw(s.target(), badge.inset({4, 8, 4, 8}), label, 3, wide ? 2 : 1, fui::TextAlign::Center);
       const auto done = fui::makeRect(summary.x, body.bottom() - 44, summary.width, 44);
       pageui::build(s, fui::makeRect(summary.x, done.y, summary.width, 38), page + 1, wide ? 8 : 4, HelpPage, -1,
                     HelpPage, 1);
-      const auto mandatory = fui::makeRect(summary.x, done.y - 70, summary.width, 24);
-      dashboard::text(s, mandatory, tr(STR_DRAUGHTS_MANDATORY), 3);
+      const auto mandatory = fui::makeRect(summary.x, done.y - (wide ? 86 : 70), summary.width, wide ? 72 : 24);
+      fittext::draw(s.target(), mandatory, tr(STR_DRAUGHTS_MANDATORY), 3, wide ? 3 : 1, fui::TextAlign::Center);
       const int top = wide ? lessons.y : badge.bottom() + 10, available = wide ? lessons.height : mandatory.y - top - 4;
       static constexpr int weights[] = {88, 128, 110, 158};
       static constexpr const fui::BitmapRef* illustrations[][4] = {
@@ -226,9 +227,11 @@ void build(toybox::Screen& s, const Model& m) {
         dashboard::text(s, number, label, 0, fui::TextAlign::Center, true);
         static constexpr StrId headings[] = {StrId::STR_DRAUGHTS_MOVEMENT, StrId::STR_DRAUGHTS_CAPTURE,
                                              StrId::STR_DRAUGHTS_PROMOTION, StrId::STR_DRAUGHTS_FLYING_KING};
-        pixelui::text(s.target(), fui::makeRect(r.x + 46, r.y, (wide ? 180 : r.width * 2 / 5) - 46, 32),
-                      I18N.get(n == 3 && english ? StrId::STR_DRAUGHTS_SHORT_KING : headings[n]), pixelui::kSmall);
-        const int artW = wide ? 180 : r.width * 2 / 5;
+        pixelui::copyCaps(label, sizeof(label),
+                          I18N.get(n == 3 && english ? StrId::STR_DRAUGHTS_SHORT_KING : headings[n]));
+        fittext::draw(s.target(), fui::makeRect(r.x + 46, r.y, (wide ? r.width : r.width * 2 / 5) - 46, 32), label,
+                      pixelui::kSmall, 1);
+        const int artW = wide ? std::min(138, int(r.width) / 3) : r.width * 2 / 5;
         compactart::draw(s, fui::makeRect(r.x + 42, r.y + 34, artW - 42, r.height - 42),
                          *illustrations[wide ? page / 2 : page][n]);
         const char* text = n == 0    ? tr(STR_DRAUGHTS_MOVE_HELP)
@@ -239,7 +242,8 @@ void build(toybox::Screen& s, const Model& m) {
         fui::TextStyle prose;
         prose.font = 4;
         prose.maxLines = 8;
-        auto copy = fui::makeRect(r.x + artW + 6, r.y + 4, r.width - artW - 10, r.height - 12);
+        auto copy =
+            fui::makeRect(r.x + artW + 6, wide ? r.y + 38 : r.y + 4, r.width - artW - 10, r.height - (wide ? 50 : 8));
         if (n == 1) {
           std::snprintf(label, sizeof(label), "%s %s", text,
                         english                            ? tr(STR_DRAUGHTS_ANY_CHAIN)
@@ -247,7 +251,10 @@ void build(toybox::Screen& s, const Model& m) {
                                                            : tr(STR_DRAUGHTS_MOST));
           text = label;
         }
-        s.target().text(copy, text, prose);
+        if (wide)
+          fittext::draw(s.target(), copy, text, 4, 6);
+        else
+          s.target().text(copy, text, prose);
         s.target().fill(fui::makeRect(r.x, r.bottom() - 4, r.width, 4), dashboard::ink);
         y += h;
       }
@@ -289,7 +296,10 @@ void build(toybox::Screen& s, const Model& m) {
       const auto& g = *m.game;
       const bool review = m.view == View::Review, wide = body.width > body.height;
       const auto r = boardRect(s.device(), g.size);
-      const auto side = wide ? fui::makeRect(r.right() + 20, body.y, body.right() - r.right() - 20, body.height) : body;
+      const auto side =
+          wide ? gamepanel::centeredBlock(
+                     fui::makeRect(r.right() + 20, body.y, body.right() - r.right() - 20, body.height), 208)
+               : body;
       const char* status = review              ? tr(STR_MATCH_BOARD)
                            : !m.legal->ready() ? tr(STR_DRAUGHTS_CALCULATING)
                            : m.local           ? (g.turn ? tr(STR_DRAUGHTS_BLACK_YOURS) : tr(STR_DRAUGHTS_WHITE_YOURS))
@@ -304,7 +314,7 @@ void build(toybox::Screen& s, const Model& m) {
       std::snprintf(label, sizeof(label), tr(STR_DRAUGHTS_BADGE), ruleName(g.rules), g.size, g.size);
       dashboard::text(s, fui::makeRect(side.x, side.y + 44, side.width, 28), label, 0);
       board(s, r, g.size, g.cells, review ? -1 : m.selected, review ? nullptr : m.legal, m.humanBlack);
-      const auto totals = fui::makeRect(side.x, wide ? side.y + 104 : r.bottom() + 14, side.width, 46);
+      const auto totals = fui::makeRect(side.x, wide ? side.y + 88 : r.bottom() + 14, side.width, 46);
       dashboard::frame(s, totals, 3);
       s.target().fill(fui::makeRect(totals.x + totals.width / 2, totals.y, 2, totals.height), dashboard::ink);
       for (int colour = 0; colour < 2; ++colour) {

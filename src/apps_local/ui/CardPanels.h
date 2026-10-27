@@ -127,23 +127,23 @@ inline void deckLesson(toybox::Screen& s, fui::Rect r, bool aceHigh) {
   static constexpr int ranks[] = {cards::kAce, cards::kJack, cards::kQueen, cards::kKing};
   static constexpr StrId labels[] = {StrId::STR_CARDS_GUIDE_ACE, StrId::STR_CARDS_GUIDE_JACK,
                                      StrId::STR_CARDS_GUIDE_QUEEN, StrId::STR_CARDS_GUIDE_KING};
-  const int cw = (faceW - 24) / 4, ch = wide ? 100 : 118;
+  const int cw = (faceW - 24) / 4, ch = wide ? 84 : 118;
   for (int n = 0; n < 4; ++n) {
     const auto box = fui::makeRect(faceX + n * (cw + 8), faceY, cw, ch);
     cardart::drawCardFace(s, box, cards::faceUp(cards::makeCard(order[n], ranks[n])), ch);
     pixelui::text(s.target(), fui::makeRect(box.x, box.bottom() + 4, cw, 28), I18N.get(labels[n]), 0, fui::Color::Black,
                   fui::TextAlign::Center);
   }
-  const int orderY = faceY + ch + 42;
+  const int orderY = faceY + ch + (wide ? 34 : 42);
   pixelui::text(s.target(), fui::makeRect(faceX, orderY, faceW, 28), tr(STR_CARDS_GUIDE_ORDER), 0);
   const int key = faceW / 13;
   for (int n = 0; n < 13; ++n) {
     const int rank = aceHigh ? (n + 1) % 13 : n;
-    const auto box = fui::makeRect(faceX + n * key, orderY + 34, key, 38);
+    const auto box = fui::makeRect(faceX + n * key, orderY + (wide ? 28 : 34), key, wide ? 32 : 38);
     dashboard::frame(s, box, 1);
     pixelui::text(s.target(), box, cards::rankLabel(rank), 0, fui::Color::Black, fui::TextAlign::Center);
   }
-  guideui::text(s, fui::makeRect(faceX, orderY + 80, faceW, wide ? 30 : 52),
+  guideui::text(s, fui::makeRect(faceX, orderY + (wide ? 68 : 80), faceW, wide ? 30 : 52),
                 aceHigh ? tr(STR_CARDS_GUIDE_ACE_HIGH) : tr(STR_CARDS_GUIDE_ACE_LOW), 2);
 }
 }  // namespace cardpanel

@@ -17,6 +17,7 @@ struct TestStorage {
   bool corruptReadChecksum = false;
   bool failJournalVerification = false;
   int writes = 0;
+  uint64_t readBytes = 0;
   bool refuseRename = false;
   bool enforceParents = false;
   int readLimit = -1;
@@ -89,6 +90,7 @@ class HalFile {
     std::memcpy(out, data->data() + cursor, length);
     if (testStorage.corruptReadChecksum && length > 0) static_cast<uint8_t*>(out)[length - 1] ^= 1;
     cursor += length;
+    testStorage.readBytes += length;
     return static_cast<int>(length);
   }
   size_t write(const void* input, size_t count) {

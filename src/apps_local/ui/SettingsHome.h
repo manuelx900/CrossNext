@@ -45,10 +45,27 @@ inline void styleHome(freeink::ui::ListProps& props) {
 inline void styleAppearance(freeink::ui::ListProps& p) {
   styleRows(p);
   p.rowHeight = 140;
-  p.rowGap = 12;
+  p.rowGap = 0;
+  p.rowStyles.normal.borderWidth = 0;
+  p.rowStyles.selected.borderWidth = 0;
+  p.rowStyles.focused.borderWidth = 0;
+  p.rowStyles.active.borderWidth = 0;
+  p.separatorPaint = freeink::ui::Paint::solid(freeink::ui::Color::Transparent);
   p.iconSize = 108;
   p.labelText.font = 1;
   p.labelText.bold = false;
   p.labelText.maxLines = 2;
+}
+template <typename Screen>
+void appearanceList(Screen& screen, freeink::ui::ListProps& props) {
+  pixelui::list(screen, props);
+  if (props.count < 2 || !props.items) return;
+  const auto band = pixelui::rowArea(screen.body(), props);
+  const int height =
+      freeink::ui::measureListRow(screen.target(), screen.frame().assets(), band.width, props, props.items[0]).height;
+  if (height < band.height)
+    screen.target().fill(
+        freeink::ui::makeRect(band.x, band.y + height - pixelui::kBorder / 2, band.width, pixelui::kBorder),
+        freeink::ui::Paint::solid(freeink::ui::Color::Black));
 }
 }  // namespace settingsui

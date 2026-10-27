@@ -102,12 +102,14 @@ fui::Rect controls(const fui::DeviceContext& d) {
 }
 const char* colour(uint8_t side) { return side == go::kBlack ? tr(STR_UI_BLACK_A9414A) : tr(STR_UI_WHITE_40D23F); }
 void seat(toybox::Screen& s, fui::Rect r, uint8_t side, const char* who, int captures) {
-  stone(s, r.x + 24, r.y + r.height / 2, 18, side);
+  const bool compact = r.width < 220;
+  const int inset = compact ? 40 : 51;
+  stone(s, r.x + (compact ? 18 : 24), r.y + r.height / 2, compact ? 12 : 18, side);
   char text[96];
   std::snprintf(text, sizeof(text), tr(STR_GO_SEAT), who, colour(side));
-  dashboard::text(s, fui::makeRect(r.x + 51, r.y + 2, r.width - 56, 28), text, 0, fui::TextAlign::Left);
+  fittext::draw(s.target(), fui::makeRect(r.x + inset, r.y + 2, r.width - inset - 6, 28), text, compact ? 3 : 0, 1);
   std::snprintf(text, sizeof(text), tr(STR_GO_CAPTURES), captures);
-  prose(s, fui::makeRect(r.x + 51, r.y + 30, r.width - 56, 24), text, 1, 3);
+  fittext::draw(s.target(), fui::makeRect(r.x + inset, r.y + 30, r.width - inset - 6, 24), text, 3, 1);
 }
 void number(char* text, size_t capacity, int halves) {
   if (halves % 2)
@@ -130,7 +132,7 @@ const char* boardNote(const BoardModel& m) {
 fui::Rect boardRect(const fui::DeviceContext& device) {
   const auto b = pixelui::geometry(device).body;
   if (b.width > b.height) {
-    const int side = std::min(int(b.height), int(b.width) * 9 / 20);
+    const int side = std::min(int(b.height), int(b.width) * 52 / 100);
     return fui::makeRect(b.x, b.y + (b.height - side) / 2, side, side);
   }
   const int side = std::min(int(b.width), int(b.height) - 230);
@@ -168,7 +170,8 @@ void buildMenu(toybox::Screen& s, const MenuModel& m) {
   std::snprintf(label, sizeof(label), m.sharedDevice ? tr(STR_GO_LOCAL_DETAIL) : tr(STR_GO_MENU_DETAIL), m.boardSize,
                 m.boardSize, colour(m.seat));
   prose(s, fui::makeRect(b.x, b.y + 40, wide ? b.width / 2 - 8 : b.width, 28), label, 1, 0, fui::TextAlign::Center);
-  const int actionsY = wide ? side.y + 14 : b.bottom() - 46 - rows * (rowH + 6);
+  const int actionHeight = rows * (rowH + 6) - 6;
+  const int actionsY = wide ? gamepanel::centeredBlock(side, actionHeight + 60).y : b.bottom() - 46 - rows * (rowH + 6);
   const auto area = wide ? fui::makeRect(b.x, b.y + 76, b.width / 2 - 8, b.height - 78)
                          : fui::makeRect(b.x, b.y + 76, b.width, actionsY - b.y - 88);
   const int edge = std::min(int(area.width), int(area.height));
@@ -191,8 +194,8 @@ void buildMenu(toybox::Screen& s, const MenuModel& m) {
   y += rowH + 6;
   gamepanel::row(s, fui::makeRect(side.x, y, side.width, rowH), tr(STR_SETTINGS_TITLE), ActionMenuRow,
                  int(MenuRow::Settings), gamepanel::Mark::Settings, false, nullptr, true, &matchart::Gear);
-  prose(s, fui::makeRect(side.x, side.bottom() - 44, side.width, 44), tr(STR_FRONT_GO_RULE), 2, 3,
-        fui::TextAlign::Center);
+  prose(s, fui::makeRect(side.x, wide ? actionsY + actionHeight + 16 : side.bottom() - 44, side.width, 44),
+        tr(STR_FRONT_GO_RULE), 2, 3, fui::TextAlign::Center);
 }
 
 void buildSettings(toybox::Screen& s, const SettingsModel& m) {
@@ -258,7 +261,8 @@ void buildBoard(toybox::Screen& s, const BoardModel& m) {
   begin(s);
   const auto b = s.body(), c = controls(s.device()), r = boardRect(s.device());
   const bool wide = b.width > b.height;
-  const auto stats = fui::makeRect(c.x, c.y, c.width, 60);
+  const int groupY = c.y + (c.height - 204) / 2;
+  const auto stats = fui::makeRect(c.x, wide ? groupY + 72 : c.y, c.width, 60);
   frame(s, stats, 2);
   s.target().fill(fui::makeRect(stats.x + stats.width / 2, stats.y, 2, stats.height), ink);
   const int human = m.seat, other = go::other(m.seat);
@@ -272,9 +276,11 @@ void buildBoard(toybox::Screen& s, const BoardModel& m) {
                 : m.yourTurn   ? tr(STR_GO_YOUR_TURN)
                                : tr(STR_GO_OTHER_TURN),
                 colour(m.game.toMove));
-  const auto turn = fui::makeRect(c.x, c.y + 68, c.width, 36);
+  const int turnW = wide ? c.width * 46 / 100 : c.width;
+  const auto turn = fui::makeRect(c.x, wide ? groupY + 148 : c.y + 68, turnW, wide ? 56 : 36);
   s.target().fill(turn, ink);
-  dashboard::text(s, turn, m.review ? tr(STR_MATCH_BOARD) : label, 1, fui::TextAlign::Center, true);
+  fittext::draw(s.target(), turn.inset({4, 6, 4, 6}), m.review ? tr(STR_MATCH_BOARD) : label, wide ? 0 : 1,
+                wide ? 2 : 1, fui::TextAlign::Center, fui::Color::White);
   gameBoard(s, m.game, false);
   if (!m.review && m.yourTurn && m.aimed >= 0 && m.aimed < m.game.points() && m.game.at(m.aimed) == go::kEmpty) {
     int16_t x, y;
@@ -291,13 +297,15 @@ void buildBoard(toybox::Screen& s, const BoardModel& m) {
     std::snprintf(played, sizeof(played), tr(STR_UI_NOT_OVER_U_FREE_POINTS_B1035D), unsigned(m.freePoints));
     note = played;
   }
-  prose(s, fui::makeRect(c.x, wide ? c.y + 126 : r.bottom() + 12, c.width, wide ? 80 : 44), note, 3, 0,
+  prose(s, fui::makeRect(c.x, wide ? groupY : r.bottom() + 12, c.width, wide ? 56 : 44), note, 3, 0,
         fui::TextAlign::Center);
-  const int half = (c.width - 12) / 2;
-  button(s, fui::makeRect(c.x, c.bottom() - 60, half, 60), m.review ? tr(STR_MATCH_RESULTS) : tr(STR_WORDLE_MENU),
-         m.review ? ActionResult : ActionDone);
+  const int actionX = wide ? turn.right() + 8 : c.x;
+  const int actionW = wide ? c.right() - actionX : c.width;
+  const int half = (actionW - 8) / 2, actionY = wide ? turn.y : c.bottom() - 60;
+  button(s, fui::makeRect(actionX, actionY, m.review && wide ? actionW : half, wide ? 56 : 60),
+         m.review ? tr(STR_MATCH_RESULTS) : tr(STR_WORDLE_MENU), m.review ? ActionResult : ActionDone);
   if (!m.review && m.yourTurn)
-    button(s, fui::makeRect(c.x + half + 12, c.bottom() - 60, c.width - half - 12, 60), tr(STR_UI_PASS_BD564D),
+    button(s, fui::makeRect(actionX + half + 8, actionY, actionW - half - 8, wide ? 56 : 60), tr(STR_UI_PASS_BD564D),
            ActionPass, 0, true);
 }
 
@@ -310,8 +318,9 @@ void buildCount(toybox::Screen& s, const CountModel& m) {
   dashboard::text(s, fui::makeRect(c.x, c.y + 40, c.width, 36), value, 1);
   gameBoard(s, m.game, true, m.owner);
   const auto r = boardRect(s.device());
-  prose(s, fui::makeRect(c.x, c.width > c.height ? c.y + 90 : r.bottom() + 10, c.width, 56), tr(STR_GO_REVIEW_HELP), 3,
-        3, fui::TextAlign::Center);
+  const int noteTop = s.device().width > s.device().height ? c.y + 90 : r.bottom() + 10;
+  prose(s, fui::makeRect(c.x, noteTop, c.width, c.bottom() - 70 - noteTop), tr(STR_GO_REVIEW_HELP), 3, 3,
+        fui::TextAlign::Center);
   const int half = (c.width - 12) / 2;
   const bool can = m.yourTurn && !m.youAccepted;
   button(s, fui::makeRect(c.x, c.bottom() - 58, half, 58),

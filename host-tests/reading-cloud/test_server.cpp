@@ -99,6 +99,28 @@ int main(int argc, char** argv) {
     check(view.find(completion.book.document, manual));
     check(manual.completed && !manual.seconds && !manual.pages && !manual.sessions);
   }
+  Record reopened;
+  reopened.kind = RecordKind::Reopen;
+  reopened.epoch = completion.epoch + 1;
+  reopened.localDay = completion.localDay;
+  reopened.book.progressBp = 8000;
+  copyText(reopened.book.document, sizeof(reopened.book.document), completion.book.document);
+  copyText(reopened.book.title, sizeof(reopened.book.title), completion.book.title);
+  updateBook(reopened, completion.book);
+  const auto reopenAt = bytes.size();
+  bytes.resize(reopenAt + kRecordBytes);
+  encode(reopened, bytes.data() + reopenAt);
+  for (int attempt = 0; attempt < 2; ++attempt) {
+    check(sync() == Result::Success);
+    total(450);
+    Reader reader;
+    check(reader.open() == Result::Success);
+    Projection view;
+    check(view.open(&reader, dayIndex({2026, 10, 26}), Client::deviceTag()) == Result::Success);
+    Book book;
+    check(view.find(reopened.book.document, book) && !book.completed && book.manuallyUnfinished);
+    check(view.data().finished == 0 && view.data().summary.completed == 0);
+  }
   std::printf("Official CrossPoint Sync + production client: %d checks, %d failed\n", checks, failed);
   return (failed || testProgressServer()) ? 1 : 0;
 }

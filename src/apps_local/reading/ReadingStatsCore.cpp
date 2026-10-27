@@ -110,12 +110,31 @@ void PeriodStats::add(const Record& r) {
   const int64_t start = int64_t(r.localDay) * 86400 + r.secondOfDay;
   const int64_t from = std::max(start, int64_t(first) * 86400);
   const int64_t to = std::min(start + r.seconds, int64_t(last + 1) * 86400);
-  const int64_t completedAt = start + r.seconds;
-  if (r.firstCompletion && completedAt >= int64_t(first) * 86400 && completedAt < int64_t(last + 1) * 86400) {
-    completed = sum32(completed, 1);
+  const bool reverse = r.kind == RecordKind::Reopen;
+  const int64_t completedAt = reverse ? int64_t(r.reversedCompletionDay) * 86400 : start + r.seconds;
+  if ((r.firstCompletion || reverse) && completedAt >= int64_t(first) * 86400 &&
+      completedAt < int64_t(last + 1) * 86400) {
+    // Period scans run backwards. Keep unmatched reversals until their original completion is encountered.
+    if (reverse) {
+      if (completed)
+        --completed;
+      else
+        ++pendingReversals;
+    } else if (pendingReversals)
+      --pendingReversals;
+    else
+      completed = sum32(completed, 1);
     if (annual) {
       const int month = dateFromDay(static_cast<int>(completedAt / 86400)).month - 1;
-      annualCompleted[month] = sum32(annualCompleted[month], 1);
+      if (reverse) {
+        if (annualCompleted[month])
+          --annualCompleted[month];
+        else
+          ++annualReversals[month];
+      } else if (annualReversals[month])
+        --annualReversals[month];
+      else
+        annualCompleted[month] = sum32(annualCompleted[month], 1);
     }
   }
   if (!r.seconds || to <= from) return;
@@ -185,10 +204,21 @@ void updateBook(Record& record, const Book& previous) {
   b.sessions = sum32(previous.sessions, record.kind == RecordKind::Session ? 1 : 0);
   b.pages = sum32(previous.pages, record.pages);
   b.firstEpoch = previous.firstEpoch > 0 || !record.seconds ? previous.firstEpoch : record.epoch;
-  b.lastEpoch = record.epoch + record.seconds;
-  b.completed = previous.completed || b.progressBp >= 10000;
+  b.lastEpoch = record.kind == RecordKind::Reopen ? previous.lastEpoch : record.epoch + record.seconds;
+  b.manuallyUnfinished =
+      record.kind == RecordKind::Reopen || (previous.manuallyUnfinished && record.kind != RecordKind::Completion);
+  b.completed = !b.manuallyUnfinished && (previous.completed || b.progressBp >= 10000);
+  if (b.manuallyUnfinished)
+    b.progressBp = std::min<uint16_t>(9999, b.progressBp);
+  else if (b.completed)
+    b.progressBp = 10000;
   record.firstCompletion = b.completed && !previous.completed;
-  b.finishedEpoch = previous.finishedEpoch > 0 ? previous.finishedEpoch : record.firstCompletion ? b.lastEpoch : 0;
+  b.finishedEpoch = !b.completed ? 0 : previous.completed ? previous.finishedEpoch : b.lastEpoch;
+  b.finishedDay = !b.completed ? 0
+                  : previous.completed
+                      ? previous.finishedDay
+                      : record.localDay + static_cast<int>((uint64_t(record.secondOfDay) + record.seconds) / 86400);
+  if (record.kind == RecordKind::Reopen) record.reversedCompletionDay = previous.completed ? previous.finishedDay : 0;
   b.readingDays = previous.readingDays;
   b.lastDay = previous.lastDay;
   for (int n = 0; n < 4; ++n) b.buckets[n] = previous.buckets[n];
@@ -218,7 +248,10 @@ void Summary::add(const Record& r) {
   seconds = sum(seconds, r.seconds);
   pages = sum(pages, r.pages);
   sessions = sum32(sessions, r.kind == RecordKind::Session ? 1 : 0);
-  completed = sum32(completed, r.firstCompletion ? 1 : 0);
+  if (r.kind == RecordKind::Reopen && r.reversedCompletionDay && completed)
+    --completed;
+  else
+    completed = sum32(completed, r.firstCompletion ? 1 : 0);
   if (!r.seconds) return;
   const int end = r.localDay + static_cast<int>((uint64_t(r.secondOfDay) + r.seconds - 1) / 86400);
   const int first = std::max(r.localDay, anchorDay - kHistoryDays + 1);
@@ -279,6 +312,9 @@ void encode(const Record& r, uint8_t* p) {
   p[329] = r.book.completed;
   write(p + 330, r.localDay, 4);
   write(p + 334, r.secondOfDay, 4);
+  write(p + 338, r.book.finishedDay, 4);
+  write(p + 342, r.reversedCompletionDay, 4);
+  p[346] = r.book.manuallyUnfinished;
   write(p + kRecordBytes - 4, checksum(p, kRecordBytes - 4), 4);
 }
 bool decode(const uint8_t* p, Record& r) {
@@ -305,10 +341,18 @@ bool decode(const uint8_t* p, Record& r) {
   r.book.completed = p[329];
   r.localDay = static_cast<int>(read(p + 330, 4));
   r.secondOfDay = static_cast<uint32_t>(read(p + 334, 4));
+  r.book.finishedDay = static_cast<int>(read(p + 338, 4));
+  r.reversedCompletionDay = static_cast<int>(read(p + 342, 4));
+  r.book.manuallyUnfinished = p[346];
   const bool validKind =
       (r.kind == RecordKind::Session && r.seconds > 0 && r.book.sessions > 0) ||
-      (r.kind == RecordKind::Completion && !r.seconds && !r.pages && r.book.progressBp == 10000 && r.book.completed);
+      (r.kind == RecordKind::Completion && !r.seconds && !r.pages && r.book.progressBp == 10000 && r.book.completed) ||
+      (r.kind == RecordKind::Reopen && !r.seconds && !r.pages && r.book.progressBp < 10000 && !r.book.completed &&
+       r.book.manuallyUnfinished);
   return validKind && validDocument(r.book.document) && r.epoch > 0 && r.localDay >= 18262 && r.localDay <= 84005 &&
-         r.secondOfDay < 86400 && r.book.progressBp <= 10000 && p[12] <= 1 && p[329] <= 1;
+         r.secondOfDay < 86400 && r.book.progressBp <= 10000 && p[12] <= 1 && p[329] <= 1 && p[346] <= 1 &&
+         (!r.book.manuallyUnfinished || !r.book.completed) &&
+         (!r.book.finishedDay || (r.book.finishedDay >= 18262 && r.book.finishedDay <= 84005)) &&
+         (!r.reversedCompletionDay || (r.reversedCompletionDay >= 18262 && r.reversedCompletionDay <= 84005));
 }
 }  // namespace readingstats

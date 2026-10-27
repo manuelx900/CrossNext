@@ -249,9 +249,9 @@ bool buildDictionaryHtmlPages(GfxRenderer& renderer, const int fontId, const std
     // a stack local. Null epub is safe: imageRendering=2 suppresses <img>
     // handling, the only path that dereferences it.
     auto parser = makeUniqueNoThrow<ChapterHtmlSlimParser>(
-        nullptr, tmpPath, renderer, fontId, SETTINGS.getReaderLineCompression(), SETTINGS.extraParagraphSpacing,
-        CrossPointSettings::LEFT_ALIGN, viewportWidth, viewportHeight, SETTINGS.hyphenationEnabled,
-        SETTINGS.focusReadingEnabled,
+        nullptr, tmpPath, renderer, fontId, 1.15f, /*extraParagraphSpacing=*/false, CrossPointSettings::LEFT_ALIGN,
+        viewportWidth, viewportHeight, SETTINGS.hyphenationEnabled,
+        /*focusReadingEnabled=*/false,
         [&pagesOut, &resourceLimitHit, &retainedElements, &limitReason](std::unique_ptr<Page> page, uint16_t, uint16_t,
                                                                         uint32_t) {
           if (resourceLimitHit) return;

@@ -28,6 +28,9 @@ inline constexpr uint8_t CrossPointSettings::* FIELDS[] = {&CrossPointSettings::
                                                            &CrossPointSettings::homeButtonDoubleTapAction,
                                                            &CrossPointSettings::homeButtonLongPressAction};
 inline constexpr const char* KEYS[] = {"homeButtonTapAction", "homeButtonDoubleTapAction", "homeButtonLongPressAction"};
+inline constexpr StrId TIMING_LABELS[] = {StrId::STR_HOME_TAP_350, StrId::STR_HOME_TAP_450, StrId::STR_HOME_TAP_550,
+                                          StrId::STR_HOME_TAP_650, StrId::STR_HOME_TAP_750};
+static_assert(sizeof(TIMING_LABELS) / sizeof(TIMING_LABELS[0]) == HomeButtonInput::TAP_WINDOW_COUNT);
 inline bool opensShortcut(HomeButtonAction action) {
   return action == HomeButtonAction::OpenShortcut || action == HomeButtonAction::OpenDoubleShortcut ||
          action == HomeButtonAction::OpenLongShortcut;
@@ -48,6 +51,7 @@ inline const char* shortcutTarget(HomeButtonAction action) {
                                                                        : 0);
 }
 inline bool isSetting(uint8_t CrossPointSettings::* field) {
-  return field == FIELDS[0] || field == FIELDS[1] || field == FIELDS[2];
+  return field == FIELDS[0] || field == FIELDS[1] || field == FIELDS[2] ||
+         field == &CrossPointSettings::homeButtonDoubleTapTiming;
 }
 }  // namespace home_button

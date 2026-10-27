@@ -8,6 +8,23 @@
 
 int main() {
   const EpdFont pixel(&toybox_30), ubuntu(&ubuntu_12_regular);
+  for (const auto* face : {&pixel, &ubuntu}) {
+    for (const uint32_t cp : {0x2641u, 0x1F728u}) {
+      EpdGlyph fallback;
+      const auto* glyph = face->getGlyphMetrics(cp, fallback);
+      assert(glyph == &fallback && glyph->width == glyph->height && glyph->advanceX > 0);
+      int ink = 0;
+      for (int y = 0; y < glyph->height; ++y)
+        for (int x = 0; x < glyph->width; ++x) ink += syntheticGlyph::ink(cp, x, y, glyph->width, glyph->height);
+      assert(ink > 0 && ink < glyph->width * glyph->height);
+    }
+  }
+  assert(!syntheticGlyph::ink(0x2641, 7, 10, 16, 16));
+  assert(syntheticGlyph::ink(0x1F728, 7, 7, 16, 16));
+  assert(!syntheticGlyph::ink(0x2641, -1, 0, 16, 16));
+  assert(!syntheticGlyph::ink(0x1F728, 0, 0, 0, 0));
+  assert(syntheticGlyph::isSupported(syntheticGlyph::BLACK_SQUARE));
+  assert(!syntheticGlyph::isSupported('A'));
   // Model the complete character coverage advertised by an optional SD face.
   static constexpr EpdUnicodeInterval unicode[] = {{32, 0xffff, 0}};
   EpdFontData sdData = toybox_30;

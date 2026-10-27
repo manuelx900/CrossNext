@@ -434,8 +434,20 @@ static void renderCharScaled(const GfxRenderer& renderer, const EpdFontFamily& f
 
   const EpdFontData* fontData = fontFamily.getData(style);
   if (glyph == &solidFallback) {
-    renderer.fillRect(cursorX + glyph->left / 2, cursorY - glyph->top / 2, (glyph->width + 1) / 2,
-                      (glyph->height + 1) / 2, pixelState);
+    const int width = (glyph->width + 1) / 2, height = (glyph->height + 1) / 2;
+    const int left = cursorX + glyph->left / 2, top = cursorY - glyph->top / 2;
+    if (syntheticGlyph::isSolid(cp)) {
+      renderer.fillRect(left, top, width, height, pixelState);
+    } else {
+      for (int y = 0; y < height; ++y)
+        for (int x = 0; x < width; ++x) {
+          bool ink = false;
+          for (int sy = y * 2; sy < std::min(y * 2 + 2, int(glyph->height)); ++sy)
+            for (int sx = x * 2; sx < std::min(x * 2 + 2, int(glyph->width)); ++sx)
+              ink |= syntheticGlyph::ink(cp, sx, sy, glyph->width, glyph->height);
+          if (ink) renderer.drawPixel(left + x, top + y, pixelState);
+        }
+    }
     return;
   }
   const uint8_t* bitmap = renderer.getGlyphBitmap(fontData, glyph);
@@ -512,7 +524,13 @@ static void renderCharAtScale(const GfxRenderer& renderer, const EpdFontFamily& 
   const int left = x + scaledTextPixel(glyph->left, scale);
   const int top = y - scaledTextPixel(glyph->top, scale);
   if (glyph == &fallback) {
-    renderer.fillRect(left, top, width, height, black);
+    if (syntheticGlyph::isSolid(cp)) {
+      renderer.fillRect(left, top, width, height, black);
+    } else {
+      for (int dy = 0; dy < height; ++dy)
+        for (int dx = 0; dx < width; ++dx)
+          if (syntheticGlyph::ink(cp, dx, dy, width, height)) renderer.drawPixel(left + dx, top + dy, black);
+    }
     return;
   }
   const auto* data = family.getData(style);
@@ -584,10 +602,20 @@ static void renderCharImpl(const GfxRenderer& renderer, GfxRenderer::RenderMode 
   }
 
   if (glyph == &solidFallback) {
-    if constexpr (rotation == TextRotation::Rotated90CW) {
-      renderer.fillRect(cursorX + fontData->ascender - top, cursorY - left - width + 1, height, width, pixelState);
+    if (syntheticGlyph::isSymbol(cp)) {
+      for (int y = 0; y < height; ++y)
+        for (int x = 0; x < width; ++x)
+          if (syntheticGlyph::ink(cp, x, y, width, height)) {
+            if constexpr (rotation == TextRotation::Rotated90CW)
+              renderer.drawPixel(cursorX + fontData->ascender - top + y, cursorY - left - x, pixelState);
+            else
+              renderer.drawPixel(cursorX + left + x, cursorY - top + y, pixelState);
+          }
     } else {
-      renderer.fillRect(cursorX + left, cursorY - top, width, height, pixelState);
+      if constexpr (rotation == TextRotation::Rotated90CW)
+        renderer.fillRect(cursorX + fontData->ascender - top, cursorY - left - width + 1, height, width, pixelState);
+      else
+        renderer.fillRect(cursorX + left, cursorY - top, width, height, pixelState);
     }
     return;
   }
@@ -2360,7 +2388,7 @@ int GfxRenderer::getTextAdvanceX(const int fontId, const char* text, EpdFontFami
       }
       int32_t advFP = sdIt->second->getAdvance(cp, styleIdx);
       if (!utf8IsCombiningMark(cp)) {
-        if (advFP == 0 || (syntheticGlyph::isSolid(cp) && !font.hasCodepoint(cp, style))) {
+        if (advFP == 0 || (syntheticGlyph::isSupported(cp) && !font.hasCodepoint(cp, style))) {
           EpdGlyph solidFallback;
           const EpdGlyph* glyph = font.getGlyphMetrics(cp, solidFallback, style);
           advFP = glyph ? glyph->advanceX : 0;

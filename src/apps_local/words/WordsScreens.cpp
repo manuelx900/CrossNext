@@ -424,11 +424,12 @@ void card(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g, pagedtext::
   }
   const int x = wide ? box.right() + 18 : body.x, width = wide ? body.right() - x : body.width;
   if (!m.answer) {
-    const int y = wide ? body.y + 60 : box.bottom() + 12;
-    prose(t, fui::makeRect(x, y, width, wide ? 74 : 46), tr(STR_WORDS_THINK), 3, true, 3);
-    g.buttons[Reveal] = fui::makeRect(x, wide ? y + 88 : y + 56, width, 58);
+    const int groupHeight = 80 + 16 + 58 * 2 + 12;
+    const int y = wide ? box.y + std::max(0, (int(box.height) - groupHeight) / 2) : box.bottom() + 12;
+    prose(t, fui::makeRect(x, y, width, wide ? 80 : 46), tr(STR_WORDS_THINK), wide ? 2 : 3, true, wide ? 4 : 3);
+    g.buttons[Reveal] = fui::makeRect(x, wide ? y + 96 : y + 56, width, 58);
     button(t, g.buttons[Reveal], tr(STR_WORDS_SHOW_ANSWER), !m.keyboardFocus, m.keyboardFocus && m.focus == 0);
-    g.buttons[Back] = fui::makeRect(x, body.bottom() - 58, width, 58);
+    g.buttons[Back] = fui::makeRect(x, wide ? g.buttons[Reveal].bottom() + 12 : body.bottom() - 58, width, 58);
     button(t, g.buttons[Back], tr(STR_WORDS_RETURN), false, m.keyboardFocus && m.focus == 1);
   } else {
     const int top = wide ? body.y + 52 : body.bottom() - footer + 8;
@@ -478,15 +479,29 @@ void detail(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g, pagedtext
   }
 }
 void waiting(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g) {
-  caps(t, fui::makeRect(body.x, body.y + 30, body.width, 60), tr(STR_WORDS_REVIEW_WORDS), 1, true);
+  g.buttons[Back] = fui::makeRect(body.x, body.bottom() - 58, body.width, 58);
+  const int groupHeight = 246, contentHeight = g.buttons[Back].y - 16 - body.y;
+  const int top = body.y + std::max(0, (contentHeight - groupHeight) / 2);
+  caps(t, fui::makeRect(body.x, top, body.width, 60), tr(STR_WORDS_REVIEW_WORDS), 1, true);
   char message[128];
   std::snprintf(message, sizeof(message), tr(STR_WORDS_WAIT), std::max(1, m.waitMinutes));
-  prose(t, fui::makeRect(body.x + 16, body.y + 136, body.width - 32, 100), message, 4, true);
-  prose(t, fui::makeRect(body.x + 16, body.y + 250, body.width - 32, 90), tr(STR_WORDS_WAIT_HELP), 4, true);
-  g.buttons[Back] = fui::makeRect(body.x, body.bottom() - 58, body.width, 58);
+  prose(t, fui::makeRect(body.x + 16, top + 72, body.width - 32, 72), message, 4, true);
+  prose(t, fui::makeRect(body.x + 16, top + 156, body.width - 32, 90), tr(STR_WORDS_WAIT_HELP), 4, true);
   button(t, g.buttons[Back], tr(STR_WORDS_RETURN));
 }
 void deleteWord(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g) {
+  if (body.width > body.height) {
+    const int width = (body.width - 24) / 2;
+    const int right = body.x + width + 24;
+    caps(t, fui::makeRect(body.x, body.y + 24, width, 64), tr(STR_WORDS_DELETE_TITLE), 1, true);
+    prose(t, fui::makeRect(body.x + 12, body.y + 108, width - 24, body.height - 132), m.term, 2, true, 1);
+    prose(t, fui::makeRect(right + 8, body.y + 24, width - 16, body.height - 174), tr(STR_WORDS_DELETE_HELP), 4, true);
+    g.buttons[ConfirmDelete] = fui::makeRect(right, body.bottom() - 126, width, 58);
+    g.buttons[Cancel] = fui::makeRect(right, body.bottom() - 58, width, 58);
+    button(t, g.buttons[ConfirmDelete], tr(STR_WORDS_DELETE), false, m.keyboardFocus && m.focus == 0);
+    button(t, g.buttons[Cancel], tr(STR_CANCEL), !m.keyboardFocus, m.keyboardFocus && m.focus == 1);
+    return;
+  }
   caps(t, fui::makeRect(body.x, body.y + 20, body.width, 50), tr(STR_WORDS_DELETE_TITLE), 1, true);
   prose(t, fui::makeRect(body.x + 16, body.y + 96, body.width - 32, 72), m.term, 2, true, 1);
   prose(t, fui::makeRect(body.x + 16, body.y + 184, body.width - 32, 100), tr(STR_WORDS_DELETE_HELP), 4, true);

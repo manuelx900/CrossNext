@@ -74,6 +74,14 @@ When a word is found, the definition screen shows the matched headword at the to
 
 HTML dictionaries that declare `sametypesequence=h` use the EPUB text-layout engine for semantic formatting such as headings, bold, italics, lists, and line breaks. Images and CSS styling are ignored. Definitions that are too large or cannot be laid out within the available memory fall back to plain text.
 
+Dictionary layout uses compact line spacing without the reader's extra paragraph spacing or focus-reading emphasis. These dictionary-specific choices do not change book typography. The header uses the shared back arrow and a separate **Save to Words** action.
+
+The resource builder compacts all bundled HTML dictionaries in its generated copies. The monolingual dictionaries keep numbered meanings, lexical relations and examples supplied by the source. Web styling, pronunciation (including regional AFI transcriptions), syllabification, repeated headword/inflection rows and etymology metadata are omitted so the first meaning follows the word category. Examples and synonyms are never invented. Long entries can still require several pages. The bundled text renderer supplies the missing ♁ and 🜨 symbols without changing their meaning in the source.
+
+The eight bundled WikDict translators show target-language equivalents together, grouped by the source's sense divisions. The part-of-speech labels use the destination language: EN–ES shows **Adjetivo: privado**, while ES–EN shows English equivalents and labels. Select the bilingual pair for the direction you need; the interface language does not reverse a manually selected pair. Source-language glosses and source gender metadata are omitted from these translation entries. These dictionaries supply word equivalents, not translated explanatory paragraphs or contextual sentence translation. Use a monolingual dictionary for definitions in its own language. Custom dictionaries keep their own content and language; the viewer does not automatically translate arbitrary dictionary text.
+
+Run `python tools_local/build_resources.py` to regenerate the microSD package. Source dictionaries remain unchanged; generated `.idx` offsets and `.ifo` sizes are rebuilt while word order and `.syn` pointers remain intact. `SOURCES.json` records the source hash and the new output hash. Install the complete updated dictionary folders while the reader is powered off; merge the resource folders without removing `.crosspoint` or your saved words. The viewer spacing correction also applies to dictionaries already installed.
+
 - **Left/Right** or side **Up/Down** — previous / next page
 - **Back** — return to word selection
 

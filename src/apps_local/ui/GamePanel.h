@@ -2,6 +2,11 @@
 #include "Dashboard.h"
 namespace gamepanel {
 namespace fui = freeink::ui;
+
+inline fui::Rect centeredBlock(fui::Rect area, int height) {
+  height = std::clamp(height, 0, int(area.height));
+  return fui::makeRect(area.x, area.y + (area.height - height) / 2, area.width, height);
+}
 enum class Mark : uint8_t {
   Play,
   New,

@@ -206,6 +206,21 @@ Result sync(Server& server) {
   for (int n = 0; n < 10000 && result == Result::Busy; ++n) result = download.step();
   return result;
 }
+void appendReopening(const char* document) {
+  Record record;
+  record.kind = RecordKind::Reopen;
+  record.epoch = 1793000001;
+  record.localDay = today;
+  record.book.progressBp = 7000;
+  copyText(record.book.document, sizeof(record.book.document), document);
+  copyText(record.book.title, sizeof(record.book.title), "Reopened book");
+  updateBook(record, localBooks[document]);
+  localBooks[document] = record.book;
+  auto& file = testStorage.files[logPath];
+  const auto at = file.size();
+  file.resize(at + kRecordBytes);
+  encode(record, file.data() + at);
+}
 void total(uint64_t expected, int pages, int sessions) {
   Reader reader;
   CHECK(reader.open() == Result::Success);
@@ -244,6 +259,18 @@ int main() {
       CHECK(view.find("00000000000000000000000000000009", manual));
       CHECK(manual.completed && !manual.seconds && !manual.pages && !manual.sessions);
       CHECK(view.data().summary.completed == 2);
+      CHECK(sync(finished) == Result::Success);
+    }
+    appendReopening(a);
+    for (int attempt = 0; attempt < 3; ++attempt) {
+      total(420, 13, 3);
+      Reader reader;
+      CHECK(reader.open() == Result::Success);
+      Projection view;
+      CHECK(view.open(&reader, today, device) == Result::Success);
+      Book reopened;
+      CHECK(view.find(a, reopened) && !reopened.completed && reopened.manuallyUnfinished);
+      CHECK(view.data().summary.completed == 1 && view.data().finished == 1);
       CHECK(sync(finished) == Result::Success);
     }
     localBooks.clear();

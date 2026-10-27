@@ -26,7 +26,7 @@ namespace {
 // Longest measurable/drawable span. Wrapped lines stay under the screen width
 // (far below this); only pathological unbreakable tokens are split at this cap.
 constexpr size_t MAX_LINE_BYTES = 191;
-constexpr float PLAIN_TEXT_LINE_SPACING = 1.5f;
+constexpr float PLAIN_TEXT_LINE_SPACING = 1.2f;
 
 // Styled-path ceiling: the laid-out Pages keep the whole definition resident
 // (TextBlock arenas ≈ text + ~7 bytes/word plus per-line objects), roughly
@@ -240,7 +240,10 @@ void DictionaryDefinitionActivity::wrapText() {
   while (i < n) {
     const char c = text[i];
     if (c == '\n' || c == '\0') {
-      flushLine(i + 1);
+      if (lineEnd > lineStart || (!lines.empty() && lines.back().len != 0))
+        flushLine(i + 1);
+      else
+        lineStart = lineEnd = i + 1;
       i++;
       continue;
     }
@@ -434,11 +437,7 @@ void DictionaryDefinitionActivity::turnPage(const int delta) {
 
 void DictionaryDefinitionActivity::noticeScreen(UiScreen& screen, void* p) {
   auto& self = *static_cast<DictionaryDefinitionActivity*>(p);
-  const auto fonts = uiScaleSpec();
-  self.uiTarget.setFont(0, fonts.smallFontId);
-  self.uiTarget.setFont(1, fonts.bodyFontId);
-  self.uiTarget.setFont(2, fonts.titleFontId);
-  self.uiTarget.setFont(3, fonts.smallFontId);
+  pixelui::FontScope fonts(self.uiTarget, self.renderer, I18N.getLanguage() != Language::EN);
   dictionaryui::Model model;
   model.word = self.headword.c_str();
   model.page = self.currentPage + 1;

@@ -65,7 +65,10 @@ void PresentationSettingsActivity::buildScreen(UiScreen& screen) {
     p.topIndex = 0;
   }
   if (kind == Kind::Theme && mappedInput.hasTouch()) p.selectedIndex = -1;
-  pixelui::list(screen, p);
+  if (kind == Kind::Theme)
+    settingsui::appearanceList(screen, p);
+  else
+    pixelui::list(screen, p);
 }
 void PresentationSettingsActivity::activateIndex(int n) {
   if (n < 0 || n >= listCount()) return;

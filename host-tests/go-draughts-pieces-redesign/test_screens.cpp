@@ -316,6 +316,15 @@ int main(int argc, char** argv) {
         CHECK(c.has(goui::ActionAccept));
         save(c, "go-count");
       }
+      for (int page = 0; page < (w > h ? 8 : 4); ++page) {
+        Canvas help(w, h);
+        draughtsui::Model m;
+        m.view = draughtsui::View::Help;
+        m.helpPage = page;
+        draughtsui::build(help.screen, m);
+        CHECK(help.has(draughtsui::HelpPage, page ? -1 : 1));
+        save(help, "draughts-help", page);
+      }
       for (int rules = 0; rules < 4; ++rules) {
         draughts::Game game;
         draughts::start(game, draughts::Rules(rules));
@@ -343,6 +352,18 @@ int main(int argc, char** argv) {
               if (hit.action == draughtsui::Settings) settingsY = hit.rect.y;
             }
             CHECK(playY >= 0 && playY < newY && newY < settingsY);
+          }
+          if (w > h && (view == draughtsui::View::Board || view == draughtsui::View::Review)) {
+            const auto area = pixelui::geometry(c.device).body;
+            const auto board = draughtsui::boardRect(c.device, game.size);
+            int top = h, bottom = 0;
+            for (const auto& label : c.target.labels)
+              if (label.box.x > board.right() && label.box.y >= area.y) top = std::min(top, int(label.box.y));
+            for (size_t n = 0; n < c.interactions.count(); ++n) {
+              const auto& hit = c.interactions.data()[n];
+              if (hit.rect.x > board.right()) bottom = std::max(bottom, int(hit.rect.bottom()));
+            }
+            CHECK(std::abs(top + bottom - area.y - area.bottom()) <= 2);
           }
           save(c, "draughts", rules * 10 + int(view));
         }

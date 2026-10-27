@@ -24,7 +24,7 @@ class FlashcardsActivity final : public Activity {
   toybox::Interactions interactions;
   bool interactionsReady = false;
   int page = 0, helpPage = 0;
-  flashui::DeckRow deckRows[3];
+  flashui::DeckRow deckRows[flashui::kMaxLibraryRows];
   std::string path = "/FLASHCARDS", selectedPath;
   std::unique_ptr<flashcards::Importer> importer;
   View view = View::Browse;

@@ -16,9 +16,10 @@ inline void draw(toybox::Screen& s, fui::Rect body, const char* title, const cha
   pixelui::copyCaps(capital, sizeof(capital), title);
   fittext::draw(s.target(), fui::makeRect(hero.x, hero.y + 8, hero.width, 68), capital, 2, 1, fui::TextAlign::Center);
   fittext::draw(s.target(), fui::makeRect(hero.x, hero.y + 80, hero.width, 42), winner, 1, 1, fui::TextAlign::Center);
-  const int actionY = controls.bottom() - 196;
+  const int groupTop = gamepanel::centeredBlock(controls, 314).y;
+  const int actionY = wide ? groupTop + 124 : controls.bottom() - 196;
   const auto badgeBox = fui::makeRect(wide ? controls.x : hero.x + 24,
-                                      wide            ? controls.y
+                                      wide            ? groupTop
                                       : badgeAfterArt ? actionY - 108
                                                       : hero.y + 126,
                                       wide ? controls.width : hero.width - 48, 40);

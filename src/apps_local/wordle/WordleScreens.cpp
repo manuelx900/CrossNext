@@ -105,11 +105,16 @@ KeyboardLayout buildGame(toybox::Screen& screen, const GameModel& model, Work& w
       cell(target, box, letter, mark);
       if (row == game.guesses() && !game.over()) target.stroke(box, ink, 4);
     }
+  const int keyboardH = 3 * 64 + 2 * 4;
+  const int groupH = keyboardH + 44;
+  const int groupY = body.y + (body.height - groupH) / 2;
   const auto controls =
-      wide ? fui::makeRect(gridArea.right() + 12, body.y + 40, body.right() - gridArea.right() - 12, body.height - 40)
-           : fui::makeRect(body.x, body.bottom() - 204, body.width, 204);
+      wide && !game.over()
+          ? fui::makeRect(gridArea.right() + 12, groupY + 44, body.right() - gridArea.right() - 12, keyboardH)
+      : wide ? fui::makeRect(gridArea.right() + 12, body.y + 40, body.right() - gridArea.right() - 12, body.height - 40)
+             : fui::makeRect(body.x, body.bottom() - 204, body.width, 204);
   if (!game.over()) {
-    const auto legend = wide ? fui::makeRect(controls.x, body.y, controls.width, 32)
+    const auto legend = wide ? fui::makeRect(controls.x, groupY, controls.width, 32)
                              : fui::makeRect(body.x, controls.y - 36, body.width, 30);
     if (model.message) {
       text(target, legend, model.message, 3);
@@ -138,7 +143,7 @@ KeyboardLayout buildGame(toybox::Screen& screen, const GameModel& model, Work& w
     return {};
   }
   auto k = keyboardLayout(controls, controls.y);
-  if (wide) k.keyH = std::min<int>(74, (controls.height - 12) / 3);
+
   wordlekeys::Tone tones[27];
   for (int n = 0; n < 27; ++n) {
     const auto mark = game.key(char('A' + n));

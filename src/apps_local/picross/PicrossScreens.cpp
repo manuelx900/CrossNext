@@ -5,6 +5,7 @@
 #include <cstdio>
 
 #include "../ui/Dashboard.h"
+#include "../ui/FitText.h"
 #include "../ui/GameFrontDoor.h"
 #include "../ui/GameGuide.h"
 #include "../ui/PageIndicator.h"
@@ -50,7 +51,7 @@ struct ClueMetrics {
 
 ClueMetrics clueMetricsFor(const int n) {
   if (n <= 5) return {toybox::kUiFont, toybox::kUiCut, 30, 28};
-  return {toybox::kTileFont, toybox::kTileCut, 16, 18};
+  return {3, toybox::kTileCut, 16, 18};
 }
 
 int maxRunsInRows(const picross::Board& board) {
@@ -337,15 +338,16 @@ void drawModeToggle(toybox::Screen& screen, const fui::Rect& row, int mode) {
     else
       dashboard::frame(screen, r, 3);
     const auto paint = active ? dashboard::paper : dashboard::ink;
-    const auto box = fui::makeRect(r.x + 20, r.y + (r.height - 28) / 2, 28, 28);
+    const auto box = fui::makeRect(r.x + 12, r.y + (r.height - 24) / 2, 24, 24);
     if (n == 0)
       screen.target().fill(box, paint);
     else {
       screen.target().stroke(box, paint, 3);
       drawX(screen, box, active ? fui::Color::White : fui::Color::Black);
     }
-    dashboard::text(screen, fui::makeRect(r.x + 60, r.y, r.width - 70, r.height),
-                    n == 0 ? tr(STR_UI_FILL_57B284) : tr(STR_UI_MARK_20B7A6), 0, fui::TextAlign::Center, active);
+    dashboard::text(screen, fui::makeRect(r.x + 44, r.y, r.width - 50, r.height),
+                    n == 0 ? tr(STR_UI_FILL_57B284) : tr(STR_UI_MARK_20B7A6), row.width < 320 ? 3 : 0,
+                    fui::TextAlign::Center, active);
     screen.frame().hit(r, ActionMode, n);
   }
 }
@@ -423,13 +425,24 @@ void buildBoard(toybox::Screen& screen, const BoardModel& model, Layout& layout)
   chrome(screen, "PICROSS", nullptr);
   screen.insetContent(fui::Insets{toybox::kGutter, toybox::kMargin, toybox::kMargin, toybox::kMargin});
 
-  // The mode toggle sits at the very bottom, under the thumb. The RESTART /
-  // PUZZLES row is above it, so the destructive control is not beside the one
-  // the player taps every move.
-  dashboard::text(screen, screen.takeBottom(26, 6), tr(STR_PICROSS_TOUCH_HINT), 3);
-  const fui::Rect buttonRow = screen.takeBottom(56, 12);
-  const fui::Rect modeRow = screen.takeBottom(60, 12);
+  const bool wide = screen.device().width > screen.device().height;
+  fui::Rect hint, buttonRow, modeRow;
+  if (!wide) {
+    hint = screen.takeBottom(26, 6);
+    buttonRow = screen.takeBottom(56, 12);
+    modeRow = screen.takeBottom(60, 12);
+  }
   const fui::Rect status = screen.takeTop(kStatusStrip, toybox::kGutter);
+  auto body = screen.body();
+  if (wide) {
+    const int controlW = 288;
+    const int x = body.right() - controlW, y = body.y + (body.height - 208) / 2;
+    modeRow = fui::makeRect(x, y, controlW, 60);
+    buttonRow = fui::makeRect(x, y + 80, controlW, 56);
+    hint = fui::makeRect(x, y + 156, controlW, 52);
+    body.width -= controlW + 16;
+  }
+  fittext::draw(screen.target(), hint, tr(STR_PICROSS_TOUCH_HINT), 3, wide ? 2 : 1, fui::TextAlign::Center);
 
   // The mistake count, the visible penalty. On the left, in plain words.
   char mistakes[kMistakeChars];
@@ -453,7 +466,6 @@ void buildBoard(toybox::Screen& screen, const BoardModel& model, Layout& layout)
   // they could act on and repeated itself on every screen; Mario's call. The
   // strip is the mistake count alone.
 
-  const fui::Rect body = screen.body();
   const ClueMetrics cm = clueMetricsFor(n);
   const int16_t rowGutter = static_cast<int16_t>(maxRunsInRows(board) * cm.numW + kClueGap);
   const int16_t colGutter = static_cast<int16_t>(maxRunsInCols(board) * cm.slotH + kClueGap);

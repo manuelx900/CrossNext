@@ -44,6 +44,37 @@ int main() {
             "Double tap preserved after hold");
     }
   }
+  static_assert(HomeButtonInput::DOUBLE_TAP_MS == 350);
+  check(HomeButtonInput::windowFor(255) == 350, "Invalid timing uses the existing default");
+  for (unsigned setting = 0; setting < HomeButtonInput::TAP_WINDOW_COUNT; ++setting) {
+    const auto window = HomeButtonInput::windowFor(setting);
+    for (uint32_t start : {100u, 0xfffffff0u}) {
+      HomeButtonInput timed;
+      timed.setWindow(setting);
+      check(timed.update(start, true, false, false, false, Action::Home, Action::ToggleFrontlight, Action::Ignore) ==
+                Action::Ignore,
+            "Configured first tap waits");
+      check(timed.nextActionDelayMs(start, 1000) == window + 1, "Idle deadline uses the selected interval");
+      check(timed.update(start + window, false, false, false, false, Action::Home, Action::ToggleFrontlight,
+                         Action::Ignore) == Action::Ignore,
+            "Single tap does not fire at the boundary");
+      check(timed.update(start + window + 1, false, false, false, false, Action::Home, Action::ToggleFrontlight,
+                         Action::Ignore) == Action::Home,
+            "Single tap fires once after the selected interval");
+      check(timed.nextActionDelayMs(start + window + 2, 1000) == 1000,
+            "Completed gesture releases the polling deadline");
+      timed.reset();
+      timed.update(start, true, false, false, false, Action::Home, Action::ToggleFrontlight, Action::Ignore);
+      timed.update(start + window - 1, false, false, false, true, Action::Home, Action::ToggleFrontlight,
+                   Action::Ignore);
+      check(timed.update(start + window + 80, true, false, false, false, Action::Home, Action::ToggleFrontlight,
+                         Action::Ignore) == Action::ToggleFrontlight,
+            "Second contact inside the interval survives a later release");
+      check(timed.update(start + window + 500, false, false, false, false, Action::Home, Action::ToggleFrontlight,
+                         Action::Ignore) == Action::Ignore,
+            "Double tap does not also navigate Home");
+    }
+  }
   HomeButtonInput input;
   check(input.update(1, true, false, false, false, Action::Home, Action::Ignore, Action::ReaderMenu) == Action::Home,
         "Single tap stays immediate without double action");

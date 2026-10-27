@@ -99,7 +99,11 @@ struct RecordingTarget : fui::DrawTarget {
               fui::Paint p = fui::Paint::solid(fui::Color::Black),
               fui::Rotation rotation = fui::Rotation::None) override {
     CHECK(r.width > 0 && r.height > 0);
-    CHECK(r.x >= 0 && r.y >= 0 && r.right() <= clipRect().right() && r.bottom() <= clipRect().bottom());
+    const auto clip = clipRect();
+    const bool inside = r.x >= clip.x && r.y >= clip.y && r.right() <= clip.right() && r.bottom() <= clip.bottom();
+    const bool partial =
+        allowClippedBitmap && r.x < clip.right() && r.right() > clip.x && r.y < clip.bottom() && r.bottom() > clip.y;
+    CHECK(inside || partial);
     backend.bitmap(r, ref, mode, p, rotation);
   }
   struct Label {
@@ -108,6 +112,7 @@ struct RecordingTarget : fui::DrawTarget {
     fui::Rect box;
   };
   bool allowEllipsis = false;
+  bool allowClippedBitmap = false;
   std::vector<Label> labels;
   std::vector<fui::Rect> blackFills;
   void text(fui::Rect box, const char* value, fui::TextStyle style) override {
@@ -237,12 +242,12 @@ int main(int argc, char** argv) {
     readertext::Work w;
     readertext::build(c.screen, m, w);
     const int rows = readertext::sheetRowsPerPage(c.device);
-    CHECK(rows == (size.first < size.second ? 4 : 2));
+    CHECK(rows == 4);
     for (int n = 0; n < rows; ++n) CHECK(c.has(6, readertext::ChapterPick + n));
     CHECK(!c.has(6, readertext::ChapterPick + rows));
     c.checkHits();
     Canvas fonts(size.first, size.second);
-    m.fontView = readertext::FontView::Families;
+    m.view = readertext::SheetView::Families;
     m.fontCount = 3;
     m.fontLabel = [](const void*, int n) { return n == 0 ? "Noto Serif" : n == 1 ? "Bitter" : "Lexend Deca"; };
     readertext::build(fonts.screen, m, w);
@@ -250,7 +255,7 @@ int main(int argc, char** argv) {
     for (size_t n = 0; n < fonts.interactions.count(); ++n) {
       const auto& hit = fonts.interactions.data()[n];
       if (hit.action == 6 && hit.value >= readertext::FontPick && hit.value < readertext::FontPick + 3)
-        CHECK(hit.rect.height == 44);
+        CHECK(hit.rect.height == readertext::kFontRowHeight);
     }
     fonts.checkHits();
   }
@@ -382,7 +387,8 @@ int main(int argc, char** argv) {
       p.inputMask = fui::InputTouch;
       fui::ListNav nav;
       c.screen.syncListViewport(nav, p, p.count, 1);
-      pixelui::list(c.screen, p, true);
+      c.target.allowClippedBitmap = true;
+      pixelui::list(c.screen, p, true, false, pixelui::kBorder, true);
       c.checkHits();
       if (size.first < size.second) {
         for (int n = 0; n < settingsui::homeCount; ++n) CHECK(c.has(1, n));
@@ -414,7 +420,12 @@ int main(int argc, char** argv) {
       fui::ListNav themeNav;
       themeNav.reset(-1);
       theme.screen.syncListViewport(themeNav, p, p.count);
-      pixelui::list(theme.screen, p);
+      settingsui::appearanceList(theme.screen, p);
+      int dividers = 0;
+      for (const auto& fill : theme.target.blackFills)
+        if (fill.width > theme.screen.body().width / 2 && fill.height == pixelui::kBorder) ++dividers;
+      CHECK(dividers == 1);
+      CHECK(p.rowGap == 0 && p.rowStyles.normal.borderWidth == 0);
       theme.checkHits();
       CHECK(theme.has(1, 0));
       CHECK(theme.has(1, 1));

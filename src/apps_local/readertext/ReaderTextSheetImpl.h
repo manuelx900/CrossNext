@@ -126,6 +126,8 @@ void compactPager(Screen& screen, fui::Rect band, int page, int pages, fui::Acti
 
 template <typename Screen>
 void build(Screen& screen, const Model& model, Work& work) {
+  const bool compactLandscape = screen.device().width > screen.device().height;
+  const int sectionGap = compactLandscape ? 8 : kSectionGap;
   const auto rect = sheetRect(screen.device(), model.fixed);
   fui::SheetProps sheet;
   sheet.anchor = fui::SheetEdge::Bottom;
@@ -135,8 +137,8 @@ void build(Screen& screen, const Model& model, Work& work) {
   sheet.dismissAction = 1;
   screen.sheet(sheet, rect.height);
   screen.insetContent(fui::Insets{4, 10, 8, 10});
-  const auto grip = screen.takeTop(44);
-  const int cx = grip.x + grip.width / 2, cy = grip.y + 20;
+  const auto grip = screen.takeTop(compactLandscape ? 32 : 44);
+  const int cx = grip.x + grip.width / 2, cy = grip.y + grip.height / 2;
   const auto ink = fui::Paint::solid(fui::Color::Black);
   screen.target().line({int16_t(cx - 16), int16_t(cy + 4)}, {int16_t(cx), int16_t(cy - 4)}, 3, ink);
   screen.target().line({int16_t(cx), int16_t(cy - 4)}, {int16_t(cx + 16), int16_t(cy + 4)}, 3, ink);
@@ -194,15 +196,18 @@ void build(Screen& screen, const Model& model, Work& work) {
     work.tabs[count] = fui::tabItem(n, model.tab == n, true, work.tabLabels[count]);
     ++count;
   }
-  pixelui::tabs(screen, work.tabs, count, 2);
-  const auto done = screen.takeBottom(screen.device().width > screen.device().height ? 48 : 56, kSectionGap);
+  pixelui::tabs(screen, work.tabs, count, 2, 3, compactLandscape ? 44 : 52, compactLandscape ? 8 : 10);
+  const auto done = screen.takeBottom(compactLandscape                                 ? 44
+                                      : screen.device().width > screen.device().height ? 48
+                                                                                       : 56,
+                                      sectionGap);
   work.button = {};
   auto& p = work.button;
   p.styles = pixelui::rowStyles();
   p.action = 1;
   pixelui::copyCaps(work.label, sizeof(work.label), tr(STR_DONE));
   p.label = work.label;
-  p.text.font = pixelui::kBody;
+  p.text.font = compactLandscape ? pixelui::kSmall : pixelui::kBody;
   p.text.align = fui::TextAlign::Center;
   p.minTouchSize = 0;
   screen.button(p, done);
@@ -237,11 +242,11 @@ void build(Screen& screen, const Model& model, Work& work) {
     const int pages = std::max(1, (model.listCount + capacity - 1) / capacity);
     const int page = std::clamp(model.listPage, 0, pages - 1);
     if (model.tab == 2 || pages > 1) {
-      const auto band = screen.takeBottom(44, kSectionGap);
+      const auto band = screen.takeBottom(44, sectionGap);
       compactPager(screen, band, page + 1, pages, 6, SheetPrevious, 6, SheetNext);
     }
     if (model.tab == 2) {
-      const auto heading = screen.takeTop(34, kSectionGap);
+      const auto heading = screen.takeTop(compactLandscape ? 28 : 34, sectionGap);
       pixelui::text(screen.target(), fui::makeRect(heading.x, heading.y, heading.width * 2 / 3, heading.height),
                     tr(STR_SELECT_CHAPTER), pixelui::kSmall);
       std::snprintf(work.label, sizeof(work.label), tr(STR_READER_CHAPTERS), model.listCount);
@@ -253,7 +258,7 @@ void build(Screen& screen, const Model& model, Work& work) {
     if (!model.listCount) pixelui::text(screen.target(), area, tr(STR_NO_CHAPTERS), 0);
     const int cols = model.tab == 3 && screen.device().width > screen.device().height ? 2 : 1;
     const int rows = (capacity + cols - 1) / cols;
-    const int gap = kSectionGap;
+    const int gap = sectionGap;
     const int h = model.fixed && model.tab == 3 ? 70 : std::max(1, (int(area.height) - (rows - 1) * gap) / rows);
     for (int n = 0; n < capacity && page * capacity + n < model.listCount; ++n) {
       const int index = page * capacity + n;

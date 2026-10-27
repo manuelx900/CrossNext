@@ -6,6 +6,32 @@
 namespace libraryui {
 namespace fui = freeink::ui;
 constexpr int kFooterHeight = 44;
+constexpr int gridCapacity(int width, int height) { return width > height ? 4 : 9; }
+
+struct GridLayout {
+  fui::Rect area{}, pager{};
+  int columns = 3, rows = 3;
+  int capacity() const { return columns * rows; }
+  fui::Rect card(int index) const {
+    constexpr int gap = 12;
+    const int width = (area.width - (columns - 1) * gap) / columns;
+    const int height = (area.height - (rows - 1) * gap) / rows;
+    const int bookWidth = std::min(width, height * 2 / 3);
+    return fui::makeRect(area.x + index % columns * (width + gap) + (width - bookWidth) / 2,
+                         area.y + index / columns * (height + gap), bookWidth, height);
+  }
+};
+inline GridLayout gridLayout(const fui::DeviceContext& device, fui::Rect body) {
+  GridLayout out;
+  if (device.width > device.height) {
+    out.columns = 4;
+    out.rows = 1;
+  }
+  out.pager = fui::makeRect(body.x, body.bottom() - 52, body.width, 48);
+  body.height = std::max(1, int(body.height) - 64);
+  out.area = body;
+  return out;
+}
 
 struct HeaderWork {
   pixelui::Header heading{};

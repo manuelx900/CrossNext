@@ -822,8 +822,11 @@ void buildVerdict(toybox::Screen& s, const VerdictModel& m) {
   } else
     text(s, makeRect(x, textY + (failed ? 0 : 108), w, failed ? 90 : 60),
          failed ? tr(STR_MR_FAILED_HELP) : tr(STR_MR_NOT_FIT_HELP), 4, 3, fui::TextAlign::Center);
-  const auto right = wide ? makeRect(b.x + w + 24, b.y + 60, b.width - w - 24, b.height - 60)
-                          : makeRect(b.x, b.bottom() - (m.right ? 242 : 180), b.width, m.right ? 242 : 180);
+  const auto right =
+      wide ? gamepanel::centeredBlock(makeRect(b.x + w + 24, b.y, b.width - w - 24, b.height), m.right  ? 240
+                                                                                               : failed ? 178
+                                                                                                        : 116)
+           : makeRect(b.x, b.bottom() - (m.right ? 242 : 180), b.width, m.right ? 242 : 180);
   if (m.right) {
     button(s, makeRect(right.x, right.y, right.width, 54),
            m.nextCase ? tr(STR_MURDLE_NEXT_CASE) : tr(STR_MR_CHOOSE_CASE), m.nextCase ? ActionDone : ActionCampaign, 0,

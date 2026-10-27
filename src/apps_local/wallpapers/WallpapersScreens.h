@@ -2,6 +2,8 @@
 
 #include <I18n.h>
 
+#include <algorithm>
+
 #include "../ui/ToyboxScreen.h"
 
 namespace wallpapersui {
@@ -23,11 +25,17 @@ struct GridGeom {
 };
 
 GridGeom gridGeom(const fui::DeviceContext& device, bool selecting = false);
+fui::Rect previewRect(int pageWidth, int pageHeight, int imageWidth, int imageHeight);
 fui::Rect thumbRect(const GridGeom& g, int slot);
 fui::Rect cellRect(const GridGeom& g, int slot);
 fui::Rect captionRect(const GridGeom& g, int slot);
 int cellAt(const GridGeom& g, int x, int y);
 int pageCountFor(int specialTiles, int libraryCount, int perPage);
+inline int pageAfterResize(int page, int oldCapacity, int newCapacity, int count) {
+  if (newCapacity <= 0 || count <= 0) return 0;
+  const int first = std::clamp(page * std::max(1, oldCapacity), 0, count - 1);
+  return first / newCapacity;
+}
 uint32_t gridMeaning(int page, int view, int libraryCount, int specialTiles, bool choosing);
 
 struct SelectionGeometry {

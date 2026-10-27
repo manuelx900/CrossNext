@@ -23,6 +23,7 @@ void MappedInputManager::update(const bool deferHomeButtonAction) const {
   HalHaptics::feedback(SETTINGS.vibration != CrossPointSettings::VIBRATION_OFF, pagePressed, SETTINGS.hapticIntensity);
   homeAction = HomeButtonAction::Ignore;
   if (gpio.hasHomeKey()) {
+    homeButtonInput.setWindow(SETTINGS.homeButtonDoubleTapTiming);
     homeAction = homeButtonInput.update(
         millis(), gpio.wasHomeKeyTapped(), gpio.wasHomeKeyLongPressed(), wasSwipe() != SwipeDir::None,
         gpio.wasHomeKeyPressed(), static_cast<HomeButtonAction>(SETTINGS.homeButtonTapAction),

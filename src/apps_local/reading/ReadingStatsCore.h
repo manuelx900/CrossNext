@@ -11,7 +11,7 @@ constexpr int kRecentBooks = 10;
 enum class Period { Calendar, Day, Week, Month, Year };
 enum class BookFilter { Finished, Recent };
 enum class Source { Local, Unified };
-enum class RecordKind : uint8_t { Session, Completion };
+enum class RecordKind : uint8_t { Session, Completion, Reopen };
 struct Date {
   int year = 0, month = 0, day = 0;
 };
@@ -30,6 +30,8 @@ struct Book {
   int lastDay = 0;
   uint16_t progressBp = 0;
   bool completed = false;
+  bool manuallyUnfinished = false;
+  int finishedDay = 0;
 };
 struct Record {
   Book book;
@@ -39,6 +41,7 @@ struct Record {
   uint32_t secondOfDay = 0;
   bool firstCompletion = false;
   RecordKind kind = RecordKind::Session;
+  int reversedCompletionDay = 0;
 };
 struct Summary {
   uint64_t seconds = 0, pages = 0;
@@ -68,6 +71,7 @@ struct PeriodStats {
   // Annual projection uses twelve totals and one bit per date, not 366 counters.
   uint64_t annualSeconds[12]{}, annualDays[6]{};
   uint32_t annualCompleted[12]{};
+  uint32_t pendingReversals = 0, annualReversals[12]{};
   bool annual = false;
   int daysReadThrough(int day) const;
   Streak consistency;

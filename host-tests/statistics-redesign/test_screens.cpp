@@ -259,7 +259,8 @@ int main(int argc, char** argv) {
           }
           if (argc > 1)
             c.write(std::string(argv[1]) + "/" + (lang == Language::ES ? "es" : "en") + "-" +
-                    std::to_string(size.first) + "-tab" + std::to_string(tab) + (alternate ? "-alt" : "") + ".pbm");
+                    (std::to_string(size.first) + "x" + std::to_string(size.second)) + "-tab" + std::to_string(tab) +
+                    (alternate ? "-alt" : "") + ".pbm");
         }
       }
       for (auto period : {readingstats::Period::Day, readingstats::Period::Week, readingstats::Period::Month,
@@ -307,8 +308,9 @@ int main(int argc, char** argv) {
           }
         }
         if (argc > 1)
-          c.write(std::string(argv[1]) + "/" + (lang == Language::ES ? "es" : "en") + "-" + std::to_string(size.first) +
-                  "-period" + std::to_string(int(period)) + ".pbm");
+          c.write(std::string(argv[1]) + "/" + (lang == Language::ES ? "es" : "en") + "-" +
+                  (std::to_string(size.first) + "x" + std::to_string(size.second)) + "-period" +
+                  std::to_string(int(period)) + ".pbm");
       }
       for (int year : {2024, 2026}) {
         Canvas c(size.first, size.second);
@@ -323,7 +325,8 @@ int main(int argc, char** argv) {
         CHECK(work.items[1].selected && !work.items[2].selected);
         CHECK(c.hits(readingui::PickerMonth) == (year == 2026 ? 10 : 12));
         if (argc > 1)
-          c.write(std::string(argv[1]) + "/picker-" + std::to_string(size.first) + "-" + std::to_string(year) + ".pbm");
+          c.write(std::string(argv[1]) + "/picker-" + (std::to_string(size.first) + "x" + std::to_string(size.second)) +
+                  "-" + std::to_string(year) + ".pbm");
       }
       m.pickerVisible = false;
       m.period = readingstats::Period::Calendar;
@@ -338,8 +341,9 @@ int main(int argc, char** argv) {
         c.checkHits();
         CHECK(c.has(readingui::BackToBooks));
         if (argc > 1)
-          c.write(std::string(argv[1]) + "/" + (lang == Language::ES ? "es" : "en") + "-" + std::to_string(size.first) +
-                  "-book" + std::to_string(finished) + ".pbm");
+          c.write(std::string(argv[1]) + "/" + (lang == Language::ES ? "es" : "en") + "-" +
+                  (std::to_string(size.first) + "x" + std::to_string(size.second)) + "-book" +
+                  std::to_string(finished) + ".pbm");
       }
       m.detail = nullptr;
       for (int state = 0; state < 4; ++state) {

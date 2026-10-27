@@ -46,17 +46,13 @@ constexpr int16_t kButtonH = 64;
 void drawButton(toybox::Screen& screen, const fui::Rect& box, const char* label, const fui::ActionId action,
                 const fui::Rect* hit = nullptr) {
   screen.target().fill(box, fui::Paint::solid(fui::Color::Black));
-  fui::TextStyle style = screen.theme().smallText;
-  style.align = fui::TextAlign::Center;
-  style.color = fui::Color::White;
-  style.maxLines = 1;
-  // Fit labels before drawing a narrow control.
-  screen.target().text(box, toybox::fittedTitle(screen.target(), label, box.width, style).c_str(), style);
+  pixelui::text(screen.target(), box, label, 0, fui::Color::White, fui::TextAlign::Center);
   screen.frame().hit(hit == nullptr ? box : *hit, action);
 }
 
 void drawProse(toybox::Screen& screen, const fui::Rect& box, const char* text, const fui::TextAlign align) {
   fui::TextStyle style = onPaper(screen.theme().bodyText, align);
+  style.font = 4;
   const int16_t lineH = screen.target().lineHeight(style.font);
   const int lines = lineH > 0 ? box.height / lineH : 1;
   style.maxLines = static_cast<uint8_t>(lines < 1 ? 1 : (lines > 16 ? 16 : lines));
@@ -77,8 +73,8 @@ void chrome(toybox::Screen& screen, const char* title, const char* rightLabel) {
 GridGeom gridGeom(const fui::DeviceContext& device, bool selecting) {
   const fui::Rect safe = device.safeRect();
   GridGeom g;
-  g.cols = 3;
-  g.rows = kRows;
+  g.cols = device.width > device.height ? 4 : 3;
+  g.rows = device.width > device.height ? 1 : kRows;
   g.perPage = g.cols * g.rows;
   g.captionH = kCaptionH;
   g.markerRoom = kMarkerRoom;
@@ -115,6 +111,17 @@ GridGeom gridGeom(const fui::DeviceContext& device, bool selecting) {
   g.originY = gridTop + std::max(0, (gridH - usedH) / 2);
   g.pageDotsY = static_cast<int16_t>(safe.bottom() - kPageStripH + 16);
   return g;
+}
+
+fui::Rect previewRect(int pageWidth, int pageHeight, int imageWidth, int imageHeight) {
+  if (pageWidth <= 0 || pageHeight <= 0 || imageWidth <= 0 || imageHeight <= 0) return {};
+  int width = std::min(pageWidth, imageWidth);
+  int height = std::max(1, static_cast<int>(int64_t(imageHeight) * width / imageWidth));
+  if (height > pageHeight) {
+    height = std::min(pageHeight, imageHeight);
+    width = std::max(1, static_cast<int>(int64_t(imageWidth) * height / imageHeight));
+  }
+  return fui::makeRect((pageWidth - width) / 2, (pageHeight - height) / 2, width, height);
 }
 
 fui::Rect thumbRect(const GridGeom& g, int slot) {
@@ -202,8 +209,7 @@ void buildEmpty(toybox::Screen& screen, const EmptyModel& model) {
     screen.target().text(screen.takeTop(30, toybox::kGutter), fitted.c_str(), warn);
   }
 
-  fui::TextStyle head = onPaper(screen.theme().titleText, fui::TextAlign::Left);
-  screen.target().text(screen.takeTop(44, toybox::kGutter), tr(STR_UI_NO_WALLPAPERS_3C7751), head);
+  pixelui::text(screen.target(), screen.takeTop(52, toybox::kGutter), tr(STR_UI_NO_WALLPAPERS_3C7751), 1);
 
   fui::TextStyle detail = owned(screen.theme().bodyText, fui::TextAlign::Left);
   detail.maxLines = 6;
@@ -218,17 +224,14 @@ SelectionGeometry selectionGeometry(const fui::Rect& thumb) {
 void buildNotice(toybox::Screen& screen, const NoticeModel& model) {
   chrome(screen, tr(STR_UI_WALLPAPERS_2AA278), nullptr);
   const fui::Rect body = screen.body();
-  const int16_t left = body.x;
-
-  fui::TextStyle head = onPaper(screen.theme().titleText, fui::TextAlign::Left);
-  screen.target().text(fui::makeRect(left, static_cast<int16_t>(body.y + 48), body.width, 52), model.headline, head);
-  drawProse(screen, fui::makeRect(left, static_cast<int16_t>(body.y + 116), body.width, 200), model.body,
-            fui::TextAlign::Left);
+  const int contentBottom = model.actionLabel ? body.bottom() - kButtonH - 16 : body.bottom();
+  pixelui::text(screen.target(), fui::makeRect(body.x, body.y + 16, body.width, 52), model.headline, 1);
+  drawProse(screen, fui::makeRect(body.x, body.y + 80, body.width, std::max(0, contentBottom - body.y - 80)),
+            model.body, fui::TextAlign::Left);
 
   if (model.actionLabel != nullptr) {
-    drawButton(screen,
-               fui::makeRect(left, static_cast<int16_t>(body.y + body.height - kButtonH - 44), body.width, kButtonH),
-               model.actionLabel, model.action);
+    drawButton(screen, fui::makeRect(body.x, body.bottom() - kButtonH, body.width, kButtonH), model.actionLabel,
+               model.action);
   }
 }
 

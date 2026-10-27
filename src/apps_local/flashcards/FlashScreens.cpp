@@ -28,10 +28,11 @@ void caps(toybox::Screen& s, fui::Rect r, const char* t, int font = 0, int lines
 }
 void prose(toybox::Screen& s, fui::Rect r, const char* t, int lines = 1) { fittext::draw(s.target(), r, t, 4, lines); }
 void section(toybox::Screen& s, fui::Rect r, const char* t, const char* count = nullptr) {
-  caps(s, r, t, 1);
+  const int font = r.height <= 28 ? 0 : 1;
+  pixelui::text(s.target(), r, t, font);
   fui::TextStyle style;
-  style.font = 1;
-  const int measured = std::min(int(r.width) - 30, int(s.target().measureText(1, t, style).width) + 18);
+  style.font = font;
+  const int measured = std::min(int(r.width) - 30, int(s.target().measureText(font, t, style).width) + 18);
   const int right = r.right() - (count ? 34 : 0);
   if (right > r.x + measured)
     s.target().line({int16_t(r.x + measured), int16_t(r.bottom() - 5)}, {int16_t(right), int16_t(r.bottom() - 5)}, 2,
@@ -175,55 +176,73 @@ void importing(toybox::Screen& s, const ImportModel& m) {
   fittext::draw(s.target(), makeRect(b.x, y + 192, b.width, 56), tr(STR_FLASH_IMPORT_KEEP_SD), 4, 2,
                 fui::TextAlign::Center);
 }
+int libraryCapacity(const fui::DeviceContext& device) {
+  const auto b = pixelui::geometry(device).body;
+  const bool wide = b.width > b.height;
+  const int available = b.height - (wide ? 60 + 32 + 10 : 90 + 52 + 160);
+  return std::clamp((available + (wide ? 4 : 6)) / (wide ? 54 : 66), 1, kMaxLibraryRows);
+}
 void library(toybox::Screen& s, const LibraryModel& m) {
   const auto b = begin(s, tr(STR_FLASHCARDS_APP));
   const bool wide = b.width > b.height;
   const int w = wide ? (b.width - 18) / 2 : b.width;
   char text[128];
-  mark(s, makeRect(b.x + 8, b.y + 16, 44, 44), extra_calendar_32);
+  const int summaryH = wide ? 24 : 52;
+  mark(s, makeRect(b.x + 6, b.y + (summaryH - 24) / 2, 24, 24), extra_calendar_32);
   std::snprintf(text, sizeof(text), m.today == 1 ? tr(STR_FLASH_TODAY_ONE) : tr(STR_FLASH_TODAY_TOTAL), m.today);
-  fittext::draw(s.target(), makeRect(b.x + 74, b.y + 8, b.width - 82, 60), text, 1, 1);
+  pixelui::text(s.target(), makeRect(b.x + 44, b.y, b.width - 52, summaryH), text, wide ? 0 : 1);
   std::snprintf(text, sizeof(text), "%d", m.totalDecks);
-  section(s, makeRect(b.x, b.y + (wide ? 60 : (m.pages > 1 ? 78 : 98)), w, 36), tr(STR_FLASH_MY_DECKS), text);
+  const int listTop = b.y + (wide ? 60 : 90);
+  section(s, makeRect(b.x, listTop - (wide ? 24 : 32), w, wide ? 20 : 24), tr(STR_FLASH_MY_DECKS), text);
   if (m.error || !m.count)
-    prose(s, makeRect(b.x + 8, b.y + 154, w - 16, 130),
+    prose(s, makeRect(b.x + 8, listTop + 8, w - 16, 130),
           m.error ? tr(STR_READING_STORAGE_ERROR) : tr(STR_FLASH_EMPTY_LIBRARY), 4);
-  for (int n = 0; n < m.count; ++n) {
+  const int capacity = libraryCapacity(s.device());
+  for (int n = 0; n < m.count && n < capacity; ++n) {
     const auto& d = m.rows[n];
-    std::snprintf(text, sizeof(text), d.total == 1 ? tr(STR_FLASH_DECK_ONE) : tr(STR_FLASH_DECK_ROW), d.total,
-                  d.due + d.fresh);
-    row(s,
-        makeRect(b.x, b.y + (wide ? 100 : (m.pages > 1 ? 126 : 146)) + n * (wide ? 76 : (m.pages > 1 ? 90 : 98)), w,
-                 wide ? 68 : (m.pages > 1 ? 80 : 86)),
-        d.name, d.ready ? text : tr(STR_FLASH_IMPORT_FIRST), d.folder ? icon_folder_32 : extra_dashboard_cards_32,
-        OpenDeck, n);
+    const auto r = makeRect(b.x, listTop + n * (wide ? 54 : 66), w, wide ? 50 : 60);
+    const bool selected = s.frame().buttonSelected(OpenDeck, n);
+    if (selected) s.target().fill(r, dashboard::ink);
+    dashboard::frame(s, r, 2);
+    mark(s, makeRect(r.x + 10, r.y + (r.height - 28) / 2, 28, 28), d.folder ? icon_folder_32 : extra_dashboard_cards_32,
+         selected);
+    pixelui::copyCaps(text, sizeof(text), d.name);
+    fittext::draw(s.target(), makeRect(r.x + 54, r.y + 4, r.width - 92, d.ready ? 22 : r.height - 8), text, 0, 1,
+                  fui::TextAlign::Left, selected ? fui::Color::White : fui::Color::Black);
+    if (d.ready) {
+      std::snprintf(text, sizeof(text), d.total == 1 ? tr(STR_FLASH_DECK_ONE) : tr(STR_FLASH_DECK_ROW), d.total,
+                    d.due + d.fresh);
+      fittext::draw(s.target(), makeRect(r.x + 54, r.y + (wide ? 25 : 30), r.width - 92, wide ? 21 : 23), text, 4, 1,
+                    fui::TextAlign::Left, selected ? fui::Color::White : fui::Color::Black);
+    }
+    dashboard::chevron(s.target(), makeRect(r.right() - 34, r.y, 26, r.height), selected);
+    s.frame().hit(r, OpenDeck, n, fui::InputTouch);
   }
-  if (m.pages > 1) paging(s, makeRect(b.x, wide ? b.bottom() - 48 : b.y + 394, w, 44), m.page, m.pages);
-  const int x = wide ? b.x + w + 18 : b.x, y = wide ? b.y + 98 : b.bottom() - 248;
-  section(s, makeRect(x, y, w, 36), tr(STR_FLASH_NAVIGATION));
-  row(s, makeRect(x, y + 44, w, 60), tr(STR_FLASH_HISTORY), nullptr, extra_calendar_32, History);
-  row(s, makeRect(x, y + 116, w, 60), tr(STR_FLASH_HELP), nullptr, extra_reading_book_32, Help);
-  mark(s, makeRect(x + 4, b.bottom() - 50, 36, 36), icon_folder_32);
-  prose(s, makeRect(x + 54, b.bottom() - 54, w - 62, 28), tr(STR_FLASH_FILES_AT));
-  prose(s, makeRect(x + 54, b.bottom() - 26, w - 62, 24), ".apkg · .csv");
+  const int pagerTop = wide ? b.bottom() - 32 : b.bottom() - 204;
+  if (m.pages > 1) paging(s, makeRect(b.x, pagerTop, w, wide ? 32 : 44), m.page, m.pages);
+  const int x = wide ? b.x + w + 18 : b.x;
+  const int groupH = 148, y = wide ? b.y + (b.height - groupH) / 2 : b.bottom() - groupH;
+  section(s, makeRect(x, y, w, 28), tr(STR_FLASH_NAVIGATION));
+  row(s, makeRect(x, y + 36, w, 50), tr(STR_FLASH_HISTORY), nullptr, extra_calendar_32, History);
+  row(s, makeRect(x, y + 96, w, 50), tr(STR_FLASH_HELP), nullptr, extra_reading_book_32, Help);
 }
 void deck(toybox::Screen& s, const studyui::DeckModel& m) {
   const auto b = begin(s, tr(STR_FLASHCARDS_APP));
   const bool wide = b.width > b.height;
   const int w = wide ? (b.width - 18) / 2 : b.width;
   char text[96];
-  const auto hero = makeRect(b.x, b.y, w, 92);
+  const auto hero = makeRect(b.x, b.y, w, wide ? 80 : 92);
   dashboard::frame(s, hero, 2);
-  mark(s, makeRect(hero.x + 16, hero.y + 20, 52, 52), extra_dashboard_cards_32);
+  mark(s, makeRect(hero.x + 16, hero.y + (wide ? 14 : 20), 52, 52), extra_dashboard_cards_32);
   caps(s, makeRect(hero.x + 96, hero.y + 12, hero.width - 110, 36), m.name, 1);
   std::snprintf(text, sizeof(text), m.total == 1 ? tr(STR_FLASH_CARD_ONE) : tr(STR_FLASH_CARD_COUNT), m.total);
-  prose(s, makeRect(hero.x + 96, hero.y + 52, hero.width - 110, 32), text);
-  const auto today = makeRect(b.x, b.y + 108, w, wide ? 132 : 148);
+  prose(s, makeRect(hero.x + 96, hero.y + (wide ? 46 : 52), hero.width - 110, wide ? 28 : 32), text);
+  const auto today = makeRect(b.x, b.y + (wide ? 96 : 108), w, 148);
   dashboard::frame(s, today, 2);
   caps(s, makeRect(today.x + 12, today.y + 8, w - 24, 36), tr(STR_FLASH_FOR_TODAY), 1);
   for (int n = 0; n < 2; ++n) {
     std::snprintf(text, sizeof(text), "%d", n ? m.fresh : m.due);
-    metric(s, makeRect(today.x + 12 + n * (w - 12) / 2, today.y + 50, (w - 36) / 2, wide ? 76 : 86), text,
+    metric(s, makeRect(today.x + 12 + n * (w - 12) / 2, today.y + 50, (w - 36) / 2, 86), text,
            n ? tr(STR_FLASH_NEW) : tr(STR_FLASH_DUE), n ? extra_dashboard_new_32 : extra_notes_32);
   }
   const int ax = wide ? b.x + w + 18 : b.x, ay = wide ? b.y : b.y + 272;

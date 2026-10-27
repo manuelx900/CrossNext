@@ -174,8 +174,9 @@ BoardLayout boardLayout(const fui::DeviceContext& device) {
   const int side = g.cell * 8;
   g.board = fui::makeRect(wide ? b.x + 20 : b.x + 18, wide ? b.y + 8 : b.y + 50, side, side);
   const int x = wide ? g.board.right() + 30 : b.x, w = wide ? b.right() - x : b.width;
-  g.status = fui::makeRect(x, b.y, w, 42);
-  const int lastY = wide ? b.y + 60 : g.board.bottom() + 30;
+  const int panelTop = wide ? g.board.y + (side - 226) / 2 : b.y;
+  g.status = fui::makeRect(x, panelTop, w, 42);
+  const int lastY = wide ? panelTop + 60 : g.board.bottom() + 30;
   g.lastMove = fui::makeRect(x, lastY, w, 48);
   g.losses = fui::makeRect(x, lastY + 58, w, 108);
   return g;

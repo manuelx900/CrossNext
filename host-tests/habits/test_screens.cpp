@@ -81,11 +81,15 @@ struct Canvas {
       const auto& r = slot.rect;
       CHECK(r.x >= 0 && r.y >= 0 && r.right() <= width && r.bottom() <= height);
       CHECK(r.width >= 44 && r.height >= 44);
+      if (slot.action == fui::NO_ACTION) continue;
       fui::InputSnapshot tap;
       tap.touchReleased = true;
       tap.touchX = static_cast<int16_t>(r.x + r.width / 2);
       tap.touchY = static_cast<int16_t>(r.y + r.height / 2);
       const auto event = interactions.route(tap);
+      if (event.action != slot.action || event.value != slot.value)
+        std::printf("HIT at %d,%d expected %d:%d, got %d:%d\n", tap.touchX, tap.touchY, slot.action, slot.value,
+                    event.action, event.value);
       CHECK(event.action == slot.action && event.value == slot.value);
     }
   }

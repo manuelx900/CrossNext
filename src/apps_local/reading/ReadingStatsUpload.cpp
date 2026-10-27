@@ -162,7 +162,8 @@ Result Uploader::checkBooks() {
     if (!row["stats"]["completed"].is<bool>()) return Result::InvalidResponse;
     const auto stats = row["stats"];
     if (stats["seconds"].as<uint64_t>() > book.seconds || stats["pages"].as<uint64_t>() > book.pages ||
-        stats["sessions"].as<uint64_t>() > book.sessions || (stats["completed"].as<bool>() && !book.completed))
+        stats["sessions"].as<uint64_t>() > book.sessions ||
+        (stats["completed"].as<bool>() && !book.completed && !book.manuallyUnfinished))
       return Result::LocalChanged;
   }
   if (!doc["next"].isNull() && !doc["next"].is<const char*>()) return Result::InvalidResponse;

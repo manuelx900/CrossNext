@@ -121,6 +121,7 @@ class LibraryListActivity final : public UiTabListActivity {
   void buildGrid(UiScreen& screen);
   static constexpr freeink::ui::ActionId ACTION_GRID_PAGE = ACTION_VIEW;
   bool gridView() const;
+  int gridPageSize() const;
   void toggleView();
   bool loadPendingCover();
   void ensureGridBuffer();

@@ -16,14 +16,14 @@ Layout layout(const fui::DeviceContext& device, int count, bool detail, bool not
   const int rowX = wide ? body.right() - rowWidth : body.x;
   const int noteHeight = note ? 60 : 0;
   const int blockHeight = count * (rowHeight + gap) - gap;
-  const int wideTop = body.y + (compact ? std::max(0, int(body.height) - blockHeight) / 2 : 0);
+  const int wideTop = gamepanel::centeredBlock(body, blockHeight).y;
   const int rowY = wide ? wideTop : body.bottom() - noteHeight - count * (rowHeight + gap) + gap;
   for (int n = 0; n < count; ++n) out.rows[n] = fui::makeRect(rowX, rowY + n * (rowHeight + gap), rowWidth, rowHeight);
   const int width = wide ? rowWidth : body.width;
-  out.heading = fui::makeRect(body.x, body.y + 4, width, 48);
+  out.heading = fui::makeRect(body.x, body.y + (wide && compact ? 0 : 4), width, 48);
   if (detail) out.detail = fui::makeRect(body.x, out.heading.bottom() + 2, width, 30);
-  const int top = detail ? out.detail.bottom() + 14 : out.heading.bottom() + 16;
-  const int bottom = wide ? body.bottom() - noteHeight : rowY - 18;
+  const int top = detail ? out.detail.bottom() + 14 : out.heading.bottom() + (wide && compact ? 8 : 16);
+  const int bottom = wide ? body.bottom() - noteHeight - (compact ? 16 : 0) : rowY - 18;
   out.preview = fui::makeRect(body.x, top, width, std::max(0, bottom - top));
   if (note) out.footnote = fui::makeRect(body.x, body.bottom() - noteHeight + 8, width, noteHeight - 8);
   return out;

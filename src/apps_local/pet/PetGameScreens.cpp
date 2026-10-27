@@ -355,8 +355,20 @@ void games(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
     const int font = s.target().measureText(0, w.label, {}).width <= box.width - 8 ? 0 : 3;
     text(s, rect(box.x + 4, box.y + 7, box.width - 8, wide ? 22 : 29), w.label, font, inverse, fui::TextAlign::Center);
     if (wide) {
-      cardMotif(s, rect(box.x + 9, box.y + 35, 30, 30), pet::Game(i), inverse);
-      text(s, rect(box.x + 49, box.y + 34, box.width - 57, 22), I18N.get(difficulties[i]), 3, inverse);
+      const int lineH = (box.height - 36) / 3;
+      const unsigned gain = std::min(pet::gameMoodGain(*m.profile, pet::Game(i)), 100u - m.profile->joy);
+      std::snprintf(w.label, sizeof(w.label), tr(STR_PET_GAME_GAIN_VALUE), gain);
+      const char* lines[] = {I18N.get(difficulties[i]),
+                             offer == GameOffer::Blocked ? offerLabel
+                             : reward                    ? w.label
+                                                         : tr(STR_PET_GAME_PRACTICE),
+                             offer == GameOffer::Blocked ? ""
+                             : reward                    ? tr(STR_PET_GAME_COST)
+                                                         : tr(STR_PET_GAME_NO_COST)};
+      for (int n = 0; n < 3; ++n)
+        text(s, rect(box.x + 8, box.y + 31 + n * lineH, box.width - 16, lineH), lines[n], 3, inverse,
+             fui::TextAlign::Center);
+      continue;
     } else {
       const int side = std::min(64, int(box.width) - 24);
       cardMotif(s, rect(box.x + (box.width - side) / 2, box.y + 48, side, side), pet::Game(i), inverse);

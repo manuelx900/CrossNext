@@ -9,13 +9,13 @@
 
 #include "../ui/CompactArt.h"
 #include "../ui/Dashboard.h"
+#include "../ui/FitText.h"
 #include "../ui/PageIndicator.h"
 #include "../ui/ToyboxIcons.h"
 
 namespace habitsui {
 namespace {
-constexpr int kHabitRow = 104;
-int summaryHeight(const fui::DeviceContext& device) { return device.width > device.height ? 140 : 188; }
+int summaryHeight(const fui::DeviceContext& device) { return device.width > device.height ? 64 : 112; }
 
 fui::TextStyle style(const fui::FontId font, const fui::TextAlign align = fui::TextAlign::Left,
                      const fui::Color color = fui::Color::Black) {
@@ -98,6 +98,10 @@ void drawHabit(toybox::Screen& screen, fui::Rect rect, const char* name, bool in
 fui::Rect contentBand(const fui::DeviceContext& device) {
   return pixelui::geometry(device, 12).body.inset(fui::Insets{8, 4, 0, 4});
 }
+int habitPitch(const fui::DeviceContext& device) {
+  const int rows = device.width > device.height ? 3 : 6;
+  return std::max(64, (contentBand(device).height - summaryHeight(device) - 56) / rows);
+}
 void pages(toybox::Screen& screen, const fui::Rect& footer, int page, int count) {
   pageui::build(screen, footer, page + 1, count, ActionPage, -1, ActionPage, 1);
 }
@@ -124,7 +128,10 @@ bool editable(const DetailModel& model, int day) {
 
 }  // namespace
 
-int todayCapacity(const fui::DeviceContext&) { return 4; }
+int todayCapacity(const fui::DeviceContext& device) {
+  const int rows = std::max(1, (contentBand(device).height - summaryHeight(device) - 48) / habitPitch(device));
+  return std::min(6, rows * (device.width > device.height ? 2 : 1));
+}
 int presetCapacity(const fui::DeviceContext&) { return 6; }
 void buildToday(toybox::Screen& screen, const TodayModel& model) {
   chrome(screen, tr(STR_UI_HABITS_630758), tr(STR_UI_NEW_27037C), ActionAdd);
@@ -135,29 +142,34 @@ void buildToday(toybox::Screen& screen, const TodayModel& model) {
   int year, month, date;
   habits::dateOfDay(day, year, month, date);
   dashboard::date(label, sizeof(label), year, month, date);
-  const int arrow = 44, todayW = wide ? 112 : 104;
-  const auto previous = fui::makeRect(body.x, body.y, arrow, 52),
-             next = fui::makeRect(body.right() - todayW - arrow - 8, body.y, arrow, 52);
-  button(screen, previous, "", ActionBrowseDay, -1);
-  dashboard::chevron(screen.target(), previous, false, true);
-  button(screen, fui::makeRect(body.x + arrow + 8, body.y, body.width - todayW - 2 * arrow - 24, 52), label,
-         ActionDate);
-  button(screen, next, "", ActionBrowseDay, 1);
-  dashboard::chevron(screen.target(), next);
-  button(screen, fui::makeRect(body.right() - todayW, body.y, todayW, 52), tr(STR_TODAY), ActionBrowseDay, 0, true);
   const int count = model.store ? habits::countOnDay(*model.store, day) : 0,
             done = model.store ? habits::doneCount(*model.store, day) : 0;
-  const auto progress = fui::makeRect(body.x, body.y + 70, wide ? body.width * 2 / 5 : body.width, 56);
+  const int arrow = 44, todayW = wide ? 104 : 104, progressW = wide ? 208 : body.width;
+  const int navRight = wide ? body.right() - progressW - 8 : body.right();
+  const auto previous = fui::makeRect(body.x, body.y, arrow, 48),
+             next = fui::makeRect(navRight - todayW - arrow - 8, body.y, arrow, 48);
+  button(screen, previous, "", ActionBrowseDay, -1);
+  dashboard::chevron(screen.target(), previous, false, true);
+  button(screen, fui::makeRect(previous.right() + 8, body.y, next.x - previous.right() - 16, 48), label, ActionDate);
+  button(screen, next, "", ActionBrowseDay, 1);
+  dashboard::chevron(screen.target(), next);
+  button(screen, fui::makeRect(navRight - todayW, body.y, todayW, 48), tr(STR_TODAY), ActionBrowseDay, 0, true);
+  const auto progress =
+      wide ? fui::makeRect(navRight + 8, body.y, progressW, 48) : fui::makeRect(body.x, body.y + 60, body.width, 40);
   dashboard::frame(screen, progress, 2);
-  dashboard::text(screen, fui::makeRect(progress.x + 12, progress.y, progress.width - 110, progress.height),
-                  day == model.today ? tr(STR_HABITS_TODAY_PROGRESS) : tr(STR_HABITS_DAILY_PROGRESS), 1,
-                  fui::TextAlign::Left);
+  const auto progressLabel = fui::makeRect(progress.x + 10, progress.y, progress.width - 104, progress.height);
+  if (wide && day != model.today) {
+    pixelui::copyCaps(label, sizeof(label), tr(STR_HABITS_DAILY_PROGRESS));
+    fittext::draw(screen.target(), progressLabel.inset({3, 0, 3, 0}), label, 3, 2);
+  } else {
+    dashboard::text(screen, progressLabel,
+                    wide                 ? tr(STR_TODAY)
+                    : day == model.today ? tr(STR_HABITS_TODAY_PROGRESS)
+                                         : tr(STR_HABITS_DAILY_PROGRESS),
+                    3, fui::TextAlign::Left);
+  }
   std::snprintf(label, sizeof(label), "%d / %d", done, count);
-  dashboard::digits(screen, fui::makeRect(progress.right() - 94, progress.y + 10, 82, 36), label);
-  dashboard::text(screen,
-                  fui::makeRect(wide ? progress.right() + 16 : body.x, body.y + (wide ? 80 : 140),
-                                wide ? body.right() - progress.right() - 16 : body.width, 34),
-                  tr(STR_HABITS_FOR_DAY), 1, fui::TextAlign::Left);
+  dashboard::digits(screen, fui::makeRect(progress.right() - 88, progress.y + 10, 78, progress.height - 20), label);
   const int capacity = todayCapacity(screen.device()), first = model.page * capacity;
   if (!count) {
     dashboard::text(screen, fui::makeRect(body.x, body.y + summaryHeight(screen.device()) + 8, body.width, 64),
@@ -173,28 +185,27 @@ void buildToday(toybox::Screen& screen, const TodayModel& model) {
     const bool checked = habits::checked(*model.store, index, day);
     const int columns = wide ? 2 : 1, width = (body.width - (columns - 1) * 12) / columns;
     const auto row = fui::makeRect(body.x + n % columns * (width + 12),
-                                   body.y + summaryHeight(screen.device()) + n / columns * (wide ? 78 : kHabitRow),
-                                   width, (wide ? 78 : kHabitRow) - 12);
+                                   body.y + summaryHeight(screen.device()) + n / columns * habitPitch(screen.device()),
+                                   width, habitPitch(screen.device()) - 10);
     const bool focused = index == model.focused;
     if (focused) screen.target().fill(row, dashboard::ink);
     dashboard::frame(screen, row, 2);
-    hit(screen, fui::makeRect(row.x, row.y, 68, row.height), ActionToggleToday, index);
-    hit(screen, fui::makeRect(row.x + 68, row.y, row.width - 68, row.height), ActionOpen, index);
-    const auto check = fui::makeRect(row.x + 14, row.y + (row.height - 42) / 2, 42, 42);
+    hit(screen, fui::makeRect(row.x, row.y, 56, row.height), ActionToggleToday, index);
+    hit(screen, fui::makeRect(row.x + 56, row.y, row.width - 56, row.height), ActionOpen, index);
+    const auto check = fui::makeRect(row.x + 12, row.y + (row.height - 34) / 2, 34, 34);
     if (focused) screen.target().fill(check, dashboard::paper);
     dashboard::check(screen, check, checked);
-    drawHabit(screen, fui::makeRect(row.x + 80, row.y + (row.height - 44) / 2, 44, 44), habit.name, focused);
-    dashboard::text(screen, fui::makeRect(row.x + 146, row.y + (wide ? 4 : 10), row.width - 188, 34), habit.name, 1,
+    drawHabit(screen, fui::makeRect(row.x + 68, row.y + (row.height - 36) / 2, 36, 36), habit.name, focused);
+    dashboard::text(screen, fui::makeRect(row.x + 118, row.y + 4, row.width - 158, 34), habit.name, 1,
                     fui::TextAlign::Left, focused);
     std::snprintf(label, sizeof(label), (stat.current == 1 ? tr(STR_HABITS_STREAK_DAY) : tr(STR_HABITS_STREAK_DAYS)),
                   unsigned(stat.current));
-    dashboard::text(screen, fui::makeRect(row.x + 146, row.y + (wide ? 36 : 43), row.width - 188, 24), label, 4,
-                    fui::TextAlign::Left, focused);
+    dashboard::text(screen, fui::makeRect(row.x + 118, row.y + 38, row.width - 158, screen.target().lineHeight(4)),
+                    label, 4, fui::TextAlign::Left, focused);
     dashboard::chevron(screen.target(), fui::makeRect(row.right() - 36, row.y, 26, row.height), focused);
   }
-  const int rows = (std::min(count, capacity) + (wide ? 1 : 0)) / (wide ? 2 : 1);
-  const int bottom = body.y + summaryHeight(screen.device()) + rows * (wide ? 78 : kHabitRow) - 12;
-  pages(screen, pageui::afterContent(body, bottom), model.page, (count + capacity - 1) / capacity);
+  pages(screen, fui::makeRect(body.x, body.bottom() - 44, body.width, 44), model.page,
+        (count + capacity - 1) / capacity);
 }
 void buildPresets(toybox::Screen& screen, int) {
   chrome(screen, tr(STR_UI_NEW_HABIT_558B6A));

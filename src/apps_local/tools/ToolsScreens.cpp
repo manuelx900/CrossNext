@@ -160,10 +160,10 @@ void clock(toybox::Screen& s, const Model& m, Work& w, fui::Rect body) {
       const int side = std::min(int(content.height), int(content.width) * 48 / 100);
       face(s, fui::makeRect(content.x, content.y, side, content.height), m);
       info = fui::makeRect(content.x + side + 16, content.y, content.width - side - 16, content.height);
-      toolsdigits::draw(s, fui::makeRect(info.x, info.y + info.height / 6, info.width, info.height / 2), time);
-      caps(s, w, fui::makeRect(info.x, info.y + info.height * 2 / 3, info.width, 36), I18N.get(weekdays[weekday]));
-      text(s, fui::makeRect(info.x, info.y + info.height * 2 / 3 + 40, info.width, 36),
-           m.validTime ? date : tr(STR_READING_CLOCK), 0);
+      const int valueH = std::min(104, info.height / 2), top = info.y + (info.height - valueH - 76) / 2;
+      toolsdigits::draw(s, fui::makeRect(info.x + 12, top, info.width - 24, valueH), time);
+      caps(s, w, fui::makeRect(info.x, top + valueH + 8, info.width, 32), I18N.get(weekdays[weekday]));
+      text(s, fui::makeRect(info.x, top + valueH + 44, info.width, 32), m.validTime ? date : tr(STR_READING_CLOCK), 0);
     } else {
       const int offset = std::min(18, std::max(0, int(content.height) - int(content.width) - 110));
       const int side = std::min(int(content.width), int(content.height) - 100 - offset);
@@ -203,7 +203,7 @@ void counter(toybox::Screen& s, const Model& m, Work& w, fui::Rect body) {
   const auto display = fui::makeRect(number.x, number.y + 48, number.width, number.height - 48);
   dashboard::frame(s, display, 4);
   std::snprintf(w.label, sizeof(w.label), "%lld", static_cast<long long>(m.count));
-  toolsdigits::draw(s, display.inset(fui::Insets{24, 20, 24, 20}), w.label);
+  toolsdigits::counter(s, display.inset(fui::Insets{24, 20, 24, 20}), w.label, wide ? 112 : 120);
   const auto controls =
       wide ? fui::makeRect(number.right() + 16, body.y, body.right() - number.right() - 16, body.height)
            : fui::makeRect(body.x, number.bottom() + 16, body.width, body.bottom() - number.bottom() - 16);
@@ -215,7 +215,6 @@ void counter(toybox::Screen& s, const Model& m, Work& w, fui::Rect body) {
   pixelui::text(s.target(), fui::makeRect(controls.right() - 60, controls.y, 48, h), "+1", 1, fui::Color::White,
                 fui::TextAlign::Right);
   control(s, w, fui::makeRect(controls.x, controls.y + h + gap, half, h), tr(STR_TOOLS_SUBTRACT), Subtract);
-  s.target().fill(fui::makeRect(controls.x + 20, controls.y + h + gap + h / 2 - 2, 28, 4), ink);
   control(s, w, fui::makeRect(controls.x + half + gap, controls.y + h + gap, half, h), tr(STR_UNDO), Undo, 0, false,
           &extra_dashboard_undo_32);
   control(s, w, fui::makeRect(controls.x, controls.y + 2 * (h + gap), controls.width, h), tr(STR_COUNTER_RESET), Reset,
