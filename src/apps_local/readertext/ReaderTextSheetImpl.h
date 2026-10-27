@@ -295,10 +295,11 @@ void build(Screen& screen, const Model& model, Work& work) {
         pixelui::text(screen.target(), fui::makeRect(box.x + 4, box.y + half, box.width - 8, h - half - 12), work.value,
                       pixelui::kSmall, fui::Color::Black, fui::TextAlign::Center);
       } else {
-        const freeink::Icon* icons[] = {
-            &icon_reader_text_24, &extra_carnivoro_search_32, &icon_bookmark_32, &icon_book_32, &icon_file_32,
-            &extra_chart_64,      &icon_refresh_cw_32};
-        const auto& mark = *icons[std::clamp(index, 0, 6)];
+        const freeink::Icon* icons[] = {&icon_reader_text_24, &extra_carnivoro_search_32,
+                                        &icon_bookmark_32,    &icon_book_32,
+                                        &icon_file_32,        &extra_chart_64,
+                                        &icon_check_32,       &icon_refresh_cw_32};
+        const auto& mark = *icons[std::clamp(index, 0, 7)];
         const int side = std::min(36, h - 12);
         screen.target().bitmap(fui::makeRect(box.x + 16, box.y + (h - side) / 2, side, side), fui::bitmapFromIcon(mark),
                                fui::BitmapMode::Contain, paint);

@@ -47,11 +47,13 @@ void XtcReaderActivity::renderPageSettings() {
   text.contentsAvailable = !xtc->getChapters().empty();
   text.listContext = this;
   text.listPage = settingsPage;
-  text.listCount = settingsTab == 2 ? xtc->getChapters().size() : 1;
+  text.listCount = settingsTab == 2 ? xtc->getChapters().size() : 2;
   text.listLabel = [](const void* context, int n, char* out, size_t size) {
     const auto* self = static_cast<const XtcReaderActivity*>(context);
     std::snprintf(out, size, "%s",
-                  self->settingsTab == 2 ? self->xtc->getChapters()[n].name.c_str() : tr(STR_REFRESH_FREQ));
+                  self->settingsTab == 2 ? self->xtc->getChapters()[n].name.c_str()
+                  : n == 0               ? tr(STR_REFRESH_FREQ)
+                                         : tr(STR_READER_FINISH_BOOK));
   };
   text.listCheck = [](const void* context, int n) {
     const auto* self = static_cast<const XtcReaderActivity*>(context);
@@ -107,7 +109,7 @@ bool XtcReaderActivity::handleFormatInput() {
   if (pageSettings) {
     const auto routed = pageSettings->route(mappedInput);
     int swipeStep = 0;
-    if (settingsTab == 2) {
+    if (settingsTab == 2 || settingsTab == 3) {
       switch (mappedInput.wasSwipe()) {
         case MappedInputManager::SwipeDir::Left:
           swipeStep = 1;
@@ -140,11 +142,19 @@ bool XtcReaderActivity::handleFormatInput() {
       return true;
     }
     if (routed.event == ReaderToolbarUi::Event::Row || swipeStep) {
+      if (!swipeStep && settingsTab == 3 && routed.value == readertext::MorePick + 1) {
+        {
+          RenderLock lock;
+          pageSettings.reset();
+        }
+        requestFinishBook();
+        return true;
+      }
       {
         RenderLock lock;
         int control = routed.value;
         if (swipeStep || control == readertext::SheetPrevious || control == readertext::SheetNext) {
-          const int count = settingsTab == 2 ? xtc->getChapters().size() : 1;
+          const int count = settingsTab == 2 ? xtc->getChapters().size() : 2;
           const int capacity = readertext::sheetRowsPerPage(pageSettings->uiTarget.deviceContext(), true);
           const int step = swipeStep ? swipeStep : (control == readertext::SheetNext ? 1 : -1);
           const int page = std::clamp(settingsPage + step, 0, std::max(0, (count - 1) / capacity));
@@ -454,6 +464,17 @@ bool XtcReaderActivity::skipPages(int amount) {
 
 bool XtcReaderActivity::isAtEndOfBook() const { return xtc && currentPage >= xtc->getPageCount(); }
 
+bool XtcReaderActivity::saveFinishedPosition() {
+  if (!xtc || !xtc->getPageCount()) return false;
+  const uint32_t page = xtc->getPageCount();
+  uint8_t data[4];
+  for (int n = 0; n < 4; ++n) data[n] = static_cast<uint8_t>(page >> (8 * n));
+  if (!ProgressFile::writeAtomic(xtc->getCachePath(), data, sizeof(data))) return false;
+  currentPage = lastSavedPage = page;
+  pageSettings.reset();
+  return true;
+}
+
 void XtcReaderActivity::onReturnFromEndOfBook() {
   if (xtc && xtc->getPageCount() > 0) {
     currentPage = xtc->getPageCount() - 1;
@@ -482,7 +503,7 @@ void XtcReaderActivity::loadProgress() {
     uint8_t data[4];
     if (f.read(data, 4) == 4) {
       currentPage = data[0] | (data[1] << 8) | (data[2] << 16) | (data[3] << 24);
-      if (currentPage >= xtc->getPageCount() && xtc->getPageCount() > 0) {
+      if (currentPage > xtc->getPageCount() && xtc->getPageCount() > 0) {
         currentPage = xtc->getPageCount() - 1;
       }
       LOG_DBG("XTC", "Loaded progress: page %lu/%lu", currentPage + 1, xtc->getPageCount());
@@ -499,7 +520,7 @@ ScreenshotInfo XtcReaderActivity::getScreenshotInfo() const {
     const uint32_t pageCount = xtc->getPageCount();
     info.totalPages = pageCount;
     uint32_t clampedPage = (pageCount > 0 && currentPage >= pageCount) ? pageCount - 1 : currentPage;
-    info.progressPercent = pageCount > 0 ? xtc->calculateProgress(clampedPage) : 0;
+    info.progressPercent = isAtEndOfBook() ? 100 : pageCount > 0 ? xtc->calculateProgress(clampedPage) : 0;
     info.currentPage = static_cast<int>(clampedPage) + 1;
   } else {
     info.currentPage = currentPage + 1;

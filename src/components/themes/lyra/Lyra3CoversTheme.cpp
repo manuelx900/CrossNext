@@ -16,7 +16,7 @@
 // Internal constants
 namespace {
 constexpr int hPaddingInSelection = 8;
-constexpr int cornerRadius = 6;
+constexpr int cornerRadius = 0;
 }  // namespace
 
 int Lyra3CoversTheme::homeCoverThumbHeight(const GfxRenderer& renderer) const {

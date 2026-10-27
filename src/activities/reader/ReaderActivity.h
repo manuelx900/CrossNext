@@ -49,6 +49,8 @@ class ReaderActivity : public Activity {
   virtual bool pageTurn(bool isForward) = 0;
   virtual bool skipPages(int amount) { return pageTurn(amount > 0); }
   virtual bool isAtEndOfBook() const = 0;
+  // Called with the render lock held, after the completion record is durable.
+  virtual bool saveFinishedPosition() = 0;
   virtual void onReturnFromEndOfBook() {}
 
   virtual void renderBook() = 0;
@@ -63,7 +65,9 @@ class ReaderActivity : public Activity {
   void clearEndOfBookOptionsIfNeeded();
   void disableFastInitialRefresh();
   void notePageTurn(bool forward, bool succeeded);
-  void flushReaderSession();
+  bool flushReaderSession();
+  void requestFinishBook();
+  void showFinishBookError(const char* message);
 
  public:
   ~ReaderActivity() override = default;

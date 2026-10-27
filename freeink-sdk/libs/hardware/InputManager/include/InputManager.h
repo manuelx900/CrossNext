@@ -398,8 +398,10 @@ class InputManager {
   unsigned long twoButtonPressStart;
   bool twoButtonLongPressActive;
 
-  bool touchDataEnabled = false;         // I2C up, controller present
-  uint8_t gt911Addr = 0;                 // resolved GT911 address (0 until probed)
+  bool touchDataEnabled = false;  // I2C up, controller present
+  uint8_t gt911Addr = 0;          // resolved GT911 address (0 until probed)
+  uint8_t gt911ReadFailures = 0;
+  static constexpr uint8_t GT911_FAST_READ_RETRIES = 3;
   unsigned long touchIrqPulseUntil = 0;  // synthesized-confirm window after a press
   unsigned long touchReadAt = 0;         // next scheduled I2C poll
   unsigned long touchReleaseAt = 0;

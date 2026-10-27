@@ -93,7 +93,7 @@ constexpr int kBoardFrame = 9;
 // Row height for a settings list, and capsule geometry. Chrome is drawn by
 // FreeInkUI components now; these are the numbers ToyboxTheme.h feeds them.
 constexpr int kRowHeight = 62;
-constexpr int kPillRadius = 20;
+constexpr int kPillRadius = 0;
 constexpr int kPillHeight = 52;
 
 }  // namespace toybox

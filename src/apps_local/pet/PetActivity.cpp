@@ -159,6 +159,7 @@ void PetActivity::scan() {
     const auto result = readings.next(record);
     switch (result) {
       case readingstats::ScanResult::Record: {
+        if (record.kind == readingstats::RecordKind::Completion) break;
         const bool alreadyLost = readingTimeline.endedAt() != 0;
         readingTimeline.add(record.epoch, record.seconds, record.localDay, record.secondOfDay);
         if (!alreadyLost && readingTimeline.endedAt()) scanChanged = updateHabits() || scanChanged;

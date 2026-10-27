@@ -15,7 +15,9 @@ namespace {
 constexpr int kHeader = kHeaderBand;
 constexpr int kBottomMargin = 16;
 void drawPip(toybox::Screen& s, fui::Rect r, uint8_t c) { cardart::drawSuit(s, r, suitOf(c), isRed(c)); }
-fui::Rect begin(toybox::Screen& s) { return cardpanel::begin(s, tr(STR_UI_SOLITAIRE_8C3ACB)); }
+fui::Rect begin(toybox::Screen& s, int actionReserve = 0) {
+  return cardpanel::begin(s, tr(STR_UI_SOLITAIRE_8C3ACB), actionReserve);
+}
 enum class GuideExample { Columns, Foundations, Stock, Empty };
 void helpLesson(toybox::Screen& s, fui::Rect r, const char* heading, GuideExample example, const char* caption) {
   dashboard::frame(s, r, 2);
@@ -78,7 +80,7 @@ int Layout::cardAt(const Game& game, int pile, int ty) const {
 void buildBoard(toybox::Screen& s, const BoardModel& m, Layout& l) {
   if (!m.game) return;
   const auto& g = *m.game;
-  const auto b = begin(s);
+  const auto b = begin(s, 408);
   auto& t = s.target();
   const int h = b.y - 12, right = s.device().safeRect().right() - 112;
   const auto menu = fui::makeRect(right - 126, h - 48, 120, 40);

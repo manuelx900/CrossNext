@@ -30,7 +30,7 @@
 // Internal constants
 namespace {
 constexpr int hPaddingInSelection = 8;
-constexpr int cornerRadius = 6;
+constexpr int cornerRadius = 0;
 constexpr int topHintButtonY = 345;
 constexpr int maxListValueWidth = 200;
 constexpr int mainMenuIconSize = 32;

@@ -15,6 +15,7 @@ struct TestStorage {
   int writeLimit = -1;
   bool refuseReads = false;
   bool corruptReadChecksum = false;
+  bool failJournalVerification = false;
   int writes = 0;
   bool refuseRename = false;
   bool enforceParents = false;
@@ -78,6 +79,10 @@ class HalFile {
     return ioError ? HalFile{} : openNextFile();
   }
   int read(void* out, size_t count) {
+    if (testStorage.failJournalVerification && count == 384) {
+      testStorage.failJournalVerification = false;
+      return -1;
+    }
     if (!data || testStorage.refuseReads) return -1;
     const size_t length =
         std::min({count, data->size() - cursor, testStorage.readLimit < 0 ? count : size_t(testStorage.readLimit)});

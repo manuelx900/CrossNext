@@ -18,6 +18,7 @@ inline void bindFonts(freeink::ui::GfxRendererTarget& target, GfxRenderer& rende
   target.setFont(2, toybox::kDisplayFontId);
   target.setFont(3, toybox::kTileFontId);
   target.setFont(4, toybox::kLibraryFontId);
+  target.setFont(fui::HEADER_CLOCK_FONT, toybox::kButtonFontId);
 }
 
 // Keep the host's shared theme derivation on its original UI font bindings.
@@ -32,6 +33,7 @@ class FontScope {
     target.setFont(1, fonts.bodyFontId);
     target.setFont(2, fonts.titleFontId);
     target.setFont(3, SMALL_FONT_ID);
+    target.setFont(fui::GfxRendererTarget::FONT_CLOCK, UI_12_FONT_ID);
   }
   FontScope(const FontScope&) = delete;
   FontScope& operator=(const FontScope&) = delete;

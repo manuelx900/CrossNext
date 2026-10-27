@@ -14,3 +14,9 @@ SDK=freeink-sdk/libs/hardware/InputManager
   -I"$SDK/test/host/metalio_stubs" -I"$SDK/include" -Ifreeink-sdk/libs/hardware/BoardConfig/include \
   host-tests/idle-wait/test_input.cpp "$SDK/src/InputManager.cpp" -o "$OUT/input"
 "$OUT/input"
+"${CXX:-c++}" -std=c++20 -Wall -Wextra -Werror -Wno-unused-parameter \
+  -DFREEINK_DEVICE_METALIO_EINK4=1 -DARDUINO_USB_CDC_ON_BOOT=1 \
+  -Ihost-tests/idle-wait/gt911_stubs -I"$SDK/test/host/metalio_stubs" -I"$SDK/include" \
+  -Ifreeink-sdk/libs/hardware/BoardConfig/include -Isrc \
+  host-tests/idle-wait/test_home_gt911.cpp "$SDK/src/InputManager.cpp" -o "$OUT/home-gt911"
+"$OUT/home-gt911"

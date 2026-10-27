@@ -806,7 +806,7 @@ STR_TOOLS_SAVE_FAILED: "Could not save. Check SD card."
 STR_COUNTER_CONFIRM: "Reset this counter to zero?"
 STR_RESET: "Reset"
 STR_UNDO: "Undo"
-STR_READING_FORMATS: "Reading formats"
+STR_READING_FORMATS: "Statistics tracking"
 STR_CHESS_PIECES: "Piece design"
 STR_PIECE_CLASSIC: "Classic"
 STR_PIECE_MODERN: "Modern"
@@ -5257,3 +5257,9 @@ STR_APP_RESOURCES_COPY: "This app needs its contents to work. Extract CrossNext-
 
 STR_READING_SYNC_NEWER: "A newer firmware created this imported history. Update CrossNext before importing again."
 STR_READING_SYNC_LOCAL_CHANGED: "The saved journal is older than its synced history or has changed. Restore its complete backup before syncing. No local reading was deleted."
+
+STR_READER_FINISH_BOOK: "Finish book"
+STR_READER_FINISH_CONFIRM: "Mark this book as finished and save 100% progress? Reading time and pages will not be added."
+STR_READER_FINISH_CLOCK: "Set the date and time in Settings, then try again."
+STR_READER_FINISH_FAILED: "Could not record the completion. Check the microSD and try again from More."
+STR_READER_FINISH_POSITION_FAILED: "The book is finished in Statistics, but its reading position could not be saved. Check the microSD and try again from More."

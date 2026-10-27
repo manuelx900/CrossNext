@@ -22,7 +22,7 @@ inline freeink::ui::StyleSet uiButtonStyles() {
   }
   button.disabled.border = fui::Paint::dither(fui::Color::LightGray);
   for (fui::BoxStyle* box : {&button.normal, &button.selected, &button.focused, &button.active, &button.disabled}) {
-    box->radius = 4;
+    box->radius = 0;
   }
   return button;
 }

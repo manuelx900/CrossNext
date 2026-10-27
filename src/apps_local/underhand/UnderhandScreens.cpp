@@ -269,6 +269,11 @@ void chrome(toybox::Screen& screen, const char* rightLabel, const char* title = 
   fui::HeaderProps header;
   header.title = title;
   header.borderEdges = fui::EdgesNone;
+  if (rightLabel && *rightLabel) {
+    fui::TextStyle labelStyle;
+    labelStyle.font = toybox::kSmallFont;
+    header.rightReserve = screen.target().measureText(labelStyle.font, rightLabel, labelStyle).width + 12;
+  }
   toybox::absoluteChrome(screen);
   toybox::headerBand(screen, header);
   if (rightLabel && *rightLabel) {

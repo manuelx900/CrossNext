@@ -106,6 +106,30 @@ void tests() {
   CHECK(run(sync) == Result::Success);
   CHECK(server.puts == 2);
 
+  // Manual EOF sentinels upload as 100%, repeat without PUTs and cannot regress.
+  for (const auto& path : {a, b, std::string("/Manga/three.xtc")}) {
+    reset();
+    saved(path, 7);
+    const bool fixed = !path.ends_with(".epub");
+    testStorage.files[cache(path)] =
+        fixed ? std::vector<uint8_t>{100, 0, 0, 0} : std::vector<uint8_t>{10, 0, 0, 0, 0, 0};
+    server = {};
+    const auto key = KOReaderDocumentId::calculateFromFilename(path);
+    server.records[key] = remote(5, fixed);
+    CHECK(sync.begin(Server::exchange, &server) == Result::Busy);
+    CHECK(run(sync) == Result::Success && server.puts == 1);
+    CHECK(!deserializeJson(doc, server.records[key]));
+    CHECK(doc["percentage"].as<float>() == 1.0f);
+    CHECK(sync.begin(Server::exchange, &server) == Result::Busy);
+    CHECK(run(sync) == Result::Success && server.puts == 1);
+    CHECK(testStorage.files[cache(path)][0] == (fixed ? 100 : 10));
+    // Downloading 100% onto an unfinished copy stores its format's EOF sentinel.
+    saved(path, 7);
+    CHECK(sync.begin(Server::exchange, &server) == Result::Busy);
+    CHECK(run(sync) == Result::Success && server.puts == 1);
+    CHECK(testStorage.files[cache(path)][0] == (fixed ? 100 : 10));
+  }
+  reset();
   // A cloud record under the other document-id method is updated in place.
   reset();
   saved(a, 7);

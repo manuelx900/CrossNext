@@ -9,6 +9,7 @@ reach additional rows in either orientation. Group headings use text without an 
 list borders and separators between options remain visible.
 
 Reading separates text, reading behaviour, dictionaries and the status bar.
+**Statistics tracking** selects which file formats contribute reading statistics; it does not control which formats can be opened.
 Library groups files, finished books and cache maintenance. Controls separates
 buttons, touch, haptics where fitted, and keyboard layouts. Connectivity contains
 Wi-Fi, reading sync and OPDS. System contains Home, language, sleep and the clock
@@ -65,3 +66,13 @@ The timezone picker lists Punta Arenas directly after Santiago. Display order is
 System → Clock → Manual date and time adjusts year (2020–2099), month, day, hour and minute without Wi-Fi or a required timezone-selection step. Confirm writes the hardware RTC in UTC using the currently configured zone, then updates system time; Back discards edits. Invalid dates and daylight-saving gaps are rejected. Manual time counts as a configured clock for reading statistics. RTC persistence and power-cycle behavior still require device checks.
 
 The 12/24-hour setting applies to Home and shared pixel headers. Show in header controls the optional clock in those headers; Home keeps its dedicated clock. Reading → Manage fonts offers Installed fonts offline and Download fonts, which explicitly requires Wi-Fi. Reading sync and OPDS remain active features. English and Spanish UI languages select their corresponding initial keyboard even when an older saved mask omitted it. Wordle's English keyboard omits Ñ; Spanish includes it.
+
+## Header clock and control shapes
+
+Controls use square corners in both Home appearances, menus and reader sheets. Older saved theme identifiers remain readable and cannot restore rounded controls. Card illustrations and circular icons keep their intended shapes.
+
+System → Clock → Show in header enables a fixed, larger clock in shared app headers, including Solitaire and Hearts. Titles, navigation buttons and battery status take precedence: the clock is omitted when its complete text cannot fit. It follows the selected 12/24-hour format and updates when that screen repaints; Home retains its dedicated clock and minute updates. Turning the optional clock or battery percentage off clears it on the next repaint.
+
+The device and web settings lists omit legacy theme selection and touch-inapplicable power/menu controls. Their saved keys remain compatible with existing settings files. Appearance is configured with Framed or Carousel; Home-button gestures are configured in Controls. Frontlight and tilt options depend on the hardware capabilities.
+
+The reader's Contents and More lists both accept horizontal swipes between available list pages. Swiping at either end stays on that list page and does not turn the book underneath. A downward swipe closes the sheet.

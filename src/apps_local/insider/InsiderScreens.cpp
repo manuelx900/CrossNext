@@ -296,7 +296,7 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
     arrow.text = styled(toybox::kDisplayFont, fui::TextAlign::Center, live ? fui::Color::White : fui::Color::Black);
     arrow.styles = live ? toybox::rowStyles() : toybox::disabledStepperStyles();
     arrow.state = live ? fui::StateSelected : fui::StateNormal;
-    arrow.radius = 10;
+    arrow.radius = 0;
     screen.button(
         arrow, fui::makeRect(static_cast<int16_t>(body.right() - kStep * 2 - kStepGap + i * (kStep + kStepGap)), body.y,
                              kStep, kStep));
@@ -354,7 +354,7 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
   rules.action = ActionRules;
   rules.text = styled(toybox::kUiFont, fui::TextAlign::Center);
   rules.styles = toybox::rowStyles();
-  rules.radius = 10;
+  rules.radius = 0;
   screen.button(rules, fui::LayoutAnchor::Bottom);
 
   fui::ButtonProps deal;
@@ -363,7 +363,7 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
   deal.text = styled(toybox::kDisplayFont, fui::TextAlign::Center, fui::Color::White);
   deal.styles = toybox::rowStyles();
   deal.state = fui::StateSelected;
-  deal.radius = 10;
+  deal.radius = 0;
   screen.button(deal, fui::LayoutAnchor::Bottom);
 }
 
@@ -439,7 +439,7 @@ void buildPass(toybox::Screen& screen, const PassModel& model) {
   pass.text = styled(toybox::kUiFont, fui::TextAlign::Center, fui::Color::White);
   pass.styles = toybox::rowStyles();
   pass.state = fui::StateSelected;
-  pass.radius = 10;
+  pass.radius = 0;
   screen.button(pass, fui::LayoutAnchor::Bottom);
 
   // Whatever is left after the button is the card, so it grows to the screen
@@ -502,7 +502,7 @@ void buildQuestions(toybox::Screen& screen, const QuestionsModel& model) {
   got.text = styled(toybox::kUiFont, fui::TextAlign::Center, fui::Color::White);
   got.styles = toybox::rowStyles();
   got.state = fui::StateSelected;
-  got.radius = 10;
+  got.radius = 0;
   screen.button(got, fui::LayoutAnchor::Bottom);
 
   const fui::Rect body = screen.body();
@@ -583,7 +583,7 @@ void buildVote(toybox::Screen& screen, const VoteModel& model) {
   go.text = styled(toybox::kUiFont, fui::TextAlign::Center, fui::Color::White);
   go.styles = ready ? toybox::rowStyles() : toybox::disabledButtonStyles();
   go.state = ready ? fui::StateSelected : fui::StateNormal;
-  go.radius = 10;
+  go.radius = 0;
   screen.button(go, fui::LayoutAnchor::Bottom);
 
   const fui::Rect hint = screen.takeBottom(44, toybox::kGutter);
@@ -597,7 +597,7 @@ void buildVote(toybox::Screen& screen, const VoteModel& model) {
                        model.chosen == kNoInsider ? fui::Color::White : fui::Color::Black);
   nobody.styles = toybox::rowStyles();
   nobody.state = model.chosen == kNoInsider ? fui::StateSelected : fui::StateNormal;
-  nobody.radius = 10;
+  nobody.radius = 0;
   screen.button(nobody, fui::LayoutAnchor::Bottom);
 
   const fui::Rect body = screen.body();
@@ -694,7 +694,7 @@ void buildReveal(toybox::Screen& screen, const RevealModel& model) {
   done.action = ActionDone;
   done.text = styled(toybox::kUiFont, fui::TextAlign::Center);
   done.styles = toybox::rowStyles();
-  done.radius = 10;
+  done.radius = 0;
   screen.button(done, fui::LayoutAnchor::Bottom);
 
   fui::ButtonProps again;
@@ -703,7 +703,7 @@ void buildReveal(toybox::Screen& screen, const RevealModel& model) {
   again.text = styled(toybox::kDisplayFont, fui::TextAlign::Center, fui::Color::White);
   again.styles = toybox::rowStyles();
   again.state = fui::StateSelected;
-  again.radius = 10;
+  again.radius = 0;
   screen.button(again, fui::LayoutAnchor::Bottom);
 }
 

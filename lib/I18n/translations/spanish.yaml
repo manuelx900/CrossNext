@@ -806,7 +806,7 @@ STR_TOOLS_SAVE_FAILED: "No se pudo guardar. Revisa la SD."
 STR_COUNTER_CONFIRM: "¿Poner el contador a cero?"
 STR_RESET: "Reiniciar"
 STR_UNDO: "Deshacer"
-STR_READING_FORMATS: "Formatos de lectura"
+STR_READING_FORMATS: "Registro de estadísticas"
 STR_CHESS_PIECES: "Piezas"
 STR_PIECE_CLASSIC: "Clásicas"
 STR_PIECE_MODERN: "Modernas"
@@ -5256,3 +5256,9 @@ STR_APP_RESOURCES_COPY: "Esta app necesita sus contenidos para funcionar. Extrae
 
 STR_READING_SYNC_NEWER: "Este historial importado proviene de un firmware más reciente. Actualiza CrossNext antes de volver a importar."
 STR_READING_SYNC_LOCAL_CHANGED: "El registro guardado es anterior al historial sincronizado o ha cambiado. Restaura su copia completa antes de sincronizar. No se borraron lecturas locales."
+
+STR_READER_FINISH_BOOK: "Terminar libro"
+STR_READER_FINISH_CONFIRM: "¿Marcar este libro como terminado y guardar el 100 %? No se añadirán tiempo de lectura ni páginas."
+STR_READER_FINISH_CLOCK: "Configura la fecha y la hora en Ajustes y vuelve a intentarlo."
+STR_READER_FINISH_FAILED: "No se pudo registrar la finalización. Revisa la microSD y vuelve a intentarlo desde Más."
+STR_READER_FINISH_POSITION_FAILED: "El libro figura como terminado en Estadísticas, pero no se pudo guardar su posición de lectura. Revisa la microSD y vuelve a intentarlo desde Más."

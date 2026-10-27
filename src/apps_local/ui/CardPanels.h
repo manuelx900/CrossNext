@@ -6,7 +6,7 @@
 
 namespace cardpanel {
 namespace fui = freeink::ui;
-inline fui::Rect begin(toybox::Screen& s, const char* title) {
+inline fui::Rect begin(toybox::Screen& s, const char* title, int actionReserve = 0) {
   const auto safe = s.device().safeRect();
   const int h = safe.y + 56;
   chrome::headerHeight = h;
@@ -14,12 +14,11 @@ inline fui::Rect begin(toybox::Screen& s, const char* title) {
   const auto back = fui::makeRect(safe.x + 6, safe.y + 6, 44, 44);
   backui::paint(s.target(), back);
   backui::publish(s.device().hasTouch, back);
-  dashboard::text(s, fui::makeRect(back.right() + 6, safe.y, safe.width - 180, 56), title, 1, fui::TextAlign::Left,
-                  true);
   const auto battery = fui::makeRect(safe.right() - 39, safe.y + 20, 28, 17);
   s.target().stroke(battery, dashboard::paper, 2);
   s.target().fill(fui::makeRect(battery.right(), battery.y + 4, 4, 9), dashboard::paper);
   const auto status = s.headerStatus();
+  int right = battery.x - 10;
   if (status.percent >= 0) {
     s.target().fill(fui::makeRect(battery.x + 4, battery.y + 4, 20 * std::clamp(status.percent, 0, 100) / 100, 9),
                     dashboard::paper);
@@ -27,8 +26,30 @@ inline fui::Rect begin(toybox::Screen& s, const char* title) {
       char label[8];
       std::snprintf(label, sizeof(label), "%d%%", status.percent);
       dashboard::text(s, fui::makeRect(battery.x - 60, safe.y, 54, 56), label, 0, fui::TextAlign::Right, true);
+      right = battery.x - 70;
     }
   }
+  if (actionReserve > 0) right = std::min(right, safe.right() - actionReserve - 12);
+  const int left = back.right() + 6;
+  fui::TextStyle titleStyle;
+  titleStyle.font = 1;
+  titleStyle.bold = true;
+  char titleLabel[96];
+  pixelui::copyCaps(titleLabel, sizeof(titleLabel), title);
+  const int titleEnd = left + s.target().measureText(1, titleLabel, titleStyle).width + 14;
+  fui::TextStyle clockStyle;
+  clockStyle.font = fui::HEADER_CLOCK_FONT;
+  clockStyle.color = fui::Color::White;
+  const auto clock = fui::headerClockRect(
+      s.target(), fui::makeRect(titleEnd, safe.y, std::max(0, right - titleEnd), 56), status.clock, clockStyle);
+  if (!clock.empty()) {
+    s.target().text(clock, status.clock, clockStyle);
+    right = clock.x - 14;
+  }
+  // Compact boards give their fixed action buttons precedence over the title.
+  if (!actionReserve || s.target().measureText(3, titleLabel, {}).width <= right - left)
+    dashboard::text(s, fui::makeRect(left, safe.y, std::max(0, right - left), 56), title, 1, fui::TextAlign::Left,
+                    true);
   const auto body = fui::makeRect(safe.x + 12, h + 12, safe.width - 24, safe.bottom() - h - 24);
   s.setContentMarginAbsolute(
       {body.y, int16_t(s.device().width - body.right()), int16_t(s.device().height - body.bottom()), body.x});

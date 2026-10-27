@@ -46,6 +46,12 @@ Result openEpub(const ProgressBook& book, std::unique_ptr<Epub>& epub) {
   return epub->load(true, true) ? Result::Success : Result::StorageError;
 }
 CrossPointPosition mapRemote(const std::shared_ptr<Epub>& epub, const KOReaderProgress& remote, GfxRenderer& renderer) {
+  if (remote.percentage == 1.0f) {
+    CrossPointPosition finished{};
+    finished.spineIndex = epub->getSpineItemsCount();
+    finished.hasResolvedSpineIndex = finished.hasMappedPage = true;
+    return finished;
+  }
   auto result = ProgressMapper::toCrossPoint(epub, {remote.progress, remote.percentage}, renderer);
   if (!result.hasVisibleTextOffset && remote.position) {
     const auto rich =
@@ -78,6 +84,7 @@ CrossPointPosition mapFixed(const ProgressBook& book, const KOReaderProgress& re
     page = page * 10 + digit - '0';
   }
   if (numeric && page > 0 && page <= book.pages) result.pageNumber = static_cast<int>(page - 1);
+  if (remote.percentage == 1.0f) result.pageNumber = static_cast<int>(book.pages);
   result.hasMappedPage = result.hasResolvedSpineIndex = true;
   return result;
 }
@@ -153,11 +160,11 @@ Result ProgressBooks::prepare(ProgressBook& book) {
     if (!xtc->load() || !xtc->getPageCount() || xtc->getPageCount() > INT32_MAX) return Result::StorageError;
     book.pages = xtc->getPageCount();
     const auto page = dword(book.saved);
-    if (page >= book.pages || page > INT32_MAX) return Result::StorageError;
+    if (page > book.pages || page > INT32_MAX) return Result::StorageError;
     book.position.pageNumber = static_cast<int>(page);
     book.position.hasMappedPage = book.position.hasResolvedSpineIndex = true;
-    book.local.percentage = float(double(page + 1) / book.pages);
-    book.local.progress = std::to_string(page + 1);
+    book.local.percentage = float(double(std::min(page + 1, book.pages)) / book.pages);
+    book.local.progress = std::to_string(std::min(page + 1, book.pages));
     if (KOREADER_STORE.getSendMetadata()) {
       book.local.metadata.emplace();
       book.local.metadata->title = xtc->getTitle();
@@ -173,26 +180,37 @@ Result ProgressBooks::prepare(ProgressBook& book) {
     book.position.totalPages = book.savedSize >= 6 ? word(book.saved + 4) : 0;
     book.position.hasResolvedSpineIndex = true;
     book.position.hasMappedPage = true;
-    if (book.position.spineIndex >= epub->getSpineItemsCount()) return Result::StorageError;
+    const int spineCount = epub->getSpineItemsCount();
+    if (spineCount <= 0 || book.position.spineIndex > spineCount) return Result::StorageError;
+    const bool finished = book.position.spineIndex == spineCount;
     if (book.savedSize == 10) {
       book.position.visibleTextOffset = dword(book.saved + 6);
       book.position.hasVisibleTextOffset = true;
     }
-    Section section(epub, book.position.spineIndex, renderer);
-    if (book.position.totalPages <= 0) {
+    // Map the EOF sentinel to the final chapter's endpoint for other readers.
+    auto mapped = book.position;
+    if (finished) {
+      mapped.spineIndex = spineCount - 1;
+      mapped.pageNumber = 1;
+      mapped.totalPages = 2;
+      mapped.hasVisibleTextOffset = false;
+    }
+    Section section(epub, mapped.spineIndex, renderer);
+    if (mapped.totalPages <= 0) {
       const auto pages = section.getCachedPageCount();
       if (!pages || *pages <= 0) return Result::StorageError;
-      book.position.totalPages = *pages;
+      mapped.totalPages = *pages;
     }
-    if (book.position.pageNumber >= book.position.totalPages) return Result::StorageError;
-    const auto saved = ProgressMapper::toSavedProgress(epub, book.position);
-    book.local.percentage = saved.percentage;
+    if (mapped.pageNumber >= mapped.totalPages) return Result::StorageError;
+    if (!finished) book.position = mapped;
+    const auto saved = ProgressMapper::toSavedProgress(epub, mapped);
+    book.local.percentage = finished ? 1.0f : saved.percentage;
     book.local.progress = saved.xpath;
     KOReaderRichPosition rich;
-    rich.pctQ = static_cast<uint32_t>(saved.percentage * 1000000.0f + 0.5f);
-    rich.spineIndex = book.position.spineIndex;
-    rich.pageNumber = book.position.pageNumber;
-    rich.totalPages = book.position.totalPages;
+    rich.pctQ = static_cast<uint32_t>(book.local.percentage * 1000000.0f + 0.5f);
+    rich.spineIndex = mapped.spineIndex;
+    rich.pageNumber = mapped.pageNumber;
+    rich.totalPages = mapped.totalPages;
     if (saved.xpath.size() <= 120) rich.xpath = saved.xpath;
     book.local.position = std::move(rich);
     if (KOREADER_STORE.getSendMetadata()) {

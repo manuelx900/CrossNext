@@ -9,4 +9,8 @@ mkdir -p "$BUILD_DIR"
   ../../src/apps_local/reading/ReadingStatsCore.cpp ../../src/apps_local/reading/ReadingStatsStore.cpp \
   ../../src/activities/reader/ReaderSession.cpp -o "$BUILD_DIR/test_core"
 "$BUILD_DIR/test_core"
+"${CXX:-c++}" -std=c++20 -Wall -Wextra -Werror -O2 -Istubs -I../../lib/Memory test_completion.cpp ../../src/activities/reader/ReaderSession.cpp \
+  ../../src/apps_local/reading/ReadingStatsCore.cpp ../../src/apps_local/reading/ReadingStatsStore.cpp \
+  -o "$BUILD_DIR/test_completion"
+"$BUILD_DIR/test_completion"
 ./run-ui.sh "$@"

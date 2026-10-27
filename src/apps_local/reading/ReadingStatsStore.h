@@ -16,6 +16,7 @@ class Repository {
   bool record(const char* document, const char* title, const char* author, int64_t epoch, uint32_t seconds,
               uint32_t pages, uint16_t progressBp);
   bool loadBook(const char* document, Book& book);
+  bool complete(const char* document, const char* title, const char* author, int64_t epoch);
   bool hadDamage() const { return damaged; }
 
  private:
@@ -33,6 +34,7 @@ class Repository {
   bool append(const Record& record);
 };
 int today();
-void recordSession(const char* document, const char* title, const char* author, int64_t epoch, uint32_t seconds,
+bool recordSession(const char* document, const char* title, const char* author, int64_t epoch, uint32_t seconds,
                    uint32_t pages, uint16_t progressBp);
+bool recordCompletion(const char* document, const char* title, const char* author, int64_t epoch);
 }  // namespace readingstats

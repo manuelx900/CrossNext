@@ -1082,6 +1082,9 @@ void EpubReaderActivity::onReaderMenuConfirm(EpubReaderMenuActivity::MenuAction 
   };
 
   switch (action) {
+    case EpubReaderMenuActivity::MenuAction::FINISH_BOOK:
+      requestFinishBook();
+      break;
     case EpubReaderMenuActivity::MenuAction::SEARCH: {
       auto search = makeUniqueNoThrow<BookSearchActivity>(renderer, mappedInput, epub);
       if (!search) {
@@ -2050,6 +2053,29 @@ void EpubReaderActivity::onEndOfBookRendered() {
   }
 }
 
+bool EpubReaderActivity::saveFinishedPosition() {
+  if (!epub || epub->getSpineItemsCount() <= 0 ||
+      !EpubReaderUtils::saveProgress(*epub, epub->getSpineItemsCount(), 0, 0))
+    return false;
+  clearDeferredReposition();
+  currentSpineIndex = epub->getSpineItemsCount();
+  nextPageNumber = 0;
+  cachedSpineIndex = currentSpineIndex;
+  cachedChapterTotalPageCount = 0;
+  cachedVisibleTextOffset.reset();
+  footnoteDepth = 0;
+  pendingPageJump.reset();
+  pendingOffsetJump.reset();
+  pendingAnchor.clear();
+  pendingPercentJump = false;
+  pendingManualTurn = 0;
+  automaticPageTurnActive = false;
+  overlay = Overlay::None;
+  discardOverlayPage();
+  resetSection();
+  return true;
+}
+
 bool EpubReaderActivity::applyDeferredReposition() {
   if ((!cachedVisibleTextOffset.has_value() && cachedChapterTotalPageCount == 0) || !section || section->isBuilding()) {
     return false;
@@ -2828,7 +2854,7 @@ void EpubReaderActivity::handleTextSheetInput(const ReaderToolbarUi::Routed& rou
   using Event = ReaderToolbarUi::Event;
   const auto swipe = mappedInput.wasSwipe();
   int swipeStep = 0;
-  if (textSheetTab == 2 && textSheetView == readertext::SheetView::Controls) {
+  if ((textSheetTab == 2 || textSheetTab == 3) && textSheetView == readertext::SheetView::Controls) {
     switch (swipe) {
       case MappedInputManager::SwipeDir::Left:
         swipeStep = 1;
@@ -3374,7 +3400,7 @@ void EpubReaderActivity::applyReaderTextSettings() {
 void EpubReaderActivity::buildMoreActions() {
   using MA = EpubReaderMenuActivity::MenuAction;
   moreItems.clear();
-  moreItems.reserve(7);
+  moreItems.reserve(8);
   moreItems.push_back({MA::STYLE_SETTINGS, StrId::STR_STYLE});
   moreItems.push_back({MA::SEARCH, StrId::STR_READER_SEARCH});
   moreItems.push_back({MA::TOGGLE_BOOKMARK,
@@ -3382,6 +3408,7 @@ void EpubReaderActivity::buildMoreActions() {
   moreItems.push_back({MA::BOOKMARKS, StrId::STR_READER_BOOKMARKS_NOTES});
   moreItems.push_back({MA::GO_TO_PERCENT, StrId::STR_READER_GOTO});
   moreItems.push_back({MA::BOOK_STATS, StrId::STR_READER_BOOK_STATS});
+  moreItems.push_back({MA::FINISH_BOOK, StrId::STR_READER_FINISH_BOOK});
   if (KOREADER_STORE.hasCredentials()) moreItems.push_back({MA::SYNC, StrId::STR_SYNC_PROGRESS});
 }
 
@@ -3720,6 +3747,7 @@ ScreenshotInfo EpubReaderActivity::getScreenshotInfo() const {
   if (epub) {
     snprintf(info.title, sizeof(info.title), "%s", epub->getTitle().c_str());
     info.spineIndex = currentSpineIndex;
+    if (isAtEndOfBook()) info.progressPercent = 100;
   }
   if (section) {
     info.currentPage = section->currentPage + 1;

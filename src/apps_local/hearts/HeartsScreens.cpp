@@ -12,7 +12,7 @@ namespace heartsui {
 using namespace hearts;
 namespace {
 fui::Rect begin(toybox::Screen& s, bool menu = false) {
-  auto b = cardpanel::begin(s, tr(STR_UI_HEARTS_29FBCB));
+  auto b = cardpanel::begin(s, tr(STR_UI_HEARTS_29FBCB), menu ? 214 : 0);
   if (menu) {
     const auto r = fui::makeRect(s.device().safeRect().right() - 214, b.y - 60, 100, 40);
     dashboard::button(s, r, tr(STR_WORDLE_MENU), ActionButton, ButtonMenu, true, nullptr, 0);

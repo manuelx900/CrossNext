@@ -169,10 +169,14 @@ uint8_t InputManager::getState() {
   if (BoardConfig::ACTIVE.inputStyle == BoardConfig::InputStyle::OnePageAdcLadder) {
     if (BoardConfig::ACTIVE.input.adcLadderPin >= 0) {
       const int mv = analogReadMilliVolts(BoardConfig::ACTIVE.input.adcLadderPin);
-      if (mv >= 2400 && mv <= 2800)      state |= (1 << BTN_BACK);    // ~2592 mV
-      else if (mv >= 1780 && mv <= 2140) state |= (1 << BTN_LEFT);    // ~1956 mV
-      else if (mv >= 1140 && mv <= 1500) state |= (1 << BTN_RIGHT);   // ~1316 mV
-      else if (mv >= 0 && mv <= 250)     state |= (1 << BTN_CONFIRM); // ~0 mV (ENTER)
+      if (mv >= 2400 && mv <= 2800)
+        state |= (1 << BTN_BACK);  // ~2592 mV
+      else if (mv >= 1780 && mv <= 2140)
+        state |= (1 << BTN_LEFT);  // ~1956 mV
+      else if (mv >= 1140 && mv <= 1500)
+        state |= (1 << BTN_RIGHT);  // ~1316 mV
+      else if (mv >= 0 && mv <= 250)
+        state |= (1 << BTN_CONFIRM);  // ~0 mV (ENTER)
     }
     if (BoardConfig::ACTIVE.input.up >= 0 && digitalRead(BoardConfig::ACTIVE.input.up) == LOW) {
       state |= (1 << BTN_UP);
@@ -359,7 +363,8 @@ bool InputManager::popMultiTouchPinch(float& scale, float& nxCenter, float& nyCe
 uint32_t InputManager::nextServiceDelayMs(const uint32_t maximum) const {
   if (isDebouncePending()) return maximum < 6 ? maximum : 6;
   if (currentState != 0 || confirmBackPhysicalPressed || confirmPowerPhysicalPressed || twoButtonPhysicalState != 0 ||
-      touchPressed || touchHomeKeyDown || touchSnapshot.reportedCount != 0) {
+      touchPressed || touchHomeKeyDown || touchSnapshot.reportedCount != 0 ||
+      (gt911ReadFailures > 0 && gt911ReadFailures <= GT911_FAST_READ_RETRIES)) {
     return maximum < 10 ? maximum : 10;
   }
   const auto& touch = BoardConfig::ACTIVE.touch;
@@ -1543,7 +1548,7 @@ void InputManager::beginFt5x06() {
 namespace {
 volatile bool cstInterrupt = false;
 void IRAM_ATTR cstTouchInterrupt() { cstInterrupt = true; }
-}
+}  // namespace
 
 void InputManager::beginCst816s() {
   const auto& t = BoardConfig::ACTIVE.touch;
@@ -1586,7 +1591,10 @@ void InputManager::pollCst816s(const unsigned long now) {
   };
   // Re-reading CST816S can return the last sample after its event ends.
   // A stale successful read must not keep a contact pressed forever either.
-  if (active && !fresh && now - cstLastSample >= 100) { release(); return; }
+  if (active && !fresh && now - cstLastSample >= 100) {
+    release();
+    return;
+  }
   uint8_t data[5] = {};
   if (!ft5x06ReadReg(0x02, data, sizeof(data))) {
     // The device goes silent again after release; don't latch a key/contact.
@@ -1603,8 +1611,14 @@ void InputManager::pollCst816s(const unsigned long now) {
   if (BoardConfig::isMetalioEInk4() && rawY >= 800) {
     // Vendor cover key centers: HOME=(80,900), NEXT=(240,900), PREV=(400,900).
     // Ignore invalid off-panel samples rather than clamping them into screen taps.
-    if (rawY < 860 || rawY > 940 || rawX > 479) { release(); return; }
-    if (touchPressed) { suppressTouchContact(); release(); }
+    if (rawY < 860 || rawY > 940 || rawX > 479) {
+      release();
+      return;
+    }
+    if (touchPressed) {
+      suppressTouchContact();
+      release();
+    }
     if (rawX < 160) {
       cstVirtualButtons = 0;
       if (!touchHomeKeyDown) {
@@ -1625,9 +1639,12 @@ void InputManager::pollCst816s(const unsigned long now) {
   if (touchHomeKeyDown || cstVirtualButtons) release();
   const uint16_t x = t.swapXY ? rawY : rawX;
   const uint16_t y = t.swapXY ? rawX : rawY;
-  if (x < t.rawMinX || x > t.rawMaxX || y < t.rawMinY || y > t.rawMaxY) { release(); return; }
+  if (x < t.rawMinX || x > t.rawMaxX || y < t.rawMinY || y > t.rawMaxY) {
+    release();
+    return;
+  }
   touchPoint = {true, mapTouchAxis(x, t.rawMinX, t.rawMaxX, t.rawMaxX - t.rawMinX),
-                     mapTouchAxis(y, t.rawMinY, t.rawMaxY, t.rawMaxY - t.rawMinY), now};
+                mapTouchAxis(y, t.rawMinY, t.rawMaxY, t.rawMaxY - t.rawMinY), now};
   if (t.flipX) touchPoint.x = t.rawMaxX - t.rawMinX - touchPoint.x;
   if (t.flipY) touchPoint.y = t.rawMaxY - t.rawMinY - touchPoint.y;
   if (!touchPressed) {
@@ -2303,6 +2320,9 @@ void InputManager::pollGt911(const unsigned long now) {
   }
   uint8_t status = 0;
   if (!gt911ReadReg(0x814E, &status, 1)) {
+    // Bound fast retries so a disconnected controller cannot keep an idle
+    // device polling at 100 Hz after a missed IRQ-driven status read.
+    if (gt911ReadFailures <= GT911_FAST_READ_RETRIES) ++gt911ReadFailures;
     // Keep the last complete frame while the single-touch state remains
     // latched. Clearing only this snapshot makes a transient I2C failure look
     // like a multi-contact release to multi-touch consumers, which can split one
@@ -2310,6 +2330,8 @@ void InputManager::pollGt911(const unsigned long now) {
     // the snapshot together with the rest of the touch state.
     return;
   }
+
+  gt911ReadFailures = 0;
 
   // Capacitive home key long-press (status bit 0x10). Fire from the LATCHED
   // down-state + wall clock, BEFORE the buffer-ready gate below: a motionless

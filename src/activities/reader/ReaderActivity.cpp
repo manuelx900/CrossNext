@@ -3,6 +3,7 @@
 #include <FontCacheManager.h>
 #include <FsHelpers.h>
 #include <HalStorage.h>
+#include <I18n.h>
 #include <KOReaderDocumentId.h>
 #include <Memory.h>
 #include <TrustedTime.h>
@@ -19,6 +20,7 @@
 #include "RecentBooksStore.h"
 #include "SdCardFontSystem.h"
 #include "XtcReaderActivity.h"
+#include "activities/util/ConfirmationActivity.h"
 #include "util/PluginEvents.h"
 
 ReaderActivity::ReaderActivity(const char* name, GfxRenderer& renderer, MappedInputManager& mappedInput,
@@ -126,10 +128,10 @@ void ReaderActivity::onExit() {
 
 void ReaderActivity::prepareForSleep() { flushReaderSession(); }
 
-void ReaderActivity::flushReaderSession() {
+bool ReaderActivity::flushReaderSession() {
   if (!readerSession.isEmitWorthy()) {
     readerSession.reset();
-    return;
+    return true;
   }
 
   const std::string document = KOReaderDocumentId::calculate(bookPath);
@@ -137,14 +139,15 @@ void ReaderActivity::flushReaderSession() {
       document.size() == 32 && std::all_of(document.begin(), document.end(), [](const unsigned char c) {
         return std::isdigit(c) || (c >= 'a' && c <= 'f');
       });
+  bool saved = true;
   if (validDocument) {
     if (readingstats::enabledFormat(bookPath.c_str(), SETTINGS.readingFormats))
-      readingstats::recordSession(document.c_str(), getBookTitle().c_str(), getBookAuthor().c_str(),
-                                  readerSession.startTime(), readerSession.durationSeconds(), readerSession.pagesRead(),
-                                  readerSession.endProgressBp());
+      saved = readingstats::recordSession(document.c_str(), getBookTitle().c_str(), getBookAuthor().c_str(),
+                                          readerSession.startTime(), readerSession.durationSeconds(),
+                                          readerSession.pagesRead(), readerSession.endProgressBp());
     if (!pluginevents::anySubscriber(pluginevents::Event::ReaderSession)) {
       readerSession.reset();
-      return;
+      return saved;
     }
     char startTime[24];
     char endTime[24];
@@ -162,7 +165,55 @@ void ReaderActivity::flushReaderSession() {
                                       {"end_progress_bp", endProgress}, {"progress_scale", "10000"}};
     pluginevents::emit(pluginevents::Event::ReaderSession, vars, 8);
   }
+  // Verification can fail after a complete append. Never replay this
+  // best-effort session on another flush and count the same reading twice.
   readerSession.reset();
+  return validDocument && saved;
+}
+
+void ReaderActivity::showFinishBookError(const char* message) {
+  auto dialog =
+      makeUniqueNoThrow<ConfirmationActivity>(renderer, mappedInput, tr(STR_READER_FINISH_BOOK), message, true);
+  if (!dialog) {
+    LOG_ERR("READER", "OOM: completion error dialog");
+    requestUpdate();
+    return;
+  }
+  startActivityForResult(std::move(dialog), [this](const ActivityResult&) { requestUpdate(); });
+}
+
+void ReaderActivity::requestFinishBook() {
+  // The activity stack owns the modal; cancel leaves the reading position untouched.
+  auto dialog = makeUniqueNoThrow<ConfirmationActivity>(renderer, mappedInput, tr(STR_READER_FINISH_BOOK),
+                                                        tr(STR_READER_FINISH_CONFIRM));
+  if (!dialog) {
+    LOG_ERR("READER", "OOM: finish-book confirmation");
+    requestUpdate();
+    return;
+  }
+  startActivityForResult(std::move(dialog), [this](const ActivityResult& result) {
+    if (result.isCancelled) {
+      requestUpdate();
+      return;
+    }
+    const char* error = nullptr;
+    {
+      RenderLock lock(*this);
+      const auto now = trustedtime::trustedNow();
+      const auto document = KOReaderDocumentId::calculate(bookPath);
+      if (!now)
+        error = tr(STR_READER_FINISH_CLOCK);
+      else if (!readingstats::validDocument(document.c_str()) || !flushReaderSession() ||
+               !readingstats::recordCompletion(document.c_str(), getBookTitle().c_str(), getBookAuthor().c_str(), now))
+        error = tr(STR_READER_FINISH_FAILED);
+      else if (!saveFinishedPosition())
+        error = tr(STR_READER_FINISH_POSITION_FAILED);
+    }
+    if (error)
+      showFinishBookError(error);
+    else
+      requestUpdate();
+  });
 }
 
 bool ReaderActivity::handleBackNavigation() {

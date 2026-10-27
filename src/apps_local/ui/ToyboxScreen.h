@@ -42,7 +42,7 @@ struct HeaderStatus {
   int percent = -1;
   bool charging = false, showPercent = true;
   char clock[10]{};
-  int reserve() const { return (percent < 0 ? 0 : showPercent ? 106 : 46) + (clock[0] ? 94 : 0); }
+  int reserve() const { return percent < 0 ? 0 : showPercent ? 106 : 46; }
 };
 
 // One size for every screen in this fork, sized for the largest: the
@@ -143,7 +143,9 @@ class Screen : public freeink::ui::Screen<kMaxInteractions> {
   }
   Screen(Frame&, freeink::ui::ThemeTokens&&) = delete;
   const HeaderStatus& headerStatus() const { return status; }
-  int headerRight() const { return device().safeRect().right() - status.reserve(); }
+  int headerReserve() const { return paintedHeaderReserve < 0 ? status.reserve() : paintedHeaderReserve; }
+  void setHeaderReserve(int value) { paintedHeaderReserve = value; }
+  int headerRight() const { return device().safeRect().right() - headerReserve(); }
   // The shared palette. What 20 of the 22 screens want.
   explicit Screen(freeink::ui::Frame<kMaxInteractions>& frame)
       : freeink::ui::Screen<kMaxInteractions>(frame, themeTokens()) {}
@@ -173,6 +175,7 @@ class Screen : public freeink::ui::Screen<kMaxInteractions> {
 
  private:
   HeaderStatus status;
+  int paintedHeaderReserve = -1;
 };
 
 // Toybox chrome opts OUT of the device safe area: call FIRST in a screen
@@ -301,8 +304,9 @@ inline void headerBand(Screen& screen, const freeink::ui::HeaderProps& props) {
   // component sizes its leading and trailing buttons from `rect.height - 8` --
   // measuring those against the taller band reserved ten pixels the title was
   // then never given back.
-  const fui::Rect ink = fui::makeRect(band.x, inkTop, band.width - screen.headerStatus().reserve(),
-                                      static_cast<int16_t>(band.bottom() - inkTop));
+  const int rightInset = screen.device().width - screen.device().safeRect().right();
+  auto ink = fui::makeRect(band.x, inkTop, band.width - rightInset - screen.headerStatus().reserve() - 6,
+                           static_cast<int16_t>(band.bottom() - inkTop));
 
   fui::HeaderProps fitted = props;
   const bool ownBack = screen.device().hasTouch && !props.leadingIcon && !props.leadingIconAsset;
@@ -334,6 +338,16 @@ inline void headerBand(Screen& screen, const freeink::ui::HeaderProps& props) {
   const fui::TextStyle asked = fitted.titleText;
   std::string title =
       fittedTitle(screen.target(), fitted.title, headerTitleWidth(screen, ink, fitted), fitted.titleText);
+  fui::TextStyle clockStyle;
+  clockStyle.font = fui::HEADER_CLOCK_FONT;
+  clockStyle.color = fui::Color::White;
+  const int titleWidth = screen.target().measureText(fitted.titleText.font, title.c_str(), fitted.titleText).width;
+  const int clockSpace = std::max(0, headerTitleWidth(screen, ink, fitted) - titleWidth - 14);
+  const auto clock =
+      fui::headerClockRect(screen.target(), fui::makeRect(ink.right() - clockSpace - 6, ink.y, clockSpace, ink.height),
+                           screen.headerStatus().clock, clockStyle);
+  if (!clock.empty()) ink.width -= clock.width + 14;
+  screen.setHeaderReserve(band.width - ink.width);
   // A fitted style that reads as DEFAULT would be replaced by the theme's own
   // inside Screen::header(), putting the cut we just chose back to the display
   // one -- silently, and only on the longest strings. FONT_SLOT_SMALL is 0, so
@@ -379,15 +393,7 @@ inline void headerBand(Screen& screen, const freeink::ui::HeaderProps& props) {
   screen.header(fitted, titleRect);
   if (ownBack) backui::paint(screen.target(), back);
   const auto& battery = screen.headerStatus();
-  if (battery.clock[0]) {
-    const auto safe = screen.device().safeRect();
-    const int right = safe.right() - (battery.percent < 0 ? 12 : battery.showPercent ? 112 : 48);
-    fui::TextStyle style;
-    style.font = 3;
-    style.color = fui::Color::White;
-    style.align = fui::TextAlign::Right;
-    screen.target().text(fui::makeRect(right - 94, ink.y, 90, ink.height), battery.clock, style);
-  }
+  if (!clock.empty()) screen.target().text(clock, battery.clock, clockStyle);
   if (battery.percent >= 0) {
     const auto safe = screen.device().safeRect();
     const auto paper = fui::Paint::solid(fui::Color::White);
@@ -441,7 +447,7 @@ inline freeink::ui::Rect headerBandRect(Screen& screen) {
 inline freeink::ui::Rect headerInkRect(Screen& screen) {
   const freeink::ui::Rect band = headerBandRect(screen);
   const int16_t top = band.y > screen.frame().safeRect().y ? band.y : screen.frame().safeRect().y;
-  return freeink::ui::makeRect(band.x, top, band.width - screen.headerStatus().reserve(),
+  return freeink::ui::makeRect(band.x, top, band.width - screen.headerReserve(),
                                static_cast<int16_t>(band.bottom() - top));
 }
 

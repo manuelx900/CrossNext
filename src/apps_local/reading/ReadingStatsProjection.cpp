@@ -157,14 +157,16 @@ Result Projection::open(Reader* source, int today, uint64_t device, const Header
       if (at + kRecordBytes <= cutoff) entry->prior = at;
       if (at >= cutoff) {
         if (!remote && today < firstDay)
-          anchor = std::max(anchor, record.localDay + int((uint64_t(record.secondOfDay) + record.seconds - 1) / 86400));
+          anchor = std::max(
+              anchor, record.localDay +
+                          int((uint64_t(record.secondOfDay) + (record.seconds ? record.seconds - 1 : 0)) / 86400));
         auto& summary = header.summary;
         if (UINT64_MAX - summary.seconds < record.seconds || UINT64_MAX - summary.pages < record.pages ||
-            summary.sessions == UINT32_MAX)
+            (record.kind == RecordKind::Session && summary.sessions == UINT32_MAX))
           return Result::LimitExceeded;
         summary.seconds += record.seconds;
         summary.pages += record.pages;
-        ++summary.sessions;
+        if (record.kind == RecordKind::Session) ++summary.sessions;
         if (record.firstCompletion && !entry->finished) {
           if (summary.completed == UINT32_MAX) return Result::LimitExceeded;
           ++summary.completed;

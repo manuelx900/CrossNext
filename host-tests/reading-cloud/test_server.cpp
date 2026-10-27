@@ -75,6 +75,30 @@ int main(int argc, char** argv) {
   total(450);
   check(sync() == Result::Success);
   total(450);
+  // Completion-only books must survive the real server's validation and round trip.
+  Record completion;
+  completion.kind = RecordKind::Completion;
+  completion.epoch = 1793000000;
+  completion.localDay = dayIndex({2026, 10, 26});
+  copyText(completion.book.document, sizeof(completion.book.document), "00000000000000000000000000000009");
+  copyText(completion.book.title, sizeof(completion.book.title), "Manually finished book");
+  completion.book.progressBp = 10000;
+  updateBook(completion, Book{});
+  auto& bytes = testStorage.files[logPath];
+  const auto at = bytes.size();
+  bytes.resize(at + kRecordBytes);
+  encode(completion, bytes.data() + at);
+  for (int attempt = 0; attempt < 2; ++attempt) {
+    check(sync() == Result::Success);
+    total(450);
+    Reader reader;
+    check(reader.open() == Result::Success);
+    Projection view;
+    check(view.open(&reader, dayIndex({2026, 10, 26}), Client::deviceTag()) == Result::Success);
+    Book manual;
+    check(view.find(completion.book.document, manual));
+    check(manual.completed && !manual.seconds && !manual.pages && !manual.sessions);
+  }
   std::printf("Official CrossPoint Sync + production client: %d checks, %d failed\n", checks, failed);
   return (failed || testProgressServer()) ? 1 : 0;
 }

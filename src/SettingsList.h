@@ -646,6 +646,21 @@ inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* regist
   }();
 
   std::vector<SettingInfo> v = baseList;
+  if (!forPersistence) {
+    // Keep legacy keys loadable, but do not advertise unsupported controls on
+    // the device or the web settings page. Appearance uses homeLayout.
+    v.erase(std::remove_if(v.begin(), v.end(),
+                           [](const SettingInfo& s) {
+                             if (s.valuePtr == &CrossPointSettings::uiTheme) return true;
+                             if (BoardConfig::hasHomeKey() && s.nameId == StrId::STR_LONG_PRESS_MENU) return true;
+                             return BoardConfig::hasTouch() &&
+                                    (s.valuePtr == &CrossPointSettings::showReaderMenu ||
+                                     s.valuePtr == &CrossPointSettings::pwrBtnFootnoteBack ||
+                                     s.valuePtr == &CrossPointSettings::doubleClickPwrLight ||
+                                     s.nameId == StrId::STR_SHORT_PWR_BTN);
+                           }),
+            v.end());
+  }
   if (!BoardConfig::hasTouch()) {
     // The reader menu style stays available on button boards (the toolbar
     // chrome is button-navigable); only the touch controls are hidden.

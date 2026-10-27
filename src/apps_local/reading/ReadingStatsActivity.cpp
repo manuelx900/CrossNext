@@ -188,7 +188,9 @@ void ReadingStatsActivity::scan() {
     if (status != readingstats::ScanResult::Record) continue;
     switch (loading) {
       case Load::Anchor: {
-        currentDay = record.localDay + static_cast<int>((uint64_t(record.secondOfDay) + record.seconds - 1) / 86400);
+        currentDay =
+            record.localDay +
+            static_cast<int>((uint64_t(record.secondOfDay) + (record.seconds ? record.seconds - 1 : 0)) / 86400);
         summary.anchorDay = currentDay;
         const auto d = readingstats::dateFromDay(currentDay);
         month = d.year * 12 + d.month - 1;

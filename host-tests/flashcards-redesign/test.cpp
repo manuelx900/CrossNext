@@ -403,6 +403,29 @@ int main(int argc, char** argv) {
       for (int p = 0; p < 2; ++p) {
         Canvas c(w, h);
         flashui::help(c.screen, p);
+        if (p) {
+          const RecordingTarget::Label* question = nullptr;
+          const RecordingTarget::Label* answer = nullptr;
+          char questionText[48], answerText[48];
+          pixelui::copyCaps(questionText, sizeof(questionText), tr(STR_FLASH_QUESTION));
+          pixelui::copyCaps(answerText, sizeof(answerText), tr(STR_FLASH_ANSWER));
+          for (const auto& label : c.target.labels) {
+            if (label.value == questionText) question = &label;
+            if (label.value == answerText) answer = &label;
+          }
+          CHECK(question && answer);
+          if (question && answer) {
+            CHECK(question->box.y == answer->box.y && question->box.width == answer->box.width);
+            const int gapLeft = question->box.right() + 8, gapRight = answer->box.x - 8;
+            CHECK(gapRight - gapLeft == 32);
+            bool arrowInGap = false;
+            for (const auto& line : c.target.lines)
+              if (line.a.x >= gapLeft && line.b.x <= gapRight && line.a.y < question->box.y &&
+                  line.b.y < question->box.y)
+                arrowInGap = true;
+            CHECK(arrowInGap);
+          }
+        }
         saveScreen(c, p ? "help2" : "help1");
       }
       {

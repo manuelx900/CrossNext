@@ -41,7 +41,8 @@ class GfxRendererTarget final : public DrawTarget {
   static constexpr FontId FONT_LABEL = 3;
   // Content prose must not replace the small fixed-label fallback.
   static constexpr FontId FONT_CONTENT = 4;
-  static constexpr size_t FONT_SLOTS = 5;
+  static constexpr FontId FONT_CLOCK = 5;
+  static constexpr size_t FONT_SLOTS = 6;
 
   explicit GfxRendererTarget(const GfxRenderer& renderer, const bool hasTouch = false)
       : renderer(renderer), hasTouch_(hasTouch) {
@@ -363,6 +364,7 @@ class GfxRendererTarget final : public DrawTarget {
   int gfxFont(const FontId slot) const {
     // FONT_LABEL follows FONT_SMALL until an app binds it explicitly.
     if (slot == FONT_LABEL && fonts[FONT_LABEL] == 0) return fonts[FONT_SMALL];
+    if (slot == FONT_CLOCK && fonts[FONT_CLOCK] == 0) return fonts[FONT_LABEL] ? fonts[FONT_LABEL] : fonts[FONT_SMALL];
     return slot < FONT_SLOTS ? fonts[slot] : fonts[FONT_BODY];
   }
 
@@ -384,9 +386,8 @@ class GfxRendererTarget final : public DrawTarget {
   }
 
   static EpdFontFamily::Style fontStyle(const TextStyle& style) {
-    return static_cast<EpdFontFamily::Style>(
-        (style.bold ? EpdFontFamily::BOLD : 0) |
-        (style.italic ? EpdFontFamily::ITALIC : 0));
+    return static_cast<EpdFontFamily::Style>((style.bold ? EpdFontFamily::BOLD : 0) |
+                                             (style.italic ? EpdFontFamily::ITALIC : 0));
   }
 };
 

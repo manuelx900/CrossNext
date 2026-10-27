@@ -181,15 +181,46 @@ bool Repository::record(const char* document, const char* title, const char* aut
   updateBook(scratch, previous);
   return append(scratch);
 }
-void recordSession(const char* document, const char* title, const char* author, int64_t epoch, uint32_t seconds,
+bool Repository::complete(const char* document, const char* title, const char* author, int64_t epoch) {
+  if (!validDocument(document)) return false;
+  const auto timestamp = static_cast<time_t>(epoch);
+  tm local{};
+  if (!localtime_r(&timestamp, &local) || local.tm_year < 120 || local.tm_year > 299) return false;
+  if (!loadBook(document, previous)) return false;
+  if (previous.completed && previous.progressBp == 10000) return true;
+  scratch = {};
+  scratch.kind = RecordKind::Completion;
+  scratch.epoch = epoch;
+  scratch.localDay = dayIndex({local.tm_year + 1900, local.tm_mon + 1, local.tm_mday});
+  scratch.secondOfDay = local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec;
+  scratch.book.progressBp = 10000;
+  copyText(scratch.book.document, sizeof(scratch.book.document), document);
+  copyText(scratch.book.title, sizeof(scratch.book.title), title);
+  copyText(scratch.book.author, sizeof(scratch.book.author), author);
+  updateBook(scratch, previous);
+  return append(scratch);
+}
+bool recordSession(const char* document, const char* title, const char* author, int64_t epoch, uint32_t seconds,
                    uint32_t pages, uint16_t progressBp) {
   // Journal descriptors/buffers are about 1 KiB, allocated only while flushing.
   auto repository = makeUniqueNoThrow<Repository>();
   if (!repository) {
     LOG_ERR("READ-STATS", "OOM: journal workspace");
-    return;
+    return false;
   }
-  if (!repository->record(document, title, author, epoch, seconds, pages, progressBp))
-    LOG_ERR("READ-STATS", "Could not record reading session");
+  if (repository->record(document, title, author, epoch, seconds, pages, progressBp)) return true;
+  LOG_ERR("READ-STATS", "Could not record reading session");
+  return false;
+}
+bool recordCompletion(const char* document, const char* title, const char* author, int64_t epoch) {
+  // Reuse the same bounded, short-lived journal workspace as session flushing.
+  auto repository = makeUniqueNoThrow<Repository>();
+  if (!repository) {
+    LOG_ERR("READ-STATS", "OOM: completion workspace");
+    return false;
+  }
+  if (repository->complete(document, title, author, epoch)) return true;
+  LOG_ERR("READ-STATS", "Could not record book completion");
+  return false;
 }
 }  // namespace readingstats

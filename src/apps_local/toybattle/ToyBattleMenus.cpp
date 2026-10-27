@@ -309,7 +309,7 @@ void buildSetup(toybox::Screen& screen, const SetupModel& model) {
   start.styles = toybox::rowStyles();
   start.state = fui::StateSelected;
   start.text = styled(toybox::kDisplayFont, fui::TextAlign::Center, fui::Color::White);
-  start.radius = 10;
+  start.radius = 0;
   const fui::Rect startBox = fui::makeRect(content.x, static_cast<int16_t>(content.bottom() - 76), content.width, 76);
   screen.button(start, startBox);
 
@@ -434,7 +434,7 @@ void buildMapPick(toybox::Screen& screen, const MapPickModel& model) {
     pick.action = ActionMapRow;
     pick.value = static_cast<int16_t>(index);
     pick.styles = toybox::rowStyles();
-    pick.radius = 8;
+    pick.radius = 0;
     screen.button(pick, card);
 
     screen.target().text(fui::makeRect(static_cast<int16_t>(card.x + toybox::kGutter),

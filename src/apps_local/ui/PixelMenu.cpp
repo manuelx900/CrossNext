@@ -1,5 +1,7 @@
 #include "PixelMenu.h"
 
+#include <components/controls/header-clock.h>
+
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
@@ -142,14 +144,6 @@ static fui::Rect paintHeader(fui::DrawTarget& target, const fui::DeviceContext& 
       right -= width + 10;
     }
   }
-  if (model.clockText && *model.clockText) {
-    fui::TextStyle clockStyle;
-    clockStyle.font = 3;
-    const int width = target.measureText(3, model.clockText, clockStyle).width + 4;
-    text(target, fui::makeRect(right - width, top, width, 72), model.clockText, 3, fui::Color::White,
-         fui::TextAlign::Right);
-    right -= width + 10;
-  }
   if (model.trailingLabel) {
     fui::TextStyle style;
     style.font = kSmall;
@@ -184,6 +178,20 @@ static fui::Rect paintHeader(fui::DrawTarget& target, const fui::DeviceContext& 
     left = geometry.back.right() + 4;
   }
   right -= model.titleReserve;
+  fui::TextStyle titleStyle;
+  titleStyle.font = kBody;
+  char title[192];
+  copyCaps(title, sizeof(title), model.title);
+  const int titleEnd = left + target.measureText(titleStyle.font, title, titleStyle).width + 14;
+  fui::TextStyle clockStyle;
+  clockStyle.font = fui::HEADER_CLOCK_FONT;
+  clockStyle.color = fui::Color::White;
+  const auto clock = fui::headerClockRect(target, fui::makeRect(titleEnd, top, std::max(0, right - titleEnd), 72),
+                                          model.clockText, clockStyle);
+  if (!clock.empty()) {
+    target.text(clock, model.clockText, clockStyle);
+    right = clock.x - 14;
+  }
   text(target, fui::makeRect(left, top, std::max(0, right - left), 72), model.title, kBody, fui::Color::White);
   return mark;
 }

@@ -142,6 +142,7 @@ inline fui::GfxRendererTarget makeTarget(const GfxRenderer& renderer, const Face
   target.setFont(fui::GfxRendererTarget::FONT_TITLE, faces.title);
   target.setFont(3, kTileFontId);
   target.setFont(4, UI_10_FONT_ID);
+  target.setFont(fui::HEADER_CLOCK_FONT, kButtonFontId);
   return target;
 }
 

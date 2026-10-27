@@ -3,6 +3,7 @@
 #include "../../FreeInkUICore.h"
 #include "../bars/battery-indicator.h"
 #include "button.h"
+#include "header-clock.h"
 
 namespace freeink {
 namespace ui {
@@ -19,6 +20,7 @@ struct HeaderStatusProps {
   int16_t stripHeight = 0;  // status strip height; set it when status is shown
   int16_t edgeInset = -1;   // -1 = the resolved sidePadding
   const char* clockText = nullptr;
+  FontId clockFont = HEADER_CLOCK_FONT;
   // Center the clock on the band (both axes) instead of anchoring it to the
   // corner opposite the battery. A non-centered title truncates before it.
   bool clockCentered = false;
@@ -129,8 +131,10 @@ void header(Frame<MaxInteractions>& frame, Rect rect, const HeaderProps& props) 
     }
   }
   int16_t clockWidth = 0;
+  TextStyle clockStyle = status.battery.text;
+  clockStyle.font = status.clockFont;
   if (status.clockText) {
-    clockWidth = frame.target().measureText(status.battery.text.font, status.clockText, status.battery.text).width;
+    clockWidth = frame.target().measureText(clockStyle.font, status.clockText, clockStyle).width;
   }
   // Reserves are only needed while the title's ink actually shares the status
   // strip: on tall bands the centered title sits below the strip and keeps its
@@ -147,18 +151,14 @@ void header(Frame<MaxInteractions>& frame, Rect rect, const HeaderProps& props) 
       content.width = static_cast<int16_t>(content.width - reserve);
     }
   }
-  if (clockWidth > 0 && status.clockCentered && !centeredTitle && titleSharesStrip) {
-    // A left-anchored title on the strip line stops short of the centered
-    // clock; a title below the strip keeps its width.
-    const int16_t clockStart = static_cast<int16_t>(rect.x + (rect.width - clockWidth) / 2);
-    const int16_t maxWidth = static_cast<int16_t>(clockStart - 8 - content.x);
-    if (maxWidth < content.width) content.width = maxWidth;
-  }
+  // Status must yield to content and actions; it never shrinks a title.
+  Rect occupied[5]{};
+  size_t occupiedCount = 0;
 
-  const BitmapRef leading = props.leadingIcon ? props.leadingIcon : resolveBitmap(frame.assets(), props.leadingIconAsset);
+  const BitmapRef leading =
+      props.leadingIcon ? props.leadingIcon : resolveBitmap(frame.assets(), props.leadingIconAsset);
   if (leading && props.leadingAction != NO_ACTION) {
-    const int16_t btn =
-        props.leadingSize > 0 ? props.leadingSize : static_cast<int16_t>(rect.height - 8);
+    const int16_t btn = props.leadingSize > 0 ? props.leadingSize : static_cast<int16_t>(rect.height - 8);
     ButtonProps back;
     back.icon = leading;
     back.action = props.leadingAction;
@@ -169,6 +169,7 @@ void header(Frame<MaxInteractions>& frame, Rect rect, const HeaderProps& props) 
     button(frame,
            Rect{static_cast<int16_t>(rect.x + 4), static_cast<int16_t>(rect.y + 4 + props.actionOffsetY), btn, btn},
            back);
+    occupied[occupiedCount++] = makeRect(rect.x + 4, rect.y + 4 + props.actionOffsetY, btn, btn);
     // The button replaces the side padding at the leading edge rather than
     // stacking on top of it, and a non-centered title tucks in just right of
     // the icon's ink: the icon centers in the square, so anchoring on the
@@ -187,9 +188,8 @@ void header(Frame<MaxInteractions>& frame, Rect rect, const HeaderProps& props) 
   const BitmapRef trailing =
       props.trailingIcon ? props.trailingIcon : resolveBitmap(frame.assets(), props.trailingIconAsset);
   if ((props.trailingLabel || trailing) && props.trailingAction != NO_ACTION) {
-    const int16_t btnH =
-        props.trailingSize > 0 ? props.trailingSize : static_cast<int16_t>(rect.height - 8);
-    int16_t btnW = btnH;   // icon-only: square, like the leading button
+    const int16_t btnH = props.trailingSize > 0 ? props.trailingSize : static_cast<int16_t>(rect.height - 8);
+    int16_t btnW = btnH;  // icon-only: square, like the leading button
     if (props.trailingLabel) {
       const Size labelSize =
           frame.target().measureText(props.trailingText.font, props.trailingLabel, props.trailingText);
@@ -210,6 +210,7 @@ void header(Frame<MaxInteractions>& frame, Rect rect, const HeaderProps& props) 
     action.enabled = props.trailingEnabled;
     action.minTouchSize = props.minTouchSize;
     button(frame, Rect{static_cast<int16_t>(trailingAnchor - btnW), trailingY, btnW, btnH}, action);
+    occupied[occupiedCount++] = makeRect(trailingAnchor - btnW, trailingY, btnW, btnH);
     const bool hasAdjacentTrailing = props.trailingAdjacentIcon && props.trailingAdjacentAction != NO_ACTION;
     if (hasAdjacentTrailing) {
       ButtonProps adjacent;
@@ -220,6 +221,7 @@ void header(Frame<MaxInteractions>& frame, Rect rect, const HeaderProps& props) 
       adjacent.radius = props.trailingRadius;
       adjacent.minTouchSize = props.minTouchSize;
       button(frame, Rect{static_cast<int16_t>(trailingAnchor - 4 - btnW - btnH), trailingY, btnH, btnH}, adjacent);
+      occupied[occupiedCount++] = makeRect(trailingAnchor - 4 - btnW - btnH, trailingY, btnH, btnH);
     }
     if (!centeredTitle) {
       content.width = static_cast<int16_t>(content.width - btnW - (hasAdjacentTrailing ? btnH + 4 : 0) - 8);
@@ -238,11 +240,11 @@ void header(Frame<MaxInteractions>& frame, Rect rect, const HeaderProps& props) 
       // Bottom-aligned to the title's line (including its vertical offset):
       // a smaller label centered on the band would float above the title.
       const int16_t titleLh = frame.target().lineHeight(props.titleText.font);
-      const int16_t titleTop =
-          static_cast<int16_t>(content.y + props.titleOffsetY + (content.height - titleLh) / 2);
+      const int16_t titleTop = static_cast<int16_t>(content.y + props.titleOffsetY + (content.height - titleLh) / 2);
       Rect rightRect{static_cast<int16_t>(content.right() - rightSize.width),
                      static_cast<int16_t>(titleTop + titleLh - rightSize.height), rightSize.width, rightSize.height};
       frame.target().text(rightRect, props.rightLabel, props.subtitleText);
+      occupied[occupiedCount++] = rightRect;
       // Reserve the label's width out of the title rect. A centered title
       // gives up the same width on both sides so it stays centered on the
       // band; a left-aligned one only loses the right slice.
@@ -254,6 +256,15 @@ void header(Frame<MaxInteractions>& frame, Rect rect, const HeaderProps& props) 
       }
     }
     frame.target().text(titleRect, props.title, titleStyle);
+    const auto measured = frame.target().measureText(titleStyle.font, props.title, titleStyle);
+    const auto titleInk = frame.target().inkBounds(titleStyle.font, props.title, titleStyle);
+    const int width = measured.width < titleRect.width ? measured.width : titleRect.width;
+    const int x = titleStyle.align == TextAlign::Center  ? titleRect.x + (titleRect.width - width) / 2
+                  : titleStyle.align == TextAlign::Right ? titleRect.right() - width
+                                                         : titleRect.x;
+    const int lineH = frame.target().lineHeight(titleStyle.font);
+    const int y = titleRect.y + (titleRect.height > lineH ? (titleRect.height - lineH) / 2 : 0) + titleInk.y;
+    occupied[occupiedCount++] = makeRect(x, y, width, titleInk.height);
   }
   if (props.subtitle) {
     Rect subRect{content.x, static_cast<int16_t>(content.y + frame.target().lineHeight(props.titleText.font)),
@@ -265,24 +276,34 @@ void header(Frame<MaxInteractions>& frame, Rect rect, const HeaderProps& props) 
   // the clock to its slot, and neither ever repositions for other header
   // content. Apps place action buttons below the strip via actionOffsetY.
   if (status.showBattery) {
-    const int16_t batteryX = status.batteryLeft
-                                 ? static_cast<int16_t>(rect.x + statusInset)
-                                 : static_cast<int16_t>(rect.right() - statusInset - batteryReserve);
+    const int16_t batteryX = status.batteryLeft ? static_cast<int16_t>(rect.x + statusInset)
+                                                : static_cast<int16_t>(rect.right() - statusInset - batteryReserve);
     batteryIndicator(frame, Rect{batteryX, rect.y, batteryReserve, statusStripH}, status.battery);
   }
   if (clockWidth > 0) {
     // Centered or in a corner, the clock's ink centers on the status strip,
     // level with the battery glyph and its label (targets without glyph
     // metrics center the line box instead).
-    const int16_t clockLineH = frame.target().lineHeight(status.battery.text.font);
-    const Rect ink = frame.target().inkBounds(status.battery.text.font, status.clockText, status.battery.text);
-    const int16_t clockY = static_cast<int16_t>(rect.y + (statusStripH - ink.height) / 2 - ink.y);
-    const int16_t clockX = status.clockCentered
-                               ? static_cast<int16_t>(rect.x + (rect.width - clockWidth) / 2)
-                           : status.batteryLeft
-                               ? static_cast<int16_t>(rect.right() - statusInset - clockWidth)
-                               : static_cast<int16_t>(rect.x + statusInset);
-    frame.target().text(Rect{clockX, clockY, clockWidth, clockLineH}, status.clockText, status.battery.text);
+    const int16_t clockX = status.clockCentered ? static_cast<int16_t>(rect.x + (rect.width - clockWidth) / 2)
+                           : status.batteryLeft ? static_cast<int16_t>(rect.right() - statusInset - clockWidth)
+                                                : static_cast<int16_t>(rect.x + statusInset);
+    const auto clock = headerClockRect(frame.target(), makeRect(clockX, rect.y, clockWidth, statusStripH),
+                                       status.clockText, clockStyle);
+    const auto ink = frame.target().inkBounds(clockStyle.font, status.clockText, clockStyle);
+    const auto visible = makeRect(clock.x, clock.y + ink.y, clock.width, ink.height);
+    bool fits = !clock.empty() && visible.x >= rect.x + statusInset && visible.right() <= rect.right() - statusInset;
+    const auto overlaps = [&](Rect other) {
+      return !other.empty() && visible.x < other.right() + 8 && visible.right() + 8 > other.x &&
+             visible.y < other.bottom() + 4 && visible.bottom() + 4 > other.y;
+    };
+    if (status.showBattery) {
+      const int x = status.batteryLeft ? rect.x + statusInset : rect.right() - statusInset - batteryReserve;
+      if (overlaps(makeRect(x, rect.y, batteryReserve, statusStripH))) fits = false;
+    }
+    for (size_t i = 0; i < occupiedCount; ++i)
+      if (overlaps(occupied[i])) fits = false;
+    if (props.subtitle) fits = false;
+    if (fits) frame.target().text(clock, status.clockText, clockStyle);
   }
 }
 

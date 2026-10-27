@@ -72,6 +72,7 @@ inline freeink::ui::GfxRendererTarget makeUiTarget(const GfxRenderer& renderer) 
   // Status chrome (header battery percent, clock) stays at the fixed small
   // font; the uiScale FONT_SMALL is for list subtitles.
   target.setFont(freeink::ui::GfxRendererTarget::FONT_LABEL, SMALL_FONT_ID);
+  target.setFont(freeink::ui::GfxRendererTarget::FONT_CLOCK, UI_12_FONT_ID);
   return target;
 }
 

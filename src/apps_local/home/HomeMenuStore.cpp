@@ -49,7 +49,10 @@ void Store::load() {
 }
 bool Store::save(const Config& next) {
   load();
-  if (std::memcmp(&current, &next, sizeof(Config)) == 0) return true;
+  if (current.visible == next.visible && !std::memcmp(current.labels, next.labels, sizeof(current.labels)) &&
+      !std::memcmp(current.shortcuts, next.shortcuts, sizeof(current.shortcuts)) &&
+      !std::memcmp(current.order, next.order, sizeof(current.order)))
+    return true;
   if (readOnly || !Storage.ensureDirectoryExists("/.crosspoint")) return false;
   encode(next, generation + 1, buffer);
   uint32_t found = 0;

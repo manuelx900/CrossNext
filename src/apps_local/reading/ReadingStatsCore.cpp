@@ -106,7 +106,7 @@ void Streak::add(const Record& r) {
 uint32_t Streak::days() const { return last && first <= last ? static_cast<uint32_t>(last - first + 1) : 0; }
 void PeriodStats::add(const Record& r) {
   consistency.add(r);
-  if (!r.seconds || last < first) return;
+  if (last < first) return;
   const int64_t start = int64_t(r.localDay) * 86400 + r.secondOfDay;
   const int64_t from = std::max(start, int64_t(first) * 86400);
   const int64_t to = std::min(start + r.seconds, int64_t(last + 1) * 86400);
@@ -118,7 +118,7 @@ void PeriodStats::add(const Record& r) {
       annualCompleted[month] = sum32(annualCompleted[month], 1);
     }
   }
-  if (to <= from) return;
+  if (!r.seconds || to <= from) return;
   seconds = sum(seconds, static_cast<uint64_t>(to - from));
   // Cumulative rounding assigns every page once across adjoining periods.
   pages = sum(pages, uint64_t(r.pages) * (to - start) / r.seconds - uint64_t(r.pages) * (from - start) / r.seconds);
@@ -182,22 +182,23 @@ void copyText(char* out, size_t size, const char* text) {
 void updateBook(Record& record, const Book& previous) {
   auto& b = record.book;
   b.seconds = sum(previous.seconds, record.seconds);
-  b.sessions = sum32(previous.sessions, 1);
+  b.sessions = sum32(previous.sessions, record.kind == RecordKind::Session ? 1 : 0);
   b.pages = sum32(previous.pages, record.pages);
-  b.firstEpoch = previous.firstEpoch > 0 ? previous.firstEpoch : record.epoch;
+  b.firstEpoch = previous.firstEpoch > 0 || !record.seconds ? previous.firstEpoch : record.epoch;
   b.lastEpoch = record.epoch + record.seconds;
   b.completed = previous.completed || b.progressBp >= 10000;
   record.firstCompletion = b.completed && !previous.completed;
   b.finishedEpoch = previous.finishedEpoch > 0 ? previous.finishedEpoch : record.firstCompletion ? b.lastEpoch : 0;
   b.readingDays = previous.readingDays;
   b.lastDay = previous.lastDay;
+  for (int n = 0; n < 4; ++n) b.buckets[n] = previous.buckets[n];
+  if (!record.seconds) return;
   const int endDay = record.localDay + static_cast<int>((uint64_t(record.secondOfDay) + record.seconds - 1) / 86400);
   if (endDay > previous.lastDay) {
     b.readingDays =
         sum32(b.readingDays, static_cast<uint32_t>(endDay - std::max(record.localDay - 1, previous.lastDay)));
     b.lastDay = endDay;
   }
-  for (int n = 0; n < 4; ++n) b.buckets[n] = previous.buckets[n];
   uint64_t left = record.seconds;
   uint32_t at = record.secondOfDay;
   const auto wholeDays = left / 86400;
@@ -216,8 +217,9 @@ void updateBook(Record& record, const Book& previous) {
 void Summary::add(const Record& r) {
   seconds = sum(seconds, r.seconds);
   pages = sum(pages, r.pages);
-  sessions = sum32(sessions, 1);
+  sessions = sum32(sessions, r.kind == RecordKind::Session ? 1 : 0);
   completed = sum32(completed, r.firstCompletion ? 1 : 0);
+  if (!r.seconds) return;
   const int end = r.localDay + static_cast<int>((uint64_t(r.secondOfDay) + r.seconds - 1) / 86400);
   const int first = std::max(r.localDay, anchorDay - kHistoryDays + 1);
   const int last = std::min(end, anchorDay);
@@ -259,6 +261,7 @@ void encode(const Record& r, uint8_t* p) {
   write(p + 4, r.seconds, 4);
   write(p + 8, r.pages, 4);
   p[12] = r.firstCompletion;
+  p[13] = static_cast<uint8_t>(r.kind);
   write(p + 14, r.book.progressBp, 2);
   write(p + 16, r.epoch, 8);
   write(p + 24, r.book.seconds, 8);
@@ -287,6 +290,7 @@ bool decode(const uint8_t* p, Record& r) {
   r.seconds = static_cast<uint32_t>(read(p + 4, 4));
   r.pages = static_cast<uint32_t>(read(p + 8, 4));
   r.firstCompletion = p[12];
+  r.kind = static_cast<RecordKind>(p[13]);
   r.book.progressBp = static_cast<uint16_t>(read(p + 14, 2));
   r.epoch = static_cast<int64_t>(read(p + 16, 8));
   r.book.seconds = read(p + 24, 8);
@@ -301,7 +305,10 @@ bool decode(const uint8_t* p, Record& r) {
   r.book.completed = p[329];
   r.localDay = static_cast<int>(read(p + 330, 4));
   r.secondOfDay = static_cast<uint32_t>(read(p + 334, 4));
-  return validDocument(r.book.document) && r.seconds > 0 && r.epoch > 0 && r.localDay >= 18262 && r.localDay <= 84005 &&
-         r.secondOfDay < 86400 && r.book.progressBp <= 10000 && p[12] <= 1 && p[329] <= 1 && r.book.sessions > 0;
+  const bool validKind =
+      (r.kind == RecordKind::Session && r.seconds > 0 && r.book.sessions > 0) ||
+      (r.kind == RecordKind::Completion && !r.seconds && !r.pages && r.book.progressBp == 10000 && r.book.completed);
+  return validKind && validDocument(r.book.document) && r.epoch > 0 && r.localDay >= 18262 && r.localDay <= 84005 &&
+         r.secondOfDay < 86400 && r.book.progressBp <= 10000 && p[12] <= 1 && p[329] <= 1;
 }
 }  // namespace readingstats

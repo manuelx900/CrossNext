@@ -401,17 +401,28 @@ void help(toybox::Screen& s, int page) {
     flashart::draw(s, makeRect(b.x, artY, w, artH), flashart::Prepare);
   else {
     prose(s, makeRect(b.x, artY, w, wide ? 72 : 48), tr(STR_FLASH_REMEMBER_HELP), 2);
+    constexpr int flowGap = 32;
+    const int tileW = (w - flowGap) / 2;
+    const int tileY = artY + (wide ? 72 : 56);
+    char flowLabels[2][32];
+    pixelui::copyCaps(flowLabels[0], sizeof(flowLabels[0]), tr(STR_FLASH_QUESTION));
+    pixelui::copyCaps(flowLabels[1], sizeof(flowLabels[1]), tr(STR_FLASH_ANSWER));
+    fui::TextStyle flowStyle;
+    flowStyle.font = pixelui::kSmall;
+    const int labelWidth = std::max(s.target().measureText(flowStyle.font, flowLabels[0], flowStyle).width,
+                                    s.target().measureText(flowStyle.font, flowLabels[1], flowStyle).width);
+    const fui::FontId labelFont = labelWidth <= tileW - 16 ? pixelui::kSmall : 3;
     for (int n = 0; n < 2; ++n) {
-      auto r = makeRect(b.x + 4 + n * (w / 2), artY + (wide ? 72 : 56), w / 2 - 16, 86);
+      const auto r = makeRect(b.x + n * (tileW + flowGap), tileY, tileW, 86);
       dashboard::frame(s, r, 3);
       if (n)
-        mark(s, makeRect(r.x + (r.width - 40) / 2, r.y + 4, 40, 40), extra_check_32);
+        mark(s, makeRect(r.x + (r.width - 32) / 2, r.y + 10, 32, 32), extra_check_32);
       else
-        dashboard::text(s, makeRect(r.x, r.y + 4, r.width, 40), "?", 2);
-      caps(s, makeRect(r.x + 4, r.bottom() - 32, r.width - 8, 28), n ? tr(STR_FLASH_ANSWER) : tr(STR_FLASH_QUESTION),
-           3);
+        dashboard::text(s, makeRect(r.x + 8, r.y + 10, r.width - 16, 32), "?", 1);
+      pixelui::text(s.target(), makeRect(r.x + 8, r.bottom() - 34, r.width - 16, 28), flowLabels[n], labelFont,
+                    fui::Color::Black, fui::TextAlign::Center);
     }
-    dashboard::chevron(s.target(), makeRect(b.x + w / 2 - 24, artY + 84, 24, 40));
+    dashboard::chevron(s.target(), makeRect(b.x + tileW + (flowGap - 24) / 2, tileY, 24, 86));
   }
   const int x = wide ? b.x + w + 18 : b.x, y = wide ? b.y + (page ? 6 : 40) : artY + artH + 14;
   if (!page) {

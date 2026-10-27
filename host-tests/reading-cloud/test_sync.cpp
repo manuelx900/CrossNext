@@ -178,6 +178,23 @@ void append(const char* document, uint32_t seconds = 120, uint16_t progress = 70
   file.resize(at + kRecordBytes);
   encode(record, file.data() + at);
 }
+void appendCompletion(const char* document) {
+  Record record;
+  record.kind = RecordKind::Completion;
+  record.epoch = 1793000000;
+  record.localDay = today;
+  record.secondOfDay = 0;
+  copyText(record.book.document, sizeof(record.book.document), document);
+  copyText(record.book.title, sizeof(record.book.title), "Finished manually");
+  record.book.progressBp = 10000;
+  updateBook(record, localBooks[document]);
+  localBooks[document] = record.book;
+  auto& file = testStorage.files[logPath];
+  if (file.empty()) file = {'C', 'R', 'S', '1', 0x80, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  const auto at = file.size();
+  file.resize(at + kRecordBytes);
+  encode(record, file.data() + at);
+}
 Result sync(Server& server) {
   Uploader upload;
   auto result = upload.begin(today, device, account, Server::exchange, &server);
@@ -207,6 +224,30 @@ void total(uint64_t expected, int pages, int sessions) {
 }
 }  // namespace
 int main() {
+  {
+    testStorage = {};
+    localBooks.clear();
+    Server finished;
+    finished.remote();
+    append(a);
+    CHECK(sync(finished) == Result::Success);
+    appendCompletion(a);
+    appendCompletion("00000000000000000000000000000009");
+    appendCompletion(a);  // Duplicate valid marker cannot count a second completion.
+    for (int attempt = 0; attempt < 3; ++attempt) {
+      total(420, 13, 3);
+      Reader reader;
+      CHECK(reader.open() == Result::Success);
+      Projection view;
+      CHECK(view.open(&reader, today, device) == Result::Success);
+      Book manual;
+      CHECK(view.find("00000000000000000000000000000009", manual));
+      CHECK(manual.completed && !manual.seconds && !manual.pages && !manual.sessions);
+      CHECK(view.data().summary.completed == 2);
+      CHECK(sync(finished) == Result::Success);
+    }
+    localBooks.clear();
+  }
   testStorage = {};
   Server server;
   server.remote();
