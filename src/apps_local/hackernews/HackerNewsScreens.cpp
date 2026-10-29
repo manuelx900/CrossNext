@@ -150,7 +150,7 @@ void buildList(toybox::Screen& screen, const ListModel& model) {
       // Filled is where you are, outlined is where you can go. Both must be
       // set: leaving the other to the default drew two filled segments, which
       // says "both" and so says nothing.
-      button.styles = toybox::rowStyles();
+      button.styles = toybox::buttonStyles();
       button.state = here ? fui::StateSelected : fui::StateNormal;
       screen.button(button, fui::makeRect(x, y, half, kFooterHeight));
     };
@@ -224,7 +224,7 @@ void buildList(toybox::Screen& screen, const ListModel& model) {
         fui::ButtonProps button;
         button.label = model.emptyActionLabel;
         button.action = model.emptyAction;
-        button.styles = toybox::rowStyles();
+        button.styles = toybox::buttonStyles();
         button.state = fui::StateSelected;
         button.radius = static_cast<uint8_t>(toybox::kPillRadius);
         // Narrower than the body and centred, so it cannot be mistaken for the

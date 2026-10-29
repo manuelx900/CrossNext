@@ -69,7 +69,9 @@ class CrossPointWebServerActivity final : public Activity {
  public:
   explicit CrossPointWebServerActivity(GfxRenderer& renderer, MappedInputManager& mappedInput,
                                        bool startInJoinNetwork = false)
-      : Activity("CrossPointWebServer", renderer, mappedInput), startInJoinNetwork(startInJoinNetwork) {}
+      : Activity("CrossPointWebServer", renderer, mappedInput), startInJoinNetwork(startInJoinNetwork) {
+    setInterfaceFontSection(menufont::Section::Transfer);
+  }
   void onEnter() override;
   void onExit() override;
   void loop() override;

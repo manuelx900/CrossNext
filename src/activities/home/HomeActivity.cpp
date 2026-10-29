@@ -46,7 +46,7 @@ void HomeActivity::loadRecentBooks(int maxBooks) {
     recentBooks.reserve(1);
     recentBookCount = 0;
     recentBookIndex = 0;
-    constexpr int limit = 3;
+    const int limit = std::clamp(int(SETTINGS.homeRecentBookCount), 1, RecentBooksStore::MAX_RECENT_BOOKS);
     for (size_t n = 0; n < books.size() && recentBookCount < limit; ++n) {
       if (!RecentBooksStore::isMissing(books[n])) recentSourceIndices[recentBookCount++] = static_cast<int>(n);
     }

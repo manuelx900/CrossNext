@@ -23,6 +23,7 @@
 #include "activities/util/KeyboardEntryActivity.h"
 #include "apps_local/home/HomeMenuIntegration.h"
 #include "apps_local/ui/PixelMenuTheme.h"
+#include "apps_local/ui/ToyboxFonts.h"
 #include "components/UITheme.h"
 #include "components/UiAppHelpers.h"
 #include "fontIds.h"
@@ -91,7 +92,9 @@ FileBrowserActivity::FileBrowserActivity(GfxRenderer& renderer, MappedInputManag
                                          std::string initialPath, const Mode mode)
     : UiListActivity("FileBrowser", renderer, mappedInput, /*wantsTouchLongPress=*/true),
       mode(mode),
-      basepath(initialPath.empty() ? "/" : std::move(initialPath)) {}
+      basepath(initialPath.empty() ? "/" : std::move(initialPath)) {
+  if (mode == Mode::Books) setInterfaceFontSection(menufont::Section::Files);
+}
 
 void FileBrowserActivity::loadFiles() {
   files.clear();
@@ -162,7 +165,7 @@ void FileBrowserActivity::provideRow(void* ctx, const uint16_t index, fui::ListI
   const std::string& entry = self->files[index];
   formatFileName(entry, self->rowNameBuf, sizeof(self->rowNameBuf));
   item.label = self->rowNameBuf;
-  item.labelBold = !entry.empty() && entry.back() == '/';
+  item.labelBold = toybox::interfaceFontStyle() == menufont::Style::Pixel && !entry.empty() && entry.back() == '/';
   formatFileExtension(entry, self->rowExtBuf, sizeof(self->rowExtBuf));
   if (self->rowExtBuf[0] != '\0') {
     item.value = self->rowExtBuf + 1;

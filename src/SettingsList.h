@@ -17,6 +17,7 @@
 #include "HomeButtonSettings.h"
 #include "KOReaderCredentialStore.h"
 #include "ReaderFontSizes.h"
+#include "SideButtonSettings.h"
 #include "activities/settings/SettingsActivity.h"
 #include "components/UITheme.h"
 #include "util/DictionaryRegistry.h"
@@ -318,6 +319,10 @@ inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* regist
         SettingInfo::Enum(StrId::STR_HOME_LAYOUT, &CrossPointSettings::homeLayout,
                           {StrId::STR_HOME_FRAMED, StrId::STR_HOME_FOCUS_CAROUSEL}, "homeLayout",
                           StrId::STR_CAT_INTERFACE),
+        SettingInfo::Enum(StrId::STR_MENU_FONT, &CrossPointSettings::menuFontStyle,
+                          {StrId::STR_MENU_FONT_PIXEL, StrId::STR_MENU_FONT_CLASSIC, StrId::STR_MENU_FONT_NOTO_SANS,
+                           StrId::STR_MENU_FONT_NOTO_SERIF},
+                          "menuFontStyle"),
         SettingInfo::Enum(StrId::STR_UI_THEME, &CrossPointSettings::uiTheme, homeThemeValues(), "uiTheme",
                           StrId::STR_CAT_DISPLAY),
         SettingInfo::Toggle(StrId::STR_SUNLIGHT_FADING_FIX, &CrossPointSettings::fadingFix, "fadingFix",
@@ -378,6 +383,10 @@ inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* regist
             StrId::STR_ORIENTATION, &CrossPointSettings::orientation,
             {StrId::STR_PORTRAIT, StrId::STR_LANDSCAPE_CW, StrId::STR_ORIENTATION_INVERTED, StrId::STR_LANDSCAPE_CCW},
             "orientation", StrId::STR_CAT_READER),
+        SettingInfo::Toggle(StrId::STR_READER_FOUR_ORIENTATIONS, &CrossPointSettings::readerFourOrientations,
+                            "readerFourOrientations", StrId::STR_CAT_READER),
+        SettingInfo::Value(StrId::STR_HOME_RECENT_BOOK_COUNT, &CrossPointSettings::homeRecentBookCount, {1, 10, 1},
+                           "homeRecentBookCount"),
         SettingInfo::Enum(StrId::STR_ROTATION_DIRECTION, &CrossPointSettings::rotationDirection,
                           {StrId::STR_ROTATION_LEFT, StrId::STR_ROTATION_RIGHT}, "rotationDirection",
                           StrId::STR_CAT_CONTROLS),
@@ -409,12 +418,20 @@ inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* regist
                           {StrId::STR_PREV_NEXT, StrId::STR_NEXT_PREV, StrId::STR_DISABLED, StrId::STR_NEXT_NEXT,
                            StrId::STR_PREV_PREV},
                           "sideButtonLayout", StrId::STR_CAT_CONTROLS),
+        SettingInfo::StaticEnum(StrId::STR_SIDE_LEFT_ACTION, &CrossPointSettings::sideLeftAction, side_button::LABELS,
+                                "sideLeftAction", StrId::STR_CAT_CONTROLS),
+        SettingInfo::StaticEnum(StrId::STR_SIDE_RIGHT_ACTION, &CrossPointSettings::sideRightAction, side_button::LABELS,
+                                "sideRightAction", StrId::STR_CAT_CONTROLS),
         SettingInfo::String(StrId::STR_HOME_SHORTCUT_TARGET, SETTINGS.homeButtonShortcutTitle,
                             sizeof(SETTINGS.homeButtonShortcutTitle), "homeButtonShortcutTitle"),
         SettingInfo::String(StrId::STR_HOME_SHORTCUT_TARGET, SETTINGS.homeButtonDoubleShortcutTitle,
                             sizeof(SETTINGS.homeButtonDoubleShortcutTitle), "homeButtonDoubleShortcutTitle"),
         SettingInfo::String(StrId::STR_HOME_SHORTCUT_TARGET, SETTINGS.homeButtonLongShortcutTitle,
                             sizeof(SETTINGS.homeButtonLongShortcutTitle), "homeButtonLongShortcutTitle"),
+        SettingInfo::String(StrId::STR_HOME_SHORTCUT_TARGET, SETTINGS.sideLeftShortcutTitle,
+                            sizeof(SETTINGS.sideLeftShortcutTitle), "sideLeftShortcutTitle"),
+        SettingInfo::String(StrId::STR_HOME_SHORTCUT_TARGET, SETTINGS.sideRightShortcutTitle,
+                            sizeof(SETTINGS.sideRightShortcutTitle), "sideRightShortcutTitle"),
         SettingInfo::Toggle(StrId::STR_TOUCHSCREEN_LOCK, &CrossPointSettings::touchScreenLocked, "touchScreenLocked",
                             StrId::STR_CAT_CONTROLS),
         SettingInfo::Toggle(StrId::STR_TOUCH_READER_CONTROLS, &CrossPointSettings::touchReaderControls,

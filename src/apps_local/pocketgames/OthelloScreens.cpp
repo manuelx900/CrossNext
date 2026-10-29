@@ -37,7 +37,7 @@ void grid(toybox::Screen& s, fui::Rect area, const pg::Othello& g, bool legal = 
   for (int n = 0; n < 64; ++n) {
     const int x = b.x + n % 8 * cell + cell / 2, y = b.y + n / 8 * cell + cell / 2;
     if (n == botSquare && !g.board[n]) {
-      dashboard::frame(s, rect(b.x + n % 8 * cell + 3, b.y + n / 8 * cell + 3, cell - 6, cell - 6), 3);
+      dashboard::frame(s, rect(b.x + n % 8 * cell + 3, b.y + n / 8 * cell + 3, cell - 6, cell - 6), pixelui::kBorder);
       disk(s, x, y, cell * 38 / 100, g.turn);
       toybox::disc(s, x, y, std::max(2, cell / 12), g.turn == 1 ? fui::Color::White : fui::Color::Black);
     } else if (g.board[n])
@@ -45,7 +45,7 @@ void grid(toybox::Screen& s, fui::Rect area, const pg::Othello& g, bool legal = 
     else if (legal && !g.over && pg::flips(g, n, g.turn))
       toybox::disc(s, x, y, std::max(2, cell / 12), fui::Color::Black);
   }
-  dashboard::frame(s, b, 4);
+  dashboard::frame(s, b, pixelui::kBorder);
   if (!coordinates) return;
   for (int n = 0; n < 8; ++n) {
     char row[2] = {char('1' + n), 0}, col[2] = {char('A' + n), 0};

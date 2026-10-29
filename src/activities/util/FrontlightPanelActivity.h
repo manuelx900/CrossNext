@@ -31,6 +31,7 @@ class FrontlightPanelActivity final : public Activity, private UiAppHost {
   // reflected user intent in the first place.
   bool lightOnChanged = false;
   bool draggingSlider = false;
+  bool suspendedForWifi = false;
   unsigned long lastClockPoll = 0;
   int shownMinute = -1;
   int panelBottom = 0;
@@ -56,6 +57,7 @@ class FrontlightPanelActivity final : public Activity, private UiAppHost {
   void toggleLight();
   void toggleWarmth();
   void runTile(int idx);
+  void syncLightState(bool useSavedWarmth = false);
   // Copy the panel's live brightness/warmth/lightOn into SETTINGS and save if
   // anything actually changed. onExit() runs it on every way out.
   void persistLightSettings();

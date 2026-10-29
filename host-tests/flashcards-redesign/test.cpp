@@ -122,13 +122,20 @@ struct RecordingTarget : fui::DrawTarget {
   };
   std::vector<Label> labels;
   std::vector<fui::Rect> blackFills;
+  const char* expectedElidedName = nullptr;
+  bool elidedNameSeen = false;
   void text(fui::Rect box, const char* value, fui::TextStyle style) override {
     CHECK(!value || !std::strchr(value, '\n'));
     fui::layoutText(backend, box, value, style, [&](const char* run, fui::Rect line) {
       if (line.bottom() > box.bottom() || std::strstr(run, "…") || std::strstr(run, "..."))
         std::printf("TEXT [%d,%d %dx%d font%d] %s\n", box.x, box.y, box.width, box.height, int(style.font), value);
       CHECK(line.bottom() <= box.bottom());
-      CHECK(!std::strstr(run, "…") && !std::strstr(run, "..."));
+      const bool elided = std::strstr(run, "…") || std::strstr(run, "...");
+      if (expectedElidedName && !std::strcmp(value, expectedElidedName)) {
+        CHECK(style.font == 0 && style.maxLines == 1);
+        elidedNameSeen |= elided;
+      } else
+        CHECK(!elided);
     });
     labels.push_back({value ? value : "", style.font, box});
     backend.text(box, value, style);
@@ -168,7 +175,9 @@ struct Canvas {
       const auto& slot = interactions.data()[n];
       const auto& r = slot.rect;
       CHECK(r.x >= 0 && r.y >= 0 && r.right() <= width && r.bottom() <= height);
-      CHECK(r.width >= 44 && r.height >= 44);
+      // The landscape library uses the compact page selector shared with the reader.
+      const int minSide = width > height && slot.action == flashui::Page ? 32 : 44;
+      CHECK(r.width >= minSide && r.height >= minSide);
       for (size_t j = 0; j < n; ++j) {
         const auto& a = interactions.data()[j].rect;
         CHECK(r.x >= a.right() || r.right() <= a.x || r.y >= a.bottom() || r.bottom() <= a.y);
@@ -351,8 +360,26 @@ int main(int argc, char** argv) {
         m.today = 37;
         c.target.setFont(4, c.caption.font);
         flashui::library(c.screen, m);
-        for (const auto& l : c.target.labels) CHECK(l.value.find("/flashcards") == std::string::npos);
+        for (const auto& l : c.target.labels) {
+          CHECK(l.value.find("/flashcards") == std::string::npos);
+          CHECK(l.value.find("120") == std::string::npos);
+          CHECK(l.value.find("85") == std::string::npos);
+          if (l.value == "CIENCIA GENERAL") CHECK(l.font == 0);
+        }
         saveScreen(c, "library");
+      }
+      {
+        Canvas c(w, h);
+        const flashui::DeckRow longName[] = {
+            {"INFORMATICA - BRIAN SPIERING - INTRODUCCION A LOS SISTEMAS Y LAS REDES INFORMATICAS", 120, 12, 8, true,
+             false}};
+        c.target.expectedElidedName = longName[0].name;
+        flashui::LibraryModel m;
+        m.rows = longName;
+        m.count = m.totalDecks = 1;
+        flashui::library(c.screen, m);
+        CHECK(c.target.elidedNameSeen);
+        c.checkHits();
       }
       {
         Canvas c(w, h);

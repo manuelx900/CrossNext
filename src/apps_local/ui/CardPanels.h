@@ -143,7 +143,9 @@ inline void deckLesson(toybox::Screen& s, fui::Rect r, bool aceHigh) {
     dashboard::frame(s, box, 1);
     pixelui::text(s.target(), box, cards::rankLabel(rank), 0, fui::Color::Black, fui::TextAlign::Center);
   }
-  guideui::text(s, fui::makeRect(faceX, orderY + (wide ? 68 : 80), faceW, wide ? 30 : 52),
+  const int captionH = std::max(wide ? 30 : 52, int(s.target().lineHeight(4)));
+  const int captionY = std::min(orderY + (wide ? 68 : 80), r.bottom() - captionH);
+  guideui::text(s, fui::makeRect(faceX, captionY, faceW, captionH),
                 aceHigh ? tr(STR_CARDS_GUIDE_ACE_HIGH) : tr(STR_CARDS_GUIDE_ACE_LOW), 2);
 }
 }  // namespace cardpanel

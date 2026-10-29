@@ -294,7 +294,7 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
     arrow.action = live ? static_cast<fui::ActionId>(ActionPlayers) : fui::NO_ACTION;
     arrow.value = more ? 1 : -1;
     arrow.text = styled(toybox::kDisplayFont, fui::TextAlign::Center, live ? fui::Color::White : fui::Color::Black);
-    arrow.styles = live ? toybox::rowStyles() : toybox::disabledStepperStyles();
+    arrow.styles = live ? toybox::buttonStyles() : toybox::disabledStepperStyles();
     arrow.state = live ? fui::StateSelected : fui::StateNormal;
     arrow.radius = 0;
     screen.button(
@@ -353,7 +353,7 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
   rules.label = "HOW TO PLAY";
   rules.action = ActionRules;
   rules.text = styled(toybox::kUiFont, fui::TextAlign::Center);
-  rules.styles = toybox::rowStyles();
+  rules.styles = toybox::buttonStyles();
   rules.radius = 0;
   screen.button(rules, fui::LayoutAnchor::Bottom);
 
@@ -361,7 +361,7 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
   deal.label = "DEAL";
   deal.action = ActionDeal;
   deal.text = styled(toybox::kDisplayFont, fui::TextAlign::Center, fui::Color::White);
-  deal.styles = toybox::rowStyles();
+  deal.styles = toybox::buttonStyles();
   deal.state = fui::StateSelected;
   deal.radius = 0;
   screen.button(deal, fui::LayoutAnchor::Bottom);
@@ -437,7 +437,7 @@ void buildPass(toybox::Screen& screen, const PassModel& model) {
   pass.label = onward;
   pass.action = ActionAdvance;
   pass.text = styled(toybox::kUiFont, fui::TextAlign::Center, fui::Color::White);
-  pass.styles = toybox::rowStyles();
+  pass.styles = toybox::buttonStyles();
   pass.state = fui::StateSelected;
   pass.radius = 0;
   screen.button(pass, fui::LayoutAnchor::Bottom);
@@ -460,7 +460,8 @@ void buildPass(toybox::Screen& screen, const PassModel& model) {
                          fui::Paint::solid(fui::Color::Black));
   y = static_cast<int16_t>(y + kArt + 24);
 
-  screen.target().text(toybox::inkCentred(fui::makeRect(card.x, y, card.width, 44), toybox::kDisplayCut),
+  screen.target().text(toybox::inkCentred(screen.target(), fui::makeRect(card.x, y, card.width, 44),
+                                          styled(toybox::kDisplayFont, fui::TextAlign::Center)),
                        roleName(model.role), styled(toybox::kDisplayFont, fui::TextAlign::Center));
   y = static_cast<int16_t>(y + 44);
 
@@ -470,8 +471,9 @@ void buildPass(toybox::Screen& screen, const PassModel& model) {
     fui::TextStyle word = styled(toybox::kDisplayFont, fui::TextAlign::Center);
     word.font = fitted(screen, model.word, static_cast<int16_t>(card.width - 40), word);
     const fui::Rect wordBox = fui::makeRect(card.x, static_cast<int16_t>(y + 48), card.width, 46);
-    screen.target().text(word.font == toybox::kDisplayFont ? toybox::inkCentred(wordBox, toybox::kDisplayCut) : wordBox,
-                         model.word, word);
+    screen.target().text(
+        word.font == toybox::kDisplayFont ? toybox::inkCentred(screen.target(), wordBox, word) : wordBox, model.word,
+        word);
     y = static_cast<int16_t>(y + 118);
   } else {
     y = static_cast<int16_t>(y + 20);
@@ -500,7 +502,7 @@ void buildQuestions(toybox::Screen& screen, const QuestionsModel& model) {
   got.label = "WE SAID THE WORD";
   got.action = ActionFoundWord;
   got.text = styled(toybox::kUiFont, fui::TextAlign::Center, fui::Color::White);
-  got.styles = toybox::rowStyles();
+  got.styles = toybox::buttonStyles();
   got.state = fui::StateSelected;
   got.radius = 0;
   screen.button(got, fui::LayoutAnchor::Bottom);
@@ -581,7 +583,7 @@ void buildVote(toybox::Screen& screen, const VoteModel& model) {
   go.label = confirm;
   go.action = ready ? static_cast<fui::ActionId>(ActionConfirmVote) : fui::NO_ACTION;
   go.text = styled(toybox::kUiFont, fui::TextAlign::Center, fui::Color::White);
-  go.styles = ready ? toybox::rowStyles() : toybox::disabledButtonStyles();
+  go.styles = ready ? toybox::buttonStyles() : toybox::disabledButtonStyles();
   go.state = ready ? fui::StateSelected : fui::StateNormal;
   go.radius = 0;
   screen.button(go, fui::LayoutAnchor::Bottom);
@@ -595,7 +597,7 @@ void buildVote(toybox::Screen& screen, const VoteModel& model) {
   nobody.value = static_cast<int16_t>(kNoInsider);
   nobody.text = styled(toybox::kUiFont, fui::TextAlign::Center,
                        model.chosen == kNoInsider ? fui::Color::White : fui::Color::Black);
-  nobody.styles = toybox::rowStyles();
+  nobody.styles = toybox::buttonStyles();
   nobody.state = model.chosen == kNoInsider ? fui::StateSelected : fui::StateNormal;
   nobody.radius = 0;
   screen.button(nobody, fui::LayoutAnchor::Bottom);
@@ -686,14 +688,15 @@ void buildReveal(toybox::Screen& screen, const RevealModel& model) {
   screen.target().text(fui::makeRect(body.x, wordY, body.width, 24), "THE WORD WAS",
                        styled(toybox::kTileFont, fui::TextAlign::Center));
   screen.target().text(
-      toybox::inkCentred(fui::makeRect(body.x, static_cast<int16_t>(wordY + 30), body.width, 46), toybox::kDisplayCut),
+      toybox::inkCentred(screen.target(), fui::makeRect(body.x, static_cast<int16_t>(wordY + 30), body.width, 46),
+                         styled(toybox::kDisplayFont, fui::TextAlign::Center)),
       model.word, styled(toybox::kDisplayFont, fui::TextAlign::Center));
 
   fui::ButtonProps done;
   done.label = "BACK TO THE MENU";
   done.action = ActionDone;
   done.text = styled(toybox::kUiFont, fui::TextAlign::Center);
-  done.styles = toybox::rowStyles();
+  done.styles = toybox::buttonStyles();
   done.radius = 0;
   screen.button(done, fui::LayoutAnchor::Bottom);
 
@@ -701,7 +704,7 @@ void buildReveal(toybox::Screen& screen, const RevealModel& model) {
   again.label = "DEAL AGAIN";
   again.action = ActionPlayAgain;
   again.text = styled(toybox::kDisplayFont, fui::TextAlign::Center, fui::Color::White);
-  again.styles = toybox::rowStyles();
+  again.styles = toybox::buttonStyles();
   again.state = fui::StateSelected;
   again.radius = 0;
   screen.button(again, fui::LayoutAnchor::Bottom);
@@ -815,7 +818,8 @@ void tutorialFooter(toybox::Screen& screen, const fui::Rect& body, const int pag
     }
   }
   screen.target().text(
-      toybox::inkCentred(fui::makeRect(body.x, static_cast<int16_t>(y - 34), body.width, 22), toybox::kButtonCut),
+      toybox::inkCentred(screen.target(), fui::makeRect(body.x, static_cast<int16_t>(y - 34), body.width, 22),
+                         styled(toybox::kTileFont, fui::TextAlign::Center)),
       page + 1 == pages ? "TAP TO FINISH" : "TAP TO CONTINUE", styled(toybox::kTileFont, fui::TextAlign::Center));
 }
 
@@ -829,7 +833,8 @@ void caption(toybox::Screen& screen, const fui::Rect& box, const char* text) {
 constexpr int16_t kTitleBand = 46;
 
 void pageTitle(toybox::Screen& screen, const fui::Rect& body, const char* title) {
-  screen.target().text(toybox::inkCentred(fui::makeRect(body.x, body.y, body.width, kTitleBand), toybox::kDisplayCut),
+  screen.target().text(toybox::inkCentred(screen.target(), fui::makeRect(body.x, body.y, body.width, kTitleBand),
+                                          styled(toybox::kDisplayFont, fui::TextAlign::Center)),
                        title, styled(toybox::kDisplayFont, fui::TextAlign::Center));
 }
 
@@ -861,8 +866,9 @@ void buildTutorial(toybox::Screen& screen, const TutorialModel& model) {
       // away from nothing unless you have been told what the set of roles was.
       pageTitle(screen, body, "THE ROLES");
       screen.target().text(
-          toybox::inkCentred(fui::makeRect(body.x, static_cast<int16_t>(body.y + kTitleBand + 6), body.width, 22),
-                             toybox::kButtonCut),
+          toybox::inkCentred(screen.target(),
+                             fui::makeRect(body.x, static_cast<int16_t>(body.y + kTitleBand + 6), body.width, 22),
+                             styled(toybox::kTileFont, fui::TextAlign::Center)),
           "IN A GAME OF FIVE", styled(toybox::kTileFont, fui::TextAlign::Center));
 
       const freeink::Icon* art[3] = {&icon_roleMaster_96, &icon_roleInsider_96, &icon_roleCitizen_96};
@@ -879,10 +885,12 @@ void buildTutorial(toybox::Screen& screen, const TutorialModel& model) {
             fui::makeRect(static_cast<int16_t>(card.x + (kW - 56) / 2), static_cast<int16_t>(card.y + 16), 56, 56),
             fui::bitmapFromIcon(*art[i]), fui::BitmapMode::Contain, fui::Paint::solid(fui::Color::Black));
         screen.target().text(
-            toybox::inkCentred(fui::makeRect(card.x, static_cast<int16_t>(card.y + 82), kW, 24), toybox::kButtonCut),
+            toybox::inkCentred(screen.target(), fui::makeRect(card.x, static_cast<int16_t>(card.y + 82), kW, 24),
+                               styled(toybox::kTileFont, fui::TextAlign::Center)),
             name[i], styled(toybox::kTileFont, fui::TextAlign::Center));
         screen.target().text(
-            toybox::inkCentred(fui::makeRect(card.x, static_cast<int16_t>(card.y + 116), kW, 44), toybox::kDisplayCut),
+            toybox::inkCentred(screen.target(), fui::makeRect(card.x, static_cast<int16_t>(card.y + 116), kW, 44),
+                               styled(toybox::kDisplayFont, fui::TextAlign::Center)),
             howMany[i], styled(toybox::kDisplayFont, fui::TextAlign::Center));
         x = static_cast<int16_t>(x + kW + kGap);
       }
@@ -933,8 +941,9 @@ void buildTutorial(toybox::Screen& screen, const TutorialModel& model) {
       // but without the label a reader who counts sees a contradiction, and
       // this deck exists to stop exactly that kind of confusion.
       screen.target().text(
-          toybox::inkCentred(fui::makeRect(body.x, static_cast<int16_t>(body.y + kTitleBand + 4), body.width, 22),
-                             toybox::kButtonCut),
+          toybox::inkCentred(screen.target(),
+                             fui::makeRect(body.x, static_cast<int16_t>(body.y + kTitleBand + 4), body.width, 22),
+                             styled(toybox::kTileFont, fui::TextAlign::Center)),
           "EVERY ROLE BUT THE MASTER", styled(toybox::kTileFont, fui::TextAlign::Center));
       for (int i = 0; i < kExamplePlayers; ++i) {
         miniCard(screen, fui::makeRect(x, static_cast<int16_t>(body.y + kTitleBand + 32), kW, kH),
@@ -942,9 +951,10 @@ void buildTutorial(toybox::Screen& screen, const TutorialModel& model) {
         x = static_cast<int16_t>(x + kW + kGap);
       }
       arrowDown(screen, static_cast<int16_t>(body.x + body.width / 2), static_cast<int16_t>(body.y + 194), 34);
-      screen.target().text(toybox::inkCentred(fui::makeRect(body.x, static_cast<int16_t>(body.y + 236), body.width, 22),
-                                              toybox::kButtonCut),
-                           "ONE GOES BACK, FACE DOWN", styled(toybox::kTileFont, fui::TextAlign::Center));
+      screen.target().text(
+          toybox::inkCentred(screen.target(), fui::makeRect(body.x, static_cast<int16_t>(body.y + 236), body.width, 22),
+                             styled(toybox::kTileFont, fui::TextAlign::Center)),
+          "ONE GOES BACK, FACE DOWN", styled(toybox::kTileFont, fui::TextAlign::Center));
       faceDownCard(screen, fui::makeRect(static_cast<int16_t>(body.x + (body.width - kW) / 2),
                                          static_cast<int16_t>(body.y + 266), kW, kH));
       caption(screen, fui::makeRect(body.x, static_cast<int16_t>(body.y + 394), body.width, 150),

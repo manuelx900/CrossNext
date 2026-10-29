@@ -225,7 +225,8 @@ int main(int argc, char** argv) {
           if (view == pu::View::Help) {
             CHECK(c.has(pu::GuidePage, variant - 1) == (variant > 0));
             CHECK(c.has(pu::GuidePage, variant + 1) == (variant < 2));
-            CHECK(c.has(pu::Menu) == (variant == 2));
+            // Guides use the shared header Back target, not a final-page Menu action.
+            CHECK(!c.has(pu::Menu));
           }
           if (view == pu::View::ConfirmNew) {
             CHECK(c.has(pu::ConfirmNew));

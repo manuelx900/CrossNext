@@ -84,11 +84,11 @@ constexpr int bodyTopBelow(const int bandHeight) { return chromeBelow(bandHeight
 // clip. Anything whose band height is not kHeaderHeight calls bodyTopBelow()
 // with its own; that is why the function exists beside the constant.
 constexpr int kBodyTop = bodyTopBelow(kHeaderHeight);
-constexpr int kFrame = 4;
+constexpr int kFrame = 2;
 // The board's own border is heavier than anything drawn inside it, so the
 // playing surface reads as a single object rather than as a grid that happens
 // to have a line round it.
-constexpr int kBoardFrame = 9;
+constexpr int kBoardFrame = 2;
 
 // Row height for a settings list, and capsule geometry. Chrome is drawn by
 // FreeInkUI components now; these are the numbers ToyboxTheme.h feeds them.

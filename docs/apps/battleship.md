@@ -5,15 +5,20 @@ New game opens placement: select a ship on the board or in the five-ship strip,
 tap its destination, and tap the ship again or Rotate to turn it. Shuffle and
 Ready remain separate actions. Ships cannot overlap or leave the board.
 
-During play, the opponent grid is the large touch surface. Selecting an
-unfired cell displays its coordinate and a separate Fire action. The smaller
-own-fleet chart is read-only. Opponent ship positions stay hidden until a cell
-is shot or the game finishes; the fleet strip reports sunk ships. A shot
-report remains separate from the fire action, with the supplied sinking
-illustration for a sunk own ship. The single illustrated help page explains
-placement, readiness and firing, with the Water/Hit legend.
+During play, one large coordinate-labelled grid uses the available space.
+**Your move** holds the current instruction, selected target or shot report.
+Select an unfired rival cell, then Fire or tap that cell again. Fleet counters
+show ships still afloat, out of five. Tap **You** to inspect your full-size
+read-only fleet. The explicit **My board** button opens the same view; it changes
+to **Rival board** to return to firing. The Rival counter also returns there.
+Opponent ship positions stay hidden until shot or the game finishes. The
+in-game Water/Hit legend and miniature ship strip are omitted; the illustrated
+help retains the symbol explanation.
 
-BattleshipScreens draws both grids and returns their rectangles. The activity
+A finished game opens a victory or defeat screen with New game, View board
+and Back to menu. Reviewing the final boards does not record the result again.
+
+BattleshipScreens draws the selected grid and returns its rectangle. The activity
 uses those same rectangles to map taps, while retaining ownership of game
 state, computer turns and SD persistence. Rules, turn order and save formats
 are unchanged. The reference art is a constexpr 1-bit mask in flash and adds

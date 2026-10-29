@@ -99,6 +99,11 @@ void CrossPointSettings::toJson(JsonDocument& doc) const {
   doc["weekStartsSunday"] = weekStartsSunday;
   doc["readingFormats"] = readingFormats;
   doc["homeLayout"] = homeLayout;
+  auto fonts = doc["menuFontOverrides"].to<JsonArray>();
+  for (int n = 1; n < menufont::kSectionCount; ++n) fonts.add(menuFontOverrides[n]);
+  auto contentFonts = doc["menuFontItems"].to<JsonObject>();
+  for (int n = 0; n < menufont::kItemCount; ++n)
+    if (menuFontItemOverrides[n]) contentFonts[menufont::kItemKeys[n]] = menuFontItemOverrides[n];
   auto quick = doc["quickActions"].to<JsonArray>();
   for (uint8_t action : quickActions) quick.add(action);
   // SD card font family name — not in SettingsList, save manually
@@ -131,6 +136,15 @@ void CrossPointSettings::toJson(JsonDocument& doc) const {
 bool CrossPointSettings::fromJson(JsonVariantConst doc) {
   CrossPointSettings& s = *this;
   bool needsResave = false;
+  const auto fonts = doc["menuFontOverrides"];
+  for (int n = 1; n < menufont::kSectionCount; ++n) {
+    const auto value = fonts[n - 1];
+    menuFontOverrides[n] = value.is<uint8_t>() ? uint8_t(menufont::normalizedOverride(value.as<uint8_t>())) : 0;
+  }
+  for (int n = 0; n < menufont::kItemCount; ++n) {
+    const auto value = doc["menuFontItems"][menufont::kItemKeys[n]];
+    menuFontItemOverrides[n] = value.is<uint8_t>() ? uint8_t(menufont::normalizedOverride(value.as<uint8_t>())) : 0;
+  }
   if (doc["quickActions"].is<JsonArrayConst>() && doc["quickActions"].size() == quickui::kSlots) {
     uint16_t used = 0;
     for (int n = 0; n < quickui::kSlots; ++n) {

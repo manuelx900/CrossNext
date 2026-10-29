@@ -11,7 +11,8 @@ namespace petui {
 inline bool fullCreature(const Model& m, fui::DrawTarget& target, fui::Rect area, bool inverse = false,
                          bool opaqueFallback = false) {
   const auto& p = *m.profile;
-  const unsigned step = petsleep::breathing(p, m.view) ? m.sleepStep : 0;
+  const unsigned step =
+      pet::stage(p.readingSeconds) == pet::Stage::Egg && petsleep::breathing(p, m.view) ? m.sleepStep : 0;
   const auto mask = petsleep::fullBodyIndex(p, step);
   if (m.sleepArt.draw && m.sleepArt.draw(m.sleepArt.context, target, area, mask, !inverse) &&
       m.sleepArt.draw(m.sleepArt.context, target, area, mask + 1, inverse))

@@ -128,9 +128,9 @@ void dashboard(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, Palette*
     r.y += 62;
     r.height -= 62;
   }
-  const int metricsH = ended ? (wide ? 76 : 84) : (wide ? 142 : 136);
+  const int metricsH = ended ? (wide ? 76 : 84) : (wide ? 108 : 136);
   const int actionsH = ended ? (wide ? 64 : 68) : 0, footerH = urgent ? 0 : 54;
-  const int projectH = wide ? 106 : ended ? 122 : 132;
+  const int projectH = wide ? (ended ? 106 : 140) : ended ? 122 : 140;
   const int heroH = r.height - metricsH - projectH - actionsH - footerH - GAP * (ended ? 4 : urgent ? 2 : 3);
   if (!wide) {
     hero(s, m, w, rect(r.x, r.y, r.width, heroH), false, palette);
@@ -157,8 +157,10 @@ void dashboard(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, Palette*
   else if (ended)
     project(s, m, w, goal);
   else {
-    objective(s, m, w, cell(goal, 0, 2));
-    daily(s, m, w, cell(goal, 1, 2));
+    constexpr int share = 60;
+    const int projectW = (goal.width - GAP) * share / 100;
+    objective(s, m, w, rect(goal.x, goal.y, projectW, goal.height));
+    daily(s, m, w, rect(goal.x + projectW + GAP, goal.y, goal.width - projectW - GAP, goal.height));
   }
   int footerY = goal.bottom() + GAP;
   if (ended) {

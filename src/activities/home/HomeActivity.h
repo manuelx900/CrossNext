@@ -85,7 +85,9 @@ class HomeActivity final : public Activity {
       : Activity("Home", renderer, mappedInput),
         dashboard(renderer),
         initialMenuItem(initialMenuItemValue),
-        cleanInitialRefresh(cleanInitialRefresh) {}
+        cleanInitialRefresh(cleanInitialRefresh) {
+    setInterfaceFontSection(menufont::Section::Home);
+  }
   void onEnter() override;
   void onExit() override;
   void loop() override;

@@ -106,6 +106,9 @@ StrId settingsGroupLabel(int group, int category) {
                          : system[group];
 }
 StrId settingHelp(const SettingInfo& setting) {
+  if (setting.valuePtr == &CrossPointSettings::sideLeftAction ||
+      setting.valuePtr == &CrossPointSettings::sideRightAction)
+    return StrId::STR_SIDE_ACTION_HELP;
   if (setting.valuePtr == &CrossPointSettings::xtcInvertPageDirection) return StrId::STR_XTC_INVERT_DIRECTION_HELP;
   if (setting.valuePtr == &CrossPointSettings::removeReadBooksFromRecents ||
       setting.valuePtr == &CrossPointSettings::moveFinishedToReadFolder)
@@ -140,7 +143,9 @@ StrId settingHelp(const SettingInfo& setting) {
 }  // namespace
 
 SettingsActivity::SettingsActivity(GfxRenderer& renderer, MappedInputManager& mappedInput)
-    : UiTabListActivity("Settings", renderer, mappedInput) {}
+    : UiTabListActivity("Settings", renderer, mappedInput) {
+  setInterfaceFontSection(menufont::Section::Settings);
+}
 
 void SettingsActivity::rebuildSettingsLists() {
   displaySettings.clear();
@@ -518,6 +523,24 @@ void SettingsActivity::toggleCurrentSetting() {
   const bool sleepScreenChanged = setting.valuePtr == &CrossPointSettings::sleepScreen;
   const bool quickResumeTimeoutChanged = setting.valuePtr == &CrossPointSettings::quickResumeSleepScreen;
 
+  if (setting.valuePtr == &CrossPointSettings::sideLeftAction ||
+      setting.valuePtr == &CrossPointSettings::sideRightAction) {
+    const auto binding = setting.valuePtr == &CrossPointSettings::sideLeftAction
+                             ? HomeButtonSettingsActivity::Binding::SideLeft
+                             : HomeButtonSettingsActivity::Binding::SideRight;
+    auto next = makeUniqueNoThrow<HomeButtonSettingsActivity>(renderer, mappedInput, binding);
+    if (!next) {
+      LOG_ERR("SET", "OOM: side button settings");
+      return;
+    }
+    startActivityForResult(std::move(next), [this](const ActivityResult&) {
+      rebuildSettingsLists();
+      resetUi();
+      requestUpdate();
+    });
+    return;
+  }
+
   if (setting.nameId == StrId::STR_TIME_TO_SLEEP) {
     openSleepTimeoutPicker();
     return;
@@ -819,8 +842,9 @@ std::string SettingsActivity::settingValueText(const SettingInfo& setting) {
 
 void SettingsActivity::buildScreen(UiScreen& screen) {
   pixelui::FontScope fonts(uiTarget, renderer, I18N.getLanguage() != Language::EN);
-  uiTarget.setFont(0, UI_12_FONT_ID);
-  uiTarget.setFont(4, UI_10_FONT_ID);
+  const bool pixel = toybox::interfaceFontStyle() == menufont::Style::Pixel;
+  uiTarget.setFont(0, pixel ? UI_12_FONT_ID : toybox::kButtonFontId);
+  uiTarget.setFont(4, pixel ? UI_10_FONT_ID : toybox::kLibraryFontId);
   const int hints = mappedInput.hasTouch() ? 0 : UITheme::getInstance().getMetrics().buttonHintsHeight;
   pixelui::begin(screen, hints);
   // rowItems_ (label/actionValue) was built by rebuildRowItems() when the
@@ -861,7 +885,7 @@ void SettingsActivity::buildScreen(UiScreen& screen) {
   props.rtl =
       (I18N.getLanguage() == Language::AR || I18N.getLanguage() == Language::FA || I18N.getLanguage() == Language::HE);
   syncTabListViewport(screen, props);
-  pixelui::list(screen, props, categoryHome, !categoryHome, pixelui::kBorder, true);
+  pixelui::list(screen, props, false, true, pixelui::kBorder, true);
 }
 
 void SettingsActivity::drawChrome() {

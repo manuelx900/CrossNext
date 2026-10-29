@@ -2,6 +2,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <span>
 
 #include "apps_local/Shelf.h"
 #include "apps_local/ui/PixelMenuTheme.h"
@@ -17,14 +18,65 @@ const shelf::Item* shortcutAt(int index) {
   return nullptr;
 }
 }  // namespace
+void HomeButtonSettingsActivity::onEnter() {
+  UiListActivity::onEnter();
+  if (binding != Binding::Home) show(Page::Actions, actionRow(SETTINGS.*actionField()));
+}
+uint8_t CrossPointSettings::* HomeButtonSettingsActivity::actionField() const {
+  switch (binding) {
+    case Binding::Home:
+      return home_button::FIELDS[gesture];
+    case Binding::SideLeft:
+      return &CrossPointSettings::sideLeftAction;
+    case Binding::SideRight:
+      return &CrossPointSettings::sideRightAction;
+  }
+  return home_button::FIELDS[0];
+}
+char* HomeButtonSettingsActivity::shortcutTarget() const {
+  switch (binding) {
+    case Binding::Home:
+      return home_button::shortcutTarget(gesture);
+    case Binding::SideLeft:
+      return SETTINGS.sideLeftShortcutTitle;
+    case Binding::SideRight:
+      return SETTINGS.sideRightShortcutTitle;
+  }
+  return home_button::shortcutTarget(0);
+}
+bool HomeButtonSettingsActivity::isShortcut() const {
+  const auto value = SETTINGS.*actionField();
+  return binding == Binding::Home ? home_button::opensShortcut(HomeButtonAction(value))
+                                  : value == uint8_t(SideButtonAction::OpenShortcut);
+}
+int HomeButtonSettingsActivity::shortcutIndex() const {
+  return binding == Binding::Home ? int(HomeButtonAction::OpenShortcut) : int(SideButtonAction::OpenShortcut);
+}
+int HomeButtonSettingsActivity::actionAt(int row) const {
+  const int count = binding == Binding::Home ? HOME_ACTION_COUNT : int(SideButtonAction::Count);
+  for (int action = 0; action < count; ++action) {
+    const bool selectable = binding == Binding::Home ? selectableHomeAction(HomeButtonAction(action))
+                                                     : selectableSideAction(SideButtonAction(action));
+    if (selectable && row-- == 0) return action;
+  }
+  return -1;
+}
+int HomeButtonSettingsActivity::actionRow(int value) const {
+  for (int row = 0; actionAt(row) >= 0; ++row)
+    if (actionAt(row) == value) return row;
+  return 0;
+}
 int HomeButtonSettingsActivity::listCount() const {
   switch (page) {
     case Page::Gestures:
       return GESTURE_COUNT + 1;
     case Page::Timing:
       return HomeButtonInput::TAP_WINDOW_COUNT;
-    case Page::Actions:
-      return ACTION_COUNT;
+    case Page::Actions: {
+      int count = 0;
+      while (actionAt(count) >= 0) ++count;
+      return count;
+    }
     case Page::Apps: {
       int count = 0;
       for (int folder = 0; folder < shelf::folderCount(); ++folder) count += shelf::folders()[folder].count;
@@ -40,6 +92,8 @@ const char* HomeButtonSettingsActivity::headerTitle() const {
     case Page::Timing:
       return tr(STR_HOME_TAP_INTERVAL);
     case Page::Actions:
+      if (binding == Binding::SideLeft) return tr(STR_SIDE_LEFT_ACTION);
+      if (binding == Binding::SideRight) return tr(STR_SIDE_RIGHT_ACTION);
       return I18N.get(home_button::GESTURE_LABELS[gesture]);
     case Page::Apps:
       return tr(STR_HOME_SHORTCUT_TARGET);
@@ -60,31 +114,40 @@ void HomeButtonSettingsActivity::onBackButton() {
       finish();
       return;
     case Page::Actions:
-      show(Page::Gestures, gesture);
+      if (binding == Binding::Home)
+        show(Page::Gestures, gesture);
+      else
+        finish();
       return;
     case Page::Apps:
-      show(Page::Actions, int(HomeButtonAction::OpenShortcut));
+      show(Page::Actions, actionRow(shortcutIndex()));
       return;
     case Page::Timing:
       show(Page::Gestures, GESTURE_COUNT);
       return;
   }
 }
-bool HomeButtonSettingsActivity::saveAction(HomeButtonAction action, const char* target) {
-  auto& stored = SETTINGS.*home_button::FIELDS[gesture];
+bool HomeButtonSettingsActivity::saveAction(uint8_t action, const char* target) {
+  auto& stored = SETTINGS.*actionField();
   const auto previous = stored;
   char oldTarget[40];
-  std::snprintf(oldTarget, sizeof(oldTarget), "%s", home_button::shortcutTarget(gesture));
-  stored = uint8_t(action);
-  if (target) std::snprintf(home_button::shortcutTarget(gesture), sizeof(oldTarget), "%s", target);
-  saveFailed = !SETTINGS.saveToFile();
-  if (saveFailed) {
-    stored = previous;
-    std::snprintf(home_button::shortcutTarget(gesture), sizeof(oldTarget), "%s", oldTarget);
-    requestUpdate();
-    return false;
+  std::snprintf(oldTarget, sizeof(oldTarget), "%s", shortcutTarget());
+  if (previous != action || (target && std::strcmp(oldTarget, target))) {
+    stored = action;
+    if (target) std::snprintf(shortcutTarget(), sizeof(oldTarget), "%s", target);
+    saveFailed = !SETTINGS.saveToFile();
+    if (saveFailed) {
+      stored = previous;
+      std::snprintf(shortcutTarget(), sizeof(oldTarget), "%s", oldTarget);
+      requestUpdate();
+      return false;
+    }
   }
-  show(Page::Gestures, gesture);
+  saveFailed = false;
+  if (binding == Binding::Home)
+    show(Page::Gestures, gesture);
+  else
+    show(Page::Actions, actionRow(action));
   return true;
 }
 void HomeButtonSettingsActivity::activateIndex(int index) {
@@ -98,24 +161,27 @@ void HomeButtonSettingsActivity::activateIndex(int index) {
         return;
       }
       gesture = index;
-      const auto action = HomeButtonAction(SETTINGS.*home_button::FIELDS[gesture]);
-      show(Page::Actions, home_button::opensShortcut(action) ? int(HomeButtonAction::OpenShortcut) : int(action));
+      show(Page::Actions, actionRow(isShortcut() ? shortcutIndex() : SETTINGS.*actionField()));
       return;
     }
     case Page::Actions:
-      if (index == int(HomeButtonAction::OpenShortcut)) {
+      if (actionAt(index) == shortcutIndex()) {
         int selected = 0;
         for (int n = 0; const auto* item = shortcutAt(n); ++n)
-          if (!std::strcmp(item->title, home_button::shortcutTarget(gesture))) {
+          if (!std::strcmp(item->title, shortcutTarget())) {
             selected = n;
             break;
           }
         show(Page::Apps, selected);
       } else
-        saveAction(HomeButtonAction(index));
+        saveAction(uint8_t(actionAt(index)));
       return;
     case Page::Apps:
-      if (const auto* item = shortcutAt(index)) saveAction(home_button::shortcutAction(gesture), item->title);
+      if (const auto* item = shortcutAt(index)) {
+        const uint8_t action = binding == Binding::Home ? uint8_t(home_button::shortcutAction(gesture))
+                                                        : uint8_t(SideButtonAction::OpenShortcut);
+        saveAction(action, item->title);
+      }
       return;
     case Page::Timing: {
       const auto previous = SETTINGS.homeButtonDoubleTapTiming;
@@ -142,6 +208,18 @@ void HomeButtonSettingsActivity::buildScreen(UiScreen& screen) {
   pixelui::FontScope fonts(uiTarget, renderer, I18N.getLanguage() != Language::EN);
   useCompactSettingsRows();
   pixelui::begin(screen, saveFailed ? 52 : 0);
+  if (binding != Binding::Home && page == Page::Actions) {
+    const auto body = screen.body();
+    const int helpH = screen.device().width > screen.device().height ? 52 : 80;
+    fui::TextStyle help;
+    help.font = 4;
+    help.maxLines = 3;
+    screen.target().text(fui::makeRect(body.x + 8, body.y + 4, body.width - 16, helpH - 12), tr(STR_SIDE_ACTION_HELP),
+                         help);
+    screen.setContentMarginAbsolute(fui::Insets{static_cast<int16_t>(body.y + helpH),
+                                                static_cast<int16_t>(screen.device().width - body.right()),
+                                                static_cast<int16_t>(screen.device().height - body.bottom()), body.x});
+  }
   fui::ListProps props;
   if (page == Page::Apps) {
     props.rowProvider = &HomeButtonSettingsActivity::shortcutRow;
@@ -170,12 +248,18 @@ void HomeButtonSettingsActivity::buildScreen(UiScreen& screen) {
                       home_button::ACTION_LABELS[unsigned(action) < unsigned(HomeButtonAction::Count) ? unsigned(action)
                                                                                                       : 0]);
       } else {
-        const auto current = HomeButtonAction(SETTINGS.*home_button::FIELDS[gesture]);
-        rows[i].label = I18N.get(home_button::ACTION_LABELS[i]);
-        rows[i].toggleChecked =
-            home_button::opensShortcut(current) ? i == int(HomeButtonAction::OpenShortcut) : i == int(current);
-        if (i == int(HomeButtonAction::OpenShortcut))
-          rows[i].subtitle = shelf::label(home_button::shortcutTarget(gesture));
+        const auto current = SETTINGS.*actionField();
+        const auto labels = binding == Binding::Home ? std::span<const StrId>(home_button::ACTION_LABELS)
+                                                     : std::span<const StrId>(side_button::LABELS);
+        const int action = actionAt(i);
+        rows[i].label = I18N.get(labels[action]);
+        rows[i].toggle = binding != Binding::Home;
+        rows[i].toggleChecked = isShortcut() ? action == shortcutIndex() : action == int(current);
+        if (action == shortcutIndex())
+          rows[i].subtitle = shelf::label(shortcutTarget());
+        else if (readerHomeAction(binding == Binding::Home ? HomeButtonAction(action)
+                                                           : sideHomeAction(SideButtonAction(action))))
+          rows[i].subtitle = tr(STR_BUTTON_READER_ONLY);
       }
     }
     props.items = rows;

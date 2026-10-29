@@ -64,7 +64,7 @@ inline void prose(toybox::Screen& screen, fui::Rect rect, const char* value,
   rect.height = std::max(int(rect.height), int(screen.target().lineHeight(4)) * lines);
   screen.target().text(rect, value, style);
 }
-inline void frame(toybox::Screen& s, fui::Rect r, int weight = 3) { s.target().stroke(r, ink, weight); }
+inline void frame(toybox::Screen& s, fui::Rect r, int weight = pixelui::kBorder) { s.target().stroke(r, ink, weight); }
 inline void icon(toybox::Screen& s, fui::Rect r, const freeink::Icon& value, bool inverse = false) {
   s.target().bitmap(r, fui::bitmapFromIcon(value), fui::BitmapMode::Contain, inverse ? paper : ink);
 }
@@ -97,7 +97,7 @@ inline void check(toybox::Screen& s, fui::Rect r, bool checked) {
     s.target().fill(r, ink);
     icon(s, r.inset(fui::Insets{5, 5, 5, 5}), extra_check_32, true);
   } else
-    frame(s, r, 3);
+    frame(s, r, pixelui::kBorder);
 }
 inline void digits(toybox::Screen& s, fui::Rect r, const char* value, bool inverse = false) {
   numerals::draw(s.target(), r, value, inverse ? fui::Color::White : fui::Color::Black);

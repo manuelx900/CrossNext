@@ -49,15 +49,14 @@ uint8_t percentFromPermille(const int16_t permille) {
 }  // namespace
 
 FrontlightPanelActivity::FrontlightPanelActivity(GfxRenderer& renderer, MappedInputManager& mappedInput)
-    : Activity("FrontlightPanel", renderer, mappedInput), UiAppHost(renderer) {}
+    : Activity("FrontlightPanel", renderer, mappedInput), UiAppHost(renderer) {
+  setInterfaceFontSection(menufont::Section::Controls);
+}
 
 void FrontlightPanelActivity::onEnter() {
   Activity::onEnter();
 
-  brightness = std::max(MIN_BRIGHTNESS, Frontlight.brightness());
-  warmth = Frontlight.warmth();
-  rememberedWarmth = warmth ? warmth : std::clamp<int>(SETTINGS.frontlightWarmthMemory, 1, 100);
-  lightOn = Frontlight.isOn() && brightness > 0;
+  syncLightState(true);
   lightOnChanged = false;
 
   resetUi();
@@ -70,7 +69,17 @@ void FrontlightPanelActivity::onEnter() {
   requestUpdate();
 }
 
+void FrontlightPanelActivity::syncLightState(const bool useSavedWarmth) {
+  if (useSavedWarmth) rememberedWarmth = std::clamp<int>(SETTINGS.frontlightWarmthMemory, 1, 100);
+  brightness = std::max(MIN_BRIGHTNESS, Frontlight.brightness());
+  warmth = Frontlight.warmth();
+  if (warmth) rememberedWarmth = warmth;
+  lightOn = Frontlight.isOn() && brightness > 0;
+}
+
 void FrontlightPanelActivity::persistLightSettings() {
+  // Global actions and nested panels can change the light while Wi-Fi owns input.
+  syncLightState(suspendedForWifi);
   // brightness/warmth are always restored unconditionally on boot (see
   // main.cpp), so they never diverge from SETTINGS at onEnter() — comparing
   // against SETTINGS here only fires on a genuine user change. lightOn has
@@ -152,7 +161,9 @@ void FrontlightPanelActivity::runTile(const int idx) {
       close();
       break;
     case quickui::Shortcut::Rotate:
-      SETTINGS.orientation = rotation::pair(int(renderer.getOrientation()), SETTINGS.rotationDirection != 0);
+      SETTINGS.orientation =
+          rotation::readerNext(int(renderer.getOrientation()), SETTINGS.rotationDirection != 0,
+                               SETTINGS.readerFourOrientations && activityManager.isReaderActivity());
       SETTINGS.saveToFile();
       {
         RenderLock lock;
@@ -173,9 +184,15 @@ void FrontlightPanelActivity::runTile(const int idx) {
     case quickui::Shortcut::Wifi:
       persistLightSettings();
       if (auto next =
-              makeUniqueNoThrow<WifiSelectionActivity>(renderer, mappedInput, false, WifiSelectionPurpose::Manage))
-        startActivityForResult(std::move(next), [this](const ActivityResult&) { requestUpdate(); });
-      else
+              makeUniqueNoThrow<WifiSelectionActivity>(renderer, mappedInput, false, WifiSelectionPurpose::Manage)) {
+        suspendedForWifi = true;
+        startActivityForResult(std::move(next), [this](const ActivityResult&) {
+          RenderLock lock;
+          syncLightState(true);
+          suspendedForWifi = false;
+          requestUpdate();
+        });
+      } else
         LOG_ERR("QUICK", "OOM: Wi-Fi selection");
       break;
     case quickui::Shortcut::Lock:
@@ -263,6 +280,16 @@ bool FrontlightPanelActivity::handleHomeGesture() {
 }
 
 void FrontlightPanelActivity::loop() {
+  if (mappedInput.sideButtonAction() == SideButtonAction::ToggleWarmth ||
+      mappedInput.homeButtonAction() == HomeButtonAction::ToggleFrontlight) {
+    RenderLock lock;
+    if (mappedInput.sideButtonAction() == SideButtonAction::ToggleWarmth)
+      toggleWarmth();
+    else
+      toggleLight();
+    persistLightSettings();
+    return;
+  }
   const auto touch = routeTouch(mappedInput, false, /*routeHeld=*/true);
   if (touch.routed) {
     if (app.invalidated()) requestUpdate();

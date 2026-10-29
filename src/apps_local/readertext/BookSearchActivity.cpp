@@ -246,7 +246,7 @@ void BookSearchActivity::buildScreen(UiScreen& screen) {
   searchButton = {};
   searchButton.label = tr(STR_READER_SEARCH_AGAIN);
   searchButton.action = searching ? fui::NO_ACTION : ACTION_USER;
-  searchButton.styles = pixelui::rowStyles();
+  searchButton.styles = pixelui::buttonStyles();
   searchButton.text.font = pixelui::kSmall;
   searchButton.text.align = fui::TextAlign::Center;
   searchButton.minTouchSize = 0;

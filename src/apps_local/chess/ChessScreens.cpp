@@ -184,7 +184,7 @@ BoardLayout boardLayout(const fui::DeviceContext& device) {
 fui::Rect buildBoardChrome(toybox::Screen& screen, const BoardModel& model) {
   frontdoor::begin(screen, tr(STR_UI_CHESS_902609));
   const auto g = boardLayout(screen.device());
-  dashboard::frame(screen, g.status, 3);
+  dashboard::frame(screen, g.status, pixelui::kBorder);
   const int tail = std::min(108, int(g.status.width) / 3);
   caps(screen, fui::makeRect(g.status.x + 10, g.status.y, g.status.width - tail - 18, g.status.height), model.status, 0,
        1);
@@ -201,14 +201,14 @@ fui::Rect buildBoardChrome(toybox::Screen& screen, const BoardModel& model) {
     fittext::draw(screen.target(), fui::makeRect(g.board.x + n * g.cell, g.board.bottom() + 3, g.cell, 24), file, 3, 1,
                   fui::TextAlign::Center);
   }
-  dashboard::frame(screen, g.lastMove, 3);
+  dashboard::frame(screen, g.lastMove, pixelui::kBorder);
   const int left = g.lastMove.width / 2;
   caps(screen, fui::makeRect(g.lastMove.x + 8, g.lastMove.y, left - 12, 48), tr(STR_CHESS_LAST_MOVE), 0, 1);
   fittext::draw(screen.target(), fui::makeRect(g.lastMove.x + left, g.lastMove.y, g.lastMove.width - left, 48),
                 model.lastMove, 1, 1, fui::TextAlign::Center);
   screen.target().line({int16_t(g.lastMove.x + left), int16_t(g.lastMove.y + 8)},
                        {int16_t(g.lastMove.x + left), int16_t(g.lastMove.bottom() - 8)}, 2, dashboard::ink);
-  dashboard::frame(screen, g.losses, 3);
+  dashboard::frame(screen, g.losses, pixelui::kBorder);
   caps(screen, fui::makeRect(g.losses.x + 8, g.losses.y, g.losses.width - 16, 30), tr(STR_CHESS_LOST_PIECES), 0, 1);
   static constexpr int types[] = {chess::Pawn, chess::Knight, chess::Rook, chess::Bishop, chess::Queen};
   const int labelWidth = std::min(90, int(g.losses.width) / 4), stride = (g.losses.width - labelWidth) / 5;

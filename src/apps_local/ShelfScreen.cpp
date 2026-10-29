@@ -145,6 +145,7 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
   props.selectedIndex = static_cast<int16_t>(model.selected < 0 ? -1 : std::min(model.count - 1, model.selected));
   props.action = choosing ? ActionToggleShown : ActionOpen;
   props.labelText.maxLines = 1;
+  props.labelText.bold = false;
   props.toggleCheckbox = true;
   props.toggleWidth = props.toggleHeight = 32;
   props.scrollIndicator = false;

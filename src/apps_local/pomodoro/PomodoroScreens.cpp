@@ -41,7 +41,7 @@ void button(toybox::Screen& screen, Work& work, fui::Rect box, const char* label
             bool checked = false) {
   work.button = {};
   auto& p = work.button;
-  p.styles = pixelui::rowStyles();
+  p.styles = pixelui::buttonStyles();
   p.label = label;
   p.text.font = pixelui::kSmall;
   p.text.align = fui::TextAlign::Center;
@@ -142,7 +142,7 @@ void build(toybox::Screen& screen, const Model& model, Work& work) {
     const int right = stageLeft + stageWidth * (n + 1) / visibleStages;
     const auto cell = fui::makeRect(left, previous.y, right - left, previous.height);
     work.button = {};
-    work.button.styles = pixelui::rowStyles();
+    work.button.styles = pixelui::buttonStyles();
     work.button.borderEdges = fui::EdgesNone;
     work.button.label = nullptr;
     work.button.text.font = 3;
@@ -176,7 +176,7 @@ void build(toybox::Screen& screen, const Model& model, Work& work) {
   body.height -= timelineH + 12;
   const auto timer = wide ? fui::makeRect(body.x, body.y, body.width - 244, body.height)
                           : fui::makeRect(body.x, body.y, body.width, body.height - 238);
-  dashboard::frame(screen, timer, 4);
+  dashboard::frame(screen, timer, pixelui::kBorder);
   dashboard::text(screen, fui::makeRect(timer.x + 8, timer.y + 8, timer.width - 16, 40), phaseName(s.phase), 2);
   std::snprintf(work.label, sizeof(work.label), tr(STR_POMO_SESSION), int(s.stage / 2 + 1));
   dashboard::text(screen, fui::makeRect(timer.x + 8, timer.y + 48, timer.width - 16, 30), work.label, 3);

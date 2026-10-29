@@ -239,7 +239,7 @@ void drawClueNumber(toybox::Screen& screen, const fui::Rect& box, const int valu
     if (chipHalfW > 0 && chipHalfH > 0) drawDoneChip(screen, cx, cy, chipHalfW, chipHalfH);
   }
 
-  screen.target().text(toybox::inkCentred(box, cm.cut), text, style);
+  screen.target().text(toybox::inkCentred(screen.target(), box, style), text, style);
 
   if (crossOut && chipHalfW > 0 && chipHalfH > 0) {
     // Square the reach so the angle is the same on every clue, and keep it a
@@ -328,7 +328,7 @@ void drawGrid(toybox::Screen& screen, const picross::Board& board, const Layout&
 }
 
 // Physical-button tool: FILL or MARK, also selected by the side keys.
-// Touch gestures keep their fixed tap-to-fill and hold-to-mark meanings.
+// A short tap uses the selected tool; holding always marks an empty cell.
 void drawModeToggle(toybox::Screen& screen, const fui::Rect& row, int mode) {
   for (int n = 0; n < 2; ++n) {
     const auto r = fui::makeRect(row.x + n * row.width / 2, row.y, row.width / 2, row.height);
@@ -336,7 +336,7 @@ void drawModeToggle(toybox::Screen& screen, const fui::Rect& row, int mode) {
     if (active)
       screen.target().fill(r, dashboard::ink);
     else
-      dashboard::frame(screen, r, 3);
+      dashboard::frame(screen, r, pixelui::kBorder);
     const auto paint = active ? dashboard::paper : dashboard::ink;
     const auto box = fui::makeRect(r.x + 12, r.y + (r.height - 24) / 2, 24, 24);
     if (n == 0)
@@ -829,7 +829,7 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model, PickerLayout& lay
   char label[80];
   std::snprintf(label, sizeof(label), tr(STR_GUIDE_PICROSS_SOLVED), model.solvedCount, model.total);
   const auto tally = fui::makeRect(left.x + left.width / 10, left.y + 4, left.width * 8 / 10, 50);
-  dashboard::frame(screen, tally, 3);
+  dashboard::frame(screen, tally, pixelui::kBorder);
   dashboard::icon(screen, fui::makeRect(tally.x + 12, tally.y + 10, 30, 30), extra_check_32);
   dashboard::text(screen, fui::makeRect(tally.x + 52, tally.y, tally.width - 62, tally.height), label, 0);
   const auto& puzzle = picross::kPuzzles[std::clamp(model.selectedIndex, 0, picross::kPuzzleCount - 1)];
@@ -867,7 +867,7 @@ void buildSizes(toybox::Screen& screen, const MenuModel& model) {
     if (active)
       screen.target().fill(box, dashboard::ink);
     else
-      dashboard::frame(screen, box, 3);
+      dashboard::frame(screen, box, pixelui::kBorder);
     guideui::grid(screen, fui::makeRect(box.x + 16, box.y + 14, 72, h - 28), groups.size[n], active, true);
     char label[40];
     std::snprintf(label, sizeof(label), "%d x %d", groups.size[n], groups.size[n]);
@@ -893,7 +893,7 @@ void buildHelp(toybox::Screen& screen, int page) {
   pageui::build(screen, screen.takeBottom(48, 12), page + 1, 4, ActionHelpPage, -1, ActionHelpPage, 1);
   const auto body = screen.body();
   const bool wide = body.width > body.height;
-  dashboard::frame(screen, body, 3);
+  dashboard::frame(screen, body, pixelui::kBorder);
   const int pad = 14;
   guideui::badge(screen, fui::makeRect(body.x + pad, body.y + pad, 38, 38), page + 1);
   static constexpr StrId titles[] = {StrId::STR_PICROSS_READ_CLUES, StrId::STR_PICROSS_LEAVE_GAP,
@@ -911,7 +911,7 @@ void buildHelp(toybox::Screen& screen, int page) {
     dashboard::text(screen, fui::makeRect(demo.x, demo.bottom() + 10, demo.width, wide ? 28 : 36),
                     page == 0 ? tr(STR_GUIDE_PICROSS_THREE) : tr(STR_GUIDE_PICROSS_TWO), 0);
     const auto notice = fui::makeRect(content.x, content.bottom() - (wide ? 36 : 64), content.width, wide ? 36 : 64);
-    dashboard::frame(screen, notice, 3);
+    dashboard::frame(screen, notice, pixelui::kBorder);
     dashboard::text(screen, notice.inset(fui::Insets{8, 8, 8, 8}),
                     page == 0 ? tr(STR_GUIDE_PICROSS_ORDER) : tr(STR_GUIDE_PICROSS_X), 0);
   } else if (page == 2) {
@@ -924,13 +924,13 @@ void buildHelp(toybox::Screen& screen, int page) {
       const int side = std::max(24, std::min(64, wide ? 56 : h - 32));
       const int artX = wide ? row.x + (row.width - side) / 2 : row.x + 30;
       const auto box = fui::makeRect(artX, row.y + 4, side, side);
-      dashboard::frame(screen, box, 3);
+      dashboard::frame(screen, box, pixelui::kBorder);
       if (n == 0)
         screen.target().fill(box.inset(fui::Insets{7, 7, 7, 7}), dashboard::ink);
       else if (n == 1)
         drawX(screen, box, fui::Color::Black);
       else
-        dashboard::frame(screen, box.inset(fui::Insets{6, 6, 6, 6}), 3);
+        dashboard::frame(screen, box.inset(fui::Insets{6, 6, 6, 6}), pixelui::kBorder);
       dashboard::text(screen, fui::makeRect(wide ? row.x : row.x, row.y + side + 8, wide ? row.width : 120, 24),
                       I18N.get(names[n]), 3);
       const auto desc = wide ? fui::makeRect(row.x + 8, row.y + side + 36, row.width - 16, row.height - side - 36)
@@ -973,7 +973,7 @@ void buildWin(toybox::Screen& screen, const WinModel& model) {
     back.value = ButtonPuzzles;
     back.text = toybox::buttonText(screen.theme());
     back.radius = 0;
-    back.styles = toybox::rowStyles();
+    back.styles = toybox::buttonStyles();
     screen.button(
         back, fui::makeRect(static_cast<int16_t>(actions.x + half + toybox::kGutter), actions.y, half, actions.height));
   }
@@ -990,7 +990,7 @@ void buildWin(toybox::Screen& screen, const WinModel& model) {
   fui::TextStyle gradeStyle;
   gradeStyle.font = toybox::kUiFont;
   gradeStyle.align = fui::TextAlign::Center;
-  screen.target().text(toybox::inkCentred(gradeBand, toybox::kUiCut), grade, gradeStyle);
+  screen.target().text(toybox::inkCentred(screen.target(), gradeBand, gradeStyle), grade, gradeStyle);
 
   // NO DESIGNER CREDIT HERE, AND THERE IS NOBODY TO CREDIT.
   //
@@ -1022,7 +1022,7 @@ void buildWin(toybox::Screen& screen, const WinModel& model) {
     nameStyle.font = toybox::kDisplayFont;
     nameStyle.align = fui::TextAlign::Center;
     const std::string fitted = toybox::fittedTitle(screen.target(), model.cleared->name, nameBand.width, nameStyle);
-    screen.target().text(toybox::inkCentred(nameBand, toybox::kDisplayCut), fitted.c_str(), nameStyle);
+    screen.target().text(toybox::inkCentred(screen.target(), nameBand, nameStyle), fitted.c_str(), nameStyle);
   }
 
   // The picture itself, clean, filling what is left -- the payoff.

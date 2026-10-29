@@ -70,7 +70,7 @@ void footer(Screen& screen, fui::ButtonProps& button, const Footer& layout, int 
   button.label = tr(STR_DONE);
   button.text.font = pixelui::kBody;
   button.text.align = fui::TextAlign::Center;
-  button.styles = pixelui::rowStyles();
+  button.styles = pixelui::buttonStyles();
   button.action = action;
   button.value = Done;
   button.minTouchSize = 0;

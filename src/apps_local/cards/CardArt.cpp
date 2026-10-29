@@ -85,7 +85,7 @@ void drawCardFace(toybox::Screen& screen, const fui::Rect& rect, const uint8_t c
   // Both corners now take the same inset, so they cannot drift apart again,
   // and it is the radius: the index starts where the rounded corner stops
   // curving.
-  target.text(toybox::inkCentred(fui::makeRect(rect.x + 9, rect.y + kIndexInset, 40, 28), toybox::kUiCut),
+  target.text(toybox::inkCentred(target, fui::makeRect(rect.x + 9, rect.y + kIndexInset, 40, 28), rankStyle),
               c::rankLabel(c::rankOf(card)), rankStyle);
 
   if (fan == Fan::Sideways) {

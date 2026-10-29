@@ -173,8 +173,9 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
   } else {
     snprintf(headline, sizeof(headline), "NO ARCHIVE");
   }
-  screen.target().text(toybox::inkCentred(bands.headline, toybox::kDisplayCut), headline,
-                       onPaper(screen.theme().titleText, fui::TextAlign::Left));
+  screen.target().text(
+      toybox::inkCentred(screen.target(), bands.headline, onPaper(screen.theme().titleText, fui::TextAlign::Left)),
+      headline, onPaper(screen.theme().titleText, fui::TextAlign::Left));
 
   // Short enough to FIT. "The archive, one download away" overflowed this band
   // and truncated to "The archive, one download aw" -- with no ellipsis, because
@@ -207,8 +208,10 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
   }
   // The reading cut for an all-caps count line: safe for inkCentred, which the
   // mixed-case title above it is not.
-  screen.target().text(model.hasArchive ? toybox::inkCentred(bands.record, toybox::kReadingCut) : bands.record, record,
-                       onPaper(screen.theme().smallText, fui::TextAlign::Left));
+  screen.target().text(model.hasArchive ? toybox::inkCentred(screen.target(), bands.record,
+                                                             onPaper(screen.theme().smallText, fui::TextAlign::Left))
+                                        : bands.record,
+                       record, onPaper(screen.theme().smallText, fui::TextAlign::Left));
 
   // The mosaic band is left for the Activity, which draws it from the index.
 

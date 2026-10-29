@@ -14,7 +14,7 @@ namespace pixelui {
 namespace fui = freeink::ui;
 constexpr int kMargin = 10;
 constexpr int kRowHeight = 66;
-constexpr int kBorder = 4;
+constexpr int kBorder = 2;
 constexpr int kPageHeight = 44;
 constexpr int kPageReserve = kPageHeight + 16;
 constexpr fui::FontId kSmall = 0, kBody = 1, kTitle = 2;
@@ -44,8 +44,9 @@ struct Header {
 void header(toybox::Screen& screen, Header model);
 void header(fui::DrawTarget& target, const fui::DeviceContext& device, const Header& model);
 void text(fui::DrawTarget& target, fui::Rect box, const char* label, fui::FontId font = kBody,
-          fui::Color color = fui::Color::Black, fui::TextAlign align = fui::TextAlign::Left);
+          fui::Color color = fui::Color::Black, fui::TextAlign align = fui::TextAlign::Left, bool emphasis = false);
 fui::StyleSet rowStyles();
+fui::StyleSet buttonStyles();
 void styleList(fui::ListProps& props, bool dense = false);
 fui::Rect rowArea(fui::Rect band, const fui::ListProps& props);
 void fitLabel(const fui::DrawTarget& target, char* text, int width, fui::TextStyle& style);

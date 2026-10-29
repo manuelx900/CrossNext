@@ -21,15 +21,15 @@ inline int overlap(fui::Rect a, fui::Rect b) {
 }
 inline fui::Rect roomBounds(fui::Rect area, fui::Rect subject, const fui::Rect* obstacles, unsigned count) {
   const int side = std::min(
-      {int(area.width), int(area.height), std::clamp(std::min(int(area.width) / 8, int(area.height) / 4), 36, 56)});
+      {int(area.width), int(area.height), std::clamp(std::min(int(area.width) / 10, int(area.height) / 5), 28, 42)});
   fui::Rect best{};
   int bestScore = INT32_MAX;
   for (unsigned candidate = 0; candidate < 4; ++candidate) {
-    const int x = candidate == 0   ? subject.right() + 8
-                  : candidate == 1 ? subject.right() - side / 3
+    const int x = candidate == 0   ? subject.right() - side
+                  : candidate == 1 ? subject.right() + 2
                   : candidate == 2 ? subject.x + (subject.width - side) / 2
-                                   : subject.x - side - 8;
-    const int y = candidate == 0 || candidate == 3 ? subject.y - side / 2 : subject.y - side - 8;
+                                   : subject.x - side - 2;
+    const int y = candidate == 0 || candidate == 2 ? subject.y - side - 2 : subject.y - side / 3;
     const auto box = fui::makeRect(std::clamp(x, int(area.x), int(area.right()) - side),
                                    std::clamp(y, int(area.y), int(area.bottom()) - side), side, side);
     int score = overlap(box, subject) * 8;

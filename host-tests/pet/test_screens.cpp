@@ -132,9 +132,9 @@ struct Target : fui::DrawTarget {
     backend.fill(r, p, radius, corners);
   }
   void stroke(fui::Rect r, fui::Paint p, uint8_t w, uint8_t radius = 0, uint8_t corners = fui::CornersAll) override {
-    if (watchDashboardCards && w == 1 && r.width < 180 && r.height >= 132 && metricFrameCount < 4)
+    if (watchDashboardCards && w == 1 && r.width < 180 && r.height >= 90 && metricFrameCount < 4)
       metricFrames[metricFrameCount++] = r;
-    if (watchReadingRules && r.x > width / 2 - 20 && r.height > 150) readingCard = r;
+    if (watchReadingRules && r.x > width / 3 && r.height > 150) readingCard = r;
     backend.stroke(r, p, w, radius, corners);
   }
   void line(fui::Point a, fui::Point b, uint8_t w, fui::Paint p) override { backend.line(a, b, w, p); }
@@ -148,18 +148,27 @@ struct Target : fui::DrawTarget {
     backend.bitmap(r, ref, mode, p, rotation);
   }
   void text(fui::Rect r, const char* value, fui::TextStyle st) override {
+    if ((!std::strcmp(view, "needs-guide") || !std::strcmp(view, "rules-guide")) && st.maxLines == 8)
+      CHECK(st.font == 4 && !st.bold);
     if (watchStageLabels) {
       for (unsigned age = 0; age < 5; ++age) {
         if (std::strcmp(value, petui::stageName(pet::Stage(age)))) continue;
         ++stageLabels;
-        CHECK(st.maxLines == 1);
-        CHECK(measureText(st.font, value, st).width <= r.width);
+        CHECK(st.maxLines >= 1 && st.maxLines <= 2);
         unsigned lines = 0;
+        std::string restored;
+        restored.reserve(std::strlen(value));
         fui::layoutText(*this, r, value, st, [&](const char* run, fui::Rect) {
           ++lines;
-          CHECK(!std::strcmp(run, value));
+          for (const char* ch = run; *ch; ++ch)
+            if (*ch != ' ' && *ch != '\n') restored.push_back(*ch);
         });
-        CHECK(lines == 1);
+        std::string expected;
+        expected.reserve(std::strlen(value));
+        for (const char* ch = value; *ch; ++ch)
+          if (*ch != ' ' && *ch != '\n') expected.push_back(*ch);
+        CHECK(restored == expected && lines >= 1 && lines <= 2);
+        if (I18N.getLanguage() == Language::ES && age == 1) CHECK(lines == 2);
       }
     }
     if (watchReadingRules &&
@@ -171,11 +180,13 @@ struct Target : fui::DrawTarget {
     }
     if (expectedFullText && !std::strcmp(value, expectedFullText)) expectedFullTextSeen = true;
     if (expectedRegularText && !std::strcmp(value, expectedRegularText)) {
-      CHECK(st.font == 4);
+      bool stageLabel = false;
+      for (unsigned age = 0; age < 5; ++age) stageLabel |= !std::strcmp(value, petui::stageName(pet::Stage(age)));
+      CHECK(st.font == 4 || (stageLabel && st.font == 3));
       regularTextSeen = true;
     }
     if (expectedEmphasizedText && !std::strcmp(value, expectedEmphasizedText)) {
-      CHECK(st.font == 0 || st.font == 3);
+      CHECK(st.bold || st.font == 0 || st.font == 3);
       emphasizedTextSeen = true;
     }
     if (expectedFocusName && !std::strcmp(expectedFocusName, value) && st.color == fui::Color::White)
@@ -205,7 +216,9 @@ struct Target : fui::DrawTarget {
         else
           remaining += length;
       }
-      const bool fits = line.bottom() <= r.bottom() && !std::strstr(run, "…") && !std::strstr(run, "...");
+      const bool clippedCardName = clipRect().width < width && clipRect().height < 100 && st.font <= 1;
+      const bool fits =
+          line.bottom() <= r.bottom() && (clippedCardName || (!std::strstr(run, "…") && !std::strstr(run, "...")));
       if (!fits && failures < 140)
         std::printf("TEXT %s %dx%d [%d,%d %dx%d f%d] %s => %s\n", view, width, height, r.x, r.y, r.width, r.height,
                     int(st.font), value, run);
@@ -1286,8 +1299,9 @@ static void consistencyScreens() {
   const auto room = fui::makeRect(0, 0, 432, 216), subject = fui::makeRect(190, 80, 100, 110);
   const fui::Rect window = fui::makeRect(350, 18, 62, 54);
   const auto badge = petmood::roomBounds(room, subject, &window, 1);
-  CHECK(badge.width >= 36 && badge.width <= 56);
+  CHECK(badge.width >= 28 && badge.width <= 42);
   CHECK(!petmood::overlap(badge, subject) && !petmood::overlap(badge, window));
+  CHECK(badge.bottom() == subject.y - 2 && badge.right() == subject.right());
 
   for (const auto language : {Language::EN, Language::ES}) {
     I18N.setLanguage(language);
@@ -1619,13 +1633,13 @@ static void dashboardCardDimensions() {
         c->paint(m, w);
         c->checkHits();
         CHECK(c->target.metricFrameCount == 4);
-        for (const auto frame : c->target.metricFrames) CHECK(frame.height == (wide ? 142 : 136));
+        for (const auto frame : c->target.metricFrames) CHECK(frame.height == (wide ? 108 : 136));
         fui::Rect daily{};
         for (size_t i = 0; i < c->interactions.count(); ++i) {
           const auto& hit = c->interactions.data()[i];
           if (hit.action == petui::OpenReadingInfo && hit.value == 0) daily = hit.rect;
         }
-        CHECK(!daily.empty() && daily.height == (wide ? 106 : 132));
+        CHECK(!daily.empty() && daily.height == 140);
         if (!stage) reference = daily;
         CHECK(daily.x == reference.x && daily.y == reference.y && daily.width == reference.width &&
               daily.height == reference.height);
@@ -2185,7 +2199,16 @@ void previousGenerationChecks(const char* output = nullptr) {
   }
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#include "goal-font-checks.h"
+#pragma GCC diagnostic pop
 int main(int argc, char** argv) {
+  if (argc > 1 && !std::strcmp(argv[1], "--goals-only")) {
+    goalFontChecks(argc > 2 ? argv[2] : nullptr);
+    std::printf("PET goal fonts: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
   if (argc > 1 && !std::strcmp(argv[1], "--lives-only")) {
     previousGenerationChecks(argc > 2 ? argv[2] : nullptr);
     std::printf("PET previous generations and dates: %d checks, %d failures\n", checks, failures);
@@ -3060,20 +3083,23 @@ int main(int argc, char** argv) {
         unsigned record = UINT32_MAX;
         petui::Model m;
         m.profile = &p;
-        m.sleepStep = 2;
         m.sleepArt = {&record, [](void* context, fui::DrawTarget&, fui::Rect, uint32_t id, bool) {
                         *static_cast<unsigned*>(context) = id;
                         return true;
                       }};
         petui::Work w;
-        m.view = pet::View::Dashboard;
-        c->paint(m, w);
-        const unsigned full = record;
-        CHECK(full == petsleep::fullBodyIndex(p, 2) + 1);
-        m.view = pet::View::Home;
-        m.tab = pet::Tab::Home;
-        c->paint(m, w);
-        CHECK(record == (state == 6 ? petsleep::headIndex(p) + 1 : full));
+        const unsigned full = petsleep::fullBodyIndex(p, 0) + 1;
+        for (unsigned step = 0; step < 4; ++step) {
+          m.sleepStep = uint8_t(step);
+          m.view = pet::View::Dashboard;
+          m.tab = pet::Tab::Pet;
+          c->paint(m, w);
+          CHECK(record == full);
+          m.view = pet::View::Home;
+          m.tab = pet::Tab::Home;
+          c->paint(m, w);
+          CHECK(record == (state == 6 ? petsleep::headIndex(p) + 1 : full));
+        }
       }
   for (auto lang : {Language::ES, Language::EN}) {
     I18N.setLanguage(lang);
@@ -3334,6 +3360,32 @@ int main(int argc, char** argv) {
     }
   }
   // ALBUM_CHECKS_END
+  for (auto lang : {Language::EN, Language::ES}) {
+    I18N.setLanguage(lang);
+    for (int orientation = 0; orientation < 4; ++orientation) {
+      const bool wide = orientation % 2;
+      auto c = std::make_unique<Canvas>(wide ? 800 : 480, wide ? 480 : 800);
+      c->device.orientation = fui::Orientation(orientation);
+      pet::Profile profile;
+      petui::Model model;
+      model.profile = &profile;
+      petui::Work work;
+      for (auto view : {pet::View::Info, pet::View::Rules}) {
+        model.view = view;
+        const int guidePages = view == pet::View::Info ? 2 : (wide ? 6 : 3);
+        for (int page = 0; page < guidePages; ++page) {
+          model.page = page;
+          c->target.view = view == pet::View::Info ? "needs-guide" : "rules-guide";
+          c->paint(model, work);
+          c->checkHits();
+          CHECK(work.pages == guidePages);
+          if (orientation < 2)
+            c->write(std::string(out) + "/guide-" + (lang == Language::ES ? "es-" : "en-") + std::to_string(c->width) +
+                     "-" + std::to_string(unsigned(view)) + "-" + std::to_string(page) + ".pbm");
+        }
+      }
+    }
+  }
   std::printf("PET screens: %d checks, %d failures\n", checks, failures);
   return failures ? 1 : 0;
 }

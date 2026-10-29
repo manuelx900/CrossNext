@@ -63,7 +63,7 @@ void label(toybox::Screen& screen, const fui::Rect& box, const char* text, fui::
            const toybox::CutMetrics& cut, fui::TextAlign align, fui::Color colour = fui::Color::Black) {
   const fui::TextStyle s = style(font, align, colour);
   if (screen.target().measureText(font, text, s).width > box.width) report("a label is wider than its box", text);
-  screen.target().text(toybox::inkCentred(box, cut), text, s);
+  screen.target().text(toybox::inkCentred(screen.target(), box, s), text, s);
 }
 
 void small(toybox::Screen& screen, const fui::Rect& box, const char* text, fui::TextAlign align,

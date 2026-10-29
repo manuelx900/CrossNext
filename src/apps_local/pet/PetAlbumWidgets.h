@@ -9,9 +9,10 @@ namespace petui {
 namespace albumwidget {
 using namespace widget;
 inline void caption(toybox::Screen& s, fui::Rect r, const char* value, int lines = 2, bool inverse = false,
-                    fui::FontId font = 4) {
+                    fui::FontId font = 4, bool emphasis = false) {
   fui::TextStyle style;
   style.font = font;
+  style.bold = emphasis;
   style.maxLines = std::max(1, std::min(lines, int(r.height) / std::max(1, int(s.target().lineHeight(font)))));
   style.align = fui::TextAlign::Center;
   style.color = inverse ? fui::Color::White : fui::Color::Black;
@@ -216,41 +217,38 @@ inline void stages(toybox::Screen& s, const Model& m, fui::Rect r) {
   text(s, rect(r.x + 10, r.y + 10, r.width - 20, 28), tr(STR_PET_LIFE_STAGES), 0);
   const auto row = rect(r.x + 8, r.y + 42, r.width - 16, r.height - 50);
   const unsigned current = unsigned(pet::stage(m.profile->readingSeconds));
-  fui::FontId fonts[5] = {4, 4, 4, 4, 4};
-  fonts[current] = 0;
-  int widths[5]{}, total = 0;
-  constexpr int gap = 6;
-  const auto measure = [&]() {
-    total = gap * 4;
-    for (unsigned i = 0; i < 5; ++i) {
-      widths[i] = std::max(40, int(s.target().measureText(fonts[i], stageName(pet::Stage(i)), {}).width) + 2);
-      total += widths[i];
+  constexpr int gap = 12;
+  const int available = std::max(0, int(row.width) - gap * 4);
+  constexpr int labelH = 72;
+  fui::FontId labelFont = 4;
+  for (unsigned i = 0; i < 5 && labelFont == 4; ++i) {
+    const int width = available * int(i + 1) / 5 - available * int(i) / 5 + 10;
+    fui::TextStyle style;
+    style.font = 4;
+    style.bold = i == current;
+    const char* start = stageName(pet::Stage(i));
+    while (*start && labelFont == 4) {
+      const char* end = std::strchr(start, ' ');
+      const size_t length = end ? size_t(end - start) : std::strlen(start);
+      char word[48];
+      if (length >= sizeof(word)) {
+        labelFont = 3;
+        break;
+      }
+      std::memcpy(word, start, length);
+      word[length] = '\0';
+      if (s.target().measureText(4, word, style).width > width || s.target().lineHeight(4) * 2 > labelH) labelFont = 3;
+      start += length + (end ? 1 : 0);
     }
-  };
-  measure();
-  if (total > row.width) {
-    fonts[current] = 3;
-    measure();
   }
-  if (total > row.width) {
-    for (auto& font : fonts) font = 3;
-    measure();
-  }
-  const bool singleLine = total <= row.width;
-  if (!singleLine) {
-    const int available = std::max(0, int(row.width) - gap * 4);
-    for (unsigned i = 0; i < 5; ++i) widths[i] = available / 5 + (int(i) < available % 5 ? 1 : 0);
-    total = row.width;
-  }
-  int x = row.x;
   for (unsigned i = 0; i < 5; ++i) {
-    const int extra = std::max(0, int(row.width) - total);
-    const int width = widths[i] + extra / 5 + (int(i) < extra % 5 ? 1 : 0);
+    const int x = row.x + available * int(i) / 5 + gap * int(i);
+    const int width = available * int(i + 1) / 5 - available * int(i) / 5;
     const auto box = rect(x, row.y, width, row.height);
-    x += width + gap;
     const bool locked = i > current;
     const int imageW = std::min(72, int(box.width) - 2);
-    const auto image = rect(box.x + (box.width - imageW) / 2, box.y + 15, imageW, std::max(28, int(box.height) - 78));
+    const auto image =
+        rect(box.x + (box.width - imageW) / 2, box.y + 8, imageW, std::max(28, int(box.height) - labelH - 20));
     if (locked) {
       const auto lock = rect(image.x + (image.width - 28) / 2, image.y + std::max(0, (image.height - 56) / 2), 28, 32);
       icon(s, lock, referenceicons::LOCK);
@@ -262,8 +260,10 @@ inline void stages(toybox::Screen& s, const Model& m, fui::Rect r) {
     } else
       art(s, m, image, i ? 3 + unsigned(m.profile->species) * 16 + (i - 1) * 4 : unsigned(m.profile->species),
           speciesIcon(m.profile->species), false);
-    const auto label = rect(box.x + 1, box.bottom() - 58, box.width - 2, 58);
-    caption(s, label, stageName(pet::Stage(i)), singleLine ? 1 : 2, false, fonts[i]);
+    const auto label = rect(box.x - 5, box.bottom() - labelH, box.width + 10, labelH);
+    caption(s, label, stageName(pet::Stage(i)), 2, false, labelFont, i == current && labelFont == 4);
+    if (i == current && labelFont == 3)
+      s.target().fill(rect(label.x + label.width / 4, label.bottom() - 4, label.width / 2, 2), ink);
     if (i < 4) {
       arrowRight(s, box.right(), image.y + image.height / 2, gap);
     }

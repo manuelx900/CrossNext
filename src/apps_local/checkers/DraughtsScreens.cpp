@@ -55,7 +55,7 @@ void board(toybox::Screen& s, fui::Rect r, int size, const uint8_t* cells, int s
       toybox::ring(s, box.x + cell / 2, box.y + cell / 2, std::max(3, cell / 8), 1, fui::Color::Black,
                    fui::Color::White);
   }
-  dashboard::frame(s, r, 3);
+  dashboard::frame(s, r, pixelui::kBorder);
 }
 }  // namespace
 fui::Rect boardRect(const fui::DeviceContext& device, int size) {
@@ -94,7 +94,7 @@ void build(toybox::Screen& s, const Model& m) {
           wide ? fui::makeRect(left.right() + 20, body.y, body.right() - left.right() - 20, body.height) : body;
       const int size = rule == draughts::Rules::International ? 10 : 8;
       const auto badge = fui::makeRect(left.x, left.y, left.width, 72);
-      dashboard::frame(s, badge, 3);
+      dashboard::frame(s, badge, pixelui::kBorder);
       const int reserve = wide ? 76 : 90;
       s.target().fill(fui::makeRect(badge.right() - reserve, badge.y, 2, 44), dashboard::ink);
       s.target().fill(fui::makeRect(badge.x, badge.y + 44, badge.width, 2), dashboard::ink);
@@ -315,7 +315,7 @@ void build(toybox::Screen& s, const Model& m) {
       dashboard::text(s, fui::makeRect(side.x, side.y + 44, side.width, 28), label, 0);
       board(s, r, g.size, g.cells, review ? -1 : m.selected, review ? nullptr : m.legal, m.humanBlack);
       const auto totals = fui::makeRect(side.x, wide ? side.y + 88 : r.bottom() + 14, side.width, 46);
-      dashboard::frame(s, totals, 3);
+      dashboard::frame(s, totals, pixelui::kBorder);
       s.target().fill(fui::makeRect(totals.x + totals.width / 2, totals.y, 2, totals.height), dashboard::ink);
       for (int colour = 0; colour < 2; ++colour) {
         int count = 0;

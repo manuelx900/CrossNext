@@ -1,6 +1,6 @@
 # Interface layouts and reader fonts
 
-Settings > Appearance offers Framed and Carousel. Framed keeps the book card and divided menu, with known progress at the cover's upper right. Carousel is the former Focus layout: the most recent book centered between exactly two neighboring covers, separated reading progress and compact menu icons. The old third layout migrates to Carousel. Swipe horizontally, tap a neighboring-cover band, or use the arrows to change the selected recent book. The center opens the selected book. Carousel browses only the three most recent available books from the existing recently opened store and wraps in both directions. Other recent-book views retain their existing behavior. It never adds synthetic books or changes their order. Settings remains enabled and follows the saved Home menu order, alongside shortcuts. Settings > System > Home Menu > Reorder Menu Items changes that order. See [Settings](settings.md) for the current category menu.
+Settings > Appearance offers Framed and Carousel. Framed keeps the book card and divided menu, with known progress at the cover's upper right. Carousel is the former Focus layout: the most recent book centered between exactly two neighboring covers, separated reading progress and compact menu icons. The old third layout migrates to Carousel. Swipe horizontally, tap a neighboring-cover band, or use the arrows to change the selected recent book. The center opens the selected book. Settings > Appearance > Recent books selects how many available books both Home layouts browse, from one to ten (default three), using the existing recently opened store. Navigation wraps in both directions. Reducing this display limit does not remove books from the history or SD card. Other recent-book views retain their existing behavior. It never adds synthetic books or changes their order. Settings remains enabled and follows the saved Home menu order, alongside shortcuts. Settings > System > Home Menu > Reorder Menu Items changes that order. See [Settings](settings.md) for the current category menu.
 
 The layouts share the existing Home dashboard, input host, cover generation and one optional B/W art cache. Neighbor art is streamed one bitmap at a time. The existing fallible cache covers the carousel's art region rather than only its center cover (roughly 25 KiB at the largest supported portrait layout, orientation/region alignment dependent). Cache failure paints the art again; it does not block navigation. No animation loop, task or second continuous framebuffer is added. Physical peak heap/largest block and refresh quality still need device measurement. CrossInk's carousel and the SDK's three-slot component were evaluated; the three overlapping cover positions and streamed bitmap ownership remain in the local Home renderer.
 
@@ -150,9 +150,9 @@ and firing controls to its right. Carnivore fits multiple statements when their
 complete text fits. Wordle centers its keyboard and legend together.
 
 Habits shows six entries per page on the X4 Pro, with a compact date and progress
-area. Flashcards uses compact deck rows and orientation-dependent pagination;
-unprepared decks omit the preparation subtitle. Prepared decks keep their card
-and due counts in a smaller caption. The counter keeps a fixed numeral scale
+area. Flashcards uses larger centered deck titles without a second-line caption
+and orientation-dependent pagination. Card and due counts appear inside the
+opened deck. The counter keeps a fixed numeral scale
 through four digits and fits larger values to the display without clipping.
 
 On the device, check both rotations, page through all habits and decks, open the

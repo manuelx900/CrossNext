@@ -91,6 +91,7 @@ struct RecordingTarget : fui::DrawTarget {
   }
   void stroke(fui::Rect r, fui::Paint p, uint8_t width, uint8_t radius = 0,
               uint8_t corners = fui::CornersAll) override {
+    frames.push_back(r);
     backend.stroke(r, p, width, radius, corners);
   }
   void line(fui::Point a, fui::Point b, uint8_t w, fui::Paint p) override { backend.line(a, b, w, p); }
@@ -114,7 +115,7 @@ struct RecordingTarget : fui::DrawTarget {
   bool allowEllipsis = false;
   bool allowClippedBitmap = false;
   std::vector<Label> labels;
-  std::vector<fui::Rect> blackFills;
+  std::vector<fui::Rect> blackFills, frames;
   void text(fui::Rect box, const char* value, fui::TextStyle style) override {
     fui::layoutText(backend, box, value, style, [&](const char* run, fui::Rect line) {
       if (line.bottom() > box.bottom() || std::strstr(run, "…") || std::strstr(run, "..."))
@@ -376,11 +377,16 @@ int main(int argc, char** argv) {
       char labels[settingsui::homeCount][64];
       for (int n = 0; n < settingsui::homeCount; ++n) {
         settingsui::homeRow(n, items[n]);
+        CHECK(items[n].subtitle == nullptr || items[n].subtitle[0] == 0);
         pixelui::copyCaps(labels[n], sizeof(labels[n]), items[n].label);
         items[n].label = labels[n];
       }
       fui::ListProps p;
       settingsui::styleHome(p);
+      CHECK(!p.labelText.bold);
+      CHECK(pixelui::buttonStyles().normal.borderWidth == pixelui::kBorder);
+      CHECK(pixelui::rowStyles().normal.borderWidth == 1);
+      CHECK(pixelui::rowStyles().disabled.borderWidth == pixelui::rowStyles().normal.borderWidth);
       p.items = items;
       p.count = settingsui::homeCount;
       p.action = 1;
@@ -388,7 +394,15 @@ int main(int argc, char** argv) {
       fui::ListNav nav;
       c.screen.syncListViewport(nav, p, p.count, 1);
       c.target.allowClippedBitmap = true;
-      pixelui::list(c.screen, p, true, false, pixelui::kBorder, true);
+      pixelui::list(c.screen, p, false, true, pixelui::kBorder, true);
+      if (size.first < size.second) {
+        CHECK(!c.target.frames.empty());
+        for (size_t n = 0; n < c.interactions.count(); ++n) {
+          const auto& hit = c.interactions.data()[n];
+          if (hit.action == 1 && hit.value == settingsui::homeCount - 1)
+            CHECK(c.target.frames.back().bottom() == hit.rect.bottom());
+        }
+      }
       c.checkHits();
       if (size.first < size.second) {
         for (int n = 0; n < settingsui::homeCount; ++n) CHECK(c.has(1, n));

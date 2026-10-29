@@ -139,7 +139,7 @@ void littleGrid(toybox::Screen& s, fui::Rect r, const char* values, int selected
       digit(s, b, values[n] - '0', n == selected, cell > 50 ? 2 : cell >= 34 ? 1 : 0);
     dashboard::frame(s, b, 2);
   }
-  dashboard::frame(s, rect(x, y, cell * 3, cell * 3), 4);
+  dashboard::frame(s, rect(x, y, cell * 3, cell * 3), pixelui::kBorder);
 }
 void arrow(toybox::Screen& s, fui::Rect r) {
   const int x = r.x + r.width / 2, y = r.y + r.height / 2;
@@ -295,7 +295,7 @@ void buildBoard(toybox::Screen& s, const BoardModel& m) {
   if (!m.generating) {
     grid(s, g.grid, m.game, m.selectedCell, m.holdCell, true, m.entryTool, m.showMatches);
   } else {
-    dashboard::frame(s, g.grid, 4);
+    dashboard::frame(s, g.grid, pixelui::kBorder);
     copy(s, g.grid, tr(STR_SDK_GENERATING), 4, 2);
   }
   for (int n = 1; n <= 9; ++n) {
@@ -347,7 +347,7 @@ void buildResult(toybox::Screen& s, const ResultModel& m) {
   copy(s, rect(left.x, left.y + (wide ? 134 : 168), left.width, 42), tr(STR_SDK_SOLVED_COPY), 4, 2);
   const auto stats =
       wide ? rect(left.x, left.y + 190, left.width, left.height - 190) : rect(left.x, left.y + 226, left.width, 258);
-  dashboard::frame(s, stats, 4);
+  dashboard::frame(s, stats, pixelui::kBorder);
   const int split = stats.x + stats.width / 2, h = stats.height * 65 / 100;
   guideui::grid(s, rect(stats.x + 20, stats.y + 20, stats.width / 2 - 40, h - 38), 3);
   dashboard::icon(s, rect(stats.x + stats.width / 4 - 18, stats.y + h / 2 - 18, 36, 36), extra_check_32);

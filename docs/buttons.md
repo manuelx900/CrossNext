@@ -2,6 +2,43 @@
 
 The current per-screen behavior is documented in [Side-button navigation](button-navigation.md).
 
+## Assigning the X4 Pro side keys
+
+In **Settings > Controls > Left side button / Right side button**, each key can
+open a dedicated action screen. Keep **Navigation and page turns**, or choose
+Sleep, Toggle frontlight, Toggle warm light, Home, Reader menu, Bookmark,
+Dictionary, Save quote, Sync, Refresh, Toggle touchscreen, Next page, Footnotes,
+Confirm or Ignore. **Open game or app** opens the same installed-app catalogue
+used by Home gestures; each side key keeps its own shortcut target.
+Reader-specific actions require a compatible open book. Both keys default to
+Navigation. The new bindings and shortcut targets use the existing microSD
+settings store, independently of Home gestures.
+
+Toggle warm light restores the selected warm level and turns the light on if
+needed; the next press returns to cool light at the same brightness. It reuses
+the control center's warmth memory. These controls still work while the
+control center is open and its displayed values stay consistent.
+
+A reassigned key no longer publishes presses, holds, repeats or releases to
+page turning or menu navigation. Its configured action runs once on release.
+Choose Navigation again to restore the existing side-button layout and
+orientation mapping. These bindings do not change the Home key's tap,
+double-tap or hold settings. The navigation descriptions below apply to keys
+that retain Navigation.
+
+The Power + right-key screenshot shortcut is available only while the right
+key retains Navigation, so it cannot override a reassigned key.
+
+**Reading > Rotate in four directions** is off by default. When
+enabled, the reader's Rotate action cycles through both portrait and both
+landscape positions. The control-center Rotate tile follows this choice while
+a reader is open; outside reading it keeps the portrait/landscape pair.
+
+The reader's **Whole-book percentage** uses progress through the entire book.
+The adjacent chapter page counter is a separate display option in
+**Reading > Status bar**; hide it to show the whole-book percentage alone.
+The progress bar also has independent Book / Chapter / Hide options.
+
 In **Settings > Controls > Power button wake**, choose **Short press** (the
 default) to leave suspension with one brief Power press, or **Press and hold**
 to require holding Power through the initial boot check. This preference is
@@ -310,3 +347,11 @@ compile `lib/hal` and its latch clears in `beginFrame()` rather than
 anything an `update()` does, and a green simulator run is not evidence about
 the device's latches in either direction. The frame-by-frame checks are in
 `host-tests/pickerseam/`.
+
+
+The Home-gesture and side-button assignment menus omit Dictionary, Save quote
+and Footnotes because they need text/link context. Those tools remain in the
+reader. Previously saved bindings are still understood; choosing another action
+replaces them. Reader menu, next page, bookmark and KOReader sync are labelled
+“With a book open”. Reassigned side buttons keep their exclusive action until
+Navigation is restored; the default double-tap timing is unchanged.

@@ -18,19 +18,21 @@
 namespace homeui {
 namespace {
 constexpr fui::FontId kSmall = 0, kBody = 1, kCarouselTitle = 4;
-constexpr int kBorder = 4;
+constexpr int kBorder = 2;
 constexpr auto black = fui::Paint::solid(fui::Color::Black);
 constexpr auto white = fui::Paint::solid(fui::Color::White);
 
 void text(fui::DrawTarget& target, fui::Rect rect, const char* value, fui::FontId font, int lines = 1,
-          fui::Color color = fui::Color::Black, fui::TextAlign align = fui::TextAlign::Left, bool compact = false) {
+          fui::Color color = fui::Color::Black, fui::TextAlign align = fui::TextAlign::Left, bool compact = false,
+          bool emphasis = false) {
   fui::TextStyle style;
   style.font = font;
+  style.bold = emphasis;
   style.color = color;
   style.align = align;
   style.maxLines = static_cast<uint8_t>(std::max(1, std::min(lines, int(rect.height / target.lineHeight(font)))));
   if (compact && style.maxLines == 1 && rect.height < target.lineHeight(font))
-    if (const auto* cut = toybox::cutForLineHeight(target.lineHeight(font))) rect = toybox::inkCentred(rect, *cut);
+    rect = toybox::inkCentred(target, rect, style);
   target.text(rect, value, style);
 }
 
@@ -224,6 +226,7 @@ void drawMenuRow(fui::DrawTarget& target, const Model& model, const Layout& geom
     copyLabel(brief, sizeof(brief), model.rows[n].label);
     fui::TextStyle small;
     small.font = 3;
+    small.bold = false;
     small.maxLines = 1;
     if (target.measureText(3, brief, small).width > row.width - 4) {
       if (model.rows[n].brief[0]) copyLabel(brief, sizeof(brief), model.rows[n].brief);
@@ -235,7 +238,7 @@ void drawMenuRow(fui::DrawTarget& target, const Model& model, const Layout& geom
       brief[size - 1] = 0;
     }
     text(target, fui::makeRect(row.x + 2, art.bottom() + 10, row.width - 4, 30), brief, 3, 1, fui::Color::Black,
-         fui::TextAlign::Center);
+         fui::TextAlign::Center, false, false);
     return;
   }
   if (selected) target.fill(row, black);
@@ -246,7 +249,7 @@ void drawMenuRow(fui::DrawTarget& target, const Model& model, const Layout& geom
     icon(target, art, model.rows[n].icon, selected);
   const auto font = geometry.count == kMaxRows ? kCarouselTitle : kBody;
   text(target, fui::makeRect(row.x + 88, row.y + 4, row.width - 104, row.height - 8), model.rows[n].label, font, 1,
-       selected ? fui::Color::White : fui::Color::Black);
+       selected ? fui::Color::White : fui::Color::Black, fui::TextAlign::Left, false, false);
   if (n > 0) target.fill(fui::makeRect(row.x, row.y, row.width, kBorder), black);
   if (n == geometry.count - 1) target.fill(fui::makeRect(row.x, row.bottom() - kBorder, row.width, kBorder), black);
 }
@@ -275,7 +278,8 @@ void draw(fui::DrawTarget& target, const Model& model, const Layout& geometry) {
   if (model.showPercent) {
     char label[8];
     std::snprintf(label, sizeof(label), "%d%%", percent);
-    text(target, fui::makeRect(battery.x - 70, headerY + 8, 66, 56), label, kSmall, 1, fui::Color::White);
+    text(target, fui::makeRect(battery.x - 70, headerY + 8, 66, 56), label, kSmall, 1, fui::Color::White,
+         fui::TextAlign::Right);
   }
   if (model.style != Style::Carousel) target.stroke(geometry.card, black, kBorder);
   if (model.hasBook) {
@@ -285,13 +289,13 @@ void draw(fui::DrawTarget& target, const Model& model, const Layout& geometry) {
       for (int n = 0; n < 2; ++n) {
         const auto box = n ? geometry.next : geometry.previous;
         const auto ink = (n ? model.canNext : model.canPrevious) ? black : fui::Paint::solid(fui::Color::LightGray);
-        target.stroke(box, ink, 3);
+        target.stroke(box, ink, kBorder);
         const int cx = box.x + box.width / 2, cy = box.y + box.height / 2;
         const int direction = n ? 1 : -1;
-        target.line({int16_t(cx - direction * 5), int16_t(cy - 10)}, {int16_t(cx + direction * 5), int16_t(cy)}, 4,
-                    ink);
-        target.line({int16_t(cx + direction * 5), int16_t(cy)}, {int16_t(cx - direction * 5), int16_t(cy + 10)}, 4,
-                    ink);
+        target.line({int16_t(cx - direction * 5), int16_t(cy - 10)}, {int16_t(cx + direction * 5), int16_t(cy)},
+                    kBorder, ink);
+        target.line({int16_t(cx + direction * 5), int16_t(cy)}, {int16_t(cx - direction * 5), int16_t(cy + 10)},
+                    kBorder, ink);
       }
     }
     const bool hasAuthor = model.author[std::strspn(model.author, " \t\r\n")] != '\0';

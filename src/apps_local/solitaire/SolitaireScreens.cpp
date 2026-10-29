@@ -349,7 +349,7 @@ void buildWin(toybox::Screen& screen, const WinModel& model) {
   fui::TextStyle sub;
   sub.font = toybox::kUiFont;
   sub.align = fui::TextAlign::Center;
-  target.text(toybox::inkCentred(fui::makeRect(0, top + 70, band.width, 26), toybox::kUiCut), line, sub);
+  target.text(toybox::inkCentred(target, fui::makeRect(0, top + 70, band.width, 26), sub), line, sub);
 
   std::snprintf(line, sizeof(line), tr(STR_UI_D_CLEARED_D_IN_A_ROW_90558C), model.wins, model.streak);
   fui::TextStyle stats;
@@ -371,7 +371,7 @@ void buildWin(toybox::Screen& screen, const WinModel& model) {
   menu.label = tr(STR_UI_BACK_TO_THE_TABLE_6590E8);
   menu.action = ActionButton;
   menu.value = WinMenu;
-  menu.styles = toybox::rowStyles();
+  menu.styles = toybox::buttonStyles();
   screen.button(menu, fui::makeRect(band.width / 2 + toybox::kGutter / 2, buttonY, buttonW, toybox::kPillHeight));
 }
 

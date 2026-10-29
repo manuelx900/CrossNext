@@ -353,7 +353,7 @@ void buildResult(toybox::Screen& s, const ResultModel& m) {
         2, 0, fui::TextAlign::Center);
   const auto box =
       wide ? fui::makeRect(right.x, right.y, right.width, 190) : fui::makeRect(b.x, b.y + 218, b.width, 224);
-  frame(s, box, 4);
+  frame(s, box, pixelui::kBorder);
   dashboard::text(s, fui::makeRect(box.x, box.y + 10, box.width, 38), tr(STR_MATCH_FINAL), 1);
   s.target().fill(fui::makeRect(box.x + box.width / 2, box.y + 56, 2, box.height - 68), ink);
   for (int n = 0; n < 2; ++n) {
@@ -399,7 +399,7 @@ void buildHelp(toybox::Screen& s, int page) {
     matchart::draw(s, art, matchart::GoLiberties);
     const auto note = wide ? fui::makeRect(b.x + b.width / 2 + 12, b.y + 130, b.width / 2 - 12, bottom - b.y - 134)
                            : fui::makeRect(b.x, bottom - 172, b.width, 164);
-    frame(s, note, 3);
+    frame(s, note, pixelui::kBorder);
     dashboard::text(s, fui::makeRect(note.x + 12, note.y + 6, note.width - 24, 30), tr(STR_GO_BREATHING), 1,
                     fui::TextAlign::Left);
     prose(s, fui::makeRect(note.x + 12, note.y + 42, note.width - 24, note.height - 48), tr(STR_GO_LIBERTIES_HELP), 6,
@@ -411,7 +411,7 @@ void buildHelp(toybox::Screen& s, int page) {
     const int top = b.y + 126;
     for (int n = 0; n < 2; ++n) {
       const auto r = fui::makeRect(b.x + n * (diagramsW / 2 + 4), top, diagramsW / 2 - 4, edge + 22);
-      frame(s, r, 3);
+      frame(s, r, pixelui::kBorder);
       matchart::draw(s, r.inset(fui::Insets{10, 10, 26, 10}), n ? matchart::GoAfter : matchart::GoBefore);
       dashboard::text(s, fui::makeRect(r.x, r.bottom() + 4, r.width, 30), n ? tr(STR_OT_AFTER) : tr(STR_OT_BEFORE), 1);
       if (!n) dashboard::text(s, fui::makeRect(r.x, r.bottom() - 24, r.width, 20), tr(STR_GO_PLACE_HERE), 3);
@@ -419,11 +419,11 @@ void buildHelp(toybox::Screen& s, int page) {
     const int x = wide ? b.x + b.width / 2 + 12 : b.x, y = wide ? b.y + 82 : top + edge + 74,
               w = wide ? b.width / 2 - 12 : b.width;
     const auto ko = fui::makeRect(x, y, w, 108);
-    frame(s, ko, 3);
+    frame(s, ko, pixelui::kBorder);
     dashboard::text(s, fui::makeRect(x + 12, y + 6, w - 24, 30), tr(STR_GO_KO), 1, fui::TextAlign::Left);
     prose(s, fui::makeRect(x + 12, y + 42, w - 24, ko.height - 48), tr(STR_GO_KO_HELP), 4, 3);
     const auto suicide = fui::makeRect(x, ko.bottom() + 8, w, bottom - ko.bottom() - 16);
-    frame(s, suicide, 3);
+    frame(s, suicide, pixelui::kBorder);
     prose(s, suicide.inset(fui::Insets{4, 12, 4, 12}), tr(STR_GO_SUICIDE_HELP), 4, 3);
   } else {
     const int top = b.y + (wide ? 62 : 84), available = bottom - top;

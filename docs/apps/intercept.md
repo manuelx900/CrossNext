@@ -1,5 +1,12 @@
 # The Intercept
 
+**How to play** introduces the setting and objective, then the player character,
+Hooper on page 3 (the colleague exerting blackmail) and Harris on page 4
+(the investigator), using
+the existing story illustrations. The final guide page explains choices,
+pagination and automatic saving. It does not reveal a solution or add a time
+limit. Guide pages do not alter the saved story.
+
 The interactive story requires `/apps/intercept/graphics.bin` from
 `CrossNext-Resources.zip`. Extract the archive to the microSD root and merge
 folders, then restart the reader. Keep `/apps/intercept/` complete. Without
@@ -19,7 +26,7 @@ resource folder does not replace saves.
 `InterceptActivity` owns one `sdart::Pack`, opens it before loading progress and
 closes it on exit. The loader validates count, dimensions, offsets, index CRC
 and each image CRC before drawing it. Its optional PSRAM cache is 4,880 bytes
-(49 records Ã— 16 bytes + 4,096 bytes read-ahead), reused across frames. Fixed
+(49 records × 16 bytes + 4,096 bytes read-ahead), reused across frames. Fixed
 scratch belongs to the activity; no extra framebuffer is allocated. Existing
 small-read fallback handles PSRAM allocation failure.
 

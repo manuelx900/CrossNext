@@ -23,6 +23,15 @@ enum class HomeButtonAction : uint8_t {
   Count
 };
 
+constexpr bool selectableHomeAction(HomeButtonAction action) {
+  return action != HomeButtonAction::Dictionary && action != HomeButtonAction::CreateClipping &&
+         action != HomeButtonAction::Footnotes && uint8_t(action) <= uint8_t(HomeButtonAction::OpenShortcut);
+}
+constexpr bool readerHomeAction(HomeButtonAction action) {
+  return action == HomeButtonAction::NextPage || action == HomeButtonAction::Bookmark ||
+         action == HomeButtonAction::ReaderMenu || action == HomeButtonAction::Sync;
+}
+
 class HomeButtonInput {
  public:
   static constexpr uint32_t DOUBLE_TAP_MS = 350;

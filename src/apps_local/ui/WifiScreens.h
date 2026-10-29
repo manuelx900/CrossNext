@@ -51,7 +51,7 @@ void button(Screen& screen, fui::ButtonProps& props, fui::Rect box, const char* 
   props.text.font = 0;
   props.text.bold = true;
   props.text.align = fui::TextAlign::Center;
-  props.styles = pixelui::rowStyles();
+  props.styles = pixelui::buttonStyles();
   props.styles.normal.borderWidth = 2;
   props.minTouchSize = 0;
   if (primary) props.state = fui::StateSelected;

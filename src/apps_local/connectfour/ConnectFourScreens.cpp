@@ -101,7 +101,7 @@ void grid(toybox::Screen& s, fui::Rect area, const uint8_t* cells, const int* li
   for (int n = 1; n < 6; ++n)
     s.target().line({int16_t(left), int16_t(top + n * cell)}, {int16_t(board.right()), int16_t(top + n * cell)}, 2,
                     black);
-  dashboard::frame(s, board, 4);
+  dashboard::frame(s, board, pixelui::kBorder);
   if (line && line[0] >= 0 && line[3] >= 0) {
     const int a = line[0], b = line[3];
     if (cells[a] == c4::kDark)
@@ -290,7 +290,7 @@ void buildResult(toybox::Screen& s, const ResultModel& m) {
                  : tr(STR_C4_LOSS_DETAIL));
   auto middle = wide ? rect(a.x, a.y + topH + 12, a.width * 55 / 100, a.height - topH - 24)
                      : rect(a.x, a.y + topH + 12, a.width, a.height - topH - footer - 24);
-  dashboard::frame(s, middle, 4);
+  dashboard::frame(s, middle, pixelui::kBorder);
   if (draw) {
     equal(s, rect(middle.x, middle.y, middle.width, middle.height - 42));
     title(s, rect(middle.x, middle.bottom() - 40, middle.width, 36), tr(STR_C4_NO_WINNER), 1);
@@ -392,7 +392,7 @@ void buildHowTo(toybox::Screen& s, const HowToModel& m) {
         else
           toybox::disc(s, box.x + cell / 2, box.y + cell / 2, std::max(1, cell / 24), fui::Color::Black);
       }
-    dashboard::frame(s, rect(left, top, cell * 4, cell * 4), 4);
+    dashboard::frame(s, rect(left, top, cell * 4, cell * 4), pixelui::kBorder);
     if (page == 0) {
       disc(s, left + cell + cell / 2, top - 26, 16, c4::kLight);
       s.target().line({int16_t(left + cell + cell / 2), int16_t(top - 8)},

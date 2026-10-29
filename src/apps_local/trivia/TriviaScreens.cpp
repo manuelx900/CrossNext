@@ -22,7 +22,8 @@ fui::TextStyle textStyle(const fui::FontId font, const fui::TextAlign align,
 // All-caps chrome: safe to ink-centre, because every glyph sits on the baseline.
 void drawLabel(toybox::Screen& screen, const fui::Rect& box, const char* text, const fui::FontId font,
                const fui::TextAlign align, const toybox::CutMetrics& cut, const fui::Color colour = fui::Color::Black) {
-  screen.target().text(toybox::inkCentred(box, cut), text, textStyle(font, align, colour));
+  screen.target().text(toybox::inkCentred(screen.target(), box, textStyle(font, align, colour)), text,
+                       textStyle(font, align, colour));
 }
 
 // Mixed-case prose: placed by its box and NEVER ink-centred. inkCentred solves

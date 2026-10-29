@@ -7,6 +7,7 @@
 
 #include "../ui/CardPanels.h"
 #include "../ui/FitText.h"
+#include "../ui/MatchResult.h"
 #include "../ui/MysteryArt.h"
 #include "BattleshipLabels.h"
 namespace bshipui {
@@ -282,135 +283,91 @@ fui::Rect buildPlaceChrome(toybox::Screen& s, const PlaceModel& m, Layout* out) 
   return g;
 }
 fui::Rect buildBoardChrome(toybox::Screen& s, const BoardModel& m, Layout* out) {
-  auto b = begin(s);
+  const auto b = begin(s);
   const bool wide = b.width > b.height;
-  if (wide) {
-    const int leftW = landscapeBoardWidth(b);
-    const auto target = gridRect(fui::makeRect(b.x, b.y, leftW, b.height));
-    if (out) out->target = target;
-    grid(s, target, m.game ? &m.game->side[m.mySide ^ 1] : nullptr, false, m.gameOver, m.aim);
-    const int x = b.x + leftW + 16, width = b.right() - x;
-    dashboard::text(s, fui::makeRect(x, b.y, width, 28),
-                    m.gameOver ? tr(STR_UI_GAME_OVER_B1DE5C)
-                    : m.myTurn ? tr(STR_HEARTS_TURN)
-                               : tr(STR_UI_INCOMING_21130F),
-                    0, fui::TextAlign::Left);
-    char report[100];
-    const int sank = m.game && m.myTurn && !m.gameOver ? bship::lastShotSank(*m.game) : -1;
-    if (sank >= 0) std::snprintf(report, sizeof(report), tr(STR_NAVAL_SUNK), battleshiplabels::shipName(sank));
-    const auto notice = fui::makeRect(x, b.y + 36, width, 64);
-    dashboard::frame(s, notice, 2);
-    fittext::draw(s.target(), notice.inset({4, 8, 4, 8}),
-                  sank >= 0               ? report
-                  : m.report && *m.report ? m.report
-                                          : tr(STR_NAVAL_SELECT_CELL),
-                  4, 2);
-    const int ownW = width * 45 / 100, ownSide = std::min(ownW - 8, std::max(10, int(b.height) - 228)) / 10 * 10;
-    dashboard::text(s, fui::makeRect(x, b.y + 112, ownW, 28), tr(STR_UI_YOUR_FLEET_2D650C), 3);
-    const auto own = fui::makeRect(x + (ownW - ownSide) / 2, b.y + 150, ownSide, ownSide);
-    if (out) out->own = own;
-    grid(s, own, m.game ? &m.game->side[m.mySide] : nullptr, true, false, -1, false);
-    const int fleetX = x + ownW + 12, fleetW = width - ownW - 12;
-    dashboard::text(s, fui::makeRect(fleetX, b.y + 112, fleetW, 28), tr(STR_NAVAL_THEIR_FLEET), 3);
-    for (int n = 0; n < 5; ++n) {
-      const int y = b.y + 148 + n * 28;
-      dashboard::text(s, fui::makeRect(fleetX, y, fleetW - 36, 26), battleshiplabels::shipName(n), 3,
-                      fui::TextAlign::Left);
-      for (int j = 0; j < bship::kShipLength[n]; ++j) {
-        const auto pip = fui::makeRect(fleetX + fleetW - 32 + j * 6, y + 9, 5, 8);
-        if (m.game && bship::sunk(m.game->side[m.mySide ^ 1], n))
-          s.target().fill(pip, dashboard::ink);
-        else
-          dashboard::frame(s, pip, 1);
-      }
-    }
-    const int actionY = b.bottom() - 48;
-    if (m.canFire) {
-      char where[4], label[40];
-      bship::cellName(m.aim, where);
-      std::snprintf(label, sizeof(label), tr(STR_NAVAL_TARGET_AT), where);
-      dashboard::text(s, fui::makeRect(x, actionY - 36, width, 28), label, 0);
-    } else
-      legend(s, fui::makeRect(x, actionY - 36, width, 24));
-    dashboard::button(s, fui::makeRect(x, actionY, width, 48), m.status,
-                      m.gameOver  ? ActionPlayAgain
-                      : m.canFire ? ActionFire
-                                  : fui::NO_ACTION,
-                      0, m.canFire || m.gameOver, nullptr, 0);
-    return target;
-  }
-  const int sank = m.game && m.myTurn && !m.gameOver ? bship::lastShotSank(*m.game) : -1;
-  const auto report = fui::makeRect(b.x, b.y, b.width, 48);
-  dashboard::frame(s, report, 2);
-  if (sank >= 0) {
-    mysteryart::draw(s, fui::makeRect(report.x + 8, report.y + 8, 96, 32), mysteryart::NavalSunk);
-    char label[100];
-    std::snprintf(label, sizeof(label), tr(STR_NAVAL_SUNK), battleshiplabels::shipName(sank));
-    pixelui::copyCaps(label, sizeof(label), label);
-    fittext::draw(s.target(), fui::makeRect(report.x + 116, report.y, report.width - 124, report.height), label, 0, 2);
-  } else {
-    fittext::draw(s.target(), report.inset({4, 8, 4, 8}), m.report && *m.report ? m.report : tr(STR_NAVAL_SELECT_CELL),
-                  0, 2);
-  }
-  b.y += 58;
-  b.height -= 58;
-  dashboard::text(s, fui::makeRect(b.x, b.y, b.width / 2, 28),
-                  m.gameOver ? tr(STR_UI_GAME_OVER_B1DE5C)
-                  : m.myTurn ? tr(STR_HEARTS_TURN)
-                             : tr(STR_UI_INCOMING_21130F),
-                  1, fui::TextAlign::Left);
-  dashboard::text(s, fui::makeRect(b.x + b.width / 2, b.y, b.width / 2, 28), tr(STR_NAVAL_TARGET), 0,
-                  fui::TextAlign::Right);
-  const int footer = 86;
-  const auto area = wide ? fui::makeRect(b.x, b.y + 34, b.width * 57 / 100, b.height - 34 - footer - 8)
-                         : fui::makeRect(b.x, b.y + 34, b.width, b.height - footer - 234);
-  const auto target = gridRect(area);
-  if (out) out->target = target;
-  grid(s, target, m.game ? &m.game->side[m.mySide ^ 1] : nullptr, false, m.gameOver, m.aim);
-  const auto lower =
-      wide ? fui::makeRect(area.right() + 16, b.y + 34, b.right() - area.right() - 16, b.height - 34 - footer - 8)
-           : fui::makeRect(b.x, target.bottom() + 12, b.width, b.bottom() - footer - target.bottom() - 20);
-  const auto ownArea =
-      fui::makeRect(lower.x, lower.y + 26, lower.width * 48 / 100, std::max(30, int(lower.height) - (wide ? 56 : 26)));
-  dashboard::text(s, fui::makeRect(lower.x, lower.y, ownArea.width, 28), tr(STR_UI_YOUR_FLEET_2D650C), 0,
+  const int panelW = wide ? b.width - landscapeBoardWidth(b) - 16 : b.width;
+  const auto panel =
+      wide ? fui::makeRect(b.right() - panelW, b.y, panelW, b.height) : fui::makeRect(b.x, b.y, b.width, b.height);
+  const int fleetH = wide ? 68 : 48;
+  const auto notice = fui::makeRect(panel.x, panel.y, panel.width, wide ? 112 : 80);
+  dashboard::frame(s, notice);
+  dashboard::text(s, fui::makeRect(notice.x + 12, notice.y + 6, notice.width - 24, 28), tr(STR_NAVAL_YOUR_MOVE), 0,
                   fui::TextAlign::Left);
-  const int ownCell = std::min(int(ownArea.width), int(ownArea.height)) / 10;
-  const auto own = fui::makeRect(ownArea.x + (ownArea.width - 10 * ownCell) / 2, ownArea.y, ownCell * 10, ownCell * 10);
-  if (out) out->own = own;
-  grid(s, own, m.game ? &m.game->side[m.mySide] : nullptr, true, false, -1, false);
-  const int x = lower.x + lower.width * 52 / 100, width = lower.right() - x;
-  dashboard::text(s, fui::makeRect(x, lower.y, width, 28), tr(STR_NAVAL_THEIR_FLEET), 0, fui::TextAlign::Left);
-  const int row = std::min(26, (int(lower.height) - 48) / 5);
-  for (int n = 0; n < 5; ++n) {
-    const int y = lower.y + 32 + n * row;
-    char label[70];
-    std::snprintf(label, sizeof(label), "%s", battleshiplabels::shipName(n));
-    dashboard::text(s, fui::makeRect(x, y, width - 24, row), label, 3, fui::TextAlign::Left);
-    const int pip = 4;
-    for (int j = 0; j < bship::kShipLength[n]; ++j) {
-      const auto box = fui::makeRect(x + width - 20 + j * pip, y + (row - pip) / 2, pip, pip);
-      if (m.game && bship::sunk(m.game->side[m.mySide ^ 1], n))
-        s.target().fill(box.inset({1, 1, 1, 1}), dashboard::ink);
-      else
-        dashboard::frame(s, box, 1);
-    }
-  }
-  if (lower.height > 174)
-    legend(s, fui::makeRect(wide ? lower.x : x, lower.bottom() - 26, wide ? lower.width : width, 24));
-  if (m.canFire) {
-    char where[4], label[40];
+  char feedback[96];
+  if (m.canFire && !m.ownFleet) {
+    char where[4];
     bship::cellName(m.aim, where);
-    std::snprintf(label, sizeof(label), tr(STR_NAVAL_TARGET_AT), where);
-    dashboard::frame(s, fui::makeRect(b.x, b.bottom() - 84, b.width, 28));
-    dashboard::text(s, fui::makeRect(b.x + 8, b.bottom() - 84, b.width - 16, 28), label, 0, fui::TextAlign::Left);
+    std::snprintf(feedback, sizeof(feedback), tr(STR_NAVAL_TARGET_AT), where);
+  } else {
+    const bool hasReport = m.report && *m.report && std::strcmp(m.report, tr(STR_UI_YOUR_MOVE_AF6C56));
+    std::snprintf(feedback, sizeof(feedback), "%s", hasReport ? m.report : tr(STR_NAVAL_SELECT_CELL));
   }
-  if (!m.canFire && !m.gameOver) s.target().fill(fui::makeRect(b.x, b.bottom() - 48, b.width, 48), dashboard::paper);
-  dashboard::button(s, fui::makeRect(b.x, b.bottom() - 48, b.width, 48), m.status,
-                    m.gameOver  ? ActionPlayAgain
-                    : m.canFire ? ActionFire
-                                : fui::NO_ACTION,
-                    0, m.canFire || m.gameOver, nullptr, 1);
-  return target;
+  fittext::draw(s.target(), fui::makeRect(notice.x + 12, notice.y + 38, notice.width - 24, notice.height - 44),
+                feedback, 4, wide ? 3 : 2);
+  const int fleetY = notice.bottom() + (wide ? 20 : 8);
+  const int half = (panel.width - 8) / 2;
+  for (int n = 0; n < 2; ++n) {
+    const auto box = fui::makeRect(panel.x + n * (half + 8), fleetY, half, fleetH);
+    const bool own = n == 0;
+    const bool active = own == m.ownFleet;
+    const bool inverse = s.frame().buttonSelected(ActionFleet, n, active);
+    dashboard::button(s, box, "", ActionFleet, n, inverse, nullptr, 0);
+    const int afloat = m.game ? bship::kShipCount - bship::sunkCount(m.game->side[own ? m.mySide : (m.mySide ^ 1)]) : 5;
+    char label[64];
+    std::snprintf(label, sizeof(label), own ? tr(STR_NAVAL_OWN_AFLOAT) : tr(STR_NAVAL_RIVAL_AFLOAT), afloat);
+    fittext::draw(s.target(), box.inset({5, 8, 5, 8}), label, 0, 2, fui::TextAlign::Center,
+                  inverse ? fui::Color::White : fui::Color::Black);
+  }
+  const auto action = fui::makeRect(panel.x, panel.bottom() - 52, panel.width, 52);
+  const int gridTop = fleetY + fleetH + 8;
+  const int gridBottom = action.y - 8;
+  const auto area = wide ? fui::makeRect(b.x, b.y, b.width - panelW - 16, b.height)
+                         : fui::makeRect(b.x, gridTop, b.width, gridBottom - gridTop);
+  auto target = gridRect(area);
+  const int spare = area.bottom() - target.bottom();
+  target.y += std::max(0, spare / 2);
+  if (out) {
+    out->target = m.ownFleet ? fui::Rect{} : target;
+    out->own = m.ownFleet ? target : fui::Rect{};
+  }
+  grid(s, target, m.game ? &m.game->side[m.ownFleet ? m.mySide : (m.mySide ^ 1)] : nullptr, m.ownFleet, m.gameOver,
+       m.ownFleet ? -1 : m.aim);
+  if (wide) {
+    const int helpTop = fleetY + fleetH + 20;
+    const int helpBottom = action.y - 16;
+    const auto help = fui::makeRect(panel.x + 8, helpTop, panel.width - 16, helpBottom - helpTop);
+    fittext::draw(s.target(), help, m.ownFleet ? tr(STR_NAVAL_OWN_HELP) : tr(STR_NAVAL_TARGET_HELP), 4, 4,
+                  fui::TextAlign::Center);
+  }
+  const int actionHalf = (action.width - 8) / 2;
+  const auto viewButton = fui::makeRect(action.x, action.y, actionHalf, action.height);
+  const bool viewInverse = s.frame().buttonSelected(ActionOwnBoard, m.ownFleet ? 1 : 0, false);
+  dashboard::button(s, viewButton, "", ActionOwnBoard, m.ownFleet ? 1 : 0, viewInverse, nullptr, 0);
+  pixelui::copyCaps(feedback, sizeof(feedback), m.ownFleet ? tr(STR_NAVAL_RIVAL_BOARD) : tr(STR_NAVAL_MY_BOARD));
+  fittext::draw(s.target(), viewButton.inset({2, 6, 2, 6}), feedback, 0, 2, fui::TextAlign::Center,
+                viewInverse ? fui::Color::White : fui::Color::Black);
+  const auto fireButton =
+      fui::makeRect(action.x + actionHalf + 8, action.y, action.width - actionHalf - 8, action.height);
+  const auto fireAction = m.ownFleet   ? fui::NO_ACTION
+                          : m.gameOver ? ActionPlayAgain
+                          : m.canFire  ? ActionFire
+                                       : fui::NO_ACTION;
+  const bool primary = fireAction != fui::NO_ACTION;
+  const bool fireInverse = s.frame().buttonSelected(fireAction, 0, primary);
+  dashboard::button(s, fireButton, "", fireAction, 0, primary, nullptr, 0);
+  pixelui::copyCaps(feedback, sizeof(feedback), m.ownFleet ? tr(STR_NAVAL_READ_ONLY) : m.status);
+  fittext::draw(s.target(), fireButton.inset({2, 6, 2, 6}), feedback, 0, 2, fui::TextAlign::Center,
+                fireInverse ? fui::Color::White : fui::Color::Black);
+  return m.ownFleet ? fui::Rect{} : target;
+}
+
+void buildResult(toybox::Screen& s, const BoardModel& m) {
+  const auto b = begin(s);
+  const bool won = m.game && bship::winner(*m.game) == m.mySide;
+  matchresult::draw(s, b, won ? tr(STR_MATCH_WON) : tr(STR_MATCH_LOST),
+                    won ? tr(STR_NAVAL_VICTORY) : tr(STR_NAVAL_DEFEAT), m.report, tr(STR_NAVAL_RESULT_HELP),
+                    won ? mysteryart::NavalReady : mysteryart::NavalSunk, ActionPlayAgain, ActionResultReview,
+                    ActionResultMenu);
 }
 void buildHowTo(toybox::Screen& s, int) {
   const auto b = begin(s);

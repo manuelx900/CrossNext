@@ -43,8 +43,9 @@ fui::TextStyle textStyle(const fui::FontId font, const fui::TextAlign align,
 
 // All-caps chrome, ink-centred on the cap band.
 void drawLabel(toybox::Screen& screen, const fui::Rect& box, const char* text, const fui::FontId font,
-               const fui::TextAlign align, const toybox::CutMetrics& cut, const fui::Color colour = fui::Color::Black) {
-  screen.target().text(toybox::inkCentred(box, cut), text, textStyle(font, align, colour));
+               const fui::TextAlign align, const toybox::CutMetrics&, const fui::Color colour = fui::Color::Black) {
+  screen.target().text(toybox::inkCentred(screen.target(), box, textStyle(font, align, colour)), text,
+                       textStyle(font, align, colour));
 }
 
 // One line placed by its box. Only for text that is the reader's own (the
@@ -83,7 +84,7 @@ fui::StyleSet bandOutlineStyles() {
   styles.normal.background = fui::Paint::solid(fui::Color::Black);
   styles.normal.foreground = fui::Paint::solid(fui::Color::White);
   styles.normal.border = fui::Paint::solid(fui::Color::White);
-  styles.normal.borderWidth = toybox::kHairline;
+  styles.normal.borderWidth = toybox::kFrame;
   styles.selected = styles.normal;
   styles.focused = styles.normal;
   styles.active = styles.normal;

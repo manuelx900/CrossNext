@@ -335,8 +335,8 @@ void PicrossActivity::loop() {
 
   int touchX = 0, touchY = 0;
   const bool touch = mappedInput.wasScreenTapped(touchX, touchY);
-  // A repaint can hide the live long-press event; the release keeps its duration.
-  const int inputMode = touch ? (mappedInput.tapWasHeldLong() ? ui::ModeMark : ui::ModeFill) : mode;
+  // Holding always marks; a short tap uses the tool selected on screen.
+  const int inputMode = ui::tapMode(mode, touch && mappedInput.tapWasHeldLong());
   const fui::ActionEvent action =
       sidebuttons::route(interactions, input, mappedInput, *this, !(view == View::Sizes || view == View::Picker));
   switch (action.action) {

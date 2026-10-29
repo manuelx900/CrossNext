@@ -33,8 +33,7 @@ void label(fui::DrawTarget& t, fui::Rect r, const char* value, int font = 0, boo
   style.color = inverse ? fui::Color::White : fui::Color::Black;
   style.align = center ? fui::TextAlign::Center : fui::TextAlign::Left;
   style.maxLines = 1;
-  const auto* cut = toybox::cutForLineHeight(t.lineHeight(font));
-  t.text(cut ? toybox::inkCentred(r, *cut) : r, value, style);
+  t.text(toybox::inkCentred(t, r, style), value, style);
 }
 void caps(fui::DrawTarget& t, fui::Rect r, const char* value, int font = 0, bool center = false, bool inverse = false) {
   char copy[128];
@@ -78,7 +77,7 @@ void art(fui::DrawTarget& t, fui::Rect r, fui::BitmapRef image, bool inverse = f
 void button(fui::DrawTarget& t, fui::Rect box, const char* value, bool primary = false, bool focus = false) {
   primary |= focus;
   t.fill(box, primary ? black : white);
-  t.stroke(box, black, 4);
+  t.stroke(box, black, pixelui::kBorder);
   const auto text = box.inset(fui::Insets{4, 10, 4, 10});
   fui::TextStyle style;
   style.font = 3;
@@ -95,7 +94,7 @@ void button(fui::DrawTarget& t, fui::Rect box, const char* value, bool primary =
 void action(fui::DrawTarget& t, fui::Rect r, const char* title, const char* help, fui::BitmapRef icon,
             bool focused = false) {
   t.fill(r, focused ? black : white);
-  t.stroke(r, black, 4);
+  t.stroke(r, black, pixelui::kBorder);
   const int side = std::min(68, int(r.height) - 22);
   art(t, fui::makeRect(r.x + 16, r.y + (r.height - side) / 2, side, side), icon, focused);
   const int x = r.x + side + 32, width = r.width - side - 72;
@@ -109,7 +108,7 @@ void home(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g) {
   const int gap = 10, half = (body.width - gap) / 2, metricH = wide ? 66 : 80;
   for (int n = 0; n < 2; ++n) {
     const auto box = fui::makeRect(body.x + n * (half + gap), body.y, half, metricH);
-    t.stroke(box, black, 4);
+    t.stroke(box, black, pixelui::kBorder);
     art(t, fui::makeRect(box.x + 12, box.y + 14, 44, 44), n ? wordsart::Review : wordsart::Book);
     caps(t, fui::makeRect(box.x + 70, box.y + 7, box.width - 78, 26),
          n ? tr(STR_WORDS_PENDING) : tr(STR_WORDS_SAVED_LABEL), 0);
@@ -172,7 +171,7 @@ void collection(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g) {
   const int metricY = body.y + 42, metricH = wide ? 62 : 78, half = (actionsW - 10) / 2;
   for (int n = 0; n < 2; ++n) {
     const auto r = fui::makeRect(body.x + n * (half + 10), metricY, half, metricH);
-    t.stroke(r, black, 4);
+    t.stroke(r, black, pixelui::kBorder);
     art(t, fui::makeRect(r.x + 10, r.y + (metricH - 36) / 2, 36, 36), n ? wordsart::Review : wordsart::Book);
     caps(t, fui::makeRect(r.x + (wide ? 44 : 52), r.y + 5, r.width - (wide ? 50 : 58), 24),
          n ? tr(STR_WORDS_DIFFICULT) : tr(STR_WORDS_PENDING), 3);
@@ -202,7 +201,7 @@ void collection(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g) {
       button(t, g.buttons[Dismiss], tr(STR_OK_BUTTON));
     }
   } else {
-    t.stroke(list, black, 4);
+    t.stroke(list, black, pixelui::kBorder);
     for (int n = 0; n < std::min(m.count, m.capacity); ++n) {
       const int y = list.y + n * list.height / m.capacity, end = list.y + (n + 1) * list.height / m.capacity;
       const auto row = fui::makeRect(list.x, y, list.width, end - y);
@@ -237,7 +236,7 @@ void wordList(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g) {
       button(t, g.buttons[Dismiss], tr(STR_OK_BUTTON));
     }
   } else {
-    t.stroke(list, black, 4);
+    t.stroke(list, black, pixelui::kBorder);
     for (int n = 0; n < std::min(m.count, m.capacity); ++n) {
       const int y = list.y + n * list.height / m.capacity, end = list.y + (n + 1) * list.height / m.capacity;
       const auto row = fui::makeRect(list.x, y, list.width, end - y);
@@ -266,7 +265,7 @@ void guide(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g) {
     prose(t, fui::makeRect(body.x, top, body.width, 58), tr(STR_WORDS_SELECT_HELP), 2);
     const int boxH = wide ? 124 : 190;
     const auto box = fui::makeRect(body.x, top + (wide ? 62 : 72), wide ? body.width / 2 - 10 : body.width, boxH);
-    t.stroke(box, black, 4);
+    t.stroke(box, black, pixelui::kBorder);
     label(t, fui::makeRect(box.x + 18, box.y + 22, box.width - 36, 40), tr(STR_WORDS_EXAMPLE_BEFORE), 1);
     const auto word = fui::makeRect(box.x + box.width * 42 / 100, box.y + 20, box.width * 45 / 100, 46);
     t.fill(word, black);
@@ -284,7 +283,7 @@ void guide(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g) {
   } else if (m.guidePage == 1) {
     const int cardW = wide ? body.width / 2 - 12 : body.width, cardH = wide ? bottom - top : 300;
     const auto card = fui::makeRect(body.x, top, cardW, cardH);
-    t.stroke(card, black, 4);
+    t.stroke(card, black, pixelui::kBorder);
     label(t, fui::makeRect(card.x + 16, card.y + (wide ? 8 : 12), card.width - 32, wide ? 40 : 54),
           tr(STR_WORDS_EXAMPLE_WORD), 2);
     languageLabel(t, fui::makeRect(card.x + 16, card.y + (wide ? 50 : 70), card.width - 32, wide ? 22 : 28),
@@ -316,7 +315,7 @@ void guide(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g) {
     for (int n = 0; n < 3; ++n) {
       const auto row = fui::makeRect(body.x + (wide ? n * (w + gap) : 0), top + (wide ? 0 : n * (h + gap)), w, h);
       if (wide) {
-        t.stroke(row, black, 4);
+        t.stroke(row, black, pixelui::kBorder);
         art(t, fui::makeRect(row.x + 8, row.y + 10, 52, 44), icons[n]);
         char title[80];
         pixelui::copyCaps(title, sizeof(title), labels[n]);
@@ -401,7 +400,7 @@ void card(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g, pagedtext::
     std::snprintf(progress, sizeof(progress), "%d / %d", m.reviewIndex + 1, std::max(m.reviewTotal, m.reviewIndex + 1));
   label(t, fui::makeRect(body.right() - 80, body.y, 80, 40), progress, 0, true);
   const auto box = faceBox(body, m);
-  t.stroke(box, black, 4);
+  t.stroke(box, black, pixelui::kBorder);
   if (m.answer)
     contentPage(content, box, m, g, work);
   else {
@@ -444,7 +443,7 @@ void card(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g, pagedtext::
       g.rows[n] = r;
       const bool selected = m.keyboardFocus && m.focus == n;
       t.fill(r, selected ? black : white);
-      t.stroke(r, black, 4);
+      t.stroke(r, black, pixelui::kBorder);
       t.bitmap(fui::makeRect(r.x + 12, r.y + (h - 32) / 2, 32, 32), fui::bitmapFromIcon(*icons[n]),
                fui::BitmapMode::Contain, selected ? white : black);
       caps(t, fui::makeRect(r.x + 54, r.y + (wide ? 10 : 4), r.width - (wide ? 170 : 62), 32), I18N.get(ratings[n]), 0,
@@ -461,7 +460,7 @@ void detail(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g, pagedtext
   const bool wide = body.width > body.height;
   const int h = 58, gap = 10;
   const auto box = faceBox(body, m);
-  t.stroke(box, black, 4);
+  t.stroke(box, black, pixelui::kBorder);
   contentPage(content, box, m, g, work);
   constexpr Action ids[] = {Passage, Delete, ReviewWord};
   const char* labels[] = {tr(STR_WORDS_VIEW_BOOK), tr(STR_WORDS_DELETE), tr(STR_WORDS_REVIEW_ONE)};
@@ -472,7 +471,7 @@ void detail(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g, pagedtext
     g.buttons[ids[n]] = r;
     const bool selected = m.keyboardFocus && m.focus == n;
     t.fill(r, selected ? black : white);
-    t.stroke(r, black, 4);
+    t.stroke(r, black, pixelui::kBorder);
     art(t, fui::makeRect(r.x + 14, r.y + 10, 36, 36), icons[n], selected);
     caps(t, fui::makeRect(r.x + 64, r.y + 4, r.width - 100, r.height - 8), labels[n], 0, true, selected);
     dashboard::chevron(t, fui::makeRect(r.right() - 30, r.y, 24, r.height), selected);

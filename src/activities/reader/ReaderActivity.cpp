@@ -26,6 +26,7 @@
 ReaderActivity::ReaderActivity(const char* name, GfxRenderer& renderer, MappedInputManager& mappedInput,
                                std::string bookPath, const bool allowFastInitialRefresh)
     : Activity(name, renderer, mappedInput), bookPath(std::move(bookPath)) {
+  setInterfaceFontSection(menufont::Section::Reader);
   if (allowFastInitialRefresh) {
     const int refreshFrequency = SETTINGS.getRefreshFrequency();
     pagesUntilFullRefresh = refreshFrequency > 1 ? refreshFrequency : 2;

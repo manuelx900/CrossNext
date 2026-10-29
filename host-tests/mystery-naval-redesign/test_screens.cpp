@@ -196,14 +196,14 @@ int main(int argc, char** argv) {
       intercept::State in;
       for (auto view :
            {interceptui::View::Menu, interceptui::View::Restart, interceptui::View::About, interceptui::View::Story})
-        for (int page = 0; page < (view == interceptui::View::About ? 2 : 1); ++page) {
+        for (int page = 0; page < (view == interceptui::View::About ? 5 : 1); ++page) {
           Canvas c(w, h);
           c.target.setFont(3, c.tiny.font);
           c.target.setFont(4, view == interceptui::View::Story ? c.prose.font : c.library.font);
           interceptui::Work work;
           interceptui::build(c.screen, {&in, view, false, 0, page, &interceptAssets}, work);
           shot(c, "intercept-" + tag + "-" + std::to_string(int(view)) + "-" + std::to_string(page));
-          if (view == interceptui::View::About) CHECK(work.pages == 2);
+          if (view == interceptui::View::About) CHECK(work.pages == 5);
         }
       {
         Canvas a(w, h), b(w, h);
@@ -249,12 +249,15 @@ int main(int argc, char** argv) {
         bshipui::BoardModel m;
         m.game = &sunkGame;
         m.myTurn = true;
+        char report[128];
+        std::snprintf(report, sizeof(report), tr(STR_UI_S_SANK_YOUR_S_09A635), "Rival", bship::shipName(0));
+        m.report = report;
         bshipui::buildBoardChrome(c.screen, m);
         bool complete = false;
         for (const auto& label : c.target.labels) {
           char caption[192];
           pixelui::copyCaps(caption, sizeof(caption), label.value.c_str());
-          complete |= std::strstr(caption, lang == Language::ES ? "HUNDIDO" : "SUNK") != nullptr;
+          complete |= std::strstr(caption, lang == Language::ES ? "HUND" : "SANK") != nullptr;
         }
         CHECK(complete);
       }
@@ -307,12 +310,51 @@ int main(int argc, char** argv) {
         m.game = &game;
         m.aim = aim;
         m.canFire = aim >= 0;
-        m.status = aim >= 0 ? tr(STR_UI_FIRE_AT_S_3F134A) : tr(STR_UI_TAP_A_TARGET_0B935C);
+        m.report = tr(STR_UI_YOUR_MOVE_AF6C56);
+        char status[48];
+        std::snprintf(status, sizeof(status), tr(STR_UI_FIRE_AT_S_3F134A), "D9");
+        m.status = aim >= 0 ? status : tr(STR_UI_TAP_A_TARGET_0B935C);
         bshipui::Layout l;
         bshipui::buildBoardChrome(c.screen, m, &l);
         CHECK(c.has(bshipui::ActionFire) == m.canFire);
+        char moveHeading[64];
+        pixelui::copyCaps(moveHeading, sizeof(moveHeading), tr(STR_NAVAL_YOUR_MOVE));
+        unsigned moveHeadings = 0;
+        for (const auto& label : c.target.labels) moveHeadings += label.value == moveHeading;
+        CHECK(moveHeadings == 1);
         CHECK(l.target.width == l.target.height);
         shot(c, "naval-board-" + tag + "-" + std::to_string(aim));
+      }
+      {
+        Canvas c(w, h);
+        bshipui::BoardModel m;
+        m.game = &game;
+        m.ownFleet = true;
+        bshipui::Layout l;
+        bshipui::buildBoardChrome(c.screen, m, &l);
+        CHECK(l.target.empty() && l.own.width >= (w > h ? 330 : 400));
+        CHECK(!c.has(bshipui::ActionFire));
+        CHECK(c.has(bshipui::ActionOwnBoard, 1));
+        CHECK(c.has(bshipui::ActionFleet, 0) && c.has(bshipui::ActionFleet, 1));
+        shot(c, "naval-own-" + tag);
+      }
+      for (bool won : {false, true}) {
+        Canvas c(w, h);
+        auto finished = game;
+        const int loser = won ? 1 : 0;
+        for (int ship = 0; ship < bship::kShipCount; ++ship)
+          for (int part = 0; part < bship::kShipLength[ship]; ++part)
+            bship::markShot(finished.side[loser], bship::shipCell(finished.side[loser].fleet.ships[ship], part));
+        bshipui::BoardModel m;
+        m.game = &finished;
+        m.gameOver = true;
+        m.report = won ? tr(STR_NAVAL_VICTORY) : tr(STR_NAVAL_DEFEAT);
+        bshipui::buildResult(c.screen, m);
+        CHECK(c.has(bshipui::ActionPlayAgain));
+        CHECK(c.has(bshipui::ActionResultReview));
+        CHECK(c.has(bshipui::ActionResultMenu));
+        CHECK(!c.has(bshipui::ActionFire));
+        shot(c, "naval-result-" + tag + "-" + std::to_string(won));
       }
       {
         Canvas c(w, h);

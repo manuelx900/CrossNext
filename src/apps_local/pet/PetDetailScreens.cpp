@@ -1,4 +1,5 @@
 #include "../ui/PageIndicator.h"
+#include "PetCareIcons.h"
 #include "PetCatalogView.h"
 #include "PetCelebration.h"
 #include "PetOverview.h"
@@ -145,28 +146,28 @@ void reward(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   celebrationBanner(s, banner, tr(STR_PET_GOOD_READING), referenceicons::BOOK, true);
   const auto footer = rect(r.x, r.bottom() - 54, r.width, 54);
   const int sideWidth = wide ? r.width * 60 / 100 : r.width;
-  const auto panels =
-      wide ? rect(r.right() - sideWidth, banner.bottom() + 10, sideWidth, footer.y - banner.bottom() - 20)
-           : rect(r.x, footer.y - 262, sideWidth, 252);
+  const auto panels = wide
+                          ? rect(r.right() - sideWidth, banner.bottom() + 6, sideWidth, footer.y - banner.bottom() - 12)
+                          : rect(r.x, footer.y - 294, sideWidth, 284);
   const auto scene = wide ? rect(r.x, banner.bottom() + 8, r.width - sideWidth - 12, footer.y - banner.bottom() - 18)
                           : rect(r.x, banner.bottom() + 12, r.width, panels.y - banner.bottom() - 20);
-  const int elapsedW = wide ? scene.width : scene.width * 46 / 100;
-  const auto copy = rect(scene.x + 4, scene.y + (wide ? scene.height - 74 : 14), elapsedW - 8, wide ? 68 : 116);
-  prose(s, rect(copy.x, copy.y, copy.width, wide ? 25 : 48), tr(STR_PET_SINCE_VISIT), wide ? 1 : 2);
+  const int elapsedW = wide ? scene.width : scene.width * 52 / 100;
+  const auto copy = rect(scene.x + 4, scene.y + (wide ? scene.height - 116 : 14), elapsedW - 8, 112);
+  prose(s, rect(copy.x, copy.y, copy.width, 58), tr(STR_PET_SINCE_VISIT), 2);
   const auto elapsed = p.readingSeconds - std::min(p.readingSeconds, p.noticedSeconds);
   duration(w.label, sizeof(w.label), elapsed);
-  const auto value = rect(copy.x, copy.y + (wide ? 30 : 58), copy.width, 48);
+  const auto value = rect(copy.x, copy.y + 60, copy.width, 48);
   frame(s, value);
   text(s, value.inset({5, 5, 5, 5}), w.label, 1, false, fui::TextAlign::Center);
-  const auto picture = wide ? rect(scene.x + 4, scene.y, scene.width - 8, scene.height - 82)
+  const auto picture = wide ? rect(scene.x + 4, scene.y, scene.width - 8, scene.height - 126)
                             : rect(scene.x + elapsedW, scene.y, scene.width - elapsedW, scene.height);
   celebrationPicture(s, m, picture);
-  const auto gains = rect(panels.x, panels.y, panels.width, wide ? 70 : 78);
+  const auto gains = rect(panels.x, panels.y, panels.width, wide ? 62 : 78);
   for (int i = 0; i < 2; ++i) {
     const auto box = cell(gains, i, 2);
     frame(s, box);
     const int markW = std::min(58, int(box.width) / 3);
-    icon(s, rect(box.x + 8, box.y + 12, markW - 8, box.height - 24), i ? MEDICINE_ICON : extra_food_64);
+    icon(s, rect(box.x + 8, box.y + 12, markW - 8, box.height - 24), i ? MEDICINE_ICON : careicons::FOOD);
     s.target().line({int16_t(box.x + markW + 4), int16_t(box.y + 10)},
                     {int16_t(box.x + markW + 4), int16_t(box.bottom() - 10)}, 1, ink);
     std::snprintf(w.label, sizeof(w.label), "+%llu", static_cast<unsigned long long>(readingGains(p, i != 0)));
@@ -174,9 +175,10 @@ void reward(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
     text(s, rect(box.x + markW + 14, box.bottom() - 30, box.width - markW - 22, 24),
          i ? tr(STR_PET_MEDICINE) : tr(STR_PET_PROVISIONS), 3);
   }
-  const auto progress = rect(panels.x, gains.bottom() + GAP, panels.width, wide ? 66 : 78);
-  growth(s, m, w, progress);
-  const auto daily = rect(panels.x, progress.bottom() + GAP, panels.width, wide ? 66 : 78);
+  const int progressH = wide ? 90 : 92;
+  const auto progress = rect(panels.x, gains.bottom() + GAP, panels.width, progressH);
+  growth(s, m, w, progress, true);
+  const auto daily = rect(panels.x, progress.bottom() + GAP, panels.width, panels.bottom() - progress.bottom() - GAP);
   frame(s, daily);
   icon(s, rect(daily.x + 12, daily.y + 12, 46, daily.height - 24), referenceicons::GOAL);
   const int left = daily.x + 74, width = daily.width - 86;
@@ -190,10 +192,10 @@ void reward(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
                     std::min(std::max(0, m.todaySeconds) / 60, int(goal)), goal);
   } else
     std::snprintf(w.label, sizeof(w.label), "%s", tr(STR_PET_DAILY_WAIT));
-  text(s, rect(left, daily.y + 5, width, 24), w.label, 3);
+  text(s, rect(left, daily.y + 5, width, 30), w.label, 0, false, fui::TextAlign::Left, true);
   duration(w.secondary, sizeof(w.secondary), uint64_t(std::max(0, m.todaySeconds)));
   std::snprintf(w.label, sizeof(w.label), tr(STR_PET_READ_TODAY), w.secondary);
-  if (available) prose(s, rect(left, daily.y + 34, width, daily.height - 39), w.label, 1);
+  if (available) prose(s, rect(left, daily.y + 37, width, daily.height - 42), w.label, 1);
   button(s, w, footer, tr(STR_PET_CONTINUE), Continue, 0, true);
 }
 }  // namespace

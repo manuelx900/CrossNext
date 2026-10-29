@@ -67,19 +67,19 @@ void fitLabel(const fui::DrawTarget& target, char* label, const int width, fui::
 }
 
 void text(fui::DrawTarget& target, fui::Rect box, const char* label, fui::FontId font, fui::Color color,
-          fui::TextAlign align) {
+          fui::TextAlign align, bool emphasis) {
   char copy[192];
   copyCaps(copy, sizeof(copy), label);
   fui::TextStyle style;
   style.color = color;
   style.align = align;
   style.font = font;
+  style.bold = emphasis || font == kTitle;
   static constexpr fui::FontId smaller[] = {3, kSmall, kBody};
   while (style.font < 3 && target.measureText(style.font, copy, style).width > box.width)
     style.font = smaller[style.font];
   fitLabel(target, copy, box.width, style);
-  const auto* cut = toybox::cutForLineHeight(target.lineHeight(style.font));
-  target.text(cut ? toybox::inkCentred(box, *cut) : box, copy, style);
+  target.text(toybox::inkCentred(target, box, style), copy, style);
 }
 
 static fui::Rect paintHeader(fui::DrawTarget&, const fui::DeviceContext&, const Header&, fui::Rect* = nullptr);
@@ -180,6 +180,7 @@ static fui::Rect paintHeader(fui::DrawTarget& target, const fui::DeviceContext& 
   right -= model.titleReserve;
   fui::TextStyle titleStyle;
   titleStyle.font = kBody;
+  titleStyle.bold = true;
   char title[192];
   copyCaps(title, sizeof(title), model.title);
   const int titleEnd = left + target.measureText(titleStyle.font, title, titleStyle).width + 14;
@@ -192,18 +193,21 @@ static fui::Rect paintHeader(fui::DrawTarget& target, const fui::DeviceContext& 
     target.text(clock, model.clockText, clockStyle);
     right = clock.x - 14;
   }
-  text(target, fui::makeRect(left, top, std::max(0, right - left), 72), model.title, kBody, fui::Color::White);
+  text(target, fui::makeRect(left, top, std::max(0, right - left), 72), model.title, kBody, fui::Color::White,
+       fui::TextAlign::Left, true);
   return mark;
 }
 
 fui::StyleSet rowStyles() {
   auto styles = toybox::rowStyles();
-  styles.normal.borderWidth = 2;
+  styles.normal.borderWidth = 1;
   styles.normal.radius = 0;
   styles.selected.radius = 0;
   styles.focused = styles.active = styles.selected;
   return styles;
 }
+
+fui::StyleSet buttonStyles() { return toybox::buttonStyles(); }
 
 void styleList(fui::ListProps& props, bool dense) {
   props.rowStyles = rowStyles();
@@ -216,6 +220,8 @@ void styleList(fui::ListProps& props, bool dense) {
   props.textGap = 18;
   props.iconSize = 40;
   props.labelText.font = dense ? kSmall : kBody;
+  props.labelText.bold = true;
+  props.subtitleText.bold = false;
   props.labelText.maxLines = 2;
   props.subtitleText.font = kSmall;
   props.subtitleText.maxLines = 2;

@@ -37,10 +37,10 @@ enum Button : int {
   ButtonHome,
 };
 
-// Physical-button tool. FILL commits (a wrong fill locks as a mistake); MARK
-// annotates freely. Side keys and the capsule select it. Touch always uses
-// a short tap for FILL and a hold for MARK.
+// FILL commits; MARK annotates freely. A tap uses the selected tool;
+// holding a cell always marks it.
 enum Mode : int { ModeFill = 0, ModeMark = 1 };
+constexpr int tapMode(int selected, bool held) { return held ? ModeMark : selected; }
 
 // Where the board grid was drawn. Filled by the builder as it lays out the
 // cells, read by the activity to turn a tap into a cell -- hit-testing sharing

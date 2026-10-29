@@ -30,8 +30,8 @@ inline fui::Rect cell(fui::Rect r, int index, int count, int gap = GAP) {
 }
 inline void frame(toybox::Screen& s, fui::Rect r) { s.target().stroke(r, ink, BORDER); }
 inline void text(toybox::Screen& s, fui::Rect r, const char* value, int font = 0, bool inverse = false,
-                 fui::TextAlign align = fui::TextAlign::Left) {
-  pixelui::text(s.target(), r, value, font, inverse ? fui::Color::White : fui::Color::Black, align);
+                 fui::TextAlign align = fui::TextAlign::Left, bool emphasis = false) {
+  pixelui::text(s.target(), r, value, font, inverse ? fui::Color::White : fui::Color::Black, align, emphasis);
 }
 inline void prose(toybox::Screen& s, fui::Rect r, const char* value, int lines = 2,
                   fui::TextAlign align = fui::TextAlign::Left, bool inverse = false) {
@@ -58,6 +58,76 @@ inline void prose(toybox::Screen& s, fui::Rect r, const char* value, int lines =
   }
   s.target().text(r, value, style);
 }
+// Fit short card names by their actual ink, without falling back to tiny captions.
+inline void cardCopy(toybox::Screen& s, fui::Rect box, const char* value, bool inverse = false, int lines = 3,
+                     fui::TextAlign align = fui::TextAlign::Center) {
+  fui::TextStyle style;
+  style.color = inverse ? fui::Color::White : fui::Color::Black;
+  style.align = align;
+  style.bold = false;
+  style.maxLines = lines;
+  int height = 0;
+  bool fitted = false;
+  for (int font : {1, 0}) {
+    style.font = font;
+    bool wordsFit = true;
+    const char* wordStart = value;
+    while (*wordStart && wordsFit) {
+      while (*wordStart == ' ' || *wordStart == '\n') ++wordStart;
+      const size_t length = std::strcspn(wordStart, " \n");
+      if (!length) break;
+      char word[64];
+      if (length >= sizeof(word)) {
+        wordsFit = false;
+        break;
+      }
+      std::memcpy(word, wordStart, length);
+      word[length] = '\0';
+      wordsFit = s.target().measureText(font, word, style).width <= box.width;
+      wordStart += length;
+    }
+    if (!wordsFit && font != 0) continue;
+    height = 0;
+    const char* next = value;
+    bool complete = true;
+    const auto measure = rect(0, 0, box.width, s.target().lineHeight(font) * lines);
+    fui::layoutText(s.target(), measure, value, style, [&](const char* run, fui::Rect) {
+      while (*next == ' ' || *next == '\n') ++next;
+      const auto length = std::strlen(run);
+      if (std::strncmp(next, run, length))
+        complete = false;
+      else
+        next += length;
+      height += s.target().inkBounds(font, run, style).height + 4;
+    });
+    while (*next == ' ' || *next == '\n') ++next;
+    height = std::max(0, height - 4);
+    if (height <= box.height && complete && !*next) {
+      fitted = true;
+      break;
+    }
+  }
+  if (!fitted) {
+    style.maxLines =
+        std::max(1, std::min(lines, int(box.height) / std::max(1, int(s.target().lineHeight(style.font)) + 4)));
+    height = style.maxLines * (s.target().lineHeight(style.font) + 4) - 4;
+  }
+  const auto oldClip = s.target().clipRect();
+  const int left = std::max(int(box.x), int(oldClip.x)), top = std::max(int(box.y), int(oldClip.y));
+  const int right = std::min(int(box.right()), int(oldClip.right()));
+  const int bottom = std::min(int(box.bottom()), int(oldClip.bottom()));
+  if (!s.target().setClipRect(rect(left, top, right - left, bottom - top))) return;
+  int y = box.y + std::max(0, (box.height - height) / 2);
+  const auto measure = rect(box.x, 0, box.width, s.target().lineHeight(style.font) * lines);
+  fui::layoutText(s.target(), measure, value, style, [&](const char* run, fui::Rect) {
+    const auto ink = s.target().inkBounds(style.font, run, style);
+    auto one = style;
+    one.maxLines = 1;
+    s.target().text(rect(box.x, y - ink.y, box.width, s.target().lineHeight(style.font)), run, one);
+    y += ink.height + 4;
+  });
+  s.target().setClipRect(oldClip);
+}
 inline void icon(toybox::Screen& s, fui::Rect r, const freeink::Icon& mark, bool inverse = false) {
   dashboard::icon(s, r, mark, inverse);
 }
@@ -68,7 +138,7 @@ inline bool button(toybox::Screen& s, Work& w, fui::Rect r, const char* label, f
   w.button.label = "";
   w.button.action = enabled ? id : fui::NO_ACTION;
   w.button.value = int16_t(value);
-  w.button.styles = pixelui::rowStyles();
+  w.button.styles = pixelui::buttonStyles();
   w.button.minTouchSize = 0;
   w.button.state = !enabled ? fui::StateDisabled : inverse ? fui::StateSelected : fui::StateNormal;
   s.button(w.button, r);
@@ -153,7 +223,7 @@ inline void art(toybox::Screen& s, const Model& m, fui::Rect r, unsigned id, con
       m.sleepArt.draw(m.sleepArt.context, s.target(), r, petsleep::eggIndex(id, m.sleepStep) + 1, inverse))
     return;
   if (id >= 3 && id < 51 && petsleep::breathing(*m.profile, m.view) && m.sleepArt.draw &&
-      m.sleepArt.draw(m.sleepArt.context, s.target(), r, petsleep::graphicIndex(id, m.sleepStep) + 1, inverse))
+      m.sleepArt.draw(m.sleepArt.context, s.target(), r, petsleep::graphicIndex(id, 0) + 1, inverse))
     return;
   if (m.art.draw && m.art.draw(m.art.context, s.target(), r, id, inverse)) return;
   const int side = std::max(20, std::min({104, int(r.width) - 20, int(r.height) - (caption ? 42 : 12)}));
@@ -202,7 +272,7 @@ inline void creature(toybox::Screen& s, const Model& m, fui::Rect r, bool portra
                               : 0;
   if (sleeping && band) {
     const int x = portrait ? badge.x + 4 : r.x + r.width / 3, y = r.y + 20;
-    for (unsigned i = 0; i <= petsleep::frame(m.sleepStep); ++i) {
+    for (unsigned i = 0; i <= petsleep::frame(0); ++i) {
       const int size = 6 + int(i) * 2, left = x + int(i) * 13, top = y - int(i) * 8;
       for (const bool halo : {true, false}) {
         const auto paint = halo ? paper : ink;
@@ -274,18 +344,26 @@ inline void identity(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, in
 }
 inline bool portraitBackground(toybox::Screen& s, const Model& m, fui::Rect r) {
   if (!m.portraitBackgrounds || !m.scenes.draw) return false;
-  const int width = (r.width - 4) & ~1;
+  const int width = (int(r.width) - 4) & ~1;
   const int height = width * 144 / 448;
-  if (width <= 0 || height <= 0 || height > r.height - 4) return false;
+  if (width <= 0 || height <= 0 || r.height <= 156) return false;
   const auto area = rect(r.x + (r.width - width) / 2, r.bottom() - height - 2, width, height);
+  const auto previous = s.target().clipRect();
+  const int left = std::max(int(area.x), int(previous.x)), right = std::min(int(area.right()), int(previous.right()));
+  const int top = std::max(int(r.y) + 154, int(previous.y));
+  const int bottom = std::min(int(area.bottom()), int(previous.bottom()));
+  if (right <= left || bottom <= top || !s.target().setClipRect(rect(left, top, right - left, bottom - top)))
+    return false;
   const unsigned first = HOME_ART_COUNT + unsigned(m.profile->species) * 2;
   for (unsigned half = 0; half < 2; ++half) {
     const auto piece = rect(area.x + int(half) * width / 2, area.y, width / 2, height);
     if (!m.scenes.draw(m.scenes.context, s.target(), piece, first + half, false)) {
       s.target().fill(area, paper);
+      s.target().setClipRect(previous);
       return false;
     }
   }
+  s.target().setClipRect(previous);
   return true;
 }
 inline void hero(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, bool habitat = false,
@@ -471,14 +549,14 @@ inline void project(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, boo
     const auto picture = rect(r.x + 12, r.y + 49, side, side);
     frame(s, picture);
     object(s, m, picture.inset({9, 9, 9, 9}), p.project);
-    const auto copy = rect(picture.right() + 15, picture.y, r.right() - picture.right() - 29, picture.height);
-    prose(s, rect(copy.x, copy.y + 3, copy.width, 46), objectName(p.project), 2);
+    const auto copy = rect(picture.right() + 15, picture.y, r.right() - picture.right() - 29, r.height - 55);
+    cardCopy(s, rect(copy.x, copy.y, copy.width, 66), objectName(p.project));
     if (completed)
       std::snprintf(w.label, sizeof(w.label), "%s", tr(STR_PET_PROJECT_READY));
     else
       std::snprintf(w.label, sizeof(w.label), tr(STR_PET_READING_LEFT),
                     static_cast<unsigned long long>((pet::projectRemaining(p) + 59) / 60));
-    prose(s, rect(copy.x, copy.y + 52, copy.width, copy.height - 71), w.label, 2);
+    prose(s, rect(copy.x, copy.y + 70, copy.width, copy.height - 94), w.label, 2);
     dashboard::bar(s, rect(copy.x, copy.bottom() - 18, copy.width, 13), progress.value, progress.target);
     return;
   }

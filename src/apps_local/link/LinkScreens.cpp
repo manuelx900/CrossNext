@@ -119,7 +119,7 @@ fui::Rect buildLink(toybox::Screen& screen, const LinkModel& model) {
     // The gap separates them; the weight is what says which one is the answer
     // to the question above. BACK stays solid when it is the only control on
     // the screen, because then there is no hierarchy to express.
-    leave.styles = toybox::rowStyles();
+    leave.styles = toybox::buttonStyles();
     screen.button(leave, screen.takeBottom(toybox::kPillHeight, toybox::kGutter));
   } else {
     // Alone, BACK keeps the bottom band: a single pill floating one row up

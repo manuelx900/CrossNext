@@ -791,7 +791,7 @@ void buildResult(toybox::Screen& screen, const ResultModel& model) {
   fui::TextStyle big;
   big.font = toybox::kDisplayFont;
   big.align = fui::TextAlign::Center;
-  screen.target().text(toybox::inkCentred(screen.takeTop(60, toybox::kGutter), toybox::kDisplayCut), tally, big);
+  screen.target().text(toybox::inkCentred(screen.target(), screen.takeTop(60, toybox::kGutter), big), tally, big);
 
   fui::ButtonProps done;
   done.label = tr(STR_UI_DONE_E782E7);
@@ -1008,7 +1008,7 @@ void buildBoard(toybox::Screen& screen, const BoardModel& model) {
     fui::ButtonProps done;
     done.label = tr(STR_UI_HOW_IT_ENDED_B78A03);
     done.action = ActionResult;
-    done.styles = toybox::rowStyles();
+    done.styles = toybox::buttonStyles();
     done.state = fui::StateSelected;
     done.text.font = toybox::kUiFont;
     done.text.align = fui::TextAlign::Center;
@@ -1079,8 +1079,8 @@ void buildBoard(toybox::Screen& screen, const BoardModel& model) {
       char field[toybox::kIntTextChars];
       std::snprintf(field, sizeof(field), "%d", value);
       screen.target().text(
-          toybox::inkCentred(fui::makeRect(static_cast<int16_t>(x + 10), y, 20, kCountsRow), toybox::kTileCut), field,
-          cell);
+          toybox::inkCentred(screen.target(), fui::makeRect(static_cast<int16_t>(x + 10), y, 20, kCountsRow), cell),
+          field, cell);
     };
 
     cell.align = fui::TextAlign::Left;

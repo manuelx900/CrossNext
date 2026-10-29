@@ -66,7 +66,7 @@ inline fui::StyleSet bandOutlineStyles() {
   styles.normal.background = fui::Paint::solid(fui::Color::Black);
   styles.normal.foreground = fui::Paint::solid(fui::Color::White);
   styles.normal.border = fui::Paint::solid(fui::Color::White);
-  styles.normal.borderWidth = kHairline;
+  styles.normal.borderWidth = kFrame;
   styles.selected = styles.normal;
   styles.focused = styles.normal;
   styles.active = styles.normal;
@@ -92,6 +92,13 @@ inline fui::StyleSet rowStyles() {
   styles.active = styles.selected;
   styles.disabled = styles.normal;
   styles.disabled.foreground = fui::Paint::dither(fui::Color::DarkGray);
+  return styles;
+}
+
+inline fui::StyleSet buttonStyles() {
+  auto styles = rowStyles();
+  styles.normal.borderWidth = kFrame;
+  styles.disabled.borderWidth = kFrame;
   return styles;
 }
 
@@ -154,6 +161,14 @@ constexpr CutMetrics kReadingBoldCut{45, 36, 23};       // reading_serif_bold_16
 constexpr fui::Rect inkCentred(const fui::Rect& box, const CutMetrics& cut) {
   return fui::Rect{box.x, static_cast<int16_t>(box.y + (box.height + cut.inkHeight) / 2 - cut.ascender), box.width,
                    cut.lineHeight};
+}
+
+inline fui::Rect inkCentred(const fui::DrawTarget& target, fui::Rect box, fui::TextStyle style) {
+  const auto ink = target.inkBounds(style.font, "H", style);
+  if (ink.height <= 0) return box;
+  box.y = static_cast<int16_t>(box.y + (box.height - ink.height) / 2 - ink.y);
+  box.height = target.lineHeight(style.font);
+  return box;
 }
 
 // The cut a line height belongs to, or nullptr for one this fork does not ship.
@@ -234,7 +249,7 @@ inline fui::StyleSet disabledStepperStyles() {
   styles.normal.background = fui::Paint::dither(fui::Color::LightGray);
   styles.normal.foreground = fui::Paint::solid(fui::Color::Black);
   styles.normal.border = fui::Paint::dither(fui::Color::DarkGray);
-  styles.normal.borderWidth = kHairline;
+  styles.normal.borderWidth = kFrame;
   styles.selected = styles.normal;
   styles.focused = styles.normal;
   styles.active = styles.normal;
@@ -295,6 +310,7 @@ inline const fui::ThemeTokens& themeTokens() {
     tokens.headerTitleAlign = fui::TextAlign::Left;
 
     tokens.titleText.font = fui::FONT_SLOT_BODY;
+    tokens.titleText.bold = true;
     // The display cut is only ever set on the header band, and that band is
     // always solid black, so the title colour belongs to the token rather than to
     // each caller. `header()` uses the title style as given instead of resolving
@@ -307,7 +323,7 @@ inline const fui::ThemeTokens& themeTokens() {
     tokens.smallText.font = kUiFont;
 
     tokens.listRow = rowStyles();
-    tokens.button = rowStyles();
+    tokens.button = buttonStyles();
     // Screen::header() takes the band's StyleSet from the popup slot, which is
     // the SDK's convention for "chrome surface" rather than an oversight.
     tokens.popup = invertedStyles();

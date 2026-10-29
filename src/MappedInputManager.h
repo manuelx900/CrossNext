@@ -4,6 +4,7 @@
 
 #include "util/ButtonReleaseGate.h"
 #include "util/HomeButtonInput.h"
+#include "util/SideButtonActions.h"
 
 class GfxRenderer;
 namespace freeink {
@@ -170,6 +171,8 @@ class MappedInputManager {
   bool wasHomeGesture() const;
   // Configured one-frame action, independent of the gesture that triggered it.
   HomeButtonAction homeButtonAction() const { return homeAction; }
+  SideButtonAction sideButtonAction() const { return sideEvent.action; }
+  SideButtonKey sideButtonKey() const { return sideEvent.key; }
   void resetHomeButtonInput() const {
     homeButtonInput.reset();
     deferredHomeAction = HomeButtonAction::Ignore;
@@ -201,6 +204,8 @@ class MappedInputManager {
 
  private:
   bool edgeBackEnabled = true;
+  mutable SideButtonEvent sideEvent{};
+  mutable SideButtonEvent deferredSideEvent{};
   HalGPIO& gpio;
   // Logical-to-physical button mapping depends on what the user is actually looking at: when the
   // screen is rendered rotated, the directional buttons must flip to match. The renderer is the only

@@ -561,3 +561,46 @@ statistics and leaves the journal untouched. Period projections retain
 bounded cancellation counters so reverse scans remove completions from their
 original period. The unified projection honors explicit local reversals, counts
 finished books once across devices and preserves cumulative reading totals.
+
+
+Side-button customization adds two persisted byte-sized bindings, defaulting to
+Navigation, and two bounded 40-byte app/game shortcut titles. The existing Home
+gesture activity also hosts each side key's action and shortcut picker, keeping
+one UI and save/rollback path. `MappedInputManager` suppresses every navigation edge/level for a
+reassigned physical side key, then publishes one release action through the
+existing Home/reader-action path; `main.cpp` owns Sleep, warmth and app dispatch.
+The key identity is retained when a synchronous operation defers an action. Home gesture
+configuration and the shared release gate retain ownership of their own input.
+`PresentationSettingsActivity` reuses the existing interval picker for the
+1..10 Home recent-book limit (default 3); Home keeps its existing ten source
+indices and one active-book object. The reader's optional four-position Rotate
+cycle is stored separately from its current orientation; the global control
+center retains paired rotation outside reading. These changes add no task,
+network lifetime, render buffer or recent-book copy cache. See
+[buttons](docs/buttons.md) and [interface layouts](docs/interface-layouts.md).
+
+Interface lettering is a persisted byte in the existing settings registry. The
+Appearance activity reuses its bounded settings host and local MenuFontScreen helper.
+ToyboxFonts owns eight interface aliases and switches them between the existing
+pixel families and the existing Ubuntu, Noto Sans and Noto Serif cuts.
+Dense captions retain the small Noto Sans cut outside Pixel for legibility. The
+GfxRenderer replaceBuiltinFont seam only replaces an existing non-SD font-map
+value; it does not allocate a map node or change reading font registrations.
+Preference changes reuse these flash fonts and the activity's render ownership,
+without a font file, task, framebuffer or per-paint allocation. Shared labels
+center from the active face's cap metrics instead of inferring them from line
+height, since different faces can share a line height.
+
+Section overrides are a fixed eleven-byte settings array (index zero is unused)
+serialized in section order. Invalid or absent entries follow General. Activities
+carry a two-byte section context; child and replacement activities inherit it
+unless explicitly tagged. Root constructors and Shelf launches assign sections,
+and the ActivityManager installation seam restores the effective aliases before
+entry and after a pop. No section-name scan or map rebuild runs per frame: the
+resolver reads the active section and one byte, and aliases change only when the
+effective style changes. The existing Appearance host uses a bounded eleven-row
+workspace for its section list, allocated with the activity rather than on its
+render stack or each repaint. It reuses OptionPopup for four global choices or
+five section choices including inheritance. Popup labels are copied only when
+opened; its fixed interaction table and strings belong to the activity. Book-font registrations and reading positions are
+not part of this preference.

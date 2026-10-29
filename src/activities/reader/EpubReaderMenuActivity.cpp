@@ -96,7 +96,8 @@ void EpubReaderMenuActivity::activateIndex(const int index) {
 
   const auto selectedAction = menuItems[index].action;
   if (selectedAction == MenuAction::ROTATE_SCREEN) {
-    pendingOrientation = uint8_t(rotation::pair(pendingOrientation, SETTINGS.rotationDirection != 0));
+    pendingOrientation = uint8_t(rotation::readerNext(pendingOrientation, SETTINGS.rotationDirection != 0,
+                                                      SETTINGS.readerFourOrientations != 0));
     ReaderUtils::applyOrientation(renderer, pendingOrientation);
     app.setDevice(uiTarget.deviceContext());
     requestUpdate();

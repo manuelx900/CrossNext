@@ -28,8 +28,7 @@ void text(fui::DrawTarget& target, fui::Rect box, const char* value, fui::FontId
   style.maxLines = lines;
   style.align = fui::TextAlign::Center;
   style.color = color;
-  const auto* cut = toybox::cutForLineHeight(target.lineHeight(font));
-  target.text(lines == 1 && cut ? toybox::inkCentred(box, *cut) : box, value, style);
+  target.text(lines == 1 ? toybox::inkCentred(target, box, style) : box, value, style);
 }
 void button(toybox::Screen& screen, fui::Rect box, const char* label, fui::ActionId action, int value = 0,
             bool selected = false) {
@@ -308,7 +307,7 @@ void buildHowTo(toybox::Screen& screen) {
                                       StrId::STR_GUIDE_WORDLE_ACCENTS};
   for (int n = 0; n < 3; ++n) {
     const auto r = fui::makeRect(note.x, note.y + n * (h + 8), note.width, h);
-    dashboard::frame(screen, r, 3);
+    dashboard::frame(screen, r, pixelui::kBorder);
     if (n == 0)
       dashboard::icon(screen, fui::makeRect(r.x + 10, r.y + (h - 30) / 2, 30, 30), extra_check_32);
     else if (n == 1) {

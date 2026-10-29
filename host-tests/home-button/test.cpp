@@ -3,6 +3,7 @@
 #include <cstdio>
 
 #include "util/HomeButtonInput.h"
+#include "util/SideButtonActions.h"
 
 namespace {
 int checks = 0;
@@ -17,6 +18,47 @@ void check(bool condition, const char* message) {
 }  // namespace
 
 int main() {
+  static_assert(!selectableHomeAction(HomeButtonAction::Dictionary));
+  static_assert(!selectableHomeAction(HomeButtonAction::CreateClipping));
+  static_assert(!selectableHomeAction(HomeButtonAction::Footnotes));
+  static_assert(!selectableSideAction(SideButtonAction::Dictionary));
+  static_assert(!selectableSideAction(SideButtonAction::SaveClipping));
+  static_assert(!selectableSideAction(SideButtonAction::Footnotes));
+  static_assert(selectableHomeAction(HomeButtonAction::Home));
+  static_assert(selectableSideAction(SideButtonAction::ToggleWarmth));
+
+  using Side = SideButtonAction;
+  for (uint8_t left = 0; left < uint8_t(Side::Count); ++left) {
+    for (uint8_t right = 0; right < uint8_t(Side::Count); ++right) {
+      check(sideNavigates(left) == (left == 0), "Only Navigation exposes normal left-key events");
+      check(sideNavigates(right) == (right == 0), "Only Navigation exposes normal right-key events");
+      check(sideReleasedAction(left, right, false, false) == Side::Navigation, "No release emits no custom action");
+      check(sideReleasedAction(left, right, true, false) == Side(left), "Left release uses the left binding");
+      check(sideReleasedAction(left, right, false, true) == Side(right), "Right release uses the right binding");
+      check(sideReleasedAction(left, right, true, true) == Side(left ? left : right),
+            "Simultaneous releases emit one action");
+    }
+  }
+  check(sideReleasedEvent(uint8_t(Side::OpenShortcut), uint8_t(Side::OpenShortcut), true, false).key ==
+            SideButtonKey::Left,
+        "Left shortcut keeps its own target");
+  check(sideReleasedEvent(uint8_t(Side::OpenShortcut), uint8_t(Side::OpenShortcut), false, true).key ==
+            SideButtonKey::Right,
+        "Right shortcut keeps its own target");
+  check(sideStandaloneAction(Side::ToggleWarmth) && sideStandaloneAction(Side::OpenShortcut),
+        "Warmth and app shortcuts survive synchronous input deferral");
+  for (uint8_t remembered : {uint8_t(0), uint8_t(25), uint8_t(50), uint8_t(100), uint8_t(255)}) {
+    const int restored = remembered < 1 ? 1 : remembered > 100 ? 100 : remembered;
+    check(sideToggledWarmth(false, 0, remembered) == restored, "Warmth turns on at remembered level");
+    check(sideToggledWarmth(true, 0, remembered) == restored, "Cool light restores remembered warmth");
+    check(sideToggledWarmth(true, 50, remembered) == 0, "Warm light switches back to cool");
+  }
+  check(sideHomeAction(Side::ToggleFrontlight) == HomeButtonAction::ToggleFrontlight,
+        "Side light reaches global light action");
+  check(sideHomeAction(Side::ReaderMenu) == HomeButtonAction::ReaderMenu, "Side menu reaches the reader sheet");
+  check(sideHomeAction(Side::Bookmark) == HomeButtonAction::Bookmark, "Side bookmark reaches reader bookmark action");
+  check(sideHomeAction(Side::Sleep) == HomeButtonAction::Ignore, "Sleep does not also dispatch a Home action");
+  check(sideHomeAction(Side::Navigation) == HomeButtonAction::Ignore, "Default keys retain ordinary navigation only");
   using Action = HomeButtonAction;
   static_assert(static_cast<int>(Action::ReaderMenu) == 9);
   static_assert(static_cast<int>(Action::CreateClipping) == 11);

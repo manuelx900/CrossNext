@@ -38,7 +38,7 @@ class BattleshipActivity final : public Activity {
 
   // Which screen owns the pass. Menu is the front door, Place is setting up,
   // Board is the game.
-  enum class View : uint8_t { Menu, Place, Board, Help };
+  enum class View : uint8_t { Menu, Place, Board, Help, Result };
   int helpPage = 0;
 
   // Where a grid landed. Derived once and used by both painting and hit
@@ -138,6 +138,7 @@ class BattleshipActivity final : public Activity {
   // The computer owes a shot. Deferred by one loop pass so the repaint showing
   // your own shot lands before it thinks, exactly as the chess engine is.
   bool computerThinking = false;
+  bool showOwnFleet = false;
   // What just happened, in the player's words. One line, and it is the only
   // narration this game has. It doubles as the instruction line while you are
   // setting up, because both answer the same question: what now.

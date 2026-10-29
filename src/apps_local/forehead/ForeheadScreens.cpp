@@ -56,8 +56,9 @@ fui::TextStyle textStyle(const fui::FontId font, const fui::TextAlign align,
 }
 
 void drawText(toybox::Screen& screen, const fui::Rect& box, const char* text, const fui::FontId font,
-              const fui::TextAlign align, const toybox::CutMetrics& cut, const fui::Color colour = fui::Color::Black) {
-  screen.target().text(toybox::inkCentred(box, cut), text, textStyle(font, align, colour));
+              const fui::TextAlign align, const toybox::CutMetrics&, const fui::Color colour = fui::Color::Black) {
+  screen.target().text(toybox::inkCentred(screen.target(), box, textStyle(font, align, colour)), text,
+                       textStyle(font, align, colour));
 }
 
 // The header band with the offset rule under it, as jaipur, yahtzee and the

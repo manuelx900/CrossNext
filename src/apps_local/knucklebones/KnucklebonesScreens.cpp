@@ -193,8 +193,9 @@ void drawGrid(toybox::Screen& screen, const kb::Grid& grid, const bool yours) {
     const int16_t left = static_cast<int16_t>(gridLeftOf(device, yours) + column * (kCell + kCellGap));
     // inkCentred because the band is 28px and the ui cut's line box is 42:
     // handed the band itself, the target's clamp drops the total 6px out of it.
-    screen.target().text(toybox::inkCentred(fui::makeRect(left, scoreTopOf(yours), kCell, kScoreBand), toybox::kUiCut),
-                         label, style);
+    screen.target().text(
+        toybox::inkCentred(screen.target(), fui::makeRect(left, scoreTopOf(yours), kCell, kScoreBand), style), label,
+        style);
   }
 }
 
@@ -393,14 +394,14 @@ void buildHowTo(toybox::Screen& screen, const HowToModel& model) {
     score.align = fui::TextAlign::Center;
     miniGrid(screen, left, diagramTop, kMini, stacked, false);
     screen.target().text(
-        toybox::inkCentred(fui::makeRect(zoneX, static_cast<int16_t>(diagramTop + (gridH - 44) / 2), zoneW, 44),
-                           toybox::kDisplayCut),
+        toybox::inkCentred(screen.target(),
+                           fui::makeRect(zoneX, static_cast<int16_t>(diagramTop + (gridH - 44) / 2), zoneW, 44), score),
         "36", score);
     const int16_t secondTop = static_cast<int16_t>(diagramTop + gridH + 40);
     miniGrid(screen, left, secondTop, kMini, spread, false);
     screen.target().text(
-        toybox::inkCentred(fui::makeRect(zoneX, static_cast<int16_t>(secondTop + (gridH - 44) / 2), zoneW, 44),
-                           toybox::kDisplayCut),
+        toybox::inkCentred(screen.target(),
+                           fui::makeRect(zoneX, static_cast<int16_t>(secondTop + (gridH - 44) / 2), zoneW, 44), score),
         "12", score);
     return;
   }
@@ -417,8 +418,9 @@ void buildHowTo(toybox::Screen& screen, const HowToModel& model) {
   arrow.font = toybox::kDisplayFont;
   arrow.align = fui::TextAlign::Center;
   screen.target().text(
-      toybox::inkCentred(fui::makeRect(area.x, static_cast<int16_t>(diagramTop + 3 * kMini + 10), area.width, 44),
-                         toybox::kDisplayCut),
+      toybox::inkCentred(screen.target(),
+                         fui::makeRect(area.x, static_cast<int16_t>(diagramTop + 3 * kMini + 10), area.width, 44),
+                         arrow),
       "^", arrow);
   miniGrid(screen, left, static_cast<int16_t>(diagramTop + 3 * kMini + 60), kMini, yours, true);
 }
@@ -515,8 +517,8 @@ void buildBoard(toybox::Screen& screen, const BoardModel& model) {
     numberStyle.align = fui::TextAlign::Left;
     screen.target().text(fui::makeRect(toybox::kMargin, kDieTop, zoneW, 20), "THEM", nameStyle);
     screen.target().text(
-        toybox::inkCentred(fui::makeRect(toybox::kMargin, static_cast<int16_t>(kDieTop + 22), zoneW, 50),
-                           toybox::kDisplayCut),
+        toybox::inkCentred(screen.target(),
+                           fui::makeRect(toybox::kMargin, static_cast<int16_t>(kDieTop + 22), zoneW, 50), numberStyle),
         theirsText, numberStyle);
     const int16_t rightX = static_cast<int16_t>(dieLeft + kDieSize + toybox::kGutter);
     const int16_t rightW = static_cast<int16_t>(device.width - toybox::kMargin - rightX);
@@ -524,7 +526,8 @@ void buildBoard(toybox::Screen& screen, const BoardModel& model) {
     numberStyle.align = fui::TextAlign::Right;
     screen.target().text(fui::makeRect(rightX, kDieTop, rightW, 20), "YOU", nameStyle);
     screen.target().text(
-        toybox::inkCentred(fui::makeRect(rightX, static_cast<int16_t>(kDieTop + 22), rightW, 50), toybox::kDisplayCut),
+        toybox::inkCentred(screen.target(), fui::makeRect(rightX, static_cast<int16_t>(kDieTop + 22), rightW, 50),
+                           numberStyle),
         mineText, numberStyle);
   }
 

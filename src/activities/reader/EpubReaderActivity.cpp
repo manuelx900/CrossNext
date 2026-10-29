@@ -952,8 +952,7 @@ void EpubReaderActivity::loop() {
 
   if (longPress && SETTINGS.longPressButtonBehavior == SETTINGS.ORIENTATION_CHANGE) {
     const uint8_t newOrientation =
-        nextTriggered ? (SETTINGS.orientation - 1 + SETTINGS.ORIENTATION_COUNT) % SETTINGS.ORIENTATION_COUNT
-                      : (SETTINGS.orientation + 1) % SETTINGS.ORIENTATION_COUNT;
+        uint8_t(rotation::readerNext(SETTINGS.orientation, !nextTriggered, SETTINGS.readerFourOrientations != 0));
     applyOrientation(newOrientation);
     if (touch.prev || touch.next) haptic_feedback::touchAction(true);
     requestUpdate();
@@ -3489,7 +3488,8 @@ void EpubReaderActivity::activateMoreRow(int row) {
   // In-place toggles keep the panel open and re-render the page beneath it.
   switch (action) {
     case MA::ROTATE_SCREEN: {
-      applyOrientation(uint8_t(rotation::pair(SETTINGS.orientation, SETTINGS.rotationDirection != 0)));
+      applyOrientation(uint8_t(rotation::readerNext(SETTINGS.orientation, SETTINGS.rotationDirection != 0,
+                                                    SETTINGS.readerFourOrientations != 0)));
       discardOverlayPage();
       requestUpdate();
       return;

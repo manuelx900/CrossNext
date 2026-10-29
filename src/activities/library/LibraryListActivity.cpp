@@ -76,7 +76,9 @@ const char* tabLabelFor(const int tab) {
 }  // namespace
 
 LibraryListActivity::LibraryListActivity(GfxRenderer& renderer, MappedInputManager& mappedInput)
-    : UiTabListActivity("Library", renderer, mappedInput, true) {}
+    : UiTabListActivity("Library", renderer, mappedInput, true) {
+  setInterfaceFontSection(menufont::Section::Library);
+}
 
 void LibraryListActivity::onEnter() {
   // One lock across the base lifecycle AND the data phase: the base onEnter

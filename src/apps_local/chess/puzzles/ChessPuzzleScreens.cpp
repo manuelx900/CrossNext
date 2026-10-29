@@ -32,7 +32,7 @@ void button(toybox::Screen& screen, Work& work, fui::Rect rect, const char* labe
   props.label = work.buttonLabel;
   props.text.font = pixelui::kSmall;
   props.text.align = fui::TextAlign::Center;
-  props.styles = pixelui::rowStyles();
+  props.styles = pixelui::buttonStyles();
   props.action = action;
   props.value = value;
   props.minTouchSize = 0;

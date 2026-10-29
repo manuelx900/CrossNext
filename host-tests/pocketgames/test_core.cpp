@@ -1,5 +1,6 @@
 #include <HalStorage.h>
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -17,7 +18,73 @@ int checks = 0, failures = 0;
     }                                                 \
   } while (0)
 
+// Reference captures walk from existing friendly anchors toward the candidate.
+uint64_t referenceCaptures(const pg::Othello& game, int square, int colour) {
+  if (square < 0 || square >= 64 || game.board[square]) return 0;
+  uint64_t captured = 0;
+  for (int anchor = 0; anchor < 64; ++anchor) {
+    if (game.board[anchor] != colour) continue;
+    const int dx = square % 8 - anchor % 8, dy = square / 8 - anchor / 8;
+    const int ax = std::abs(dx), ay = std::abs(dy), length = std::max(ax, ay);
+    if (length < 2 || (dx && dy && ax != ay)) continue;
+    const int step = (dx > 0 ? 1 : dx < 0 ? -1 : 0) + (dy > 0 ? 8 : dy < 0 ? -8 : 0);
+    uint64_t ray = 0;
+    bool enclosed = true;
+    for (int n = 1; n < length; ++n) {
+      const int at = anchor + step * n;
+      if (game.board[at] != 3 - colour) {
+        enclosed = false;
+        break;
+      }
+      ray |= uint64_t(1) << at;
+    }
+    if (enclosed) captured |= ray;
+  }
+  return captured;
+}
+void captureRules() {
+  for (int colour : {1, 2}) {
+    pg::Othello game;
+    game.turn = colour;
+    const int origin = 27;
+    for (int dy = -1; dy <= 1; ++dy)
+      for (int dx = -1; dx <= 1; ++dx) {
+        if (!dx && !dy) continue;
+        game.board[origin + dy * 8 + dx] = 3 - colour;
+        game.board[origin + 2 * (dy * 8 + dx)] = colour;
+      }
+    CHECK(pg::flips(game, origin, colour) == 8);
+    CHECK(pg::play(game, origin));
+    CHECK(pg::disks(game, colour) == 17 && pg::disks(game, 3 - colour) == 0);
+    CHECK(game.over);
+  }
+  for (uint32_t seed = 1; seed <= 120; ++seed) {
+    pg::State state;
+    pg::start(state, pg::Kind::Othello, seed);
+    uint32_t random = seed;
+    for (int move = 0; move < 60 && !state.othello.over; ++move) {
+      int legal[64], count = 0;
+      for (int square = 0; square < 64; ++square) {
+        const uint64_t expected = referenceCaptures(state.othello, square, state.othello.turn);
+        int flips = 0;
+        for (int n = 0; n < 64; ++n) flips += (expected >> n) & 1;
+        CHECK(pg::flips(state.othello, square, state.othello.turn) == flips);
+        if (expected) legal[count++] = square;
+      }
+      CHECK(count > 0);
+      if (!count) break;
+      const int square = legal[pg::random(random) % count];
+      const auto before = state.othello;
+      const uint64_t expected = referenceCaptures(before, square, before.turn) | (uint64_t(1) << square);
+      CHECK(pg::play(state.othello, square));
+      for (int n = 0; n < 64; ++n)
+        CHECK(state.othello.board[n] == ((expected >> n) & 1 ? before.turn : before.board[n]));
+      CHECK(state.othello.over || pg::hasMove(state.othello, state.othello.turn));
+    }
+  }
+}
 int main() {
+  captureRules();
   pg::State s, restored;
   uint8_t bytes[pg::kSaveBytes];
   uint32_t generation = 0;

@@ -35,28 +35,41 @@ void MappedInputManager::update(const bool deferHomeButtonAction) const {
       HalHaptics::feedback(SETTINGS.vibration != CrossPointSettings::VIBRATION_OFF, true, SETTINGS.hapticIntensity);
     }
   }
+  // Settle physical release ownership before deriving an action from it.
+  // Repeating this for the same frame's edges is idempotent.
+  settleReleaseGate();
+  sideEvent = {};
+  if (gpio.hasTouch() && homeAction == HomeButtonAction::Ignore) {
+    sideEvent =
+        sideReleasedEvent(SETTINGS.sideLeftAction, SETTINGS.sideRightAction,
+                          !releaseGate.swallowsRelease(HalGPIO::BTN_UP) && gpio.wasReleased(HalGPIO::BTN_UP),
+                          !releaseGate.swallowsRelease(HalGPIO::BTN_DOWN) && gpio.wasReleased(HalGPIO::BTN_DOWN));
+    homeAction = sideHomeAction(sideEvent.action);
+  }
   if (deferHomeButtonAction) {
-    // Keep the first action observed during a synchronous transfer. Home must
-    // still be visible now so the transfer can cancel and unwind promptly.
-    if (homeAction != HomeButtonAction::Ignore && deferredHomeAction == HomeButtonAction::Ignore) {
+    // Keep the first global action, including which side key owns a shortcut.
+    const bool empty =
+        !sideStandaloneAction(deferredSideEvent.action) && deferredHomeAction == HomeButtonAction::Ignore;
+    if (empty && sideStandaloneAction(sideEvent.action))
+      deferredSideEvent = sideEvent;
+    else if (empty && homeAction != HomeButtonAction::Ignore)
       deferredHomeAction = homeAction;
-    }
+  } else if (sideStandaloneAction(deferredSideEvent.action)) {
+    sideEvent = deferredSideEvent;
+    deferredSideEvent = {};
+    homeAction = HomeButtonAction::Ignore;
   } else if (deferredHomeAction != HomeButtonAction::Ignore) {
     homeAction = deferredHomeAction;
     deferredHomeAction = HomeButtonAction::Ignore;
+    sideEvent = {};
   }
   for (uint8_t value = 0; value <= static_cast<uint8_t>(Button::ScreenDown); ++value) {
     if (!isPressed(static_cast<Button>(value))) longPressFiredButtons &= ~(1u << value);
   }
-  // The second path to a release read (blocking download/sync flows advance the
-  // latch themselves). Idempotent for a given frame's edges, so this and
-  // ActivityManager::loop() cannot disagree. Dropping it leaves an arm standing
-  // for the whole of a blocking download and swallows the Back that cancels it.
-  settleReleaseGate();
 }
 
 uint32_t MappedInputManager::nextActionDelayMs(const uint32_t now, const uint32_t maximum) const {
-  if (deferredHomeAction != HomeButtonAction::Ignore) return 0;
+  if (sideStandaloneAction(deferredSideEvent.action) || deferredHomeAction != HomeButtonAction::Ignore) return 0;
   return gpio.hasHomeKey() ? homeButtonInput.nextActionDelayMs(now, maximum) : maximum;
 }
 
@@ -101,6 +114,10 @@ MappedInputManager::Button MappedInputManager::mapScreenDirection(const Button b
 }
 
 bool MappedInputManager::readButton(const uint8_t buttonIndex, bool (HalGPIO::*fn)(uint8_t) const) const {
+  // Reassigned side keys have one owner: no page turn, menu step or held repeat.
+  if (gpio.hasTouch() && ((buttonIndex == HalGPIO::BTN_UP && !sideNavigates(SETTINGS.sideLeftAction)) ||
+                          (buttonIndex == HalGPIO::BTN_DOWN && !sideNavigates(SETTINGS.sideRightAction))))
+    return false;
   // The release half of a press some earlier activity already acted on is not
   // this activity's input. Comparing the member pointer keeps the gate on the
   // ONE edge it is about: presses and levels are read raw, so a held button

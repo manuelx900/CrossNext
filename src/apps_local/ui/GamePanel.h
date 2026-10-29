@@ -140,7 +140,7 @@ inline void row(toybox::Screen& s, fui::Rect r, const char* label, fui::ActionId
   if (selected)
     s.target().fill(r, dashboard::ink);
   else
-    dashboard::frame(s, r, 3);
+    dashboard::frame(s, r, pixelui::kBorder);
   dashboard::hit(s, r, action, value);
   const int side = std::max(12, std::min({40, int(r.height) - 18, int(r.width) / 5}));
   const int margin = r.width < 180 ? 8 : 16;

@@ -520,6 +520,7 @@ void PetActivity::action(fui::ActionId action, int value) {
     case petui::SetupTab:
       if (value >= 0 && value < 3) {
         static constexpr pet::View views[] = {pet::View::New, pet::View::Info, pet::View::Rules};
+        page = 0;
         show(views[value]);
       }
       return;
@@ -757,7 +758,10 @@ void PetActivity::action(fui::ActionId action, int value) {
         if (pet::owns(profile, previewItem)) catalogFilter = petui::CatalogFilter::Owned;
         const unsigned perPage = renderer.getScreenWidth() > renderer.getScreenHeight() ? 4 : 6;
         page = int(petui::catalogOrdinal(profile, unsigned(projectSlot), catalogFilter, previewItem) / perPage);
-        show(pet::View::ProjectPreview);
+        if (pet::owns(profile, previewItem))
+          changeTab(int(pet::Tab::Home));
+        else
+          show(pet::View::ProjectPreview);
       }
       return;
     case petui::RemoveProject:
@@ -789,6 +793,7 @@ void PetActivity::action(fui::ActionId action, int value) {
     case petui::Retry:
       return;
     case petui::OpenRules:
+      page = 0;
       show(pet::View::Rules);
       return;
     case fui::NO_ACTION:
@@ -865,9 +870,10 @@ void PetActivity::loop() {
         (view == pet::View::Dashboard || view == pet::View::Home || view == pet::View::ReadingInfo))
       requestUpdate();
   }
-  const bool breathing =
-      petsleep::breathing(profile, view) && (sleepArt.ready() || petsleep::moodVisible(profile, view));
-  if (sleepClock.update(millis(), !loading && (breathing || petsleep::enabled(profile, view)))) requestUpdate();
+  const bool animated = petsleep::breathing(profile, view) &&
+                        ((pet::stage(profile.readingSeconds) == pet::Stage::Egg && sleepArt.ready()) ||
+                         petsleep::moodVisible(profile, view));
+  if (sleepClock.update(millis(), !loading && animated)) requestUpdate();
   pet::View before = view;
   sectionnav::Input::Event command{};
   fui::InputSnapshot input{};

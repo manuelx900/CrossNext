@@ -115,6 +115,13 @@ constexpr bool everyItemHasAnIcon() {
   }
   return true;
 }
+constexpr bool everyItemHasFontKey() {
+  for (const auto& folder : kFolders)
+    for (int n = 0; n < folder.count; ++n)
+      if (menufont::itemFor(folder.items[n].title) == menufont::kNoItem) return false;
+  return true;
+}
+static_assert(everyItemHasFontKey(), "Add a stable interface font key for every shelf item");
 static_assert(everyItemHasAnIcon(), "every shelf item needs an icon; see tools_local/toybox/icons.txt");
 
 constexpr bool everyFolderHasAMark() {
@@ -399,6 +406,9 @@ bool openItem(const int folder, const int item, GfxRenderer& renderer, MappedInp
   saveIfChanged(folder, item);
   setOpenTitle(parent.items[item].title, origin);
   auto activity = parent.items[item].create(renderer, mappedInput);
+  if (activity)
+    activity->setInterfaceFontSection(folder == 0 ? menufont::Section::Games : menufont::Section::Apps,
+                                      menufont::itemFor(parent.items[item].title));
   if (!replaceWith(std::move(activity), parent.items[item].title)) {
     openFolderIndex = -1;
     setOpenTitle(nullptr);

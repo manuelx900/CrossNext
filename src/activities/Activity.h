@@ -13,6 +13,7 @@
 #include "MappedInputManager.h"
 #include "RenderLock.h"
 #include "RevealedInteractions.h"
+#include "util/MenuFontStyle.h"
 #include "util/ScreenshotInfo.h"
 
 class Activity {
@@ -29,11 +30,15 @@ class Activity {
   paintclock::SurfaceGate surfaceGate;
   bool edgeBackEnabled = true;
   bool blockChildEdgeBack = false;
+  menufont::Context interfaceFontContext;
 
  public:
   explicit Activity(std::string name, GfxRenderer& renderer, MappedInputManager& mappedInput)
       : name(std::move(name)), renderer(renderer), mappedInput(mappedInput) {}
   virtual ~Activity() = default;
+  void setInterfaceFontSection(menufont::Section section, uint8_t item = menufont::kNoItem) {
+    interfaceFontContext.set(section, item);
+  }
   void setEdgeBackEnabled(bool enabled, bool includeChildren = false) {
     edgeBackEnabled = enabled;
     blockChildEdgeBack = !enabled && includeChildren;

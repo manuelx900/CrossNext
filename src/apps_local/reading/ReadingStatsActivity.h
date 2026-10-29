@@ -13,7 +13,9 @@
 
 class ReadingStatsActivity final : public Activity {
  public:
-  ReadingStatsActivity(GfxRenderer& renderer, MappedInputManager& input) : Activity("ReadingStats", renderer, input) {}
+  ReadingStatsActivity(GfxRenderer& renderer, MappedInputManager& input) : Activity("ReadingStats", renderer, input) {
+    setInterfaceFontSection(menufont::Section::Statistics);
+  }
   void openBook(const char* document, const char* title, const char* author) {
     std::snprintf(initialBook, sizeof(initialBook), "%s", document);
     std::snprintf(detail.title, sizeof(detail.title), "%s", title);

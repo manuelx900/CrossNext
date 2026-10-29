@@ -63,6 +63,14 @@ int main() {
       check(next == (initial + (right ? 1 : 3)) % 4);
       check(rotation::toggle(next, initial, right) == initial);
       check(rotation::pair(rotation::pair(initial, right), right) == initial);
+      check(rotation::readerNext(initial, right, false) == rotation::pair(initial, right));
+      int rotated = initial;
+      unsigned seen = 0;
+      for (int n = 0; n < 4; ++n) {
+        seen |= 1u << rotated;
+        rotated = rotation::readerNext(rotated, right, true);
+      }
+      check(seen == 15u && rotated == initial);
     }
   for (bool right : {false, true}) {
     study::ImageView view;

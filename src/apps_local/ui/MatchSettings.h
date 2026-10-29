@@ -64,7 +64,7 @@ inline void choice(toybox::Screen& s, fui::Rect r, const char* label, fui::Actio
                    bool icon = false) {
   chosen = s.frame().buttonSelected(action, value, chosen);
   if (chosen) s.target().fill(r, dashboard::ink);
-  dashboard::frame(s, r, 3);
+  dashboard::frame(s, r, pixelui::kBorder);
   dashboard::hit(s, r, action, value);
   if (icon) {
     const int side = std::min(32, int(r.height) - 16);

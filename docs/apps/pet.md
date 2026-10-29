@@ -1,5 +1,24 @@
 # PET
 
+Info starts with raising a pet through reading, then explains food, mood,
+energy, cleaning and decoration in short everyday language. Info shows three
+cards per page in either orientation; difficulty is explained only in Rules.
+Rules lists the daily food/remedy rewards, games, difficulty and projects. Paragraphs retain
+regular text instead of falling back to a bold pixel font. The guide is
+paginated for the current orientation and uses the care screen's real rules.
+The reading-return summary enlarges its
+elapsed-reading, growth and daily-goal labels without changing recorded totals
+or rewards. The reading-help screen explains the daily totals directly: up to
+six food portions (one at each of 5, 10, 15, 30, 60 and 120 minutes) and two
+remedies (30 and 120 minutes). It explains that reading can be accumulated in
+several sessions and that the daily goal is optional for earning rewards.
+
+PET Settings keeps only the difficulty choices, daily reading goal and Save.
+Removing the repeated deadline preview leaves more room around the difficulty
+rows; the confirmation required when a difficulty change would end a life is
+retained. Reading rewards use a food bowl for provisions and an upward growth
+arrow. The remaining-minutes caption is centred between its heading and bar.
+
 PET appears in **Apps**, beside Reading Adventure. Choose a Forest, Lunar or Volcano Egg,
 set a daily reading goal (5, 10, 20 or 30 minutes), and press Begin. A PET-specific
 name screen reuses Wordle’s letter keys, with the selected egg, a name preview,
@@ -9,7 +28,7 @@ Blank names are rejected and trailing spaces are trimmed. Back returns to egg
 selection without creating a companion; confirmation writes the new life once.
 The name appears on its dashboard, room and archived life. Older unnamed saves
 remain readable and use their egg label until a new named companion is created.
-The interface uses the firmware's pixel fonts, headers and existing icons.
+The interface follows the firmware's selected interface font, headers and existing icons.
 The supplied monochrome artwork is loaded from the microSD packs.
 
 During incubation, vital stats show locks and the Care tab opens an explanation
@@ -376,21 +395,17 @@ the existing fixed small-read fallback on allocation failure. Original atlases,
 prompts and provenance are in `assets_local/pet/animation/`; regenerate with
 `tools_local/pet/build_breathing.py`. The activity owns and closes the pack.
 
-Breathing uses phases 0/1/2/1, with 0.75 seconds between steps, while an active,
-hatched pet is visible on PET, Home, Reward or Evolution. PET and Home share
-one pose selection for happy, hungry, tired, sick and sleeping companions.
-PET always shows the complete body; Home alone may crop to a shelter head.
-Both sick conditions use the subdued sick pose in both views.
-Eggs rock between left, upright and right orientations about their lower support.
-Ended lives, menus and historical pictures remain static. No animation runs
-while reading. A missing or invalid required pack blocks entry with the installation notice. Procedural
-rising Z marks use the same clock for a healthy sleeping pet in PET, Home or Reward; they
-are native UI elements, independent of the packed animation frames. Their black strokes have a white outline
-so background details do not hide them. Live mood badges are drawn as monochrome
-faces (happy, sad, hungry, tired or sick) above the pet on PET, Home and Reward.
-They alternate two centered sizes on the same clock and are native UI elements
-independent of the packed animation frames. Sleeping healthy pets use Z marks instead. Shelter heads remain still because the
-breathing torso is hidden inside the furniture.
+Hatched companions stay still in every live view. Their pose still reflects
+happiness, hunger, tiredness, illness and rest. The existing body frames and
+animation source artwork remain in the resource pack for a future change;
+rendering selects the first body frame. PET shows the full body, while Home may
+show a shelter head. Sleeping Z marks stay still too.
+
+Egg wobble and live mood badges retain the 0.75-second clock. Mood badges use
+native monochrome faces, with a smaller badge in Home. Periodic refreshes stop
+when neither an egg nor a mood badge can move. Menus, previous lives and reading
+remain static. Required resource installation checks and save formats are
+unchanged.
 
 Beds and hammocks fit the entire sleeping body without limiting it to mattress
 thickness. Twenty-three enclosed shelters use a head-only view sized to their
@@ -490,7 +505,7 @@ Home catalogue cards open a static preview: an enlarged object and the room with
 
 Preview arrows browse the current category and Owned/Unowned filter without saving. The counter identifies the current item; arrows stop at the first and last item. Back opens the catalogue page containing the item just previewed. Read-only browsing remains available.
 
-Confirming Place or Choose project keeps Preview open after the guarded save. An equipped object shows its saved status and offers Remove; a pending project's confirmation is disabled. A different unowned selection starts its reading goal at zero and stays in To earn until completed through reading. Back returns to the catalogue page containing that item. In Owned, the equipped object appears first; all remaining objects keep their canonical order, so replacing it restores the previous object to its normal position. This order is derived and is not saved.
+Confirming Place returns to Home after a successful guarded save. Choose project keeps Preview open. An equipped object shows its saved status and offers Remove; a pending project's confirmation is disabled. A different unowned selection starts its reading goal at zero and stays in To earn until completed through reading. Back returns to the catalogue page containing that item. In Owned, the equipped object appears first; all remaining objects keep their canonical order, so replacing it restores the previous object to its normal position. This order is derived and is not saved.
 
 At full satiety, Feed stays disabled and explains that the companion is already full, even with no provisions left. Wake warns that ending early forfeits the cycle bonus; current energy remains in its separate metric. Rest shows the two-hour cycle and an upper bound on its energy bonus before starting. Successful cleaning shows actual hygiene and capped mood changes and is free. Successful healing shows the hygiene change and the one remedy spent. Results are temporary activity state, created only after a successful save and cleared on leaving their notice; save errors never show a successful result. Remedy rewards and healing use a medicine bottle icon, while hearts continue to mean mood and affection. These refinements add six bytes of result data to each UI model/activity instance and a fixed 128-byte monochrome icon, with no new save fields, heap buffers, timers or SD packs.
 
@@ -574,7 +589,7 @@ added monochrome glyphs are flash constants, with no runtime buffer or allocatio
 Mood faces use a proportional slot beside the upper-right of the fitted companion,
 bounded to 36–64 pixels when space permits. The PET anchor follows the current
 species, stage and pose dimensions and stays inside the illustration area.
-Home uses a 36–56 pixel face in screen coordinates, choosing
+Home uses a 28–42 pixel face in screen coordinates, choosing
 among four nearby anchors to reduce overlap with the companion, window and placed
 furnishings. The two pulse sizes share a fixed centre. Missing artwork follows the
 same single-badge path; it does not add a second face. These are bounded layout
@@ -754,9 +769,10 @@ validated on entry and closed, then opened only for their existing relevant
 views. The existing SD-art loader owns its bounded PSRAM caches and releases
 them on exit; it can use fixed small reads when PSRAM allocation fails.
 
-The life-stage timeline fits complete stage names on one line in English and
-Spanish, including Newborn and Recién nacido. The current stage keeps its pixel
-face emphasis. Care supplies are a read-only status panel without a chevron or
+The life-stage timeline uses five equally spaced columns with centered images
+and labels. Stage names can use two lines; Spanish Recién nacido wraps at the
+word boundary. The current stage uses the same size with emphasis; compact captions use a thin
+underline when a bold face would not fit. Care supplies are a read-only status panel without a chevron or
 focus/touch action; reading guidance remains available in the header. PET fits
 the battery percentage reserve to its label so the help and settings controls
 sit farther right, with their existing 44-pixel hit areas kept separate.
@@ -778,9 +794,9 @@ previous-generation cards and life details, independently of interface language.
 The preference is kept in the firmware settings; existing PET saves retain their
 format. Short card dates use a two-digit year; life details use a four-digit year.
 
-PET animation advances every 750 ms while an animated PET screen is visible.
-Menus and historical pictures remain static. The shorter interval requests more
-frequent display updates; the panel's refresh time determines the visible cadence.
+Eggs and live mood badges advance every 750 ms while visible. Hatched bodies,
+sleep marks, menus and historical pictures stay still. The display refresh time
+determines the visible cadence of the permitted motion.
 
 PET's four main artwork packs can retain up to sixteen verified source sprites
 within a 64 KiB PSRAM budget per pack (256 KiB total additional pixels). Cached
@@ -794,3 +810,25 @@ Black and white artwork is drawn as horizontal ink runs rather than individual
 pixels, with the existing nearest-neighbour sampling and clipping preserved.
 After a section becomes visible, its first animation update waits one frame
 interval; entering the section does not cause a second immediate animation repaint.
+
+
+The overview's hatch/project card shows the goal name without a duplicate birth
+heading, with larger text and separate artwork. Goal names can wrap within the card; the
+reading fraction and progress bar remain separate. Home project names use the
+same readable heading treatment. Progress targets and earned objects are
+unchanged.
+
+Long names wrap within the available card area; exceptionally long names use an
+ellipsis and remain available in full in the object catalogue.
+
+The PET progress card shows a larger egg or furnishing on the left, with its
+regular-weight name and reading fraction on the right. The species background
+fills the companion card width and is clipped below status text. Selecting an
+owned furnishing and successfully saving its placement returns directly to Home;
+choosing an unfinished project keeps the preview. A failed save stays visible
+with the existing error feedback.
+
+The Album summary uses the regular reading-size interface face for accumulated
+reading, reading days and best streak. Its taller card leaves room for the
+translated summary to wrap in portrait. Home places the smaller mood badge near
+the companion while avoiding the window and furnishings.

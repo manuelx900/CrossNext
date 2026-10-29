@@ -17,7 +17,7 @@ void orderControls(Screen& screen, OrderWork& work, int selected, int count, fre
   const auto band = screen.takeBottom(62, 12);
   auto& button = work.button;
   button = {};
-  button.styles = pixelui::rowStyles();
+  button.styles = pixelui::buttonStyles();
   button.text.font = pixelui::kBody;
   button.text.align = fui::TextAlign::Center;
   button.text.maxLines = 2;

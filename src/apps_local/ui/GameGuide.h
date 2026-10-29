@@ -28,7 +28,7 @@ inline void grid(toybox::Screen& screen, fui::Rect r, int n, bool inverse = fals
     }
 }
 inline void tile(toybox::Screen& screen, fui::Rect r, const char* value) {
-  dashboard::frame(screen, r, 4);
+  dashboard::frame(screen, r, pixelui::kBorder);
   dashboard::digits(screen, r.inset(fui::Insets{8, 8, 8, 8}), value);
 }
 inline void arrow(toybox::Screen& screen, fui::Rect r, int direction = 1) {
@@ -91,7 +91,7 @@ inline void restartArt(toybox::Screen& screen, fui::Rect r) {
     if (n == 1 || n == 2)
       screen.target().fill(b, dashboard::ink);
     else
-      dashboard::frame(screen, b, 3);
+      dashboard::frame(screen, b, pixelui::kBorder);
   }
   const auto centre = fui::makeRect(x + size / 4, y + size / 4, size / 2, size / 2);
   screen.target().fill(centre, dashboard::paper);

@@ -27,7 +27,7 @@ void button(toybox::Screen& s, Work& w, fui::Rect r, const char* label, fui::Act
   probe.font = 0;
   w.button.text.font = s.target().measureText(0, w.label, probe).width > r.width - 16 ? 3 : 0;
   w.button.text.align = fui::TextAlign::Center;
-  w.button.styles = pixelui::rowStyles();
+  w.button.styles = pixelui::buttonStyles();
   w.button.action = action;
   w.button.minTouchSize = 0;
   w.button.state = selected ? fui::StateSelected : fui::StateNormal;
@@ -99,7 +99,7 @@ void calendar(toybox::Screen& s, const Model& m, Work& w, fui::Rect body) {
   for (int row = 1; row < rows; ++row)
     s.target().line({grid.x, int16_t(grid.y + row * grid.height / rows)},
                     {grid.right(), int16_t(grid.y + row * grid.height / rows)}, 2, ink);
-  s.target().stroke(grid, ink, 4);
+  s.target().stroke(grid, ink, pixelui::kBorder);
   s.frame().hit(grid, SelectDay, 0, fui::InputTouch | fui::InputPointerOnly);
   const int dayTop = grid.y + grid.height / rows;
   s.frame().navigationGrid(fui::makeRect(grid.x, dayTop, grid.width, grid.bottom() - dayTop), 7, rows - 1);
@@ -201,7 +201,7 @@ void counter(toybox::Screen& s, const Model& m, Work& w, fui::Rect body) {
                            : fui::makeRect(body.x, body.y + 38, body.width, body.height * 40 / 100);
   text(s, fui::makeRect(number.x, number.y, number.width, 42), tr(STR_COUNTER_CURRENT), 0);
   const auto display = fui::makeRect(number.x, number.y + 48, number.width, number.height - 48);
-  dashboard::frame(s, display, 4);
+  dashboard::frame(s, display, pixelui::kBorder);
   std::snprintf(w.label, sizeof(w.label), "%lld", static_cast<long long>(m.count));
   toolsdigits::counter(s, display.inset(fui::Insets{24, 20, 24, 20}), w.label, wide ? 112 : 120);
   const auto controls =

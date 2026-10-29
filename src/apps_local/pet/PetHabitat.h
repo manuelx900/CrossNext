@@ -116,7 +116,7 @@ inline bool breathingPose(const Model& m, fui::DrawTarget& target, fui::Rect are
   }
   const bool sleeping = habitatlayout::sleeping(p);
   if (!sleeping && !petsleep::breathing(p, m.view)) return false;
-  const unsigned step = petsleep::breathing(p, m.view) ? m.sleepStep : 0;
+  const unsigned step = 0;
   const unsigned mask =
       sleeping && habitatlayout::peeking(p) ? petsleep::headIndex(p) : petsleep::fullBodyIndex(p, step);
   if (!m.sleepArt.draw(m.sleepArt.context, target, area, mask, true)) return false;
@@ -141,7 +141,7 @@ inline bool staticSleepHead(const Model& m, fui::DrawTarget& target, fui::Rect a
 inline void sleepMarks(toybox::Screen& screen, const Model& m, fui::Rect area) {
   if (!petsleep::enabled(*m.profile, m.view)) return;
   const auto pet = habitatlayout::pet(*m.profile);
-  const unsigned step = m.sleepStep % 4;
+  const unsigned step = 0;
   static constexpr uint8_t count[] = {1, 2, 3, 2};
   int x = std::max(8, std::min(382, int(pet.x + pet.width / 4)));
   int y = std::max(36, int(pet.y) - 4);

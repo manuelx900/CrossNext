@@ -1,5 +1,10 @@
 # The picross bank
 
+Select **Fill** or **Mark**, then tap a cell to use that tool. Mark toggles an X
+without spending a mistake; tap it again with Mark to clear the X. Holding a
+cell always marks it, whichever tool is selected. Filled and mistake cells
+retain the existing irreversible fill rules.
+
 > Current profile (October 2026): 450 puzzles: 100 each at 5x5, 8x8 and 9x9,
 > and 150 at 10x10. All 199 previous puzzles retain progress through a versioned
 > migration. The main menu has Play, Select puzzle, Size and How to play.

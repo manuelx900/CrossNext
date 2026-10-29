@@ -37,12 +37,13 @@ struct Context {
 const auto black = fui::Paint::solid(fui::Color::Black);
 void text(Context& s, fui::Rect r, const char* value, fui::FontId font = pixelui::kSmall,
           fui::TextAlign align = fui::TextAlign::Center, fui::Color color = fui::Color::Black, int lines = 1,
-          bool scaleDown = true) {
+          bool scaleDown = true, bool emphasis = false) {
   if (r.empty()) return;
   char copy[192];
   pixelui::copyCaps(copy, sizeof(copy), value);
   fui::TextStyle style;
   style.font = font;
+  style.bold = emphasis;
   style.align = align;
   style.color = color;
   if (lines == 1) {
@@ -51,16 +52,14 @@ void text(Context& s, fui::Rect r, const char* value, fui::FontId font = pixelui
       style.font = smaller[style.font];
     style.maxLines = 1;
     pixelui::fitLabel(s.target(), copy, r.width, style);
-    const auto* cut = toybox::cutForLineHeight(s.target().lineHeight(style.font));
-    s.target().text(cut ? toybox::inkCentred(r, *cut) : r, copy, style);
+    s.target().text(toybox::inkCentred(s.target(), r, style), copy, style);
   } else {
     while (style.font < 3 && r.height < 2 * s.target().lineHeight(style.font) &&
            s.target().measureText(style.font, copy, style).width > r.width)
       style.font = style.font == 2 ? 1 : style.font == 1 ? 0 : 3;
     style.maxLines = std::max(1, std::min(lines, r.height / s.target().lineHeight(style.font)));
     pixelui::fitLabel(s.target(), copy, r.width, style);
-    const auto* cut = toybox::cutForLineHeight(s.target().lineHeight(style.font));
-    s.target().text(style.maxLines == 1 && cut ? toybox::inkCentred(r, *cut) : r, copy, style);
+    s.target().text(style.maxLines == 1 ? toybox::inkCentred(s.target(), r, style) : r, copy, style);
   }
 }
 void button(Context& s, fui::Rect r, const char* label, fui::ActionId action, int value = 0, bool selected = false) {
@@ -74,7 +73,7 @@ void button(Context& s, fui::Rect r, const char* label, fui::ActionId action, in
   p.text.font =
       s.target().measureText(pixelui::kSmall, s.work.buttonLabel, p.text).width > r.width - 12 ? 3 : pixelui::kSmall;
   p.text.align = fui::TextAlign::Center;
-  p.styles = pixelui::rowStyles();
+  p.styles = pixelui::buttonStyles();
   p.minTouchSize = 0;
   p.state = selected ? fui::StateSelected : fui::StateNormal;
   s.button(p, r);
@@ -128,13 +127,7 @@ void prose(Context& s, fui::Rect r, const char* value, fui::TextAlign align = fu
   style.font = font;
   style.align = align;
   style.maxLines = std::max(1, r.height / s.target().lineHeight(font));
-  const int lineH = s.target().lineHeight(style.font);
-  const auto* cut = toybox::cutForLineHeight(lineH);
-  if (style.maxLines == 1 && !cut && r.height < lineH) {
-    r.y -= (lineH - r.height) / 2;
-    r.height = lineH;
-  }
-  s.target().text(style.maxLines == 1 && cut ? toybox::inkCentred(r, *cut) : r, value, style);
+  s.target().text(style.maxLines == 1 ? toybox::inkCentred(s.target(), r, style) : r, value, style);
 }
 void number(Context& s, fui::Rect r, const char* value) {
   const int cap = s.device().width > s.device().height ? 40 : 52;
@@ -692,7 +685,7 @@ void bookDetails(Context& s, fui::Rect r, const Model& m) {
   const int side = wide ? 54 : 80, titleH = wide ? 72 : 88;
   art(s, fui::makeRect(r.x + 8, r.y + 2, side, side), statsart::openBook);
   text(s, fui::makeRect(r.x + side + 20, r.y, r.width - side - 24, titleH - 34), b.title, wide ? 0 : 1,
-       fui::TextAlign::Left, fui::Color::Black, 2);
+       fui::TextAlign::Left, fui::Color::Black, 2, true, true);
   const auto chip = fui::makeRect(r.x + side + 20, r.y + titleH - 32, std::min(136, r.width - side - 24), 28);
   frame(s, chip, 1);
   prose(s, chip, b.completed ? tr(STR_STATS_FINISHED) : tr(STR_STATS_IN_PROGRESS), fui::TextAlign::Center, 0);
@@ -791,7 +784,7 @@ void books(Context& s, fui::Rect r, const Model& m) {
     const auto row =
         fui::makeRect(r.x + (n % columns) * (rowW + gap), r.y + (n / columns) * rowH, rowW, rowH - (wide ? 8 : 10));
     const auto& b = m.books[n];
-    frame(s, row, n == m.selected ? 3 : 2);
+    frame(s, row, 2);
     dashboard::hit(s.screen, row, OpenBook, n);
     const int side = wide ? 24 : 32, timeW = wide ? 110 : 120, divider = row.right() - timeW;
     art(s, fui::makeRect(row.x + 14, row.y + (row.height - side) / 2, side, side), statsart::closedBook);
@@ -809,7 +802,9 @@ void books(Context& s, fui::Rect r, const Model& m) {
           label, fui::TextAlign::Left, 3);
     s.target().line({int16_t(divider), int16_t(row.y + 12)}, {int16_t(divider), int16_t(row.bottom() - 12)}, 2, black);
     bookMinutes(s, fui::makeRect(divider + 5, row.y, timeW - 30, row.height), b.seconds);
-    dashboard::chevron(s.target(), fui::makeRect(row.right() - 24, row.y, 20, row.height));
+    const auto arrow = fui::makeRect(row.right() - 27, row.y + (row.height - 30) / 2, 22, 30);
+    if (n == m.selected) s.target().fill(arrow, black);
+    dashboard::chevron(s.target(), arrow, n == m.selected);
   }
   pageui::build(s, fui::makeRect(r.x, r.bottom() - footerH - 12, r.width, footerH), m.page + 1,
                 std::max(1, (m.bookTotal + m.pageSize - 1) / m.pageSize), Page, -1, Page, 1);

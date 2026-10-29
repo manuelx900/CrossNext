@@ -306,7 +306,7 @@ void buildSetup(toybox::Screen& screen, const SetupModel& model) {
   fui::ButtonProps start;
   start.label = tr(STR_UI_START_7196E7);
   start.action = ActionStart;
-  start.styles = toybox::rowStyles();
+  start.styles = toybox::buttonStyles();
   start.state = fui::StateSelected;
   start.text = styled(toybox::kDisplayFont, fui::TextAlign::Center, fui::Color::White);
   start.radius = 0;
@@ -433,7 +433,7 @@ void buildMapPick(toybox::Screen& screen, const MapPickModel& model) {
     pick.label = "";
     pick.action = ActionMapRow;
     pick.value = static_cast<int16_t>(index);
-    pick.styles = toybox::rowStyles();
+    pick.styles = toybox::buttonStyles();
     pick.radius = 0;
     screen.button(pick, card);
 

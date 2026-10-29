@@ -37,6 +37,7 @@
 #include "OpdsServerStore.h"
 #include "RecentBooksStore.h"
 #include "SdCardFontSystem.h"
+#include "SideButtonSettings.h"
 #include "WifiCredentialStore.h"
 #include "activities/Activity.h"
 #include "activities/ActivityManager.h"
@@ -296,6 +297,22 @@ void toggleFrontlight() {
   SETTINGS.frontlightOn = lightOn ? 1 : 0;
   SETTINGS.saveToFile();
   LOG_INF("LIGHT", "Frontlight toggled %s", lightOn ? "on" : "off");
+}
+
+void toggleWarmFrontlight() {
+  if (!Frontlight.hasColorTemperature()) return;
+  const auto current = Frontlight.warmth();
+  if (current) SETTINGS.frontlightWarmthMemory = current;
+  const auto next = sideToggledWarmth(Frontlight.isOn(), current, SETTINGS.frontlightWarmthMemory);
+  Frontlight.setWarmth(next);
+  if (next && !Frontlight.isOn()) {
+    if (!Frontlight.brightness()) Frontlight.setBrightness(5);
+    Frontlight.setOn(true);
+  }
+  SETTINGS.frontlightWarmth = next;
+  SETTINGS.frontlightBrightness = Frontlight.brightness();
+  SETTINGS.frontlightOn = Frontlight.isOn() ? 1 : 0;
+  SETTINGS.saveToFile();
 }
 
 bool handleX4ProFrontlightDoubleClick() {
@@ -1090,7 +1107,8 @@ void loop() {
 
   static bool screenshotButtonsReleased = true;
   static bool screenshotComboActive = false;
-  if (gpio.isPressed(HalGPIO::BTN_POWER) && gpio.isPressed(HalGPIO::BTN_DOWN)) {
+  if ((!BoardConfig::hasTouch() || sideNavigates(SETTINGS.sideRightAction)) && gpio.isPressed(HalGPIO::BTN_POWER) &&
+      gpio.isPressed(HalGPIO::BTN_DOWN)) {
     screenshotComboActive = true;
     if (screenshotButtonsReleased) {
       screenshotButtonsReleased = false;
@@ -1237,14 +1255,23 @@ void loop() {
   }
 #endif
 
+  if (mappedInputManager.sideButtonAction() == SideButtonAction::Sleep && millis() >= allowSleepAt) {
+    enterDeepSleep();
+    return;
+  }
+
   // Refresh screen when power button is short-pressed with FORCE_REFRESH setting.
-  if (home_button::opensShortcut(mappedInputManager.homeButtonAction())) {
+  const char* shortcutTitle = home_button::opensShortcut(mappedInputManager.homeButtonAction())
+                                  ? home_button::shortcutTarget(mappedInputManager.homeButtonAction())
+                              : mappedInputManager.sideButtonAction() == SideButtonAction::OpenShortcut
+                                  ? side_button::shortcutTarget(mappedInputManager.sideButtonKey())
+                                  : nullptr;
+  if (shortcutTitle) {
     bool opened = false;
     for (int folder = 0; folder < shelf::folderCount() && !opened; ++folder) {
       const auto& choices = shelf::folders()[folder];
       for (int item = 0; item < choices.count; ++item) {
-        if (std::strcmp(choices.items[item].title,
-                        home_button::shortcutTarget(mappedInputManager.homeButtonAction())) == 0) {
+        if (std::strcmp(choices.items[item].title, shortcutTitle) == 0) {
           opened = shelf::openItem(folder, item, renderer, mappedInputManager, shelf::LaunchOrigin::Home);
           break;
         }
@@ -1258,7 +1285,10 @@ void loop() {
     SETTINGS.saveToFile();
     activityManager.requestUpdate();
   }
-  if (mappedInputManager.homeButtonAction() == HomeButtonAction::ToggleFrontlight) {
+  const bool lightPanelOpen = std::strcmp(activityManager.currentActivityName(), "FrontlightPanel") == 0;
+  if (!lightPanelOpen && mappedInputManager.sideButtonAction() == SideButtonAction::ToggleWarmth)
+    toggleWarmFrontlight();
+  if (!lightPanelOpen && mappedInputManager.homeButtonAction() == HomeButtonAction::ToggleFrontlight) {
     toggleFrontlight();
   }
   if (mappedInputManager.homeButtonAction() == HomeButtonAction::Refresh ||

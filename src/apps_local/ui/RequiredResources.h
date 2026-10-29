@@ -18,7 +18,7 @@ inline void build(toybox::Screen& screen, const char* folder, freeink::ui::Actio
   button.label = tr(STR_QUEST_BACK);
   button.text.font = pixelui::kBody;
   button.text.align = fui::TextAlign::Center;
-  button.styles = pixelui::rowStyles();
+  button.styles = pixelui::buttonStyles();
   button.action = back;
   screen.button(button, fui::makeRect(body.x + 20, body.bottom() - 64, body.width - 40, 52));
 }

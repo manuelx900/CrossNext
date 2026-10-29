@@ -65,10 +65,10 @@ void rows(toybox::Screen& s, const Layout& g, const Row* rows, int count, int se
   for (int n = 0; n < count && n < 5; ++n) {
     const auto box = g.rows[n];
     const auto& row = rows[n];
-    const bool primary = s.frame().buttonSelected(row.action, row.value, n == 0);
+    const bool primary = s.frame().buttonSelected(row.action, row.value, n == selected);
     const auto paint = primary ? dashboard::paper : dashboard::ink;
     s.target().fill(box, primary ? dashboard::ink : dashboard::paper);
-    s.target().stroke(box, dashboard::ink, n == selected ? 4 : 2);
+    s.target().stroke(box, dashboard::ink, pixelui::kBorder);
     const int side = std::min(38, int(box.height) - 14);
     const auto mark = fui::makeRect(box.x + 14, box.y + (box.height - side) / 2, side, side);
     if (row.symbol == Symbol::Nearby || row.symbol == Symbol::Settings)

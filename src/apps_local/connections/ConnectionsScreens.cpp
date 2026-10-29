@@ -780,7 +780,7 @@ void buildImport(toybox::Screen& screen, const ImportModel& model) {
     number.font = toybox::kDisplayFont;
     number.align = fui::TextAlign::Center;
     number.color = ink;
-    screen.target().text(toybox::inkCentred(heroBox, toybox::kDisplayCut), model.failed ? "--" : hero, number);
+    screen.target().text(toybox::inkCentred(screen.target(), heroBox, number), model.failed ? "--" : hero, number);
   } else {
     // Two sentences, and they are the whole fix for "the device has crashed":
     // one says the wait is expected, the other says the stillness is expected.
@@ -982,7 +982,7 @@ CalendarLayout buildCalendar(toybox::Screen& screen, const CalendarModel& model)
       arrow.enabled = live;
       // Spent, not missing: dithered so the arrow still reads as a control and
       // says which end of the archive you have reached.
-      arrow.styles = live ? toybox::rowStyles() : toybox::disabledStepperStyles();
+      arrow.styles = live ? toybox::buttonStyles() : toybox::disabledStepperStyles();
       screen.button(arrow, box);
     }
   }
@@ -1159,7 +1159,7 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
   sub.align = fui::TextAlign::Left;
   // The menu binds the body slot to the 35px serif cut, so this 26px band is
   // one more box shorter than its own line box.
-  screen.target().text(toybox::inkCentred(fui::makeRect(body.x, body.y + 62, body.width, 26), toybox::kSerifTileCut),
+  screen.target().text(toybox::inkCentred(screen.target(), fui::makeRect(body.x, body.y + 62, body.width, 26), sub),
                        todayState(model), sub);
   screen.frame().hit(fui::makeRect(body.x, body.y, body.width, 96), ActionNewest, 0);
 

@@ -4,7 +4,10 @@
 #include <EpdFontFamily.h>
 #include <Logging.h>
 
+#include "../../CrossPointSettings.h"
+#include "../../activities/Activity.h"
 #include "../../fontIds.h"
+#include "../../util/MenuFontStyle.h"
 #include "ToyboxTokens.h"
 #include "fonts/book_bold_10.h"
 #include "fonts/book_text_10.h"
@@ -13,7 +16,9 @@
 #include "fonts/instrument_24.h"
 #include "fonts/reading_serif_11.h"
 #include "fonts/reading_serif_14.h"
+#include "fonts/reading_serif_bold_11.h"
 #include "fonts/reading_serif_bold_12.h"
+#include "fonts/reading_serif_bold_14.h"
 #include "fonts/reading_serif_bold_16.h"
 #include "fonts/toybox_10.h"
 #include "fonts/toybox_14.h"
@@ -24,6 +29,11 @@
 #include "fonts/toybox_64.h"
 #include "fonts/ui_prose_10.h"
 #include "fonts/ui_prose_14.h"
+#include "fonts/ui_prose_bold_14.h"
+
+extern EpdFontFamily smallFontFamily;
+extern EpdFontFamily ui10FontFamily;
+extern EpdFontFamily ui12FontFamily;
 
 namespace toybox {
 namespace {
@@ -41,7 +51,8 @@ namespace {
 // One face, no bold: at these sizes a synthesised bold would just be the same
 // flooding by another route. Weight comes from size and from inversion instead.
 EpdFont prose14(&ui_prose_14);
-EpdFontFamily proseFamily(&prose14);
+EpdFont proseBold14(&ui_prose_bold_14);
+EpdFontFamily proseFamily(&prose14, &proseBold14);
 EpdFont library10(&ui_prose_10);
 EpdFont libraryBold10(&book_bold_10);
 EpdFontFamily libraryFamily(&library10, &libraryBold10);
@@ -78,8 +89,10 @@ EpdFontFamily uiFamily(&ui20);
 EpdFontFamily carouselFamily(&carousel18);
 EpdFontFamily tileFamily(&tile10);
 EpdFontFamily buttonFamily(&button14);
-EpdFontFamily readingSmallFamily(&reading11);
-EpdFontFamily readingFamily(&reading14);
+EpdFont readingBold11(&reading_serif_bold_11);
+EpdFont readingUiBold14(&reading_serif_bold_14);
+EpdFontFamily readingSmallFamily(&reading11, &readingBold11);
+EpdFontFamily readingFamily(&reading14, &readingUiBold14);
 EpdFontFamily readingBoldSmallFamily(&readingBold12);
 EpdFontFamily readingBoldFamily(&readingBold16);
 EpdFontFamily serifTileFamily(&instrument13);
@@ -87,10 +100,82 @@ EpdFontFamily serifSmallFamily(&instrument10);
 EpdFontFamily serifTitleFamily(&instrument24);
 
 bool registered = false;
+menufont::Style registeredStyle = menufont::Style::Pixel;
+
+const EpdFontFamily* menuFamily(menufont::Style style, int id) {
+  // The built-in serif cuts are too tall for dense captions and board labels.
+  if (id == kTileFontId && style != menufont::Style::Pixel) return &smallFontFamily;
+  bool small = false;
+  switch (id) {
+    case kTileFontId:
+    case kButtonFontId:
+    case kLibraryFontId:
+    case kBookListFontId:
+      small = true;
+      break;
+    case kUiFontId:
+    case kDisplayFontId:
+    case kCarouselTitleFontId:
+    case kProseFontId:
+      break;
+    default:
+      return nullptr;
+  }
+  switch (style) {
+    case menufont::Style::Pixel:
+      switch (id) {
+        case kTileFontId:
+          return &tileFamily;
+        case kButtonFontId:
+          return &buttonFamily;
+        case kLibraryFontId:
+          return &libraryFamily;
+        case kBookListFontId:
+          return &bookListFamily;
+        case kDisplayFontId:
+          return &displayFamily;
+        case kCarouselTitleFontId:
+          return &carouselFamily;
+        case kProseFontId:
+          return &proseFamily;
+        default:
+          return &uiFamily;
+      }
+    case menufont::Style::Classic:
+      return id == kTileFontId ? &smallFontFamily : small ? &ui10FontFamily : &ui12FontFamily;
+    case menufont::Style::NotoSans:
+      return small ? &libraryFamily : &proseFamily;
+    case menufont::Style::NotoSerif:
+      return small ? &readingSmallFamily : &readingFamily;
+    case menufont::Style::Count:
+      break;
+  }
+  return nullptr;
+}
+
+bool bindMenuFonts(GfxRenderer& renderer, menufont::Style style) {
+  static constexpr int ids[] = {kLibraryFontId, kBookListFontId, kCarouselTitleFontId, kDisplayFontId,
+                                kUiFontId,      kTileFontId,     kButtonFontId,        kProseFontId};
+  bool ok = true;
+  for (int id : ids) ok = renderer.replaceBuiltinFont(id, *menuFamily(style, id)) && ok;
+  return ok;
+}
 
 }  // namespace
 
 FontMetrics metricsFor(const int fontId) {
+  if (registeredStyle != menufont::Style::Pixel) {
+    if (const auto* family = menuFamily(registeredStyle, fontId)) {
+      const auto* data = family->getData();
+      FontMetrics metrics;
+      metrics.ascender = data->ascender;
+      if (const auto* glyph = family->getGlyph('H')) {
+        metrics.capTop = glyph->top;
+        metrics.capHeight = glyph->height;
+      }
+      return metrics;
+    }
+  }
   const EpdFontFamily& family = fontId == kHugeFontId               ? hugeFamily
                                 : fontId == kLargeFontId            ? largeFamily
                                 : fontId == kDisplayFontId          ? displayFamily
@@ -171,6 +256,23 @@ void verifyCutMetrics() {
   }
 }
 
+menufont::Style interfaceFontStyle() {
+  const auto section = activityManager.currentInterfaceFontSection();
+  const auto item = activityManager.currentInterfaceFontItem();
+  return menufont::resolve(SETTINGS.menuFontStyle,
+                           section == menufont::Section::General ? 0 : SETTINGS.menuFontOverrides[int(section)],
+                           item < menufont::kItemCount ? SETTINGS.menuFontItemOverrides[item] : 0);
+}
+
+void syncInterfaceFonts(GfxRenderer& renderer) {
+  if (!registered) {
+    ensureFonts(renderer);
+    return;
+  }
+  const auto style = interfaceFontStyle();
+  if (registeredStyle != style && bindMenuFonts(renderer, style)) registeredStyle = style;
+}
+
 void ensureFonts(GfxRenderer& renderer) {
   // Font settings can clear this registry while the pixel fonts remain loaded.
   // Shared map entries are reused; no image or per-label allocation.
@@ -182,7 +284,11 @@ void ensureFonts(GfxRenderer& renderer) {
   renderer.setFallbackFont(kBookListFontId, UI_10_FONT_ID);
   renderer.setFallbackFont(kProseFontId, UI_12_FONT_ID);
   renderer.setFallbackFont(kCarouselTitleFontId, UI_12_FONT_ID);
-  if (registered) return;
+  const auto style = interfaceFontStyle();
+  if (registered) {
+    syncInterfaceFonts(renderer);
+    return;
+  }
   verifyCutMetrics();
   // Registered from here rather than main.cpp so the design language costs zero
   // upstream surface. insertFont is idempotent per id, but the guard keeps this
@@ -204,6 +310,7 @@ void ensureFonts(GfxRenderer& renderer) {
   renderer.insertFont(kSerifTileFontId, serifTileFamily);
   renderer.insertFont(kSerifSmallFontId, serifSmallFamily);
   renderer.insertFont(kSerifTitleFontId, serifTitleFamily);
+  if (bindMenuFonts(renderer, style)) registeredStyle = style;
   registered = true;
 }
 

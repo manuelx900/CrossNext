@@ -24,6 +24,10 @@ enum : fui::ActionId {
   ActionHelpNext = 6,
   ActionRotate,
   ActionSelectShip,
+  ActionFleet,
+  ActionOwnBoard,
+  ActionResultReview,
+  ActionResultMenu,
 };
 
 // The local game opens at its saved-board preview.
@@ -77,8 +81,10 @@ struct BoardModel {
   const bship::Game* game = nullptr;
   int mySide = 0, aim = -1;
   bool myTurn = true;
+  bool ownFleet = false;
 };
 
 fui::Rect buildBoardChrome(toybox::Screen& screen, const BoardModel& model, Layout* layout = nullptr);
+void buildResult(toybox::Screen& screen, const BoardModel& model);
 
 }  // namespace bshipui

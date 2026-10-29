@@ -13,16 +13,11 @@ inline constexpr StrId homeNames[] = {StrId::STR_CAT_DISPLAY,           StrId::S
                                       StrId::STR_SETTINGS_CONNECTIVITY, StrId::STR_CAT_SYSTEM,
                                       StrId::STR_SETTINGS_DEVICE,       StrId::STR_SETTINGS_APPEARANCE};
 inline void homeRow(int i, freeink::ui::ListItem& item) {
-  static constexpr StrId descriptions[] = {StrId::STR_SETTINGS_DISPLAY_HELP,  StrId::STR_SETTINGS_READER_HELP,
-                                           StrId::STR_SETTINGS_CONTROLS_HELP, StrId::STR_SETTINGS_LIBRARY_HELP,
-                                           StrId::STR_SETTINGS_NETWORK_HELP,  StrId::STR_SETTINGS_SYSTEM_HELP,
-                                           StrId::STR_SETTINGS_DEVICE_HELP,   StrId::STR_APPEARANCE_HELP};
   static constexpr freeink::ui::BitmapRef icons[] = {settingsart::Display, settingsart::Book, settingsart::Hand,
                                                      settingsart::Folder,  settingsart::Wifi, settingsart::Gear,
                                                      settingsart::Info,    settingsart::Grid};
   item = {};
   item.label = I18N.get(homeNames[i]);
-  item.subtitle = I18N.get(descriptions[i]);
   item.icon = icons[i];
   item.value = ">";
   item.actionValue = i;
@@ -53,8 +48,17 @@ inline void styleAppearance(freeink::ui::ListProps& p) {
   p.separatorPaint = freeink::ui::Paint::solid(freeink::ui::Color::Transparent);
   p.iconSize = 108;
   p.labelText.font = 1;
-  p.labelText.bold = false;
+  p.labelText.bold = true;
   p.labelText.maxLines = 2;
+}
+struct AppearanceActions {
+  freeink::ui::Rect recent, font;
+};
+inline AppearanceActions appearanceActions(freeink::ui::Rect body, int themeBottom, bool wide) {
+  const int height = wide ? 44 : 56, gap = 12;
+  const int top = std::max(themeBottom + gap, body.bottom() - 2 * height - gap);
+  return {freeink::ui::makeRect(body.x, top, body.width, height),
+          freeink::ui::makeRect(body.x, top + height + gap, body.width, height)};
 }
 template <typename Screen>
 void appearanceList(Screen& screen, freeink::ui::ListProps& props) {
@@ -67,5 +71,23 @@ void appearanceList(Screen& screen, freeink::ui::ListProps& props) {
     screen.target().fill(
         freeink::ui::makeRect(band.x, band.y + height - pixelui::kBorder / 2, band.width, pixelui::kBorder),
         freeink::ui::Paint::solid(freeink::ui::Color::Black));
+  const auto& carousel = props.items[1];
+  if (props.topIndex != 0 || carousel.icon.data != settingsart::CarouselPreview.data || props.iconSize <= 0) return;
+  const int rowHeight =
+      freeink::ui::measureListRow(screen.target(), screen.frame().assets(), band.width, props, carousel).height;
+  const auto slot = freeink::ui::makeRect(
+      band.x + (props.rtl ? band.width - props.sidePadding - props.iconSize : props.sidePadding),
+      band.y + height + props.rowGap + (rowHeight - props.iconSize) / 2, props.iconSize, props.iconSize);
+  auto state = carousel.state;
+  if (props.selectedIndex == 1) state |= freeink::ui::StateSelected;
+  state = screen.frame().stateFor(props.action, carousel.actionValue, state);
+  const auto& style = props.rowStyles.resolve(state);
+  screen.target().fill(slot, style.background);
+  // Keep the original art and hit targets; match the two previews' optical width.
+  const int width = props.iconSize * settingsart::FramedPreview.width / settingsart::FramedPreview.height;
+  const int imageHeight = props.iconSize * settingsart::CarouselPreview.height / settingsart::CarouselPreview.width;
+  screen.target().bitmap(freeink::ui::makeRect(slot.x + (slot.width - width) / 2,
+                                               slot.y + (slot.height - imageHeight) / 2, width, imageHeight),
+                         settingsart::CarouselPreview, freeink::ui::BitmapMode::Stretch, style.foreground);
 }
 }  // namespace settingsui

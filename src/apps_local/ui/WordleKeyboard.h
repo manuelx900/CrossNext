@@ -67,7 +67,7 @@ inline void draw(toybox::Screen& screen, const fui::Rect& controls, const Layout
         target.fill(box, ink);
       else if (tone == Tone::Present)
         target.fill(box, fui::Paint::dither(fui::Color::LightGray));
-      target.stroke(box, ink, 3);
+      target.stroke(box, ink, pixelui::kBorder);
       char label[3] = {key, 0, 0};
       if (key == '[') {
         label[0] = char(0xc3);

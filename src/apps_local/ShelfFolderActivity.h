@@ -18,7 +18,9 @@
 class ShelfFolderActivity final : public Activity {
  public:
   ShelfFolderActivity(GfxRenderer& renderer, MappedInputManager& mappedInput, int folderIndex)
-      : Activity("ShelfFolder", renderer, mappedInput), folder(folderIndex) {}
+      : Activity("ShelfFolder", renderer, mappedInput), folder(folderIndex) {
+    setInterfaceFontSection(folderIndex == 0 ? menufont::Section::Games : menufont::Section::Apps);
+  }
   ~ShelfFolderActivity() override = default;
 
   static std::unique_ptr<Activity> create(GfxRenderer& renderer, MappedInputManager& mappedInput, int folderIndex);

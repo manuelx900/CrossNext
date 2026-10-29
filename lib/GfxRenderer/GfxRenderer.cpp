@@ -260,6 +260,17 @@ void GfxRenderer::insertFont(const int fontId, EpdFontFamily font) {
   }
 }
 
+bool GfxRenderer::replaceBuiltinFont(const int fontId, EpdFontFamily font) {
+  const auto entry = fontMap.find(fontId);
+  if (entry == fontMap.end() || sdCardFonts_.find(fontId) != sdCardFonts_.end() ||
+      ttfFonts_.find(fontId) != ttfFonts_.end()) {
+    LOG_ERR("GFX", "Cannot replace unregistered or SD font %d", fontId);
+    return false;
+  }
+  entry->second = font;
+  return true;
+}
+
 int GfxRenderer::resolveTextFontId(const int fontId, const char* text, const EpdFontFamily::Style style) const {
   return fontfallback::resolve(fontMap, fallbackFontMap_, fontId, text, style);
 }

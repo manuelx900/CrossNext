@@ -10,14 +10,22 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #include "../../lib/EpdFont/builtinFonts/notosans_8_regular.h"
+#include "../../lib/EpdFont/builtinFonts/ubuntu_10_bold.h"
 #include "../../lib/EpdFont/builtinFonts/ubuntu_10_regular.h"
+#include "../../lib/EpdFont/builtinFonts/ubuntu_12_bold.h"
+#include "../../lib/EpdFont/builtinFonts/ubuntu_12_regular.h"
+#include "../../src/apps_local/ui/fonts/book_bold_10.h"
+#include "../../src/apps_local/ui/fonts/reading_serif_11.h"
 #include "../../src/apps_local/ui/fonts/reading_serif_14.h"
+#include "../../src/apps_local/ui/fonts/reading_serif_bold_11.h"
+#include "../../src/apps_local/ui/fonts/reading_serif_bold_14.h"
 #include "../../src/apps_local/ui/fonts/toybox_10.h"
 #include "../../src/apps_local/ui/fonts/toybox_14.h"
 #include "../../src/apps_local/ui/fonts/toybox_20.h"
 #include "../../src/apps_local/ui/fonts/toybox_30.h"
 #include "../../src/apps_local/ui/fonts/ui_prose_10.h"
 #include "../../src/apps_local/ui/fonts/ui_prose_14.h"
+#include "../../src/apps_local/ui/fonts/ui_prose_bold_14.h"
 #pragma GCC diagnostic pop
 
 #include "../../src/apps_local/battleship/BattleshipScreens.h"
@@ -38,8 +46,10 @@
 #include "../../src/apps_local/tools/ToolsScreens.h"
 #include "../../src/apps_local/ui/CardPanels.h"
 #include "../../src/apps_local/ui/KeyboardViewport.h"
+#include "../../src/apps_local/ui/MenuFontScreen.h"
 #include "../../src/apps_local/ui/NetworkLandscape.h"
 #include "../../src/apps_local/ui/PageIndicator.h"
+#include "../../src/apps_local/ui/SettingsHome.h"
 #include "../../src/apps_local/ui/ToolsDigits.h"
 #include "../../src/apps_local/wallpapers/WallpapersScreens.h"
 #include "../../src/apps_local/wordle/WordleScreens.h"
@@ -49,6 +59,8 @@ namespace fui = freeink::ui;
 namespace {
 int checks = 0;
 int failures = 0;
+bool classicFonts = false;
+menufont::Style menuStyle = menufont::Style::Pixel;
 #define CHECK(expr)                                  \
   do {                                               \
     ++checks;                                        \
@@ -90,17 +102,46 @@ fui::DeviceContext makeDevice(fui::DisplayTarget& target) {
 }
 struct RecordingTarget : fui::DrawTarget {
   fui::DisplayTarget backend;
+  const fui::BitmapFont* boundFonts[fui::DisplayTarget::FONT_SLOTS]{};
+  bool strictCopy = false;
+  static fui::TextStyle resolved(fui::TextStyle style) {
+    if (menuStyle != menufont::Style::Pixel && style.bold) {
+      if (style.font == 1 || style.font == 2)
+        style.font = 6;
+      else if (style.font == 0 || style.font == 4)
+        style.font = 7;
+    }
+    return style;
+  }
   RecordingTarget(uint8_t* data, int w, int h, int stride, fui::Orientation orientation)
       : backend(data, w, h, stride, orientation) {
     bitmaps.reserve(64);
   }
-  void setFont(fui::FontId id, const fui::BitmapFont& font) { backend.setFont(id, font); }
+  void setFont(fui::FontId id, const fui::BitmapFont& font) {
+    backend.setFont(id, font);
+    if (id < fui::DisplayTarget::FONT_SLOTS) boundFonts[id] = &font;
+  }
   fui::Size measureText(fui::FontId id, const char* text, fui::TextStyle style) const override {
-    return backend.measureText(id, text, style);
+    style.font = id;
+    style = resolved(style);
+    return backend.measureText(style.font, text, style);
   }
   int16_t lineHeight(fui::FontId id) const override { return backend.lineHeight(id); }
   fui::Rect inkBounds(fui::FontId id, const char* text, fui::TextStyle style) const override {
-    return backend.inkBounds(id, text, style);
+    style.font = id;
+    style = resolved(style);
+    const auto line = backend.inkBounds(style.font, text, style);
+    const auto* face = style.font < fui::DisplayTarget::FONT_SLOTS ? boundFonts[style.font] : nullptr;
+    if (!face || !text) return line;
+    int top = face->yAdvance, bottom = 0;
+    for (const unsigned char* p = reinterpret_cast<const unsigned char*>(text); *p; ++p) {
+      if (*p >= 128 || *p < face->first || *p > face->last) return line;
+      const auto& glyph = face->glyphs[*p - face->first];
+      if (!glyph.height) continue;
+      top = std::min(top, int(face->ascent) + glyph.yOffset);
+      bottom = std::max(bottom, int(face->ascent) + glyph.yOffset + glyph.height);
+    }
+    return top < bottom ? fui::makeRect(0, top, line.width, bottom - top) : line;
   }
   fui::Rect clipRect() const override { return backend.clipRect(); }
   bool setClipRect(fui::Rect rect) override { return backend.setClipRect(rect); }
@@ -140,14 +181,17 @@ struct RecordingTarget : fui::DrawTarget {
   std::vector<Label> labels;
   std::vector<fui::Rect> blackFills;
   void text(fui::Rect box, const char* value, fui::TextStyle style) override {
+    const auto originalFont = style.font;
+    style = resolved(style);
     fui::layoutText(backend, box, value, style, [&](const char* run, fui::Rect line) {
+      if (strictCopy) CHECK(std::strstr(run, "\xE2\x80\xA6") == nullptr && std::strstr(run, "...") == nullptr);
       if (line.bottom() > box.bottom() || std::strstr(run, "\xE2\x80\xA6") || std::strstr(run, "..."))
         if (std::strcmp(value, "...") != 0)
           std::printf("TEXT [%d,%d %dx%d font%d] %s\n", box.x, box.y, box.width, box.height, int(style.font), value);
       CHECK(line.bottom() <= box.bottom());
       // The original column diagram abbreviates its middle cells with literal dots.
     });
-    labels.push_back({value ? value : "", style.font, box});
+    labels.push_back({value ? value : "", originalFont, box});
     backend.text(box, value, style);
   }
 };
@@ -156,6 +200,9 @@ struct Canvas {
   std::vector<uint8_t> pixels;
   FontBridge regular{ui_prose_10}, tiny{toybox_10}, small{toybox_14}, body{toybox_20}, title{toybox_30},
       library{ubuntu_10_regular}, caption{notosans_8_regular}, prose{ui_prose_14}, reading{reading_serif_14};
+  FontBridge serifSmall{reading_serif_11}, serifBoldSmall{reading_serif_bold_11}, serifBold{reading_serif_bold_14};
+  FontBridge sansBoldSmall{book_bold_10}, sansBold{ui_prose_bold_14};
+  FontBridge classicBody{ubuntu_12_regular}, classicTitle{ubuntu_12_bold}, classicSmallBold{ubuntu_10_bold};
   RecordingTarget target;
   fui::DeviceContext device;
   fui::InputSnapshot input{};
@@ -171,11 +218,37 @@ struct Canvas {
         device(makeDevice(target.backend)),
         frame(target, device, input, interactions),
         screen(frame) {
-    target.setFont(3, tiny.font);
-    target.setFont(4, regular.font);
-    target.setFont(toybox::kSmallFont, small.font);
-    target.setFont(toybox::kUiFont, body.font);
-    target.setFont(toybox::kDisplayFont, title.font);
+    target.setFont(3, classicFonts ? caption.font : tiny.font);
+    target.setFont(4, classicFonts ? library.font : regular.font);
+    target.setFont(toybox::kSmallFont, classicFonts ? library.font : small.font);
+    target.setFont(toybox::kUiFont, classicFonts ? classicBody.font : body.font);
+    target.setFont(toybox::kDisplayFont, classicFonts ? classicBody.font : title.font);
+    target.setFont(6, classicTitle.font);
+    target.setFont(7, classicSmallBold.font);
+    const fui::BitmapFont *s = nullptr, *b = nullptr;
+    switch (menuStyle) {
+      case menufont::Style::NotoSans:
+        target.setFont(6, sansBold.font);
+        target.setFont(7, sansBoldSmall.font);
+        s = &regular.font;
+        b = &prose.font;
+        break;
+      case menufont::Style::NotoSerif:
+        target.setFont(6, serifBold.font);
+        target.setFont(7, serifBoldSmall.font);
+        s = &serifSmall.font;
+        b = &reading.font;
+        break;
+      case menufont::Style::Pixel:
+      case menufont::Style::Classic:
+      case menufont::Style::Count:
+        break;
+    }
+    if (s && b) {
+      for (auto id : {0, 4}) target.setFont(id, *s);
+      target.setFont(3, caption.font);
+      for (auto id : {1, 2}) target.setFont(id, *b);
+    }
   }
 
   void checkHits() {
@@ -238,6 +311,153 @@ struct Canvas {
 }  // namespace
 
 int main(int argc, char** argv) {
+  const char* style = argc > 2 ? argv[2] : "pixel";
+  classicFonts = std::strcmp(style, "classic") == 0;
+  menuStyle = classicFonts                       ? menufont::Style::Classic
+              : std::strcmp(style, "sans") == 0  ? menufont::Style::NotoSans
+              : std::strcmp(style, "serif") == 0 ? menufont::Style::NotoSerif
+                                                 : menufont::Style::Pixel;
+  for (int general = 0; general <= 255; ++general)
+    for (int value = 0; value <= 255; ++value) {
+      const auto expected = value > 0 && value < int(menufont::Override::Count) ? menufont::Style(value - 1)
+                                                                                : menufont::normalized(general);
+      CHECK(menufont::resolve(general, value) == expected);
+    }
+  menufont::Context game, dialog, nested, settings, generalPreview;
+  game.set(menufont::Section::Games);
+  dialog.inherit(game);
+  nested.inherit(dialog);
+  CHECK(dialog.section == menufont::Section::Games && nested.section == menufont::Section::Games);
+  settings.set(menufont::Section::Settings);
+  settings.inherit(game);
+  CHECK(settings.section == menufont::Section::Settings);
+  generalPreview.set(menufont::Section::General);
+  generalPreview.inherit(settings);
+  CHECK(generalPreview.section == menufont::Section::General);
+  CHECK(game.section == menufont::Section::Games && settings.section == menufont::Section::Settings);
+
+  for (int n = 0; n < menufont::kItemCount; ++n) {
+    CHECK(menufont::itemFor(menufont::kItemKeys[n]) == n);
+    for (int k = 0; k < n; ++k) CHECK(std::strcmp(menufont::kItemKeys[n], menufont::kItemKeys[k]) != 0);
+  }
+  CHECK(menufont::itemFor("unknown") == menufont::kNoItem);
+  CHECK(menufont::itemFor(nullptr) == menufont::kNoItem);
+  menufont::Context content, child, overrideSection;
+  content.set(menufont::Section::Apps, menufont::itemFor("PET"));
+  child.inherit(content);
+  overrideSection.set(menufont::Section::Settings);
+  overrideSection.inherit(content);
+  CHECK(child.item == content.item && child.section == content.section);
+  CHECK(overrideSection.item == menufont::kNoItem && overrideSection.section == menufont::Section::Settings);
+  for (int general = 0; general < 4; ++general)
+    for (int section = 0; section < 5; ++section)
+      for (int item = 0; item < 5; ++item) {
+        const auto resolved = menufont::resolve(general, section, item);
+        CHECK(resolved == (item ? menufont::Style(item - 1) : menufont::resolve(general, section)));
+      }
+  CHECK(menufont::kDefault == menufont::Style::NotoSans);
+  CHECK(menufont::normalized(255) == menufont::Style::NotoSans);
+  CHECK(menufont::normalized(0) == menufont::Style::Pixel);
+  CHECK(menufont::normalized(1) == menufont::Style::Classic);
+  for (auto language : {Language::EN, Language::ES}) {
+    I18N.setLanguage(language);
+    for (int orientation = 0; orientation < 4; ++orientation) {
+      const bool wide = orientation % 2;
+      {
+        Canvas c(wide ? 800 : 480, wide ? 480 : 800);
+        const auto body = pixelui::geometry(c.device).body;
+        const int themeBottom = body.y + 52 + (wide ? 88 : 140) * 2;
+        const auto actions = settingsui::appearanceActions(body, themeBottom, wide);
+        CHECK(actions.recent.y >= themeBottom + 12);
+        CHECK(actions.font.y == actions.recent.bottom() + 12);
+        CHECK(actions.font.bottom() == body.bottom());
+        for (auto box : {actions.recent, actions.font}) {
+          CHECK(box.x == body.x && box.width == body.width);
+          CHECK(box.height >= 44 && box.bottom() <= body.bottom());
+        }
+      }
+
+      for (int top : {0, 6}) {
+        Canvas c(wide ? 800 : 480, wide ? 480 : 800);
+        c.target.strictCopy = true;
+        // Use the selected family for section values too.
+        pixelui::begin(c.screen);
+        fui::ListItem items[menufont::kSectionCount]{};
+        for (int n = 0; n < menufont::kSectionCount; ++n) {
+          items[n].label = menufontui::sectionName(menufont::Section(n));
+          items[n].value = menufontui::choiceName(n == 6 ? 1 : n ? 0 : 2);
+          items[n].actionValue = n;
+        }
+        fui::ListProps props;
+        props.items = items;
+        props.count = menufont::kSectionCount;
+        props.topIndex = top;
+        props.action = 124;
+        menufontui::styleSections(props, wide);
+        pixelui::list(c.screen, props);
+        c.checkHits();
+        CHECK(c.hits(124) >= (wide ? 4 : 5));
+        if (argc > 1)
+          c.write(std::string(argv[1]) + "/font-sections-" + (language == Language::ES ? "es-" : "en-") +
+                  std::to_string(orientation) + "-" + std::to_string(top) + ".pbm");
+      }
+      {
+        Canvas c(wide ? 800 : 480, wide ? 480 : 800);
+        pixelui::begin(c.screen);
+        fui::ListItem entries[2]{};
+        entries[0].label = "Example book";
+        entries[0].sectionHeading = "A";
+        entries[1].label = "Another book";
+        entries[1].sectionHeading = "Austen, Jane";
+        fui::ListProps props;
+        libraryui::styleBookRows(props, c.target);
+        CHECK(props.headerText.bold && props.headerText.font == 4);
+        CHECK(!props.labelText.bold);
+        props.items = entries;
+        props.count = 2;
+        pixelui::list(c.screen, props);
+        if (argc > 1)
+          c.write(std::string(argv[1]) + "/library-heading-" + (language == Language::ES ? "es-" : "en-") +
+                  std::to_string(orientation) + ".pbm");
+      }
+      for (bool apps : {false, true}) {
+        Canvas c(wide ? 800 : 480, wide ? 480 : 800);
+        c.target.strictCopy = true;
+        pixelui::begin(c.screen);
+        pixelui::Header header;
+        header.title = tr(STR_MENU_FONT);
+        pixelui::header(c.screen, header);
+        fui::ListItem items[17]{};
+        items[0].label = apps ? tr(STR_MENU_FONT_APPS_MENU) : tr(STR_MENU_FONT_GAMES_MENU);
+        items[0].value = menufontui::choiceName(1);
+        for (int n = 1; n < (apps ? 14 : 17); ++n) {
+          items[n].label = menufont::kItemKeys[(apps ? 16 : 0) + n - 1];
+          items[n].value = tr(STR_MENU_FONT_INHERIT_MENU);
+          items[n].actionValue = n;
+        }
+        fui::ListProps props;
+        props.items = items;
+        props.count = apps ? 14 : 17;
+        props.action = 124;
+        menufontui::styleSections(props, wide);
+        pixelui::list(c.screen, props);
+        c.checkHits();
+        if (argc > 1)
+          c.write(std::string(argv[1]) + (apps ? "/app-fonts-" : "/game-fonts-") +
+                  (language == Language::ES ? "es-" : "en-") + std::to_string(orientation) + ".pbm");
+      }
+      for (int n = 0; n < int(menufont::Override::Count); ++n) {
+        CHECK(std::strlen(menufontui::choiceName(n)) > 0);
+      }
+      CHECK(std::strcmp(menufontui::choiceName(1), "Jersey 25") == 0);
+      CHECK(std::strcmp(menufontui::choiceName(2), "Ubuntu") == 0);
+    }
+  }
+
+  if (argc > 3 && std::strcmp(argv[3], "picker-only") == 0) {
+    std::printf("Menu font picker: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
   for (int rows : {4, 5, 6}) {
     const int keyHeight = keyboardview::keyHeight(56, true);
     CHECK(keyHeight >= 44);
@@ -323,9 +543,12 @@ int main(int argc, char** argv) {
             model.canFire = state == 3;
             model.gameOver = state == 4;
             model.aim = model.canFire ? 53 : -1;
-            model.status = model.canFire ? tr(STR_NAVAL_TARGET) : tr(STR_UI_TAP_A_TARGET_0B935C);
+            char status[48];
+            std::snprintf(status, sizeof(status), tr(STR_UI_FIRE_AT_S_3F134A), "D6");
+            model.status = model.canFire ? status : tr(STR_UI_TAP_A_TARGET_0B935C);
             bshipui::buildBoardChrome(naval.screen, model, &geometry);
-            CHECK(geometry.target.width >= 330 && geometry.own.width >= 100);
+            CHECK(geometry.target.width >= 330);
+            CHECK(naval.has(bshipui::ActionFleet, 0) && naval.has(bshipui::ActionFleet, 1));
           }
           naval.checkHits();
           if (argc > 1) naval.write(std::string(argv[1]) + "/naval-" + std::to_string(state) + suffix + ".pbm");
@@ -414,9 +637,11 @@ int main(int argc, char** argv) {
         bool headingFound = false;
         for (const auto& label : decks.target.labels)
           if (label.value == heading) {
-            const auto* cut = toybox::cutForLineHeight(decks.target.lineHeight(label.font));
-            CHECK(cut != nullptr);
-            if (cut) CHECK(label.box.y + cut->ascender + 4 <= firstRow);
+            fui::TextStyle style;
+            style.font = label.font;
+            const auto ink = decks.target.inkBounds(label.font, "H", style);
+            CHECK(ink.height > 0);
+            CHECK(label.box.y + ink.bottom() + 4 <= firstRow);
             headingFound = true;
           }
         CHECK(headingFound);
@@ -498,7 +723,8 @@ int main(int argc, char** argv) {
             continue;
           int firstFrame = height;
           for (const auto& outline : four.target.outlines)
-            if (outline.second == 4 && outline.first.width > safe.width / 2 && outline.first.y > label.box.y)
+            if (outline.second == pixelui::kBorder && outline.first.width > safe.width / 2 &&
+                outline.first.y > label.box.y)
               firstFrame = std::min(firstFrame, int(outline.first.y));
           CHECK(firstFrame < height && label.box.bottom() + 12 <= firstFrame);
         }
@@ -546,6 +772,27 @@ int main(int argc, char** argv) {
         if (argc > 1) end.write(std::string(argv[1]) + "/reader-end" + suffix + ".pbm");
       }
       for (auto style : {homeui::Style::Carousel, homeui::Style::Framed}) {
+        int percentageRight = -1;
+        for (int percent : {100, 49, 9, 0}) {
+          Canvas battery(width, height);
+          homeui::Model home;
+          home.style = style;
+          home.count = 7;
+          home.battery = percent;
+          const auto g = homeui::layout(battery.device, home.count, style);
+          homeui::draw(battery.target, home, g);
+          const int batteryX = g.menu.right() - 12 - 34;
+          int rightmost = -1;
+          for (int y = g.header.bottom() - 64; y < g.header.bottom() - 8; ++y)
+            for (int x = batteryX - 70; x < batteryX - 4; ++x)
+              if (battery.pixels[y * ((width + 7) / 8) + x / 8] & (0x80 >> (x % 8))) rightmost = std::max(rightmost, x);
+          CHECK(rightmost >= batteryX - 18 && rightmost < batteryX);
+          if (percentageRight >= 0) CHECK(rightmost == percentageRight);
+          percentageRight = rightmost;
+          if (argc > 1 && orientation == 0)
+            battery.write(std::string(argv[1]) + "/battery-" + std::to_string(int(style)) + "-" +
+                          std::to_string(percent) + ".pbm");
+        }
         for (int count = 1; count <= 8; ++count) {
           const auto g = homeui::layout(probe.device, count, style);
           CHECK(g.cover.height >= (wide ? 180 : 120));

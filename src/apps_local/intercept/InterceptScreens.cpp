@@ -51,71 +51,50 @@ void build(toybox::Screen& s, const Model& m, Work& w) {
   const auto& node = intercept::nodes[state.node];
   const bool wide = b.width > b.height;
   if (m.view == View::About) {
-    w.pages = 2;
-    if (wide) {
-      if (m.page == 0) {
-        const int left = 220;
-        art(s, m, fui::makeRect(b.x + 70, b.y + 2, 64, 72), interceptart::DOCUMENT);
-        char heading[80];
-        pixelui::copyCaps(heading, sizeof(heading), tr(STR_MYST_ABOUT_STORY));
-        guided(s, fui::makeRect(b.x, b.y + 80, left, 80), heading, 3, fui::TextAlign::Center, 1);
-        const auto tip = fui::makeRect(b.x, b.y + 174, left, b.height - 278);
-        dashboard::frame(s, tip);
-        guided(s, tip.inset({4, 8, 4, 8}), tr(STR_MYST_READ_CHOOSE), 4, fui::TextAlign::Center, 0);
-        prose(s, fui::makeRect(b.x + left + 20, b.y + 8, b.width - left - 28, b.height - 112), tr(STR_MYST_BACKGROUND),
-              16, 4);
-      } else {
-        const int left = (b.width - 20) / 2;
-        dashboard::text(s, fui::makeRect(b.x, b.y, left, 44), tr(STR_MYST_HOW), 1, fui::TextAlign::Left);
-        static constexpr StrId copy[] = {StrId::STR_MYST_PAGES, StrId::STR_MYST_SAVES, StrId::STR_MYST_REPLACES};
-        static constexpr uint32_t icons[] = {interceptart::DOCUMENT, interceptart::DISK, interceptart::RESTART};
-        const int row = (b.height - 150) / 3;
-        for (int n = 0; n < 3; ++n) {
-          const auto r = fui::makeRect(b.x, b.y + 50 + n * row, left, row - 4);
-          art(s, m, fui::makeRect(r.x + 4, r.y + 4, 48, r.height - 8), icons[n]);
-          prose(s, fui::makeRect(r.x + 64, r.y, r.width - 68, r.height), I18N.get(copy[n]), 4);
-        }
-        const auto credits = fui::makeRect(b.x + left + 20, b.y, b.width - left - 20, b.height - 104);
-        dashboard::frame(s, credits);
-        dashboard::text(s, fui::makeRect(credits.x + 12, credits.y + 8, credits.width - 24, 34), tr(STR_MYST_CREDITS),
-                        1, fui::TextAlign::Left);
-        prose(s, fui::makeRect(credits.x + 12, credits.y + 48, credits.width - 24, credits.height - 56),
-              tr(STR_MYST_CREDIT_COPY), 16);
-      }
-    } else if (m.page == 0) {
-      art(s, m, fui::makeRect(b.x + 8, b.y + 10, 64, 80), interceptart::DOCUMENT);
-      char heading[80];
-      pixelui::copyCaps(heading, sizeof(heading), tr(STR_MYST_ABOUT_STORY));
-      guided(s, fui::makeRect(b.x + 90, b.y, b.width - 100, 94), heading, 2, fui::TextAlign::Left, 2);
-      const auto copy = fui::makeRect(b.x + 10, b.y + 114, b.width - 20, b.height - 330);
-      prose(s, copy, tr(STR_MYST_BACKGROUND), 16, 4);
-      const auto tip = fui::makeRect(b.x, b.bottom() - 190, b.width, 80);
-      dashboard::frame(s, tip);
-      guided(s, tip.inset({8, 12, 8, 12}), tr(STR_MYST_READ_CHOOSE), 3, fui::TextAlign::Center, 4);
-    } else {
-      dashboard::text(s, fui::makeRect(b.x, b.y, b.width, 54), tr(STR_MYST_HOW), 2, fui::TextAlign::Left);
-      const int row = wide ? 64 : 94;
-      const StrId copy[] = {StrId::STR_MYST_PAGES, StrId::STR_MYST_SAVES, StrId::STR_MYST_REPLACES};
-      const gamepanel::Mark marks[] = {gamepanel::Mark::New, gamepanel::Mark::Book, gamepanel::Mark::Restart};
-      for (int n = 0; n < 3; ++n) {
-        const auto r = fui::makeRect(b.x + 8, b.y + 68 + n * row, b.width - 16, row - 8);
-        dashboard::frame(s, fui::makeRect(r.x, r.y, 66, 66));
-        if (n == 0)
-          art(s, m, fui::makeRect(r.x + 10, r.y + 10, 46, 46), interceptart::DOCUMENT);
-        else if (n == 1)
-          art(s, m, fui::makeRect(r.x + 10, r.y + 10, 46, 46), interceptart::DISK);
-        else
-          gamepanel::mark(s, fui::makeRect(r.x + 10, r.y + 10, 46, 46), marks[n]);
-        prose(s, fui::makeRect(r.x + 86, r.y, r.width - 86, r.height), I18N.get(copy[n]), 4);
-      }
-      const auto credits = fui::makeRect(b.x, b.y + 68 + 3 * row, b.width, b.bottom() - 104 - (b.y + 68 + 3 * row));
-      dashboard::frame(s, credits);
-      dashboard::text(s, fui::makeRect(credits.x + 14, credits.y + 6, credits.width - 28, 32), tr(STR_MYST_CREDITS), 1,
+    w.pages = 5;
+    const int page = std::clamp(m.page, 0, w.pages - 1);
+    const auto content = fui::makeRect(b.x, b.y, b.width, b.height - 64);
+    if (page < 4) {
+      static constexpr StrId titles[] = {StrId::STR_MYST_GUIDE_OBJECTIVE, StrId::STR_MYST_GUIDE_YOU,
+                                         StrId::STR_MYST_GUIDE_HOOPER, StrId::STR_MYST_GUIDE_HARRIS};
+      static constexpr StrId roles[] = {StrId::STR_MYST_GUIDE_SETTING, StrId::STR_MYST_GUIDE_YOU_ROLE,
+                                        StrId::STR_MYST_GUIDE_HOOPER_ROLE, StrId::STR_MYST_GUIDE_HARRIS_ROLE};
+      static constexpr StrId copy[] = {StrId::STR_MYST_GUIDE_OBJECTIVE_COPY, StrId::STR_MYST_GUIDE_YOU_COPY,
+                                       StrId::STR_MYST_GUIDE_HOOPER_COPY, StrId::STR_MYST_GUIDE_HARRIS_COPY};
+      static constexpr int scenes[] = {0, 1, 11, 2};
+      constexpr int artPercent = 43;
+      const auto picture = wide ? fui::makeRect(content.x, content.y, content.width * artPercent / 100, content.height)
+                                : fui::makeRect(content.x, content.y, content.width, content.height * artPercent / 100);
+      scene(s, m, picture, scenes[page]);
+      const auto panel =
+          wide ? fui::makeRect(picture.right() + 20, content.y, content.right() - picture.right() - 20, content.height)
+               : fui::makeRect(content.x, picture.bottom() + 16, content.width,
+                               content.bottom() - picture.bottom() - 16);
+      dashboard::frame(s, panel);
+      dashboard::text(s, fui::makeRect(panel.x + 14, panel.y + 12, panel.width - 28, 42), I18N.get(titles[page]), 1,
                       fui::TextAlign::Left);
-      prose(s, fui::makeRect(credits.x + 14, credits.y + 42, credits.width - 28, credits.height - 48),
-            tr(STR_MYST_CREDIT_COPY), 10);
+      guided(s, fui::makeRect(panel.x + 14, panel.y + 58, panel.width - 28, 50), I18N.get(roles[page]), 2,
+             fui::TextAlign::Left, 0);
+      prose(s, fui::makeRect(panel.x + 14, panel.y + 120, panel.width - 28, panel.height - 132), I18N.get(copy[page]),
+            12);
+    } else {
+      dashboard::text(s, fui::makeRect(content.x, content.y, content.width, 42), tr(STR_MYST_HOW), 1,
+                      fui::TextAlign::Left);
+      const int leftW = wide ? content.width * 56 / 100 : content.width;
+      const int rowH = wide ? (content.height - 54) / 3 : 96;
+      static constexpr StrId copy[] = {StrId::STR_MYST_GUIDE_CHOICES, StrId::STR_MYST_PAGES, StrId::STR_MYST_SAVES};
+      for (int n = 0; n < 3; ++n) {
+        const auto row = fui::makeRect(content.x, content.y + 54 + n * rowH, leftW, rowH - 8);
+        guideui::badge(s, fui::makeRect(row.x + 4, row.y + 8, 34, 34), n + 1);
+        prose(s, fui::makeRect(row.x + 52, row.y + 4, row.width - 60, row.height - 8), I18N.get(copy[n]), 4);
+      }
+      const auto credits =
+          wide ? fui::makeRect(content.x + leftW + 20, content.y + 54, content.width - leftW - 20, content.height - 54)
+               : fui::makeRect(content.x, content.y + 54 + 3 * rowH, content.width, content.height - 54 - 3 * rowH);
+      dashboard::frame(s, credits);
+      prose(s, credits.inset({12, 14, 12, 14}), tr(STR_MYST_CREDIT_COPY), 10);
     }
-    pageui::build(s, fui::makeRect(b.x, b.bottom() - 94, b.width, 40), m.page + 1, 2, Page, -1, Page, 1);
+    pageui::build(s, fui::makeRect(b.x, b.bottom() - 48, b.width, 44), page + 1, w.pages, Page, -1, Page, 1);
     return;
   }
   if (m.view == View::Restart) {
@@ -149,7 +128,7 @@ void build(toybox::Screen& s, const Model& m, Work& w) {
     const int row = std::min(66, (int(right.height) - 72) / 3) - 4;
     const int groupTop = wide ? gamepanel::centeredBlock(right, 3 * row + 20 + 16 + 62).y : right.y;
     const char* labels[] = {state.choices ? tr(STR_INTERCEPT_CONTINUE) : tr(STR_WORDLE_PLAY), tr(STR_INTERCEPT_NEW),
-                            tr(STR_ABOUT)};
+                            tr(STR_MYST_GUIDE_TITLE)};
     const fui::ActionId ids[] = {Play, New, About};
     const gamepanel::Mark marks[] = {gamepanel::Mark::Play, gamepanel::Mark::Restart, gamepanel::Mark::Help};
     for (int n = 0; n < 3; ++n) {
@@ -164,7 +143,7 @@ void build(toybox::Screen& s, const Model& m, Work& w) {
     return;
   }
   const auto chapter = fui::makeRect(b.x, b.y, b.width, 42);
-  dashboard::frame(s, chapter, 4);
+  dashboard::frame(s, chapter, pixelui::kBorder);
   dashboard::text(s, chapter, I18N.get(node.title), 1);
   b.y += 54;
   b.height -= 54;
@@ -179,7 +158,7 @@ void build(toybox::Screen& s, const Model& m, Work& w) {
     if (intercept::allowed(state, n)) ++count;
   const int rowH = wide ? 44 : 44, controls = ending ? 118 : count * (rowH + 6) + 34;
   const auto textBox = fui::makeRect(panel.x, panel.y, panel.width, panel.height - controls - 8);
-  dashboard::frame(s, textBox, 3);
+  dashboard::frame(s, textBox, pixelui::kBorder);
   const auto narrative = textBox.inset({12, 12, 52, 12});
   w.pages = pagedtext::draw(s.target(), narrative, I18N.get(node.text), 4, m.page, w.paragraph);
   if (w.pages > 1)

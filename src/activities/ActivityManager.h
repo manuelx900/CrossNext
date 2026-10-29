@@ -13,6 +13,7 @@
 
 #include "GfxRenderer.h"
 #include "MappedInputManager.h"
+#include "util/MenuFontStyle.h"
 #include "util/ScreenshotInfo.h"
 
 class Activity;    // forward declaration
@@ -129,6 +130,8 @@ class ActivityManager {
   // bound on the true peak.
   uint32_t stackFreeLowWater() const { return worstStackFreeBytes.load(); }
   void loop();
+  menufont::Section currentInterfaceFontSection() const;
+  uint8_t currentInterfaceFontItem() const;
 
   // Will replace currentActivity and drop all activities on stack
   void replaceActivity(std::unique_ptr<Activity>&& newActivity);

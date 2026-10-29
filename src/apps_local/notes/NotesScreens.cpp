@@ -346,7 +346,7 @@ void todoChrome(toybox::Screen& screen, const char* title, bool settings = false
   backui::publish(header.back, g.back);
   for (int n = 0; n < (settings ? 2 : 1); ++n) {
     const auto rect = fui::makeRect(screen.device().safeRect().right() - 60 - n * 56, g.header.bottom() - 60, 48, 48);
-    screen.target().stroke(rect, dashboard::paper, 4);
+    screen.target().stroke(rect, dashboard::paper, pixelui::kBorder);
     dashboard::icon(screen, rect.inset(fui::Insets{7, 7, 7, 7}),
                     settings && n == 0 ? icon_go_settings_32 : extra_list_32, true);
     dashboard::hit(screen, rect, settings && n == 0 ? ActionMenu : route);
@@ -648,7 +648,14 @@ void noteRows(toybox::Screen& screen, const NoteModel& model, const fui::Rect& b
     // item: centred on the row it reads as belonging to the middle of the
     // sentence, and for a one-line row the two are the same place anyway.
     const int16_t boxTop = static_cast<int16_t>(textTop + flow.lineHeight / 2 - kBoxSide / 2);
-    dashboard::frame(screen, row, 2);
+    if (model.todo && !model.asleep) {
+      screen.target().fill(fui::makeRect(row.x, row.y, 2, row.height), dashboard::ink);
+      screen.target().fill(fui::makeRect(row.right() - 2, row.y, 2, row.height), dashboard::ink);
+      if (i == begin || flow.blocks[i - 1].section)
+        screen.target().fill(fui::makeRect(row.x, row.y, row.width, 2), dashboard::ink);
+      screen.target().fill(fui::makeRect(row.x, row.bottom() - 2, row.width, 2), dashboard::ink);
+    } else
+      dashboard::frame(screen, row, 2);
     if (model.todo)
       dashboard::check(screen, fui::makeRect(row.x + 14, boxTop, kBoxSide, kBoxSide), task.checked);
     else
@@ -688,7 +695,7 @@ fui::Rect noteBandFor(const fui::DeviceContext& device, const NoteModel& model) 
   if (model.todo && !model.asleep) {
     const auto body = todoBody(device);
     const int top = model.freeTasks ? 0 : 40;
-    return fui::makeRect(body.x, body.y + top, body.width, body.height - top - 120);
+    return fui::makeRect(body.x, body.y + top, body.width, body.height - top - 144);
   }
   const int16_t width = static_cast<int16_t>(device.width - 2 * toybox::kMargin);
   // Asleep there is no footer, so the band runs to where the footer's top
@@ -705,7 +712,7 @@ fui::Rect noteBandFor(const fui::DeviceContext& device, const NoteModel& model) 
 // band under the header would fight the header for the top of the screen.
 void progressStrip(toybox::Screen& screen, const fui::Rect& band, const NoteModel& model) {
   const auto panel = fui::makeRect(band.x, kBodyTop, band.width, 126);
-  dashboard::frame(screen, panel, 3);
+  dashboard::frame(screen, panel, pixelui::kBorder);
   dashboard::text(screen, fui::makeRect(panel.x + 12, panel.y + 8, panel.width * 2 / 3 - 24, 28), tr(STR_TODO_PROGRESS),
                   3, fui::TextAlign::Left);
   char label[40];
@@ -761,7 +768,7 @@ void buildNote(toybox::Screen& screen, const NoteModel& model) {
     int page = 0;
     for (size_t n = 1; n < plan.starts.size(); ++n)
       if (plan.starts[n] <= model.firstVisible) page = n;
-    todoPager(screen, fui::makeRect(body.x, body.bottom() - 120, body.width, 48), page + 1, plan.starts.size());
+    todoPager(screen, fui::makeRect(body.x, body.bottom() - 132, body.width, 44), page + 1, plan.starts.size());
     const int width = model.anyDone ? (body.width - 12) / 2 : body.width;
     const auto add = fui::makeRect(body.x, body.bottom() - 64, width, 64);
     if (model.anyDone) {

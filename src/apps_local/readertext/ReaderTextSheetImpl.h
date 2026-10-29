@@ -43,7 +43,7 @@ template <typename Screen>
 void button(Screen& screen, Work& work, fui::Rect box, const char* label, int control, bool enabled = true) {
   work.button = {};
   auto& p = work.button;
-  p.styles = pixelui::rowStyles();
+  p.styles = pixelui::buttonStyles();
   p.action = enabled ? 6 : fui::NO_ACTION;
   p.value = control;
   p.label = label;
@@ -154,7 +154,7 @@ void build(Screen& screen, const Model& model, Work& work) {
                   tr(STR_TEXT_FONT_FAMILY), pixelui::kSmall);
     const auto close = screen.takeBottom(52, kSectionGap);
     work.button = {};
-    work.button.styles = pixelui::rowStyles();
+    work.button.styles = pixelui::buttonStyles();
     work.button.action = 1;
     work.button.label = tr(STR_DONE);
     work.button.text.font = pixelui::kBody;
@@ -203,7 +203,7 @@ void build(Screen& screen, const Model& model, Work& work) {
                                       sectionGap);
   work.button = {};
   auto& p = work.button;
-  p.styles = pixelui::rowStyles();
+  p.styles = pixelui::buttonStyles();
   p.action = 1;
   pixelui::copyCaps(work.label, sizeof(work.label), tr(STR_DONE));
   p.label = work.label;

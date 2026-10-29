@@ -2,7 +2,13 @@
 
 #include <CrossPointSettings.h>
 #include <I18n.h>
+#include <Logging.h>
+#include <Memory.h>
 
+#include "../../activities/util/IntervalSelectionActivity.h"
+#include "../Shelf.h"
+#include "../ui/Dashboard.h"
+#include "../ui/MenuFontScreen.h"
 #include "../ui/PixelMenuTheme.h"
 #include "../ui/SettingsArt.h"
 #include "../ui/SettingsHome.h"
@@ -16,13 +22,81 @@ constexpr StrId formats[] = {StrId::STR_FORMAT_EPUB, StrId::STR_FORMAT_TXT, StrI
                              StrId::STR_FORMAT_IMAGES};
 }  // namespace
 int PresentationSettingsActivity::listCount() const {
-  return kind == Kind::Theme ? sizeof(themes) / sizeof(themes[0]) : sizeof(formats) / sizeof(formats[0]);
+  switch (kind) {
+    case Kind::Theme:
+      return 4;
+    case Kind::ReadingFormats:
+      return sizeof(formats) / sizeof(formats[0]);
+    case Kind::FontOverview:
+      return menufont::kSectionCount;
+    case Kind::GameFonts:
+    case Kind::AppFonts:
+      return shelf::folders()[fontFolder()].count + 1;
+  }
+  return 0;
+}
+const char* PresentationSettingsActivity::screenTitle() const {
+  switch (kind) {
+    case Kind::Theme:
+      return tr(STR_SETTINGS_APPEARANCE);
+    case Kind::ReadingFormats:
+      return tr(STR_READING_FORMATS);
+    case Kind::FontOverview:
+    case Kind::GameFonts:
+    case Kind::AppFonts:
+      return tr(STR_MENU_FONT);
+  }
+  return "";
+}
+uint8_t& PresentationSettingsActivity::fontChoice(int row) {
+  if (!contentFonts()) return row ? SETTINGS.menuFontOverrides[row] : SETTINGS.menuFontStyle;
+  if (row == 0) return SETTINGS.menuFontOverrides[int(fontSection())];
+  const auto item = menufont::itemFor(shelf::folders()[fontFolder()].items[row - 1].title);
+  assert(item < menufont::kItemCount);
+  return SETTINGS.menuFontItemOverrides[item];
+}
+const char* PresentationSettingsActivity::fontTargetName(int row) const {
+  if (!contentFonts()) return menufontui::sectionName(menufont::Section(row));
+  if (!row) return kind == Kind::GameFonts ? tr(STR_MENU_FONT_GAMES_MENU) : tr(STR_MENU_FONT_APPS_MENU);
+  return shelf::label(shelf::folders()[fontFolder()].items[row - 1].title);
+}
+void PresentationSettingsActivity::fontRow(void* context, uint16_t row, fui::ListItem& item) {
+  auto& self = *static_cast<PresentationSettingsActivity*>(context);
+  item = {};
+  item.label = self.fontTargetName(row);
+  const bool general = !self.contentFonts() && row == 0;
+  const auto choice = self.fontChoice(row);
+  item.value = self.contentFonts() && row && choice == 0 ? tr(STR_MENU_FONT_INHERIT_MENU)
+                                                         : menufontui::choiceName(general ? choice + 1 : choice);
+  item.actionValue = row;
 }
 void PresentationSettingsActivity::buildScreen(UiScreen& screen) {
   pixelui::FontScope fonts(uiTarget, renderer, I18N.getLanguage() != Language::EN);
   useCompactSettingsRows();
-  compactSettingsRows = kind != Kind::Theme;
-  pixelui::begin(screen);
+  compactSettingsRows = kind == Kind::ReadingFormats;
+  pixelui::begin(screen, saveFailed ? 80 : 0);
+  if (kind == Kind::FontOverview || contentFonts()) {
+    pixelui::drawHeader(renderer, screenTitle(), true);
+    backui::publish(true, pixelui::geometry(screen.device()).back);
+    fui::ListProps props;
+    props.rowProvider = &PresentationSettingsActivity::fontRow;
+    props.rowProviderCtx = this;
+    props.count = listCount();
+    props.action = ACTION_ROW;
+    props.selectedIndex = activeNav().selected;
+    menufontui::styleSections(props, screen.device().width > screen.device().height);
+    syncListViewport(screen, props);
+    pixelui::list(screen, props);
+    if (saveFailed) {
+      const auto safe = screen.device().safeRect();
+      fui::TextStyle copy;
+      copy.font = 4;
+      copy.maxLines = 2;
+      screen.target().text(fui::makeRect(safe.x + 16, safe.bottom() - 76, safe.width - 32, 68),
+                           tr(STR_MENU_FONT_SAVE_FAILED), copy);
+    }
+    return;
+  }
   if (kind == Kind::Theme) {
     const auto body = screen.body();
     fui::TextStyle label;
@@ -34,10 +108,11 @@ void PresentationSettingsActivity::buildScreen(UiScreen& screen) {
   }
   pixelui::Header h;
   h.back = true;
-  h.title = kind == Kind::Theme ? tr(STR_SETTINGS_APPEARANCE) : tr(STR_READING_FORMATS);
+  h.title = screenTitle();
   pixelui::drawHeader(renderer, h.title, true);
   backui::publish(true, pixelui::geometry(screen.device()).back);
-  for (int n = 0; n < listCount(); ++n) {
+  const int rows = kind == Kind::Theme ? 2 : listCount();
+  for (int n = 0; n < rows; ++n) {
     auto& item = items[n];
     item = {};
     item.actionValue = n;
@@ -53,13 +128,36 @@ void PresentationSettingsActivity::buildScreen(UiScreen& screen) {
   }
   fui::ListProps p;
   p.items = items;
-  p.count = listCount();
+  p.count = rows;
   p.action = ACTION_ROW;
   p.selectedIndex = activeNav().selected;
   settingsui::styleRows(p);
   if (kind == Kind::Theme) settingsui::styleAppearance(p);
-  syncListViewport(screen, p);
+  if (kind != Kind::Theme) syncListViewport(screen, p);
   if (kind == Kind::Theme) {
+    const auto body = screen.body();
+    const bool wide = screen.device().width > screen.device().height;
+    p.toggleCheckbox = true;
+    p.toggleWidth = 34;
+    p.toggleHeight = 34;
+    p.rowHeight = wide ? 88 : 140;
+    p.iconSize = wide ? 72 : 108;
+    const int height = p.rowHeight * 2;
+    screen.setContentMarginAbsolute(fui::Insets{body.y, static_cast<int16_t>(screen.device().width - body.right()),
+                                                static_cast<int16_t>(screen.device().height - body.y - height),
+                                                body.x});
+    std::snprintf(labels[2], sizeof(labels[2]), tr(STR_HOME_RECENT_BOOK_COUNT_VALUE),
+                  unsigned(SETTINGS.homeRecentBookCount));
+    const auto actions = settingsui::appearanceActions(body, body.y + height, wide);
+    const auto recent = actions.recent;
+    dashboard::action(screen.target(), recent, labels[2], &extra_reading_book_32, activeNav().selected == 2, 0);
+    screen.target().stroke(recent, dashboard::ink, pixelui::kBorder);
+    screen.frame().hit(recent, ACTION_ROW, 2, fui::InputTouch);
+    pixelui::copyCaps(labels[3], sizeof(labels[3]), tr(STR_MENU_FONT));
+    const auto font = actions.font;
+    dashboard::action(screen.target(), font, labels[3], &icon_file_text_32, activeNav().selected == 3, 0);
+    screen.target().stroke(font, dashboard::ink, pixelui::kBorder);
+    screen.frame().hit(font, ACTION_ROW, 3, fui::InputTouch);
     activeNav().top = 0;
     activeNav().followPending = false;
     p.topIndex = 0;
@@ -75,12 +173,84 @@ void PresentationSettingsActivity::activateIndex(int n) {
   app.clearTapFlash();
   switch (kind) {
     case Kind::Theme:
+      if (n == 3) {
+        auto picker = makeUniqueNoThrow<PresentationSettingsActivity>(renderer, mappedInput, Kind::FontOverview);
+        if (!picker) {
+          LOG_ERR("SET", "OOM: menu font picker");
+          return;
+        }
+        startActivityForResult(std::move(picker), [this](const ActivityResult&) {
+          resetUi();
+          requestUpdate();
+        });
+        return;
+      }
+      if (n == 2) {
+        // Reuse the bounded settings slider; no separate recent-book list is stored.
+        auto picker = makeUniqueNoThrow<IntervalSelectionActivity>(renderer, mappedInput, "HomeRecentCount",
+                                                                   StrId::STR_HOME_RECENT_BOOK_COUNT,
+                                                                   SETTINGS.homeRecentBookCount, 1, 10, 1, 1);
+        if (!picker) {
+          LOG_ERR("SET", "OOM: recent-book count picker");
+          return;
+        }
+        startActivityForResult(std::move(picker), [this](const ActivityResult& result) {
+          if (!result.isCancelled) {
+            if (const auto* interval = std::get_if<IntervalResult>(&result.data)) {
+              const auto count = uint8_t(std::clamp(int(interval->value), 1, 10));
+              if (SETTINGS.homeRecentBookCount != count) {
+                SETTINGS.homeRecentBookCount = count;
+                SETTINGS.saveToFile();
+              }
+            }
+          }
+          requestUpdate();
+        });
+        return;
+      }
       if (SETTINGS.homeLayout == n) return;
       SETTINGS.homeLayout = n;
       break;
     case Kind::ReadingFormats:
       SETTINGS.readingFormats ^= masks[n];
       break;
+    case Kind::FontOverview:
+    case Kind::GameFonts:
+    case Kind::AppFonts: {
+      if (kind == Kind::FontOverview && (n == int(menufont::Section::Games) || n == int(menufont::Section::Apps))) {
+        const auto child = n == int(menufont::Section::Games) ? Kind::GameFonts : Kind::AppFonts;
+        auto picker = makeUniqueNoThrow<PresentationSettingsActivity>(renderer, mappedInput, child);
+        if (!picker) {
+          LOG_ERR("SET", "OOM: content font settings");
+          return;
+        }
+        startActivityForResult(std::move(picker), [this](const ActivityResult&) {
+          resetUi();
+          requestUpdate();
+        });
+        return;
+      }
+      const bool general = kind == Kind::FontOverview && n == 0;
+      const auto* ids = menufontui::choiceIds + (general ? 1 : 0);
+      const int count = general ? int(menufont::Style::Count) : int(menufont::Override::Count);
+      const auto current = fontChoice(n);
+      // Reuse the same bounded modal as the other enum settings.
+      const char* names[int(menufont::Override::Count)];
+      for (int j = 0; j < count; ++j) names[j] = I18N.get(ids[j]);
+      if (contentFonts() && n) names[0] = tr(STR_MENU_FONT_INHERIT_MENU);
+      optionPopup.show(fontTargetName(n), names, count, current, [this, n](int selected) {
+        auto& choice = fontChoice(n);
+        if (choice == selected) return;
+        const auto previous = choice;
+        choice = uint8_t(selected);
+        saveFailed = !SETTINGS.saveToFile();
+        if (saveFailed) choice = previous;
+        resetUi();
+        requestUpdate();
+      });
+      requestUpdate();
+      return;
+    }
   }
   SETTINGS.saveToFile();
   requestUpdate();
@@ -88,9 +258,20 @@ void PresentationSettingsActivity::activateIndex(int n) {
 
 void PresentationSettingsActivity::loop() {
   RenderLock lock(*this);
+  if (optionPopup.isActive() && mappedInput.wasReleased(MappedInputManager::Button::Back)) {
+    optionPopup.dismiss();
+    requestUpdate();
+    return;
+  }
+  if (optionPopup.handleInput(mappedInput, [this] { requestUpdate(); })) return;
   if (mappedInput.wasReleased(MappedInputManager::Button::Back)) {
     onBackButton();
     return;
   }
   UiListActivity::loop();
+}
+
+void PresentationSettingsActivity::render(RenderLock&& lock) {
+  if (optionPopup.processRender(renderer, mappedInput)) return;
+  UiListActivity::render(std::move(lock));
 }

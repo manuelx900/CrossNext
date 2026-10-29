@@ -238,7 +238,7 @@ class OptionPopup {
     const int16_t innerPadding = static_cast<int16_t>(metrics.optionPopupInnerPadding);
     props.padding = fui::Insets{innerPadding, innerPadding, innerPadding, innerPadding};
     props.gap = static_cast<int16_t>(metrics.optionPopupItemSpacing);
-    props.buttonStyles = pixelui::rowStyles();
+    props.buttonStyles = pixelui::buttonStyles();
     props.buttonText.font = pixelui::kSmall;
     // defaultPopupStyles() has no border, so opt in using the per-theme frame metrics.
     props.styles = fui::defaultPopupStyles();

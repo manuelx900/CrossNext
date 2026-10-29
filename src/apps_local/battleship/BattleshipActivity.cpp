@@ -143,6 +143,7 @@ bshipui::BoardModel BattleshipActivity::boardModel() {
   model.mySide = mySide;
   model.aim = aimCell;
   model.myTurn = myTurn();
+  model.ownFleet = showOwnFleet;
   return model;
 }
 
@@ -189,7 +190,10 @@ void BattleshipActivity::drawBoardScreen() {
   interactionsReady = false;
   toybox::Frame frame(target, target.deviceContext(), noInput, interactions, nullptr, toybox::headerStatus(renderer));
   toybox::Screen screen(frame);
-  bshipui::buildBoardChrome(screen, boardModel(), &layout);
+  if (view == View::Result)
+    bshipui::buildResult(screen, boardModel());
+  else
+    bshipui::buildBoardChrome(screen, boardModel(), &layout);
 
   interactionsReady = true;
   toybox::reportOverflow(interactions, "Battleship board", &renderer);
@@ -217,6 +221,7 @@ void BattleshipActivity::render(RenderLock&&) {
     case View::Place:
       drawPlaceScreen();
       break;
+    case View::Result:
     case View::Board:
       drawBoardScreen();
       break;
@@ -379,6 +384,7 @@ void BattleshipActivity::handlePlaceTap(const int cell) {
 void BattleshipActivity::enterBoardView() {
   if (view == View::Board) return;
   view = View::Board;
+  showOwnFleet = false;
   aimCell = -1;
   // Never inherit the line the previous screen was using. In a match this said
   // WAITING FOR MARIO for as long as it took somebody to fire, which is exactly
@@ -440,6 +446,7 @@ uint32_t BattleshipActivity::surfaceMeaning() const {
   uint32_t meaning = paintclock::mixMeaning(paintclock::kMeaningSeed, static_cast<uint32_t>(view));
   meaning = paintclock::mixMeaning(meaning, fleetCommitted ? 1u : 0u);
   meaning = paintclock::mixMeaning(meaning, computerThinking ? 1u : 0u);
+  meaning = paintclock::mixMeaning(meaning, showOwnFleet ? 1u : 0u);
   return paintclock::mixMeaning(meaning, (myTurn() && !gameOver()) ? 1u : 0u);
 }
 
@@ -591,6 +598,9 @@ void BattleshipActivity::finishGame() {
   saveStats();
   saveGame();
   hasSavedGame = false;
+  computerThinking = false;
+  view = View::Result;
+  interactionsReady = false;
 }
 
 void BattleshipActivity::routeBoard() {
@@ -626,10 +636,27 @@ void BattleshipActivity::routeBoard() {
       requestNewGame();
       return;
     }
+    if (event.action == bshipui::ActionFleet || event.action == bshipui::ActionOwnBoard) {
+      showOwnFleet = event.value == 0;
+      interactionsReady = false;
+      requestUpdate();
+      return;
+    }
+    if (event.action == bshipui::ActionResultReview) {
+      view = View::Board;
+      showOwnFleet = false;
+      interactionsReady = false;
+      requestUpdate();
+      return;
+    }
+    if (event.action == bshipui::ActionResultMenu) {
+      goToMenu();
+      return;
+    }
   }
 
   // The grid is hit-tested against geometry and never reaches route().
-  if (!surfaceRevealed()) return;
+  if (!surfaceRevealed() || showOwnFleet || view != View::Board) return;
   const int cell = cellAt(targetGrid(), tapX, tapY);
   if (cell >= 0) handleTargetTap(cell);
 }
@@ -662,6 +689,7 @@ void BattleshipActivity::loop() {
     case View::Place:
       routePlacement();
       return;
+    case View::Result:
     case View::Board:
       routeBoard();
       return;

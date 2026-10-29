@@ -14,6 +14,7 @@
 #include "CrossPointSettings.h"
 #include "HapticFeedback.h"
 #include "OpdsServerStore.h"
+#include "apps_local/ui/ToyboxFonts.h"
 #include "boot_sleep/BootActivity.h"
 #include "boot_sleep/SleepActivity.h"
 #include "browser/OpdsBookBrowserActivity.h"
@@ -352,6 +353,7 @@ void ActivityManager::setCurrentActivity(std::unique_ptr<Activity>&& next) {
   idleWorkOwner.store(nullptr);
   mappedInput.swallowNextReleaseOfHeldButtons();
   currentActivity = std::move(next);
+  toybox::syncInterfaceFonts(renderer);
   mappedInput.setEdgeBackEnabled(!currentActivity || currentActivity->allowsEdgeBack());
 }
 
@@ -368,6 +370,7 @@ void ActivityManager::exitActivity(const RenderLock& lock) {
 }
 
 void ActivityManager::replaceActivity(std::unique_ptr<Activity>&& newActivity) {
+  if (newActivity && currentActivity) newActivity->interfaceFontContext.inherit(currentActivity->interfaceFontContext);
   mappedInput.resetHomeButtonInput();
   // Note: no lock here, this is usually called by loop() and we may run into deadlock
   if (currentActivity) {
@@ -379,7 +382,9 @@ void ActivityManager::replaceActivity(std::unique_ptr<Activity>&& newActivity) {
     // No current activity, safe to launch immediately. Reached whenever the
     // stack emptied first: popActivity() -> goHome(), which is how Back leaves
     // the crash report.
+    RenderLock lock;
     setCurrentActivity(std::move(newActivity));
+    lock.unlock();
     currentActivity->onEnter();
   }
 }
@@ -491,6 +496,7 @@ void ActivityManager::goHome(HomeMenuItem initialMenuItem, bool cleanInitialRefr
 void ActivityManager::goToCrashReport() { replaceActivity(std::make_unique<CrashActivity>(renderer, mappedInput)); }
 
 void ActivityManager::pushActivity(std::unique_ptr<Activity>&& activity) {
+  if (activity && currentActivity) activity->interfaceFontContext.inherit(currentActivity->interfaceFontContext);
   mappedInput.resetHomeButtonInput();
   if (pendingActivity) {
     // Should never happen in practice
@@ -512,6 +518,13 @@ void ActivityManager::popActivity() {
 }
 
 bool ActivityManager::preventAutoSleep() const { return currentActivity && currentActivity->preventAutoSleep(); }
+uint8_t ActivityManager::currentInterfaceFontItem() const {
+  return currentActivity ? currentActivity->interfaceFontContext.item : menufont::kNoItem;
+}
+
+menufont::Section ActivityManager::currentInterfaceFontSection() const {
+  return currentActivity ? currentActivity->interfaceFontContext.section : menufont::Section::General;
+}
 
 const char* ActivityManager::currentActivityName() const {
   // A replacement that has been requested but not yet swapped in counts as the

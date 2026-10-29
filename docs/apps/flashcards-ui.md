@@ -1,7 +1,9 @@
 # Flashcards screens and local history
 
-The library follows the supplied October 2026 reference layouts: a daily total,
-three deck rows per page, history/help navigation and the source-folder footer.
+The library shows a daily total, a paginated list sized for the orientation,
+and history/help navigation. Each deck or file row uses a larger vertically
+centred title without a second line of card/due counts. Those counts remain
+available after opening the deck.
 A deck opens its due/new counts, current Monday–Sunday activity and actions to
 browse cards, inspect its history or begin reviewing. Imported titles and card
 content remain in their original language. Interface text uses English/Spanish

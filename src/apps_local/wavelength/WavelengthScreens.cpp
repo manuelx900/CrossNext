@@ -54,7 +54,8 @@ const toybox::CutMetrics& cutFor(const fui::FontId slot) {
 
 void caps(toybox::Screen& screen, const fui::Rect& box, const char* text, const fui::FontId font,
           const fui::TextAlign align, const fui::Color colour = fui::Color::Black) {
-  screen.target().text(toybox::inkCentred(box, cutFor(font)), text, textStyle(font, align, colour));
+  screen.target().text(toybox::inkCentred(screen.target(), box, textStyle(font, align, colour)), text,
+                       textStyle(font, align, colour));
 }
 
 fui::FontId slotForAll(toybox::Screen& screen, const int16_t width, const char* const* words, const int count) {

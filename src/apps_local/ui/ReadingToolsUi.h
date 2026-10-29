@@ -88,7 +88,7 @@ inline void book(toybox::Screen& s, fui::Rect r) {
   s.target().line({b.x, int16_t(b.bottom() - 7)}, {b.right(), int16_t(b.bottom() - 7)}, 3, dashboard::ink);
 }
 inline void note(toybox::Screen& s, fui::Rect r) {
-  dashboard::frame(s, r, 3);
+  dashboard::frame(s, r, pixelui::kBorder);
   for (int n = 0; n < 3; ++n)
     s.target().line({int16_t(r.x + 10), int16_t(r.y + 14 + n * 12)},
                     {int16_t(r.right() - 10 - (n == 2 ? r.width / 4 : 0)), int16_t(r.y + 14 + n * 12)}, 3,

@@ -109,7 +109,7 @@ template <typename Screen>
 void button(Screen& screen, Work& work, fui::Rect rect, const char* label, fui::ActionId action, int value = 0) {
   work.button = {};
   auto& p = work.button;
-  p.styles = pixelui::rowStyles();
+  p.styles = pixelui::buttonStyles();
   p.action = action;
   p.value = value;
   p.label = label;
@@ -196,7 +196,7 @@ void build(Screen& screen, const Model& model, Work& work) {
       const auto shortcut = static_cast<Shortcut>(model.shortcuts[n]);
       const auto box = fui::makeRect(g.tiles.x + width * n + (width - size) / 2, g.tiles.y, size, size);
       work.button = {};
-      work.button.styles = pixelui::rowStyles();
+      work.button.styles = pixelui::buttonStyles();
       work.button.icon = fui::bitmapFromIcon(
           icon(shortcut, shortcut == Shortcut::Warm ? model.warmth > 0 : model.lightOn, model.rotateRight));
       work.button.iconSize = 48;

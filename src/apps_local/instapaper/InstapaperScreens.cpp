@@ -162,7 +162,7 @@ void buildQueue(toybox::Screen& screen, const QueueModel& model) {
     fui::ButtonProps undo;
     undo.label = undoLabel;
     undo.action = ActionUndoArchive;
-    undo.styles = toybox::rowStyles();
+    undo.styles = toybox::buttonStyles();
     screen.button(undo, fui::makeRect(toybox::kMargin, footerY, undoWidth, kFooterHeight));
 
     fui::ButtonProps sync;
@@ -185,7 +185,7 @@ void buildQueue(toybox::Screen& screen, const QueueModel& model) {
     account.icon = fui::bitmapFromIcon(*model.accountIcon);
     account.iconSize = toybox::kIconSize;
     account.action = ActionAccount;
-    account.styles = toybox::rowStyles();
+    account.styles = toybox::buttonStyles();
     const int16_t accountX = static_cast<int16_t>(toybox::kMargin + barWidth + accountGap);
     screen.button(account, fui::makeRect(accountX, footerY, accountSide, kFooterHeight));
   }
@@ -312,7 +312,7 @@ uint32_t buildReader(toybox::Screen& screen, const ReaderModel& model, ReaderBod
   };
 
   const int16_t left = toybox::kMargin;
-  const fui::StyleSet quiet = toybox::rowStyles();
+  const fui::StyleSet quiet = toybox::buttonStyles();
   footerButton("ARCHIVE", ActionArchive, left, archiveWidth, true, &quiet);
   const int16_t prevX = static_cast<int16_t>(left + archiveWidth + moat);
   footerButton("<", ActionPagePrev, prevX, arrow, model.canPagePrev);
@@ -424,7 +424,7 @@ void buildDisconnectConfirm(toybox::Screen& screen, const DisconnectModel& model
   fui::ButtonProps disconnect;
   disconnect.label = "DISCONNECT";
   disconnect.action = ActionDisconnect;
-  disconnect.styles = toybox::rowStyles();
+  disconnect.styles = toybox::buttonStyles();
   screen.button(disconnect, fui::makeRect(static_cast<int16_t>(toybox::kMargin + (width - disconnectWidth) / 2),
                                           disconnectY, disconnectWidth, toybox::kPillHeight));
 

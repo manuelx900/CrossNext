@@ -31,7 +31,7 @@ void button(toybox::Screen& s, Work& w, fui::Rect r, const char* label, fui::Act
   w.button.label = w.label;
   w.button.text.font = action == LevelContinue ? 1 : action == Claim || action == Milestone ? 3 : pixelui::kSmall;
   w.button.text.align = fui::TextAlign::Center;
-  w.button.styles = pixelui::rowStyles();
+  w.button.styles = pixelui::buttonStyles();
   w.button.minTouchSize = 0;
   w.button.action = action;
   w.button.value = value;

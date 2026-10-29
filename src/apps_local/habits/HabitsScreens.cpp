@@ -26,14 +26,10 @@ fui::TextStyle style(const fui::FontId font, const fui::TextAlign align = fui::T
   return out;
 }
 
-const toybox::CutMetrics& cut(const fui::FontId font) {
-  if (font == toybox::kDisplayFont) return toybox::kDisplayCut;
-  return font == toybox::kSmallFont ? toybox::kButtonCut : toybox::kUiCut;
-}
-
 void text(toybox::Screen& screen, const fui::Rect& rect, const char* label, const fui::FontId font = toybox::kUiFont,
           const fui::TextAlign align = fui::TextAlign::Left, const fui::Color color = fui::Color::Black) {
-  screen.target().text(toybox::inkCentred(rect, cut(font)), label, style(font, align, color));
+  screen.target().text(toybox::inkCentred(screen.target(), rect, style(font, align, color)), label,
+                       style(font, align, color));
 }
 
 void button(toybox::Screen& screen, const fui::Rect& rect, const char* label, const fui::ActionId action,
@@ -160,7 +156,7 @@ void buildToday(toybox::Screen& screen, const TodayModel& model) {
   const auto progressLabel = fui::makeRect(progress.x + 10, progress.y, progress.width - 104, progress.height);
   if (wide && day != model.today) {
     pixelui::copyCaps(label, sizeof(label), tr(STR_HABITS_DAILY_PROGRESS));
-    fittext::draw(screen.target(), progressLabel.inset({3, 0, 3, 0}), label, 3, 2);
+    fittext::draw(screen.target(), progressLabel, label, 3, 2);
   } else {
     dashboard::text(screen, progressLabel,
                     wide                 ? tr(STR_TODAY)

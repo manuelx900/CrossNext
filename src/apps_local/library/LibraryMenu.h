@@ -96,6 +96,9 @@ inline void styleRows(fui::ListProps& props) {
 inline void styleBookRows(fui::ListProps& props, const fui::DrawTarget& target) {
   styleRows(props);
   props.labelText.font = 4;
+  props.labelText.bold = false;
+  props.headerText.font = 4;
+  props.headerText.bold = true;
   props.labelText.maxLines = 2;
   props.valueText.font = 3;
   props.iconSize = 32;

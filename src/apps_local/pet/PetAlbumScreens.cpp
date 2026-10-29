@@ -7,7 +7,7 @@ using namespace albumwidget;
 namespace {
 void statistics(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   const bool inverse = button(s, w, r, "", OpenAccumulatedHelp);
-  const int side = r.height < 80 ? 32 : 52;
+  const int side = r.height <= 88 ? 40 : 52;
   icon(s, rect(r.x + 12, r.y + (r.height - side) / 2, side, side), extra_reading_book_64, inverse);
   const auto copy = rect(r.x + side + 26, r.y + 10, r.width - side - 38, r.height - 20);
   if (m.profile->readingSeconds >= 3600 && m.profile->readingSeconds / 60 % 60 == 0)
@@ -16,13 +16,15 @@ void statistics(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   else
     duration(w.secondary, sizeof(w.secondary), m.profile->readingSeconds);
   std::snprintf(w.label, sizeof(w.label), tr(STR_PET_ALBUM_READING), w.secondary);
-  text(s, rect(copy.x, r.y + (r.height < 80 ? 4 : 10), copy.width, 28), w.label, 3, inverse);
+  text(s, rect(copy.x, r.y + 8, copy.width, 32), w.label, 0, inverse);
   std::snprintf(w.label, sizeof(w.label), m.profile->sharedDays == 1 ? tr(STR_PET_ALBUM_DAY) : tr(STR_PET_ALBUM_DAYS),
                 unsigned(m.profile->sharedDays), unsigned(m.profile->streak));
-  if (r.height < 80)
-    prose(s, rect(copy.x, r.y + 34, copy.width, 22), w.label, 1, fui::TextAlign::Left, inverse);
-  else
-    prose(s, rect(copy.x, copy.y + 32, copy.width, copy.height - 32), w.label, 2, fui::TextAlign::Left, inverse);
+  fui::TextStyle detail;
+  detail.font = 0;
+  detail.align = fui::TextAlign::Left;
+  detail.color = inverse ? fui::Color::White : fui::Color::Black;
+  detail.maxLines = r.height <= 88 ? 1 : 2;
+  s.target().text(rect(copy.x, r.y + 44, copy.width, r.height - 54), w.label, detail);
 }
 void memoriesRow(toybox::Screen& s, Work& w, fui::Rect r) {
   const bool inverse = button(s, w, r, "", OpenMemories, 0, true);
@@ -45,7 +47,7 @@ void books(toybox::Screen& s, fui::Rect r) {
 }  // namespace
 void album(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   const bool wide = r.width > r.height;
-  const int statsH = wide ? 64 : 100;
+  const int statsH = wide ? 88 : 128;
   statistics(s, m, w, rect(r.x, r.y, r.width, statsH));
   r.y += statsH + UI_GAP;
   r.height -= statsH + UI_GAP;

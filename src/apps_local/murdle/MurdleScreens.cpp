@@ -546,8 +546,8 @@ void buildMenu(toybox::Screen& s, const MenuModel& m) {
     } else
       dashboard::icon(s, makeRect(r.x + (r.width - 38) / 2, r.y, 38, 38), *icons[n]);
     std::snprintf(copy, sizeof(copy), "%d", items);
-    caps(s, makeRect(r.x + 6, r.y + 36, r.width - 12, 40), copy, 1, 1, fui::TextAlign::Center);
-    caps(s, makeRect(r.x + 6, r.y + 78, r.width - 12, 22), labels[n], 3, 1, fui::TextAlign::Center);
+    caps(s, makeRect(r.x + 6, r.y + 34, r.width - 12, 30), copy, 1, 1, fui::TextAlign::Center);
+    caps(s, makeRect(r.x + 6, r.y + 68, r.width - 12, 24), labels[n], 3, 1, fui::TextAlign::Center);
   }
   const auto actions = wide ? makeRect(hero.right() + 20, b.y, b.right() - hero.right() - 20, b.height)
                             : makeRect(b.x, hero.bottom() + 14, b.width, 216);

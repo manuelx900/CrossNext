@@ -207,14 +207,12 @@ void library(toybox::Screen& s, const LibraryModel& m) {
     mark(s, makeRect(r.x + 10, r.y + (r.height - 28) / 2, 28, 28), d.folder ? icon_folder_32 : extra_dashboard_cards_32,
          selected);
     pixelui::copyCaps(text, sizeof(text), d.name);
-    fittext::draw(s.target(), makeRect(r.x + 54, r.y + 4, r.width - 92, d.ready ? 22 : r.height - 8), text, 0, 1,
-                  fui::TextAlign::Left, selected ? fui::Color::White : fui::Color::Black);
-    if (d.ready) {
-      std::snprintf(text, sizeof(text), d.total == 1 ? tr(STR_FLASH_DECK_ONE) : tr(STR_FLASH_DECK_ROW), d.total,
-                    d.due + d.fresh);
-      fittext::draw(s.target(), makeRect(r.x + 54, r.y + (wide ? 25 : 30), r.width - 92, wide ? 21 : 23), text, 4, 1,
-                    fui::TextAlign::Left, selected ? fui::Color::White : fui::Color::Black);
-    }
+    fui::TextStyle titleStyle;
+    titleStyle.font = 0;
+    titleStyle.maxLines = 1;
+    titleStyle.color = selected ? fui::Color::White : fui::Color::Black;
+    const auto titleBox = makeRect(r.x + 54, r.y, r.width - 92, r.height);
+    s.target().text(toybox::inkCentred(s.target(), titleBox, titleStyle), text, titleStyle);
     dashboard::chevron(s.target(), makeRect(r.right() - 34, r.y, 26, r.height), selected);
     s.frame().hit(r, OpenDeck, n, fui::InputTouch);
   }
@@ -433,7 +431,7 @@ void help(toybox::Screen& s, int page) {
     const fui::FontId labelFont = labelWidth <= tileW - 16 ? pixelui::kSmall : 3;
     for (int n = 0; n < 2; ++n) {
       const auto r = makeRect(b.x + n * (tileW + flowGap), tileY, tileW, 86);
-      dashboard::frame(s, r, 3);
+      dashboard::frame(s, r, pixelui::kBorder);
       if (n)
         mark(s, makeRect(r.x + (r.width - 32) / 2, r.y + 10, 32, 32), extra_check_32);
       else
