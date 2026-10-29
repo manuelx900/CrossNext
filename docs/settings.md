@@ -2,7 +2,10 @@
 
 Open Settings from Home. Eight illustrated categories keep settings on the device:
 Display, Reading, Controls, Library, Connectivity, System, Device and Appearance.
-Titles use the bold 12pt UI font; values and help use the regular 10pt UI font.
+Option names use regular text; their current values and help use a smaller
+regular face. Group headings and the black screen header retain their title
+styling. Category rows match the size of the Apps and
+Games menus, and the frame ends at the final category.
 A value appears beneath its title. A checkbox shows an on/off setting; an arrow
 opens or cycles an option. Long labels wrap, and swipes or physical navigation
 reach additional rows in either orientation. Group headings use text without an underline;
@@ -16,8 +19,8 @@ Wi-Fi, reading sync and OPDS. System contains Home, language, sleep and the cloc
 when the device has one. Device contains firmware, extensions, information and
 developer mode. Hardware-specific options remain conditional on the device.
 The settings registry, JSON keys and existing actions are unchanged. Firmware
-identifies itself as CrossNext 1.0.0 in About and on the boot screen; native
-S3 and simulator builds take their version from the fork section in platformio.ini.
+identifies itself as CrossNext in About and on the boot screen; native S3 and
+simulator builds take their version from the fork section in platformio.ini.
 
 Appearance offers two home layouts: **Framed** and **Carousel**. Carousel is the
 layout previously called Focus; its cover and book details sit above a separate
@@ -46,6 +49,9 @@ the progress bar. In Framed, selection changes must retain the percentage.
 No device build, flashing or hardware verification is implied by browser checks.
 
 ## Quick settings shortcuts
+
+The picker marks the assigned shortcut with a checkmark. An underline follows
+navigation without making another shortcut look enabled.
 
 Display > Quick settings assigns four shortcuts from Night mode, Refresh, Rotate, Light, Warm, Wi-Fi, Lock screen, Sleep, Power off and Restart. Existing shortcut identifiers are preserved; the duplicate-assignment check now covers all ten choices. Lock screen keeps the existing sleep behavior and uses an outlined padlock. Sleep, Power off and Restart persist changed light preferences and use the shared power request flow, which flushes reader state and prepares storage before sleeping or restarting. They add no separate power owner or background task.
 

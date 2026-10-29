@@ -802,13 +802,19 @@ void PetActivity::action(fui::ActionId action, int value) {
       return;
   }
 }
+void PetActivity::swipeCatalog(int dx, int dy) {
+  if (view != pet::View::Projects || dy || (dx != -1 && dx != 1)) return;
+  const int next = std::clamp(page - dx, 0, std::max(0, work.pages - 1));
+  if (next != page) action(petui::Page, -dx);
+}
 void PetActivity::loop() {
   if (!navigation.capture(mappedInput, millis())) LOG_ERR("PET", "Navigation queue full");
-  if (view == pet::View::Play && game.kind == pet::Game::Puzzle) {
+  const bool sliding = view == pet::View::Projects || (view == pet::View::Play && game.kind == pet::Game::Puzzle);
+  const auto swipe = sliding ? mappedInput.wasSwipe() : MappedInputManager::SwipeDir::None;
+  if (sliding) {
     int x = 0, y = 0;
     const auto shown = (paintedRevision.load(std::memory_order_acquire) << 2) ^ uint32_t(renderer.getOrientation());
     if (mappedInput.wasScreenTouchPressed(x, y)) pendingSlide.begin(x, y, shown);
-    const auto swipe = mappedInput.wasSwipe();
     int dx = 0, dy = 0;
     switch (swipe) {
       case MappedInputManager::SwipeDir::None:
@@ -830,7 +836,7 @@ void PetActivity::loop() {
       pendingSlide.end(dx, dy, shown);
   }
   int tapX = 0, tapY = 0;
-  if (mappedInput.wasScreenTapped(tapX, tapY))
+  if (swipe == MappedInputManager::SwipeDir::None && mappedInput.wasScreenTapped(tapX, tapY))
     pendingTap.capture(tapX, tapY, paintedRevision.load(std::memory_order_acquire));
   RenderLock lock(RenderLock::Mode::Try);
   if (!lock.ownsLock()) return;
@@ -873,7 +879,7 @@ void PetActivity::loop() {
   const bool animated = petsleep::breathing(profile, view) &&
                         ((pet::stage(profile.readingSeconds) == pet::Stage::Egg && sleepArt.ready()) ||
                          petsleep::moodVisible(profile, view));
-  if (sleepClock.update(millis(), !loading && animated)) requestUpdate();
+  if (sleepClock.update(millis(), !loading && animated, petsleep::frameInterval(profile))) requestUpdate();
   pet::View before = view;
   sectionnav::Input::Event command{};
   fui::InputSnapshot input{};
@@ -897,7 +903,10 @@ void PetActivity::loop() {
   int slideX = 0, slideY = 0, dx = 0, dy = 0;
   const uint32_t gestureRevision = (viewRevision << 2) ^ uint32_t(renderer.getOrientation());
   if (pendingSlide.take(gestureRevision, slideX, slideY, dx, dy)) {
-    if (view == pet::View::Play && game.kind == pet::Game::Puzzle && game.phase == pet::GamePhase::Playing) {
+    pendingTap.clear();
+    if (view == pet::View::Projects) {
+      swipeCatalog(dx, dy);
+    } else if (view == pet::View::Play && game.kind == pet::Game::Puzzle && game.phase == pet::GamePhase::Playing) {
       const int tile = work.puzzleLayout.slide(game.puzzle, slideX, slideY, dx, dy);
       if (tile >= 0) action(petui::GamePick, tile);
     }

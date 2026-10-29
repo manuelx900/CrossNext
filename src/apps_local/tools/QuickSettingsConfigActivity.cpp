@@ -12,16 +12,20 @@ void QuickSettingsConfigActivity::onBackButton() {
     finish();
     return;
   }
+  const int previousSlot = slot;
   slot = -1;
-  nav.reset();
+  nav.reset(previousSlot);
   resetUi();
   requestUpdate();
 }
 void QuickSettingsConfigActivity::activateIndex(int index) {
   if (index < 0 || index >= listCount()) return;
-  if (slot < 0)
+  int selection = 0;
+  if (slot < 0) {
     slot = index;
-  else {
+    selection = SETTINGS.quickActions[slot];
+  } else {
+    selection = slot;
     const uint8_t previous = SETTINGS.quickActions[slot];
     for (int n = 0; n < 4; ++n)
       if (n != slot && SETTINGS.quickActions[n] == index) SETTINGS.quickActions[n] = previous;
@@ -29,7 +33,8 @@ void QuickSettingsConfigActivity::activateIndex(int index) {
     saveFailed = !SETTINGS.saveToFile();
     slot = -1;
   }
-  nav.reset();
+  nav.reset(selection);
+  app.clearTapFlash();
   resetUi();
   requestUpdate();
 }
@@ -48,8 +53,8 @@ void QuickSettingsConfigActivity::buildScreen(UiScreen& screen) {
       rows[n].subtitle = quickui::label(shortcut);
     } else {
       rows[n].label = quickui::label(shortcut);
+      rows[n].toggle = true;
       rows[n].toggleChecked = SETTINGS.quickActions[slot] == n;
-      rows[n].subtitle = rows[n].toggleChecked ? tr(STR_UI_ON_387D7A) : nullptr;
     }
   }
   props = {};
@@ -58,6 +63,7 @@ void QuickSettingsConfigActivity::buildScreen(UiScreen& screen) {
   props.count = listCount();
   props.action = ACTION_ROW;
   syncListViewport(screen, props);
+  quickui::styleConfiguration(props);
   pixelui::list(screen, props);
   if (saveFailed) {
     const auto safe = screen.device().safeRect();

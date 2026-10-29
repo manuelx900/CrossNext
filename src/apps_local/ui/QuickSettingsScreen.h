@@ -15,6 +15,15 @@
 
 namespace quickui {
 namespace fui = freeink::ui;
+inline void styleConfiguration(fui::ListProps& props) {
+  props.rowStyles.selected = props.rowStyles.normal;
+  props.rowStyles.focused = props.rowStyles.normal;
+  props.rowStyles.active = props.rowStyles.normal;
+  props.selectionMarker = fui::SelectionMarker::Underline;
+  props.markerThickness = 2;
+  props.toggleCheckbox = true;
+  props.checkboxCheckmark = true;
+}
 inline const char* label(Shortcut shortcut, bool lightOn = true, bool warmOn = true) {
   switch (shortcut) {
     case Shortcut::Dark:

@@ -5,7 +5,7 @@ Other inherited board environments are outside this release's verification.
 
 | Model | Package | Application image | Factory image |
 | --- | --- | --- | --- |
-| X4 Pro | `CrossNext-X4PRO-Firmware-v1.3.0.zip` | `CrossNext-X4PRO-Firmware-v1.3.0.bin` | `CrossNext-X4PRO-Firmware-v1.3.0-factory.bin` |
+| X4 Pro | `CrossNext-X4PRO-Firmware-v1.3.1.zip` | `CrossNext-X4PRO-Firmware-v1.3.1.bin` | `CrossNext-X4PRO-Firmware-v1.3.1-factory.bin` |
 
 Packages are generated in `dist/`; raw images are in `dist/CrossNext/`.
 Check the package's `SHA256SUMS.txt` before installation. Back up the microSD.
@@ -32,7 +32,7 @@ table and application. For example, with esptool installed and the device in
 download mode, use the matching model's command:
 
 ```sh
-esptool.py --chip esp32s3 --baud 921600 write_flash 0x0 CrossNext-X4PRO-Firmware-v1.3.0-factory.bin
+esptool.py --chip esp32s3 --baud 921600 write_flash 0x0 CrossNext-X4PRO-Firmware-v1.3.1-factory.bin
 ```
 
 An application-only image belongs at `0x10000` when deliberately writing an
@@ -51,7 +51,7 @@ wait for the release check. The firmware queries only
 It compares the latest stable tag with the installed version and asks before
 installing. It does not query the CrossPlay proxy or CrossPoint releases.
 
-For each public GitHub Release, use a semantic tag such as `1.3.0` and attach
+For each public GitHub Release, use a semantic tag such as `1.3.1` and attach
 `CrossNext-X4PRO-OTA.bin` directly to the release. The packaging tool creates this
 stable application-only alias alongside the versioned application and factory
 images. Its bytes match the versioned application. The updater deliberately
@@ -67,7 +67,7 @@ failure is reported on the device; it never falls back to upstream firmware.
 
 Maintainers: publish the firmware ZIP, `CrossNext-X4PRO-OTA.bin`, resources and
 checksums as Release attachments. Source commits remain separate. To test OTA,
-keep the reader on `1.1.5`, then publish the newer `1.3.0` build/tag; the
+keep the reader on `1.1.5`, then publish the newer `1.3.1` build/tag; the
 same version or an older version must not be offered as an update.
 
 ## Required app contents

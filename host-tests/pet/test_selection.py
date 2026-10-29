@@ -9,10 +9,14 @@ OUT = Path(sys.argv[1]).resolve()
 OUT.mkdir(parents=True, exist_ok=True)
 source = (ROOT / "src/apps_local/pet/PetActivity.cpp").read_text("utf-8")
 start = source.index("    case petui::SelectProject:")
-end = source.index("    case petui::Page:", start)
+end = source.index("    case petui::OpenMemory:", start)
 branch = source[start:end]
+swipe_start = source.index("void PetActivity::swipeCatalog(")
+swipe_end = source.index("\nvoid PetActivity::loop()", swipe_start)
+swipe_method = source[swipe_start:swipe_end].replace("PetActivity::", "")
 program = r'''
 #include <cassert>
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include "src/apps_local/pet/PetCatalogView.h"
@@ -23,6 +27,8 @@ struct Selection {
   bool writable = true, failSave = false;
   int projectSlot = 1, page = 8;
   unsigned saves = 0;
+  unsigned shows = 0;
+  struct { int pages = 10; } work;
   uint8_t previewItem = uint8_t(pet::objectAt(1, 40));
   struct Renderer {
     int width = 480;
@@ -37,7 +43,9 @@ struct Selection {
     profile.equipped[1] = uint8_t(pet::objectAt(1, 0));
   }
   bool commit() { ++saves; if (failSave) return false; profile = draft; return true; }
-  void show(pet::View next) { view = next; }
+  void show(pet::View next) { ++shows; view = next; }
+  void action(freeink::ui::ActionId kind, int value) { select(value, kind); }
+SWIPE_METHOD
   void changeTab(int) { view = pet::View::Home; }
   void select(int value, freeink::ui::ActionId action = petui::SelectProject) {
     draft = profile;
@@ -49,6 +57,40 @@ BRANCH
 };
 int main() {
   for (int width : {480, 800}) {
+    for (auto filter : {petui::CatalogFilter::Owned, petui::CatalogFilter::Unowned}) {
+      Selection catalog;
+      catalog.renderer.width = width;
+      catalog.view = pet::View::Projects;
+      catalog.catalogFilter = filter;
+      catalog.page = 0;
+      catalog.work.pages = width == 480 ? 10 : 15;
+      const auto original = catalog.profile;
+      catalog.swipeCatalog(1, 0);
+      assert(catalog.page == 0 && !catalog.shows);
+      for (int n = 1; n < catalog.work.pages; ++n) {
+        catalog.swipeCatalog(-1, 0);
+        assert(catalog.page == n && catalog.shows == unsigned(n));
+      }
+      const auto renders = catalog.shows;
+      catalog.swipeCatalog(-1, 0);
+      catalog.swipeCatalog(0, 1);
+      catalog.swipeCatalog(1, 1);
+      assert(catalog.shows == renders && catalog.page == catalog.work.pages - 1);
+      catalog.swipeCatalog(1, 0);
+      assert(catalog.page == catalog.work.pages - 2);
+      assert(catalog.view == pet::View::Projects && catalog.catalogFilter == filter && catalog.projectSlot == 1);
+      assert(!catalog.saves && !std::memcmp(&original, &catalog.profile, sizeof(original)));
+      catalog.work.pages = 1;
+      catalog.page = 0;
+      catalog.swipeCatalog(-1, 0);
+      catalog.work.pages = 0;
+      catalog.swipeCatalog(1, 0);
+      assert(catalog.page == 0 && catalog.shows == renders + 1);
+      catalog.view = pet::View::ProjectPreview;
+      catalog.work.pages = 10;
+      catalog.swipeCatalog(-1, 0);
+      assert(catalog.page == 0);
+    }
     Selection instant;
     instant.renderer.width = width;
     instant.select(instant.previewItem);
@@ -131,7 +173,7 @@ int main() {
   }
   std::puts("PET selection: fresh project budgets, completion/owned, remove/restore, persisted empty slot, failed saves, read-only and stale input passed in both layouts");
 }
-'''.replace("BRANCH", branch)
+'''.replace("BRANCH", branch).replace("SWIPE_METHOD", swipe_method)
 (OUT / "selection.cpp").write_text(program, "utf-8")
 wasm = os.name == "nt"
 compiler = ROOT / ".venv/emsdk/upstream/emscripten/em++.exe" if wasm else "c++"

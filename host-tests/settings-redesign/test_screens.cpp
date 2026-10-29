@@ -24,6 +24,7 @@
 #include "../../src/apps_local/readertext/ReaderSavedScreens.h"
 #include "../../src/apps_local/readertext/ReaderTextSheet.h"
 #include "../../src/apps_local/readertext/ReferenceSlider.h"
+#include "../../src/apps_local/ui/QuickSettingsScreen.h"
 #include "../../src/apps_local/ui/SettingsHome.h"
 namespace fui = freeink::ui;
 namespace {
@@ -212,6 +213,32 @@ struct Canvas {
 
 int main(int argc, char** argv) {
   FontBridge labelFont(ubuntu_12_bold), captionFont(ubuntu_10_regular);
+  for (bool wide : {false, true}) {
+    Canvas c(wide ? 800 : 480, wide ? 480 : 800);
+    pixelui::begin(c.screen);
+    fui::ListItem choices[int(quickui::Shortcut::Count)]{};
+    for (int n = 0; n < int(quickui::Shortcut::Count); ++n) {
+      choices[n].label = quickui::label(quickui::Shortcut(n));
+      choices[n].actionValue = n;
+      choices[n].toggle = true;
+      choices[n].toggleChecked = n == int(quickui::Shortcut::Rotate);
+    }
+    fui::ListProps props;
+    settingsui::styleRows(props);
+    quickui::styleConfiguration(props);
+    props.items = choices;
+    props.count = int(quickui::Shortcut::Count);
+    props.selectedIndex = int(quickui::Shortcut::Dark);
+    props.action = 1;
+    props.inputMask = fui::InputTouch;
+    CHECK(props.toggleCheckbox && props.checkboxCheckmark);
+    CHECK(props.selectionMarker == fui::SelectionMarker::Underline);
+    pixelui::list(c.screen, props);
+    for (const auto& fill : c.target.blackFills)
+      CHECK(fill.width < c.screen.body().width || fill.height < props.rowHeight);
+    CHECK(!choices[0].toggleChecked && choices[int(quickui::Shortcut::Rotate)].toggleChecked);
+    c.checkHits();
+  }
   {
     Canvas c(480, 800);
     c.target.setFont(0, labelFont.font);
@@ -222,12 +249,14 @@ int main(int argc, char** argv) {
     server.subtitle = "Default: sync.crosspointreader.com";
     fui::ListProps p;
     settingsui::styleRows(p);
+    CHECK(!p.labelText.bold && !p.subtitleText.bold && !p.valueText.bold && p.headerText.bold);
+    CHECK(p.subtitleText.font == 3);
     p.items = &server;
     p.count = 1;
     p.action = 1;
     const auto layout = fui::measureListRow(c.target, nullptr, c.screen.body().width, p, server);
     CHECK(layout.labelWidth > 300);
-    CHECK(layout.subtitleHeight >= c.target.lineHeight(4));
+    CHECK(layout.subtitleHeight >= c.target.lineHeight(p.subtitleText.font));
     pixelui::list(c.screen, p);
     CHECK(c.label("Custom server"));
     CHECK(c.label("Default: sync.crosspointreader.com"));
@@ -384,6 +413,7 @@ int main(int argc, char** argv) {
       fui::ListProps p;
       settingsui::styleHome(p);
       CHECK(!p.labelText.bold);
+      CHECK(p.rowHeight == pixelui::kRowHeight);
       CHECK(pixelui::buttonStyles().normal.borderWidth == pixelui::kBorder);
       CHECK(pixelui::rowStyles().normal.borderWidth == 1);
       CHECK(pixelui::rowStyles().disabled.borderWidth == pixelui::rowStyles().normal.borderWidth);

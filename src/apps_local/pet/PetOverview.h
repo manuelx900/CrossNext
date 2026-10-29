@@ -53,21 +53,14 @@ inline void daily(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   const bool available = dailyAvailable(m);
   const bool inverse = button(s, w, r, "", OpenReadingInfo, 0, false, nullptr, available);
   s.target().stroke(r, inverse ? paper : ink, pixelui::kBorder);
-  icon(s, rect(r.x + 9, r.y + 9, 21, 21), extra_reading_book_32, inverse);
-  text(s, rect(r.x + 36, r.y + 4, r.width - 46, 26), tr(STR_PET_DAILY_CARD), 0, inverse);
+  const int top = r.y + std::max(8, (int(r.height) - 24 - 84) / 2);
+  text(s, rect(r.x + 10, top, r.width - 20, 32), tr(STR_PET_DAILY_CARD), 0, inverse, fui::TextAlign::Center);
   if (available)
-    std::snprintf(w.label, sizeof(w.label), tr(STR_PET_DAILY_FRACTION),
-                  std::min(unsigned(std::max(0, m.todaySeconds) / 60), unsigned(pet::GOALS[p.goalIndex])),
+    std::snprintf(w.label, sizeof(w.label), tr(STR_PET_DAILY_FRACTION), unsigned(std::max(0, m.todaySeconds) / 60),
                   unsigned(pet::GOALS[p.goalIndex]));
   else
-    std::snprintf(w.label, sizeof(w.label), "-");
-  const bool compact = r.height <= 140;
-  text(s, rect(r.x + 10, r.y + (compact ? 30 : 50), r.width - 20, compact ? 30 : 34), w.label, compact ? 0 : 1, inverse,
-       fui::TextAlign::Center);
-  duration(w.secondary, sizeof(w.secondary), uint64_t(std::max(0, m.todaySeconds)));
-  std::snprintf(w.label, sizeof(w.label), tr(STR_PET_DAILY_TOTAL), w.secondary);
-  prose(s, rect(r.x + 10, r.bottom() - (compact ? 70 : 45), r.width - 20, compact ? 48 : 28),
-        available ? w.label : tr(STR_PET_DAILY_WAIT), compact ? 2 : 1, fui::TextAlign::Left, inverse);
+    std::snprintf(w.label, sizeof(w.label), "%s", tr(STR_PET_DAILY_WAIT));
+  text(s, rect(r.x + 10, top + 40, r.width - 20, 44), w.label, 1, inverse, fui::TextAlign::Center);
   const uint64_t seconds = available ? uint64_t(std::max(0, m.todaySeconds)) : 0;
   const uint64_t goal = uint64_t(pet::GOALS[p.goalIndex]) * 60;
   readingBar(s, r, seconds, goal, inverse);

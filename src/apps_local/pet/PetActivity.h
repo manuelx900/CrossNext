@@ -21,7 +21,9 @@ class PetActivity final : public Activity {
   void loop() override;
   void render(RenderLock&&) override;
   bool skipLoopDelay() override { return loading; }
-  bool allowsEdgeBack() const override { return view != pet::View::Play || game.kind != pet::Game::Puzzle; }
+  bool allowsEdgeBack() const override {
+    return view != pet::View::Projects && (view != pet::View::Play || game.kind != pet::Game::Puzzle);
+  }
 
  private:
   // Reused source sprites in PSRAM, not a display buffer; released with each pack on exit.
@@ -82,6 +84,7 @@ class PetActivity final : public Activity {
   bool archiveDraft();
   bool updateCare();
   void action(freeink::ui::ActionId, int);
+  void swipeCatalog(int dx, int dy);
   void show(pet::View);
   void back();
   void changeTab(int);

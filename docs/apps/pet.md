@@ -141,7 +141,7 @@ The Home reading-rule band is removed; an urgent deadline remains visible on PET
 that absence cannot cause death; other modes show the remaining grace period.
 Recorded reading before the deadline renews that period, independently of the daily goal.
 
-The Daily goal card caps its progress at the configured target and shows all reading today separately.
+The Daily goal card shows all reading today against the configured target, even after reaching it; only its progress bar is capped.
 The goal is a habit marker. Provisions, remedies, growth and furnishing progress
 come from recorded reading. Special encounters, their galleries and collection
 bonuses have been removed. Previously earned remedy credit remains valid; no
@@ -401,8 +401,9 @@ animation source artwork remain in the resource pack for a future change;
 rendering selects the first body frame. PET shows the full body, while Home may
 show a shelter head. Sleeping Z marks stay still too.
 
-Egg wobble and live mood badges retain the 0.75-second clock. Mood badges use
-native monochrome faces, with a smaller badge in Home. Periodic refreshes stop
+Egg wobble changes every 0.75 seconds; live mood badges change every 3 seconds.
+Both use the existing activity clock. Mood badges use native monochrome faces,
+with a smaller badge in Home. Periodic refreshes stop
 when neither an egg nor a mood badge can move. Menus, previous lives and reading
 remain static. Required resource installation checks and save formats are
 unchanged.
@@ -515,7 +516,7 @@ Firmware and host-rendered UI checks cover these behaviors; device refresh and c
 
 Health actions explain their current availability: already clean, no treatment needed, no remedies, saving unavailable, or their normal free/one-remedy cost. Existing care and save guards remain in force. Care shows the rest cycle's remaining time when its clock is usable, an unknown-time message otherwise, and full energy at 100. The existing once-per-minute care check refreshes Care while resting; it creates no new timer or task. The two-hour rest cycle and its energy rules are unchanged, and waking still ends it early.
 
-The Daily goal card separates capped goal progress (for example 10/10 minutes) from the full reading time today (for example 25 minutes). Accessory previews show remaining reading as hours/minutes, rounding incomplete minutes up; zero remaining time is Ready to collect, with confirmation still required. The Games tile in Care uses the same derived offer as the game menu: actual capped mood gain and 20-energy cost for rewarded play, free practice, or a short reason play is blocked. These are presentation changes, with no additional saved fields, asset packs or heap allocations.
+The overview Daily goal card shows all reading minutes for today against the chosen goal, including totals above it (for example 60/10 minutes). The title and minutes are centered without an icon or a separate Read today line; the bar stops at full when the goal is reached. Unavailable data shows Data unavailable instead of a made-up total. Accessory previews show remaining reading as hours/minutes, rounding incomplete minutes up; zero remaining time is Ready to collect, with confirmation still required. The Games tile in Care uses the same derived offer as the game menu: actual capped mood gain and 20-energy cost for rewarded play, free practice, or a short reason play is blocked. These are presentation changes, with no additional saved fields, asset packs or heap allocations.
 
 ### Contextual health and consistent daily labels
 
@@ -599,7 +600,8 @@ calculations with fixed rectangles, no extra animation frames or refreshes.
 ### Reference-based panels and memory journal (simulator)
 
 PET adds nearby grass and a cross before Go to Health. The name has no separator beneath it.
-Growth, Daily goal and Home project use illustrated bordered cards. Care keeps its
+Growth and Home project use illustrated bordered cards. Daily goal uses a text-only
+card with a centered title and the full daily reading minutes against the goal. Care keeps its
 actual capped outcomes, while treatment guidance links to Health and the four
 action tiles have clear navigation marks. Home removes the repeated reading-rule
 strip, enlarges the Home project panel and labels its main action Decorate home.
@@ -794,7 +796,7 @@ previous-generation cards and life details, independently of interface language.
 The preference is kept in the firmware settings; existing PET saves retain their
 format. Short card dates use a two-digit year; life details use a four-digit year.
 
-Eggs and live mood badges advance every 750 ms while visible. Hatched bodies,
+Eggs advance every 750 ms and live mood badges every 3 seconds while visible. Hatched bodies,
 sleep marks, menus and historical pictures stay still. The display refresh time
 determines the visible cadence of the permitted motion.
 
@@ -832,3 +834,5 @@ The Album summary uses the regular reading-size interface face for accumulated
 reading, reading days and best streak. Its taller card leaves room for the
 translated summary to wrap in portrait. Home places the smaller mood badge near
 the companion while avoiding the window and furnishings.
+
+In Decorate home, swipe left for the next catalogue page or right for the previous one. Category and Owned/To earn filter stay selected. The first and last pages do not wrap. A swipe does not open, place or select an object. Use the header Back arrow or the physical Back action to return; the catalogue reserves horizontal gestures for paging.

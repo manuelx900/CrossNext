@@ -9,9 +9,9 @@ inline void styleRows(freeink::ui::ListProps& p) {
   p.textGap = 16;
   p.sidePadding = 18;
   p.labelText.font = 0;
-  p.labelText.bold = true;
+  p.labelText.bold = false;
   p.labelText.maxLines = 3;
-  p.subtitleText.font = 4;
+  p.subtitleText.font = 3;
   p.subtitleText.maxLines = 3;
   p.valueText.font = 4;
   p.headerText.font = 0;

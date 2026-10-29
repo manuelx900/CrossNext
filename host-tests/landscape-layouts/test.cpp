@@ -411,7 +411,7 @@ int main(int argc, char** argv) {
         entries[1].sectionHeading = "Austen, Jane";
         fui::ListProps props;
         libraryui::styleBookRows(props, c.target);
-        CHECK(props.headerText.bold && props.headerText.font == 4);
+        CHECK(!props.headerText.bold && props.headerText.font == 4);
         CHECK(!props.labelText.bold);
         props.items = entries;
         props.count = 2;

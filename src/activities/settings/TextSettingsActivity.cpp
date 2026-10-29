@@ -256,8 +256,6 @@ void TextSettingsActivity::buildScreen(UiScreen& screen) {
   props.inputMask = fui::InputTouch;  // physical buttons stay in loop()
   settingsui::styleRows(props);
   props.labelText.font = 4;
-  props.labelText.bold = true;
-  props.subtitleText.font = 4;
   props.labelText.maxLines = 1;
   props.rowHeight = 68;
   props.rowGap = 0;

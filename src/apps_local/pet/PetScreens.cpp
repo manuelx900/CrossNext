@@ -157,7 +157,7 @@ void dashboard(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, Palette*
   else if (ended)
     project(s, m, w, goal);
   else {
-    constexpr int share = 60;
+    constexpr int share = 55;
     const int projectW = (goal.width - GAP) * share / 100;
     objective(s, m, w, rect(goal.x, goal.y, projectW, goal.height));
     daily(s, m, w, rect(goal.x + projectW + GAP, goal.y, goal.width - projectW - GAP, goal.height));

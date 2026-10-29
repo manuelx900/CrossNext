@@ -128,6 +128,28 @@ int main() {
   transition.restart(2000);
   assert(transition.step() == 0 && !transition.update(2000, true));
   assert(!transition.update(2749, true) && transition.update(2750, true));
-  std::puts(
-      "PET animation: PASS (timing, navigation rebase, catch-up, wrap, all ages/poses, slot bounds, pending tap)");
+
+  pet::Profile egg;
+  pet::Profile grown;
+  grown.readingSeconds = pet::stageStart(pet::Stage::Newborn);
+  assert(petsleep::frameInterval(egg) == 750);
+  assert(petsleep::frameInterval(grown) == 3000);
+  petsleep::Clock eggClock, moodClock;
+  eggClock.restart(100);
+  moodClock.restart(100);
+  unsigned eggPaints = 0, moodPaints = 0;
+  for (uint32_t now = 101; now <= 12100; ++now) {
+    eggPaints += eggClock.update(now, true, petsleep::frameInterval(egg));
+    moodPaints += moodClock.update(now, true, petsleep::frameInterval(grown));
+  }
+  assert(eggPaints == 16 && moodPaints == 4);
+  moodClock.restart(20000);
+  assert(!moodClock.update(22999, true, petsleep::MOOD_FRAME_MS));
+  assert(moodClock.update(23000, true, petsleep::MOOD_FRAME_MS) && moodClock.step() == 1);
+  assert(moodClock.update(29000, true, petsleep::MOOD_FRAME_MS) && moodClock.step() == 3);
+  assert(!moodClock.update(29001, false, petsleep::MOOD_FRAME_MS) && moodClock.step() == 0);
+  assert(moodClock.update(UINT32_MAX - 100, true, petsleep::MOOD_FRAME_MS));
+  assert(!moodClock.update(2898, true, petsleep::MOOD_FRAME_MS));
+  assert(moodClock.update(2899, true, petsleep::MOOD_FRAME_MS) && moodClock.step() == 1);
+  std::puts("PET animation: PASS (independent egg/mood timing, navigation rebase, catch-up, wrap, poses, pending tap)");
 }

@@ -1131,11 +1131,11 @@ void guidanceScreens() {
       m.view = pet::View::Dashboard;
       m.todaySeconds = 1500;
       p.goalIndex = 1;
-      std::snprintf(expected, sizeof(expected), tr(STR_PET_DAILY_FRACTION), 10u, 10u);
+      std::snprintf(expected, sizeof(expected), tr(STR_PET_DAILY_FRACTION), 25u, 10u);
       expect(expected, true);
-      petui::widget::duration(value, sizeof(value), 1500);
-      std::snprintf(expected, sizeof(expected), tr(STR_PET_DAILY_TOTAL), value);
-      expect(expected);
+      m.todaySeconds = 3600;
+      std::snprintf(expected, sizeof(expected), tr(STR_PET_DAILY_FRACTION), 60u, 10u);
+      expect(expected, true);
       m.view = pet::View::ProjectPreview;
       m.catalogFilter = petui::CatalogFilter::Unowned;
       m.previewItem = 0;
@@ -2854,19 +2854,12 @@ int main(int argc, char** argv) {
           }
           char time[64], caps[64], goalText[64];
           if (state == 3 || state == 4)
-            std::snprintf(time, sizeof(time), "-");
+            std::snprintf(time, sizeof(time), "%s", tr(STR_PET_DAILY_WAIT));
           else
-            std::snprintf(time, sizeof(time), tr(STR_PET_DAILY_FRACTION),
-                          std::min(unsigned(std::max(0, m.todaySeconds) / 60), unsigned(pet::GOALS[goal])),
+            std::snprintf(time, sizeof(time), tr(STR_PET_DAILY_FRACTION), unsigned(std::max(0, m.todaySeconds) / 60),
                           unsigned(pet::GOALS[goal]));
           pixelui::copyCaps(caps, sizeof(caps), time);
-          if (state == 3 || state == 4)
-            std::snprintf(goalText, sizeof(goalText), "%s", tr(STR_PET_DAILY_WAIT));
-          else {
-            petui::widget::duration(goalText, sizeof(goalText), uint64_t(m.todaySeconds));
-            std::snprintf(time, sizeof(time), tr(STR_PET_DAILY_TOTAL), goalText);
-            std::snprintf(goalText, sizeof(goalText), "%s", time);
-          }
+          pixelui::copyCaps(goalText, sizeof(goalText), tr(STR_PET_DAILY_CARD));
           c.target.expectedDailyTime = caps;
           c.target.expectedDailyGoal = goalText;
           petui::Work w;

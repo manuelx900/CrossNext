@@ -24,12 +24,12 @@ inline void homeRow(int i, freeink::ui::ListItem& item) {
 }
 inline void styleHome(freeink::ui::ListProps& props) {
   styleRows(props);
-  props.rowHeight = 84;
+  props.rowHeight = pixelui::kRowHeight;
   props.rowGap = 0;
-  props.iconSize = 48;
-  props.sidePadding = 20;
-  props.rowPaddingY = 6;
-  props.textGap = 22;
+  props.iconSize = 40;
+  props.sidePadding = 18;
+  props.rowPaddingY = 8;
+  props.textGap = 18;
   props.labelText.font = 1;
   props.labelText.bold = false;
   props.labelText.maxLines = 1;
@@ -48,7 +48,7 @@ inline void styleAppearance(freeink::ui::ListProps& p) {
   p.separatorPaint = freeink::ui::Paint::solid(freeink::ui::Color::Transparent);
   p.iconSize = 108;
   p.labelText.font = 1;
-  p.labelText.bold = true;
+  p.labelText.bold = false;
   p.labelText.maxLines = 2;
 }
 struct AppearanceActions {

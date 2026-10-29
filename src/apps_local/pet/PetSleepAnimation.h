@@ -5,6 +5,10 @@
 
 namespace petsleep {
 inline constexpr uint32_t FRAME_MS = 750;
+inline constexpr uint32_t MOOD_FRAME_MS = 3000;
+inline uint32_t frameInterval(const pet::Profile& p) {
+  return pet::stage(p.readingSeconds) == pet::Stage::Egg ? FRAME_MS : MOOD_FRAME_MS;
+}
 inline constexpr unsigned POSES = 12, FRAMES = 3, HEAD_OFFSET = POSES * FRAMES * 2,
                           BODY_OFFSET = HEAD_OFFSET + POSES * 2;
 enum class Pose : uint8_t { Normal, Happy, Hungry, Tired, Sick };
@@ -91,7 +95,7 @@ class Clock {
     current = 0;
     running = true;
   }
-  bool update(uint32_t now, bool enabled) {
+  bool update(uint32_t now, bool enabled, uint32_t frameMs = FRAME_MS) {
     if (!enabled) {
       running = false;
       current = 0;
@@ -104,9 +108,9 @@ class Clock {
       return true;
     }
     const uint32_t elapsed = now - at;
-    if (elapsed < FRAME_MS) return false;
-    const uint32_t frames = elapsed / FRAME_MS;
-    at += frames * FRAME_MS;
+    if (elapsed < frameMs) return false;
+    const uint32_t frames = elapsed / frameMs;
+    at += frames * frameMs;
     const uint8_t next = uint8_t((current + frames % 4) % 4);
     if (next == current) return false;
     current = next;
