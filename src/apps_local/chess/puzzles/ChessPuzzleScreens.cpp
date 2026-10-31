@@ -215,9 +215,9 @@ void build(toybox::Screen& screen, const Model& model, Work& work) {
       const bool selected =
           screen.frame().buttonSelected(Pick, index, index == last || chesspuzzle::solved(*model.progress, index));
       if (selected)
-        screen.target().fill(r, black);
+        lightui::surface(screen.target(), r, black);
       else
-        screen.target().stroke(r, black, 2);
+        lightui::outline(screen.target(), r, black, 2);
       std::snprintf(work.labels[0], sizeof(work.labels[0]), "%d", local + 1);
       numerals::draw(screen.target(),
                      r.inset(fui::Insets{int16_t(std::max(8, h / 4)), 12, int16_t(std::max(8, h / 4)), 12}),
@@ -344,7 +344,7 @@ void build(toybox::Screen& screen, const Model& model, Work& work) {
   std::snprintf(work.labels[4], sizeof(work.labels[4]), tr(STR_CHESS_PUZZLE_MOVES), session.playerMoves,
                 chesspuzzle::goal(session));
   const auto band = fui::makeRect(info.x, info.y, info.width, 38);
-  screen.target().stroke(band, black, 2);
+  lightui::outline(screen.target(), band, black, 2);
   const int half = band.width / 2;
   if (!wide)
     screen.target().line({int16_t(band.x + half), band.y}, {int16_t(band.x + half), int16_t(band.bottom())}, 2, black);

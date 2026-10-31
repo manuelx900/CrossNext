@@ -29,7 +29,12 @@ class BlockSource final : public study::ByteSource {
   bool read(uint32_t at, void* out, uint32_t bytes) override;
 };
 using SessionVisitor = void (*)(void*, const Session&);
+struct HistoryLimit {
+  uint32_t sessions = 0;
+  uint32_t records = 0;
+};
+inline constexpr HistoryLimit kRecentHistoryLimit{1000, 32768};
 // Offsets remain aligned to the unchanged 32-byte revlog format.
-bool scanHistory(study::ByteSource&, HistoryWork&, SessionVisitor, void*);
+bool scanHistory(study::ByteSource&, HistoryWork&, SessionVisitor, void*, HistoryLimit = {});
 bool summarize(study::ByteSource&, uint32_t first, uint32_t end, HistoryWork&, Session&);
 }  // namespace flashcards

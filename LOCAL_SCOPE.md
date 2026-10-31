@@ -138,8 +138,9 @@ scopes retain their reset contract. Explicit reset, reader exit, size/family rel
 eviction still release or invalidate the vector caches. Home opts into a borrowed
 4 KiB BMP read-ahead buffer, held within its existing reusable row allocation.
 Packed monochrome rows and local box sampling avoid expanding these cached
-images to 2bpp. Three art-region snapshots share a bounded 64,512-byte PSRAM
-arena across Home activity lifetimes; source metadata and view identity guard
+images to 2bpp. Three regions of up to 48 KiB plus source metadata share a
+PSRAM-only arena of about 152 KiB across Home activity lifetimes. Licorice
+also caches shelf labels and badges; source metadata and view identity guard
 reuse. No original-image regeneration is added. See
 [Home cover rendering](docs/home-cover-rendering.md).
 
@@ -393,7 +394,7 @@ Chess adds its Puzzles entry through the existing start menu. The pushed fork-ow
 
 ## Interface customization seams
 
-The three saved Home layouts extend the existing fork-owned HomeScreen/HomeDashboardUi and HomeActivity hooks; no theme-specific activity or background animation is added. SettingsList/CrossPointSettings persist the Home layout, while SettingsActivity adds Interface. The Library seam now includes a persisted Recent list/cover-grid toggle and a thirty-entry view cap; its cover generation and one bitmap handle remain activity-owned. Text Settings from a reader uses a local paged family list in the existing sheet, with the existing SD registry and render-locked font loader. The standalone Settings > Reader screen remains available. See docs/interface-layouts.md.
+The three saved Home layouts extend the existing fork-owned HomeScreen/HomeDashboardUi and HomeActivity hooks; no theme-specific activity or background animation is added. SettingsList/CrossPointSettings persist the Home layout, while SettingsActivity adds Interface. The Library seam now includes a persisted Recently opened list/cover-grid choice backed by the retained reading history; its cover generation and one bitmap handle remain activity-owned. Text Settings from a reader uses a local paged family list in the existing sheet, with the existing SD registry and render-locked font loader. The standalone Settings > Reader screen remains available. See docs/interface-layouts.md.
 
 Activity carries an edge-Back policy; Shelf marks Games/folder flows as disabled, and ActivityManager propagates it to pushed children and restores it on active-screen changes. MappedInputManager applies it only to the left-edge gesture, preserving header and physical Back. These are bounded seams for game input ownership rather than per-game gesture copies. Home carousels also reserve horizontal swipes for books. The nine-row shelf cap applies to both folders.
 
@@ -542,6 +543,8 @@ at the unchanged 350 ms default. The input object retains one 32-bit interval;
 there is no additional task, timer, dynamic buffer or per-gesture SD write.
 
 
+The temporary Contents return control is owned by `src/apps_local/readertext/ContentsReturnUi` and `ContentsJump`. `ReaderActivity` owns one checked interaction-host allocation only after a chapter selection and releases it on return or navigation; EPUB retains the source spine, page and text offset, and XTC retains its absolute page. The UI draws over the reader's existing framebuffer without retaining a page image or adding a reading event. `HomeActivity` and `CoverGridHomeUi` share the freestanding Licorice thumbnail geometry before preparing covers. The frontlight panel retains only a backdrop-drawn flag and the last touch coordinates between paints.
+
 The end-of-book adapter in `src/activities/reader/EndOfBookOptions` uses the existing
 UiAppHost lifecycle and render/input publication gate. Its local
 `apps_local/readertext/EndOfBookScreen.h` owns the illustration, Home action and
@@ -604,3 +607,10 @@ render stack or each repaint. It reuses OptionPopup for four global choices or
 five section choices including inheritance. Popup labels are copied only when
 opened; its fixed interaction table and strings belong to the activity. Book-font registrations and reading positions are
 not part of this preference.
+
+
+The cover-focused Home layouts extend `HomeScreen`, `HomeDashboardUi` and the existing `CoverGridHomeUi` owner. Shared header polarity is selected in `UITheme` and applied through `ChromeRegion` / `GfxRenderer`, so custom app headers retain their drawing and input contracts. Library sorting extends the existing 128-byte-record index with metadata blobs and three additional order arrays; a build-only PSRAM workspace owns full sort keys. EPUB metadata extraction exposes existing series parsing and the first subject without building reader or cover caches. See [cover themes and Library sorting](docs/cover-themes-library.md).
+
+Picco and Licorice additionally own the FreeInkUI renderer adapter's gray rounded-stroke seam. `FreeInkUIStroke.h` emits bounded border spans; `FreeInkUIGfxRenderer.h` draws them through existing dither fills without repainting the interior or allocating a buffer. Control palettes remain in `src/apps_local/ui/LightUi.h`; the SDK helper carries geometry only.
+
+Library presentation is owned by `src/apps_local/library/LibraryControls.h` and `LibraryPreferences.h`, with its existing activity hosting both the book list and its settings view. `CrossPointSettings` persists the validated presentation bytes. The optional finished-book filter reuses `ReadingCompletionIndex` and the local journal; `KOReaderDocumentId` exposes a borrowed-scratch overload so a library pass reuses one 1 KiB hash buffer. These paths add no network task or framebuffer. They do not change books or reading-history records.

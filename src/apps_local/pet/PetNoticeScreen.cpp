@@ -8,7 +8,7 @@ void noticeWindow(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   const bool wide = r.width > r.height;
   const auto box = rect(r.x + 4, r.y + 12, r.width - 8, r.height - 24);
   s.target().fill(rect(box.x + 4, box.y + 4, box.width, box.height), ink);
-  s.target().fill(box, paper);
+  lightui::surface(s.target(), box, paper);
   frame(s, box);
   const bool game = m.noticeKind == NoticeKind::Game;
   const bool fed = m.noticeKind == NoticeKind::Fed;

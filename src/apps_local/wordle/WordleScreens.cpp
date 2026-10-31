@@ -33,9 +33,9 @@ void text(fui::DrawTarget& target, fui::Rect box, const char* value, fui::FontId
 void button(toybox::Screen& screen, fui::Rect box, const char* label, fui::ActionId action, int value = 0,
             bool selected = false) {
   if (selected)
-    screen.target().fill(box, ink);
+    lightui::surface(screen.target(), box, ink);
   else
-    screen.target().stroke(box, ink, pixelui::kBorder);
+    lightui::outline(screen.target(), box, ink, pixelui::kBorder);
   text(screen.target(), box.inset(fui::Insets{3, 6, 3, 6}), label, pixelui::kSmall, 1,
        selected ? fui::Color::White : fui::Color::Black);
   screen.frame().hit(box, action, value, fui::InputTouch);
@@ -241,9 +241,9 @@ void buildLengths(toybox::Screen& screen, int selected, Work& work) {
     const auto box =
         fui::makeRect(body.x + (wide ? (n - 4) * (w + gap) : 0), body.y + (wide ? 0 : (n - 4) * (h + gap)), w, h);
     if (active)
-      screen.target().fill(box, ink);
+      lightui::surface(screen.target(), box, ink);
     else
-      screen.target().stroke(box, ink, 4);
+      lightui::outline(screen.target(), box, ink, 4);
     screen.frame().hit(box, ActionLength, n, fui::InputTouch);
     const auto paint = active ? dashboard::paper : dashboard::ink;
     const int side = std::max(16, std::min(40, (int(box.width) - 100) / n)), pitch = side + 6;

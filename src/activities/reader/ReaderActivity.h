@@ -10,6 +10,8 @@
 #include "EndOfBookOptions.h"
 #include "ReaderSession.h"
 #include "activities/Activity.h"
+#include "apps_local/readertext/ContentsJump.h"
+#include "apps_local/readertext/ContentsReturnUi.h"
 
 class ReaderActivity : public Activity {
  protected:
@@ -26,6 +28,16 @@ class ReaderActivity : public Activity {
   std::atomic<bool> endRenderedPending{false};
   bool endCompletionAttempted = false;
   bool finishedPositionPending = false;
+  using ContentsPosition = readertext::ContentsPosition;
+  readertext::ContentsJump contentsJump;
+  std::unique_ptr<ContentsReturnUi> contentsReturn;
+  std::atomic<bool> contentsReturnActive{false};
+  void clearContentsReturn();
+  void rememberContentsPosition(ContentsPosition position);
+  bool handleContentsReturn();
+  void renderContentsReturn(bool grayMask = false);
+  virtual void restoreContentsPosition(ContentsPosition) {}
+  virtual ContentsPosition contentsPagePosition() const { return {}; }
   bool isBookFinished() const { return bookFinished.load(std::memory_order_acquire); }
   StrId completionMenuLabelId() const {
     return finishedPositionPending ? StrId::STR_READER_RETRY_FINISH_POSITION

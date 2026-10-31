@@ -45,7 +45,7 @@ constexpr int16_t kButtonH = 64;
 
 void drawButton(toybox::Screen& screen, const fui::Rect& box, const char* label, const fui::ActionId action,
                 const fui::Rect* hit = nullptr) {
-  screen.target().fill(box, fui::Paint::solid(fui::Color::Black));
+  lightui::surface(screen.target(), box, fui::Paint::solid(fui::Color::Black));
   pixelui::text(screen.target(), box, label, 0, fui::Color::White, fui::TextAlign::Center);
   screen.frame().hit(hit == nullptr ? box : *hit, action);
 }
@@ -178,7 +178,7 @@ void buildGridChrome(toybox::Screen& screen, const GridChromeModel& model) {
   pixelui::Header header;
   header.title = tr(STR_WALLPAPERS_TITLE);
   header.back = screen.device().hasTouch;
-  header.mark = fui::bitmapFromIcon(extra_wallpaper_set_32);
+  header.mark = fui::bitmapFromIcon(extra_dashboard_cards_32);
   header.markAction = ActionSelectSet;
   pixelui::header(screen, header);
   if (!model.selecting) return;
@@ -300,8 +300,8 @@ void buildSheet(toybox::Screen& screen, const SheetModel& model) {
   const auto box = contextRect(device);
   auto& target = screen.target();
   const auto ink = fui::Paint::solid(fui::Color::Black), paper = fui::Paint::solid(fui::Color::White);
-  target.fill(box, paper);
-  target.stroke(box, ink, 2);
+  lightui::surface(target, box, paper);
+  lightui::outline(target, box, ink, 2);
   fui::TextStyle title;
   title.font = 0;
   title.maxLines = 1;

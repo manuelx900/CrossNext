@@ -1,3 +1,4 @@
+#include <ChromeRegion.h>
 #include <FreeInkApp.h>
 #include <FreeInkUIDisplayTarget.h>
 
@@ -7,8 +8,12 @@
 #include <string>
 #include <vector>
 
+#include "../../src/apps_local/home/CoverFit.h"
 #include "../../src/apps_local/home/HomeMenuInput.h"
 #include "../../src/apps_local/home/HomeScreen.h"
+#include "../../src/apps_local/home/HomeShelfOrder.h"
+#include "../../src/apps_local/home/LicoriceLayout.h"
+#include "../../src/apps_local/ui/PixelText.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
@@ -87,6 +92,29 @@ struct Canvas {
 }  // namespace
 
 int main(int argc, char** argv) {
+  for (bool wide : {false, true}) {
+    fui::DeviceContext device;
+    device.width = wide ? 800 : 480;
+    device.height = wide ? 480 : 800;
+    device.safeArea = {9, 7, 3, 7};
+    const auto layout = homeui::shelfLayout(device);
+    CHECK(layout.artHeight > 0 && layout.cellWidth > 0);
+    CHECK(layout.grid.y + layout.rows * (layout.artHeight + 34) + (layout.rows - 1) * layout.gap < layout.footer.y);
+    CHECK(layout.footer.bottom() == device.safeRect().bottom());
+    CHECK(layout.artHeight == homeui::shelfLayout(device).artHeight);
+  }
+  for (const auto slot :
+       {fui::makeRect(14, 640, 98, 148), fui::makeRect(14, 105, 140, 210), fui::makeRect(12, 350, 72, 108)})
+    for (const auto source : {fui::Size{145, 218}, fui::Size{400, 600}, fui::Size{600, 400}, fui::Size{80, 120}}) {
+      const auto fit = homecover::contain(slot, source.width, source.height);
+      CHECK(fit.x >= slot.x && fit.y >= slot.y && fit.right() <= slot.right() && fit.bottom() <= slot.bottom());
+      CHECK(fit.width <= source.width && fit.height <= source.height);
+      CHECK(std::abs(int(fit.width) * source.height - int(fit.height) * source.width) <=
+            std::max(source.width, source.height));
+      CHECK(std::abs((fit.x - slot.x) - (slot.right() - fit.right())) <= 1);
+      CHECK(std::abs((fit.y - slot.y) - (slot.bottom() - fit.bottom())) <= 1);
+    }
+  CHECK(homecover::contain(fui::makeRect(0, 0, 30, 40), 0, 100).empty());
   homeui::Model model;
   homeui::formatDate(model.date, sizeof(model.date), 2026, 10, 15);
   CHECK(std::string(model.date) == "15 OCT");
@@ -438,6 +466,42 @@ int main(int argc, char** argv) {
       input.clear();
       CHECK(!input.pop(event));
     }
+  for (int n = 0; n < 8; ++n) model.rows[n].icon = icons[n];
+  for (const auto size : {fui::Size{480, 800}, fui::Size{800, 480}}) {
+    Canvas c(size.width, size.height);
+    model.style = homeui::Style::Boox;
+    model.count = 7;
+    model.hasBook = true;
+    auto g = homeui::layout(c.device, model.count, model.style, &model);
+    CHECK(g.cover.height > 200);
+    CHECK(g.cover.width > 100);
+    CHECK(g.coverRegion.bottom() <= c.height);
+    CHECK(g.title.bottom() <= g.author.y);
+    CHECK(g.author.bottom() <= g.progress.y);
+    model.selected = 1;
+    homeui::draw(c.target, model, g);
+    const auto focusedFiles = c.pixels;
+    model.selected = 2;
+    homeui::draw(c.target, model, g);
+    CHECK(c.pixels != focusedFiles);
+    CHECK(!g.settingsButton.empty());
+    CHECK(g.progress.bottom() < g.menu.y);
+    for (int n = 0; n < 6; ++n) {
+      CHECK(!g.primary[n].empty());
+      CHECK(g.primary[n].bottom() <= c.height);
+      CHECK(g.primary[n].x >= g.menu.x);
+      CHECK(g.primary[n].right() <= g.menu.right());
+    }
+  }
+  for (int n = 0; n < homeui::kPiccoActions; ++n) CHECK(homeui::piccoIndex(homeui::piccoAction(n)) == n);
+  CHECK(homeui::piccoIndex(static_cast<homeui::QuickAction>(-1)) == -1);
+  chrome::lightHeader = false;
+  CHECK(!chrome::invertHeaderForOutput(false));
+  CHECK(chrome::invertHeaderForOutput(true));
+  chrome::lightHeader = true;
+  CHECK(chrome::invertHeaderForOutput(false));
+  CHECK(!chrome::invertHeaderForOutput(true));
+  chrome::lightHeader = false;
   model.style = homeui::Style::Framed;
   for (int month = 1; month <= 12; ++month) {
     char date[20];
@@ -452,13 +516,47 @@ int main(int argc, char** argv) {
   CHECK(std::string(date) == "01 JAN");
   homeui::formatDate(date, sizeof(date), 0, 0, 0);
   CHECK(std::string(date) == "-- ---");
+  char natural[48];
+  pixelui::copyNatural(natural, sizeof(natural), "APPS");
+  CHECK(std::string(natural) == "Apps");
+  pixelui::copyNatural(natural, sizeof(natural), "CONFIGURACIÓN");
+  CHECK(std::string(natural) == "Configuración");
+  pixelui::copyNatural(natural, sizeof(natural), "Wi-Fi, Sync and OPDS");
+  CHECK(std::string(natural) == "Wi-Fi, Sync and OPDS");
+  pixelui::copyNatural(natural, sizeof(natural), "EPUB books", pixelui::LabelCase::Preserve);
+  CHECK(std::string(natural) == "EPUB books");
+  pixelui::copyNatural(natural, sizeof(natural), "XTC / XTCH", pixelui::LabelCase::Preserve);
+  CHECK(std::string(natural) == "XTC / XTCH");
   char shortLabel[6];
   CHECK(homeui::copyLabel(shortLabel, sizeof(shortLabel), "a\xC3\xA9\xE7\x8C\xAB"));
-  CHECK(std::string(shortLabel) == "A\xC3\x89");
+  CHECK(std::string(shortLabel) == "a\xC3\xA9");
   CHECK(!homeui::copyLabel(shortLabel, sizeof(shortLabel), "abcdef"));
-  CHECK(std::string(shortLabel) == "ABCDE");
+  CHECK(std::string(shortLabel) == "abcde");
+  homeui::copyLabel(natural, sizeof(natural), "AJUSTES");
+  CHECK(std::strcmp(natural, "Ajustes") == 0);
+  homeui::copyLabel(natural, sizeof(natural), "Frankenstein");
+  CHECK(std::strcmp(natural, "Frankenstein") == 0);
+  homeui::copyLabel(natural, sizeof(natural), "Mary Shelley");
+  CHECK(std::strcmp(natural, "Mary Shelley") == 0);
   homeui::formatDate(shortLabel, sizeof(shortLabel), 1970, 1, 1);
   CHECK(std::string(shortLabel) == "-- --");
+  {
+    homeui::ShelfOrder order;
+    CHECK(order.add(homeui::ShelfSource::Recent, 4, 90));
+    CHECK(order.add(homeui::ShelfSource::Recent, 2, 70));
+    CHECK(order.add(homeui::ShelfSource::Index, 33, 90));
+    CHECK(order.count == 2);
+    CHECK(order.entries[0].index == 4 && order.entries[0].source == homeui::ShelfSource::Recent);
+    CHECK(order.entries[1].hash == 70);
+    CHECK(order.add(homeui::ShelfSource::Index, 22, 50));
+    CHECK(order.entries[2].source == homeui::ShelfSource::Index && order.entries[2].index == 22);
+    for (int n = 0; n < 15; ++n) CHECK(order.add(homeui::ShelfSource::Index, n, 100 + n));
+    CHECK(order.count == 18);
+    while (order.count < int(std::size(order.entries)))
+      CHECK(order.add(homeui::ShelfSource::Index, order.count, 1000 + order.count));
+    CHECK(!order.add(homeui::ShelfSource::Recent, 0, 500));
+    CHECK(order.count == int(std::size(order.entries)));
+  }
   std::printf("Home UI: %d checks, %d failed\n", checks, failures);
   return failures ? 1 : 0;
 }

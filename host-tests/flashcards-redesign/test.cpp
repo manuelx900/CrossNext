@@ -434,8 +434,8 @@ int main(int argc, char** argv) {
           const RecordingTarget::Label* question = nullptr;
           const RecordingTarget::Label* answer = nullptr;
           char questionText[48], answerText[48];
-          pixelui::copyCaps(questionText, sizeof(questionText), tr(STR_FLASH_QUESTION));
-          pixelui::copyCaps(answerText, sizeof(answerText), tr(STR_FLASH_ANSWER));
+          pixelui::copyNatural(questionText, sizeof(questionText), tr(STR_FLASH_QUESTION));
+          pixelui::copyNatural(answerText, sizeof(answerText), tr(STR_FLASH_ANSWER));
           for (const auto& label : c.target.labels) {
             if (label.value == questionText) question = &label;
             if (label.value == answerText) answer = &label;
@@ -523,16 +523,19 @@ int main(int argc, char** argv) {
       }
       {
         Canvas c(w, h);
-        flashui::HistoryRow items[3];
-        for (int n = 0; n < 3; ++n) items[n] = {rows[n].name, "Hoy · 08:40", sm.session};
+        flashui::HistoryRow items[flashui::kMaxHistoryRows];
+        const int capacity = flashui::historyCapacity(w, h);
+        for (int n = 0; n < capacity; ++n) items[n] = {rows[n % 3].name, "Hoy · 08:40", sm.session};
         flashui::HistoryModel m;
         m.rows = items;
-        m.count = 3;
-        m.sessions = 3;
+        m.count = capacity;
+        m.sessions = capacity;
         m.cards = 60;
         m.month = "OCTUBRE 2026";
         m.filter = "Todos los mazos";
         flashui::history(c.screen, m);
+        CHECK(!c.has(flashui::Filter));
+        for (int n = 0; n < capacity; ++n) CHECK(c.has(flashui::OpenSession, n));
         saveScreen(c, "history");
       }
       {

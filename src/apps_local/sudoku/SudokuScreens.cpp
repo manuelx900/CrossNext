@@ -261,7 +261,7 @@ void buildSettings(toybox::Screen& s, const SettingsModel& m) {
   for (int n = 0; n < sk::kLevelCount; ++n) {
     const auto r = rect(levels.x + n % columns * (cellW + 8), levels.y + 36 + n / columns * (cellH + 8), cellW, cellH);
     const bool selected = s.frame().buttonSelected(ActionPickLevel, n, n == int(m.level));
-    if (selected) s.target().fill(r, black);
+    if (selected) lightui::surface(s.target(), r, black);
     dashboard::frame(s, r);
     pixelui::text(s.target(), r.inset({4, 4, 4, 4}), sudokulabels::levelName(static_cast<sk::Level>(n)), 1,
                   selected ? fui::Color::White : fui::Color::Black, fui::TextAlign::Center);
@@ -304,7 +304,7 @@ void buildBoard(toybox::Screen& s, const BoardModel& m) {
     const bool selected =
         s.frame().buttonSelected(ActionDigit, n, m.entryTool == sk::EntryTool::Digit && n == m.game.armed);
     if (selected)
-      s.target().fill(r, black);
+      lightui::surface(s.target(), r, black);
     else
       dashboard::frame(s, r);
     digit(s, r, n, selected, 1);
@@ -317,7 +317,7 @@ void buildBoard(toybox::Screen& s, const BoardModel& m) {
     const bool selected =
         s.frame().buttonSelected(actions[n], 0, m.entryTool == (n ? sk::EntryTool::Check : sk::EntryTool::Erase));
     if (selected)
-      s.target().fill(r, black);
+      lightui::surface(s.target(), r, black);
     else
       dashboard::frame(s, r);
     dashboard::hit(s, r, actions[n]);

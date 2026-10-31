@@ -13,7 +13,7 @@ namespace {
 using fui::makeRect;
 using namespace readingui;
 void button(toybox::Screen& s, fui::Rect r, const char* label, fui::ActionId action, bool primary = false) {
-  s.target().fill(r, primary ? dashboard::ink : dashboard::paper);
+  lightui::surface(s.target(), r, primary ? dashboard::ink : dashboard::paper);
   dashboard::frame(s, r, 2);
   if (action == Favorite) star(s, makeRect(r.x + 16, r.y + (r.height - 36) / 2, 36, 36), true, primary);
   if (action == Remove || action == ConfirmRemove)
@@ -52,8 +52,12 @@ void list(toybox::Screen& s, const ListModel& m) {
     const char* titles[] = {tr(STR_RT_ALL), tr(STR_RT_BOOKS), tr(STR_RT_FAVORITES)};
     for (int n = 0; n < 3; ++n) {
       auto r = makeRect(b.x + n * b.width / 3, top, b.width * (n + 1) / 3 - n * b.width / 3, 48);
-      s.target().fill(r, n == m.tab ? dashboard::ink : dashboard::paper);
-      dashboard::frame(s, r, 2);
+      if (chrome::lightHeader)
+        lightui::segment(s.target(), makeRect(b.x, top, b.width, 48), n, 3, n == m.tab);
+      else {
+        s.target().fill(r, n == m.tab ? dashboard::ink : dashboard::paper);
+        dashboard::frame(s, r, 2);
+      }
       caps(s, r.inset(fui::Insets{4, 3, 4, 3}), titles[n], 0, 1, fui::TextAlign::Center, n == m.tab);
       dashboard::hit(s, r, Tab, n);
     }

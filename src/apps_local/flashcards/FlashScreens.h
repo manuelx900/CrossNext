@@ -28,6 +28,8 @@ struct HistoryRow {
   const char* date = "";
   flashcards::Session session;
 };
+inline constexpr int kMaxHistoryRows = 5;
+inline int historyCapacity(int, int) { return kMaxHistoryRows; }
 struct HistoryModel {
   const HistoryRow* rows = nullptr;
   int count = 0, page = 0, pages = 1, sessions = 0, cards = 0;

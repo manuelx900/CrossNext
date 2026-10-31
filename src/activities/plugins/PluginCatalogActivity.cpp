@@ -21,6 +21,7 @@
 
 #include "MappedInputManager.h"
 #include "activities/reader/DictionaryDefinitionActivity.h"  // plain-text README viewer
+#include "apps_local/ui/PixelMenuTheme.h"
 #include "components/CatalogScreens.h"
 #include "components/UITheme.h"
 #include "network/HttpDownloader.h"
@@ -1098,6 +1099,7 @@ void PluginCatalogActivity::drawFooter() {
 }
 
 void PluginCatalogActivity::buildScreen(UiScreen& screen) {
+  if (chrome::lightHeader) pixelui::bindFonts(uiTarget, renderer);
   const bool listState = state == State::BROWSING || state == State::LIST_PICKER;
   const std::string title = listState ? browsingHeaderLabel() : catalogTitle;
   screenHeader(screen, title.c_str());
@@ -1168,8 +1170,12 @@ void PluginCatalogActivity::buildBrowsingScreen(UiScreen& screen) {
   }
 
   if (rowItems.empty()) {
-    screen.centeredText(state == State::PLUGIN_PICKER ? tr(STR_NO_PLUGINS_INSTALLED) : tr(STR_NO_ENTRIES),
-                        screen.theme().bodyText);
+    auto text = screen.theme().bodyText;
+    if (chrome::lightHeader) {
+      text.bold = false;
+      text.maxLines = 3;
+    }
+    screen.centeredText(state == State::PLUGIN_PICKER ? tr(STR_NO_PLUGINS_INSTALLED) : tr(STR_NO_ENTRIES), text);
     return;
   }
 

@@ -1,12 +1,12 @@
 #include "CalcFonts.h"
 
 #include "../ui/ToyboxFonts.h"
-#include "fonts/calc_jersey_20.h"
-#include "fonts/calc_jersey_26.h"
-#include "fonts/calc_jersey_28.h"
-#include "fonts/calc_jersey_34.h"
-#include "fonts/calc_jersey_44.h"
-#include "fonts/calc_jersey_56.h"
+#include "fonts/calc_sans_20.h"
+#include "fonts/calc_sans_26.h"
+#include "fonts/calc_sans_28.h"
+#include "fonts/calc_sans_34.h"
+#include "fonts/calc_sans_44.h"
+#include "fonts/calc_sans_56.h"
 
 namespace calc {
 namespace {
@@ -15,12 +15,12 @@ namespace {
 // GfxRenderer's BW path paints a pixel for ANY coverage above zero, so an
 // antialiased cut floods -- stems fatten, counters close, and the type turns to
 // mush. A pixel-shaped face converted at one bit has no coverage to flood.
-EpdFont label28(&calc_jersey_28);
-EpdFont small20(&calc_jersey_20);
-EpdFont number56(&calc_jersey_56);
-EpdFont mid44(&calc_jersey_44);
-EpdFont tiny34(&calc_jersey_34);
-EpdFont finest26(&calc_jersey_26);
+EpdFont label28(&calc_sans_28);
+EpdFont small20(&calc_sans_20);
+EpdFont number56(&calc_sans_56);
+EpdFont mid44(&calc_sans_44);
+EpdFont tiny34(&calc_sans_34);
+EpdFont finest26(&calc_sans_26);
 
 EpdFontFamily labelFamily(&label28);
 EpdFontFamily smallFamily(&small20);
@@ -53,17 +53,17 @@ const EpdFontFamily* familyFor(const int fontId) {
 const EpdFontData* dataFor(const int fontId) {
   switch (fontId) {
     case kLabelFontId:
-      return &calc_jersey_28;
+      return &calc_sans_28;
     case kSmallFontId:
-      return &calc_jersey_20;
+      return &calc_sans_20;
     case kNumberFontId:
-      return &calc_jersey_56;
+      return &calc_sans_56;
     case kMidFontId:
-      return &calc_jersey_44;
+      return &calc_sans_44;
     case kTinyFontId:
-      return &calc_jersey_34;
+      return &calc_sans_34;
     case kFinestFontId:
-      return &calc_jersey_26;
+      return &calc_sans_26;
     default:
       return nullptr;
   }

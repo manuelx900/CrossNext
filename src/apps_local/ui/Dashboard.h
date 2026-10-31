@@ -34,8 +34,8 @@ inline void chevron(fui::DrawTarget& target, fui::Rect rect, bool inverse = fals
 }
 inline void action(fui::DrawTarget& target, fui::Rect rect, const char* label, const freeink::Icon* mark = nullptr,
                    bool primary = false, int font = pixelui::kBody) {
-  target.fill(rect, primary ? ink : paper);
-  target.stroke(rect, ink, 2);
+  lightui::surface(target, rect, primary ? ink : paper);
+  lightui::outline(target, rect, ink, 2);
   const int side = std::min(48, int(rect.height) - 24);
   if (mark)
     target.bitmap(fui::makeRect(rect.x + 18, rect.y + (rect.height - side) / 2, side, side), fui::bitmapFromIcon(*mark),
@@ -64,7 +64,9 @@ inline void prose(toybox::Screen& screen, fui::Rect rect, const char* value,
   rect.height = std::max(int(rect.height), int(screen.target().lineHeight(4)) * lines);
   screen.target().text(rect, value, style);
 }
-inline void frame(toybox::Screen& s, fui::Rect r, int weight = pixelui::kBorder) { s.target().stroke(r, ink, weight); }
+inline void frame(toybox::Screen& s, fui::Rect r, int weight = pixelui::kBorder) {
+  s.target().stroke(r, ink, chrome::lightHeader ? std::max(1, weight - 1) : weight, lightui::radius());
+}
 inline void icon(toybox::Screen& s, fui::Rect r, const freeink::Icon& value, bool inverse = false) {
   s.target().bitmap(r, fui::bitmapFromIcon(value), fui::BitmapMode::Contain, inverse ? paper : ink);
 }
@@ -74,10 +76,11 @@ inline void hit(toybox::Screen& s, fui::Rect r, fui::ActionId action, int value 
 inline void button(toybox::Screen& s, fui::Rect r, const char* label, fui::ActionId action, int value = 0,
                    bool filled = false, const freeink::Icon* mark = nullptr, int font = pixelui::kSmall) {
   filled = s.frame().buttonSelected(action, value, filled);
+  const int radius = chrome::lightHeader ? lightui::kControlRadius : 0;
   if (filled)
-    s.target().fill(r, ink);
+    s.target().fill(r, chrome::lightHeader ? lightui::selected : ink, radius);
   else
-    frame(s, r);
+    s.target().stroke(r, ink, chrome::lightHeader ? 1 : pixelui::kBorder, radius);
   hit(s, r, action, value);
   if (mark) {
     const int side = std::min(36, int(r.height) - 12);
@@ -87,14 +90,29 @@ inline void button(toybox::Screen& s, fui::Rect r, const char* label, fui::Actio
   }
   text(s, r.inset(fui::Insets{0, 8, 0, 8}), label, font, fui::TextAlign::Center, filled);
 }
+inline fui::Rect segment(toybox::Screen& s, fui::Rect band, int index, int count, const char* label,
+                         fui::ActionId action, int value, bool selected, int font = pixelui::kSmall) {
+  const auto r = lightui::segmentRect(band, index, count);
+  if (!chrome::lightHeader) {
+    button(s, r, label, action, value, selected, nullptr, font);
+    return r;
+  }
+  selected = s.frame().buttonSelected(action, value, selected);
+  lightui::segment(s.target(), band, index, count, selected);
+  hit(s, r, action, value);
+  text(s, r.inset({0, 8, 0, 8}), label, font, fui::TextAlign::Center, selected);
+  return r;
+}
 inline void bar(toybox::Screen& s, fui::Rect r, uint64_t value, uint64_t total) {
   frame(s, r, 2);
   const int width = total ? int(uint64_t(std::max(0, r.width - 6)) * std::min(value, total) / total) : 0;
-  if (width) s.target().fill(fui::makeRect(r.x + 3, r.y + 3, width, r.height - 6), ink);
+  if (width)
+    s.target().fill(fui::makeRect(r.x + 3, r.y + 3, width, r.height - 6),
+                    chrome::lightHeader ? lightui::selected : ink);
 }
 inline void check(toybox::Screen& s, fui::Rect r, bool checked) {
   if (checked) {
-    s.target().fill(r, ink);
+    lightui::surface(s.target(), r, ink);
     icon(s, r.inset(fui::Insets{5, 5, 5, 5}), extra_check_32, true);
   } else
     frame(s, r, pixelui::kBorder);

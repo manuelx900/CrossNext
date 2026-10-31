@@ -9,7 +9,7 @@ does not display the firmware version or `DEV-SIMULATOR`; About retains version
 information. Appearance keeps Recent books and Interface font at the bottom,
 with the same border weight as the theme selector.
 
-Settings > Appearance > Interface font offers Noto Sans (the default), Jersey 25,
+Settings > Appearance > Interface font offers Noto Sans (the default),
 Ubuntu and Noto Serif. Ubuntu uses regular interface labels and bold
 headings. It covers Home, files, Library, File Transfer, statistics, games,
 apps, Settings and the reader's control panels. Selecting a section opens the same option popup as other settings, without
@@ -17,39 +17,31 @@ leaving the section list. A confirmed choice is applied and saved on the microSD
 Back or an outside tap dismisses the popup without changing it. Missing or invalid General preferences use Noto Sans; missing or
 invalid section overrides follow General. If saving fails, the
 previous choice stays active and an error asks you to check the card. The book's
-reading font remains a separate setting; dedicated counters and illustrations
-keep their existing design. The smallest technical captions retain the compact
-Noto Sans face outside Jersey 25. Existing saved Pixel and Classic choices stay valid as
-Jersey 25 and Ubuntu. An explicit saved family is preserved on upgrade; the new
-default applies when General has no saved choice.
+reading font remains a separate setting. Dedicated counters and the calculator
+use bundled Noto Sans cuts; illustrations are unchanged. Saved Pixel/Jersey 25
+choices migrate to Noto Sans, while saved Ubuntu and Noto Serif choices remain.
 
 General sets the default. Home, Files, Library, File Transfer, Reading Stats,
 Games, Apps, Settings, Reader controls and Control panel can each follow General
-or choose one of the four families. For example, select General > Ubuntu and Games >
-Jersey 25. Child dialogs inherit their section; closing them restores the previous
+or choose one of the three families. For example, select General > Ubuntu and Games >
+Noto Sans. Child dialogs inherit their section; closing them restores the previous
 section's font. Selecting Use general removes that section's override. Both the
 general choice and overrides persist on the microSD.
 
 En español: Ajustes > Apariencia > Letra de la interfaz permite elegir Noto Sans
-(la predeterminada), Jersey 25, Ubuntu o Noto Serif.
+(la predeterminada), Ubuntu o Noto Serif.
 Cada sección abre un selector emergente. Al elegir se guarda el cambio; volver
 o tocar fuera lo cierra sin cambiar nada. La letra del libro se ajusta
 por separado en el lector.
 General define la letra predeterminada. Cada sección puede usarla o elegir
-una de las cuatro familias. Por ejemplo: General > Ubuntu y Juegos > Jersey 25. «Usar la general»
+una de las tres familias. Por ejemplo: General > Ubuntu y Juegos > Noto Sans. «Usar la general»
 vuelve a aplicar la elección principal a esa sección.
 
 Library (Recent Books on Home) uses the same header and framed list, with
-Recent, Title and Author sort tabs. The header keeps battery status above
-Search and Rebuild. Rows show file-type icons and titles; the bottom counter
-tracks the selection. Titles preserve their case in a subtly heavier Noto Sans face,
-with the existing fallback chain for characters outside the bundled cut. Metadata,
-search, author grouping and file paths retain their original text. Only the
-visible row window is formatted.
+Recent and Filter tabs. Recent retains up to 30 opened books and supports list or covers. Filter opens metadata categories and value rows before showing only matching books. Titles wrap to two lines, without metadata subtitles. See [Library](cover-themes-library.md#library) for category and Back behavior. Search and rebuild retain their existing actions. Only the visible row window is formatted.
 
 Browse Files keeps the current path at the bottom. File and folder names keep
-their case; folders use the same regular Noto Sans size, except the Jersey 25 interface
-keeps its original folder emphasis. Filesystem paths and
+their case; folders use the same regular Noto Sans size. Filesystem paths and
 rename/delete operations retain their original bytes. Long labels wrap to two
 lines or end in visible dots. The registered standard UI fallback keeps
 non-Latin characters readable when a suitable built-in or SD font is available.
@@ -110,10 +102,10 @@ visibility selector, app menu and an active app view; it should behave like the
 physical Back button at each level. Watch for overlapping titles, unwanted app
 launches or a Back target surviving into a screen without that arrow.
 
-Home customization and reading statistics are described in [reading-stats.md](reading-stats.md). Library list rows use a larger regular face with up to two title lines, preserving the title's case. The author is no longer appended to each title; author sorting and group headings remain available. Recent uses one frame; Title and Author keep each heading outside its own group frame. Book lists have a two-pixel outer rectangle and full-width row divisions, with the selected row filled black. Games and Apps use the same two-pixel interface frames. App/game headers leave a clear gap below the black band; no separate horizontal rule is drawn there.
+Home customization and reading statistics are described in [reading-stats.md](reading-stats.md). Library list rows preserve title case and allow two lines. Framed and Carousel use rectangular frames and row divisions; Carousel 2 and Bookshelf use separator-based lists. Games and Apps follow their section theme.
 
 
-Browse Files uses the same shared book row metrics as Library: a 32-pixel icon and 10pt Noto Sans. File titles have a small optical stroke increase, generated into the one-bit font, while retaining the original advances and line metrics. The dedicated book-list family keeps its standard UI fallback; Murdle and other apps retain their regular face. Every row reserves two lines plus eight pixels of vertical padding, giving identical 64-pixel heights for short and wrapped names. Twelve-pixel side padding and icon gaps leave more width for the title. Filenames keep their case; the small file-type label omits the leading dot. No metadata author row is added. The firmware picker uses these same shared rows, including original-case names, regular-weight folders (original emphasis with Jersey 25), small extensions and uniform height. Home Menu uses the larger body face for titles and the smaller tile face for descriptions. Screen transitions and row actions clear inherited tap feedback, so only the current navigation selection is filled black. Settings remains checked but disabled, with a smaller explanatory subtitle.
+Browse Files uses the same shared book row metrics as Library: a 32-pixel icon and 10pt Noto Sans. File titles have a small optical stroke increase, generated into the one-bit font, while retaining the original advances and line metrics. The dedicated book-list family keeps its standard UI fallback; Murdle and other apps retain their regular face. Every row reserves two lines plus eight pixels of vertical padding, giving identical 64-pixel heights for short and wrapped names. Twelve-pixel side padding and icon gaps leave more width for the title. Filenames keep their case; the small file-type label omits the leading dot. No metadata author row is added. The firmware picker uses these same shared rows, including original-case names, regular-weight folders, small extensions and uniform height. Home Menu uses the larger body face for titles and the smaller tile face for descriptions. Screen transitions and row actions clear inherited tap feedback, so only the current navigation selection is filled black. Settings remains checked but disabled, with a smaller explanatory subtitle.
 
 The reader's Contents sheet uses the regular document-selector face for chapter titles, preserving their case. Roman chapter numbers keep their existing button face. Titles keep a consistent size, with at most two lines, rather than shrinking to fit. Portrait pages contain four chapters and landscape pages contain two; the pager and selection mapping use that same capacity for EPUB and fixed-layout readers. Long titles receive the SDK's visible ellipsis after the available lines.
 
@@ -137,14 +129,14 @@ below the last category, without enclosing unused space. Settings details and
 File Transfer titles use the selected family's real bold face; descriptions stay
 regular. Home options in Framed/Carousel and the Games/Apps
 folder lists use regular weight. Home book titles and authors also use regular
-weight; Jersey 25 retains its usual single-face appearance. Noto Sans 14 and
+weight. Noto Sans 14 and
 Noto Serif 11/14 have matching one-bit bold cuts,
 generated with `tools_local/toybox/gen_ui_bold.py` from the bundled OFL sources.
 Book text fonts remain independent. Appearance's bottom actions use smaller
 icons and labels while preserving the theme border and touch target.
 
 Library author groups and alphabet headings use bold. Book rows keep regular
-weight in both expanded and recent lists; collapsed author groups retain bold.
+weight in both filtered and recent lists; collapsed author groups retain bold.
 
 Shared selectors, page controls, Home frames, settings panels and app/game panels
 use two-pixel outlines, matching the SD Card list. Standalone buttons use the same
@@ -155,4 +147,14 @@ and board selection marks retain their contrast. Flashcard deck and folder names
 ellipsis when a name exceeds one line.
 
 Finished and Recent book rows keep identical outlines. Their current navigation
-selection is indicated by the right-hand arrow, without a line beside the book icon.
+selection is indicated by the right-hand arrow only on non-touch devices,
+without a line beside the book icon. Touch devices have no persistent cursor.
+
+In every theme, Browse Files shows the `microSD/` path at bottom left and its count at bottom right. Library shows only the book count at bottom right, replacing the page arrows. Swipes and physical paging remain available. Long filenames
+wrap to two lines. Library keeps Recent and Filter above the list.
+Choice popup titles are bold and separated from choices by space rather than
+an option-row rule. Settings focus uses the same gray rule as other rows.
+Finished/Recent arrows stay unhighlighted on touch devices. Non-touch devices
+retain their selection marker. Book detail dates share a line with their label.
+Pomodoro uses a shorter stage selector with a continuous selected fill and
+gives the recovered space to the timer card in Carousel 2 and Bookshelf.

@@ -20,8 +20,9 @@ source validates its complete content hash before using a cache, so changing an
 export cannot inherit scheduling from another version. The legacy uppercase root
 is preserved on FAT; lowercase is a fallback for case-sensitive filesystems.
 The global history discovers converted decks under these roots, `/study`, and
-`/.crosspoint/flashcards`. Its filter selects all discovered decks or one deck.
-History shows three sessions per month/page, with stable timestamp/deck/offset
+`/.crosspoint/flashcards`. Global history includes all discovered decks; history
+opened from a deck includes that deck. It shows six sessions per portrait page
+or four per landscape page, with stable timestamp/deck/offset
 ordering. The session detail separates unique cards, answers (which can repeat),
 new cards and rating totals. Reviewed cards and the whole deck can be browsed
 without grading or changing scheduling state. Long questions and answers have
@@ -36,7 +37,7 @@ font cannot draw. The rating instructions have been removed; in portrait their
 space belongs to the answer box. A smaller page selector leaves more room for
 content. The four rating buttons retain their positions and labels.
 
-Paginated deck lists, help, history, filters, card lists and card text accept
+Paginated deck lists, help, history, card lists and card text accept
 left/up swipes to advance and right/down swipes to go back. Text swipes stay
 within the current question or answer and stop at its page limits. Existing
 page arrows remain available. Edge gestures keep their Back/Home/panel actions.
@@ -76,7 +77,7 @@ decks written by the production converter, with real-shaped scheduling/history
 records. Its counts are fixture data, not user data. Use Spanish/English, both
 orientations, empty library and CSV import scenarios. Check library → deck →
 question → answer → grade → undo → completion → session → reviewed cards, plus
-month/filter/page navigation and long-card browsing.
+month/page navigation, per-deck history and long-card browsing.
 
 On backed-up hardware, repeat import/review/undo, suspend/reopen and reboot;
 expected counts and history must survive. Check a removed or corrupt deck,
@@ -112,6 +113,16 @@ Pages beyond that bound remain accessible by scanning from the last cached start
 Rich-card wrapping reuses each candidate width instead of measuring it twice.
 These reduce text-layout work; physical refresh latency still needs device checks.
 
+## Review history limits
+
+Review history opens directly on the month and session list. It shows up to five
+sessions per page in portrait and landscape. The history viewer considers
+the newest 1,000 complete sessions within the last 32,768 review records per
+deck. A session cut by that record window is omitted. Original review logs and
+card scheduling remain unchanged; this is a bounded history query, not deletion
+of old study data. Month totals cover the sessions available in that window.
+Changing orientation resets the session page so its anchor stays consistent.
+
 ## Anki image viewer
 
 Tap PHOTO (or an image-only face) to open its image. The bottom toolbar offers
@@ -142,3 +153,5 @@ text and the normal preview remain untouched. If the package is missing/changed,
 the available monochrome HD/preview remains usable. A stale `.zoom-refresh`
 directory after power loss must be removed from a backed-up SD copy before retry.
 Missing, malformed or unreadable zoom data falls back to the preview.
+
+Review history shows five sessions per page, with larger date labels. Its shorter screen heading keeps the Spanish title visible beside the settings icon. The existing bounded history window is unchanged.

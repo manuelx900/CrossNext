@@ -5,7 +5,9 @@
 namespace menufont {
 enum class Style : uint8_t { Pixel = 0, Classic = 1, NotoSans = 2, NotoSerif = 3, Count = 4 };
 inline constexpr Style kDefault = Style::NotoSans;
-constexpr Style normalized(uint8_t value) { return value < uint8_t(Style::Count) ? Style(value) : kDefault; }
+constexpr Style normalized(uint8_t value) {
+  return value > uint8_t(Style::Pixel) && value < uint8_t(Style::Count) ? Style(value) : kDefault;
+}
 enum class Override : uint8_t { General = 0, Pixel = 1, Classic = 2, NotoSans = 3, NotoSerif = 4, Count = 5 };
 enum class Section : uint8_t {
   General = 0,
@@ -23,7 +25,9 @@ enum class Section : uint8_t {
 };
 inline constexpr int kSectionCount = int(Section::Count);
 constexpr Override normalizedOverride(uint8_t value) {
-  return value < uint8_t(Override::Count) ? Override(value) : Override::General;
+  return value == uint8_t(Override::Pixel)  ? Override::NotoSans
+         : value < uint8_t(Override::Count) ? Override(value)
+                                            : Override::General;
 }
 constexpr Style resolve(uint8_t general, uint8_t section) {
   switch (normalizedOverride(section)) {

@@ -30,8 +30,9 @@ class FlashHistoryActivity final : public Activity {
   study::StudyDeck noteDeck;
   study::Note note;
   HalMemory::PsramBuffer noteWorkspace;
-  Item items[3], selected, anchor;
-  flashui::HistoryRow rows[3];
+  Item items[flashui::kMaxHistoryRows], selected, anchor;
+  flashui::HistoryRow rows[flashui::kMaxHistoryRows];
+  int perPage = flashui::kMaxHistoryRows;
   int itemCount = 0, scanDeck = 0, filterIndex = -1, year = 2026, month = 1, page = 0, totalSessions = 0,
       totalCards = 0;
   int cardPage = 0, textPage = 0, textPages = 1, cardCount = 0, cardIndices[10]{};
@@ -39,7 +40,8 @@ class FlashHistoryActivity final : public Activity {
   Open initial = Open::History;
   View view = View::History;
   Direction direction = Direction::Reset;
-  char onlyDir[128]{}, path[640]{}, text[640]{}, monthLabel[64]{}, dateLabels[3][48]{}, cardLabels[10][160]{};
+  char onlyDir[128]{}, path[640]{}, text[640]{}, monthLabel[64]{}, dateLabels[flashui::kMaxHistoryRows][48]{},
+      cardLabels[10][160]{};
   uint8_t cardReadCache[1024]{};
   toybox::Interactions interactions;
   bool ready = false;

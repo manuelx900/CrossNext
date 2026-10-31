@@ -91,9 +91,12 @@ bool XtcReaderActivity::loadBook() {
 
 void XtcReaderActivity::openChapterSelection() {
   if (xtc && xtc->hasChapters() && !xtc->getChapters().empty()) {
+    const auto origin = currentPage;
     startActivityForResult(std::make_unique<XtcReaderChapterSelectionActivity>(renderer, mappedInput, xtc, currentPage),
-                           [this](const ActivityResult& result) {
+                           [this, origin](const ActivityResult& result) {
                              if (!result.isCancelled) {
+                               RenderLock lock;
+                               rememberContentsPosition({0, origin});
                                currentPage = std::get<PageResult>(result.data).page;
                                requestUpdate();
                              }
@@ -168,6 +171,7 @@ bool XtcReaderActivity::handleFormatInput() {
         if (settingsTab == 2 && control >= readertext::ChapterPick) {
           const int n = control - readertext::ChapterPick;
           if (n < int(xtc->getChapters().size())) {
+            rememberContentsPosition({0, currentPage});
             currentPage = xtc->getChapters()[n].startPage;
             pageSettings.reset();
             requestUpdate();
@@ -359,6 +363,7 @@ void XtcReaderActivity::renderPage() {
       }
     }
 
+    renderContentsReturn();
     if (pagesUntilFullRefresh <= 1) {
       // Periodic ghost cleanup: scrub via the normal path, then run the
       // settle flavor of the grayscale base pass (DTM planes are equal after
@@ -385,6 +390,7 @@ void XtcReaderActivity::renderPage() {
         }
       }
     }
+    renderContentsReturn(true);
     renderer.copyGrayscaleLsbBuffers();
 
     renderer.clearScreen(0x00);
@@ -396,6 +402,7 @@ void XtcReaderActivity::renderPage() {
         }
       }
     }
+    renderContentsReturn(true);
     renderer.copyGrayscaleMsbBuffers();
 
     renderer.displayGrayBuffer();
@@ -409,6 +416,7 @@ void XtcReaderActivity::renderPage() {
       }
     }
 
+    renderContentsReturn();
     renderer.cleanupGrayscaleWithFrameBuffer();
 
     LOG_DBG("XTR", "Rendered page %lu/%lu (2-bit grayscale)", currentPage + 1, xtc->getPageCount());
@@ -428,11 +436,14 @@ void XtcReaderActivity::renderPage() {
     renderStatusBarOverlay(renderer, StatusBarOverlayPosition::Bottom);
   }
 
+  renderContentsReturn();
   ReaderUtils::displayWithRefreshCycle(renderer, pagesUntilFullRefresh);
 
   LOG_DBG("XTR", "Rendered page %lu/%lu (%u-bit)", currentPage + 1, xtc->getPageCount(), bitDepth);
   markPageRendered();
 }
+
+void XtcReaderActivity::restoreContentsPosition(ContentsPosition position) { currentPage = position.page; }
 
 bool XtcReaderActivity::pageTurn(bool isForward) {
   if (!xtc) return false;

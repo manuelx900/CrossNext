@@ -20,27 +20,25 @@ The card shows one recent book. Without one, it shows the existing translated
 empty-state guidance and is not interactive. Portrait places the card above
 the menu; landscape places it to the left. Layout uses oriented screen bounds
 and bezel insets. The optional Cover Grid home retains its existing design.
-ASCII labels use the existing Jersey pixel fonts. When visible labels or book
-metadata contain UTF-8, the body uses the standard UI fonts so accents and other
-supported characters remain readable. Long labels and metadata wrap or truncate
-inside their bounds; titles have at most three lines.
-The Carousel theme uses a slightly smaller 18pt Jersey title cut, instead of
-the 20pt cut, so more of a long title fits. The author and navigation sizes
-are unchanged. Regenerate this cut with
-`python tools_local/toybox/gen_home_title_font.py`, then run
-`./bin/clang-format-fix -g`; it uses the bundled, openly licensed Jersey source
-and leaves all other cuts intact.
+Home uses the configured interface family: Noto Sans, Ubuntu or Noto Serif.
+Noto Sans is the default; saved Jersey 25 preferences migrate to Noto Sans.
+Long labels and book metadata wrap or truncate inside their bounds. The book's
+reading font is independent of the interface.
 
 `HomeActivity` owns navigation, recent-book loading and the existing regional
 cover snapshot. `src/apps_local/home/` owns the layout, date formatting and
 FreeInkUI host. Its model, layout, bitmap reader and interaction tables are
 fixed-size activity members, kept off the render-task stack. The existing
-snapshot allocation caches only the cover art and is released on exit or a
-geometry change. Selection outlines are drawn after the snapshot is captured
-or restored, since byte alignment can extend it beyond the art. SD decoding
-uses `HalStorage`/`HalFile` and the existing thumbnail cache. No new settings, persistent data format, network activity,
-framebuffer or background task is introduced. Runtime heap and binary-size
-measurements still require a firmware build and device.
+art snapshot caches prepared cover regions. A bounded, optional PSRAM arena
+retains three scenes across Home visits, including Bookshelf's shelf grid.
+It holds at most 48 KiB of pixels per scene plus source metadata (about 152 KiB
+total). It never falls back to internal RAM. Failure leaves normal rendering
+available. A cache hit validates source size and modification time and skips
+bitmap decoding and resampling. Undated or failed sources are not retained.
+Cache clearing invalidates scenes; orientation, polarity and shelf content
+changes use different keys. Shelf text also includes its font and language.
+The header and featured-book progress remain live. SD access uses HalStorage;
+the retained images are caches, not a second display framebuffer.
 
 ## Verification
 

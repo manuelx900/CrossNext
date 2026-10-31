@@ -2,11 +2,12 @@
 
 // Read side of the CLX1 index.
 //
-// Holds one open file handle and a few hundred bytes; nothing that scales with
-// the library stays resident. A page of rows is a handful of seeks, which is
+// Holds one open file handle and a few hundred bytes by default. Browsers may
+// opt into a bounded PSRAM snapshot until close(). A page of rows is a handful of seeks, which is
 // what the fixed 128-byte record stride buys — record k is always at
 // recordStart + 128k, so no offset table has to be loaded to find it.
 
+#include <HalMemory.h>
 #include <HalStorage.h>
 
 #include <cstdint>
@@ -25,6 +26,14 @@ enum class SortOrder : uint8_t {
   TitleDesc,
   AuthorAsc,
   AuthorDesc,
+  AuthorFirstAsc,
+  AuthorFirstDesc,
+  SeriesAsc,
+  SeriesDesc,
+  GenreAsc,
+  GenreDesc,
+  DateAddedAsc,
+  DateAddedDesc,
 };
 
 // One book to locate in the index: the complete-path hash (clixPathHash) is
@@ -53,6 +62,15 @@ class LibraryIndexFile {
   void close();
   bool isOpen() const { return opened; }
   bool ioFailed() const { return readFailed; }
+  // Optional immutable snapshot for repeated metadata scans. Failure leaves the
+  // file-backed reader usable; no internal-RAM fallback, and close invalidates it.
+  static constexpr size_t BROWSE_CACHE_LIMIT = 2 * 1024 * 1024;
+  bool cacheForBrowsing(void (*cooperate)() = nullptr);
+  // Yield optional storage to required browser data; do not reacquire until reopen.
+  void dropBrowseCache() {
+    browseCache.reset();
+    cacheAttempted = true;
+  }
 
   ClixValidity validity() const { return lastValidity; }
   const ClixHeader& header() const { return head; }
@@ -69,7 +87,7 @@ class LibraryIndexFile {
   // for books not in the index. One chunked pass over the record section plus
   // one over the arrival permutation, so cost is bounded by the library, not by
   // `count` — callers batch their lookups instead of calling per book.
-  static constexpr size_t MAX_IDENTITY_LOOKUPS = 16;
+  static constexpr size_t MAX_IDENTITY_LOOKUPS = 30;
   bool recentRowsFor(const BookIdentity* books, size_t count, uint16_t* outRows);
 
   bool readRecord(uint16_t ordinal, ClixRecord& out);
@@ -84,13 +102,21 @@ class LibraryIndexFile {
   // the spelling harmonisation visible: neither survives a filename that no
   // longer carries "Title - Author".
   bool readAuthor(const ClixRecord& record, std::string& out);
+  // Unlike readAuthor, an empty metadata field is a successful read.
+  bool readAuthorField(const ClixRecord& record, std::string& out);
   bool readTitle(const ClixRecord& record, std::string& out);
   // Cleaned author spelling before the library-wide spelling vote. Empty is a
   // valid value, so success is independent of `out.empty()`.
   bool readSourceAuthor(const ClixRecord& record, std::string& out);
+  bool readSeries(const ClixRecord& record, std::string& out);
+  bool readGenre(const ClixRecord& record, std::string& out);
+  bool readSeriesPosition(const ClixRecord& record, uint32_t& out);
 
   // Absolute path of the book, rebuilt from its folder record.
   bool readPath(const ClixRecord& record, std::string& out);
+  // Caller-owned offsets for a batch of path lookups; no resident cache.
+  bool readFolderOffsets(uint32_t* offsets, size_t capacity, void (*cooperate)() = nullptr);
+  bool readFolder(uint16_t folder, const uint32_t* offsets, size_t count, std::string& out);
 
  private:
   bool openImpl(const char* path, bool acceptStaleFold);
@@ -98,6 +124,8 @@ class LibraryIndexFile {
   bool readBlobField(const ClixRecord& record, uint8_t field, std::string& out);
 
   HalFile file;
+  HalMemory::PsramBuffer browseCache;
+  bool cacheAttempted = false;
   ClixHeader head{};
   bool opened = false;
   bool readFailed = false;

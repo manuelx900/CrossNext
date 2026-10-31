@@ -22,18 +22,34 @@ class CoverGridHomeUi final : public UiAppHost {
   void begin(const std::vector<RecentBook>& books, bool hasOpds, bool hasContinueReading, bool plugins = false);
   void refreshCoverPaths();
   void setSelection(int selection) { selected = selection; }
+  void showDrawer() {
+    drawer = true;
+    resetUi();
+  }
+  bool closeDrawer() {
+    if (!drawer) return false;
+    drawer = false;
+    resetUi();
+    return true;
+  }
   int selectedAction(const MappedInputManager& input);
   // Exact generation height, shared by every slot and recorded during draw.
   // Thumbs must be generated at the drawn size: rescaling a dithered 1-bit
   // image aliases badly.
   int thumbHeightFor() const;
   bool takeThumbHeightChanged();
+  static constexpr int PAGE_PREVIOUS = -6, PAGE_NEXT = -7, MENU_TOGGLE = -4, MENU_IGNORE = -8;
+  void setPage(int current, int total) {
+    page = current;
+    pages = total;
+  }
 
  private:
   static void screenFn(UiScreen& screen, void* user);
   static void onAction(const freeink::ui::ActionEvent& event, void* user);
   void draw(UiScreen& screen);
   void drawHeaderBand();
+  void drawLicorice(UiScreen& screen);
   void drawEmpty(UiScreen& screen);
   void drawCurrent(UiScreen& screen, freeink::ui::Rect rect, int coverRowHeight);
   void drawGrid(UiScreen& screen);
@@ -50,12 +66,26 @@ class CoverGridHomeUi final : public UiAppHost {
   int thumbHeight = 0;
   bool thumbHeightChanged = false;
   int selected = 0;
+  int page = 0, pages = 1;
+  bool drawer = false;
+  int bookProgress[MAX_BOOKS]{};
+  struct ProgressResult {
+    char path[512]{};
+    int percent = -1;
+  };
+  static constexpr int PROGRESS_RESULTS = 61;
+  HalMemory::PsramBuffer progressMemory;
+  int progressCount = 0;
+  int shelfProgress(const RecentBook& book);
   int pending = -1;
   int progress = -1;
+  uint64_t readingSeconds = 0;
+  bool readingTimeLoaded = false, readingTimeKnown = false;
   bool hasOpds = false;
   bool hasPlugins = false;
   bool hasContinueReading = false;
   char progressText[12]{};
+  freeink::ui::HeaderProps shelfStatus{};
   // Component styles and interaction tables stay off the render task's stack.
   freeink::ui::BookCardProps card;
   freeink::ui::CoverGridProps grid;

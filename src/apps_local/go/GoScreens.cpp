@@ -162,7 +162,7 @@ void buildMenu(toybox::Screen& s, const MenuModel& m) {
   begin(s);
   const auto b = s.body();
   const bool wide = b.width > b.height;
-  const int rows = m.inProgress ? 4 : 3, rowH = wide ? 54 : 46;
+  const int rows = m.inProgress ? 4 : 3, rowH = wide ? 54 : chrome::lightHeader ? 62 : 46;
   const auto side = wide ? fui::makeRect(b.x + b.width / 2 + 12, b.y, b.width / 2 - 12, b.height) : b;
   dashboard::text(s, fui::makeRect(b.x, b.y, wide ? b.width / 2 - 8 : b.width, 40),
                   m.inProgress ? tr(STR_GAME_PAUSED) : tr(STR_WORDLE_PLAY), 1);
@@ -204,56 +204,63 @@ void buildSettings(toybox::Screen& s, const SettingsModel& m) {
   const bool wide = b.width > b.height;
   pixelui::text(s.target(), fui::makeRect(b.x, b.y, b.width, 44), tr(STR_SETTINGS_TITLE), 2);
   const int width = wide ? (b.width - 20) / 2 : b.width, top = b.y + 58;
+  const bool cards = chrome::lightHeader;
+  const int headingH = cards ? 28 : 38, gap = cards ? 8 : 0;
+  const int rowH = cards && wide ? 50 : 62, levelH = rowH + 32;
   const auto heading = [&](int x, int y, const char* label) {
-    s.target().fill(fui::makeRect(x, y, width, 38), ink);
-    dashboard::text(s, fui::makeRect(x + 12, y, width - 24, 38), label, 1, fui::TextAlign::Left, true);
+    if (!cards) s.target().fill(fui::makeRect(x, y, width, headingH), ink);
+    dashboard::text(s, fui::makeRect(x + 12, y, width - 24, headingH), label, 1, fui::TextAlign::Left, !cards);
   };
   heading(b.x, top, tr(STR_GO_GAME));
   const auto row = [&](int x, int y, int height, SettingsRow id, const char* label, const char* value,
                        const fui::BitmapRef* art, bool enabled = true) {
     const auto r = fui::makeRect(x, y, width, height);
     const bool selected = enabled && s.frame().buttonSelected(ActionSettingsRow, int(id));
-    if (selected) s.target().fill(r, ink);
+    if (selected) lightui::surface(s.target(), r, ink);
     frame(s, r, 2);
     if (enabled) hit(s, r, ActionSettingsRow, int(id));
     if (art)
-      s.target().bitmap(fui::makeRect(x + 14, y + 12, 38, 38), *art, fui::BitmapMode::Contain, selected ? paper : ink);
+      s.target().bitmap(fui::makeRect(x + 14, y + (rowH - 38) / 2, 38, 38), *art, fui::BitmapMode::Contain,
+                        selected ? paper : ink);
     else if (id == SettingsRow::PlayAs) {
       stone(s, x + 24, y + height / 2, 12, go::kBlack);
       stone(s, x + 48, y + height / 2, 12, go::kWhite);
     } else
-      gamepanel::mark(s, fui::makeRect(x + 14, y + 14, 34, 34),
+      gamepanel::mark(s, fui::makeRect(x + 14, y + (rowH - 34) / 2, 34, 34),
                       id == SettingsRow::Board ? gamepanel::Mark::Grid : gamepanel::Mark::New, selected);
-    dashboard::text(s, fui::makeRect(x + 70, y, width / 2 - 65, 62), label, 0, fui::TextAlign::Left, selected);
-    dashboard::text(s, fui::makeRect(x + width / 2, y, width / 2 - 48, 62), value, 0, fui::TextAlign::Right, selected);
-    if (enabled) chevron(s.target(), fui::makeRect(x + width - 38, y, 28, 62), selected);
+    dashboard::text(s, fui::makeRect(x + 70, y, width / 2 - 65, rowH), label, 0, fui::TextAlign::Left, selected);
+    dashboard::text(s, fui::makeRect(x + width / 2, y, width / 2 - 48, rowH), value, 0, fui::TextAlign::Right,
+                    selected);
+    if (enabled) chevron(s.target(), fui::makeRect(x + width - 38, y, 28, rowH), selected);
   };
   const bool computer = m.opponent == go::Opponent::Computer;
-  row(b.x, top + 38, 62, SettingsRow::Opponent, tr(STR_UI_OPPONENT_974974),
+  const int firstY = top + headingH + gap, levelY = firstY + rowH + gap, playY = levelY + levelH + gap;
+  row(b.x, firstY, rowH, SettingsRow::Opponent, tr(STR_UI_OPPONENT_974974),
       computer ? tr(STR_UI_COMPUTER_9E47DA) : tr(STR_CHESS_PERSON), &matchart::Robot);
-  row(b.x, top + 100, 94, SettingsRow::Level, tr(STR_UI_LEVEL_F481CC),
+  row(b.x, levelY, levelH, SettingsRow::Level, tr(STR_UI_LEVEL_F481CC),
       computer
           ? (m.level == go::Level::Medium ? tr(STR_CHESS_NORMAL) : static_cast<const char*>(go::levelName(m.level)))
           : "--",
       &matchart::Level, computer);
   if (computer)
-    prose(s, fui::makeRect(b.x + 14, top + 160, width - 28, 30),
+    prose(s, fui::makeRect(b.x + 14, levelY + rowH - 2, width - 28, 30),
           m.level == go::Level::Easy   ? tr(STR_GO_LEVEL_EASY)
           : m.level == go::Level::Hard ? tr(STR_GO_LEVEL_HARD)
                                        : tr(STR_GO_LEVEL_NORMAL),
           2, 3);
-  row(b.x, top + 194, 62, SettingsRow::PlayAs, tr(STR_UI_YOU_PLAY_E18634),
+  row(b.x, playY, rowH, SettingsRow::PlayAs, tr(STR_UI_YOU_PLAY_E18634),
       computer ? colour(m.handicap ? go::kBlack : m.playAs) : "--", nullptr, computer && !m.handicap);
-  const int x = wide ? b.x + width + 20 : b.x, y = wide ? top : top + 278;
+  const int x = wide ? b.x + width + 20 : b.x, y = wide ? top : playY + rowH + (cards ? 20 : 22);
   heading(x, y, tr(STR_UI_BOARD_3E91AD));
   char value[48];
   std::snprintf(value, sizeof(value), "%d × %d", m.boardSize, m.boardSize);
-  row(x, y + 38, 62, SettingsRow::Board, tr(STR_GO_SIZE), value, nullptr);
+  row(x, y + headingH + gap, rowH, SettingsRow::Board, tr(STR_GO_SIZE), value, nullptr);
   if (m.handicap)
     std::snprintf(value, sizeof(value), tr(STR_UI_D_STONES_76819C), m.handicap);
   else
     std::snprintf(value, sizeof(value), "%s", tr(STR_UI_NONE_0654A0));
-  row(x, y + 100, 62, SettingsRow::Handicap, tr(STR_UI_HANDICAP_66447A), computer ? value : "--", nullptr, computer);
+  row(x, y + headingH + gap + rowH + gap, rowH, SettingsRow::Handicap, tr(STR_UI_HANDICAP_66447A),
+      computer ? value : "--", nullptr, computer);
   button(s, fui::makeRect(b.x, b.bottom() - 54, b.width, 54), tr(STR_UI_BACK_TO_MENU_398BBB), ActionDone);
 }
 
@@ -278,7 +285,7 @@ void buildBoard(toybox::Screen& s, const BoardModel& m) {
                 colour(m.game.toMove));
   const int turnW = wide ? c.width * 46 / 100 : c.width;
   const auto turn = fui::makeRect(c.x, wide ? groupY + 148 : c.y + 68, turnW, wide ? 56 : 36);
-  s.target().fill(turn, ink);
+  lightui::surface(s.target(), turn, ink);
   fittext::draw(s.target(), turn.inset({4, 6, 4, 6}), m.review ? tr(STR_MATCH_BOARD) : label, wide ? 0 : 1,
                 wide ? 2 : 1, fui::TextAlign::Center, fui::Color::White);
   gameBoard(s, m.game, false);
@@ -387,8 +394,9 @@ void buildHelp(toybox::Screen& s, int page) {
   const bool wide = b.width > b.height;
   dashboard::text(s, fui::makeRect(b.x, b.y, b.width, 26), tr(STR_WORDLE_HELP), 0, fui::TextAlign::Left);
   static constexpr StrId titles[] = {StrId::STR_GO_STONES_LIBERTIES, StrId::STR_GO_SURROUND, StrId::STR_GO_PASS_COUNT};
-  dashboard::text(s, fui::makeRect(b.x, b.y + 28, b.width, wide ? 30 : 48), I18N.get(titles[page]), wide ? 1 : 2,
-                  fui::TextAlign::Left);
+  if (page != 2 || !chrome::lightHeader)
+    dashboard::text(s, fui::makeRect(b.x, b.y + 28, b.width, wide ? 30 : 48), I18N.get(titles[page]), wide ? 1 : 2,
+                    fui::TextAlign::Left);
   const int bottom = b.bottom() - (page == 2 ? 92 : 48);
   pageui::build(s, fui::makeRect(b.x, b.bottom() - 42, b.width, 42), page + 1, 3, ActionHelpPage, -1, ActionHelpPage,
                 1);
@@ -426,7 +434,7 @@ void buildHelp(toybox::Screen& s, int page) {
     frame(s, suicide, pixelui::kBorder);
     prose(s, suicide.inset(fui::Insets{4, 12, 4, 12}), tr(STR_GO_SUICIDE_HELP), 4, 3);
   } else {
-    const int top = b.y + (wide ? 62 : 84), available = bottom - top;
+    const int top = b.y + (chrome::lightHeader ? 42 : wide ? 62 : 84), available = bottom - top;
     const int leftW = wide ? b.width / 2 - 10 : b.width;
     const int reviewY = top + (wide ? 92 : 98);
     dashboard::text(s, fui::makeRect(b.x, top, leftW, 30), tr(STR_UI_PASS_BD564D), 1, fui::TextAlign::Left);

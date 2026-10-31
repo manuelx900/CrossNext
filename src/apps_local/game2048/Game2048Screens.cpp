@@ -8,6 +8,7 @@
 #include "../ui/DPad.h"
 #include "../ui/GameGuide.h"
 #include "../ui/GamePanel.h"
+#include "../ui/MatchResult.h"
 namespace game2048ui {
 namespace fui = freeink::ui;
 namespace {
@@ -56,6 +57,21 @@ void build(toybox::Screen& s, const Model& m, Work&) {
   const auto body = s.body();
   const auto& state = *m.state;
   const bool wide = body.width > body.height;
+  if (m.view == View::Result) {
+    char value[48];
+    std::snprintf(value, sizeof(value), "%s: %llu", tr(STR_2048_SCORE), static_cast<unsigned long long>(state.score));
+    const bool won = m.result == game2048::Result::Won;
+    matchresult::draw(s, body, won ? tr(STR_UI_YOU_WIN_3DB6AC) : tr(STR_UI_GAME_OVER_B1DE5C), value, tr(STR_GAME_2048),
+                      m.saveFailed ? tr(STR_2048_SAVE_FAILED)
+                      : won        ? tr(STR_2048_WON)
+                                   : tr(STR_2048_OVER),
+                      {}, ConfirmNew, Review, CancelNew, matchresult::BadgePosition::AfterArt);
+    const auto hero = wide ? fui::makeRect(body.x, body.y, body.width / 2 - 12, body.height) : body;
+    const int bottom = wide ? hero.bottom() - 8 : body.bottom() - 316;
+    const int edge = std::max(4, std::min(int(hero.width) - 32, bottom - hero.y - 128)) / 4 * 4;
+    board(s, fui::makeRect(hero.x + (hero.width - edge) / 2, hero.y + 128, edge, edge), state);
+    return;
+  }
   if (m.view == View::Help) {
     dashboard::text(s, s.takeTop(wide ? 34 : 48, 8), tr(STR_2048_HELP), pixelui::kBody, fui::TextAlign::Left);
     dashboard::button(s, s.takeBottom(wide ? 48 : 54, 8), tr(STR_UI_GOT_IT_C3A894), CancelNew, 0, true, &extra_check_32,
@@ -178,7 +194,10 @@ void build(toybox::Screen& s, const Model& m, Work&) {
       : game2048::highest(state) >= 11 ? tr(STR_2048_WON)
                                        : tr(STR_REDESIGN_SWIPE),
       3);
-  dpad::build(s, controls, Move);
+  if (m.view == View::Review)
+    gamepanel::row(s, controls, tr(STR_UI_BACK_TO_MENU_398BBB), CancelNew, 0, gamepanel::Mark::Back);
+  else
+    dpad::build(s, controls, Move);
   if (m.saveFailed)
     dashboard::text(s, fui::makeRect(body.x, body.bottom() - 28, body.width, 28), tr(STR_2048_SAVE_FAILED), 3);
 }

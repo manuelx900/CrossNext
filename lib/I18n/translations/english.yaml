@@ -148,7 +148,7 @@ STR_TIME_TO_SLEEP: "Automatic sleep"
 STR_SHOW_HIDDEN_FILES: "Show Hidden Files"
 STR_LIBRARY: "Library"
 STR_LIBRARY_EMPTY: "No books found on the SD card"
-STR_LIBRARY_NO_RESULTS: "No books match this search"
+STR_LIBRARY_NO_RESULTS: "No matching books"
 STR_LIBRARY_SEARCH_UNAVAILABLE: "Search unavailable: not enough memory"
 STR_LIBRARY_UNKNOWN_TITLE: "(untitled)"
 STR_LIBRARY_UNKNOWN_AUTHOR: "Unknown author"
@@ -621,7 +621,7 @@ STR_HOME_MENU: "Home Menu"
 STR_HOME_MENU_RENAME: "Rename Menu Items"
 STR_HOME_MENU_VISIBILITY: "Show / Hide Menu Items"
 STR_HOME_MENU_REQUIRED: "Settings must stay visible"
-STR_HOME_MENU_LIMIT: "Eight items maximum. Hide one first."
+STR_HOME_MENU_LIMIT: "Seven items maximum. Hide one first."
 STR_HOME_MENU_SAVE_FAILED: "Could not save menu settings"
 STR_HOME_MENU_INVALID_NAME: "Use a shorter name without line breaks"
 STR_HOME_MENU_CONFIGURE_SERVICES: "Configure OPDS or install a plugin first"
@@ -1359,7 +1359,7 @@ STR_UI_SET_TODAY_S_DATE_444EF7: "SET TODAY'S DATE"
 STR_UI_CHECK_THE_SD_CARD_959EC3: "CHECK THE SD CARD"
 STR_UI_HABIT_HISTORY_COULD_NOT_BE_OPENED_7A8B77: "Habit history could not be opened. Check the SD card and try again. Existing save files have been kept."
 STR_UI_TRY_AGAIN_B2CA91: "TRY AGAIN"
-STR_UI_NEW_27037C: "+ NEW"
+STR_UI_NEW_27037C: "+ New"
 STR_UI_MANUAL_DATE_8C2073: "MANUAL DATE"
 STR_UI_TODAY_7A4686: "TODAY"
 STR_UI_ONE_SMALL_STEP_D0FCF7: "ONE SMALL STEP."
@@ -3156,6 +3156,7 @@ STR_QUICK_LIGHT_ON: "Light on"
 STR_QUICK_LOCK: "Lock screen"
 
 STR_READER_RETURN: "Back to reading"
+STR_READER_RETURN_POSITION: "Return"
 
 STR_READER_CHAPTERS: "%d chapters"
 
@@ -5350,3 +5351,99 @@ STR_MENU_FONT_INHERIT_MENU: "Use menu font"
 
 
 STR_BUTTON_READER_ONLY: "With a book open"
+
+STR_HOME_BOOX: "Carousel 2"
+STR_HOME_LICORICE: "Bookshelf"
+STR_HOME_BOOX_HELP: "Covers and shortcuts"
+STR_HOME_LICORICE_HELP: "Bookshelf with covers"
+
+STR_LIBRARY_LAST_OPENED: "Last opened"
+
+STR_LIBRARY_AUTHOR_LAST: "Author last name"
+
+STR_LIBRARY_AUTHOR_FIRST: "Author first name"
+
+STR_LIBRARY_DATE_ADDED: "Date added"
+
+STR_LIBRARY_SERIES: "Series"
+
+STR_LIBRARY_GENRE: "Genre"
+
+STR_LIBRARY_SORT_BY: "Sort by"
+STR_LIBRARY_LAYOUT: "Library layout"
+STR_LIBRARY_LAYOUT_CLASSIC: "Recent · Title · Author"
+STR_LIBRARY_LAYOUT_SORT_BAR: "Sort by"
+
+STR_LIBRARY_REVERSE_ORDER: "Reverse order"
+
+STR_LIBRARY_NO_SERIES: "No series"
+
+STR_LIBRARY_NO_GENRE: "No genre"
+
+STR_LIBRARY_FILTER: "Filter"
+STR_LIBRARY_FILTERED: "Filtered"
+STR_LIBRARY_CLEAR_FILTERS: "Clear filters"
+STR_LIBRARY_ALL: "All books"
+
+STR_PICCO_FILES: "Files"
+STR_PICCO_TRANSFER: "Transfer"
+STR_PICCO_STATS: "Statistics"
+
+STR_HOME_BOOKSHELF: "Bookshelf"
+
+STR_LIBRARY_FILTER_UNAVAILABLE: "Could not load filters. Enable Finished books in Library settings, or refresh the library and try again."
+STR_LIBRARY_SETTINGS: "Library settings"
+STR_LIBRARY_METADATA: "Use book metadata"
+STR_LIBRARY_LIST_VIEW: "List view"
+STR_LIBRARY_RECENT_VIEW: "Recently opened view"
+STR_LIBRARY_SHOW_FINISHED: "Finished books"
+STR_LIBRARY_SHOW_FILES: "Show files"
+STR_LIBRARY_EXPANDED: "Expanded"
+STR_LIBRARY_COMPACT: "Compact"
+STR_LIBRARY_LIST: "List"
+STR_LIBRARY_GRID_VIEW: "Covers"
+STR_LIBRARY_NO_RECENT: "No recently opened books"
+STR_LIBRARY_SAVE_FAILED: "Could not save library settings. Check the microSD and try again."
+STR_LIBRARY_REFRESH_FAILED: "Could not update the library. Check the microSD and try again."
+
+STR_HOME_READING_VALUE: "%d%% · %llu h %u min"
+
+STR_BROWSER_ITEMS: "%u items"
+STR_COVER_BOOK_COUNT: "%u books"
+STR_BROWSER_SIZE_B: "%llu B"
+STR_BROWSER_SIZE_KB: "%llu KB"
+STR_BROWSER_SIZE_MB: "%llu.%u MB"
+STR_BROWSER_SIZE_GB: "%llu.%u GB"
+
+STR_BROWSER_MICROSD_PATH: "microSD%s%s"
+STR_INTERFACE_THEME: "Interface theme"
+STR_INTERFACE_THEME_HOME: "Use Home theme"
+STR_INTERFACE_THEME_GENERAL: "Use general theme"
+
+STR_LIBRARY_FIRST_LETTER: "First letter of title"
+
+STR_HOME_SHELF_PAGES: "Number of pages"
+
+STR_HOME_SHELF_PAGES_VALUE: "Number of pages: %u"
+
+STR_FLASH_HISTORY_HEADER: "Review history"
+
+STR_GOAL_DAILY: "Daily reading goal"
+STR_GOAL_WALLPAPER: "Reading goal and streak"
+STR_GOAL_SET: "Set a daily reading goal"
+STR_GOAL_SET_HINT: "Choose how many minutes to read each day."
+STR_GOAL_PROGRESS: "%llu / %u min"
+STR_GOAL_CALENDAR_HINT: "Days meeting the current goal"
+STR_GOAL_REACHED: "Daily goal reached"
+STR_GOAL_KEEP_READING: "A little reading every day"
+STR_GOAL_STREAK_VALUE: "%u days"
+STR_GOAL_STREAK: "Daily goal streak"
+STR_XTC_COVER_CCW: "Rotate XTC covers 90° counterclockwise"
+
+STR_GOAL_COMPLETE: "Complete"
+
+STR_GOAL_PARTIAL: "Partial"
+
+STR_GOAL_INCOMPLETE: "Not met"
+
+STR_GOAL_TARGET: "Goal: %u min"

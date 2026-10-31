@@ -11,6 +11,9 @@
 #include "ToyboxTokens.h"
 #include "fonts/book_bold_10.h"
 #include "fonts/book_text_10.h"
+#include "fonts/display_sans_22.h"
+#include "fonts/display_sans_40.h"
+#include "fonts/display_sans_56.h"
 #include "fonts/instrument_10.h"
 #include "fonts/instrument_13.h"
 #include "fonts/instrument_24.h"
@@ -20,13 +23,6 @@
 #include "fonts/reading_serif_bold_12.h"
 #include "fonts/reading_serif_bold_14.h"
 #include "fonts/reading_serif_bold_16.h"
-#include "fonts/toybox_10.h"
-#include "fonts/toybox_14.h"
-#include "fonts/toybox_18.h"
-#include "fonts/toybox_20.h"
-#include "fonts/toybox_30.h"
-#include "fonts/toybox_44.h"
-#include "fonts/toybox_64.h"
 #include "fonts/ui_prose_10.h"
 #include "fonts/ui_prose_14.h"
 #include "fonts/ui_prose_bold_14.h"
@@ -38,18 +34,7 @@ extern EpdFontFamily ui12FontFamily;
 namespace toybox {
 namespace {
 
-// Jersey 25 (SIL OFL, Google Fonts), with Latin letters and Spanish accents, converted in 1-BIT
-// mode. The bit depth is the whole point. Our stock fonts are built with
-// --2bit, and GfxRenderer's BW path paints a pixel for ANY coverage above zero
-// (`bmpVal < 3`), so every antialiased edge floods to solid black: stems fatten,
-// counters close, and the type turns to mush. A pixel font converted at 1 bit
-// has no coverage to flood. Every glyph pixel is deliberate.
-//
-// Jersey is also condensed, which matters on a 480px-wide screen where a normal
-// grotesque runs out of room.
-//
-// One face, no bold: at these sizes a synthesised bold would just be the same
-// flooding by another route. Weight comes from size and from inversion instead.
+// One-bit Noto UI faces share the existing built-in registry.
 EpdFont prose14(&ui_prose_14);
 EpdFont proseBold14(&ui_prose_bold_14);
 EpdFontFamily proseFamily(&prose14, &proseBold14);
@@ -58,23 +43,23 @@ EpdFont libraryBold10(&book_bold_10);
 EpdFontFamily libraryFamily(&library10, &libraryBold10);
 EpdFont bookText10(&book_text_10);
 EpdFontFamily bookListFamily(&bookText10, &libraryBold10);
-EpdFont display30(&toybox_30);
-EpdFont large44(&toybox_44);
-EpdFont huge64(&toybox_64);
-EpdFont ui20(&toybox_20);
-EpdFont carousel18(&toybox_18);
-EpdFont tile10(&toybox_10);
+EpdFont display30(&ui_prose_14);
+EpdFont large44(&display_sans_40);
+EpdFont clockLabel22(&display_sans_22);
+EpdFont huge64(&display_sans_56);
+EpdFont ui20(&ui_prose_14);
+EpdFont carousel18(&ui_prose_14);
+EpdFont tile10(&ui_prose_10);
 // Noto Serif, converted at 1 bit by us rather than taken from builtinFonts/.
 // The builtin cuts are --2bit, and GfxRenderer's BW path paints a pixel for ANY
 // coverage above zero, so they flood to mush -- which is why Toybox has its own
 // face at all. Converting the same TTF at 1 bit sidesteps the flooding entirely
-// and gives a real text face: Jersey is a display cut with uniform heavy stems,
-// and a screenful of it reads as permanently bold.
+// and preserves thin strokes and open counters in monochrome.
 //
 // Noto Serif specifically because it is what the EPUB reader sets books in. An
 // app whose surface is a page of prose should look like the rest of this
 // device's reading, not like its games.
-EpdFont button14(&toybox_14);
+EpdFont button14(&ui_prose_10);
 EpdFont reading11(&reading_serif_11);
 EpdFont reading14(&reading_serif_14);
 EpdFont readingBold12(&reading_serif_bold_12);
@@ -84,6 +69,7 @@ EpdFont instrument13(&instrument_13);
 EpdFont instrument24(&instrument_24);
 EpdFontFamily displayFamily(&display30);
 EpdFontFamily largeFamily(&large44);
+EpdFontFamily clockLabelFamily(&clockLabel22);
 EpdFontFamily hugeFamily(&huge64);
 EpdFontFamily uiFamily(&ui20);
 EpdFontFamily carouselFamily(&carousel18);
@@ -100,7 +86,7 @@ EpdFontFamily serifSmallFamily(&instrument10);
 EpdFontFamily serifTitleFamily(&instrument24);
 
 bool registered = false;
-menufont::Style registeredStyle = menufont::Style::Pixel;
+menufont::Style registeredStyle = menufont::Style::NotoSans;
 
 const EpdFontFamily* menuFamily(menufont::Style style, int id) {
   // The built-in serif cuts are too tall for dense captions and board labels.
@@ -123,24 +109,7 @@ const EpdFontFamily* menuFamily(menufont::Style style, int id) {
   }
   switch (style) {
     case menufont::Style::Pixel:
-      switch (id) {
-        case kTileFontId:
-          return &tileFamily;
-        case kButtonFontId:
-          return &buttonFamily;
-        case kLibraryFontId:
-          return &libraryFamily;
-        case kBookListFontId:
-          return &bookListFamily;
-        case kDisplayFontId:
-          return &displayFamily;
-        case kCarouselTitleFontId:
-          return &carouselFamily;
-        case kProseFontId:
-          return &proseFamily;
-        default:
-          return &uiFamily;
-      }
+      return small ? &libraryFamily : &proseFamily;
     case menufont::Style::Classic:
       return id == kTileFontId ? &smallFontFamily : small ? &ui10FontFamily : &ui12FontFamily;
     case menufont::Style::NotoSans:
@@ -177,6 +146,7 @@ FontMetrics metricsFor(const int fontId) {
     }
   }
   const EpdFontFamily& family = fontId == kHugeFontId               ? hugeFamily
+                                : fontId == kClockLabelFontId       ? clockLabelFamily
                                 : fontId == kLargeFontId            ? largeFamily
                                 : fontId == kDisplayFontId          ? displayFamily
                                 : fontId == kTileFontId             ? tileFamily
@@ -186,16 +156,17 @@ FontMetrics metricsFor(const int fontId) {
                                 : fontId == kReadingSmallFontId     ? readingSmallFamily
                                 : fontId == kReadingBoldSmallFontId ? readingBoldSmallFamily
                                                                     : uiFamily;
-  const EpdFontData* data = fontId == kHugeFontId               ? &toybox_64
-                            : fontId == kLargeFontId            ? &toybox_44
-                            : fontId == kDisplayFontId          ? &toybox_30
-                            : fontId == kTileFontId             ? &toybox_10
-                            : fontId == kButtonFontId           ? &toybox_14
+  const EpdFontData* data = fontId == kHugeFontId               ? &display_sans_56
+                            : fontId == kClockLabelFontId       ? &display_sans_22
+                            : fontId == kLargeFontId            ? &display_sans_40
+                            : fontId == kDisplayFontId          ? &ui_prose_14
+                            : fontId == kTileFontId             ? &ui_prose_10
+                            : fontId == kButtonFontId           ? &ui_prose_10
                             : fontId == kReadingBoldFontId      ? &reading_serif_bold_16
                             : fontId == kReadingFontId          ? &reading_serif_14
                             : fontId == kReadingSmallFontId     ? &reading_serif_11
                             : fontId == kReadingBoldSmallFontId ? &reading_serif_bold_12
-                                                                : &toybox_20;
+                                                                : &ui_prose_14;
   FontMetrics metrics;
   metrics.ascender = data->ascender;
   // 'H' stands in for cap height: a flat-topped capital with no overshoot, so it
@@ -229,12 +200,10 @@ void verifyCutMetrics() {
     const toybox::CutMetrics* cut;
   };
   const Pair pairs[] = {
-      {"toybox_10", &toybox_10, &tileFamily, &toybox::kTileCut},
-      {"toybox_14", &toybox_14, &buttonFamily, &toybox::kButtonCut},
-      {"toybox_20", &toybox_20, &uiFamily, &toybox::kUiCut},
-      {"toybox_30", &toybox_30, &displayFamily, &toybox::kDisplayCut},
-      {"toybox_44", &toybox_44, &largeFamily, &toybox::kLargeCut},
-      {"toybox_64", &toybox_64, &hugeFamily, &toybox::kHugeCut},
+      {"ui_prose_10", &ui_prose_10, &tileFamily, &toybox::kTileCut},
+      {"ui_prose_14", &ui_prose_14, &uiFamily, &toybox::kUiCut},
+      {"display_sans_40", &display_sans_40, &largeFamily, &toybox::kLargeCut},
+      {"display_sans_56", &display_sans_56, &hugeFamily, &toybox::kHugeCut},
       {"instrument_10", &instrument_10, &serifSmallFamily, &toybox::kSerifSmallCut},
       {"instrument_13", &instrument_13, &serifTileFamily, &toybox::kSerifTileCut},
       {"instrument_24", &instrument_24, &serifTitleFamily, &toybox::kSerifTitleCut},
@@ -274,7 +243,7 @@ void syncInterfaceFonts(GfxRenderer& renderer) {
 }
 
 void ensureFonts(GfxRenderer& renderer) {
-  // Font settings can clear this registry while the pixel fonts remain loaded.
+  // Font settings can clear this registry while built-in faces remain loaded.
   // Shared map entries are reused; no image or per-label allocation.
   renderer.setFallbackFont(kButtonFontId, UI_10_FONT_ID);
   renderer.setFallbackFont(kUiFontId, UI_12_FONT_ID);
@@ -299,6 +268,7 @@ void ensureFonts(GfxRenderer& renderer) {
   renderer.insertFont(kCarouselTitleFontId, carouselFamily);
   renderer.insertFont(kDisplayFontId, displayFamily);
   renderer.insertFont(kLargeFontId, largeFamily);
+  renderer.insertFont(kClockLabelFontId, clockLabelFamily);
   renderer.insertFont(kHugeFontId, hugeFamily);
   renderer.insertFont(kUiFontId, uiFamily);
   renderer.insertFont(kTileFontId, tileFamily);

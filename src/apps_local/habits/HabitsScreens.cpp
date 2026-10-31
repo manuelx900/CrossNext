@@ -45,18 +45,19 @@ void chrome(toybox::Screen& screen, const char* title, const char* actionLabel =
   pixelui::Header header;
   header.title = title;
   header.back = screen.device().hasTouch;
-  header.titleReserve = actionLabel ? 128 : icon ? 56 : 0;
+  header.titleReserve = actionLabel ? 100 : icon ? 56 : 0;
   pixelui::header(screen.target(), screen.device(), header);
   const auto g = pixelui::geometry(screen.device());
   backui::publish(header.back, g.back);
   if (action && (actionLabel || icon)) {
-    const int width = actionLabel ? 120 : 48;
+    const int width = actionLabel ? 92 : 48;
     const auto box = fui::makeRect(screen.device().safeRect().right() - width - 12, g.header.bottom() - 60, width, 48);
-    screen.target().fill(box, dashboard::paper);
+    lightui::surface(screen.target(), box, dashboard::paper);
+    if (chrome::lightHeader) lightui::outline(screen.target(), box, dashboard::ink);
     if (icon)
       dashboard::icon(screen, box.inset(fui::Insets{8, 8, 8, 8}), *icon);
     else
-      dashboard::text(screen, box, actionLabel, 1);
+      dashboard::text(screen, box, actionLabel, 0);
     hit(screen, box, action);
   }
 }
@@ -184,7 +185,7 @@ void buildToday(toybox::Screen& screen, const TodayModel& model) {
                                    body.y + summaryHeight(screen.device()) + n / columns * habitPitch(screen.device()),
                                    width, habitPitch(screen.device()) - 10);
     const bool focused = index == model.focused;
-    if (focused) screen.target().fill(row, dashboard::ink);
+    if (focused) lightui::surface(screen.target(), row, dashboard::ink);
     dashboard::frame(screen, row, 2);
     hit(screen, fui::makeRect(row.x, row.y, 56, row.height), ActionToggleToday, index);
     hit(screen, fui::makeRect(row.x + 56, row.y, row.width - 56, row.height), ActionOpen, index);
@@ -269,10 +270,17 @@ void buildDetail(toybox::Screen& screen, const DetailModel& model) {
   const uint32_t values[] = {stat.current, stat.best, stat.total,
                              stat.recentDays ? uint32_t(stat.recentDone * 100 / stat.recentDays) : 0};
   char value[64];
+  const int metricH = wide ? 94 : 70;
+  const auto metrics = fui::makeRect(info.x, info.y + 70, info.width, 2 * metricH);
+  if (chrome::lightHeader) {
+    dashboard::frame(screen, metrics, 2);
+    screen.target().fill(fui::makeRect(metrics.x + metrics.width / 2, metrics.y, 1, metrics.height), lightui::rule);
+    screen.target().fill(fui::makeRect(metrics.x, metrics.y + metricH, metrics.width, 1), lightui::rule);
+  }
   for (int n = 0; n < 4; ++n) {
-    const auto rect = fui::makeRect(info.x + n % 2 * info.width / 2, info.y + 70 + n / 2 * (wide ? 94 : 70),
-                                    info.width / 2, wide ? 94 : 70);
-    dashboard::frame(screen, rect, 2);
+    const auto rect =
+        fui::makeRect(info.x + n % 2 * info.width / 2, info.y + 70 + n / 2 * metricH, info.width / 2, metricH);
+    if (!chrome::lightHeader) dashboard::frame(screen, rect, 2);
     std::snprintf(value, sizeof(value),
                   n < 2    ? (values[n] == 1 ? tr(STR_HABITS_ONE_DAY) : tr(STR_HABITS_MANY_DAYS))
                   : n == 3 ? "%u%%"

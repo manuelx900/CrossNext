@@ -11,7 +11,7 @@ a break with a game, all on the same e-ink device.
 
 [![Support me on Ko-fi](site/assets/support-ko-fi.svg)](https://ko-fi.com/manuelx900)
 
-Choose a framed Home screen or a cover carousel, arrange your own app and game
+Choose Framed, Carousel, Carousel 2 or Bookshelf for Home, arrange your own app and game
 shortcuts, and adjust the fonts, reading controls and sleep wallpapers to suit you.
 This release supports **X4 Pro only** (ESP32-S3).
 
@@ -45,11 +45,11 @@ egg, name your pet and watch it grow as you read.
 
 Install **CrossNext-Resources.zip** on the microSD to use PET.
 See [PET's guide](docs/apps/pet.md) and
-[what's new in v1.3.1](docs/releases/CrossNext-v1.3.1.md).
+[what's new in v1.4.0](docs/releases/CrossNext-v1.4.0.md).
 
-The interface starts with Noto Sans for new settings. Choose Noto Sans, Jersey 25,
-Ubuntu or Noto Serif globally, by section, or for an individual app or game.
-Reading fonts are configured separately. Existing font preferences are preserved.
+The interface starts with Noto Sans. Choose Noto Sans, Ubuntu or Noto Serif
+globally, by section, or for an individual app or game. Reading fonts are
+configured separately. Saved Jersey 25 choices migrate to Noto Sans.
 
 ## Read, study and play
 
@@ -114,7 +114,7 @@ Choose the package matching the device:
 
 | Model | ZIP | Application / SD update | Factory / USB installation |
 | --- | --- | --- | --- |
-| X4 Pro | `CrossNext-X4PRO-Firmware-v1.3.1.zip` | `CrossNext-X4PRO-Firmware-v1.3.1.bin` | `CrossNext-X4PRO-Firmware-v1.3.1-factory.bin` |
+| X4 Pro | `CrossNext-X4PRO-Firmware-v1.4.0.zip` | `CrossNext-X4PRO-Firmware-v1.4.0.bin` | `CrossNext-X4PRO-Firmware-v1.4.0-factory.bin` |
 
 Generated ZIPs are in `dist/`, and raw images in `dist/CrossNext/`.
 Each firmware ZIP includes SHA-256 checksums, model-specific images and notes.
@@ -176,7 +176,7 @@ CrossPlay supplies the app/game shelf and implementations; CrossPoint supplies
 the e-reader foundation. [CrossNext changes](docs/crossnext-changes.md) describes
 this fork's adaptations without claiming those inherited projects as new work.
 
-[What’s new in v1.3.1](docs/releases/CrossNext-v1.3.1.md)
+[What’s new in v1.4.0](docs/releases/CrossNext-v1.4.0.md)
 
 ## Support CrossNext
 

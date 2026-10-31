@@ -22,18 +22,19 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 
 namespace library {
 
 inline constexpr char CLIX_MAGIC[4] = {'C', 'L', 'X', '1'};
 // Bumping this is the whole migration: an index from an older version fails
-// validation and is rebuilt. No previous development format is accepted.
-inline constexpr uint8_t CLIX_FORMAT_VERSION = 3;
+// validation and is rebuilt. Version 3 is accepted only for reconciliation.
+inline constexpr uint8_t CLIX_FORMAT_VERSION = 4;
 
 // Bump when the fold or a permutation's sort key changes.
 // Forces fold and ranks to be rebuilt while firstSeen values are preserved, so
 // arrival history survives.
-inline constexpr uint8_t CLIX_FOLD_VERSION = 4;
+inline constexpr uint8_t CLIX_FOLD_VERSION = 5;
 
 inline constexpr uint32_t CLIX_ALIGN = 512;
 inline constexpr size_t CLIX_FOLD_BYTES = 96;
@@ -115,6 +116,28 @@ static_assert(sizeof(ClixFolderHeader) == 1, "ClixFolderHeader must be 1 byte");
 
 #pragma pack(pop)
 
+struct CardSignature {
+  uint64_t mixed = 0, sum = 0;
+  uint16_t count = 0;
+  void add(uint64_t path, uint32_t size) {
+    const uint64_t key = (path ^ (uint64_t(size) * 0x9e3779b97f4a7c15ULL)) * 0xbf58476d1ce4e5b9ULL;
+    mixed ^= key;
+    sum += key;
+    ++count;
+  }
+};
+inline void storeCardSignature(ClixHeader& header, const CardSignature& value) {
+  header.reserved[1] = 1;
+  std::memcpy(header.reserved + 2, &value.mixed, sizeof(value.mixed));
+  std::memcpy(header.reserved + 10, &value.sum, sizeof(value.sum));
+}
+inline bool matchesCardSignature(const ClixHeader& header, const CardSignature& value) {
+  uint64_t mixed = 0, sum = 0;
+  std::memcpy(&mixed, header.reserved + 2, sizeof(mixed));
+  std::memcpy(&sum, header.reserved + 10, sizeof(sum));
+  return header.reserved[1] == 1 && header.bookCount == value.count && mixed == value.mixed && sum == value.sum;
+}
+
 inline uint32_t alignUp(const uint32_t value) { return (value + CLIX_ALIGN - 1) / CLIX_ALIGN * CLIX_ALIGN; }
 
 // Fill in every offset and the expected file size from the counts alone, so the
@@ -124,7 +147,8 @@ inline void layoutSections(ClixHeader& h, const uint32_t folderBytes, const uint
   h.folderLen = folderBytes;
   h.recordStart = alignUp(h.folderStart + folderBytes);
   h.permStart = alignUp(h.recordStart + static_cast<uint32_t>(h.bookCount) * sizeof(ClixRecord));
-  h.nameStart = alignUp(h.permStart + static_cast<uint32_t>(h.bookCount) * 2u * sizeof(uint16_t));
+  h.nameStart =
+      alignUp(h.permStart + static_cast<uint32_t>(h.bookCount) * (h.formatVersion == 3 ? 2u : 5u) * sizeof(uint16_t));
   h.nameLen = nameBytes;
   h.selfSize = h.nameStart + nameBytes;
 }
@@ -159,7 +183,7 @@ inline ClixValidity validateHeaderStructure(const ClixHeader& h, const uint64_t 
   for (size_t i = 0; i < sizeof(CLIX_MAGIC); i++) {
     if (h.magic[i] != CLIX_MAGIC[i]) return ClixValidity::BadMagic;
   }
-  if (h.formatVersion != CLIX_FORMAT_VERSION) return ClixValidity::UnknownFormatVersion;
+  if (h.formatVersion != CLIX_FORMAT_VERSION && h.formatVersion != 3) return ClixValidity::UnknownFormatVersion;
   if (h.bookCount > CLIX_MAX_RECORDS) return ClixValidity::CountOutOfRange;
   if (h.metadataEnabled > 1) return ClixValidity::SectionsInconsistent;
   if (actualFileSize != h.selfSize) return ClixValidity::SizeMismatch;
@@ -181,6 +205,7 @@ inline ClixValidity validateHeaderStructure(const ClixHeader& h, const uint64_t 
 inline ClixValidity validateHeader(const ClixHeader& h, const uint64_t actualFileSize) {
   const ClixValidity structure = validateHeaderStructure(h, actualFileSize);
   if (structure != ClixValidity::Ok) return structure;
+  if (h.formatVersion != CLIX_FORMAT_VERSION) return ClixValidity::UnknownFormatVersion;
   return h.foldVersion == CLIX_FOLD_VERSION ? ClixValidity::Ok : ClixValidity::StaleFoldVersion;
 }
 

@@ -469,8 +469,7 @@ Written by `lib/LibraryIndex/LibraryBuilder.cpp`, read by `LibraryIndexFile`. On
 file describing every book on the card, so the shelf can sort and search
 thousands of titles without opening any of them.
 
-Format version 2. An index written by another version fails validation on open
-and is rebuilt; that is the entire migration mechanism.
+Format version 4. Normal opening rejects older indexes; reconciliation can read version 3 to preserve arrival history before rebuilding.
 
 ### Layout
 
@@ -479,17 +478,14 @@ and is rebuilt; that is the entire migration mechanism.
 | Header | 0 | 64 bytes, `ClixHeader` |
 | Folders | `folderStart` | length-prefixed paths, one per folder |
 | Records | `recordStart` | `bookCount` × 128-byte `ClixRecord` |
-| Permutations | `permStart` | `bookCount` u16 author order, then `bookCount` u16 arrival order |
-| Name blob | `nameStart` | per record: path hash, name, canonical author, title, source author (see below) |
+| Permutations | `permStart` | `bookCount` u16 entries in each of five orders: author surname, arrival, author given name, series/volume, genre |
+| Name blob | `nameStart` | per record: path hash, name, canonical author, title, source author, series, genre, volume key (see below) |
 
-The arrival permutation runs oldest first, keyed by the record's FAT
-modification time (when the file landed on the card); `firstSeen` — the
-build-assigned discovery counter — breaks ties and carries books whose
-filesystem reports no time. Fold version 3 introduced the timestamp key; a
-fold bump rebuilds ranks while preserving `firstSeen`.
-Fold version 4 preserves leading articles in title sort and search keys.
+The arrival permutation runs oldest first using `firstSeen`, the preserved discovery counter. A newly copied book can retain an old FAT modification time, so that timestamp is used for metadata freshness rather than arrival ordering. Fold version 5 restores this discovery ordering; rebuilding preserves each existing first-seen value. Fold version 4 preserves leading articles in title sort and search keys.
 
 Sections are 512-byte aligned so each starts on an SD block boundary.
+
+Format version 4 adds three permutations and the series, genre and volume blob fields. Normal opening requires version 4. Version 3 is accepted only during reconciliation to preserve first-seen history, including for an empty index; it is then rebuilt. Metadata reuse requires the current format version. The index is disposable and separate from books and reading saves.
 
 ### Records are exactly 128 bytes
 
@@ -508,6 +504,8 @@ modification date and time returned by SdFat. A zero timestamp is not trusted.
 These fields occupy the alignment and reserved bytes from version 1, so the
 record remains exactly 128 bytes.
 
+The header's reserved byte 0 records the content-visibility policy. Reserved byte 1 is the card-signature version (1); bytes 2..9 and 10..17 store little-endian 64-bit, order-independent mixed and summed fingerprints of eligible path hashes and sizes. The record count participates in the comparison. This is a cache-freshness check, not a content checksum: edits retaining the same path and size require a manual refresh or an app dirty marker. Older indices without the signature are reconciled once; the header remains 64 bytes. An unavailable directory check preserves the existing index for retry.
+
 The header records whether EPUB metadata extraction was enabled for the build.
 This prevents a metadata-disabled rebuild from making filename fallbacks look
 fresh to a later metadata-enabled build.
@@ -522,6 +520,9 @@ Per record, at `nameStart + nameOff`:
 [u8][author]     display author, one spelling chosen per authorKey across the library
 [u8][title]      the book's own title, or length 0 if it never gave one
 [u8][source]     cleaned author spelling before the library-wide spelling vote
+[u8][series]     EPUB series name (at most 95 UTF-8 bytes)
+[u8][genre]      first nonempty EPUB subject (at most 95 UTF-8 bytes)
+[u8=8][volume]   eight ASCII hexadecimal digits encoding a sortable IEEE-754 float key; FFFFFFFF means unknown
 ```
 
 The filename must stay the first textual field and stay the filename: `readPath`

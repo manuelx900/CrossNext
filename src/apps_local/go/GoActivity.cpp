@@ -531,10 +531,14 @@ void GoActivity::loop() {
     }
   }
 
-  if (interactionsReady && screen == go::Screen::Help) {
-    if (const int direction = sidebuttons::shortStep(mappedInput)) {
-      helpPage = std::clamp(helpPage + direction, 0, 2);
-      requestUpdate();
+  if (interactionsReady && screen == go::Screen::Help && surfaceRevealed()) {
+    const int swipe = sidebuttons::swipeStep(mappedInput);
+    if (const int direction = swipe ? swipe : sidebuttons::shortStep(mappedInput)) {
+      const int next = std::clamp(helpPage + direction, 0, 2);
+      if (next != helpPage) {
+        helpPage = next;
+        requestUpdate();
+      }
       return;
     }
   }

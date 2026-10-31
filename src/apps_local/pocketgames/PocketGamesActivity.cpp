@@ -191,6 +191,10 @@ void PocketGamesActivity::loop() {
     return;
   }
   if (kind == pg::Kind::Othello && view == pocketui::View::Help && ready && surfaceRevealed()) {
+    if (const int direction = sidebuttons::swipeStep(mappedInput)) {
+      action(pocketui::GuidePage, guidePage + direction);
+      return;
+    }
     if (mappedInput.wasReleased(MappedInputManager::Button::PageBack)) {
       action(pocketui::GuidePage, guidePage - 1);
       return;

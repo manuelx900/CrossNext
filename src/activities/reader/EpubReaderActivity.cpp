@@ -725,6 +725,7 @@ void EpubReaderActivity::loop() {
     return;
   }
 
+  if (handleContentsReturn()) return;
   int selectionX = 0;
   int selectionY = 0;
   if (!atEndOfBook && SETTINGS.touchReaderControls && mappedInput.wasScreenLongPress(selectionX, selectionY)) {
@@ -1125,6 +1126,7 @@ void EpubReaderActivity::onReaderMenuConfirm(EpubReaderMenuActivity::MenuAction 
     }
     case EpubReaderMenuActivity::MenuAction::SELECT_CHAPTER: {
       const int spineIdx = currentSpineIndex;
+      ContentsPosition origin;
       // Release the section while the chapter list is up (mirrors the
       // TEXT_SETTINGS path): picking a chapter resets it anyway, and its
       // tens-of-KB footprint is the difference between the chapter list
@@ -1133,6 +1135,8 @@ void EpubReaderActivity::onReaderMenuConfirm(EpubReaderMenuActivity::MenuAction 
       // cached-position rebuild TEXT_SETTINGS uses.
       {
         RenderLock lock;
+        origin = {currentSpineIndex, static_cast<uint32_t>(chapterPosition().pageIndex),
+                  currentPageVisibleOffset.value_or(UINT32_MAX)};
         if (section) {
           rememberCurrentContentOffset();
           cachedSpineIndex = currentSpineIndex;
@@ -1143,13 +1147,14 @@ void EpubReaderActivity::onReaderMenuConfirm(EpubReaderMenuActivity::MenuAction 
       }
       startActivityForResult(
           std::make_unique<EpubReaderChapterSelectionActivity>(renderer, mappedInput, epub, spineIdx),
-          [this](const ActivityResult& result) {
+          [this, origin](const ActivityResult& result) {
             if (result.isCancelled) {
               openReaderMenu();
               return;
             }
             const auto& chapterResult = std::get<ChapterResult>(result.data);
             RenderLock lock;
+            rememberContentsPosition(origin);
             clearDeferredReposition();
             currentSpineIndex = chapterResult.spineIndex;
             pendingAnchor = chapterResult.anchor;
@@ -2179,7 +2184,10 @@ void EpubReaderActivity::renderContents(std::unique_ptr<Page> page, const int or
       page->renderImages(renderer, fontId, orientedMarginLeft, orientedMarginTop);
     }
     // A4 replaces the whole frame with its gray planes, including the status bar.
-    if (absoluteImageGrayscale || BoardConfig::isEegoA4()) renderStatusBar();
+    if (absoluteImageGrayscale || BoardConfig::isEegoA4())
+      renderStatusBar();
+    else if (overlay == Overlay::None)
+      renderContentsReturn(true);
   };
 
   if (pageHasImagesNeedingDecode) {
@@ -2504,7 +2512,7 @@ void EpubReaderActivity::drawClippingHighlights(const Page& page, const int font
           static_cast<unsigned>(chapterClippings), static_cast<unsigned>(highlightedWords), millis() - started);
 }
 
-void EpubReaderActivity::renderStatusBar() const {
+void EpubReaderActivity::renderStatusBar() {
   const int currentPage = section ? section->currentPage + 1 : 1;
   const float pageCount = section ? section->estimatedTotalPages() : 1;
   const float sectionChapterProg = (pageCount > 0) ? (static_cast<float>(currentPage) / pageCount) : 0;
@@ -2535,6 +2543,21 @@ void EpubReaderActivity::renderStatusBar() const {
 
   GUI.drawStatusBar(renderer, bookProgress, currentPage, pageCount, title, 0, textYOffset, true, currentPageBookmarked,
                     section ? section->isBuilding() : false);
+  if (overlay == Overlay::None) renderContentsReturn();
+}
+void EpubReaderActivity::restoreContentsPosition(ContentsPosition position) {
+  clearDeferredReposition();
+  pendingAnchor.clear();
+  pendingPageJump.reset();
+  pendingPercentJump = false;
+  pendingOffsetJump.reset();
+  currentSpineIndex = position.spine;
+  nextPageNumber = position.page;
+  if (position.offset != UINT32_MAX) pendingOffsetJump = position.offset;
+  resetSection();
+}
+ReaderActivity::ContentsPosition EpubReaderActivity::contentsPagePosition() const {
+  return {currentSpineIndex, static_cast<uint32_t>(section ? section->currentPage : nextPageNumber)};
 }
 
 // ---------------------------------------------------------------------------
@@ -2929,6 +2952,8 @@ void EpubReaderActivity::handleTextSheetInput(const ReaderToolbarUi::Routed& rou
       settleOverlayRefresh();
       const auto item = epub->getTocItem(n);
       if (item.spineIndex < 0) return;
+      rememberContentsPosition({currentSpineIndex, static_cast<uint32_t>(chapterPosition().pageIndex),
+                                currentPageVisibleOffset.value_or(UINT32_MAX)});
       clearDeferredReposition();
       currentSpineIndex = item.spineIndex;
       pendingAnchor = item.anchor;
@@ -3230,6 +3255,8 @@ void EpubReaderActivity::handleOverlayInput() {
       const auto item = epub->getTocItem(panelIndex);
       if (item.spineIndex != -1) {
         RenderLock lock;
+        rememberContentsPosition({currentSpineIndex, static_cast<uint32_t>(chapterPosition().pageIndex),
+                                  currentPageVisibleOffset.value_or(UINT32_MAX)});
         clearDeferredReposition();
         currentSpineIndex = item.spineIndex;
         pendingAnchor = item.anchor;

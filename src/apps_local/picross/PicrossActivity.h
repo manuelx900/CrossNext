@@ -67,8 +67,7 @@ class PicrossActivity final : public Activity {
   // open on the tab and page holding `selected`. Set whenever the picker
   // appears.
   bool menuFollowsSelection = true;
-  // Tool for physical-button activation. Touch always taps to fill and holds
-  // to mark; the capsule and side keys select the physical-button tool.
+  // Short taps use the selected tool; a held touch always marks.
   int mode = picrossui::ModeFill;
   bool interactionsReady = false;
   bool recorded = false;

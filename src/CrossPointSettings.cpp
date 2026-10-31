@@ -15,6 +15,7 @@
 #include "ReaderFontSizes.h"
 #include "SettingsList.h"
 #include "fontIds.h"
+#include "util/InterfaceThemeStyle.h"
 #include "util/ParagraphIndentMigration.h"
 
 namespace {
@@ -65,6 +66,7 @@ uint8_t CrossPointSettings::sleepTimeoutEnumToMinutes(const uint8_t legacyValue)
 
 void CrossPointSettings::toJson(JsonDocument& doc) const {
   const CrossPointSettings& s = *this;
+  doc["readingDailyGoal"] = readingDailyGoal;
 
   for (const auto& info : getSettingsList(nullptr, nullptr, /*forPersistence=*/true)) {
     if (!info.key) continue;
@@ -96,9 +98,21 @@ void CrossPointSettings::toJson(JsonDocument& doc) const {
   doc["fontSize"] = fontPointSize;
   doc["fontWeight"] = fontWeight;
   doc["libraryView"] = libraryView;
+  doc["libraryLayout"] = libraryLayout;
+  doc["libraryClassicGrid"] = libraryClassicGrid;
+  doc["libraryClassicExpanded"] = libraryClassicExpanded;
+  doc["librarySortMethod"] = librarySortMethod;
+  doc["librarySortDirections"] = librarySortDirections;
+  doc["libraryExpandedList"] = libraryExpandedList;
+  doc["libraryDisplay"] = libraryDisplay;
+  doc["libraryFileTypes"] = libraryFileTypes;
   doc["weekStartsSunday"] = weekStartsSunday;
   doc["readingFormats"] = readingFormats;
   doc["homeLayout"] = homeLayout;
+  doc["homeLayoutVersion"] = 2;
+  doc["interfaceThemeStyle"] = interfaceThemeStyle;
+  auto themeOverrides = doc["interfaceThemeOverrides"].to<JsonArray>();
+  for (int n = 2; n < menufont::kSectionCount; ++n) themeOverrides.add(interfaceThemeOverrides[n]);
   auto fonts = doc["menuFontOverrides"].to<JsonArray>();
   for (int n = 1; n < menufont::kSectionCount; ++n) fonts.add(menuFontOverrides[n]);
   auto contentFonts = doc["menuFontItems"].to<JsonObject>();
@@ -136,14 +150,26 @@ void CrossPointSettings::toJson(JsonDocument& doc) const {
 bool CrossPointSettings::fromJson(JsonVariantConst doc) {
   CrossPointSettings& s = *this;
   bool needsResave = false;
+  readingDailyGoal = doc["readingDailyGoal"].is<uint8_t>() && doc["readingDailyGoal"].as<uint8_t>() < 10
+                         ? doc["readingDailyGoal"].as<uint8_t>()
+                         : 0;
+  const auto commonTheme = doc["interfaceThemeStyle"];
+  interfaceThemeStyle = commonTheme.is<uint8_t>() ? uint8_t(interfacetheme::normalized(commonTheme.as<uint8_t>())) : 0;
+  const auto themeOverrides = doc["interfaceThemeOverrides"];
+  for (int n = 2; n < menufont::kSectionCount; ++n) {
+    const auto value = themeOverrides[n - 2];
+    interfaceThemeOverrides[n] = value.is<uint8_t>() ? uint8_t(interfacetheme::normalized(value.as<uint8_t>())) : 0;
+  }
   const auto fonts = doc["menuFontOverrides"];
   for (int n = 1; n < menufont::kSectionCount; ++n) {
     const auto value = fonts[n - 1];
     menuFontOverrides[n] = value.is<uint8_t>() ? uint8_t(menufont::normalizedOverride(value.as<uint8_t>())) : 0;
+    if (value.is<uint8_t>() && value.as<uint8_t>() != menuFontOverrides[n]) needsResave = true;
   }
   for (int n = 0; n < menufont::kItemCount; ++n) {
     const auto value = doc["menuFontItems"][menufont::kItemKeys[n]];
     menuFontItemOverrides[n] = value.is<uint8_t>() ? uint8_t(menufont::normalizedOverride(value.as<uint8_t>())) : 0;
+    if (value.is<uint8_t>() && value.as<uint8_t>() != menuFontItemOverrides[n]) needsResave = true;
   }
   if (doc["quickActions"].is<JsonArrayConst>() && doc["quickActions"].size() == quickui::kSlots) {
     uint16_t used = 0;
@@ -224,6 +250,10 @@ bool CrossPointSettings::fromJson(JsonVariantConst doc) {
     }
   }
 
+  const auto normalizedFont = uint8_t(menufont::normalized(menuFontStyle));
+  if (menuFontStyle != normalizedFont) needsResave = true;
+  menuFontStyle = normalizedFont;
+
   const auto indentSpaces = doc["paragraphIndentSpaces"];
   const bool hasSavedWidth = indentSpaces.is<int>();
   const int savedWidth = hasSavedWidth ? indentSpaces.as<int>() : 0;
@@ -271,11 +301,19 @@ bool CrossPointSettings::fromJson(JsonVariantConst doc) {
   }
   fontPointSize = storedFontSize;
   libraryView = (doc["libraryView"] | 0) == 1 ? 1 : 0;
+  libraryLayout = (doc["libraryLayout"] | 0) == 1 ? 1 : 0;
+  libraryClassicGrid = (doc["libraryClassicGrid"] | 1) != 0;
+  libraryClassicExpanded = (doc["libraryClassicExpanded"] | 0) != 0;
+  librarySortMethod = std::min(uint8_t(doc["librarySortMethod"] | 0), uint8_t(6));
+  librarySortDirections = uint8_t(doc["librarySortDirections"] | 1) & 0x7f;
+  libraryExpandedList = (doc["libraryExpandedList"] | 1) != 0;
+  libraryDisplay = uint8_t(doc["libraryDisplay"] | 7) & 7;
+  libraryFileTypes = uint8_t(doc["libraryFileTypes"] | 15) & 15;
   weekStartsSunday = (doc["weekStartsSunday"] | 0) == 1 ? 1 : 0;
   readingFormats = uint8_t(doc["readingFormats"] | 7) & 63;
   homeLayout = uint8_t(doc["homeLayout"] | HOME_FRAMED);
   // The retired third layout migrates to the remaining carousel.
-  if (homeLayout == 2) {
+  if (homeLayout == HOME_BOOX && (doc["homeLayoutVersion"] | 0) < 2) {
     homeLayout = HOME_CAROUSEL;
     needsResave = true;
   } else if (homeLayout >= HOME_LAYOUT_COUNT) {

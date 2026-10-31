@@ -254,10 +254,14 @@ void MinesweeperActivity::loop() {
     }
   }
 
-  if (interactionsReady && screen == ms::Screen::HowTo) {
-    if (const int direction = sidebuttons::shortStep(mappedInput)) {
-      howToPage = std::clamp(howToPage + direction, 0, 4);
-      requestUpdate();
+  if (interactionsReady && screen == ms::Screen::HowTo && surfaceRevealed()) {
+    const int swipe = sidebuttons::swipeStep(mappedInput);
+    if (const int direction = swipe ? swipe : sidebuttons::shortStep(mappedInput)) {
+      const int next = std::clamp(howToPage + direction, 0, 4);
+      if (next != howToPage) {
+        howToPage = next;
+        requestUpdate();
+      }
       return;
     }
   }

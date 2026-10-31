@@ -20,6 +20,7 @@ class Epub {
   struct SyncMetadata {
     std::string isbn;
     std::string asin;
+    std::string title, author, genre;
     std::string series;
     std::optional<float> seriesIndex;
   };
@@ -62,7 +63,7 @@ class Epub {
   ~Epub() = default;
   std::string& getBasePath() { return contentBasePath; }
   bool load(bool buildIfMissing = true, bool skipLoadingCss = false);
-  bool loadMetadata(std::string& title, std::string& author);
+  bool loadMetadata(std::string& title, std::string& author, SyncMetadata* details = nullptr);
   bool loadSyncMetadata(SyncMetadata& metadata);
   bool clearCache() const;
   void setupCacheDir() const;

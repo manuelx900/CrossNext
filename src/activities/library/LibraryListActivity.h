@@ -3,8 +3,10 @@
 #include <Bitmap.h>
 #include <HalMemory.h>
 #include <HalStorage.h>
+#include <LibraryFilter.h>
 #include <LibraryIndexFile.h>
 
+#include <array>
 #include <atomic>
 #include <cstdint>
 #include <memory>
@@ -13,22 +15,14 @@
 
 #include "RecentBooksStore.h"
 #include "activities/UiTabListActivity.h"
+#include "apps_local/library/LibraryControls.h"
 #include "apps_local/library/LibraryMenu.h"
 #include "components/OptionPopup.h"
 
-// One Library screen: every indexed book on the card shown by recency, title,
-// or author. The Recent shelf orders by file modification time (when a book
-// landed on the card) and pins the recently OPENED books from RecentBooksStore
-// on top, so active reads and fresh arrivals share one list.
-//
-// Rows use the Files browser's compact pixel style, combining title and author
-// into one wrapping label. The UiTabListActivity ring keeps 0 = sort strip and
-// 1..N = books.
-//
-// Only the visible window of rows is materialized per render (strings and
-// ListItems for at most one page). The ordinary shelf therefore keeps one page
-// of strings; an active search additionally uses one fallible uint16_t slot per
-// indexed book so an allocation failure remains recoverable on the C3.
+// The sort strip and book rows share UiTabListActivity's navigation ring.
+// Recently opened uses RecentBooksStore; other orders use the card index.
+// Only a visible window of row strings is retained. Active filters add one
+// fallible uint16_t result slot per candidate; paging reuses that map.
 class LibraryListActivity final : public UiTabListActivity {
  public:
   LibraryListActivity(GfxRenderer& renderer, MappedInputManager& mappedInput);
@@ -41,6 +35,9 @@ class LibraryListActivity final : public UiTabListActivity {
   int listCount() const override;
   void buildScreen(UiScreen& screen) override;
   void activateIndex(int index) override;
+  void onRowAction(const freeink::ui::ActionEvent& event) override;
+  freeink::ui::ListNav& activeNav() override;
+  void onBackButton() override { handleBackAction(); }
   void onRowLongPress(int index) override;
   int tabCount() const override;
   int activeTab() const override;
@@ -66,6 +63,35 @@ class LibraryListActivity final : public UiTabListActivity {
   static constexpr freeink::ui::ActionId ACTION_REBUILD = ACTION_SEARCH + 1;
   static constexpr freeink::ui::ActionId ACTION_BACK = ACTION_REBUILD + 1;
   static constexpr freeink::ui::ActionId ACTION_VIEW = ACTION_BACK + 1;
+  enum class View : uint8_t { Books, Settings, Categories, Facets };
+  View view = View::Books;
+  View settingsReturn = View::Books;
+  bool preferencesChanged = false;
+  freeink::ui::ListNav preferencesNav;
+  freeink::ui::ListItem preferenceItems[int(libraryui::Preference::Count)]{};
+  libraryui::Preferences preferences() const;
+  void savePreferences(libraryui::Preferences value);
+  void showPreferences();
+  void closePreferences();
+  void activatePreference(int row);
+  void buildPreferences(UiScreen& screen);
+  void buildFilterRows(UiScreen& screen);
+  void showCategories();
+  void chooseFacet(int row);
+  bool resultMapped() const { return filtering() || libraryui::resultMapRequired(preferences()); }
+  void openSortPicker();
+  void openFilterMenu();
+  void openFacetPicker(library::Facet facet);
+  bool filtering() const { return !query.empty() || facetFilter.active(); }
+  uint16_t facetOrdinal(int row) const;
+  library::LibraryFilter facetFilter;
+  HalMemory::PsramBuffer facetChoices;
+  uint16_t facetCount = 0;
+  enum class PendingMenu : int8_t { None = -1, Settings, Rebuild };
+  PendingMenu pendingFilterMenu = PendingMenu::None;
+  char filterStatus[128]{};
+  library::Facet facetKind = library::Facet::Author;
+  std::string facetNames[9];
 
   // Walk the card and write a fresh index. Blocking, with a popup: at ~70 books
   // it is well under a second, and it only runs when the index is missing or the
@@ -108,7 +134,8 @@ class LibraryListActivity final : public UiTabListActivity {
   int rowFor(int entry) const;
   // fileName, when asked for, is the on-card name the row's icon derives from
   // (the display title may come from metadata and carry no extension).
-  bool rowTextFor(int entry, std::string& title, std::string& author, std::string* fileName = nullptr);
+  bool rowTextFor(int entry, std::string& title, std::string& author, std::string* fileName = nullptr,
+                  uint64_t* bytes = nullptr);
   uint32_t titleInitialFor(int entry);
   bool buildGroupStarts();
   int groupForBook(int bookEntry) const;
@@ -121,6 +148,8 @@ class LibraryListActivity final : public UiTabListActivity {
   void buildGrid(UiScreen& screen);
   static constexpr freeink::ui::ActionId ACTION_GRID_PAGE = ACTION_VIEW;
   bool gridView() const;
+  uint8_t& recentViewSetting() const;
+  uint8_t& expandedListSetting() const;
   int gridPageSize() const;
   void toggleView();
   bool loadPendingCover();
@@ -161,6 +190,7 @@ class LibraryListActivity final : public UiTabListActivity {
   // read order; the modification-time list follows with those books skipped.
   // Entries below pinnedCount() are store rows; the rest go through rowFor().
   int pinnedCount() const;
+  int storeIndexFor(int entry) const;
   // Re-match the store against the index (chunked scan). Call whenever the
   // index or the store changes.
   void resolvePinned();
@@ -204,6 +234,8 @@ class LibraryListActivity final : public UiTabListActivity {
   size_t windowCapacity = 0;
   bool windowReadFailed = false;
   std::vector<freeink::ui::ListItem> winItems;
+  static constexpr size_t MAX_VISIBLE_WINDOW = 24;
+  bool windowLight = false;
   std::vector<std::string> winTitles;
   std::vector<std::string> winAuthors;
   std::vector<std::string> winHeaders;

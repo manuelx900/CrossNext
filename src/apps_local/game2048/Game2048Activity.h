@@ -26,4 +26,6 @@ class Game2048Activity final : public Activity {
   unsigned long lastSave = 0;
   int selected = 0;
   bool dirty = false, saveFailed = false, ready = false;
+  bool winShown = false;
+  game2048::Result result = game2048::Result::None;
 };

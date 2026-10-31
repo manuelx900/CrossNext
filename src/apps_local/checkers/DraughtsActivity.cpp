@@ -219,7 +219,8 @@ void DraughtsActivity::loop() {
     return;
   }
   if (ready && view == draughtsui::View::Help) {
-    if (const int direction = sidebuttons::shortStep(mappedInput)) {
+    if (const int direction = sidebuttons::swipeStep(mappedInput) ? sidebuttons::swipeStep(mappedInput)
+                                                                  : sidebuttons::shortStep(mappedInput)) {
       action(draughtsui::HelpPage, direction);
       return;
     }

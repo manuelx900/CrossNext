@@ -267,3 +267,17 @@ TEST(ContentOpfParserCover, ReadingParserStillOpensManifestCache) {
   EXPECT_EQ(Storage.writeOpens, 1);
   EXPECT_EQ(Storage.readOpens, 1);
 }
+
+TEST(ContentOpfParserMetadata, ReadsFirstGenreAlongsideSeriesAndVolume) {
+  const std::string xml = R"(<package xmlns:dc="urn:dc"><metadata><dc:title>Book</dc:title>
+    <dc:subject>Ciencia &amp; ficción</dc:subject><dc:subject>Other</dc:subject>
+    <meta name="calibre:series" content="Saga"/><meta name="calibre:series_index" content="2.5"/>
+    </metadata></package>)";
+  ContentOpfParser parser("", "", xml.size(), nullptr, true);
+  ASSERT_TRUE(parser.setup());
+  EXPECT_GT(parser.write(reinterpret_cast<const uint8_t*>(xml.data()), xml.size()), 0u);
+  EXPECT_EQ(parser.genre, "Ciencia & ficción");
+  EXPECT_EQ(parser.series, "Saga");
+  ASSERT_TRUE(parser.seriesIndex);
+  EXPECT_FLOAT_EQ(*parser.seriesIndex, 2.5f);
+}

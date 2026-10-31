@@ -25,7 +25,7 @@ void ribbon(toybox::Screen& s, fui::Rect r) {
     for (unsigned i = 0; i < 5; ++i) s.target().line(points[i], points[(i + 1) % 5], BORDER, ink);
   }
   s.target().fill(rect(r.x + 3, r.y + 3, r.width, r.height), ink);
-  s.target().fill(r, paper);
+  lightui::surface(s.target(), r, paper);
   frame(s, r);
   text(s, r.inset({4, 8, 4, 8}), tr(STR_PET_COLLECTION_TITLE), 1, false, fui::TextAlign::Center);
 }

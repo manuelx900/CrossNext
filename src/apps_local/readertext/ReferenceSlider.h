@@ -3,22 +3,30 @@
 #include <I18n.h>
 
 #include <algorithm>
+
+#include "../ui/LightUi.h"
 namespace referenceslider {
 namespace fui = freeink::ui;
 template <typename Screen, typename Spec>
 void build(Screen& screen, const Spec& spec, bool touch) {
-  const auto safe = screen.device().safeRect();
+  auto safe = screen.device().safeRect();
+  if (chrome::lightHeader) {
+    const int header = std::clamp(chrome::headerHeight - int(safe.y), 0, int(safe.height));
+    safe.y += header;
+    safe.height -= header;
+  }
   const int width = std::min(int(safe.width) - 20, 560);
   const int height = std::min(int(safe.height) - 20, spec.subtitle ? 372 : 336);
   const auto box = fui::centeredRect(safe, fui::Size{int16_t(width), int16_t(height)});
   const auto black = fui::Paint::solid(fui::Color::Black), white = fui::Paint::solid(fui::Color::White);
-  screen.target().fill(box, white);
-  screen.target().stroke(box, black, 3);
+  if (chrome::lightHeader) lightui::shade(screen.target(), screen.device().screen());
+  screen.target().fill(box, white, chrome::lightHeader ? 8 : 0);
+  screen.target().stroke(box, black, chrome::lightHeader ? 1 : 3, chrome::lightHeader ? 8 : 0);
   // The guard must precede the controls: the newest hit region wins.
   screen.frame().hit(box, spec.chromeAction, 0, fui::InputTouch);
   fui::TextStyle text;
   text.font = 0;
-  text.bold = true;
+  text.bold = !chrome::lightHeader;
   text.align = fui::TextAlign::Center;
   screen.target().text(fui::makeRect(box.x + 12, box.y + 16, box.width - 24, 42), spec.title, text);
   int y = box.y + 62;
@@ -26,11 +34,11 @@ void build(Screen& screen, const Spec& spec, bool touch) {
     screen.target().text(fui::makeRect(box.x + 12, y, box.width - 24, 34), spec.subtitle, text);
     y += 36;
   }
-  text.font = 1;
+  text.font = chrome::lightHeader ? 0 : 1;
   screen.target().text(fui::makeRect(box.x + 12, y, box.width - 24, 48), spec.readout, text);
   y += 54;
   const auto slider = fui::makeRect(box.x + 30, y + 22, box.width - 60, 44);
-  text.font = 3;
+  text.font = chrome::lightHeader ? 4 : 3;
   text.align = fui::TextAlign::Left;
   if (spec.minLabel) screen.target().text(fui::makeRect(slider.x - 8, y - 4, slider.width, 30), spec.minLabel, text);
   text.align = fui::TextAlign::Right;
@@ -51,8 +59,9 @@ void build(Screen& screen, const Spec& spec, bool touch) {
   button.styles.normal.border = black;
   button.styles.normal.borderWidth = 2;
   button.styles.selected = button.styles.active = button.styles.normal;
-  button.text.font = 1;
-  button.text.bold = true;
+  if (chrome::lightHeader) button.styles = lightui::controlStyles();
+  button.text.font = chrome::lightHeader ? 0 : 1;
+  button.text.bold = !chrome::lightHeader;
   button.text.align = fui::TextAlign::Center;
   button.minTouchSize = 0;
   button.action = spec.stepAction;
@@ -66,8 +75,8 @@ void build(Screen& screen, const Spec& spec, bool touch) {
     screen.target().line({int16_t(x - 11), int16_t(y)}, {int16_t(x + 11), int16_t(y)}, 3, black);
     if (n) screen.target().line({int16_t(x), int16_t(y - 11)}, {int16_t(x), int16_t(y + 11)}, 3, black);
   }
-  button.styles.normal.background = black;
-  button.styles.normal.foreground = white;
+  button.styles.normal.background = chrome::lightHeader ? white : black;
+  button.styles.normal.foreground = chrome::lightHeader ? black : white;
   button.styles.selected = button.styles.active = button.styles.normal;
   button.action = spec.okAction;
   button.value = 0;

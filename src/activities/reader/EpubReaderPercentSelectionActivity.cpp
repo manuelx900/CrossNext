@@ -192,7 +192,7 @@ void EpubReaderPercentSelectionActivity::buildPercentScreen(UiScreen& screen) {
   spec.chromeAction = ACTION_CHROME;
   spec.hintLine1 = hint1;
   spec.hintLine2 = hint2;
-  buildSliderDialogScreen(screen, uiTarget, mappedInput, spec);
+  buildSliderDialogScreen(screen, uiTarget, mappedInput, renderer, spec);
 }
 
 void EpubReaderPercentSelectionActivity::render(RenderLock&&) {

@@ -4,8 +4,8 @@
 
 CrossNext reúne lectura, herramientas de estudio y juegos en el **Xteink X4 Pro**.
 Lee un libro, guarda vocabulario, repasa flashcards, registra tu progreso y juega
-sin cambiar de dispositivo. Elige entre Inicio con marco o carrusel y personaliza
-sus accesos, los controles de lectura y tus fondos de pantalla.
+sin cambiar de dispositivo. Elige Marco, Carrusel, Carrusel 2 o Estantería para
+Inicio y personaliza sus accesos, los controles de lectura y tus fondos de pantalla.
 
 [![Apoyar en Ko-fi](site/assets/support-ko-fi.svg)](https://ko-fi.com/manuelx900)
 
@@ -45,12 +45,12 @@ Elige un huevo, ponle nombre y acompáñalo mientras crece con tus lecturas.
 
 Instala **CrossNext-Resources.zip** en la microSD para usar PET.
 Consulta [la guía de PET](docs/apps/pet.md) y
-[las novedades de v1.3.1](docs/releases/CrossNext-v1.3.1.md).
+[las novedades de v1.4.0](docs/releases/CrossNext-v1.4.0.md).
 
 La interfaz utiliza Noto Sans con los ajustes nuevos. Puedes elegir Noto Sans,
-Jersey 25, Ubuntu o Noto Serif para toda la interfaz, por sección o para una app
-o juego concreto. La letra de lectura se configura por separado. Se conservan
-las preferencias de letra guardadas.
+Ubuntu o Noto Serif para toda la interfaz, por sección o para una app o juego.
+La letra de lectura se configura por separado. Las preferencias de Jersey 25
+pasan a Noto Sans.
 
 ## Qué incluye
 
@@ -104,12 +104,12 @@ La sincronización opcional con **CrossPoint Sync** reúne el historial de tu cu
 
 ## Archivos para instalar
 
-El paquete `CrossNext-X4PRO-Firmware-v1.3.1.zip` contiene dos imágenes y sus sumas SHA-256:
+El paquete `CrossNext-X4PRO-Firmware-v1.4.0.zip` contiene dos imágenes y sus sumas SHA-256:
 
 | Archivo | Uso |
 | --- | --- |
-| `CrossNext-X4PRO-Firmware-v1.3.1.bin` | Aplicación para X4 Pro; actualización compatible/OTA o dirección `0x10000`. |
-| `CrossNext-X4PRO-Firmware-v1.3.1-factory.bin` | Imagen completa para instalación/recuperación del X4 Pro, en `0x0`. |
+| `CrossNext-X4PRO-Firmware-v1.4.0.bin` | Aplicación para X4 Pro; actualización compatible/OTA o dirección `0x10000`. |
+| `CrossNext-X4PRO-Firmware-v1.4.0-factory.bin` | Imagen completa para instalación/recuperación del X4 Pro, en `0x0`. |
 
 Usa el paquete que corresponda al modelo y conserva una copia de la microSD antes
 de actualizar. Los X4/X3 normales usan otro chip. Consulta
@@ -158,7 +158,7 @@ consulta `THIRD-PARTY-NOTICES.txt`, `SOURCES.json` y `licenses/` en el paquete d
 microSD. Las portadas, libros, diccionarios y fuentes no cambian de licencia por
 estar incluidos en CrossNext.
 
-[Novedades de v1.3.1](docs/releases/CrossNext-v1.3.1.md)
+[Novedades de v1.4.0](docs/releases/CrossNext-v1.4.0.md)
 
 ## Apoya CrossNext
 

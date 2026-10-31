@@ -55,7 +55,7 @@ void row(toybox::Screen& s, fui::Rect r, const char* title, const char* sub, con
          fui::ActionId action, int value = 0, bool primary = false) {
   primary = s.frame().buttonSelected(action, value, primary);
   if (primary)
-    s.target().fill(r, dashboard::ink);
+    lightui::surface(s.target(), r, dashboard::ink);
   else
     dashboard::frame(s, r, 2);
   mark(s,
@@ -202,7 +202,7 @@ void library(toybox::Screen& s, const LibraryModel& m) {
     const auto& d = m.rows[n];
     const auto r = makeRect(b.x, listTop + n * (wide ? 54 : 66), w, wide ? 50 : 60);
     const bool selected = s.frame().buttonSelected(OpenDeck, n);
-    if (selected) s.target().fill(r, dashboard::ink);
+    if (selected) lightui::surface(s.target(), r, dashboard::ink);
     dashboard::frame(s, r, 2);
     mark(s, makeRect(r.x + 10, r.y + (r.height - 28) / 2, 28, 28), d.folder ? icon_folder_32 : extra_dashboard_cards_32,
          selected);
@@ -282,35 +282,47 @@ void deck(toybox::Screen& s, const studyui::DeckModel& m) {
       extra_dashboard_undo_32, Back);
 }
 void history(toybox::Screen& s, const HistoryModel& m) {
-  const auto b = begin(s, tr(STR_FLASH_HISTORY));
+  const auto b = begin(s, tr(STR_FLASH_HISTORY_HEADER));
   const bool wide = b.width > b.height;
   const int w = wide ? (b.width - 18) / 2 : b.width;
-  row(s, makeRect(b.x, b.y + 14, w, 70), m.filter, nullptr, extra_dashboard_cards_32, Filter);
-  const auto left = makeRect(b.x + 48, b.y + 108, 48, 48), right = makeRect(b.x + w - 96, b.y + 108, 48, 48);
+  const auto left = makeRect(b.x, b.y + 4, 44, 44), right = makeRect(b.x + w - 44, b.y + 4, 44, 44);
   dashboard::frame(s, left, 2);
   dashboard::chevron(s.target(), left, false, true);
   s.frame().hit(left, Month, -1);
   dashboard::frame(s, right, 2);
   dashboard::chevron(s.target(), right);
   s.frame().hit(right, Month, 1);
-  caps(s, makeRect(left.right() + 12, left.y, w - 216, 48), m.month, 1);
+  caps(s, makeRect(left.right() + 12, left.y, w - 112, 44), m.month, 0, 1, fui::TextAlign::Center);
   char text[32];
   std::snprintf(text, sizeof(text), "%d", m.sessions);
-  metric(s, makeRect(b.x, b.y + 180, w / 2, 92), text, tr(STR_FLASH_SESSIONS), extra_dashboard_bars_32);
+  metric(s, makeRect(b.x, b.y + 64, (w - 12) / 2, 92), text, tr(STR_FLASH_SESSIONS), extra_dashboard_bars_32);
   std::snprintf(text, sizeof(text), "%d", m.cards);
-  metric(s, makeRect(b.x + w / 2, b.y + 180, w - w / 2, 92), text,
+  metric(s, makeRect(b.x + (w - 12) / 2 + 12, b.y + 64, w - (w - 12) / 2 - 12, 92), text,
          wide ? tr(STR_FLASH_CARDS) : tr(STR_FLASH_CARDS_STUDIED), extra_dashboard_cards_32);
-  const int x = wide ? b.x + w + 18 : b.x, y = wide ? b.y : b.y + 300;
+  const int x = wide ? b.x + w + 18 : b.x, y = wide ? b.y : b.y + 172;
   section(s, makeRect(x, y, w, 36), tr(STR_FLASH_SESSIONS));
   if (m.error || !m.count)
     prose(s, makeRect(x + 12, y + 60, w - 24, 120), m.error ? tr(STR_FLASH_HISTORY_ERROR) : tr(STR_FLASH_EMPTY_HISTORY),
           4);
-  for (int n = 0; n < m.count; ++n) {
+  const int capacity = historyCapacity(s.device().width, s.device().height);
+  const int pitch = (b.bottom() - 66 - y - 44) / capacity;
+  for (int n = 0; n < std::min(m.count, capacity); ++n) {
     const auto& item = m.rows[n];
     char detail[160], time[40];
     duration(time, sizeof(time), item.session.tookMs, item.session.hasTiming);
     std::snprintf(detail, sizeof(detail), "%s · %u · %s", item.deck, unsigned(item.session.cards), time);
-    row(s, makeRect(x, y + 48 + n * 92, w, 82), item.date, detail, extra_calendar_32, OpenSession, n);
+    const auto box = makeRect(x, y + 44 + n * pitch, w, pitch - (wide ? 4 : 8));
+    dashboard::frame(s, box, 2);
+    mark(s, makeRect(box.x + 10, box.y + (box.height - 28) / 2, 28, 28), extra_calendar_32);
+    fittext::draw(s.target(), makeRect(box.x + 50, box.y + 4, box.width - 84, wide ? 24 : 28), item.date, wide ? 3 : 4,
+                  1);
+    fui::TextStyle detailStyle;
+    detailStyle.font = 3;
+    detailStyle.maxLines = 1;
+    s.target().text(makeRect(box.x + 50, box.y + (wide ? 25 : 34), box.width - 84, box.height - (wide ? 27 : 38)),
+                    detail, detailStyle);
+    dashboard::chevron(s.target(), makeRect(box.right() - 30, box.y, 24, box.height));
+    s.frame().hit(box, OpenSession, n, fui::InputTouch);
   }
   paging(s, makeRect(x, b.bottom() - 54, w, 48), m.page, m.pages);
 }
@@ -396,8 +408,8 @@ void cards(toybox::Screen& s, const CardsModel& m) {
   for (int n = 0; n < m.count; ++n) {
     const auto r = makeRect(b.x + n % columns * (width + 12), b.y + 56 + n / columns * (height + 4), width, height);
     const bool selected = s.frame().buttonSelected(OpenCard, n);
-    s.target().fill(r, selected ? dashboard::ink : dashboard::paper);
-    s.target().stroke(r, dashboard::ink, 1);
+    lightui::surface(s.target(), r, selected ? dashboard::ink : dashboard::paper);
+    lightui::outline(s.target(), r, dashboard::ink, 1);
     fui::TextStyle text;
     text.font = 4;
     text.maxLines = 1;

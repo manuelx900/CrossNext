@@ -228,7 +228,9 @@ class EpubReaderActivity final : public ReaderActivity {
   void renderContents(std::unique_ptr<Page> page, int orientedMarginTop, int orientedMarginRight,
                       int orientedMarginBottom, int orientedMarginLeft);
   void drawClippingHighlights(const Page& page, int fontId, int orientedMarginTop, int orientedMarginLeft) const;
-  void renderStatusBar() const;
+  void renderStatusBar();
+  void restoreContentsPosition(ContentsPosition position) override;
+  ContentsPosition contentsPagePosition() const override;
   void applyOrientation(uint8_t orientation);
   void applyInitialOrientation() override;
   // The orientation the current layout was built for. The control center's

@@ -58,6 +58,8 @@ void FrontlightPanelActivity::onEnter() {
 
   syncLightState(true);
   lightOnChanged = false;
+  backdropPainted = false;
+  lastClockPoll = millis();
 
   resetUi();
   app.on(ACTION_BRIGHTNESS, &FrontlightPanelActivity::onBrightnessEvent, this);
@@ -170,6 +172,7 @@ void FrontlightPanelActivity::runTile(const int idx) {
         ReaderUtils::applyOrientation(renderer, SETTINGS.orientation);
         renderer.clearScreen();
         panelBottom = 0;
+        backdropPainted = false;
         resetUi();
       }
       cleanRefreshPending = true;
@@ -190,6 +193,7 @@ void FrontlightPanelActivity::runTile(const int idx) {
           RenderLock lock;
           syncLightState(true);
           suspendedForWifi = false;
+          backdropPainted = false;
           requestUpdate();
         });
       } else
@@ -290,7 +294,12 @@ void FrontlightPanelActivity::loop() {
     persistLightSettings();
     return;
   }
-  const auto touch = routeTouch(mappedInput, false, /*routeHeld=*/true);
+  int touchX = -1, touchY = -1;
+  const bool held = mappedInput.isScreenTouchHeld(touchX, touchY);
+  const bool moved = held && (touchX != lastTouchX || touchY != lastTouchY);
+  lastTouchX = held ? touchX : -1;
+  lastTouchY = held ? touchY : -1;
+  const auto touch = routeTouch(mappedInput, false, /*routeHeld=*/moved);
   if (touch.routed) {
     if (app.invalidated()) requestUpdate();
     if (touch) {
@@ -316,7 +325,6 @@ void FrontlightPanelActivity::loop() {
   if (draggingSlider) {
     if (!touch.snap.touchHeld) {
       draggingSlider = false;
-      cleanRefreshPending = true;
       requestUpdate();
     }
     return;
@@ -365,8 +373,12 @@ void FrontlightPanelActivity::buildPanelScreen(UiScreen& screen) {
   quickui::Model model;
   tm local{};
   const auto now = std::time(nullptr);
-  if ((now > 0 && localtime_r(&now, &local) && local.tm_year >= 120) || halClock.localTime(local))
+  if ((now > 0 && localtime_r(&now, &local) && local.tm_year >= 120) || halClock.localTime(local)) {
     std::snprintf(model.time, sizeof(model.time), "%02d:%02d", local.tm_hour, local.tm_min);
+    shownMinute = local.tm_hour * 60 + local.tm_min;
+  } else {
+    shownMinute = -1;
+  }
   std::copy(std::begin(SETTINGS.quickActions), std::end(SETTINGS.quickActions), model.shortcuts);
   model.wifiConnected = WiFi.status() == WL_CONNECTED;
   model.brightness = lightOn ? brightness : 0;
@@ -380,6 +392,7 @@ void FrontlightPanelActivity::buildPanelScreen(UiScreen& screen) {
   model.touch = mappedInput.hasTouch();
   model.touchOn = !mappedInput.isTouchscreenLocked();
   model.lightOn = lightOn;
+  model.shadeBackdrop = !backdropPainted;
   quickui::build(screen, model, panelWork);
 }
 
@@ -389,6 +402,7 @@ void FrontlightPanelActivity::render(RenderLock&&) {
   // fui::sheet draws the card body, its bottom rule, and the grabber during
   // renderUi(); the battery band at the card's top is part of the screen build.
   renderUi();
+  backdropPainted = true;
 
   // A tile that rewrote the whole frame (night mode) re-drives every pixel
   // once; ordinary repaints stay on the fast path. HALF: strong enough to

@@ -334,7 +334,15 @@ void SudokuActivity::loop() {
     return;
   }
 
-  if (screen == sk::Screen::HowTo) {
+  if (screen == sk::Screen::HowTo && interactionsReady && surfaceRevealed()) {
+    if (const int direction = sidebuttons::swipeStep(mappedInput)) {
+      const int next = std::clamp(howToPage + direction, 0, sudokuui::howToPages() - 1);
+      if (next != howToPage) {
+        howToPage = next;
+        requestUpdate();
+      }
+      return;
+    }
     const bool forward = mappedInput.wasReleased(MappedInputManager::Button::Down);
     const bool backward = mappedInput.wasReleased(MappedInputManager::Button::Up);
     if (forward || backward) {

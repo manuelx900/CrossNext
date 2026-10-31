@@ -20,10 +20,15 @@ void choices(toybox::Screen& screen, fui::Rect band, uint8_t selected, fui::Acti
     const auto value = flashcards::kTextSizeOrder[n];
     const int start = n * extent / flashcards::kTextSizeCount + n * gap;
     const int end = (n + 1) * extent / flashcards::kTextSizeCount + n * gap;
-    const auto cell = makeRect(band.x + start, band.y, end - start, band.height);
+    const auto cell = chrome::lightHeader ? lightui::segmentRect(band, n, flashcards::kTextSizeCount)
+                                          : makeRect(band.x + start, band.y, end - start, band.height);
     const bool current = value == selected;
-    if (current) screen.target().fill(cell, dashboard::ink);
-    screen.target().stroke(cell, dashboard::ink, 2);
+    if (chrome::lightHeader)
+      lightui::segment(screen.target(), band, n, flashcards::kTextSizeCount, current);
+    else {
+      if (current) lightui::surface(screen.target(), cell, dashboard::ink);
+      lightui::outline(screen.target(), cell, dashboard::ink, 2);
+    }
     char label[24];
     std::snprintf(label, sizeof(label), tr(STR_CARD_POINT_SIZE_FORMAT), unsigned(flashcards::kTextPoints[value]));
     fittext::draw(screen.target(), cell.inset({2, 3, 2, 3}), label, 3, 1, fui::TextAlign::Center,

@@ -25,6 +25,124 @@ std::vector<uint8_t> makeBlob(const uint64_t pathHash, const std::initializer_li
 
 }  // namespace
 
+TEST(LibraryIndexFile, BrowseSnapshotEliminatesRepeatedFacetIoAndReopensFresh) {
+  library::ClixHeader header{};
+  std::memcpy(header.magic, library::CLIX_MAGIC, sizeof(header.magic));
+  header.formatVersion = library::CLIX_FORMAT_VERSION;
+  header.foldVersion = library::CLIX_FOLD_VERSION;
+  header.bookCount = library::CLIX_MAX_RECORDS;
+  const auto blob = makeBlob(17, {'A', 1, 'B', 1, 'C', 1, 'D', 1, 'E', 1, 'F'});
+  library::layoutSections(header, 0, blob.size());
+  std::vector<uint8_t> bytes(header.selfSize, 0);
+  std::memcpy(bytes.data(), &header, sizeof(header));
+  std::memcpy(bytes.data() + header.nameStart, blob.data(), blob.size());
+  for (uint16_t i = 0; i < header.bookCount; ++i) {
+    library::ClixRecord record{};
+    record.nameLen = 1;
+    std::memcpy(bytes.data() + header.recordStart + i * sizeof(record), &record, sizeof(record));
+    for (unsigned section = 0; section < 5; ++section)
+      std::memcpy(bytes.data() + header.permStart + (section * header.bookCount + i) * sizeof(i), &i, sizeof(i));
+  }
+  Storage.setFile("/browse.clx", bytes);
+  library::LibraryIndexFile index;
+  ASSERT_TRUE(index.open("/browse.clx"));
+  const auto scan = [&] {
+    for (uint16_t row = 0; row < header.bookCount; ++row) {
+      const auto ordinal = index.ordinalForRow(library::SortOrder::GenreAsc, row);
+      ASSERT_EQ(ordinal, row);
+      library::ClixRecord record{};
+      ASSERT_TRUE(index.readRecord(ordinal, record));
+      std::string value;
+      ASSERT_TRUE(index.readGenre(record, value));
+      ASSERT_EQ(value, "F");
+      ASSERT_TRUE(index.readName(record, value));
+      ASSERT_EQ(value, "A");
+    }
+  };
+  HalFile::resetIoCounts();
+  scan();
+  const auto uncachedReads = HalFile::readCount();
+  HalFile::resetIoCounts();
+  ASSERT_TRUE(index.cacheForBrowsing());
+  const auto coldReads = HalFile::readCount();
+  std::printf("4096-record metadata scan: %zu file reads; snapshot load: %zu reads; warm scans: 0 reads expected\n",
+              uncachedReads, coldReads);
+  EXPECT_LE(coldReads, (header.selfSize + 32767) / 32768);
+  EXPECT_GT(uncachedReads, coldReads * 1000);
+  HalFile::resetIoCounts();
+  scan();
+  scan();
+  ASSERT_TRUE(index.cacheForBrowsing());
+  EXPECT_EQ(HalFile::readCount(), 0u);
+  EXPECT_EQ(HalFile::seekCount(), 0u);
+  index.dropBrowseCache();
+  EXPECT_FALSE(index.cacheForBrowsing());
+  scan();
+  EXPECT_GT(HalFile::readCount(), 0u);
+  index.close();
+  bytes[header.nameStart + sizeof(uint64_t)] = 'Z';
+  Storage.setFile("/browse.clx", std::move(bytes));
+  ASSERT_TRUE(index.open("/browse.clx"));
+  ASSERT_TRUE(index.cacheForBrowsing());
+  library::ClixRecord record{};
+  ASSERT_TRUE(index.readRecord(0, record));
+  std::string name;
+  ASSERT_TRUE(index.readName(record, name));
+  EXPECT_EQ(name, "Z");
+}
+
+TEST(LibraryIndexFile, BrowseSnapshotOomKeepsFileReaderAndAttemptsOncePerOpen) {
+  library::ClixHeader header{};
+  std::memcpy(header.magic, library::CLIX_MAGIC, sizeof(header.magic));
+  header.formatVersion = library::CLIX_FORMAT_VERSION;
+  header.foldVersion = library::CLIX_FOLD_VERSION;
+  header.bookCount = 1;
+  library::layoutSections(header, 0, 0);
+  std::vector<uint8_t> bytes(header.selfSize, 0);
+  std::memcpy(bytes.data(), &header, sizeof(header));
+  Storage.setFile("/oom.clx", std::move(bytes));
+  library::LibraryIndexFile index;
+  ASSERT_TRUE(index.open("/oom.clx"));
+  HalMemory::unavailable = true;
+  HalMemory::attempts = 0;
+  EXPECT_FALSE(index.cacheForBrowsing());
+  EXPECT_FALSE(index.cacheForBrowsing());
+  EXPECT_EQ(HalMemory::attempts, 1u);
+  HalMemory::unavailable = false;
+  library::ClixRecord record{};
+  EXPECT_TRUE(index.readRecord(0, record));
+  EXPECT_FALSE(index.ioFailed());
+  index.close();
+  ASSERT_TRUE(index.open("/oom.clx"));
+  EXPECT_TRUE(index.cacheForBrowsing());
+}
+
+TEST(LibraryIndexFile, BrowseSnapshotRejectsOversizeAndShortRead) {
+  library::ClixHeader header{};
+  std::memcpy(header.magic, library::CLIX_MAGIC, sizeof(header.magic));
+  header.formatVersion = library::CLIX_FORMAT_VERSION;
+  header.foldVersion = library::CLIX_FOLD_VERSION;
+  library::layoutSections(header, 0, library::LibraryIndexFile::BROWSE_CACHE_LIMIT);
+  std::vector<uint8_t> bytes(header.selfSize, 0);
+  std::memcpy(bytes.data(), &header, sizeof(header));
+  Storage.setFile("/large.clx", std::move(bytes));
+  library::LibraryIndexFile index;
+  ASSERT_TRUE(index.open("/large.clx"));
+  HalMemory::attempts = 0;
+  EXPECT_FALSE(index.cacheForBrowsing());
+  EXPECT_EQ(HalMemory::attempts, 0u);
+  EXPECT_FALSE(index.ioFailed());
+  index.close();
+  library::layoutSections(header, 0, 0);
+  bytes.assign(header.selfSize, 0);
+  std::memcpy(bytes.data(), &header, sizeof(header));
+  Storage.setFile("/short.clx", std::move(bytes));
+  ASSERT_TRUE(index.open("/short.clx"));
+  Storage.truncate(0);
+  EXPECT_FALSE(index.cacheForBrowsing());
+  EXPECT_TRUE(index.ioFailed());
+}
+
 TEST(LibraryIndexFile, MissingIndexDoesNotCloseAnUninitializedHandle) {
   Storage.clearFile();
   HalFile::resetInvalidCloseCount();
@@ -51,6 +169,9 @@ TEST(LibraryIndexFile, ReadsEveryStoredOrderInBothDirections) {
   const uint16_t arrivalOrder[] = {1, 2, 0};
   std::memcpy(bytes.data() + library::authorOrderOffset(header, 0), authorOrder, sizeof(authorOrder));
   std::memcpy(bytes.data() + library::arrivalOrderOffset(header, 0), arrivalOrder, sizeof(arrivalOrder));
+  for (unsigned section = 2; section < 5; ++section)
+    std::memcpy(bytes.data() + header.permStart + section * header.bookCount * sizeof(uint16_t), authorOrder,
+                sizeof(authorOrder));
   Storage.setFile("/library.clx", std::move(bytes));
 
   library::LibraryIndexFile index;
@@ -68,6 +189,13 @@ TEST(LibraryIndexFile, ReadsEveryStoredOrderInBothDirections) {
   expectOrder(library::SortOrder::TitleDesc, 2, 1, 0);
   expectOrder(library::SortOrder::AuthorAsc, 2, 0, 1);
   expectOrder(library::SortOrder::AuthorDesc, 1, 0, 2);
+  expectOrder(library::SortOrder::AuthorFirstAsc, 2, 0, 1);
+  expectOrder(library::SortOrder::AuthorFirstDesc, 1, 0, 2);
+  expectOrder(library::SortOrder::SeriesAsc, 2, 0, 1);
+  expectOrder(library::SortOrder::SeriesDesc, 1, 0, 2);
+  expectOrder(library::SortOrder::GenreAsc, 2, 0, 1);
+  expectOrder(library::SortOrder::GenreDesc, 1, 0, 2);
+  expectOrder(library::SortOrder::DateAddedAsc, 1, 2, 0);
 }
 
 TEST(LibraryIndexFile, ResolvesRecentRowsByIdentity) {
@@ -111,6 +239,37 @@ TEST(LibraryIndexFile, ResolvesRecentRowsByIdentity) {
   EXPECT_EQ(rows[2], 0xFFFF);
   EXPECT_EQ(rows[3], 0xFFFF);
   EXPECT_EQ(rows[4], 0);
+}
+
+TEST(LibraryIndexFile, ResolvesAllThirtyRecentRows) {
+  constexpr uint16_t COUNT = 30;
+  library::ClixHeader header{};
+  std::memcpy(header.magic, library::CLIX_MAGIC, sizeof(header.magic));
+  header.formatVersion = library::CLIX_FORMAT_VERSION;
+  header.foldVersion = library::CLIX_FOLD_VERSION;
+  header.bookCount = COUNT;
+  library::layoutSections(header, 0, COUNT * sizeof(uint64_t));
+  std::vector<uint8_t> bytes(header.selfSize, 0);
+  std::memcpy(bytes.data(), &header, sizeof(header));
+  library::BookIdentity books[COUNT]{};
+  for (uint16_t ordinal = 0; ordinal < COUNT; ++ordinal) {
+    books[ordinal] = {uint64_t(ordinal + 100), 200};
+    library::ClixRecord record{};
+    record.fileSize = 200;
+    record.nameOff = ordinal * sizeof(uint64_t);
+    std::memcpy(bytes.data() + library::recordOffset(header, ordinal), &record, sizeof(record));
+    std::memcpy(bytes.data() + header.nameStart + record.nameOff, &books[ordinal].pathHash, sizeof(uint64_t));
+    const uint16_t reversed = COUNT - ordinal - 1;
+    std::memcpy(bytes.data() + library::arrivalOrderOffset(header, ordinal), &reversed, sizeof(reversed));
+  }
+  Storage.setFile("/library.clx", std::move(bytes));
+  library::LibraryIndexFile index;
+  ASSERT_TRUE(index.open("/library.clx"));
+  uint16_t rows[COUNT]{};
+  for (const auto count : {size_t(17), size_t(COUNT)}) {
+    ASSERT_TRUE(index.recentRowsFor(books, count, rows));
+    for (size_t n = 0; n < count; ++n) EXPECT_EQ(rows[n], COUNT - n - 1);
+  }
 }
 
 TEST(LibraryIndexFile, RejectsInvalidPermutationOrdinal) {
@@ -221,4 +380,48 @@ TEST(LibraryIndexFile, RejectsFolderRecordBeyondFolderBlob) {
   ASSERT_TRUE(index.open("/library.clx"));
   std::string path;
   EXPECT_FALSE(index.readPath(record, path));
+}
+
+TEST(LibraryIndexFile, BatchFolderLookupUsesLinearIoAndSupportsRandomOrder) {
+  constexpr uint16_t count = library::CLIX_MAX_RECORDS;
+  library::ClixHeader header{};
+  std::memcpy(header.magic, library::CLIX_MAGIC, sizeof(header.magic));
+  header.formatVersion = library::CLIX_FORMAT_VERSION;
+  header.foldVersion = library::CLIX_FOLD_VERSION;
+  header.bookCount = header.folderCount = count;
+  std::vector<uint8_t> folders;
+  folders.reserve(size_t(count) * 7);
+  for (unsigned n = 0; n < count; ++n) {
+    char name[16];
+    const auto len = std::snprintf(name, sizeof(name), "/f%04u", n);
+    folders.push_back(uint8_t(len));
+    folders.insert(folders.end(), name, name + len);
+  }
+  library::layoutSections(header, folders.size(), 0);
+  std::vector<uint8_t> bytes(header.selfSize, 0);
+  std::memcpy(bytes.data(), &header, sizeof(header));
+  std::memcpy(bytes.data() + header.folderStart, folders.data(), folders.size());
+  Storage.setFile("/library.clx", std::move(bytes));
+  library::LibraryIndexFile index;
+  ASSERT_TRUE(index.open("/library.clx"));
+  std::vector<uint32_t> offsets(count + 1, UINT32_MAX);
+  EXPECT_FALSE(index.readFolderOffsets(offsets.data(), count - 1));
+  HalFile::resetIoCounts();
+  ASSERT_TRUE(index.readFolderOffsets(offsets.data(), count));
+  EXPECT_EQ(HalFile::readCount(), count);
+  EXPECT_EQ(HalFile::seekCount(), count);
+  EXPECT_EQ(offsets[count], UINT32_MAX);
+  std::string folder;
+  folder.reserve(256);
+  for (unsigned n = count; n > 0; --n) {
+    ASSERT_TRUE(index.readFolder(n - 1, offsets.data(), count, folder));
+    char expected[16];
+    std::snprintf(expected, sizeof(expected), "/f%04u", n - 1);
+    EXPECT_EQ(folder, expected);
+  }
+  EXPECT_EQ(HalFile::readCount(), size_t(count) * 3);
+  EXPECT_EQ(HalFile::seekCount(), size_t(count) * 3);
+  EXPECT_FALSE(index.readFolder(count, offsets.data(), count, folder));
+  offsets[0] = header.recordStart;
+  EXPECT_FALSE(index.readFolder(0, offsets.data(), count, folder));
 }

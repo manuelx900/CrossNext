@@ -67,6 +67,11 @@ struct BuildStats {
 // without building the reader's spine, TOC, CSS, or section caches.
 bool buildLibraryIndex(const char* rootPath, BuildStats& stats, bool readMetadata = false);
 
+enum class CardCheck { Unchanged, Changed, Unavailable };
+// Directory metadata only: no EPUB parse or per-book array. Call once per boot
+// for external card additions; transfers also retain the dirty marker route.
+CardCheck checkLibraryCard(const ClixHeader& header);
+
 // Live index path, shared by the builder and activity.
 const char* libraryIndexPath();
 

@@ -331,9 +331,13 @@ void drawGrid(toybox::Screen& screen, const picross::Board& board, const Layout&
 // A short tap uses the selected tool; holding always marks an empty cell.
 void drawModeToggle(toybox::Screen& screen, const fui::Rect& row, int mode) {
   for (int n = 0; n < 2; ++n) {
-    const auto r = fui::makeRect(row.x + n * row.width / 2, row.y, row.width / 2, row.height);
+    const int gap = chrome::lightHeader ? 12 : 0;
+    const int width = (row.width - gap) / 2;
+    const auto r = fui::makeRect(row.x + n * (width + gap), row.y, width, row.height);
     const bool active = screen.frame().buttonSelected(ActionMode, n, mode == n);
-    if (active)
+    if (chrome::lightHeader)
+      lightui::segment(screen.target(), r, 0, 1, active);
+    else if (active)
       screen.target().fill(r, dashboard::ink);
     else
       dashboard::frame(screen, r, pixelui::kBorder);
@@ -617,8 +621,8 @@ void drawTile(toybox::Screen& screen, const fui::Rect& box, const int index, con
   const bool inverse = screen.frame().buttonSelected(ActionPick, index, selected || solved);
   const fui::Color bg = inverse ? fui::Color::Black : fui::Color::White;
   const fui::Color fg = inverse ? fui::Color::White : fui::Color::Black;
-  screen.target().fill(box, fui::Paint::solid(bg), static_cast<uint8_t>(0));
-  screen.target().stroke(box, fui::Paint::solid(fui::Color::Black), 3, static_cast<uint8_t>(0));
+  lightui::surface(screen.target(), box, fui::Paint::solid(bg));
+  lightui::outline(screen.target(), box, fui::Paint::solid(fui::Color::Black), 3);
 
   char number[toybox::kIntTextChars];
   std::snprintf(number, sizeof(number), "%d", index - groupFirst(groupFor(index)) + 1);
@@ -865,7 +869,7 @@ void buildSizes(toybox::Screen& screen, const MenuModel& model) {
     const auto box = fui::makeRect(body.x + (wide ? n % 2 * (w + gap) : 0),
                                    body.y + (wide ? n / 2 * (h + gap) : n * (h + gap)), w, h);
     if (active)
-      screen.target().fill(box, dashboard::ink);
+      lightui::surface(screen.target(), box, dashboard::ink);
     else
       dashboard::frame(screen, box, pixelui::kBorder);
     guideui::grid(screen, fui::makeRect(box.x + 16, box.y + 14, 72, h - 28), groups.size[n], active, true);

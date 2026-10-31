@@ -26,7 +26,7 @@ const char* reactionText(const pet::Affection& result) {
 }
 void doubleFrame(toybox::Screen& s, fui::Rect r) {
   s.target().fill(rect(r.x + 4, r.y + 4, r.width, r.height), ink);
-  s.target().fill(r, paper);
+  lightui::surface(s.target(), r, paper);
   frame(s, r);
 }
 void pettingHand(toybox::Screen& s, fui::Rect r) {

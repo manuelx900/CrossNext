@@ -101,7 +101,7 @@ void button(toybox::Screen& s, fui::Rect r, const char* label, fui::ActionId act
             bool enabled = true) {
   primary = s.frame().buttonSelected(action, value, primary);
   if (primary)
-    s.target().fill(r, dashboard::ink);
+    lightui::surface(s.target(), r, dashboard::ink);
   else
     dashboard::frame(s, r, 2);
   if (hasIcon) gamepanel::mark(s, makeRect(r.x + 12, r.y + (r.height - 36) / 2, 36, 36), icon, primary);
@@ -112,6 +112,10 @@ void button(toybox::Screen& s, fui::Rect r, const char* label, fui::ActionId act
 }
 void tabs(toybox::Screen& s, fui::Rect band, const char* const* labels, int count, int active, fui::ActionId action) {
   for (int n = 0; n < count; ++n) {
+    if (chrome::lightHeader) {
+      dashboard::segment(s, band, n, count, labels[n], action, n, n == active, band.height < 56 ? 0 : 1);
+      continue;
+    }
     const auto r = makeRect(band.x + n * band.width / count, band.y,
                             (n + 1) * band.width / count - n * band.width / count, band.height);
     button(s, r, labels[n], action, n, n == active);
@@ -196,7 +200,7 @@ void illustratedChoice(toybox::Screen& s, fui::Rect r, const murdle::Puzzle& p, 
   style.font = 3;
   const int labelH = s.target().measureText(3, label, style).width <= r.width - 6 ? 24 : 44;
   const auto name = makeRect(r.x + 3, r.bottom() - labelH - 2, r.width - 6, labelH);
-  if (selected) s.target().fill(name, dashboard::ink);
+  if (selected) lightui::surface(s.target(), name, dashboard::ink);
   const auto picture = makeRect(r.x + 4, r.y + 4, r.width - 8, r.height - labelH - 10);
   illustration(s, picture, p, category, item);
   caps(s, name, label, 3, 2, fui::TextAlign::Center, selected);
@@ -278,7 +282,7 @@ CaseReport clues(toybox::Screen& s, const CaseModel& m, fui::Rect area) {
     const int centerY = r.y + (r.height - 36) / 2;
     const auto tick = makeRect(r.x + 12, centerY, 36, 36);
     if (reviewed) {
-      s.target().fill(tick, dashboard::ink);
+      lightui::surface(s.target(), tick, dashboard::ink);
       check(s, tick, true);
     } else
       dashboard::frame(s, tick, 2);
@@ -361,7 +365,7 @@ CaseReport grid(toybox::Screen& s, const CaseModel& m, fui::Rect area) {
       auto box = makeRect(g.cellX(c), g.cellY(r), g.cellWidth, g.cell);
       const auto mark = m.marks->shown(a, r, b, c);
       if (mark == Mark::Yes) {
-        s.target().fill(box, dashboard::ink);
+        lightui::surface(s.target(), box, dashboard::ink);
         check(
             s,
             box.inset(fui::Insets{int16_t(g.cell / 4), int16_t(g.cell / 4), int16_t(g.cell / 4), int16_t(g.cell / 4)}),
@@ -603,7 +607,7 @@ void buildCampaign(toybox::Screen& s, const murdlecampaign::Progress& progress, 
     const auto r = makeRect(area.x + n % 4 * (cw + gap), area.y + 40 + n / 4 * (ch + gap), cw, ch);
     const bool done = progress.cleared(index), playing = index == active && !done;
     if (playing)
-      s.target().fill(r, dashboard::ink);
+      lightui::surface(s.target(), r, dashboard::ink);
     else
       dashboard::frame(s, r, index == selected ? 3 : 2);
     std::snprintf(copy, sizeof(copy), "%02d", index + 1);
@@ -611,7 +615,7 @@ void buildCampaign(toybox::Screen& s, const murdlecampaign::Progress& progress, 
          playing);
     const auto label = makeRect(r.x + 4, r.bottom() - (wide ? 42 : 44), r.width - 8, wide ? 40 : 42);
     if (done) {
-      s.target().fill(label, dashboard::ink);
+      lightui::surface(s.target(), label, dashboard::ink);
       check(s, makeRect(r.right() - 19, r.y + 5, 14, 14));
       caps(s, label, tr(STR_MR_REPLAY_SHORT), 3, 1, fui::TextAlign::Center, true);
     } else {
@@ -633,12 +637,14 @@ void buildAccuse(toybox::Screen& s, const AccuseModel& m) {
   if (!m.puzzle) return;
   const auto& p = *m.puzzle;
   const bool wide = b.width > b.height;
+  const bool padded = chrome::lightHeader;
   caps(s, makeRect(b.x, b.y, b.width - 166, 44), tr(STR_MR_WHAT_HAPPENED), 2);
   hearts(s, makeRect(b.right() - 162, b.y, 162, 44), murdlesession::lives(m.wrongAccusations));
   const int leftW = wide ? b.width * 3 / 4 - 8 : b.width;
   const int cols = wide ? p.shape.cats : p.shape.cats == 4 ? 2 : 1;
   const int rows = wide ? 1 : (p.shape.cats + cols - 1) / cols;
-  const int groupsH = wide ? b.height - 52 : b.height - 52 - 138 - 108 - 16;
+  const int summaryH = padded ? 164 : 138;
+  const int groupsH = wide ? b.height - 52 : b.height - 52 - summaryH - 108 - 16;
   const int h = (groupsH - 8 * (rows - 1)) / rows, gw = (leftW - 8 * (cols - 1)) / cols;
   static constexpr StrId cats[] = {StrId::STR_MR_WHO, StrId::STR_MR_WITH, StrId::STR_MR_WHERE, StrId::STR_MR_WHY};
   for (int c = 0; c < p.shape.cats; ++c) {
@@ -657,28 +663,33 @@ void buildAccuse(toybox::Screen& s, const AccuseModel& m) {
     }
   }
   const auto summary = wide ? makeRect(b.x + leftW + 14, b.y + 52, b.width - leftW - 14, b.height - 52)
-                            : makeRect(b.x, b.bottom() - 246, b.width, 138);
+                            : makeRect(b.x, b.bottom() - summaryH - 108, b.width, summaryH);
   const int previewH = wide ? summary.height - 108 : summary.height;
   dashboard::frame(s, makeRect(summary.x, summary.y, summary.width, previewH), 2);
-  caps(s, makeRect(summary.x + 6, summary.y + 2, summary.width - 12, 24), tr(STR_MR_YOUR_ACCUSATION), 0, 1,
-       fui::TextAlign::Center);
+  caps(s, makeRect(summary.x + 6, summary.y + (padded ? 8 : 2), summary.width - 12, 24), tr(STR_MR_YOUR_ACCUSATION), 0,
+       1, fui::TextAlign::Center);
   static constexpr StrId placeholders[] = {StrId::STR_MR_PICK_PERSON, StrId::STR_MR_PICK_WEAPON,
                                            StrId::STR_MR_PICK_PLACE, StrId::STR_MR_PICK_MOTIVE};
   const int previewCols = wide ? 1 : p.shape.cats, previewRows = wide ? p.shape.cats : 1;
   const int tileW = (summary.width - 12 - 6 * (previewCols - 1)) / previewCols;
-  const int tileH = (previewH - (wide ? 56 : 76) - 4 * (previewRows - 1)) / previewRows;
+  const int tileTop = padded ? 40 : 28, tileGap = padded ? 8 : 4;
+  const int tileH =
+      padded ? (previewH - tileTop - 38 - (!wide && !m.complete() ? 24 : 0) - tileGap * (previewRows - 1)) / previewRows
+             : (previewH - (wide ? 56 : 76) - 4 * (previewRows - 1)) / previewRows;
   for (int c = 0; c < p.shape.cats; ++c) {
     const auto tile = makeRect(summary.x + 6 + c % previewCols * (tileW + 6),
-                               summary.y + 28 + c / previewCols * (tileH + 4), tileW, tileH);
+                               summary.y + tileTop + c / previewCols * (tileH + tileGap), tileW, tileH);
     dashboard::frame(s, tile, 1);
     const auto image = wide ? makeRect(tile.x + 3, tile.y + 3, tile.height - 6, tile.height - 6)
-                            : makeRect(tile.x + 3, tile.y + 3, tile.width - 6, tile.height - 28);
+                            : makeRect(tile.x + (padded ? 6 : 3), tile.y + (padded ? 6 : 3),
+                                       tile.width - (padded ? 12 : 6), tile.height - (padded ? 36 : 28));
     if (m.picks[c] < p.shape.items)
       illustration(s, image, p, c, m.picks[c]);
     else
       gamepanel::mark(s, image, gamepanel::Mark::Help);
     const auto label = wide ? makeRect(tile.x + tile.height, tile.y + 2, tile.width - tile.height - 4, tile.height - 4)
-                            : makeRect(tile.x + 2, tile.bottom() - 24, tile.width - 4, 22);
+                            : makeRect(tile.x + (padded ? 6 : 2), tile.bottom() - (padded ? 28 : 24),
+                                       tile.width - (padded ? 12 : 4), 22);
     caps(s, label, m.picks[c] < p.shape.items ? murdletext::label(p, c, m.picks[c]) : I18N.get(placeholders[c]), 3, 1,
          fui::TextAlign::Center);
   }
@@ -1005,7 +1016,7 @@ void buildHowTo(toybox::Screen& s, const HowToModel& m) {
         dashboard::frame(s, box, 1);
         auto mark = makeRect(box.x + (box.width - 28) / 2, box.y + (box.height - 28) / 2, 28, 28);
         if ((r == 1 && c == 1) || (r == 2 && c == 2)) {
-          s.target().fill(box, dashboard::ink);
+          lightui::surface(s.target(), box, dashboard::ink);
           check(s, mark, true);
         } else if (r == 0 && c == 1)
           dashboard::frame(s, mark, 2);

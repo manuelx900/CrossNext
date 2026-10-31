@@ -454,7 +454,7 @@ build when you have not decided what the device is for.
 
 ## The Home seam
 
-Home uses `src/apps_local/home/HomeMenuCore` for visible row count and identifier/index conversion. Browse Files, Recent Books, File Transfer, Reading Stats, Games, Apps and Settings are enabled by default. Settings stays enabled; the other rows can be renamed or hidden from Settings > System > Home Menu, with at most eight enabled. Optional Plugins/OPDS and selected game/app shortcuts count toward the same limit. + Add Game / + Add App open separate catalogue selectors. A shortcut uses the shelf launcher with Home origin and returns directly Home, including after sleep/reboot. See [reading-stats.md](reading-stats.md).
+Home uses `src/apps_local/home/HomeMenuCore` for visible row count and identifier/index conversion. Browse Files, Recent Books, File Transfer, Reading Stats, Games, Apps and Settings are enabled by default. Settings stays enabled; the other rows can be renamed or hidden from Settings > System > Home Menu, with at most seven enabled. Optional Plugins/OPDS and selected game/app shortcuts count toward the same limit. + Add Game / + Add App open separate catalogue selectors. A shortcut uses the shelf launcher with Home origin and returns directly Home, including after sleep/reboot. See [reading-stats.md](reading-stats.md).
 
 Recent-book cover tiles precede these menu rows and are subtracted once before dispatch. Shelf return uses stable Games/Apps identifiers, so changing visibility does not change which folder opens. `HomeShelfRows.h` is retained only as a legacy test fixture; production Home no longer derives shelf offsets from upstream row positions.
 
@@ -485,3 +485,5 @@ apps still call `shelf::leave()`. `shelf.cfg` stores an optional third line,
 `HOME`, for the open shortcut so sleep/reboot preserves the return destination.
 Older one/two-line saves default to folder origin. Opening a folder clears the
 open shortcut and restores normal folder navigation.
+
+Carousel 2 and Bookshelf folder menus use unboxed regular labels, gray separators and a compact footer with page controls. Their page capacity uses the same row height for drawing and navigation. Framed and Carousel retain their existing bordered rows and paginators.

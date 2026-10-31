@@ -55,7 +55,41 @@ void ReaderActivity::disableFastInitialRefresh() { pagesUntilFullRefresh = 0; }
 
 void ReaderActivity::notePageTurn(const bool forward, const bool succeeded) {
   RenderLock lock(*this);
+  if (succeeded) clearContentsReturn();
   readerSession.noteTurn(forward, succeeded);
+}
+void ReaderActivity::rememberContentsPosition(ContentsPosition position) {
+  clearContentsReturn();
+  // A small interaction host lives only until the next turn; no page buffer is retained.
+  auto control = makeUniqueNoThrow<ContentsReturnUi>(renderer);
+  if (!control) {
+    LOG_ERR("READER", "OOM: contents return control");
+    return;
+  }
+  contentsJump.remember(position);
+  contentsReturn = std::move(control);
+  contentsReturnActive.store(true, std::memory_order_release);
+}
+bool ReaderActivity::handleContentsReturn() {
+  if (!contentsReturnActive.load(std::memory_order_acquire)) return false;
+  RenderLock lock(*this);
+  if (!contentsReturn || !contentsReturn->activated(mappedInput)) return false;
+  restoreContentsPosition(contentsJump.origin());
+  clearContentsReturn();
+  requestUpdate();
+  return true;
+}
+void ReaderActivity::clearContentsReturn() {
+  contentsReturnActive.store(false, std::memory_order_release);
+  contentsJump.clear();
+  contentsReturn.reset();
+}
+void ReaderActivity::renderContentsReturn(bool grayMask) {
+  if (!contentsReturn) return;
+  if (contentsJump.rendered(contentsPagePosition()))
+    contentsReturn->render(grayMask);
+  else
+    clearContentsReturn();
 }
 
 void ReaderActivity::onEnter() {
@@ -319,6 +353,7 @@ void ReaderActivity::loop() {
   clearEndOfBookOptionsIfNeeded();
   if (handleEndOfBookMenu()) return;
   if (handleFormatInput()) return;
+  if (handleContentsReturn()) return;
   if (handleBackNavigation()) return;
 
   const auto touch = ReaderUtils::detectTouchPageTurn(

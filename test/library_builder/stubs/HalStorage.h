@@ -26,6 +26,7 @@ inline int failTruncate = -1;
 inline int failRename = -1;
 inline int failAlloc = -1;
 inline bool failDirectorySeek = false;
+inline int failDirectoryRead = -1;
 inline std::string failClosePath;
 inline std::string failWritePath;
 inline unsigned parses = 0;
@@ -57,6 +58,7 @@ inline void reset() {
   failRename = -1;
   failAlloc = -1;
   failDirectorySeek = false;
+  failDirectoryRead = -1;
   failClosePath.clear();
   failWritePath.clear();
   parses = 0;
@@ -132,6 +134,10 @@ class HalFile {
     file.node = fake::files[file.path];
     fake::directoryEntriesByPath[file.path]++;
     return file;
+  }
+  HalFile openNextFile(bool& error) {
+    error = fake::fail(fake::failDirectoryRead);
+    return error ? HalFile{} : openNextFile();
   }
   size_t getName(char* out, const size_t size) {
     const std::string name = path.substr(path.find_last_of('/') + 1);

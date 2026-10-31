@@ -24,6 +24,7 @@ void Game2048Activity::onEnter() {
     dirty = true;
   }
   lastSave = millis();
+  winShown = game2048::highest(state) >= 11;
   requestUpdate();
 }
 void Game2048Activity::save() {
@@ -41,7 +42,11 @@ void Game2048Activity::onExit() {
 void Game2048Activity::action(fui::ActionId action, int value) {
   switch (action) {
     case game2048ui::Play:
-      view = game2048ui::View::Board;
+      result = game2048::canMove(state) ? game2048::Result::None : game2048::Result::Lost;
+      view = result == game2048::Result::None ? game2048ui::View::Board : game2048ui::View::Result;
+      break;
+    case game2048ui::Review:
+      view = game2048::canMove(state) ? game2048ui::View::Board : game2048ui::View::Review;
       break;
     case game2048ui::New:
       view = game2048ui::View::Confirm;
@@ -52,6 +57,8 @@ void Game2048Activity::action(fui::ActionId action, int value) {
       break;
     case game2048ui::ConfirmNew:
       game2048::start(state, esp_random());
+      winShown = false;
+      result = game2048::Result::None;
       dirty = true;
       view = game2048ui::View::Board;
       save();
@@ -65,6 +72,11 @@ void Game2048Activity::action(fui::ActionId action, int value) {
       if (!game2048::move(state, static_cast<game2048::Direction>(value))) return;
       best = std::max(best, state.score);
       dirty = true;
+      result = game2048::afterMove(state, winShown);
+      if (result != game2048::Result::None) {
+        view = game2048ui::View::Result;
+        save();
+      }
       break;
     default:
       return;
@@ -148,7 +160,7 @@ void Game2048Activity::render(RenderLock&&) {
   const fui::InputSnapshot noInput{};
   toybox::Frame frame(target, target.deviceContext(), noInput, interactions, nullptr, toybox::headerStatus(renderer));
   toybox::Screen screen(frame);
-  game2048ui::build(screen, {&state, best, view, saveFailed, selected}, uiWork);
+  game2048ui::build(screen, {&state, best, view, saveFailed, selected, result}, uiWork);
   ready = true;
   toybox::reportOverflow(interactions, "2048", &renderer);
   renderer.displayBuffer();

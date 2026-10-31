@@ -56,6 +56,14 @@ bool Repository::begin(bool reverse, uint8_t* ahead, uint32_t aheadBytes) {
   cursor = reverse ? end : 16;
   return true;
 }
+bool Repository::beginFrom(uint64_t offset) {
+  if (!begin() || offset < 16 || offset > end || (offset - 16) % kRecordBytes) {
+    close();
+    return false;
+  }
+  cursor = offset;
+  return true;
+}
 void Repository::close() {
   file.close();
   cursor = end = 0;
@@ -88,6 +96,25 @@ ScanResult Repository::next(Record& record) {
   damaged = true;
   return ScanResult::More;
 }
+bool Repository::cachedBook(const char* document, Book& book) {
+  if (!validDocument(document) || !begin()) return false;
+  char path[100];
+  cachePath(path, sizeof(path), document);
+  uint8_t index[12];
+  HalFile cached;
+  if (!Storage.openFileForRead("READ-STATS", path, cached) || cached.size() != sizeof(index) ||
+      cached.read(index, sizeof(index)) != static_cast<int>(sizeof(index)))
+    return false;
+  const auto offset = getOffset(index);
+  const uint32_t found =
+      uint32_t(index[8]) | uint32_t(index[9]) << 8 | uint32_t(index[10]) << 16 | uint32_t(index[11]) << 24;
+  if (checksum(index, 8) != found || offset < 16 || offset >= end || (offset - 16) % kRecordBytes ||
+      !readAt(offset, scratch) || std::strcmp(scratch.book.document, document))
+    return false;
+  book = scratch.book;
+  return true;
+}
+
 bool Repository::loadBook(const char* document, Book& book) {
   if (!validDocument(document) || !begin()) return false;
   book = {};

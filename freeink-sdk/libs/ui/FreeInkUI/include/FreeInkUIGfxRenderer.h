@@ -12,6 +12,7 @@
 // setFont() binds each slot to a real GfxRenderer font id.
 
 #include <FreeInkUI.h>
+#include <FreeInkUIStroke.h>
 
 // Only compile the adapter when the firmware actually provides GfxRenderer.
 // Without this guard, merely including this header (directly or transitively)
@@ -169,6 +170,13 @@ class GfxRendererTarget final : public DrawTarget {
   void stroke(const Rect rect, const Paint paint, const uint8_t width, const uint8_t radius = 0,
               const uint8_t corners = CornersAll) override {
     if (rect.empty() || width == 0 || paint.kind == PaintKind::None) return;
+    if (paint.kind == PaintKind::Dither && radius > 0) {
+      if (paint.color == Color::Transparent) return;
+      forEachRoundedStrokeBand(rect, width, radius, corners, [this, paint](Rect band) {
+        renderer.fillRectDither(band.x, band.y, band.width, band.height, gfxColor(paint.color));
+      });
+      return;
+    }
     if (paint.kind == PaintKind::Dither && radius == 0) {
       // Square dithered border as four edge bands; drawRect() is 1-bit only.
       const int inner = rect.height > 2 * width ? rect.height - 2 * width : 0;

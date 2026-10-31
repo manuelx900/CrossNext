@@ -40,7 +40,10 @@ class FileBrowserActivity final : public UiListActivity {
   static constexpr size_t ROW_NAME_BUF_SIZE = 512;  // NAME_BUFFER_SIZE + "[]" + terminator slack
   char rowNameBuf[ROW_NAME_BUF_SIZE]{};
   char rowExtBuf[16]{};
+  char pathLabel[ROW_NAME_BUF_SIZE]{};
   bool unicodeNames = false;
+  static constexpr freeink::ui::ActionId ACTION_PAGE = 50;
+  static void pageAction(const freeink::ui::ActionEvent& event, void* context);
   static void provideRow(void* ctx, uint16_t index, freeink::ui::ListItem& item);
 
   // CJK fallback glyphs are prewarmed for a bounded window of rows around the

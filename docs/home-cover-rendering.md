@@ -13,9 +13,10 @@ enlargements retain the existing point-sampling behavior. Other BMP depths keep
 their previous rendering path.
 
 Home can reuse three rendered art regions across activity changes. The single
-arena is limited to 64,512 bytes of PSRAM, with no internal-RAM fallback, no new
+arena holds three regions of up to 48 KiB each, plus metadata (about 152 KiB of PSRAM), with no internal-RAM fallback, no new
 task and no SD writes. It contains cover art, not a second display framebuffer;
-the title, author, progress, menu and status remain part of the normal redraw.
+Bookshelf also retains shelf titles and progress badges, keyed by content, font
+and language. The featured-book text/progress, menu and status redraw normally.
 Region size, orientation, appearance, night mode and source paths form the cache
 identity. Each reuse checks the image files' sizes and modification dates.
 File-transfer and book-cache mutation callbacks also invalidate retained scenes

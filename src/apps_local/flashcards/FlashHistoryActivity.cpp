@@ -96,6 +96,7 @@ void FlashHistoryActivity::onEnter() {
   localtime_r(&now, &t);
   year = t.tm_year + 1900;
   month = t.tm_mon + 1;
+  perPage = flashui::historyCapacity(renderer.getScreenWidth(), renderer.getScreenHeight());
   loadHistory(Direction::Reset);
   if (initial == Open::Cards && !decks.empty()) {
     selected.deck = 0;
@@ -128,13 +129,13 @@ void FlashHistoryActivity::accept(const flashcards::Session& session) {
   Item candidate{session, scanDeck};
   if (direction == Direction::Older && !newer(anchor, candidate)) return;
   if (direction == Direction::Newer && !newer(candidate, anchor)) return;
-  if (itemCount == 3) {
+  if (itemCount == perPage) {
     if (direction == Direction::Newer) {
       if (!newer(items[0], candidate)) return;
       items[0] = candidate;
     } else {
-      if (!newer(candidate, items[2])) return;
-      items[2] = candidate;
+      if (!newer(candidate, items[perPage - 1])) return;
+      items[perPage - 1] = candidate;
     }
   } else
     items[itemCount++] = candidate;
@@ -151,7 +152,7 @@ void FlashHistoryActivity::loadHistory(Direction dir) {
     if (!Storage.openFileForRead("FLASH", path, file)) continue;
     flashcards::FileSource fileSource(file);
     flashcards::BlockSource source(fileSource, work.readCache, sizeof(work.readCache));
-    if (!flashcards::scanHistory(source, work, visit, this)) error = true;
+    if (!flashcards::scanHistory(source, work, visit, this, flashcards::kRecentHistoryLimit)) error = true;
     delay(1);
   }
   if (dir == Direction::Reset)
@@ -289,6 +290,12 @@ void FlashHistoryActivity::back() {
 }
 void FlashHistoryActivity::loop() {
   RenderLock lock(*this);
+  const int capacity = flashui::historyCapacity(renderer.getScreenWidth(), renderer.getScreenHeight());
+  if (view == View::History && perPage != capacity) {
+    perPage = capacity;
+    loadHistory(Direction::Reset);
+    return;
+  }
   if (mappedInput.wasReleased(MappedInputManager::Button::Back)) {
     back();
     return;
@@ -363,7 +370,7 @@ void FlashHistoryActivity::loop() {
   } else if (e.action == flashui::Page) {
     switch (view) {
       case View::History:
-        if ((e.value < 0 && page == 0) || (e.value > 0 && page >= std::max(0, (totalSessions - 1) / 3))) return;
+        if ((e.value < 0 && page == 0) || (e.value > 0 && page >= std::max(0, (totalSessions - 1) / perPage))) return;
         loadHistory(e.value > 0 ? Direction::Older : Direction::Newer);
         return;
       case View::Filter:
@@ -413,7 +420,7 @@ void FlashHistoryActivity::render(RenderLock&&) {
     m.rows = rows;
     m.count = itemCount;
     m.page = page;
-    m.pages = std::max(1, (totalSessions + 2) / 3);
+    m.pages = std::max(1, (totalSessions + perPage - 1) / perPage);
     m.sessions = totalSessions;
     m.cards = totalCards;
     m.month = monthLabel;

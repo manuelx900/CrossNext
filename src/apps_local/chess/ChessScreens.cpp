@@ -124,11 +124,10 @@ void buildSettings(toybox::Screen& screen, const SettingsModel& model) {
     return fui::makeRect(r.x, r.y + 38, r.width, wide ? 50 : 48);
   };
   const auto choice = [&](fui::Rect band, int n, int count, const char* label, SettingValue value, bool active,
-                          const fui::BitmapRef* art = nullptr) {
-    const auto r = fui::makeRect(band.x + band.width * n / count, band.y,
-                                 band.width * (n + 1) / count - band.width * n / count, band.height);
-    active = screen.frame().buttonSelected(ActionSettingValue, int(value), active);
-    dashboard::button(screen, r, art ? "" : label, ActionSettingValue, int(value), active);
+                          const fui::BitmapRef* art = nullptr, bool enabled = true) {
+    active = enabled && screen.frame().buttonSelected(ActionSettingValue, int(value), active);
+    const auto r = dashboard::segment(screen, band, n, count, art ? "" : label,
+                                      enabled ? ActionSettingValue : fui::NO_ACTION, int(value), active);
     if (art) {
       screen.target().bitmap(fui::makeRect(r.x + 20, r.y + 10, 36, r.height - 20), *art, fui::BitmapMode::Contain,
                              active ? dashboard::paper : dashboard::ink);
@@ -142,9 +141,12 @@ void buildSettings(toybox::Screen& screen, const SettingsModel& model) {
   choice(r, 1, 2, tr(STR_CHESS_PERSON), SettingValue::Person, model.opponent != Opponent::Computer,
          &compactart::ChessPerson);
   r = group(1, tr(STR_UI_LEVEL_F481CC));
-  choice(r, 0, 3, tr(STR_UI_EASY_493F11), SettingValue::Easy, model.level == 0);
-  choice(r, 1, 3, tr(STR_CHESS_NORMAL), SettingValue::Normal, model.level == 1);
-  choice(r, 2, 3, tr(STR_UI_HARD_A06A58), SettingValue::Hard, model.level == 2);
+  choice(r, 0, 3, tr(STR_UI_EASY_493F11), SettingValue::Easy, model.level == 0, nullptr,
+         model.opponent == Opponent::Computer);
+  choice(r, 1, 3, tr(STR_CHESS_NORMAL), SettingValue::Normal, model.level == 1, nullptr,
+         model.opponent == Opponent::Computer);
+  choice(r, 2, 3, tr(STR_UI_HARD_A06A58), SettingValue::Hard, model.level == 2, nullptr,
+         model.opponent == Opponent::Computer);
   r = group(2, tr(STR_CHESS_YOUR_COLOUR));
   choice(r, 0, 2, tr(STR_UI_WHITE_40D23F), SettingValue::White, model.humanPlaysWhite, &compactart::ChessPawnWhite);
   choice(r, 1, 2, tr(STR_UI_BLACK_A9414A), SettingValue::Black, !model.humanPlaysWhite, &compactart::ChessPawnBlack);

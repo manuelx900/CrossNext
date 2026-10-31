@@ -10,6 +10,7 @@
 #include "ReadingStatsProjection.h"
 #include "ReadingStatsScreens.h"
 #include "ReadingStatsStore.h"
+#include "components/OptionPopup.h"
 
 class ReadingStatsActivity final : public Activity {
  public:
@@ -27,6 +28,9 @@ class ReadingStatsActivity final : public Activity {
   void render(RenderLock&&) override;
 
  private:
+  OptionPopup goalPopup;
+  bool goalCalendarVisible = false;
+  int goalMonth = 0;
   enum class Load { Anchor, Summary, Day, Period, Streak, Books, Detail, Cloud, Ready, Failed };
   void scan();
   bool beginScan(bool reverse = false);

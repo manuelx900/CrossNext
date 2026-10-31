@@ -137,9 +137,14 @@ void build(toybox::Screen& s, const Model& m) {
         dashboard::text(s, fui::makeRect(x, y, width, 36), label, 1, fui::TextAlign::Left);
       };
       const auto radio = [&](fui::Rect r, const char* label, bool active, fui::ActionId action, int value,
-                             const char* tail = nullptr) {
+                             const char* tail = nullptr, int index = 0, int count = 1) {
+        const auto band = r;
+        r = lightui::segmentRect(band, index, count);
         active = s.frame().buttonSelected(action, value, active);
-        dashboard::button(s, r, "", action, value, active);
+        if (chrome::lightHeader)
+          dashboard::segment(s, band, index, count, "", action, value, active);
+        else
+          dashboard::button(s, r, "", action, value, active);
         const auto fg = active ? fui::Color::White : fui::Color::Black;
         toybox::ring(s, r.x + 23, r.y + r.height / 2, 11, 2, fg, active ? fui::Color::Black : fui::Color::White);
         if (active) toybox::disc(s, r.x + 23, r.y + r.height / 2, 6, fg);
@@ -156,18 +161,28 @@ void build(toybox::Screen& s, const Model& m) {
       const int x = wide ? body.x + width + 20 : body.x;
       const int y = wide ? body.y : body.y + 280 - std::max(0, 660 - int(body.height));
       heading(x, y, tr(STR_UI_OPPONENT_974974));
-      radio(fui::makeRect(x, y + 38, width / 2, 50), tr(STR_UI_COMPUTER_9E47DA), !m.local, Local, 0);
-      radio(fui::makeRect(x + width / 2, y + 38, width - width / 2, 50), tr(STR_CHESS_PERSON), m.local, Local, 1);
+      radio(fui::makeRect(x, y + 38, width, 50), tr(STR_UI_COMPUTER_9E47DA), !m.local, Local, 0, nullptr, 0, 2);
+      radio(fui::makeRect(x, y + 38, width, 50), tr(STR_CHESS_PERSON), m.local, Local, 1, nullptr, 1, 2);
       heading(x, y + 110, tr(STR_UI_LEVEL_F481CC));
       static constexpr StrId levels[] = {StrId::STR_DRAUGHTS_EASY, StrId::STR_DRAUGHTS_MEDIUM,
                                          StrId::STR_DRAUGHTS_HARD};
-      for (int n = 0; n < 3; ++n)
-        dashboard::button(s, fui::makeRect(x + width * n / 3 + 3, y + 148, width * (n + 1) / 3 - width * n / 3 - 6, 48),
-                          I18N.get(levels[n]), m.local ? fui::NO_ACTION : Difficulty, n, !m.local && m.difficulty == n);
+      for (int n = 0; n < 3; ++n) {
+        if (chrome::lightHeader)
+          dashboard::segment(s, fui::makeRect(x, y + 148, width, 48), n, 3, I18N.get(levels[n]),
+                             m.local ? fui::NO_ACTION : Difficulty, n, !m.local && m.difficulty == n);
+        else
+          dashboard::button(
+              s, fui::makeRect(x + width * n / 3 + 3, y + 148, width * (n + 1) / 3 - width * n / 3 - 6, 48),
+              I18N.get(levels[n]), m.local ? fui::NO_ACTION : Difficulty, n, !m.local && m.difficulty == n);
+      }
       heading(x, y + (wide ? 200 : 220), tr(STR_DRAUGHTS_PLAY_COLOUR));
       for (int n = 0; n < 2; ++n) {
-        const auto r = fui::makeRect(x + n * width / 2, y + (wide ? 238 : 258), width / 2, 56);
-        dashboard::button(s, r, "", Colour, n, m.humanBlack == bool(n));
+        const auto band = fui::makeRect(x, y + (wide ? 238 : 258), width, 56);
+        const auto r = lightui::segmentRect(band, n, 2);
+        if (chrome::lightHeader)
+          dashboard::segment(s, band, n, 2, "", Colour, n, m.humanBlack == bool(n));
+        else
+          dashboard::button(s, r, "", Colour, n, m.humanBlack == bool(n));
         toybox::ring(s, r.x + 32, r.y + 28, 17, 2, n ? fui::Color::White : fui::Color::Black,
                      n ? fui::Color::Black : fui::Color::White);
         dashboard::text(s, fui::makeRect(r.x + 60, r.y, r.width - 66, r.height),
@@ -220,7 +235,8 @@ void build(toybox::Screen& s, const Model& m) {
       for (int n = first; n < last; ++n) {
         const int w = lessons.width;
         const int h = wide ? available / 2 : available * weights[n] / 484;
-        const auto r = fui::makeRect(lessons.x, wide ? top + (n - first) * available / 2 : y, w, h);
+        const int pad = chrome::lightHeader ? 8 : 0;
+        const auto r = fui::makeRect(lessons.x, (wide ? top + (n - first) * available / 2 : y) + pad, w, h - 2 * pad);
         const auto number = fui::makeRect(r.x, r.y, 32, 32);
         s.target().fill(number, dashboard::ink);
         std::snprintf(label, sizeof(label), "%d", n + 1);
@@ -251,11 +267,13 @@ void build(toybox::Screen& s, const Model& m) {
                                                            : tr(STR_DRAUGHTS_MOST));
           text = label;
         }
-        if (wide)
+        if (wide || chrome::lightHeader)
           fittext::draw(s.target(), copy, text, 4, 6);
         else
           s.target().text(copy, text, prose);
-        s.target().fill(fui::makeRect(r.x, r.bottom() - 4, r.width, 4), dashboard::ink);
+        s.target().fill(
+            fui::makeRect(r.x, r.bottom() - (chrome::lightHeader ? 1 : 4), r.width, chrome::lightHeader ? 1 : 4),
+            dashboard::ink);
         y += h;
       }
     } break;

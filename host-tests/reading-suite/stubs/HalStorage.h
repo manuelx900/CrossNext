@@ -12,6 +12,7 @@
 struct TestStorage {
   std::map<std::string, std::vector<uint8_t>> files;
   bool available = true;
+  bool ready() const { return available; }
   int writeLimit = -1;
   bool refuseReads = false;
   bool corruptReadChecksum = false;
@@ -67,6 +68,7 @@ class HalFile {
   explicit operator bool() const { return isOpen(); }
   bool isDirectory() const { return directory; }
   size_t fileSize() const { return size(); }
+  size_t available() const { return size() > cursor ? size() - cursor : 0; }
   size_t getName(char* out, size_t size) const {
     const auto name = path.substr(path.rfind('/') + 1);
     const size_t count = std::min(size - 1, name.size());
@@ -108,12 +110,15 @@ class HalFile {
 
 class HalStorage {
  public:
+  bool ready() const { return testStorage.available; }
   static HalStorage& getInstance() {
     static HalStorage value;
     return value;
   }
   bool remove(const char* path) { return testStorage.available && testStorage.files.erase(path) != 0; }
   bool ensureDirectoryExists(const char* path) { return testStorage.ensureDirectoryExists(path); }
+  bool mkdir(const char* path) { return ensureDirectoryExists(path); }
+  bool removeDir(const char* path) { return testStorage.directories.erase(path) != 0; }
   bool exists(const char* path) { return testStorage.exists(path); }
   HalFile open(const char* path) {
     HalFile file;

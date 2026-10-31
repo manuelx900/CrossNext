@@ -8,6 +8,7 @@
 
 #include "../../../lib/GfxRenderer/ChromeRegion.h"
 #include "BackButton.h"
+#include "LightUi.h"
 #include "ToyboxScreen.h"
 #include "ToyboxTokens.h"
 
@@ -69,12 +70,12 @@ void fitLabel(const fui::DrawTarget& target, char* label, const int width, fui::
 void text(fui::DrawTarget& target, fui::Rect box, const char* label, fui::FontId font, fui::Color color,
           fui::TextAlign align, bool emphasis) {
   char copy[192];
-  copyCaps(copy, sizeof(copy), label);
+  copyNatural(copy, sizeof(copy), label);
   fui::TextStyle style;
   style.color = color;
   style.align = align;
   style.font = font;
-  style.bold = emphasis || font == kTitle;
+  style.bold = emphasis || (!chrome::lightHeader && font == kTitle);
   static constexpr fui::FontId smaller[] = {3, kSmall, kBody};
   while (style.font < 3 && target.measureText(style.font, copy, style).width > box.width)
     style.font = smaller[style.font];
@@ -180,9 +181,9 @@ static fui::Rect paintHeader(fui::DrawTarget& target, const fui::DeviceContext& 
   right -= model.titleReserve;
   fui::TextStyle titleStyle;
   titleStyle.font = kBody;
-  titleStyle.bold = true;
+  titleStyle.bold = !chrome::lightHeader;
   char title[192];
-  copyCaps(title, sizeof(title), model.title);
+  copyNatural(title, sizeof(title), model.title);
   const int titleEnd = left + target.measureText(titleStyle.font, title, titleStyle).width + 14;
   fui::TextStyle clockStyle;
   clockStyle.font = fui::HEADER_CLOCK_FONT;
@@ -193,12 +194,18 @@ static fui::Rect paintHeader(fui::DrawTarget& target, const fui::DeviceContext& 
     target.text(clock, model.clockText, clockStyle);
     right = clock.x - 14;
   }
-  text(target, fui::makeRect(left, top, std::max(0, right - left), 72), model.title, kBody, fui::Color::White,
-       fui::TextAlign::Left, true);
+  if (chrome::lightHeader) {
+    titleStyle.color = fui::Color::White;
+    target.text(toybox::inkCentred(target, fui::makeRect(left, top, std::max(0, right - left), 72), titleStyle), title,
+                titleStyle);
+  } else
+    text(target, fui::makeRect(left, top, std::max(0, right - left), 72), model.title, kBody, fui::Color::White,
+         fui::TextAlign::Left, true);
   return mark;
 }
 
 fui::StyleSet rowStyles() {
+  if (chrome::lightHeader) return lightui::controlStyles(true);
   auto styles = toybox::rowStyles();
   styles.normal.borderWidth = 1;
   styles.normal.radius = 0;
@@ -207,7 +214,7 @@ fui::StyleSet rowStyles() {
   return styles;
 }
 
-fui::StyleSet buttonStyles() { return toybox::buttonStyles(); }
+fui::StyleSet buttonStyles() { return chrome::lightHeader ? lightui::controlStyles() : toybox::buttonStyles(); }
 
 void styleList(fui::ListProps& props, bool dense) {
   props.rowStyles = rowStyles();
@@ -235,6 +242,16 @@ void styleList(fui::ListProps& props, bool dense) {
   props.scrollIndicatorWidth = 3;
   props.scrollIndicatorInset = 0;
   props.scrollIndicatorSide = 0;
+  if (chrome::lightHeader) {
+    props.labelText.font = 0;
+    props.labelText.bold = false;
+    props.subtitleText.font = 4;
+    props.rowHeight = 72;
+    props.selectionMarker = fui::SelectionMarker::Underline;
+    props.markerThickness = 1;
+    props.markerPaint = lightui::rule;
+    props.separatorPaint = lightui::rule;
+  }
 }
 
 fui::Rect rowArea(fui::Rect band, const fui::ListProps& props) {
@@ -243,6 +260,12 @@ fui::Rect rowArea(fui::Rect band, const fui::ListProps& props) {
   if (props.scrollIndicator && reserved) band.width = static_cast<int16_t>(band.width - 5);
   return band;
 }
+
+namespace {
+bool copyMenuLabel(char* out, size_t size, const char* source) {
+  return copyNatural(out, size, source, LabelCase::Preserve);
+}
+}  // namespace
 
 void RowSource::bind(fui::ListProps& props, fui::DrawTarget& drawTarget, fui::Rect band) {
   items = props.items;
@@ -271,17 +294,17 @@ void RowSource::bind(fui::ListProps& props, fui::DrawTarget& drawTarget, fui::Re
       break;
     int available = width - padding * 2 - (item.icon ? iconSize + gap : 0);
     if (item.value) {
-      copyCaps(value, sizeof(value), item.value);
+      copyMenuLabel(value, sizeof(value), item.value);
       fitLabel(drawTarget, value, std::max(24, available * 2 / 5), valueStyle);
       available -= drawTarget.measureText(valueStyle.font, value, valueStyle).width + valueInset + gap;
     }
     if (item.toggle) available -= toggleWidth + valueInset + gap;
     if (item.label) {
-      copyCaps(label, sizeof(label), item.label);
+      copyMenuLabel(label, sizeof(label), item.label);
       fitLabel(drawTarget, label, available, labelStyle);
     }
     if (item.subtitle) {
-      copyCaps(subtitle, sizeof(subtitle), item.subtitle);
+      copyMenuLabel(subtitle, sizeof(subtitle), item.subtitle);
       fitLabel(drawTarget, subtitle, width - padding * 2, subtitleStyle);
     }
   }
@@ -301,15 +324,15 @@ void RowSource::provide(void* ctx, uint16_t index, fui::ListItem& item) {
     item = self.items[index];
   // Font choices belong to bind(), after the caller finalizes its viewport.
   if (item.value) {
-    copyCaps(self.value, sizeof(self.value), item.value);
+    copyMenuLabel(self.value, sizeof(self.value), item.value);
     item.value = self.value;
   }
   if (item.label) {
-    copyCaps(self.label, sizeof(self.label), item.label);
+    copyMenuLabel(self.label, sizeof(self.label), item.label);
     item.label = self.label;
   }
   if (item.subtitle) {
-    copyCaps(self.subtitle, sizeof(self.subtitle), item.subtitle);
+    copyMenuLabel(self.subtitle, sizeof(self.subtitle), item.subtitle);
     item.subtitle = self.subtitle;
   }
 }

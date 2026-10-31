@@ -14,7 +14,7 @@ inline const char* sectionName(menufont::Section section) {
   static_assert(sizeof(labels) / sizeof(labels[0]) == menufont::kSectionCount);
   return I18N.get(labels[int(section)]);
 }
-inline constexpr StrId choiceIds[] = {StrId::STR_MENU_FONT_INHERIT, StrId::STR_MENU_FONT_PIXEL,
+inline constexpr StrId choiceIds[] = {StrId::STR_MENU_FONT_INHERIT, StrId::STR_MENU_FONT_NOTO_SANS,
                                       StrId::STR_MENU_FONT_CLASSIC, StrId::STR_MENU_FONT_NOTO_SANS,
                                       StrId::STR_MENU_FONT_NOTO_SERIF};
 static_assert(sizeof(choiceIds) / sizeof(choiceIds[0]) == int(menufont::Override::Count));
@@ -28,5 +28,15 @@ inline void styleSections(freeink::ui::ListProps& props, bool wide) {
   props.valueText.font = 3;
   props.valueText.bold = false;
   props.rowStyles.normal.borderWidth = 1;
+  if (chrome::lightHeader) {
+    props.rowStyles = lightui::controlStyles(true);
+    props.rowStyles.normal.borderWidth = 0;
+    props.rowStyles.selected = props.rowStyles.focused = props.rowStyles.active = props.rowStyles.normal;
+    props.separatorPaint = lightui::rule;
+    props.selectionMarker = freeink::ui::SelectionMarker::Underline;
+    props.markerThickness = 1;
+    props.markerPaint = lightui::rule;
+    props.labelText.maxLines = 2;
+  }
 }
 }  // namespace menufontui

@@ -159,6 +159,13 @@ void FileBrowserActivity::loadFiles() {
 // rows the list actually lays out, so nothing per-file is materialized beyond
 // `files` itself. The label/value pointers stay valid until the next call,
 // which is all the provider contract requires.
+void FileBrowserActivity::pageAction(const fui::ActionEvent& event, void* context) {
+  auto& self = *static_cast<FileBrowserActivity*>(context);
+  RenderLock lock(self);
+  self.activeNav().requestScroll(event.value * self.activeNav().inputPageRows());
+  self.requestUpdate();
+}
+
 void FileBrowserActivity::provideRow(void* ctx, const uint16_t index, fui::ListItem& item) {
   auto* self = static_cast<FileBrowserActivity*>(ctx);
   if (index >= self->files.size()) return;
@@ -171,6 +178,9 @@ void FileBrowserActivity::provideRow(void* ctx, const uint16_t index, fui::ListI
     item.value = self->rowExtBuf + 1;
   }
   item.icon = listIconFor(UITheme::getFileIcon(entry), 32);
+  if (chrome::lightHeader) {
+    item.labelBold = false;
+  }
   item.actionValue = static_cast<int16_t>(index);
 }
 
@@ -209,6 +219,7 @@ void FileBrowserActivity::prewarmRowGlyphs(const int start) {
 
 void FileBrowserActivity::onEnter() {
   UiListActivity::onEnter();
+  app.on(ACTION_PAGE, &FileBrowserActivity::pageAction, this);
 
   fileNameBuffer = makeUniqueNoThrow<char[]>(NAME_BUFFER_SIZE);
   if (!fileNameBuffer) {
@@ -605,45 +616,24 @@ void FileBrowserActivity::buildScreen(UiScreen& screen) {
   const bool unicode = unicodeNames || I18N.getLanguage() != Language::EN;
   pixelui::FontScope fonts(uiTarget, renderer, unicode);
   const auto& metrics = UITheme::getInstance().getMetrics();
-  pixelui::begin(screen, mappedInput.hasTouch() ? 0 : metrics.buttonHintsHeight);
-
-  // Full path band at the bottom: separator on top, left-truncated so the
-  // deepest directory stays visible.
-  {
-    const int pathLineHeight = renderer.getLineHeight(SMALL_FONT_ID);
-    const fui::Rect band = screen.takeBottom(static_cast<int16_t>(pathLineHeight + metrics.verticalSpacing));
-    // fork-local seam: edge to edge, as the header's rule is. Clipped to the
-    // bezel's safe area it stopped 3px short of both sides and read as an inset
-    // that went wrong.
-    screen.target().fill(fui::Rect{0, band.y, static_cast<int16_t>(renderer.getScreenWidth()), 3},
-                         fui::Paint::solid(fui::Color::Black));
-    const int pathY =
-        band.y + metrics.verticalSpacing / 2 + (band.height - metrics.verticalSpacing / 2 - pathLineHeight) / 2;
-    const int pathInset = metrics.contentSidePadding;
-    const int pathMaxWidth = band.width - pathInset - metrics.contentSidePadding;
-    const char* pathStr = basepath.c_str();
-    const char* pathDisplay = pathStr;
-    char leftTruncBuf[256];
-    if (renderer.getTextWidth(SMALL_FONT_ID, pathStr) > pathMaxWidth) {
-      const char ellipsis[] = "\xe2\x80\xa6";  // UTF-8 ellipsis (…)
-      const int ellipsisWidth = renderer.getTextWidth(SMALL_FONT_ID, ellipsis);
-      const int available = pathMaxWidth - ellipsisWidth;
-      // Walk forward from the start until the suffix fits, skipping UTF-8 continuation bytes
-      const char* p = pathStr;
-      while (*p) {
-        if (renderer.getTextWidth(SMALL_FONT_ID, p) <= available) break;
-        ++p;
-        while (*p && (static_cast<unsigned char>(*p) & 0xC0) == 0x80) ++p;
-      }
-      snprintf(leftTruncBuf, sizeof(leftTruncBuf), "%s%s", ellipsis, p);
-      pathDisplay = leftTruncBuf;
-    }
-    renderer.drawText(SMALL_FONT_ID, band.x + pathInset, pathY, pathDisplay);
+  pixelui::begin(screen, libraryui::kFooterHeight + (mappedInput.hasTouch() ? 0 : metrics.buttonHintsHeight));
+  if (chrome::lightHeader) {
+    const auto body = screen.body();
+    screen.setContentMarginAbsolute({int16_t(std::max(chrome::headerHeight, int(body.y) - 6)),
+                                     int16_t(screen.device().width - body.right()),
+                                     int16_t(screen.device().height - body.bottom()), body.x});
   }
+
+  const int pathLength = std::snprintf(pathLabel, sizeof(pathLabel), tr(STR_BROWSER_MICROSD_PATH), basepath.c_str(),
+                                       basepath == "/" ? "" : "/");
+  const char* footerLocation = pathLength < 0 || size_t(pathLength) >= sizeof(pathLabel) ? basepath.c_str() : pathLabel;
 
   if (files.empty()) {
     screen.centeredText(mode == Mode::PickFirmware ? tr(STR_NO_BIN_FILES) : tr(STR_NO_FILES_FOUND),
                         screen.theme().bodyText);
+    char count[48];
+    std::snprintf(count, sizeof(count), tr(STR_BROWSER_ITEMS), 0U);
+    libraryui::statusFooter(screen, footerLocation, count);
     return;
   }
 
@@ -656,6 +646,10 @@ void FileBrowserActivity::buildScreen(UiScreen& screen) {
   props.inputMask = fui::InputTouch | fui::InputLongPress;
   uiTarget.setFont(4, toybox::kBookListFontId);
   libraryui::styleBookRows(props, screen.target());
+  if (chrome::lightHeader) {
+    libraryui::lightRows(props);
+  }
+  libraryui::fitPortraitRows(props, screen.device(), screen.body());
   props.rtl =
       (I18N.getLanguage() == Language::AR || I18N.getLanguage() == Language::FA || I18N.getLanguage() == Language::HE);
   syncListViewport(screen, props);
@@ -664,11 +658,18 @@ void FileBrowserActivity::buildScreen(UiScreen& screen) {
   // provider.
   prewarmRowGlyphs(nav.top);
   props.partialTrailingRow = false;
-  pixelui::list(screen, props, false, false, 2);
+  if (chrome::lightHeader) {
+    fui::list(screen.frame(), screen.body(), props);
+  } else
+    pixelui::list(screen, props, false, false, 2);
+  char count[48];
+  std::snprintf(count, sizeof(count), tr(STR_BROWSER_ITEMS), unsigned(files.size()));
+  libraryui::statusFooter(screen, footerLocation, count);
 }
 
 void FileBrowserActivity::drawChrome() {
   const char* folderName = mode == Mode::PickFirmware ? tr(STR_SELECT_FIRMWARE_FILE)
+                           : chrome::lightHeader      ? tr(STR_BROWSE_FILES)
                            : basepath == "/"          ? tr(STR_SD_CARD)
                                                       : basepath.c_str() + basepath.rfind('/') + 1;
   pixelui::drawHeader(renderer, folderName, unicodeNames || I18N.getLanguage() != Language::EN);

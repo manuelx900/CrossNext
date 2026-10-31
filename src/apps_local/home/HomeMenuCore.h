@@ -23,7 +23,7 @@ enum class Id : uint8_t {
 constexpr int kCount = static_cast<int>(Id::Count);
 constexpr int kBaseCount = static_cast<int>(Id::Shortcut0);
 constexpr int kShortcutCount = kCount - kBaseCount;
-constexpr int kMaxVisible = 8;
+constexpr int kMaxVisible = 7;
 constexpr char kSaveVersion = '4';
 constexpr size_t kLabelBytes = 49;
 constexpr size_t kItemBytes = 64;

@@ -137,10 +137,11 @@ inline void row(toybox::Screen& s, fui::Rect r, const char* label, fui::ActionId
                 bool selected = false, const char* trailing = nullptr, bool arrow = true,
                 const fui::BitmapRef* customMark = nullptr) {
   selected = s.frame().buttonSelected(action, value, selected);
+  const int radius = chrome::lightHeader ? lightui::kControlRadius : 0;
   if (selected)
-    s.target().fill(r, dashboard::ink);
+    s.target().fill(r, chrome::lightHeader ? lightui::selected : dashboard::ink, radius);
   else
-    dashboard::frame(s, r, pixelui::kBorder);
+    s.target().stroke(r, dashboard::ink, chrome::lightHeader ? 1 : pixelui::kBorder, radius);
   dashboard::hit(s, r, action, value);
   const int side = std::max(12, std::min({40, int(r.height) - 18, int(r.width) / 5}));
   const int margin = r.width < 180 ? 8 : 16;
@@ -169,7 +170,10 @@ inline void row(toybox::Screen& s, fui::Rect r, const char* label, fui::ActionId
 }
 inline void heading(toybox::Screen& s, fui::Rect r, const char* label) {
   char copy[128];
-  pixelui::copyCaps(copy, sizeof(copy), label);
+  if (chrome::lightHeader)
+    pixelui::copyNatural(copy, sizeof(copy), label);
+  else
+    pixelui::copyCaps(copy, sizeof(copy), label);
   fui::TextStyle style;
   style.font = 0;
   const int width = std::min(int(r.width) - 12, int(s.target().measureText(0, copy, style).width) + 12);
@@ -177,5 +181,20 @@ inline void heading(toybox::Screen& s, fui::Rect r, const char* label) {
   if (width + 12 < r.width)
     s.target().line({int16_t(r.x + width + 8), int16_t(r.y + r.height / 2)}, {r.right(), int16_t(r.y + r.height / 2)},
                     2, dashboard::ink);
+}
+inline void segment(toybox::Screen& s, fui::Rect band, int index, int count, const char* label, fui::ActionId action,
+                    int value, Mark symbol, bool selected) {
+  const auto box = lightui::segmentRect(band, index, count);
+  if (!chrome::lightHeader) {
+    row(s, box, label, action, value, symbol, selected, nullptr, false);
+    return;
+  }
+  selected = s.frame().buttonSelected(action, value, selected);
+  lightui::segment(s.target(), band, index, count, selected);
+  dashboard::hit(s, box, action, value);
+  const int side = std::min(32, int(box.height) - 16);
+  mark(s, fui::makeRect(box.x + 12, box.y + (box.height - side) / 2, side, side), symbol, selected);
+  dashboard::text(s, fui::makeRect(box.x + side + 22, box.y, box.width - side - 32, box.height), label, 0,
+                  fui::TextAlign::Center, selected);
 }
 }  // namespace gamepanel

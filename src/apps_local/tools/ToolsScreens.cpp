@@ -99,7 +99,7 @@ void calendar(toybox::Screen& s, const Model& m, Work& w, fui::Rect body) {
   for (int row = 1; row < rows; ++row)
     s.target().line({grid.x, int16_t(grid.y + row * grid.height / rows)},
                     {grid.right(), int16_t(grid.y + row * grid.height / rows)}, 2, ink);
-  s.target().stroke(grid, ink, pixelui::kBorder);
+  lightui::outline(s.target(), grid, ink, pixelui::kBorder);
   s.frame().hit(grid, SelectDay, 0, fui::InputTouch | fui::InputPointerOnly);
   const int dayTop = grid.y + grid.height / rows;
   s.frame().navigationGrid(fui::makeRect(grid.x, dayTop, grid.width, grid.bottom() - dayTop), 7, rows - 1);
@@ -162,7 +162,7 @@ void clock(toybox::Screen& s, const Model& m, Work& w, fui::Rect body) {
       info = fui::makeRect(content.x + side + 16, content.y, content.width - side - 16, content.height);
       const int valueH = std::min(104, info.height / 2), top = info.y + (info.height - valueH - 76) / 2;
       toolsdigits::draw(s, fui::makeRect(info.x + 12, top, info.width - 24, valueH), time);
-      caps(s, w, fui::makeRect(info.x, top + valueH + 8, info.width, 32), I18N.get(weekdays[weekday]));
+      caps(s, w, fui::makeRect(info.x, top + valueH + 8, info.width, 40), I18N.get(weekdays[weekday]), 1);
       text(s, fui::makeRect(info.x, top + valueH + 44, info.width, 32), m.validTime ? date : tr(STR_READING_CLOCK), 0);
     } else {
       const int offset = std::min(18, std::max(0, int(content.height) - int(content.width) - 110));
@@ -174,15 +174,21 @@ void clock(toybox::Screen& s, const Model& m, Work& w, fui::Rect body) {
       caps(s, w, fui::makeRect(content.x, content.y + side + offset + 66, content.width, 34), w.label, 0);
     }
   } else {
-    const int y = content.y + (wide ? 30 : content.height / 5);
-    caps(s, w, fui::makeRect(content.x, y - 20, content.width, 44), I18N.get(weekdays[weekday]));
+    const auto dateBand = fui::makeRect(content.x, content.bottom() - (wide ? 126 : 150), content.width, 76);
+    const auto weekdayBand = fui::makeRect(content.x, content.y + (wide ? 0 : 48), content.width, 76);
+    const auto clockLabel = [&](fui::Rect box, const char* label) {
+      fui::TextStyle style;
+      style.font = 4;
+      const auto ink = s.target().inkBounds(4, label, style);
+      const bool fits = s.target().measureText(4, label, style).width <= box.width - 16 && ink.height <= box.height;
+      text(s, box, label, fits ? 4 : 1);
+    };
+    clockLabel(weekdayBand, I18N.get(weekdays[weekday]));
     toolsdigits::draw(s,
-                      fui::makeRect(content.x + 8, y + 50 - (wide ? 8 : 0), content.width - 16,
-                                    content.height * (wide ? 48 : 40) / 100),
+                      fui::makeRect(content.x + 8, weekdayBand.bottom() + 8, content.width - 16,
+                                    dateBand.y - weekdayBand.bottom() - 16),
                       time);
-    text(s,
-         fui::makeRect(content.x, content.y + content.height * (wide ? 73 : 76) / 100, content.width, wide ? 32 : 40),
-         m.validTime ? date : tr(STR_READING_CLOCK), 0);
+    clockLabel(dateBand, m.validTime ? date : tr(STR_READING_CLOCK));
   }
   if (!m.analog) {
     const auto chip = fui::makeRect(content.x + (content.width - 136) / 2, content.bottom() - 42, 136, 34);

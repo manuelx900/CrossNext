@@ -28,7 +28,7 @@ inline fui::Rect cell(fui::Rect r, int index, int count, int gap = GAP) {
   return rect(r.x + index * (width + gap), r.y, index + 1 == count ? r.right() - r.x - index * (width + gap) : width,
               r.height);
 }
-inline void frame(toybox::Screen& s, fui::Rect r) { s.target().stroke(r, ink, BORDER); }
+inline void frame(toybox::Screen& s, fui::Rect r) { lightui::outline(s.target(), r, ink, BORDER); }
 inline void text(toybox::Screen& s, fui::Rect r, const char* value, int font = 0, bool inverse = false,
                  fui::TextAlign align = fui::TextAlign::Left, bool emphasis = false) {
   pixelui::text(s.target(), r, value, font, inverse ? fui::Color::White : fui::Color::Black, align, emphasis);
@@ -370,7 +370,7 @@ inline void hero(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, bool h
                  Palette* palette = nullptr) {
   const auto& p = *m.profile;
   PaletteScope scope(palette, p.lifeStatus == pet::LifeStatus::Lost);
-  if (scope.inverted()) s.target().fill(r, paper);
+  if (scope.inverted()) lightui::surface(s.target(), r, paper);
   frame(s, r);
   if (p.lifeStatus == pet::LifeStatus::Lost) {
     identity(s, m, w, rect(r.x + 12, r.y + 8, r.width - 24, 47));
@@ -406,11 +406,15 @@ inline void hero(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, bool h
       if (p.equipped[slot] < pet::OBJECT_COUNT)
         object(s, m, rect(image.x + int(slot) * (side + 5), image.bottom() - side, side, side), p.equipped[slot]);
   }
+  if (chrome::lightHeader) {
+    lightui::trimCorners(s.target(), r, scope.inverted() ? ink : paper);
+    frame(s, r);
+  }
 }
 inline void room(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, Palette* palette = nullptr) {
   const auto& p = *m.profile;
   PaletteScope scope(palette, p.lifeStatus == pet::LifeStatus::Lost);
-  if (scope.inverted()) s.target().fill(r, paper);
+  if (scope.inverted()) lightui::surface(s.target(), r, paper);
   frame(s, r);
   icon(s, rect(r.x + 12, r.y + 9, 27, 27), icon_cat_places_32);
   std::snprintf(w.secondary, sizeof(w.secondary), tr(STR_PET_GENERATION), static_cast<unsigned long>(p.generation));
@@ -425,10 +429,14 @@ inline void room(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, Palett
   text(s, rect(r.x + 48, r.y + (stacked ? 51 : 28), r.width - 60, 18),
        p.lifeStatus == pet::LifeStatus::Lost ? tr(STR_PET_DIED_STATUS) : stageName(pet::stage(p.readingSeconds)), 3);
   habitat(s, m, r, stacked ? 72 : 47, scope.inverted());
+  if (chrome::lightHeader) {
+    lightui::trimCorners(s.target(), r, scope.inverted() ? ink : paper);
+    frame(s, r);
+  }
 }
 inline void metricLine(toybox::Screen& s, Work& w, fui::Rect r, const char* label, unsigned value,
                        const freeink::Icon& mark) {
-  s.target().stroke(r, ink, 1);
+  lightui::outline(s.target(), r, ink, 1);
   icon(s, rect(r.x + 8, r.y + 7, 24, 24), mark);
   const int valueWidth = s.target().measureText(3, "100 / 100", {}).width + 4;
   prose(s, rect(r.x + 40, r.y + 4, r.width - valueWidth - 56, 28), label, 1);
@@ -438,7 +446,7 @@ inline void metricLine(toybox::Screen& s, Work& w, fui::Rect r, const char* labe
 }
 inline void metric(toybox::Screen& s, Work& w, fui::Rect r, const char* label, unsigned value,
                    const freeink::Icon& mark, bool locked = false) {
-  s.target().stroke(r, ink, 1);
+  lightui::outline(s.target(), r, ink, 1);
   const bool vertical = r.height >= 132 || (r.width < 130 && r.height >= 90);
   if (locked && !vertical) {
     text(s, rect(r.x + 6, r.y + 6, r.width - 12, 24), label, 3, false, fui::TextAlign::Center);

@@ -277,6 +277,7 @@ void ToolsActivity::render(RenderLock&&) {
   renderer.clearScreen();
   auto target = toybox::makeTarget(renderer);
   pixelui::bindFonts(target, renderer, I18N.getLanguage() != Language::EN);
+  if (kind == toolsui::Kind::Clock) target.setFont(4, toybox::kClockLabelFontId);
   const fui::InputSnapshot in{};
   toybox::Frame frame(target, target.deviceContext(), in, interactions, nullptr, toybox::headerStatus(renderer));
   toybox::Screen screen(frame);

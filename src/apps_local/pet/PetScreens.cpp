@@ -103,14 +103,17 @@ void tabs(toybox::Screen& s, Work& w, const Model& m) {
   w.tabBar.inputMask = fui::InputTouch;
   w.tabBar.text.font = 0;
   w.tabBar.text.align = fui::TextAlign::Center;
-  w.tabBar.tabStyles = pixelui::rowStyles();
+  w.tabBar.tabStyles = chrome::lightHeader ? lightui::tabStyles() : pixelui::rowStyles();
   w.tabBar.tabInset = {};
   w.tabBar.contentInset = {};
   w.tabBar.minTouchSize = 0;
   const auto band = s.takeTop(46, GAP);
-  fui::tabBar(s.frame(), band, w.tabBar);
-
-  frame(s, band);
+  if (chrome::lightHeader)
+    lightui::tabs(s.frame(), band, w.tabBar);
+  else {
+    fui::tabBar(s.frame(), band, w.tabBar);
+    frame(s, band);
+  }
 }
 }  // namespace
 void dashboard(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, Palette* palette) {
@@ -387,9 +390,16 @@ void home(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, Palette* pale
   static constexpr const freeink::Icon* empty[] = {&referenceicons::EMPTY_REST, &referenceicons::EMPTY_DECOR,
                                                    &referenceicons::EMPTY_GAME, &referenceicons::EMPTY_SCENE};
   bool decorated = false;
+  if (chrome::lightHeader) frame(s, slots);
   for (unsigned i = 0; i < pet::SLOT_COUNT; ++i) {
-    const auto box = cell(slots, int(i), 4, 6);
-    const bool inverse = button(s, w, box, "", OpenProjects, int(i), false, nullptr, unlocked);
+    const auto box = cell(slots, int(i), 4, chrome::lightHeader ? 0 : 6);
+    bool inverse = false;
+    if (chrome::lightHeader) {
+      if (i) s.target().fill(rect(box.x, box.y, 1, box.height), lightui::rule);
+      if (unlocked) s.frame().hit(box, OpenProjects, int(i));
+    } else {
+      inverse = button(s, w, box, "", OpenProjects, int(i), false, nullptr, unlocked);
+    }
     const auto preview = rect(box.x + 8, box.y + 7, box.width - 16, box.height - 39);
     if (!unlocked)
       icon(s, preview, extra_lock_32);

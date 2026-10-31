@@ -25,9 +25,11 @@ class Xtc {
   std::string cachePath;
   std::unique_ptr<xtc::XtcParser> parser;
   bool loaded;
+  bool rotateCover = false;
 
  public:
-  explicit Xtc(std::string filepath, const std::string& cacheDir) : filepath(std::move(filepath)), loaded(false) {
+  explicit Xtc(std::string filepath, const std::string& cacheDir, bool counterclockwise = false)
+      : filepath(std::move(filepath)), loaded(false), rotateCover(counterclockwise) {
     // Create cache key based on filepath (same as Epub)
     cachePath = cacheDir + "/xtc_" + std::to_string(std::hash<std::string>{}(this->filepath));
   }

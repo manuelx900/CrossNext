@@ -25,10 +25,15 @@
 #include "CrossPointState.h"
 #include "activities/reader/ReaderUtils.h"
 #include "apps_local/notes/NotesSleep.h"
+#include "apps_local/reading/ReadingGoal.h"
+#include "apps_local/reading/ReadingGoalScreens.h"
+#include "apps_local/reading/ReadingStatsStore.h"
+#include "apps_local/ui/PixelMenuTheme.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
 #include "images/Logo120.h"
 #include "images/MoonIcon.h"
+#include "util/InterfaceThemeStyle.h"
 
 namespace {
 // Metalio: B/W sleep images use the full 0xF7 waveform instead of HALF (two
@@ -568,6 +573,33 @@ void SleepActivity::onEnter() {
   }
 
   switch (SETTINGS.sleepScreen) {
+    case CrossPointSettings::SLEEP_SCREEN_MODE::READING_GOAL: {
+      const auto section = menufont::Section::Statistics;
+      const bool previous = chrome::lightHeader;
+      chrome::lightHeader = interfacetheme::light(interfacetheme::resolve(
+          SETTINGS.homeLayout, SETTINGS.interfaceThemeStyle, section, SETTINGS.interfaceThemeOverrides[int(section)]));
+      renderer.clearScreen();
+      auto target = toybox::makeTarget(renderer);
+      pixelui::bindFonts(target, renderer, I18N.getLanguage() != Language::EN);
+      auto interactions = makeUniqueNoThrow<toybox::Interactions>();
+      if (!interactions) {
+        LOG_ERR("SLP", "OOM: daily goal UI");
+        chrome::lightHeader = previous;
+        return renderDefaultSleepScreen();
+      }
+      const freeink::ui::InputSnapshot input{};
+      toybox::Frame frame(target, target.deviceContext(), input, *interactions);
+      toybox::Screen screen(frame);
+      auto summary = makeUniqueNoThrow<readingstats::Summary>();
+      const int day = readingstats::today();
+      const bool available = summary && readinggoal::load(*summary, day);
+      if (!summary) LOG_ERR("SLP", "OOM: daily goal screen");
+      readingui::goalWallpaper(screen, available ? summary.get() : nullptr, day,
+                               readinggoal::target(SETTINGS.readingDailyGoal));
+      chrome::lightHeader = previous;
+      renderer.displayBuffer(HalDisplay::HALF_REFRESH);
+      return;
+    }
     case (CrossPointSettings::SLEEP_SCREEN_MODE::BLANK):
       return renderBlankSleepScreen();
     case (CrossPointSettings::SLEEP_SCREEN_MODE::CUSTOM):
@@ -845,7 +877,7 @@ void SleepActivity::renderCoverSleepScreen() const {
   // Check if the current book is XTC, TXT, or EPUB
   if (FsHelpers::hasXtcExtension(APP_STATE.openEpubPath)) {
     // Handle XTC file
-    Xtc lastXtc(APP_STATE.openEpubPath, "/.crosspoint");
+    Xtc lastXtc(APP_STATE.openEpubPath, "/.crosspoint", SETTINGS.xtcCoverRotation != 0);
     if (!lastXtc.load()) {
       LOG_ERR("SLP", "Failed to load last XTC");
       return (this->*renderNoCoverSleepScreen)();

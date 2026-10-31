@@ -115,35 +115,15 @@ antialiased edge floods to solid black, so stems fatten, counters close, and the
 type turns to mush. This is not a property of the face; it is a property of the
 path. Any vector font rendered through it gets bloated.
 
-So Toybox ships its own: **Jersey 25** (SIL OFL, Google Fonts), subset to ASCII
-and converted in **1-bit** mode, where there is no coverage to flood and every
-glyph pixel is deliberate. It is also condensed, which matters on a 480px-wide
-screen. One weight only: a synthesised bold at these sizes is the same flooding
-by another route, so weight comes from size and from inversion instead.
-Registered from `ToyboxFonts.cpp` rather than `main.cpp`, so it costs no upstream
-surface. 13KB of flash for both cuts.
-
-**A game may have its own voice, but not its own chrome.** Connections adds
-**Instrument Serif** for its tiles and its menu body, and that is enough to tell
-the two games apart from across a room. What it does _not_ touch: the header bar
-and the buttons stay in Jersey in every app, because those are the device
-speaking, not the game. The rule generalises: the app's own surface and its menu
-prose can carry a typeface; anything the system draws around it cannot.
-
-Three cuts of a second face cost 424KB of flash, which is affordable exactly
-once or twice, not per game. Check the budget before adding a face rather than
-after.
-
-**A reading cut, for a surface that is a page rather than a board.** The UI cut
-is 20px, which is right for a row you glance at and wrong for a screenful you
-actually read: at 20px a 480px panel holds about 28 characters a line, so an
-article becomes forty page taps and half the headlines on a Hacker News front
-page cannot finish. `toybox_14` is the same face one step down, and it roughly
-halves both. An app binds it by passing `toybox::readingFaces()` to
-`makeTarget`; the header band keeps the display cut, because the top bar is the
-fork's chrome and a shared one is what makes two apps feel like one device.
-2.2KB of flash. Regenerate the cuts with `tools_local/toybox/gen_toybox_fonts.sh`,
-which fetches Jersey 25 rather than relying on a TTF nobody still has.
+The interface ships one-bit Noto Sans faces to preserve thin strokes on the
+monochrome renderer. Ubuntu and Noto Serif are alternative interface families.
+General, section and individual app/game preferences control their scope;
+the reader's book font is independent. Jersey 25 is retired, and saved choices
+for it migrate to Noto Sans without renumbering the remaining preference IDs.
+Dedicated display numerals and calculator faces also use one-bit Noto Sans.
+Regenerate these assets with `tools_local/toybox/gen_display_sans.py`, using
+the bundled SIL OFL font source. Counter and timer cells retain fixed advances
+so changing digits does not resize the display.
 
 **There are not three fonts. There are three slots.** `FONT_SLOTS = 3` is
 `int fonts[3]` on the render target: a working set, not a limit.
@@ -225,23 +205,10 @@ breaks, ask whether that layout wanted the whole value.**
 is the same defect one level up, and it is the one that keeps coming back.
 `GfxRendererTarget::text` places centre-aligned text at
 `rect.y + max(0, (rect.height - lineHeight) / 2)`, so it centres the font's
-**line box** (`advanceY`) rather than its ink -- and it clamps. Jersey carries
-heavy leading, so the moment the box is shorter than the line box that `max()`
-pins the offset at zero and the text lands `ascender - inkHeight` below the top
-with its foot out of the bottom.
-
-| cut         | line box | ink  | needs a box of |
-| ----------- | -------- | ---- | -------------- |
-| `toybox_10` | 21px     | 13px | 21px           |
-| `toybox_14` | 29px     | 18px | 29px           |
-| `toybox_20` | 42px     | 25px | 42px           |
-| `toybox_30` | 63px     | 38px | **63px**       |
-
-The display cut therefore needs a 63px-tall rect to centre itself, and almost
-nothing inside a game board is 63px tall. The error grows as the box gets
-_smaller_, which is exactly why it reads as an intermittent font problem instead
-of a rule: a 50px Sudoku cell put the 20px cut at 12 above and 13 below (fine)
-and the 30px cut at 13 above and 0 below, crossing the border.
+**line box** (`advanceY`) rather than its ink, and clamps when the box is
+shorter. Noto Sans also includes leading: the bundled 10pt UI cut has a 28px
+line box and the 14pt cut a 40px line box. Center compact controls using the
+actual ink metrics, not a fixed offset copied from another face.
 
 `toybox::inkCentred(box, cut)` returns a rect one line box tall, positioned so
 the clamp is a no-op and the ink lands centred in `box`. Use it for any

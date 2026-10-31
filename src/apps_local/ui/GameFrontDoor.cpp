@@ -41,7 +41,10 @@ void text(toybox::Screen& s, fui::Rect box, const char* label, int font, bool ce
   if (!label || box.empty()) return;
   char capital[160];
   if (font == 1) {
-    pixelui::copyCaps(capital, sizeof(capital), label);
+    if (chrome::lightHeader)
+      pixelui::copyNatural(capital, sizeof(capital), label);
+    else
+      pixelui::copyCaps(capital, sizeof(capital), label);
     label = capital;
   }
   fui::TextStyle style;
@@ -67,8 +70,9 @@ void rows(toybox::Screen& s, const Layout& g, const Row* rows, int count, int se
     const auto& row = rows[n];
     const bool primary = s.frame().buttonSelected(row.action, row.value, n == selected);
     const auto paint = primary ? dashboard::paper : dashboard::ink;
-    s.target().fill(box, primary ? dashboard::ink : dashboard::paper);
-    s.target().stroke(box, dashboard::ink, pixelui::kBorder);
+    s.target().fill(box, primary ? (chrome::lightHeader ? lightui::selected : dashboard::ink) : dashboard::paper,
+                    chrome::lightHeader ? 5 : 0);
+    s.target().stroke(box, dashboard::ink, chrome::lightHeader ? 1 : pixelui::kBorder, chrome::lightHeader ? 5 : 0);
     const int side = std::min(38, int(box.height) - 14);
     const auto mark = fui::makeRect(box.x + 14, box.y + (box.height - side) / 2, side, side);
     if (row.symbol == Symbol::Nearby || row.symbol == Symbol::Settings)
@@ -82,7 +86,10 @@ void rows(toybox::Screen& s, const Layout& g, const Row* rows, int count, int se
       gamepanel::mark(s, mark, symbol, primary);
     }
     char label[160];
-    pixelui::copyCaps(label, sizeof(label), row.label);
+    if (chrome::lightHeader)
+      pixelui::copyNatural(label, sizeof(label), row.label);
+    else
+      pixelui::copyCaps(label, sizeof(label), row.label);
     fui::TextStyle style;
     style.font = 1;
     style.color = primary ? fui::Color::White : fui::Color::Black;

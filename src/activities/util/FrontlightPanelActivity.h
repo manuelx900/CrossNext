@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 
 #include "CrossPointSettings.h"
 #include "activities/Activity.h"
@@ -33,8 +34,10 @@ class FrontlightPanelActivity final : public Activity, private UiAppHost {
   bool draggingSlider = false;
   bool suspendedForWifi = false;
   unsigned long lastClockPoll = 0;
-  int shownMinute = -1;
+  std::atomic<int> shownMinute{-1};
   int panelBottom = 0;
+  int lastTouchX = -1, lastTouchY = -1;
+  bool backdropPainted = false;
 
   // Quick-setting tiles, in grid order (2 columns): night mode, refresh,
   // orientation, Wi-Fi. Fixed set — shown on touch boards, absent elsewhere.

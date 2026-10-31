@@ -39,7 +39,7 @@ void button(toybox::Screen& s, Work& w, fui::Rect r, const char* label, fui::Act
   s.button(w.button, r);
 }
 void bar(toybox::Screen& s, fui::Rect r, uint64_t v, uint64_t total) {
-  s.target().stroke(r, ink, 2);
+  lightui::outline(s.target(), r, ink, 2);
   const int inset = r.height >= 10 ? 3 : 1;
   if (total)
     s.target().fill(fui::makeRect(r.x + inset, r.y + inset,
@@ -98,7 +98,7 @@ void lockMark(toybox::Screen& s, fui::Rect r) {
 }
 void shopStats(toybox::Screen& s, Work& w, const quest::Profile& p) {
   const auto r = s.takeTop(42, 8);
-  s.target().stroke(r, ink, 2);
+  lightui::outline(s.target(), r, ink, 2);
   std::snprintf(w.label, sizeof(w.label), tr(STR_QUEST_LEVEL), int(quest::level(p.xp)));
   text(s, fui::makeRect(r.x + 8, r.y + 4, r.width / 2 - 16, r.height - 8), w.label, 0);
   coin(s, fui::makeRect(r.x + r.width / 2 + 8, r.y + 10, 18, 24));
@@ -111,7 +111,7 @@ void hero(toybox::Screen& s, sdart::Pack* assets, fui::Rect area, const quest::P
 void dailyCard(toybox::Screen& s, Work& w, fui::Rect r, const Model& m) {
   const auto& p = *m.profile;
   const unsigned minutes = std::min<uint32_t>(quest::DAILY_MINUTES, m.summary->onDay(m.today) / 60);
-  s.target().stroke(r, ink, 3);
+  lightui::outline(s.target(), r, ink, 3);
   s.target().fill(fui::makeRect(r.x + 2, r.y + 2, r.width - 4, 24), ink);
   pixelui::text(s.target(), fui::makeRect(r.x + 10, r.y + 2, r.width - 20, 24), tr(STR_QUEST_DAILY), 0,
                 fui::Color::White);
@@ -132,7 +132,7 @@ void dailyCard(toybox::Screen& s, Work& w, fui::Rect r, const Model& m) {
   const bool claimed = m.today <= p.claimedDay;
   const auto claimBox = fui::makeRect(r.right() - 124, r.y + 42, 112, 48);
   if (claimed) {
-    s.target().stroke(claimBox, ink, 2);
+    lightui::outline(s.target(), claimBox, ink, 2);
     s.target().bitmap(fui::makeRect(claimBox.x + claimBox.width / 2 - 8, claimBox.y + 4, 16, 16),
                       fui::bitmapFromIcon(extra_check_32), fui::BitmapMode::Contain);
     text(s, fui::makeRect(claimBox.x + 4, claimBox.y + 24, claimBox.width - 8, 20), tr(STR_QUEST_CLAIMED), 3);
@@ -155,7 +155,7 @@ void genderButton(toybox::Screen& s, fui::Rect r, const quest::Profile& p) {
 }
 void heroPanel(toybox::Screen& s, Work& w, fui::Rect r, const quest::Profile& p, sdart::Pack* assets) {
   const int level = quest::level(p.xp);
-  s.target().stroke(r, ink, 3);
+  lightui::outline(s.target(), r, ink, 3);
   genderButton(s, fui::makeRect(r.right() - 50, r.y + 5, 44, 44), p);
   const auto title = rankTitle(level);
   pixelui::copyCaps(w.label, sizeof(w.label), title);
@@ -189,7 +189,7 @@ void heroPanel(toybox::Screen& s, Work& w, fui::Rect r, const quest::Profile& p,
   bar(s, fui::makeRect(r.x + 12, r.bottom() - 22, r.width - 24, 13), progress, span);
 }
 void statsCard(toybox::Screen& s, Work& w, fui::Rect r, unsigned value, const char* label, bool streak) {
-  s.target().stroke(r, ink, 3);
+  lightui::outline(s.target(), r, ink, 3);
   const bool wide = s.device().width > s.device().height;
   const auto icon = fui::makeRect(r.x + 8, r.y + 10, 40, wide ? 36 : r.height - 20);
   if (streak)
@@ -234,10 +234,10 @@ void buildLevelUp(toybox::Screen& s, const quest::Profile& p, bool saveFailed, W
                                  wide ? area.y + (area.height - height) / 2 : area.y + 70, width, height);
   const auto paper = fui::Paint::solid(fui::Color::White);
   s.target().fill(fui::makeRect(box.x + 6, box.y + 6, box.width, box.height), ink);
-  s.target().fill(box, paper);
-  s.target().stroke(box, ink, 3);
+  lightui::surface(s.target(), box, paper);
+  lightui::outline(s.target(), box, ink, 3);
   const auto banner = fui::makeRect(box.x + 8, box.y + 8, box.width - 16, 44);
-  s.target().fill(banner, ink);
+  lightui::surface(s.target(), banner, ink);
   pixelui::copyCaps(w.label, sizeof(w.label), tr(STR_QUEST_LEVEL_UP));
   const int headerFont = s.target().measureText(1, w.label, {}).width <= banner.width - 12 ? 1 : 0;
   pixelui::text(s.target(), banner.inset(fui::Insets{0, 6, 0, 6}), w.label, headerFont, fui::Color::White,
@@ -379,7 +379,7 @@ void build(toybox::Screen& s, const Model& m, Work& w) {
       const uint32_t target = quest::questTarget(q), reward = quest::questReward(q);
       const uint64_t value = std::min<uint64_t>(target, quest::questValue(q, stats));
       const bool done = value >= target, claimed = quest::isClaimed(p, q);
-      s.target().stroke(row, ink, 2);
+      lightui::outline(s.target(), row, ink, 2);
       const int iconSize = std::min(48, int(row.height) - 20), contentX = row.x + 66, contentWidth = row.width - 186;
       s.target().bitmap(fui::makeRect(row.x + 8, row.y + (row.height - iconSize) / 2, iconSize, iconSize),
                         fui::bitmapFromIcon(*icons[q % 6]), fui::BitmapMode::Contain);
@@ -402,7 +402,7 @@ void build(toybox::Screen& s, const Model& m, Work& w) {
         s.target().bitmap(fui::makeRect(contentX, contentY + 53, 16, 16), fui::bitmapFromIcon(extra_check_32),
                           fui::BitmapMode::Contain);
       const auto rewards = fui::makeRect(row.right() - 110, row.y + (row.height - 54) / 2, 102, 54);
-      s.target().stroke(rewards, ink, done && !claimed ? 3 : 2);
+      lightui::outline(s.target(), rewards, ink, done && !claimed ? 3 : 2);
       std::snprintf(w.label, sizeof(w.label), tr(STR_QUEST_CLAIM_REWARD), reward);
       text(s, fui::makeRect(rewards.x + 4, rewards.y + 3, rewards.width - 8, 23), w.label, 3);
       coin(s, fui::makeRect(rewards.x + 26, rewards.y + 30, 12, 17));
@@ -464,7 +464,7 @@ void build(toybox::Screen& s, const Model& m, Work& w) {
         fui::makeRect(body.x + (n % columns) * (width + 10), body.y + (n / columns) * (height + 8), width, height);
     const bool equipped = p.equipped[int(category)] == item,
                locked = !quest::owns(p, item) && level < int(quest::requiredLevel(item));
-    s.target().stroke(box, ink, equipped ? 4 : 2);
+    s.target().stroke(box, ink, chrome::lightHeader ? (equipped ? 2 : 1) : (equipped ? 4 : 2), lightui::radius());
     const int artWidth = std::min(86, box.width * 40 / 100);
     sprite(s, m.assets, item, fui::makeRect(box.x + 6, box.y + 8, artWidth - 8, box.height - 16));
     const auto info = fui::makeRect(box.x + artWidth + 8, box.y + 6, box.width - artWidth - 16, box.height - 12);

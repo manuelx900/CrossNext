@@ -6,6 +6,7 @@
 
 #include "MappedInputManager.h"
 #include "apps_local/readertext/ReferenceSlider.h"
+#include "apps_local/ui/PixelMenuTheme.h"
 #include "components/UITheme.h"
 #include "components/UiAppHelpers.h"
 #include "components/UiAppHost.h"
@@ -32,9 +33,14 @@ struct UiSliderDialogSpec {
 };
 
 inline void buildSliderDialogScreen(UiAppHost::UiScreen& screen, freeink::ui::GfxRendererTarget& uiTarget,
-                                    const MappedInputManager& mappedInput, const UiSliderDialogSpec& spec) {
-  uiTarget.setFont(0, UI_12_FONT_ID);
-  uiTarget.setFont(1, UI_12_FONT_ID);
-  uiTarget.setFont(3, UI_10_FONT_ID);
+                                    const MappedInputManager& mappedInput, const GfxRenderer& renderer,
+                                    const UiSliderDialogSpec& spec) {
+  if (chrome::lightHeader) {
+    pixelui::bindFonts(uiTarget, const_cast<GfxRenderer&>(renderer));
+  } else {
+    uiTarget.setFont(0, UI_12_FONT_ID);
+    uiTarget.setFont(1, UI_12_FONT_ID);
+    uiTarget.setFont(3, UI_10_FONT_ID);
+  }
   referenceslider::build(screen, spec, mappedInput.hasTouch());
 }

@@ -11,7 +11,7 @@ mkdir -p "$out"
  src/apps_local/pocketgames/OthelloScreens.cpp src/apps_local/pocketgames/PocketGamesCore.cpp \
  src/apps_local/cards/CardArt.cpp src/apps_local/pomodoro/PomodoroScreens.cpp src/apps_local/pomodoro/PomodoroCore.cpp \
  src/apps_local/words/WordsScreens.cpp src/apps_local/wallpapers/WallpapersScreens.cpp \
- src/apps_local/reading/ReadingStatsScreens.cpp src/apps_local/reading/ReadingStatsCore.cpp \
+ src/apps_local/reading/ReadingStatsScreens.cpp src/apps_local/reading/ReadingGoalScreens.cpp src/apps_local/reading/ReadingStatsCore.cpp \
  src/apps_local/picross/PicrossScreens.cpp src/apps_local/picross/PicrossCore.cpp \
  src/apps_local/go/GoScreens.cpp src/apps_local/go/GoCore.cpp \
  src/apps_local/battleship/BattleshipScreens.cpp src/apps_local/battleship/BattleshipCore.cpp \
@@ -22,3 +22,5 @@ mkdir -p "$out"
  src/apps_local/ui/PixelMenu.cpp src/apps_local/ui/GameFrontDoor.cpp \
  lib/I18n/I18n.cpp lib/I18n/I18nStrings.cpp freeink-sdk/libs/ui/FreeInkUI/src/FreeInkUI.cpp -o "$out/tests"
 "$out/tests" "$out"
+mkdir -p "$out/light"
+"$out/tests" "$out/light" light

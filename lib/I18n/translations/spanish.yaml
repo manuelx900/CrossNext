@@ -148,7 +148,7 @@ STR_TIME_TO_SLEEP: "Suspensión automática"
 STR_SHOW_HIDDEN_FILES: "Mostrar archivos ocultos"
 STR_LIBRARY: "Biblioteca"
 STR_LIBRARY_EMPTY: "No se encontraron libros en la tarjeta SD"
-STR_LIBRARY_NO_RESULTS: "No hay libros que coincidan con la búsqueda"
+STR_LIBRARY_NO_RESULTS: "No hay libros que coincidan"
 STR_LIBRARY_SEARCH_UNAVAILABLE: "Búsqueda no disponible: falta memoria"
 STR_LIBRARY_UNKNOWN_TITLE: "(sin título)"
 STR_LIBRARY_UNKNOWN_AUTHOR: "Autor desconocido"
@@ -621,7 +621,7 @@ STR_HOME_MENU: "Menú de inicio"
 STR_HOME_MENU_RENAME: "Cambiar nombres"
 STR_HOME_MENU_VISIBILITY: "Mostrar u ocultar"
 STR_HOME_MENU_REQUIRED: "Ajustes debe seguir visible"
-STR_HOME_MENU_LIMIT: "Máximo ocho opciones. Oculta una primero."
+STR_HOME_MENU_LIMIT: "Máximo siete opciones. Oculta una primero."
 STR_HOME_MENU_SAVE_FAILED: "No se pudo guardar el menú"
 STR_HOME_MENU_INVALID_NAME: "Usa un nombre corto y sin saltos de línea"
 STR_HOME_MENU_CONFIGURE_SERVICES: "Configura OPDS o instala una extensión primero"
@@ -1389,7 +1389,7 @@ STR_UI_SET_TODAY_S_DATE_444EF7: "FECHA DE HOY"
 STR_UI_CHECK_THE_SD_CARD_959EC3: "REVISAR LA SD"
 STR_UI_HABIT_HISTORY_COULD_NOT_BE_OPENED_7A8B77: "No se pudo abrir el historial. Revisa la SD y reintenta. Se conservaron los guardados."
 STR_UI_TRY_AGAIN_B2CA91: "REINTENTAR"
-STR_UI_NEW_27037C: "+ NUEVO"
+STR_UI_NEW_27037C: "+ Nuevo"
 STR_UI_MANUAL_DATE_8C2073: "FECHA MANUAL"
 STR_UI_TODAY_7A4686: "HOY"
 STR_UI_ONE_SMALL_STEP_D0FCF7: "UN PEQUEÑO PASO."
@@ -3155,6 +3155,7 @@ STR_QUICK_LIGHT_ON: "Encender luz"
 STR_QUICK_LOCK: "Bloquear pantalla"
 
 STR_READER_RETURN: "Listo"
+STR_READER_RETURN_POSITION: "Regresar"
 
 STR_READER_CHAPTERS: "%d capítulos"
 
@@ -5348,3 +5349,98 @@ STR_MENU_FONT_APPS_MENU: "Menú de apps"
 STR_MENU_FONT_INHERIT_MENU: "Usar la del menú"
 
 STR_BUTTON_READER_ONLY: "Con un libro abierto"
+STR_HOME_BOOX: "Carrusel 2"
+STR_HOME_LICORICE: "Estantería"
+STR_HOME_BOOX_HELP: "Portadas y accesos rápidos"
+STR_HOME_LICORICE_HELP: "Estantería de libros"
+
+STR_LIBRARY_LAST_OPENED: "Última apertura"
+
+STR_LIBRARY_AUTHOR_LAST: "Apellido del autor"
+
+STR_LIBRARY_AUTHOR_FIRST: "Nombre del autor"
+
+STR_LIBRARY_DATE_ADDED: "Fecha de incorporación"
+
+STR_LIBRARY_SERIES: "Serie"
+
+STR_LIBRARY_GENRE: "Género"
+
+STR_LIBRARY_SORT_BY: "Ordenar por"
+STR_LIBRARY_LAYOUT: "Diseño de biblioteca"
+STR_LIBRARY_LAYOUT_CLASSIC: "Recientes · Título · Autor"
+STR_LIBRARY_LAYOUT_SORT_BAR: "Ordenar por"
+
+STR_LIBRARY_REVERSE_ORDER: "Invertir orden"
+
+STR_LIBRARY_NO_SERIES: "Sin serie"
+
+STR_LIBRARY_NO_GENRE: "Sin género"
+
+STR_LIBRARY_FILTER: "Filtrar"
+STR_LIBRARY_FILTERED: "Con filtros"
+STR_LIBRARY_CLEAR_FILTERS: "Quitar filtros"
+STR_LIBRARY_ALL: "Todos los libros"
+
+STR_PICCO_FILES: "Archivos"
+STR_PICCO_TRANSFER: "Enviar"
+STR_PICCO_STATS: "Estadísticas"
+
+STR_HOME_BOOKSHELF: "Estantería"
+
+STR_LIBRARY_FILTER_UNAVAILABLE: "No se pudieron cargar los filtros. Activa Libros terminados en Ajustes de biblioteca o actualiza la biblioteca."
+STR_LIBRARY_SETTINGS: "Ajustes de biblioteca"
+STR_LIBRARY_METADATA: "Metadatos del libro"
+STR_LIBRARY_LIST_VIEW: "Vista de lista"
+STR_LIBRARY_RECENT_VIEW: "Vista de recientes"
+STR_LIBRARY_SHOW_FINISHED: "Libros terminados"
+STR_LIBRARY_SHOW_FILES: "Mostrar archivos"
+STR_LIBRARY_EXPANDED: "Ampliada"
+STR_LIBRARY_COMPACT: "Compacta"
+STR_LIBRARY_LIST: "Lista"
+STR_LIBRARY_GRID_VIEW: "Portadas"
+STR_LIBRARY_NO_RECENT: "No hay libros abiertos recientemente"
+STR_LIBRARY_SAVE_FAILED: "No se pudieron guardar los ajustes. Revisa la microSD y vuelve a intentarlo."
+STR_LIBRARY_REFRESH_FAILED: "No se pudo actualizar la biblioteca. Revisa la microSD y vuelve a intentarlo."
+
+STR_HOME_READING_VALUE: "%d%% · %llu h %u min"
+
+STR_BROWSER_ITEMS: "%u elementos"
+STR_COVER_BOOK_COUNT: "%u libros"
+STR_BROWSER_SIZE_B: "%llu B"
+STR_BROWSER_SIZE_KB: "%llu KB"
+STR_BROWSER_SIZE_MB: "%llu,%u MB"
+STR_BROWSER_SIZE_GB: "%llu,%u GB"
+
+STR_BROWSER_MICROSD_PATH: "microSD%s%s"
+STR_INTERFACE_THEME: "Tema de la interfaz"
+STR_INTERFACE_THEME_HOME: "Usar tema de inicio"
+STR_INTERFACE_THEME_GENERAL: "Usar tema general"
+
+STR_LIBRARY_FIRST_LETTER: "Primera letra del título"
+
+STR_HOME_SHELF_PAGES: "Número de páginas"
+
+STR_HOME_SHELF_PAGES_VALUE: "Número de páginas: %u"
+
+STR_FLASH_HISTORY_HEADER: "Repasos"
+
+STR_GOAL_DAILY: "Meta diaria de lectura"
+STR_GOAL_WALLPAPER: "Meta de lectura y racha"
+STR_GOAL_SET: "Establecer una meta diaria"
+STR_GOAL_SET_HINT: "Elige cuántos minutos leer al día."
+STR_GOAL_PROGRESS: "%llu / %u min"
+STR_GOAL_CALENDAR_HINT: "Días con la meta cumplida"
+STR_GOAL_REACHED: "Meta diaria cumplida"
+STR_GOAL_KEEP_READING: "Un poco de lectura cada día"
+STR_GOAL_STREAK_VALUE: "%u días"
+STR_GOAL_STREAK: "Racha de metas cumplidas"
+STR_XTC_COVER_CCW: "Girar portadas XTC 90° a la izquierda"
+
+STR_GOAL_COMPLETE: "Cumplida"
+
+STR_GOAL_PARTIAL: "Parcial"
+
+STR_GOAL_INCOMPLETE: "No cumplida"
+
+STR_GOAL_TARGET: "Meta: %u min"

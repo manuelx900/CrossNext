@@ -346,7 +346,7 @@ void todoChrome(toybox::Screen& screen, const char* title, bool settings = false
   backui::publish(header.back, g.back);
   for (int n = 0; n < (settings ? 2 : 1); ++n) {
     const auto rect = fui::makeRect(screen.device().safeRect().right() - 60 - n * 56, g.header.bottom() - 60, 48, 48);
-    screen.target().stroke(rect, dashboard::paper, pixelui::kBorder);
+    if (!chrome::lightHeader) screen.target().stroke(rect, dashboard::paper, pixelui::kBorder);
     dashboard::icon(screen, rect.inset(fui::Insets{7, 7, 7, 7}),
                     settings && n == 0 ? icon_go_settings_32 : extra_list_32, true);
     dashboard::hit(screen, rect, settings && n == 0 ? ActionMenu : route);
@@ -372,10 +372,13 @@ void buildDeck(toybox::Screen& screen, const DeckModel& model) {
       const int index = model.firstVisible + n;
       const auto& item = model.items[index];
       const auto row = fui::makeRect(band.x, band.y + n * rowH, band.width, rowH);
-      dashboard::frame(screen, row, 2);
+      dashboard::frame(screen, chrome::lightHeader ? row.inset({3, 0, 3, 0}) : row, 2);
       dashboard::icon(screen, fui::makeRect(row.x + 18, row.y + (row.height - 40) / 2, 40, 40), extra_list_32);
-      dashboard::text(screen, fui::makeRect(row.x + 80, row.y, row.width - 204, row.height), item.title, 1,
-                      fui::TextAlign::Left);
+      if (chrome::lightHeader)
+        screen.target().text(fui::makeRect(row.x + 80, row.y, row.width - 204, row.height), item.title, plain(0));
+      else
+        dashboard::text(screen, fui::makeRect(row.x + 80, row.y, row.width - 204, row.height), item.title, 1,
+                        fui::TextAlign::Left);
       char label[32];
       std::snprintf(label, sizeof(label), "%d / %d", item.done, item.total);
       dashboard::text(screen, fui::makeRect(row.right() - 126, row.y, 90, row.height), label, 0);
@@ -648,7 +651,9 @@ void noteRows(toybox::Screen& screen, const NoteModel& model, const fui::Rect& b
     // item: centred on the row it reads as belonging to the middle of the
     // sentence, and for a one-line row the two are the same place anyway.
     const int16_t boxTop = static_cast<int16_t>(textTop + flow.lineHeight / 2 - kBoxSide / 2);
-    if (model.todo && !model.asleep) {
+    if (model.todo && !model.asleep && chrome::lightHeader) {
+      dashboard::frame(screen, row.inset({3, 0, 3, 0}), 2);
+    } else if (model.todo && !model.asleep) {
       screen.target().fill(fui::makeRect(row.x, row.y, 2, row.height), dashboard::ink);
       screen.target().fill(fui::makeRect(row.right() - 2, row.y, 2, row.height), dashboard::ink);
       if (i == begin || flow.blocks[i - 1].section)
@@ -657,7 +662,10 @@ void noteRows(toybox::Screen& screen, const NoteModel& model, const fui::Rect& b
     } else
       dashboard::frame(screen, row, 2);
     if (model.todo)
-      dashboard::check(screen, fui::makeRect(row.x + 14, boxTop, kBoxSide, kBoxSide), task.checked);
+      dashboard::check(screen,
+                       chrome::lightHeader ? fui::makeRect(row.x + 18, boxTop + 4, 32, 32)
+                                           : fui::makeRect(row.x + 14, boxTop, kBoxSide, kBoxSide),
+                       task.checked);
     else
       tickBox(screen, fui::makeRect(row.x + 6, boxTop, kBoxSide, kBoxSide), task.checked);
     const int16_t textX = static_cast<int16_t>(row.x + kBoxSide + toybox::kGutter + (model.todo ? 16 : 0));

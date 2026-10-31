@@ -137,6 +137,17 @@ void reopeningTests() {
   }
   journal.close();
   CHECK(summary.completed == 0 && summary.seconds == 600 && summary.pages == 12 && summary.sessions == 1);
+  CHECK(!index.completed(document));
+  CHECK(!index.completed("invalid"));
+  Record completedRecord;
+  copyText(completedRecord.book.document, sizeof(completedRecord.book.document), document);
+  completedRecord.firstCompletion = true;
+  CHECK(index.apply(completedRecord, 4096));
+  CHECK(index.completed(document));
+  completedRecord.firstCompletion = false;
+  completedRecord.kind = RecordKind::Reopen;
+  CHECK(index.apply(completedRecord, 4480));
+  CHECK(!index.completed(document));
 
   CHECK(journal.begin(true));
   while (journal.next(record) == ScanResult::Record) {

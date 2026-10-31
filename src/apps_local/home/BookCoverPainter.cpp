@@ -9,6 +9,7 @@
 #include <functional>
 #include <optional>
 
+#include "../../CrossPointSettings.h"
 #include "../../RecentBooksStore.h"
 #include "../../components/UITheme.h"
 #include "CoverBoxSampler.h"
@@ -83,15 +84,22 @@ bool BookCoverPainter::paintBitmap(fui::Rect slot, int taper) {
 void BookCoverPainter::paint(const RecentBook& book, fui::Rect slot, int taper) {
   bool drawn = false;
   char thumb[112]{};
+  const bool xtc = FsHelpers::hasXtcExtension(book.path);
   if (FsHelpers::hasEpubExtension(book.path) || FsHelpers::hasXtcExtension(book.path)) {
-    std::snprintf(thumb, sizeof(thumb), "/.crosspoint/%s_%lu/thumb_%d.bmp",
-                  FsHelpers::hasXtcExtension(book.path) ? "xtc" : "epub",
-                  static_cast<unsigned long>(std::hash<std::string>{}(book.path)), slot.height);
+    std::snprintf(thumb, sizeof(thumb), "/.crosspoint/%s_%lu/thumb_%s%d.bmp", xtc ? "xtc" : "epub",
+                  static_cast<unsigned long>(std::hash<std::string>{}(book.path)),
+                  xtc && SETTINGS.xtcCoverRotation ? "ccw_" : "", slot.height);
   }
   std::string fallback;
   const char* path = thumb;
   if (!*thumb || !Storage.exists(thumb)) {
-    fallback = UITheme::getCoverThumbPath(book.coverBmpPath, slot.height);
+    if (xtc) {
+      std::snprintf(thumb, sizeof(thumb), "/.crosspoint/xtc_%lu/cover%s.bmp",
+                    static_cast<unsigned long>(std::hash<std::string>{}(book.path)),
+                    SETTINGS.xtcCoverRotation ? "_ccw" : "");
+      fallback = UITheme::getCoverThumbPath(thumb, slot.height);
+    } else
+      fallback = UITheme::getCoverThumbPath(book.coverBmpPath, slot.height);
     path = fallback.c_str();
   }
   if (*path && Storage.openFileForRead("HOME", path, coverFile)) {

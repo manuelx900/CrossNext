@@ -18,6 +18,7 @@
 #include "MappedInputManager.h"
 #include "WifiCredentialStore.h"
 #include "activities/util/KeyboardEntryActivity.h"
+#include "apps_local/ui/LightOptionMenu.h"
 #include "apps_local/ui/PixelMenuTheme.h"
 #include "apps_local/ui/WifiScreens.h"
 #include "components/UITheme.h"
@@ -1016,7 +1017,8 @@ void WifiSelectionActivity::render(RenderLock&&) {
   // fork-local seam: the header and the sub-band below it span the panel, as
   // every other screen's do; clipped to the bezel's safe area their rules
   // stopped 3px short of both edges.
-  pixelui::drawHeader(renderer, tr(STR_WIFI_NETWORKS), I18N.getLanguage() != Language::EN, countStr);
+  pixelui::drawHeader(renderer, tr(STR_WIFI_NETWORKS), I18N.getLanguage() != Language::EN,
+                      chrome::lightHeader ? nullptr : countStr);
   // Why the remembered network failed, on the screen the user is actually
   // handed. Auto-connect returns to the list rather than to CONNECTION_FAILED,
   // so this line is the only place the reason is ever visible -- the log line
@@ -1028,7 +1030,9 @@ void WifiSelectionActivity::render(RenderLock&&) {
                     Rect{0, pixelui::geometry(toybox::makeTarget(renderer).deviceContext()).header.bottom() + 4,
                          renderer.getScreenWidth(), metrics.tabBarHeight},
                     showingAutoConnectError ? autoConnectError.c_str() : cachedMacAddress.c_str(),
-                    showingAutoConnectError ? cachedMacAddress.c_str() : nullptr);
+                    showingAutoConnectError ? cachedMacAddress.c_str()
+                    : chrome::lightHeader   ? countStr
+                                            : nullptr);
 
   switch (state) {
     case WifiSelectionState::AUTO_CONNECTING:
@@ -1168,8 +1172,10 @@ void WifiSelectionActivity::onReferenceEvent(const fui::ActionEvent& event, void
 void WifiSelectionActivity::buildReferenceScreen(UiScreen& screen) {
   namespace ws = wifiscreens;
   pixelui::FontScope fonts(uiTarget, renderer, true);
-  uiTarget.setFont(0, UI_12_FONT_ID);
-  uiTarget.setFont(4, UI_10_FONT_ID);
+  if (!chrome::lightHeader) {
+    uiTarget.setFont(0, UI_12_FONT_ID);
+    uiTarget.setFont(4, UI_10_FONT_ID);
+  }
   const bool wide = screen.device().width > screen.device().height;
   pixelui::begin(screen, mappedInput.hasTouch() ? 0 : UITheme::getInstance().getMetrics().buttonHintsHeight);
   const auto ink = fui::Paint::solid(fui::Color::Black);
@@ -1249,17 +1255,26 @@ void WifiSelectionActivity::buildReferenceScreen(UiScreen& screen) {
     ws::detail(screen.target(), screen.takeTop(rowHeight), tr(STR_SR_WIFI_MAC), cachedMacAddress.c_str());
     return;
   }
-  const auto toggle = screen.takeTop(wide ? 68 : 96, 18);
-  screen.target().stroke(toggle, ink, 2);
-  ws::text(screen.target(), fui::makeRect(toggle.x + 16, toggle.y + 8, toggle.width - 86, 34), tr(STR_SR_WIFI_TITLE),
-           true);
+  const auto toggle = screen.takeTop(chrome::lightHeader ? 64 : wide ? 68 : 96, 18);
+  if (chrome::lightHeader)
+    lightui::separator(screen.target(), toggle);
+  else
+    screen.target().stroke(toggle, ink, 2);
+  if (!chrome::lightHeader)
+    ws::text(screen.target(), fui::makeRect(toggle.x + 16, toggle.y + 8, toggle.width - 86, 34), tr(STR_SR_WIFI_TITLE),
+             true);
   if (!currentSSID.empty())
     std::snprintf(referenceText, sizeof(referenceText), "%s · %s", tr(STR_SR_WIFI_CONNECTED), currentSSID.c_str());
   else
     std::snprintf(referenceText, sizeof(referenceText), "%s", wifiEnabled ? tr(STR_SR_WIFI_ON) : tr(STR_SR_WIFI_OFF));
-  ws::text(screen.target(), fui::makeRect(toggle.x + 16, toggle.y + 42, toggle.width - 86, 36), referenceText, false,
-           4);
-  ws::check(screen.target(), fui::makeRect(toggle.right() - 58, toggle.y + (toggle.height - 34) / 2, 34, 34),
+  ws::text(screen.target(),
+           chrome::lightHeader ? fui::makeRect(toggle.x + 16, toggle.y, toggle.width - 86, toggle.height)
+                               : fui::makeRect(toggle.x + 16, toggle.y + 42, toggle.width - 86, 36),
+           referenceText, false, chrome::lightHeader ? 0 : 4);
+  const int checkSize = chrome::lightHeader ? 26 : 34;
+  ws::check(screen.target(),
+            fui::makeRect(toggle.right() - (chrome::lightHeader ? 50 : 58), toggle.y + (toggle.height - checkSize) / 2,
+                          checkSize, checkSize),
             wifiEnabled);
   screen.frame().hit(toggle, ACTION_REFERENCE, Toggle, fui::InputTouch);
   const auto scan = screen.takeBottom(58, 12);
@@ -1268,7 +1283,10 @@ void WifiSelectionActivity::buildReferenceScreen(UiScreen& screen) {
   if (!currentSSID.empty()) {
     ws::text(screen.target(), screen.takeTop(32, 8), tr(STR_SR_WIFI_CURRENT), true);
     const auto row = screen.takeTop(wide ? 64 : 86, 18);
-    screen.target().stroke(row, ink, 2);
+    if (chrome::lightHeader)
+      lightui::separator(screen.target(), row);
+    else
+      screen.target().stroke(row, ink, 2);
     ws::check(screen.target(), fui::makeRect(row.x + 14, row.y + 18, 28, 28), true);
     ws::text(screen.target(), fui::makeRect(row.x + 56, row.y + 10, row.width - 160, 34), currentSSID.c_str(), true);
     ws::text(screen.target(), fui::makeRect(row.x + 56, row.y + 42, row.width - 160, 32), tr(STR_SR_WIFI_CONNECTED),
@@ -1290,7 +1308,10 @@ void WifiSelectionActivity::buildReferenceScreen(UiScreen& screen) {
        ++index, ++drawn) {
     const auto& network = networks[index];
     const auto row = fui::makeRect(area.x, area.y + drawn * height, area.width, height);
-    screen.target().stroke(row, ink, 2);
+    if (chrome::lightHeader)
+      lightui::separator(screen.target(), row);
+    else
+      screen.target().stroke(row, ink, 2);
     const char* name = network.isHiddenPlaceholder ? tr(STR_ADD_HIDDEN_NETWORK) : network.ssid.c_str();
     ws::text(screen.target(), fui::makeRect(row.x + 14, row.y + 10, row.width - 116, 34), name, true);
     if (!network.isHiddenPlaceholder) {
@@ -1391,6 +1412,19 @@ void WifiSelectionActivity::buildPromptDialog(UiScreen& screen) {
     options[i].state = selection == i ? fui::StateFocused : fui::StateNormal;
   }
 
+  if (chrome::lightHeader) {
+    lightui::ChoiceMenu menu;
+    menu.title = isForget ? tr(STR_FORGET_NETWORK) : tr(STR_CONNECTED);
+    menu.headline = ssidInfo.c_str();
+    menu.message = isForget ? tr(STR_FORGET_AND_REMOVE) : tr(STR_SAVE_PASSWORD);
+    menu.options = options;
+    menu.count = 2;
+    menu.current = -1;
+    menu.focus = selection;
+    menu.guard = ACTION_REFERENCE;
+    lightui::choiceMenu(screen.frame(), screen.device().screen(), menu);
+    return;
+  }
   fui::OptionDialogProps props;
   props.title = isForget ? tr(STR_FORGET_NETWORK) : tr(STR_CONNECTED);
   props.headline = ssidInfo.c_str();

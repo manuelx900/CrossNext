@@ -1,6 +1,7 @@
 #include "SettingsActivity.h"
 
 #include <BoardConfig.h>
+#include <ChromeRegion.h>
 #include <GfxRenderer.h>
 #include <HalClock.h>
 #include <HalDisplay.h>
@@ -390,7 +391,7 @@ void SettingsActivity::showCategoryHome() {
   rowItems_.resize(settingsui::homeCount);
   for (int i = 0; i < settingsui::homeCount; ++i) {
     settingsui::homeRow(i, rowItems_[i]);
-    pixelui::copyCaps(pixelTabLabels[i], sizeof(pixelTabLabels[i]), rowItems_[i].label);
+    pixelui::copyNatural(pixelTabLabels[i], sizeof(pixelTabLabels[i]), rowItems_[i].label);
     rowItems_[i].label = pixelTabLabels[i];
   }
   activeNav().reset();
@@ -414,6 +415,10 @@ void SettingsActivity::activateIndex(const int index) {
                                                                   PresentationSettingsActivity::Kind::Theme);
       if (next)
         startActivityForResult(std::move(next), [this](const ActivityResult&) {
+          RenderLock lock(*this);
+          const auto navigation = activeNav();
+          showCategoryHome();
+          activeNav() = navigation;
           resetUi();
           requestUpdate();
         });
@@ -855,6 +860,7 @@ void SettingsActivity::buildScreen(UiScreen& screen) {
   const auto& settings = *currentSettings;
   for (size_t i = 0; !categoryHome && i < settings.size(); i++) {
     const auto& setting = settings[i];
+    if (chrome::lightHeader) rowItems_[i].icon = {};
     const auto labels = setting.enumLabels();
     const auto helpId = settingHelp(setting);
     const char* help = helpId == StrId::STR_NONE_OPT ? nullptr : I18N.get(helpId);
@@ -864,7 +870,7 @@ void SettingsActivity::buildScreen(UiScreen& screen) {
     if (checkbox && (setting.valuePtr || setting.valueGetter)) {
       const bool checked = setting.valuePtr ? SETTINGS.*(setting.valuePtr) != 0 : setting.valueGetter() != 0;
       rowValues_[i].clear();
-      rowItems_[i].subtitle = help;
+      rowItems_[i].subtitle = chrome::lightHeader ? nullptr : help;
       rowItems_[i].value = nullptr;
       GUI.setCheckboxRow(rowItems_[i], checked);
     } else {
@@ -872,6 +878,21 @@ void SettingsActivity::buildScreen(UiScreen& screen) {
       rowItems_[i].toggle = false;
       rowItems_[i].subtitle = rowValues_[i].empty() ? help : rowValues_[i].c_str();
       rowItems_[i].value = ">";
+      {
+        if (chrome::lightHeader) rowItems_[i].icon = {};
+        const int available = screen.body().width - (chrome::lightHeader ? 64 : 108);
+        fui::TextStyle titleStyle;
+        titleStyle.font = 0;
+        fui::TextStyle valueStyle;
+        valueStyle.font = 0;
+        const int used = screen.target().measureText(0, rowItems_[i].label, titleStyle).width +
+                         screen.target().measureText(0, rowValues_[i].c_str(), valueStyle).width + 24;
+        if (!rowValues_[i].empty() && used <= available) {
+          rowItems_[i].value = rowValues_[i].c_str();
+          rowItems_[i].subtitle = nullptr;
+        } else if (rowValues_[i].empty())
+          rowItems_[i].subtitle = nullptr;
+      }
     }
   }
 
@@ -882,10 +903,14 @@ void SettingsActivity::buildScreen(UiScreen& screen) {
   props.inputMask = fui::InputTouch;  // physical buttons stay in loop()
   settingsui::styleRows(props);
   if (categoryHome) settingsui::styleHome(props);
+
   props.rtl =
       (I18N.getLanguage() == Language::AR || I18N.getLanguage() == Language::FA || I18N.getLanguage() == Language::HE);
   syncTabListViewport(screen, props);
-  pixelui::list(screen, props, false, true, pixelui::kBorder, true);
+  if (chrome::lightHeader)
+    fui::list(screen.frame(), screen.body(), props);
+  else
+    pixelui::list(screen, props, false, true, pixelui::kBorder, true);
 }
 
 void SettingsActivity::drawChrome() {

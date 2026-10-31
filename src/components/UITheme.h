@@ -41,6 +41,7 @@ class UITheme {
   static bool hasCoverGridHome();
   static void drawCoverGridHome(CoverGridHomeUi& home);
   void reload();
+  void setInterfaceSection(menufont::Section section);
   void setTheme(CrossPointSettings::UI_THEME type);
   static std::string getCoverThumbPath(std::string coverBmpPath, int coverHeight);
   static UIIcon getFileIcon(const std::string& filename);
@@ -54,6 +55,7 @@ class UITheme {
   mutable ThemeMetrics adjustedMetrics;
   mutable bool metricsValid = false;
   mutable bool metricsForTouch = false;
+  menufont::Section interfaceSection = menufont::Section::General;
 };
 
 // Helper macro to access current theme

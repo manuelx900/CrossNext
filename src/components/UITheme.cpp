@@ -1,5 +1,6 @@
 #include "UITheme.h"
 
+#include <ChromeRegion.h>
 #include <FsHelpers.h>
 #include <GfxRenderer.h>
 #include <HalGPIO.h>
@@ -16,6 +17,7 @@
 #include "components/themes/BaseTheme.h"
 #include "components/themes/lyra/Lyra3CoversTheme.h"
 #include "components/themes/lyra/LyraTheme.h"
+#include "util/InterfaceThemeStyle.h"
 
 UITheme UITheme::instance;
 
@@ -31,11 +33,16 @@ void UITheme::reload() {
 
 bool UITheme::supportsCoverGrid() { return HalMemory::getPsramHeap().totalBytes > 0; }
 
-bool UITheme::hasCoverGridHome() { return SETTINGS.uiTheme == CrossPointSettings::COVER_GRID && supportsCoverGrid(); }
+bool UITheme::hasCoverGridHome() {
+  return (SETTINGS.uiTheme == CrossPointSettings::COVER_GRID ||
+          SETTINGS.homeLayout == CrossPointSettings::HOME_LICORICE) &&
+         supportsCoverGrid();
+}
 
 void UITheme::drawCoverGridHome(CoverGridHomeUi& home) { home.renderUi(); }
 
 void UITheme::setTheme(CrossPointSettings::UI_THEME type) {
+  setInterfaceSection(interfaceSection);
   if (type == CrossPointSettings::COVER_GRID && !supportsCoverGrid()) type = CrossPointSettings::LYRA;
 
   switch (type) {
@@ -66,6 +73,15 @@ void UITheme::setTheme(CrossPointSettings::UI_THEME type) {
       break;
   }
   metricsValid = false;
+}
+
+void UITheme::setInterfaceSection(menufont::Section section) {
+  interfaceSection = section;
+  const auto choice = section == menufont::Section::General || section == menufont::Section::Home
+                          ? 0
+                          : SETTINGS.interfaceThemeOverrides[int(section)];
+  chrome::lightHeader = interfacetheme::light(
+      interfacetheme::resolve(SETTINGS.homeLayout, SETTINGS.interfaceThemeStyle, section, choice));
 }
 
 const ThemeMetrics& UITheme::getMetrics() const {

@@ -13,6 +13,6 @@ with tempfile.TemporaryDirectory(prefix='crossnext-stat-tests-') as folder:
         subprocess.run(['node',str(output)],cwd=root,check=True)
     output=Path(folder)/'ui.cjs'
     include=['freeink-sdk/libs/ui/FreeInkUI/include','freeink-sdk/libs/assets/Icons/include','lib/EpdFont','lib/I18n']
-    files=['host-tests/reading-cloud/test_ui.cpp','src/apps_local/reading/ReadingStatsScreens.cpp','src/apps_local/reading/ReadingStatsCore.cpp','src/apps_local/ui/PixelMenu.cpp','lib/I18n/I18n.cpp','lib/I18n/I18nStrings.cpp','freeink-sdk/libs/ui/FreeInkUI/src/FreeInkUI.cpp']
+    files=['host-tests/reading-cloud/test_ui.cpp','src/apps_local/reading/ReadingStatsScreens.cpp','src/apps_local/reading/ReadingGoalScreens.cpp','src/apps_local/reading/ReadingStatsCore.cpp','src/apps_local/ui/PixelMenu.cpp','lib/I18n/I18n.cpp','lib/I18n/I18nStrings.cpp','freeink-sdk/libs/ui/FreeInkUI/src/FreeInkUI.cpp']
     subprocess.run([args.emxx,*base,*['-I'+x for x in include],*files,'-o',str(output)],cwd=root,check=True)
     subprocess.run(['node',str(output)],cwd=root,check=True)

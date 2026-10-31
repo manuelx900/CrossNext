@@ -10,6 +10,7 @@
 #include "GfxRenderer.h"
 #include "MappedInputManager.h"
 #include "RevealedInteractions.h"
+#include "apps_local/ui/LightOptionMenu.h"
 #include "apps_local/ui/PixelMenuTheme.h"
 #include "components/UITheme.h"
 #include "components/UiAppHelpers.h"
@@ -91,6 +92,11 @@ class OptionPopup {
         // preventing one.
         if (!interactions.publishedRoutable()) return true;
         const freeink::ui::ActionEvent event = interactions.routePublished(snap);
+        if (event && event.action == ACTION_PAGE) {
+          selectedIndex = event.value;
+          requestUpdate();
+          return true;
+        }
         if (event && event.action == ACTION_OPTION) {
           // Tap released on an option: select it, fire, dismiss.
           selectedIndex = event.value;
@@ -177,7 +183,7 @@ class OptionPopup {
     // tracks the live orientation and uiScale fonts; a target held across
     // show() would stale-bind both after a rotation or scale change.
     fui::GfxRendererTarget target = makeUiTarget(renderer);
-    const fui::ThemeTokens& theme = refreshSharedUiThemeTokens(target);
+    refreshSharedUiThemeTokens(target);
     // Frame stores a const DeviceContext&; keep it in a local that outlives
     // the frame (a deviceContext() temporary would dangle).
     const fui::DeviceContext device = target.deviceContext();
@@ -197,7 +203,7 @@ class OptionPopup {
     fui::Frame<INTERACTION_CAPACITY> frame(target, device, noInput, interactions);
 
     pixelui::FontScope fonts(target, const_cast<GfxRenderer&>(renderer), I18N.getLanguage() != Language::EN);
-    target.setFont(pixelui::kSmall, toybox::kTileFontId);
+    if (!chrome::lightHeader) target.setFont(pixelui::kSmall, toybox::kTileFontId);
     const auto& metrics = UITheme::getInstance().getMetrics();
     const int totalOptions = static_cast<int>(ownedStrings.size());
     const uint8_t count = static_cast<uint8_t>(totalOptions > MAX_OPTIONS ? MAX_OPTIONS : totalOptions);
@@ -208,6 +214,23 @@ class OptionPopup {
       options[i].action = ACTION_OPTION;
       options[i].value = static_cast<int16_t>(i);
       options[i].state = (i == selectedIndex) ? fui::StateFocused : fui::StateNormal;
+    }
+
+    if (chrome::lightHeader) {
+      lightui::ChoiceMenu menu;
+      menu.title = title.c_str();
+      menu.headline = headline.c_str();
+      menu.message = message.c_str();
+      menu.options = options;
+      menu.count = count;
+      menu.current = currentIndex;
+      menu.focus = selectedIndex;
+      menu.guard = ACTION_CHROME;
+      menu.pageAction = ACTION_PAGE;
+      lightui::choiceMenu(frame, device.screen(), menu);
+      interactions.publish();
+      uiReady = true;
+      return;
     }
 
     fui::OptionDialogProps props;
@@ -279,16 +302,17 @@ class OptionPopup {
   }
 
  private:
-  // The dialog has no scrolling, so options past MAX_OPTIONS would render off
-  // screen anyway; a fixed cap keeps the DialogOption array on the stack and
-  // the interaction table small. +1 slot for the chrome guard rect.
+  // Keep option storage bounded. The light picker pages within this set;
+  // its routing table also reserves a guard and two page controls.
   static constexpr int MAX_OPTIONS = 16;
-  static constexpr size_t INTERACTION_CAPACITY = MAX_OPTIONS + 1;
+  static constexpr size_t INTERACTION_CAPACITY = MAX_OPTIONS + 3;
   static constexpr freeink::ui::ActionId ACTION_OPTION = 1;
   static constexpr freeink::ui::ActionId ACTION_CHROME = 2;
+  static constexpr freeink::ui::ActionId ACTION_PAGE = 3;
 
   void activate(int currentIndex, std::function<void(int)> onSelect) {
     const int count = std::min<int>(ownedStrings.size(), MAX_OPTIONS);
+    this->currentIndex = currentIndex;
     selectedIndex = currentIndex >= 0 && currentIndex < count ? currentIndex : 0;
     onSelectCallback = std::move(onSelect);
     message.clear();
@@ -301,7 +325,7 @@ class OptionPopup {
   std::string headline;
   std::string message;
   std::vector<std::string> ownedStrings;
-  int selectedIndex = 0;
+  int selectedIndex = 0, currentIndex = 0;
   std::function<void(int)> onSelectCallback;
   // Written by the render task (frame registration), routed by the loop task;
   // uiReady closes the rebuild window exactly like UiListActivity::uiReady.

@@ -19,6 +19,7 @@
 #include "boot_sleep/SleepActivity.h"
 #include "browser/OpdsBookBrowserActivity.h"
 #include "components/HeaderBackTapTarget.h"
+#include "components/UITheme.h"
 #include "home/CrashActivity.h"
 #include "home/FileBrowserActivity.h"
 #include "home/HomeActivity.h"
@@ -353,6 +354,7 @@ void ActivityManager::setCurrentActivity(std::unique_ptr<Activity>&& next) {
   idleWorkOwner.store(nullptr);
   mappedInput.swallowNextReleaseOfHeldButtons();
   currentActivity = std::move(next);
+  UITheme::getInstance().setInterfaceSection(currentInterfaceFontSection());
   toybox::syncInterfaceFonts(renderer);
   mappedInput.setEdgeBackEnabled(!currentActivity || currentActivity->allowsEdgeBack());
 }

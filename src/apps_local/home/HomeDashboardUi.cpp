@@ -78,7 +78,7 @@ void HomeDashboardUi::addRow(const char* label, const homeui::Icon icon) {
 bool HomeDashboardUi::draw(const RecentBook* book, bool librarySlot, bool plugins, int selected, int recentIndex,
                            int recentCount, const RecentBook* const* sides) {
   model.style =
-      static_cast<homeui::Style>(SETTINGS.homeLayout < CrossPointSettings::HOME_LAYOUT_COUNT ? SETTINGS.homeLayout : 0);
+      static_cast<homeui::Style>(SETTINGS.homeLayout <= CrossPointSettings::HOME_BOOX ? SETTINGS.homeLayout : 0);
   model.recentIndex = recentIndex;
   model.recentCount = recentCount;
   for (int n = 0; n < 4; ++n) neighbors[n] = sides ? sides[n] : nullptr;
@@ -114,7 +114,11 @@ bool HomeDashboardUi::draw(const RecentBook* book, bool librarySlot, bool plugin
   model.charging = status.status.battery.charging;
   model.showPercent = status.status.battery.label != nullptr;
 
-  const auto next = homeui::layout(uiTarget.deviceContext(), model.count, model.style);
+  if (model.style == homeui::Style::Boox && book) {
+    std::snprintf(model.title, sizeof(model.title), "%s", book->title.c_str());
+    std::snprintf(model.author, sizeof(model.author), "%s", book->author.c_str());
+  }
+  const auto next = homeui::layout(uiTarget.deviceContext(), model.count, model.style, &model);
   const auto& cover = next.cover;
   const bool changed = cover.x != layout.cover.x || cover.y != layout.cover.y || cover.width != layout.cover.width ||
                        cover.height != layout.cover.height ||
@@ -153,6 +157,7 @@ void HomeDashboardUi::paintCover(const RecentBook& book) {
   };
   bytes(&orientation, sizeof(orientation));
   bytes(&SETTINGS.screenInverted, sizeof(SETTINGS.screenInverted));
+  bytes(&SETTINGS.xtcCoverRotation, sizeof(SETTINGS.xtcCoverRotation));
   bytes(&model.style, sizeof(model.style));
   rect(layout.coverRegion);
   rect(layout.cover);
@@ -166,7 +171,19 @@ void HomeDashboardUi::paintCover(const RecentBook& book) {
   if (model.style != homeui::Style::Framed) {
     const int order[] = {1, 2};
     for (int n : order)
-      if (neighbors[n]) covers.paint(*neighbors[n], layout.sides[n], n < 2 ? -1 : 1);
+      if (neighbors[n]) {
+        auto slot = layout.sides[n];
+        if (model.style == homeui::Style::Boox) {
+          const auto previous = uiTarget.clipRect();
+          uiTarget.setClipRect(layout.coverRegion);
+          const int width = slot.height * 2 / 3;
+          slot.x = n == 1 ? slot.right() - width : slot.x;
+          slot.width = width;
+          covers.paint(*neighbors[n], slot, 0);
+          uiTarget.setClipRect(previous);
+        } else
+          covers.paint(*neighbors[n], slot, n < 2 ? -1 : 1);
+      }
   }
   covers.paint(book, layout.cover);
   homecover::storeScene(renderer);
@@ -180,6 +197,7 @@ void HomeDashboardUi::screenFn(UiScreen& screen, void* user) {
 void HomeDashboardUi::finishCover() { homeui::drawCardSelection(uiTarget, model, layout); }
 
 bool HomeDashboardUi::canRepaintSelection(int selected) {
+  if (model.style == homeui::Style::Boox) return false;
   if (selected == model.selected || orientation != static_cast<int>(renderer.getOrientation()) ||
       static_cast<int>(model.style) != SETTINGS.homeLayout || !routingReady())
     return false;

@@ -15,6 +15,8 @@
 
 #include "I18n.h"
 #include "RecentBooksStore.h"
+#include "apps_local/ui/PixelMenuTheme.h"
+#include "apps_local/ui/PixelText.h"
 #include "clippings/SelectionGeometry.h"
 #include "components/HeaderBackTapTarget.h"
 #include "components/PopupLayout.h"
@@ -397,13 +399,16 @@ void BaseTheme::drawHeader(const GfxRenderer& renderer, Rect rect, const char* t
   // same publish-a-fresh-slot path applySharedUiTheme() uses (see
   // UiAppHelpers.h) rather than overwriting the previously-published
   // instance in place, since some other FreeInkApp could be mid-read of it.
+  if (chrome::lightHeader) pixelui::bindFonts(ui.target, const_cast<GfxRenderer&>(renderer));
   const fui::ThemeTokens& tokens = refreshSharedUiThemeTokens(ui.target);
   // Header status text (battery percent, right label) stays at the fixed
   // small font like the legacy headers; the uiScale small font is for list
   // subtitles.
-  ui.target.setFont(fui::GfxRendererTarget::FONT_SMALL, SMALL_FONT_ID);
-  ui.target.setFont(fui::GfxRendererTarget::FONT_LABEL, SMALL_FONT_ID);
-  ui.target.setFont(fui::GfxRendererTarget::FONT_CLOCK, UI_12_FONT_ID);
+  if (!chrome::lightHeader) {
+    ui.target.setFont(fui::GfxRendererTarget::FONT_SMALL, SMALL_FONT_ID);
+    ui.target.setFont(fui::GfxRendererTarget::FONT_LABEL, SMALL_FONT_ID);
+    ui.target.setFont(fui::GfxRendererTarget::FONT_CLOCK, UI_12_FONT_ID);
+  }
   // Callers pass a full-width header rect, so the battery/title would sit at the
   // true screen edges — clipped on rounded-corner panels (EEGO A4). Inset the band
   // horizontally by the board's viewable insets so header chrome clears the bezel.
@@ -414,6 +419,12 @@ void BaseTheme::drawHeader(const GfxRenderer& renderer, Rect rect, const char* t
                        static_cast<int16_t>(rect.height)};
 
   fui::HeaderProps props;
+  // All header draws share the serialized render path.
+  static char naturalTitle[192];
+  if (chrome::lightHeader && title) {
+    pixelui::copyNatural(naturalTitle, sizeof(naturalTitle), title);
+    title = naturalTitle;
+  }
   props.title = title;
   props.rightLabel = subtitle;  // firmware headers right-align the secondary text
   // Battery + clock chrome and their title reserves live in the FreeInkUI
@@ -457,8 +468,9 @@ void BaseTheme::drawHeader(const GfxRenderer& renderer, Rect rect, const char* t
   } else {
     HeaderBackTapTarget::clear();
   }
-  props.borderEdges = fui::EdgeBottom;
+  props.borderEdges = chrome::lightHeader ? 0 : fui::EdgeBottom;
   props.titleText = tokens.titleText;
+  if (chrome::lightHeader) props.titleText.bold = false;
   props.titleText.align = tokens.headerTitleAlign;
   // fork-local seam: a centred title shares its line with the right-hand label
   // (Wi-Fi's "2 networks found"), and centred it is truncated to make room
@@ -781,17 +793,28 @@ Rect BaseTheme::drawPopup(const GfxRenderer& renderer, const char* message) cons
   const auto& metrics = UITheme::getInstance().getMetrics();
   const int marginX = metrics.popupMarginX;
   const int marginY = metrics.popupMarginY;
-  const int frameThickness = metrics.popupFrameThickness;
+  const int frameThickness = chrome::lightHeader ? 1 : metrics.popupFrameThickness;
   freeink::ui::GfxRendererTarget target(renderer);
-  target.setFont(0, UI_12_FONT_ID);
+  if (chrome::lightHeader)
+    pixelui::bindFonts(target, const_cast<GfxRenderer&>(renderer));
+  else
+    target.setFont(0, UI_12_FONT_ID);
   freeink::ui::TextStyle style;
-  style.bold = metrics.popupTextBold;
-  style.color = metrics.popupTextInverted ? freeink::ui::Color::Black : freeink::ui::Color::White;
+  style.bold = !chrome::lightHeader && metrics.popupTextBold;
+  style.color =
+      chrome::lightHeader || metrics.popupTextInverted ? freeink::ui::Color::Black : freeink::ui::Color::White;
   const auto popup = popupui::layout(target, target.deviceContext().safeRect(), message, style, marginX, marginY,
                                      frameThickness, renderer.getScreenHeight() * metrics.popupTopOffsetRatio);
   const auto& box = popup.body;
   const int x = box.x, y = box.y, w = box.width, h = box.height;
 
+  if (chrome::lightHeader) {
+    target.fill(box, lightui::paper, 6);
+    target.stroke(box, freeink::ui::Paint::solid(freeink::ui::Color::Black), 1, 6);
+    target.text(popup.text, message, popup.style);
+    renderer.displayBuffer();
+    return Rect{x, y, w, h};
+  }
   popupui::paintChrome(target, popup, frameThickness, metrics.popupCornerRadius);
 
   const auto family = metrics.popupTextBold ? EpdFontFamily::BOLD : EpdFontFamily::REGULAR;

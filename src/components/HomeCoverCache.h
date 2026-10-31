@@ -15,11 +15,12 @@ class HomeCoverCache {
  public:
   static constexpr size_t MAX_COVERS = 7;
   explicit HomeCoverCache(GfxRenderer& renderer) : renderer(renderer) {}
-  void begin();
+  void begin(bool flat = false);
   void prepare();
   void invalidate();
   void invalidate(size_t index);
-  bool paint(freeink::ui::Rect rect, size_t index, const std::string& path);
+  bool paint(freeink::ui::Rect rect, size_t index, const std::string& path, bool flat = false, bool fillSlot = false);
+  bool hasImage(size_t index) const { return index < cachedCovers.size() && cachedCovers[index].image; }
 
  private:
   struct CachedCover {
@@ -27,8 +28,13 @@ class HomeCoverCache {
     size_t offset = 0;
     size_t bytes = 0;
     bool valid = false;
+    bool image = false;
+    bool flat = false;
+    bool fillSlot = false;
   };
-  HalMemory::PsramBuffer coverCache;
+  HalMemory::PsramBuffer coverCache, samplingScratch;
+  size_t samplingCapacity = 0;
+  bool paintFlatBitmap(freeink::ui::Rect rect, bool fillSlot);
   std::array<CachedCover, MAX_COVERS> cachedCovers{};
   size_t coverCacheCapacity = 0;
   size_t coverCacheUsed = 0;

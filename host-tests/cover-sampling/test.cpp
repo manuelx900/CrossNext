@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "../../src/apps_local/home/CoverBoxSampler.h"
+#include "../../src/apps_local/home/CoverScanline.h"
 
 namespace {
 int checks = 0, failures = 0;
@@ -54,6 +55,25 @@ int main() {
   for (int y = 0; y < 64; ++y) std::fill(checker.begin() + y * 8, checker.begin() + (y + 1) * 8, y & 1 ? 0x55 : 0xaa);
   const auto reduced = filtered(checker, 64, 64, 32, 32, 0, true);
   check(std::count(reduced.begin(), reduced.end(), 1) == 512);
+  std::vector<uint8_t> cover(((145 + 7) / 8) * 218);
+  for (int y = 0; y < 218; ++y) std::fill(cover.begin() + y * 19, cover.begin() + (y + 1) * 19, y & 1 ? 0x55 : 0xaa);
+  const auto fitted = filtered(cover, 145, 218, 98, 147, 0, true);
+  const auto ink = std::count(fitted.begin(), fitted.end(), 1);
+  check(ink > int(fitted.size()) * 40 / 100 && ink < int(fitted.size()) * 60 / 100);
+  for (bool topDown : {false, true}) {
+    const auto slot = freeink::ui::makeRect(13, 17, 120, 180);
+    std::vector<uint8_t> pixels(120 * 180), row((108 + 7) / 8, 0);
+    for (int n = 0; n < 180; ++n) {
+      const int y = (topDown ? n : 179 - n) - 9;
+      if (y < 0 || y >= 162) continue;
+      homecover::paint1BitRow(row.data(), 0, 108, 162, y, slot, 0, [&](int x, int yy, int w, int h) {
+        check(x >= slot.x && yy >= slot.y && x + w <= slot.right() && yy + h <= slot.bottom());
+        for (int dy = 0; dy < h; ++dy)
+          for (int dx = 0; dx < w; ++dx) pixels[(yy - slot.y + dy) * 120 + x - slot.x + dx] = 1;
+      });
+    }
+    check(std::all_of(pixels.begin(), pixels.end(), [](uint8_t p) { return p == 1; }));
+  }
   std::printf("cover-sampling: %d checks, %d failed\n", checks, failures);
   return failures ? 1 : 0;
 }

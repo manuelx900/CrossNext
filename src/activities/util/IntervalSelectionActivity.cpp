@@ -197,7 +197,7 @@ void IntervalSelectionActivity::buildIntervalScreen(UiScreen& screen) {
   spec.chromeAction = ACTION_CHROME;
   spec.hintLine1 = hints[0];
   spec.hintLine2 = hints[1];
-  buildSliderDialogScreen(screen, uiTarget, mappedInput, spec);
+  buildSliderDialogScreen(screen, uiTarget, mappedInput, renderer, spec);
 }
 
 void IntervalSelectionActivity::render(RenderLock&&) {

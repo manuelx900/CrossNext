@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <string>
 
 /**
@@ -23,6 +24,8 @@ class KOReaderDocumentId {
    * @return 32-character lowercase hex string, or empty string on failure
    */
   static std::string calculate(const std::string& filePath);
+  // Borrow a reusable chunk for batch operations; ownership remains with the caller.
+  static std::string calculate(const std::string& filePath, uint8_t* scratch, size_t bytes);
 
   /**
    * Calculate document hash from filename only (filename-based sync mode).

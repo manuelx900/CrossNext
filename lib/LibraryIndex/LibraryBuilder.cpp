@@ -5,6 +5,7 @@
 #include <ContentVisibility.h>
 #include <Epub.h>
 #include <FsHelpers.h>
+#include <HalMemory.h>
 #include <HalStorage.h>
 #include <Logging.h>
 #include <Memory.h>
@@ -16,6 +17,7 @@
 #include <cstring>
 
 #include "LibraryIndexFile.h"
+#include "LibraryInventory.h"
 #include "LibraryText.h"
 
 namespace library {
@@ -38,10 +40,8 @@ constexpr size_t NAME_BUF_SIZE = 512;
 
 // One staged entry: the record as far as the filename can fill it, followed by
 // the display name. Fixed stride keeps the second pass a seek rather than a scan.
-constexpr size_t STAGE_NAME_BYTES = 255;
+constexpr size_t STAGE_NAME_BYTES = inventory::NameBytes;
 constexpr size_t STAGE_AUTHOR_BYTES = 128;
-// A folder path is stored behind one length byte in the folder section.
-constexpr size_t FOLDER_PATH_BYTES = 255;
 struct StagedEntry {
   ClixRecord record;
   uint64_t pathHash;
@@ -57,6 +57,9 @@ struct StagedEntry {
   // title on the other.
   uint8_t titleLen;
   char title[STAGE_NAME_BYTES];
+  uint8_t seriesLen, genreLen;
+  char series[96], genre[96];
+  uint32_t seriesPosition;
 };
 constexpr size_t STAGE_STRIDE = sizeof(StagedEntry);
 
@@ -187,16 +190,6 @@ void clearLibraryIndexDirty() {
   }
 }
 
-bool isBookName(const std::string& name) {
-  return FsHelpers::checkFileExtension(name, ".epub") || FsHelpers::checkFileExtension(name, ".txt") ||
-         FsHelpers::checkFileExtension(name, ".md") || FsHelpers::hasXtcExtension(name);
-}
-
-// macOS AppleDouble sidecars and hidden entries. The file browser already hides
-// these (FileBrowserActivity isMacOSMetadataEntry); the shelf must agree, or a
-// card written on a Mac shows every book twice.
-bool isHiddenOrSidecar(const char* name) { return name[0] == '.'; }
-
 std::string stemOf(const std::string& name) {
   const size_t dot = name.find_last_of('.');
   return (dot == std::string::npos || dot == 0) ? name : name.substr(0, dot);
@@ -226,15 +219,6 @@ bool priorPathLess(const PriorEntry& a, const PriorEntry& b) {
 
 bool priorSizeLess(const PriorEntry& a, const PriorEntry& b) {
   return a.fileSize < b.fileSize || (a.fileSize == b.fileSize && priorOrdinal(a) < priorOrdinal(b));
-}
-
-uint32_t fnv1a32(const char* data, const size_t len) {
-  uint32_t hash = 2166136261u;
-  for (size_t i = 0; i < len; i++) {
-    hash ^= static_cast<unsigned char>(data[i]);
-    hash *= 16777619u;
-  }
-  return hash;
 }
 
 // Sentinel written into a staged record whose book matched no previous path. A
@@ -296,11 +280,12 @@ int findPrior(WalkState& st, const uint64_t pathHash) {
                                    const uint32_t modificationTime) {
   StagedEntry& entry = *st.stagedEntry;
   memset(&entry, 0, sizeof(entry));
+  entry.seriesPosition = UINT32_MAX;
   // The filename is a fallback for the title and nothing else: no parsing, and
   // never an author. Per review on #2885 -- no other reader parses filenames,
   // and a name pulled out of one by pattern is a guess wearing a fact's clothes.
   std::string title = stemOf(name);
-  std::string author;
+  std::string author, series, genre;
   bool titleFromBook = false;
   bool authorFromBook = false;
 
@@ -317,13 +302,20 @@ int findPrior(WalkState& st, const uint64_t pathHash) {
       st.failed = true;
       return false;
     }
-    reuseMetadata =
-        st.prior[priorIndex].fileSize == fileSize && modificationTime != 0 &&
-        priorRecord.modificationTime == modificationTime && st.previous->header().foldVersion == CLIX_FOLD_VERSION &&
-        st.previous->header().metadataEnabled == st.readMetadata && priorRecord.metadataStatus == expectedStatus;
+    reuseMetadata = st.prior[priorIndex].fileSize == fileSize && modificationTime != 0 &&
+                    priorRecord.modificationTime == modificationTime &&
+                    st.previous->header().formatVersion == CLIX_FORMAT_VERSION &&
+                    st.previous->header().foldVersion == CLIX_FOLD_VERSION &&
+                    st.previous->header().metadataEnabled == st.readMetadata &&
+                    priorRecord.metadataStatus == expectedStatus;
   }
 
   if (reuseMetadata) {
+    if (!st.previous->readSeries(priorRecord, series) || !st.previous->readGenre(priorRecord, genre) ||
+        !st.previous->readSeriesPosition(priorRecord, entry.seriesPosition)) {
+      st.failed = true;
+      return false;
+    }
     if (!st.previous->readSourceAuthor(priorRecord, author)) {
       st.failed = true;
       return false;
@@ -357,7 +349,17 @@ int findPrior(WalkState& st, const uint64_t pathHash) {
       }
     } else {
       Epub epub(fullPath, CACHE_DIR);
-      loaded = epub.loadMetadata(bookTitle, author);
+      Epub::SyncMetadata details;
+      loaded = epub.loadMetadata(bookTitle, author, &details);
+      series = std::move(details.series);
+      genre = std::move(details.genre);
+      if (details.seriesIndex) {
+        float position = *details.seriesIndex;
+        if (position == 0) position = 0;
+        uint32_t bits;
+        memcpy(&bits, &position, sizeof(bits));
+        entry.seriesPosition = bits & 0x80000000u ? ~bits : bits ^ 0x80000000u;
+      }
     }
     if (loaded) {
       entry.record.metadataStatus = CLIX_METADATA_EXTRACTED;
@@ -371,6 +373,12 @@ int findPrior(WalkState& st, const uint64_t pathHash) {
     }
     if (!titleFromBook && !authorFromBook) LOG_DBG("LIBIDX", "no metadata for %s", fullPath.c_str());
   }
+  entry.seriesLen = static_cast<uint8_t>(
+      utf8SafeTruncateBuffer(series.c_str(), std::min<int>(series.size(), sizeof(entry.series) - 1)));
+  entry.genreLen =
+      static_cast<uint8_t>(utf8SafeTruncateBuffer(genre.c_str(), std::min<int>(genre.size(), sizeof(entry.genre) - 1)));
+  memcpy(entry.series, series.data(), entry.seriesLen);
+  memcpy(entry.genre, genre.data(), entry.genreLen);
   // Exporters write "Unknown" into dc:creator often enough that treating it as
   // a person would put a fictional author at the top of the shelf. fold() already
   // lowercases and trims, so recognising it is the one comparison @Uri-Tauber
@@ -481,10 +489,10 @@ void walk(WalkState& st, const std::string& path, const int depth) {
     const uint32_t modificationTime = isDir ? 0 : entry.modificationTime();
     entry.close();
 
-    if (st.nameBuf[0] == '\0' || isHiddenOrSidecar(st.nameBuf)) continue;
+    if (!inventory::visible(st.nameBuf)) continue;
     const std::string name(st.nameBuf);
 
-    if (isDir && path == "/" && content::appFolder(name)) continue;
+    if (isDir && inventory::appRootFolder(name, depth)) continue;
     if (isDir) {
       const size_t resumePosition = dir.position();
       dir.close();
@@ -500,7 +508,7 @@ void walk(WalkState& st, const std::string& path, const int depth) {
       }
       continue;
     }
-    if (!isBookName(name)) continue;
+    if (!inventory::bookName(name)) continue;
 
     // A zero-length book is a dangling directory entry: the name enumerates but
     // the contents do not exist. Counted rather than silently dropped.
@@ -515,33 +523,29 @@ void walk(WalkState& st, const std::string& path, const int depth) {
     // open, and a byte-level cut is not even valid UTF-8. The limit is real —
     // FAT allows 255 UTF-16 units, so a long Cyrillic or CJK filename can run
     // to ~765 UTF-8 bytes.
-    if (name.size() > STAGE_NAME_BYTES || path.size() > FOLDER_PATH_BYTES) {
+    if (!inventory::representable(name, path.size())) {
       st.unreadableSkipped++;
       continue;
     }
-    const uint64_t key = (static_cast<uint64_t>(fnv1a32(name.data(), name.size())) << 32) | size;
-    if (st.dedupKeys != nullptr) {
-      uint64_t* const end = st.dedupKeys + st.activeDedupCount;
-      uint64_t* const slot = std::lower_bound(st.dedupKeys + dedupBase, end, key);
-      if (slot != end && *slot == key) {
+    switch (inventory::remember(st.dedupKeys, LIBRARY_MAX_DEDUP_KEYS, dedupBase, st.activeDedupCount, name, size)) {
+      case inventory::Remember::Duplicate:
         st.duplicatesDropped++;
         continue;
-      }
-      if (st.activeDedupCount < LIBRARY_MAX_DEDUP_KEYS) {
-        memmove(slot + 1, slot, static_cast<size_t>(end - slot) * sizeof(*slot));
-        *slot = key;
-        st.activeDedupCount++;
-      } else if (!st.dedupDegraded) {
-        LOG_INF("LIBIDX", "duplicate detection capped at %u entries in %s",
-                static_cast<unsigned>(LIBRARY_MAX_DEDUP_KEYS), path.c_str());
-        st.dedupDegraded = true;
-      }
+      case inventory::Remember::Untracked:
+        if (!st.dedupDegraded) {
+          LOG_INF("LIBIDX", "duplicate detection capped at %u entries in %s",
+                  static_cast<unsigned>(LIBRARY_MAX_DEDUP_KEYS), path.c_str());
+          st.dedupDegraded = true;
+        }
+        break;
+      case inventory::Remember::Added:
+        break;
     }
     if (!folderEmitted) {
       // Folders are emitted lazily, so only directories that actually hold a
       // book get an id and the ids stay dense.
       myFolderId = st.folderId;
-      // In range: entries whose folder path exceeds FOLDER_PATH_BYTES were
+      // In range: entries whose folder path exceeds inventory::FolderBytes were
       // skipped above, so no book reaches this line with an overlong path.
       const uint8_t pathLen = static_cast<uint8_t>(path.size());
       if (st.folders.write(&pathLen, 1) != 1 ||
@@ -563,7 +567,7 @@ void walk(WalkState& st, const std::string& path, const int depth) {
 // truth.
 uint32_t blobBytesFor(const StagedEntry& entry, const StagedEntry& canonical) {
   return sizeof(entry.pathHash) + entry.record.nameLen + 1u + canonical.authorLen + 1u + entry.titleLen + 1u +
-         entry.authorLen;
+         entry.authorLen + 1u + entry.seriesLen + 1u + entry.genreLen + 9u;
 }
 
 bool emitIndex(const char* folderStagePath, WalkState& st, const uint16_t* order, const uint16_t* resolvedFirstSeen,
@@ -879,48 +883,18 @@ bool emitIndex(const char* folderStagePath, WalkState& st, const uint16_t* order
 
   // --- arrival order -------------------------------------------------------
   //
-  // Primary key is the file's modification time, so the "Recent" shelf reflects
-  // when a book actually landed on the card rather than when a rebuild happened
-  // to discover it. firstSeen breaks ties (and carries books whose filesystem
-  // reports no time): it comes from the PREVIOUS index, so it is no longer a
-  // dense sequence in walk order — a rebuild reuses each book's original number
-  // and only hands out new ones for books it has never seen. The arrival order
-  // has to be SORTED rather than assumed, or "Recent" silently degrades into
-  // "the order the card enumerates in" — which is exactly the bug
-  // reconciliation exists to prevent.
+  // firstSeen records when the firmware discovered a book. Copying an old
+  // EPUB to the card often preserves its original modification timestamp.
   if (rankable) {
     for (uint16_t i = 0; i < n; i++) arrivalOrder[i] = i;
-    if (n > 1) {
-      // Fallible and non-fatal: without the array the sort still runs on
-      // firstSeen alone, which is the pre-timestamp behaviour.
-      auto mtimes = makeUniqueNoThrow<uint32_t[]>(n);
-      if (mtimes) {
-        for (uint16_t i = 0; i < n; i++) {
-          serviceBuilder(serviceUnits);
-          if (!readStageAt(static_cast<uint64_t>(order[i]) * STAGE_STRIDE + offsetof(ClixRecord, modificationTime),
-                           &mtimes[i], sizeof(mtimes[i]))) {
-            mtimes.reset();
-            break;
-          }
-        }
-      } else {
-        LOG_ERR("LIBIDX", "OOM: %u-byte mtime array, arrival falls back to firstSeen",
-                static_cast<unsigned>(n * sizeof(uint32_t)));
-      }
-      if (ioFailed) {
-        // The shared read helper latched the failure; the emit fails below.
-      } else {
-        delay(1);
-        std::sort(arrivalOrder.get(), arrivalOrder.get() + n,
-                  [order, resolvedFirstSeen, mt = mtimes.get()](const uint16_t a, const uint16_t b) {
-                    if (mt && mt[a] != mt[b]) return mt[a] < mt[b];
-                    const uint16_t aSeen = resolvedFirstSeen[order[a]];
-                    const uint16_t bSeen = resolvedFirstSeen[order[b]];
-                    return aSeen < bSeen || (aSeen == bSeen && a < b);
-                  });
-        delay(1);
-      }
-    }
+    delay(1);
+    std::sort(arrivalOrder.get(), arrivalOrder.get() + n,
+              [order, resolvedFirstSeen](const uint16_t a, const uint16_t b) {
+                const uint16_t aSeen = resolvedFirstSeen[order[a]];
+                const uint16_t bSeen = resolvedFirstSeen[order[b]];
+                return aSeen < bSeen || (aSeen == bSeen && a < b);
+              });
+    delay(1);
   } else {
     // Without sorting, preserve walk order by mapping each staging ordinal back
     // to its position in the title-ordered record section.
@@ -968,10 +942,12 @@ bool emitIndex(const char* folderStagePath, WalkState& st, const uint16_t* order
     return readStageAt(static_cast<uint64_t>(stagingIndex) * STAGE_STRIDE, &dest, STAGE_STRIDE);
   };
 
+  CardSignature cardSignature;
   uint32_t nameCursor = 0;
   for (uint16_t i = 0; i < n; i++) {
     serviceBuilder(serviceUnits);
     if (!fetch(order[i], entry)) break;
+    cardSignature.add(entry.pathHash, entry.record.fileSize);
     entry.record.nameOff = nameCursor;
     // The blob holds the path hash, basename, chosen author spelling, title, and
     // source author spelling used by later rebuilds.
@@ -994,6 +970,53 @@ bool emitIndex(const char* folderStagePath, WalkState& st, const uint16_t* order
     const uint16_t ordinal = arrivalOrder[k];
     put(&ordinal, sizeof(ordinal));
   }
+  // Reuse one checked PSRAM workspace for all three complete metadata keys.
+  // At the 4096-book ceiling this is about 1 MiB, cold-path only, never internal RAM.
+  struct FacetKey {
+    char name[256];
+    uint32_t position;
+    uint16_t ordinal;
+    bool known;
+  };
+  auto workspace = HalMemory::allocatePsram(std::max<size_t>(1, n) * sizeof(FacetKey));
+  if (!workspace) {
+    LOG_ERR("LIBIDX", "OOM: %u-byte metadata sort workspace", unsigned(std::max<size_t>(1, n) * sizeof(FacetKey)));
+    ioFailed = true;
+  }
+  auto* keys = reinterpret_cast<FacetKey*>(workspace.get());
+  for (unsigned section = 0; section < 3 && !ioFailed; ++section) {
+    for (uint16_t i = 0; i < n; ++i) {
+      if (!fetch(order[i], entry)) break;
+      std::string value;
+      if (section == 0) {
+        const uint16_t source = canonicalFrom ? canonicalFrom[i] : i;
+        if (!fetch(order[source], canonical)) break;
+        value = cleanPersonName(std::string_view(canonical.author, canonical.authorLen));
+      } else
+        value.assign(section == 1 ? entry.series : entry.genre, section == 1 ? entry.seriesLen : entry.genreLen);
+      const std::string key = fold(value);
+      auto& item = keys[i];
+      memset(&item, 0, sizeof(item));
+      memcpy(item.name, key.data(), std::min(key.size(), sizeof(item.name) - 1));
+      item.known = !key.empty();
+      item.position = section == 1 ? entry.seriesPosition : 0;
+      item.ordinal = i;
+      serviceBuilder(serviceUnits);
+    }
+    if (ioFailed) break;
+    std::sort(keys, keys + n, [](const FacetKey& a, const FacetKey& b) {
+      if (a.known != b.known) return a.known;
+      const int name = strcmp(a.name, b.name);
+      if (name) return name < 0;
+      if (a.position != b.position) return a.position < b.position;
+      return a.ordinal < b.ordinal;
+    });
+    for (uint16_t i = 0; i < n; ++i) {
+      put(&keys[i].ordinal, sizeof(uint16_t));
+      serviceBuilder(serviceUnits);
+    }
+  }
+  workspace = {};
   padTo(header.nameStart);
 
   uint32_t blobWritten = 0;
@@ -1011,8 +1034,18 @@ bool emitIndex(const char* folderStagePath, WalkState& st, const uint16_t* order
     if (entry.titleLen > 0) put(entry.title, entry.titleLen);
     put(&entry.authorLen, 1);
     if (entry.authorLen > 0) put(entry.author, entry.authorLen);
+    put(&entry.seriesLen, 1);
+    put(entry.series, entry.seriesLen);
+    put(&entry.genreLen, 1);
+    put(entry.genre, entry.genreLen);
+    constexpr uint8_t positionLength = 8;
+    char position[9];
+    snprintf(position, sizeof(position), "%08lx", static_cast<unsigned long>(entry.seriesPosition));
+    put(&positionLength, 1);
+    put(position, positionLength);
     blobWritten += blobBytesFor(entry, canonical);
   }
+  storeCardSignature(header, cardSignature);
   header.nameLen = blobWritten;
   header.selfSize = header.nameStart + blobWritten;
   stage.close();
@@ -1194,8 +1227,9 @@ bool buildLibraryIndex(const char* rootPath, BuildStats& stats, const bool readM
   stats.unchanged = st.reused;
   stats.enriched = st.enriched;
 
-  if (previous.isOpen() && st.books == priorCount && st.reused == priorCount && stats.metadataReused == priorCount &&
-      st.unreadableSkipped == 0 && previous.header().reserved[0] == content::VISIBILITY_VERSION) {
+  if (previous.isOpen() && previous.header().formatVersion == CLIX_FORMAT_VERSION && st.books == priorCount &&
+      st.reused == priorCount && stats.metadataReused == priorCount && st.unreadableSkipped == 0 &&
+      previous.header().reserved[0] == content::VISIBILITY_VERSION && previous.header().reserved[1] == 1) {
     previous.close();
     Storage.remove(STAGE_PATH);
     Storage.remove(folderStagePath.c_str());

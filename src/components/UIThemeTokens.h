@@ -2,6 +2,8 @@
 #include <BoardConfig.h>
 #include <FreeInkUIGfxRenderer.h>
 
+#include "../../lib/GfxRenderer/ChromeRegion.h"
+#include "../apps_local/ui/LightUi.h"
 #include "UITheme.h"
 #include "UiControlChrome.h"
 
@@ -50,5 +52,11 @@ inline freeink::ui::ThemeTokens uiThemeTokens(const freeink::ui::GfxRendererTarg
   tokens.sheetRadius = static_cast<uint8_t>(metrics.sheetRadius);
   tokens.capsuleRadius = static_cast<uint8_t>(metrics.capsuleRadius);
   tokens.bodyText.bold = metrics.listTitleBold;
+  if (chrome::lightHeader) {
+    tokens.bodyText.bold = tokens.smallText.bold = tokens.titleText.bold = false;
+    tokens.headerUnderline = 0;
+    tokens.listRow = lightui::controlStyles(true);
+    tokens.button = lightui::controlStyles();
+  }
   return tokens;
 }

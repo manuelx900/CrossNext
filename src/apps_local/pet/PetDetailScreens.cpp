@@ -37,7 +37,14 @@ void projects(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   for (unsigned slot = 0; slot < pet::SLOT_COUNT; ++slot) {
     const auto categoryBox = wide ? rect(r.x, r.y + 44 + int(slot) * 44, sideWidth, 44)
                                   : cell(rect(r.x, r.y + 44, r.width, 44), int(slot), 4, 0);
-    button(s, w, categoryBox, I18N.get(categories[slot]), SelectCategory, int(slot), slot == category);
+    if (chrome::lightHeader && !wide) {
+      const auto band = rect(r.x, r.y + 44, r.width, 44);
+      lightui::segment(s.target(), band, int(slot), 4, slot == category);
+      text(s, categoryBox.inset({0, 4, 0, 4}), I18N.get(categories[slot]), 3, slot == category, fui::TextAlign::Center);
+      s.frame().hit(categoryBox, SelectCategory, int(slot));
+    } else {
+      button(s, w, categoryBox, I18N.get(categories[slot]), SelectCategory, int(slot), slot == category);
+    }
   }
   const auto filterRow =
       wide ? rect(r.x + sideWidth + 12, r.y + 44, r.width - sideWidth - 12, 44) : rect(r.x, r.y + 96, r.width, 44);
@@ -72,7 +79,7 @@ void projects(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
     const bool owned = pet::owns(p, item), equipped = p.equipped[category] == item;
     const bool current = equipped || (!owned && p.project == item);
     const bool inverse = button(s, w, box, "", OpenProjectPreview, int(item));
-    if (current) s.target().stroke(box, ink, 8);
+    if (current) s.target().stroke(box, ink, chrome::lightHeader ? 3 : 8, lightui::radius());
     const int side = std::max(18, std::min(54, h - 85));
     object(s, m, rect(box.x + (box.width - side) / 2, box.y + 8, side, side), item, inverse);
     prose(s, rect(box.x + 6, box.bottom() - 70, box.width - 12, 42), objectName(item), 3, fui::TextAlign::Center,
@@ -98,10 +105,10 @@ void evolution(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   const int height = std::min(int(r.height) - 12, wide ? 338 : 680);
   const auto box = rect(r.x + (r.width - width) / 2, r.y + (r.height - height) / 2, width, height);
   s.target().fill(rect(box.x + 6, box.y + 6, box.width, box.height), ink);
-  s.target().fill(box, paper);
+  lightui::surface(s.target(), box, paper);
   frame(s, box);
   const auto banner = rect(box.x + 10, box.y + 10, box.width - 20, 58);
-  s.target().fill(banner, ink);
+  lightui::surface(s.target(), banner, ink);
   text(s, banner.inset({0, 32, 0, 32}), tr(STR_PET_CONGRATULATIONS), 1, true, fui::TextAlign::Center);
   sparkle(s, banner.x + 18, banner.y + banner.height / 2, 18, true);
   sparkle(s, banner.right() - 18, banner.y + banner.height / 2, 18, true);
@@ -121,7 +128,7 @@ void evolution(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
                                : 3 + unsigned(p.species) * 16 + (unsigned(value) - 1) * 4 + (i ? 1 : 0);
     art(s, m, rect(card.x + 8, card.y + 8, card.width - 16, card.height - 54), artId, speciesIcon(p.species), false);
     const auto caption = rect(card.x + 6, card.bottom() - 39, card.width - 12, 33);
-    if (!born) s.target().fill(caption, ink);
+    if (!born) lightui::surface(s.target(), caption, ink);
     prose(s, caption.inset({2, 2, 2, 2}), stageName(value), 2, fui::TextAlign::Center, !born);
   }
   growthArrow(s, rect(stages.x + stageW + 8, stages.y + (stages.height - 32) / 2, arrowW, 32));

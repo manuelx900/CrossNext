@@ -646,7 +646,13 @@ bool Epub::load(const bool buildIfMissing, const bool skipLoadingCss) {
   return true;
 }
 
-bool Epub::loadMetadata(std::string& title, std::string& author) {
+bool Epub::loadMetadata(std::string& title, std::string& author, SyncMetadata* details) {
+  if (details) {
+    const bool loaded = loadSyncMetadata(*details);
+    title = details->title;
+    author = details->author;
+    return loaded;
+  }
   title.clear();
   author.clear();
 
@@ -714,6 +720,9 @@ bool Epub::loadSyncMetadata(SyncMetadata& metadata) {
   zip.close();
   if (!read) return false;
 
+  metadata.title = std::move(parser.title);
+  metadata.author = std::move(parser.author);
+  metadata.genre = std::move(parser.genre);
   metadata.isbn = std::move(parser.isbn);
   metadata.asin = std::move(parser.asin);
   metadata.series = std::move(parser.series);

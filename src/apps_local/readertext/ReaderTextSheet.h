@@ -66,11 +66,20 @@ struct Work {
 };
 freeink::ui::Rect sheetRect(const freeink::ui::DeviceContext& device, bool fixed = false);
 inline constexpr int kFontRowHeight = 56;
+inline int fontRowHeight() { return chrome::lightHeader ? 52 : kFontRowHeight; }
+inline int fontColumns(const freeink::ui::DeviceContext& device) {
+  return chrome::lightHeader && device.width > device.height ? 2 : 1;
+}
 inline int fontRowsPerPage(const freeink::ui::DeviceContext& device) {
+  if (chrome::lightHeader) {
+    const int grip = device.width > device.height ? 24 : 36;
+    const int available = int(sheetRect(device).height) - 12 - grip - 64 - 64 - 56;
+    return std::max(1, std::min(5, available / fontRowHeight() * fontColumns(device)));
+  }
   return std::max(1, (int(sheetRect(device).height) - 12 - 44 - 64 - 64 - 56) / kFontRowHeight);
 }
 inline int sheetRowsPerPage(const freeink::ui::DeviceContext& device, bool fixed = false, int tab = 2) {
-  if (tab == 3 && !fixed) return 6;
+  if (tab == 3 && !fixed) return chrome::lightHeader ? 5 : 6;
   return device.width > device.height ? (tab == 2 ? 4 : 2) : (tab == 2 ? 4 : 5);
 }
 template <typename Screen>

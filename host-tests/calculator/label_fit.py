@@ -34,12 +34,12 @@ for line in (REPO / "src/apps_local/calculator/CalcFontIds.h").read_text().split
         IDS[int(m.group(2).replace("'", ""), 16)] = m.group(1)
 
 FILES = {
-    "Label": "calc_jersey_28",
-    "Small": "calc_jersey_20",
-    "Number": "calc_jersey_56",
-    "Mid": "calc_jersey_44",
-    "Tiny": "calc_jersey_34",
-    "Finest": "calc_jersey_26",
+    "Label": "calc_sans_28",
+    "Small": "calc_sans_20",
+    "Number": "calc_sans_56",
+    "Mid": "calc_sans_44",
+    "Tiny": "calc_sans_34",
+    "Finest": "calc_sans_26",
 }
 _missing = sorted(set(IDS.values()) - set(FILES))
 assert not _missing, f"label_fit.py has no file for: {', '.join(_missing)}"

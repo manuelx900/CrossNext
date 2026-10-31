@@ -1892,7 +1892,7 @@ void GfxRenderer::displayBuffer(HalDisplay::RefreshMode refreshMode) const {
   refreshMode = applyPromotedRefresh(refreshMode);
   {
     PanelSpan span;
-    const int header = display.isInverted() ? chrome::headerHeight : 0;
+    const int header = chrome::invertHeaderForOutput(display.isInverted()) ? chrome::headerHeight : 0;
     invertHeaderBand(header);
     display.displayBuffer(refreshMode, fadingFix);
     invertHeaderBand(header);
@@ -1910,7 +1910,7 @@ void GfxRenderer::displayBufferAsync(HalDisplay::RefreshMode refreshMode) const 
   if (fadingFix) {
     {
       PanelSpan span;
-      const int header = display.isInverted() ? chrome::headerHeight : 0;
+      const int header = chrome::invertHeaderForOutput(display.isInverted()) ? chrome::headerHeight : 0;
       invertHeaderBand(header);
       display.displayBuffer(refreshMode, fadingFix);
       invertHeaderBand(header);
@@ -1920,7 +1920,7 @@ void GfxRenderer::displayBufferAsync(HalDisplay::RefreshMode refreshMode) const 
   }
   {
     PanelSpan span;
-    deferredHeaderHeight = display.isInverted() ? chrome::headerHeight : 0;
+    deferredHeaderHeight = chrome::invertHeaderForOutput(display.isInverted()) ? chrome::headerHeight : 0;
     invertHeaderBand(deferredHeaderHeight);
     display.displayBufferAsync(refreshMode);
   }

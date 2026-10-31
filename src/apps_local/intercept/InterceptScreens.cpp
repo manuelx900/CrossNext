@@ -175,7 +175,7 @@ void build(toybox::Screen& s, const Model& m, Work& w) {
     return;
   }
   const auto heading = fui::makeRect(panel.x, panel.bottom() - controls, panel.width, 28);
-  s.target().fill(heading, dashboard::ink);
+  lightui::surface(s.target(), heading, dashboard::ink);
   dashboard::text(s, heading, tr(STR_REDESIGN_NEXT_MOVE), 0, fui::TextAlign::Center, true);
   int row = 0;
   for (unsigned n = 0; n < node.count; ++n)
@@ -183,7 +183,7 @@ void build(toybox::Screen& s, const Model& m, Work& w) {
       const auto r = fui::makeRect(panel.x, heading.bottom() + 6 + row * (rowH + 6), panel.width, rowH);
       const bool selected = s.frame().buttonSelected(Choice, n, row == m.selected);
       if (selected)
-        s.target().fill(r, dashboard::ink);
+        lightui::surface(s.target(), r, dashboard::ink);
       else
         dashboard::frame(s, r, 2);
       dashboard::hit(s, r, Choice, n);

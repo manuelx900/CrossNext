@@ -209,12 +209,14 @@ void ConnectFourActivity::loop() {
   // buttons and the case labels them previous and next page; a page of a
   // how-to is a page. NEXT stays tappable -- a button is never the only route.
   if (screen == c4::Screen::HowTo) {
-    const bool forward = mappedInput.wasReleased(MappedInputManager::Button::Down);
-    const bool backward = mappedInput.wasReleased(MappedInputManager::Button::Up);
-    if (forward || backward) {
-      const int pages = c4ui::howToPages();
-      howToPage = (howToPage + (forward ? 1 : pages - 1)) % pages;
-      requestUpdate();
+    const int swipe = sidebuttons::swipeStep(mappedInput);
+    const int direction = swipe ? swipe : sidebuttons::shortStep(mappedInput);
+    if (direction) {
+      const int next = std::clamp(howToPage + direction, 0, c4ui::howToPages() - 1);
+      if (next != howToPage) {
+        howToPage = next;
+        requestUpdate();
+      }
       return;
     }
   }

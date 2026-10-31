@@ -15,6 +15,7 @@
 #include "../../lib/EpdFont/builtinFonts/ubuntu_12_bold.h"
 #include "../../lib/EpdFont/builtinFonts/ubuntu_12_regular.h"
 #include "../../src/apps_local/ui/fonts/book_bold_10.h"
+#include "../../src/apps_local/ui/fonts/display_sans_22.h"
 #include "../../src/apps_local/ui/fonts/reading_serif_11.h"
 #include "../../src/apps_local/ui/fonts/reading_serif_14.h"
 #include "../../src/apps_local/ui/fonts/reading_serif_bold_11.h"
@@ -311,15 +312,15 @@ struct Canvas {
 }  // namespace
 
 int main(int argc, char** argv) {
+  chrome::lightHeader = argc > 2 && std::strstr(argv[2], "light") != nullptr;
   const char* style = argc > 2 ? argv[2] : "pixel";
-  classicFonts = std::strcmp(style, "classic") == 0;
-  menuStyle = classicFonts                       ? menufont::Style::Classic
-              : std::strcmp(style, "sans") == 0  ? menufont::Style::NotoSans
-              : std::strcmp(style, "serif") == 0 ? menufont::Style::NotoSerif
-                                                 : menufont::Style::Pixel;
+  classicFonts = std::strstr(style, "classic") != nullptr;
+  menuStyle = classicFonts                  ? menufont::Style::Classic
+              : std::strstr(style, "serif") ? menufont::Style::NotoSerif
+                                            : menufont::Style::NotoSans;
   for (int general = 0; general <= 255; ++general)
     for (int value = 0; value <= 255; ++value) {
-      const auto expected = value > 0 && value < int(menufont::Override::Count) ? menufont::Style(value - 1)
+      const auto expected = value > 0 && value < int(menufont::Override::Count) ? menufont::normalized(value - 1)
                                                                                 : menufont::normalized(general);
       CHECK(menufont::resolve(general, value) == expected);
     }
@@ -353,11 +354,11 @@ int main(int argc, char** argv) {
     for (int section = 0; section < 5; ++section)
       for (int item = 0; item < 5; ++item) {
         const auto resolved = menufont::resolve(general, section, item);
-        CHECK(resolved == (item ? menufont::Style(item - 1) : menufont::resolve(general, section)));
+        CHECK(resolved == (item ? menufont::normalized(item - 1) : menufont::resolve(general, section)));
       }
   CHECK(menufont::kDefault == menufont::Style::NotoSans);
   CHECK(menufont::normalized(255) == menufont::Style::NotoSans);
-  CHECK(menufont::normalized(0) == menufont::Style::Pixel);
+  CHECK(menufont::normalized(0) == menufont::Style::NotoSans);
   CHECK(menufont::normalized(1) == menufont::Style::Classic);
   for (auto language : {Language::EN, Language::ES}) {
     I18N.setLanguage(language);
@@ -365,14 +366,17 @@ int main(int argc, char** argv) {
       const bool wide = orientation % 2;
       {
         Canvas c(wide ? 800 : 480, wide ? 480 : 800);
-        const auto body = pixelui::geometry(c.device).body;
-        const int themeBottom = body.y + 52 + (wide ? 88 : 140) * 2;
+        auto body = pixelui::geometry(c.device).body;
+        body.y += 52;
+        body.height -= 52;
+        const int themeBottom = body.y + (wide ? 50 : 108) * 4;
         const auto actions = settingsui::appearanceActions(body, themeBottom, wide);
-        CHECK(actions.recent.y >= themeBottom + 12);
+        if (!wide) CHECK(actions.themes.y >= themeBottom + 12);
+        CHECK(actions.recent.y == actions.themes.bottom() + 12);
         CHECK(actions.font.y == actions.recent.bottom() + 12);
-        CHECK(actions.font.bottom() == body.bottom());
-        for (auto box : {actions.recent, actions.font}) {
-          CHECK(box.x == body.x && box.width == body.width);
+        if (!wide) CHECK(actions.font.bottom() == body.bottom());
+        for (auto box : {actions.themes, actions.recent, actions.font}) {
+          CHECK(wide ? box.x > body.x + body.width / 2 : box.x == body.x && box.width == body.width);
           CHECK(box.height >= 44 && box.bottom() <= body.bottom());
         }
       }
@@ -394,6 +398,11 @@ int main(int argc, char** argv) {
         props.topIndex = top;
         props.action = 124;
         menufontui::styleSections(props, wide);
+        if (chrome::lightHeader) {
+          CHECK(props.selectionMarker == fui::SelectionMarker::Underline);
+          CHECK(!fui::textStyleUnset(props.labelText));
+          CHECK(props.rowStyles.selected.background.color == fui::Color::White);
+        }
         pixelui::list(c.screen, props);
         c.checkHits();
         CHECK(c.hits(124) >= (wide ? 4 : 5));
@@ -440,6 +449,11 @@ int main(int argc, char** argv) {
         props.count = apps ? 14 : 17;
         props.action = 124;
         menufontui::styleSections(props, wide);
+        if (chrome::lightHeader) {
+          CHECK(props.selectionMarker == fui::SelectionMarker::Underline);
+          CHECK(!fui::textStyleUnset(props.labelText));
+          CHECK(props.rowStyles.selected.background.color == fui::Color::White);
+        }
         pixelui::list(c.screen, props);
         c.checkHits();
         if (argc > 1)
@@ -449,7 +463,7 @@ int main(int argc, char** argv) {
       for (int n = 0; n < int(menufont::Override::Count); ++n) {
         CHECK(std::strlen(menufontui::choiceName(n)) > 0);
       }
-      CHECK(std::strcmp(menufontui::choiceName(1), "Jersey 25") == 0);
+      CHECK(std::strcmp(menufontui::choiceName(1), "Noto Sans") == 0);
       CHECK(std::strcmp(menufontui::choiceName(2), "Ubuntu") == 0);
     }
   }
@@ -633,7 +647,7 @@ int main(int argc, char** argv) {
           if (decks.interactions.data()[n].action == flashui::OpenDeck)
             firstRow = std::min(firstRow, int(decks.interactions.data()[n].rect.y));
         char heading[64];
-        pixelui::copyCaps(heading, sizeof(heading), tr(STR_FLASH_MY_DECKS));
+        pixelui::copyNatural(heading, sizeof(heading), tr(STR_FLASH_MY_DECKS));
         bool headingFound = false;
         for (const auto& label : decks.target.labels)
           if (label.value == heading) {
@@ -678,7 +692,34 @@ int main(int argc, char** argv) {
         }
         CHECK(bottom - top <= (wide ? 112 : 120));
         if (counterHeight < 0) counterHeight = bottom - top;
-        CHECK(std::abs(bottom - top - counterHeight) <= 1);
+        CHECK(std::abs(bottom - top - counterHeight) <= 4);
+      }
+      {
+        Canvas clock(width, height);
+        FontBridge large(display_sans_22);
+        clock.target.setFont(4, large.font);
+        toolsui::Model model;
+        model.kind = toolsui::Kind::Clock;
+        model.validTime = true;
+        model.year = 2026;
+        model.month = 10;
+        model.day = 30;
+        toolsui::Work work;
+        toolsui::build(clock.screen, model, work);
+        clock.checkHits();
+        CHECK(clock.has(toolsui::HourFormat));
+        for (const auto& label : clock.target.labels)
+          if (label.font == 4)
+            for (size_t n = 0; n < clock.interactions.count(); ++n) {
+              const auto& hit = clock.interactions.data()[n];
+              if (hit.action == toolsui::HourFormat) {
+                fui::TextStyle style;
+                style.font = label.font;
+                CHECK(label.box.y + clock.target.inkBounds(label.font, label.value.c_str(), style).bottom() + 4 <=
+                      hit.rect.y);
+              }
+            }
+        if (argc > 1) clock.write(std::string(argv[1]) + "/clock" + suffix + ".pbm");
       }
       {
         Canvas counter(width, height);
@@ -723,8 +764,8 @@ int main(int argc, char** argv) {
             continue;
           int firstFrame = height;
           for (const auto& outline : four.target.outlines)
-            if (outline.second == pixelui::kBorder && outline.first.width > safe.width / 2 &&
-                outline.first.y > label.box.y)
+            if (outline.second == (chrome::lightHeader ? 1 : pixelui::kBorder) &&
+                outline.first.width > safe.width / 2 && outline.first.y > label.box.y)
               firstFrame = std::min(firstFrame, int(outline.first.y));
           CHECK(firstFrame < height && label.box.bottom() + 12 <= firstFrame);
         }
@@ -853,6 +894,12 @@ int main(int argc, char** argv) {
           ++chapters;
         }
         CHECK(chapters == 4);
+        if (!page) {
+          CHECK(std::any_of(c.target.labels.begin(), c.target.labels.end(),
+                            [](const auto& label) { return label.value == "II"; }));
+          CHECK(std::any_of(c.target.labels.begin(), c.target.labels.end(),
+                            [](const auto& label) { return label.value == "IV"; }));
+        }
         CHECK(c.has(1));
         if (argc > 1 && !page) c.write(std::string(argv[1]) + "/contents" + suffix + ".pbm");
       }
@@ -901,13 +948,12 @@ int main(int argc, char** argv) {
           readertext::Work work;
           readertext::build(sheet.screen, model, work);
           bool found = false;
-          for (const auto& outline : sheet.target.outlines) {
-            if (outline.second != pixelui::kBorder || outline.first.height != 44 || outline.first.width < width - 50)
-              continue;
-            if (firstTabY < 0) firstTabY = outline.first.y;
-            CHECK(firstTabY == outline.first.y);
+          for (size_t n = 0; n < sheet.interactions.count(); ++n) {
+            const auto& hit = sheet.interactions.data()[n];
+            if (hit.action != 2) continue;
+            if (firstTabY < 0) firstTabY = hit.rect.y;
+            CHECK(firstTabY == hit.rect.y && hit.rect.height == 44);
             found = true;
-            break;
           }
           CHECK(found);
           if (argc > 1) sheet.write(std::string(argv[1]) + "/reader-tab-" + std::to_string(tab) + suffix + ".pbm");
@@ -928,7 +974,7 @@ int main(int argc, char** argv) {
         }
         CHECK(bottom - top >= (wide ? 94 : 80));
         if (timerHeight < 0) timerHeight = bottom - top;
-        CHECK(bottom - top == timerHeight);
+        CHECK(std::abs(bottom - top - timerHeight) <= 4);
       }
       for (uint32_t seconds : {0u, 11u, 111u, 671u, 1500u, 5999u}) {
         for (bool saveFailed : {false, true}) {

@@ -26,6 +26,8 @@ class XtcReaderActivity final : public ReaderActivity {
 
   void renderPage();
   void openChapterSelection();
+  void restoreContentsPosition(ContentsPosition position) override;
+  ContentsPosition contentsPagePosition() const override { return {0, currentPage}; }
   void renderStatusBarOverlay(GfxRenderer& renderer, StatusBarOverlayPosition position) const;
   StatusBarInfo getStatusBarInfo() const;
   void saveProgress() const;

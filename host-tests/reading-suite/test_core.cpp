@@ -74,8 +74,8 @@ int main() {
   CHECK(homemenu::at(menu, 2) == homemenu::Id::Transfer);
   CHECK(homemenu::at(menu, 3) == homemenu::Id::Stats);
   CHECK(!homemenu::setVisible(menu, homemenu::Id::Settings, false));
-  CHECK(homemenu::setVisible(menu, homemenu::Id::Services, true));
-  CHECK(homemenu::visibleCount(menu) == 8);
+  CHECK(!homemenu::setVisible(menu, homemenu::Id::Services, true));
+  CHECK(homemenu::visibleCount(menu) == 7);
   CHECK(homemenu::addShortcut(menu, 0, "CHESS") == homemenu::Id::Count);
   CHECK(homemenu::setVisible(menu, homemenu::Id::Services, false));
   CHECK(homemenu::setVisible(menu, homemenu::Id::Apps, false));
@@ -97,6 +97,15 @@ int main() {
     CHECK(!homemenu::decode(menuBytes, restored, generation));
     menuBytes[n] ^= 1;
   }
+  // Eight-entry saves migrate without discarding custom labels or shortcut definitions.
+  homemenu::Config eight;
+  eight.visible |= 1u << int(homemenu::Id::Services);
+  CHECK(homemenu::setLabel(eight, homemenu::Id::Files, "My files"));
+  homemenu::encode(eight, 99, menuBytes);
+  CHECK(homemenu::decode(menuBytes, restored, generation));
+  CHECK(homemenu::visibleCount(restored) == 7);
+  CHECK(homemenu::indexOf(restored, homemenu::Id::Settings) >= 0);
+  CHECK(!std::strcmp(restored.labels[int(homemenu::Id::Files)], "My files"));
   // All entries, including Settings and shortcuts, can move without changing identity.
   CHECK(homemenu::move(menu, homemenu::Id::Settings, -1));
   CHECK(homemenu::at(menu, 4) == homemenu::Id::Settings);
@@ -172,13 +181,14 @@ int main() {
   homemenu::Store futurePrefs;
   futurePrefs.load();
   CHECK(!futurePrefs.save(changed));
-  // A shortcut shares the eight-item budget and is identified by title, not shelf row.
+  // A shortcut shares the seven-item budget and is identified by title, not shelf row.
   homemenu::Config shortcuts;
+  CHECK(homemenu::setVisible(shortcuts, homemenu::Id::Apps, false));
   const auto chessId = homemenu::addShortcut(shortcuts, 0, "CHESS");
-  CHECK(chessId != homemenu::Id::Count && homemenu::visibleCount(shortcuts) == 8);
+  CHECK(chessId != homemenu::Id::Count && homemenu::visibleCount(shortcuts) == 7);
   CHECK(homemenu::findShortcut(shortcuts, 0, "CHESS") == chessId);
-  CHECK(homemenu::at(shortcuts, 7) == homemenu::Id::Settings);
-  CHECK(homemenu::at(shortcuts, 6) == chessId);
+  CHECK(homemenu::at(shortcuts, 6) == homemenu::Id::Settings);
+  CHECK(homemenu::at(shortcuts, 5) == chessId);
   CHECK(homemenu::addShortcut(shortcuts, 1, "HABITS") == homemenu::Id::Count);
   CHECK(homemenu::setLabel(shortcuts, chessId, "My chess"));
   homemenu::encode(shortcuts, 17, menuBytes);
@@ -186,7 +196,7 @@ int main() {
   CHECK(generation == 17 && !std::strcmp(homemenu::shortcut(restored, chessId)->title, "CHESS"));
   CHECK(!std::strcmp(restored.labels[static_cast<int>(chessId)], "My chess"));
   homemenu::removeShortcut(shortcuts, chessId);
-  CHECK(homemenu::visibleCount(shortcuts) == 7);
+  CHECK(homemenu::visibleCount(shortcuts) == 6);
   CHECK(homemenu::findShortcut(shortcuts, 0, "CHESS") == homemenu::Id::Count);
   CHECK(homemenu::addShortcut(shortcuts, 1, "HABITS") == chessId);
   CHECK(!shortcuts.labels[static_cast<int>(chessId)][0]);
@@ -466,7 +476,17 @@ int main() {
   readingstats::Book loaded;
   CHECK(journal.loadBook(document, loaded));
   CHECK(loaded.sessions == 2 && loaded.completed && loaded.seconds == 240);
+  const auto beforeCachedRead = testStorage.readBytes;
+  CHECK(journal.cachedBook(document, loaded) && loaded.seconds == 240);
+  CHECK(testStorage.readBytes - beforeCachedRead <= 512);
+  const char* cache = "/.crosspoint/reading-history/0123456789abcdef0123456789abcdef.idx";
+  const auto validCache = testStorage.files[cache];
+  testStorage.files[cache][0] ^= 1;
+  CHECK(!journal.cachedBook(document, loaded));
+  testStorage.files[cache] = validCache;
+  CHECK(!journal.cachedBook("fedcba9876543210fedcba9876543210", loaded));
   testStorage.files.erase("/.crosspoint/reading-history/0123456789abcdef0123456789abcdef.idx");
+  CHECK(!journal.cachedBook(document, loaded));
   CHECK(journal.loadBook(document, loaded));
   CHECK(loaded.sessions == 2);
   auto& log = testStorage.files["/.crosspoint/reading-history/sessions.bin"];

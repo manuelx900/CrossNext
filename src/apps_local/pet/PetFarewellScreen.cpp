@@ -9,7 +9,7 @@ void deathWindow(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   const auto box = rect(r.x + (r.width - width) / 2, r.y + (r.height - height) / 2, width, height);
   frame(s, box);
   const auto banner = rect(box.x + BORDER, box.y + BORDER, box.width - BORDER * 2, 40);
-  s.target().fill(banner, ink);
+  lightui::surface(s.target(), banner, ink);
   text(s, banner, tr(STR_PET_FAREWELL), 1, true, fui::TextAlign::Center);
   const auto content = rect(box.x + 18, banner.bottom() + 10, box.width - 36, box.bottom() - banner.bottom() - 90);
   std::snprintf(w.label, sizeof(w.label), tr(STR_PET_DIED_TITLE), displayName(m.profile->name, m.profile->species));

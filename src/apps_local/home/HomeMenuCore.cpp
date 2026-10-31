@@ -165,7 +165,7 @@ bool decode(const uint8_t* bytes, Config& config, uint32_t& generation, size_t l
   config = {};
   std::memcpy(config.order, legacyOrder, sizeof(legacyOrder));
   config.visible = static_cast<uint16_t>(mask);
-  if (visibleCount(config) > kMaxVisible) return false;
+  if (visibleCount(config) > 8) return false;
   for (int n = 0; n < count; ++n) {
     const auto* text = reinterpret_cast<const char*>(bytes + 12 + n * kLabelBytes);
     if (!std::memchr(text, 0, kLabelBytes) || !setLabel(config, static_cast<Id>(n), text)) return false;
@@ -195,6 +195,10 @@ bool decode(const uint8_t* bytes, Config& config, uint32_t& generation, size_t l
     }
   }
   if (!current && legacyDefaults(config)) config = {};
+  for (int n = kCount - 1; visibleCount(config) > kMaxVisible && n >= 0; --n) {
+    const auto id = config.order[n];
+    if (id != Id::Settings) config.visible &= ~(1u << int(id));
+  }
   // Retired targets are no longer Home entries; other custom labels and slots survive.
   for (int n = 0; n < kShortcutCount; ++n) {
     const auto& entry = config.shortcuts[n];

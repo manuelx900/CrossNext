@@ -8,8 +8,8 @@ namespace homeui {
 namespace fui = freeink::ui;
 
 constexpr int kMaxRows = 8;
-enum class Style : uint8_t { Framed, Carousel };
-enum class Icon { Files, Library, Transfer, Settings, Plugins, Games, Apps, Stats };
+enum class Style : uint8_t { Framed, Carousel, Boox };
+enum class Icon { Files, Library, Transfer, Settings, Plugins, Games, Apps, Stats, Gear };
 struct Row {
   char label[96]{};
   char brief[32]{};
@@ -39,6 +39,7 @@ struct Layout {
   Style style = Style::Framed;
   fui::Rect sides[4]{}, coverRegion{}, progress{}, bookProgress{};
   fui::Rect header{}, card{}, cover{}, badge{}, previous{}, next{}, title{}, author{}, menu{};
+  fui::Rect settingsButton{}, primary[6]{};
   fui::Rect rows[kMaxRows]{};
   int count = 0;
 };
@@ -47,7 +48,7 @@ struct Layout {
 bool copyLabel(char* out, size_t size, const char* text);
 void formatDate(char* out, size_t size, int year, int month, int day);
 void drawIcon(fui::DrawTarget& target, fui::Rect rect, Icon kind, bool inverted = false);
-Layout layout(const fui::DeviceContext& device, int rows, Style style = Style::Framed);
+Layout layout(const fui::DeviceContext& device, int rows, Style style = Style::Framed, const Model* model = nullptr);
 void draw(fui::DrawTarget& target, const Model& model, const Layout& layout);
 // Keeps the book, status and published interaction geometry untouched.
 void drawMenuSelection(fui::DrawTarget& target, Model& model, const Layout& layout, int selected);
@@ -56,6 +57,26 @@ void drawCardSelection(fui::DrawTarget& target, const Model& model, const Layout
 
 constexpr fui::ActionId kSelect = 1;
 constexpr int kPreviousBook = -2, kNextBook = -3;
+enum class QuickAction : int16_t {
+  Settings = -4,
+  Files = -10,
+  Library = -11,
+  Transfer = -12,
+  Stats = -13,
+  Apps = -14,
+  Games = -15
+};
+constexpr QuickAction primaryActions[] = {QuickAction::Files, QuickAction::Library, QuickAction::Transfer,
+                                          QuickAction::Stats, QuickAction::Apps,    QuickAction::Games};
+constexpr int kPiccoActions = 7;
+constexpr QuickAction piccoAction(int index) {
+  return index >= 0 && index < 6 ? primaryActions[index] : QuickAction::Settings;
+}
+constexpr int piccoIndex(QuickAction action) {
+  for (int n = 0; n < kPiccoActions; ++n)
+    if (piccoAction(n) == action) return n;
+  return -1;
+}
 template <typename Screen>
 void build(Screen& screen, const Model& model, const Layout& geometry, fui::ButtonProps& hit) {
   draw(screen.target(), model, geometry);
@@ -63,6 +84,17 @@ void build(Screen& screen, const Model& model, const Layout& geometry, fui::Butt
   hit.action = kSelect;
   hit.styles.explicitlySet = true;
   hit.minTouchSize = 0;
+  if (model.style == Style::Boox) {
+    screen.frame().hit(geometry.settingsButton, kSelect, int(QuickAction::Settings), fui::InputTouch);
+    if (model.hasBook) {
+      screen.frame().hit(geometry.cover, kSelect, 0, fui::InputTouch);
+      if (model.canPrevious) screen.frame().hit(geometry.sides[1], kSelect, kPreviousBook, fui::InputTouch);
+      if (model.canNext) screen.frame().hit(geometry.sides[2], kSelect, kNextBook, fui::InputTouch);
+    }
+    for (int n = 0; n < 6; ++n)
+      screen.frame().hit(geometry.primary[n], kSelect, int(primaryActions[n]), fui::InputTouch);
+    return;
+  }
   if (model.hasBook) {
     const auto card = geometry.card;
     const auto previous = geometry.previous;

@@ -868,7 +868,9 @@ void WallpapersActivity::drawGrid(const wallpapersui::GridGeom& geom) {
 
     // A hairline on every cell so a mostly-white wallpaper still reads as a
     // framed tile. This is not the selection signal: it is on every cell.
-    renderer.drawRect(th.x, th.y, th.width, th.height, 1, true);
+    auto target = toybox::makeTarget(renderer);
+    lightui::trimCorners(target, th);
+    lightui::outline(target, th, fui::Paint::solid(fui::Color::Black), 1);
     if (selecting_ ? pendingSet_.test(size_t(idx)) : isChosen(idx)) drawMarker(th);
 
     // Caption (variants with one): the file name, fitted so it never truncates
@@ -902,11 +904,11 @@ void WallpapersActivity::drawGrid(const wallpapersui::GridGeom& geom) {
 
 void WallpapersActivity::drawMarker(const fui::Rect& th) const {
   const auto selection = wallpapersui::selectionGeometry(th);
-  renderer.drawRect(th.x, th.y, th.width, th.height, 4, true);
-  const int side = selection.check.width, x = selection.check.x, y = selection.check.y;
-  renderer.fillRect(x, y, side, side, true);
-  renderer.drawRect(x, y, side, side, 2, false);
   auto target = toybox::makeTarget(renderer);
+  target.stroke(th, fui::Paint::solid(fui::Color::Black), 4, lightui::radius());
+  const int side = selection.check.width, x = selection.check.x, y = selection.check.y;
+  lightui::surface(target, selection.check, fui::Paint::solid(fui::Color::Black));
+  target.stroke(selection.check, fui::Paint::solid(fui::Color::White), 2, lightui::radius());
   target.bitmap(fui::makeRect(x + 3, y + 3, side - 6, side - 6), fui::bitmapFromIcon(extra_check_32),
                 fui::BitmapMode::Contain, fui::Paint::solid(fui::Color::White));
 }

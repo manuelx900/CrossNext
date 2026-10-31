@@ -50,6 +50,17 @@ class CompletionIndex {
     }
     return false;
   }
+  bool completed(const char* document) const {
+    uint8_t key[16];
+    if (!slots || !keyFor(document, key)) return false;
+    size_t at = checksum(key, sizeof(key)) & (slots - 1);
+    for (size_t n = 0; n < slots; ++n, at = (at + 1) & (slots - 1)) {
+      const auto& entry = table[at];
+      if (!entry.completionOffset) return false;
+      if (!std::memcmp(entry.document, key, sizeof(key))) return entry.completionOffset > 1;
+    }
+    return false;
+  }
 
  private:
   Entry* table = nullptr;

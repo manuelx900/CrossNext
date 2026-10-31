@@ -42,8 +42,9 @@ inline void growth(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, bool
 inline bool dailyAvailable(const Model& m) { return m.today > 0 && m.clockKnown && !m.historyChanged && m.writable; }
 inline void readingBar(toybox::Screen& s, fui::Rect r, uint64_t value, uint64_t target, bool inverse) {
   const auto bar = rect(r.x + 10, r.bottom() - 16, r.width - 20, 8);
-  s.target().stroke(bar, inverse ? paper : ink, 2);
-  s.target().fill(
+  lightui::outline(s.target(), bar, inverse ? paper : ink, 2);
+  lightui::surface(
+      s.target(),
       rect(bar.x + 2, bar.y + 2, target ? int(std::min(value, target) * std::max(0, int(bar.width) - 4) / target) : 0,
            std::max(0, int(bar.height) - 4)),
       inverse ? paper : ink);
@@ -52,7 +53,7 @@ inline void daily(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   const auto& p = *m.profile;
   const bool available = dailyAvailable(m);
   const bool inverse = button(s, w, r, "", OpenReadingInfo, 0, false, nullptr, available);
-  s.target().stroke(r, inverse ? paper : ink, pixelui::kBorder);
+  lightui::outline(s.target(), r, inverse ? paper : ink, pixelui::kBorder);
   const int top = r.y + std::max(8, (int(r.height) - 24 - 84) / 2);
   text(s, rect(r.x + 10, top, r.width - 20, 32), tr(STR_PET_DAILY_CARD), 0, inverse, fui::TextAlign::Center);
   if (available)
@@ -72,7 +73,7 @@ inline void collection(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) 
       icon(s, area, extra_trophy_64, inverse);
   };
   if (r.height < 150 || r.width < 300) {
-    s.target().stroke(r, inverse ? paper : ink, pixelui::kBorder);
+    lightui::outline(s.target(), r, inverse ? paper : ink, pixelui::kBorder);
     text(s, rect(r.x + 8, r.y + 3, r.width - 16, 24), tr(STR_PET_COLLECTION_TITLE), 3, inverse, fui::TextAlign::Center);
     drawTrophy(rect(r.x + 8, r.y + 34, 88, std::min(70, int(r.height) - 63)));
     std::snprintf(w.label, sizeof(w.label), tr(STR_PET_COLLECTION_COUNT), pet::ownedCount(*m.profile),
@@ -89,7 +90,7 @@ inline void collection(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) 
   drawTrophy(picture);
   const auto banner =
       rect(picture.right() + 10, r.y + std::max(18, (int(r.height) - 126) / 2), r.right() - picture.right() - 24, 40);
-  s.target().stroke(banner, inverse ? paper : ink, 2);
+  lightui::outline(s.target(), banner, inverse ? paper : ink, 2);
   text(s, banner.inset({3, 5, 3, 5}), tr(STR_PET_COLLECTION_TITLE), 0, inverse, fui::TextAlign::Center);
   std::snprintf(w.label, sizeof(w.label), tr(STR_PET_COLLECTION_COUNT), pet::ownedCount(*m.profile), pet::OBJECT_COUNT);
   text(s, rect(banner.x, banner.bottom() + 10, banner.width, 40), w.label, 1, inverse, fui::TextAlign::Center);
@@ -106,7 +107,7 @@ inline void objective(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   const bool ready = !egg && pet::owns(p, p.project);
   const auto progress = projectProgress(p);
   const bool inverse = button(s, w, r, "", egg ? OpenReadingInfo : OpenProjects, 4);
-  s.target().stroke(r, inverse ? paper : ink, pixelui::kBorder);
+  lightui::outline(s.target(), r, inverse ? paper : ink, pixelui::kBorder);
   constexpr int iconLimit = 80;
   const int side = std::max(20, std::min({iconLimit, int(r.width) * 40 / 100, int(r.height) - 40}));
   const auto content = rect(r.x + 12, r.y + 9, r.width - 24, r.height - 34);

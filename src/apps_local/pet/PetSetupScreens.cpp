@@ -83,7 +83,7 @@ void setup(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
     const auto box = cell(cards, i, 3, 7);
     const bool selected = int(m.choice) == i;
     const bool inverse = button(s, w, box, "", SelectSpecies, i);
-    if (selected) s.target().stroke(box, ink, 8);
+    if (selected) s.target().stroke(box, ink, chrome::lightHeader ? 3 : 8, lightui::radius());
     const auto image = rect(box.x + 10, box.y + 12, box.width - 20, box.height - 86);
     art(s, m, image, unsigned(i), speciesIcon(pet::Species(i)), false, inverse);
     pixelui::copyCaps(w.label, sizeof(w.label), eggName(pet::Species(i)));

@@ -230,9 +230,19 @@ void HomeMenuSettingsActivity::buildScreen(UiScreen& screen) {
   useCompactSettingsRows();
   pixelui::begin(screen, notice == StrId::STR_NONE_OPT ? 0 : 52);
   if (view == View::Names) {
-    pixelui::text(screen.target(), screen.takeTop(56, 8), tr(STR_SR_RENAME_CHOOSE), 4);
-    pixelui::text(screen.target(), screen.takeBottom(72, 8), tr(STR_SR_RENAME_RESET), 4);
+    if (chrome::lightHeader) {
+      freeink::ui::TextStyle help;
+      help.font = 4;
+      help.maxLines = 2;
+      screen.target().text(screen.takeTop(64, 8), tr(STR_SR_RENAME_CHOOSE), help);
+      help.maxLines = 3;
+      screen.target().text(screen.takeBottom(88, 8), tr(STR_SR_RENAME_RESET), help);
+    } else {
+      pixelui::text(screen.target(), screen.takeTop(56, 8), tr(STR_SR_RENAME_CHOOSE), 4);
+      pixelui::text(screen.target(), screen.takeBottom(72, 8), tr(STR_SR_RENAME_RESET), 4);
+    }
   }
+
   props = {};
   pixelui::styleList(props);
   props.labelText.maxLines = 1;
@@ -257,10 +267,10 @@ void HomeMenuSettingsActivity::buildScreen(UiScreen& screen) {
   if (view == View::Names) {
     props.rowGap = 0;
     props.rowHeight = screen.device().width > screen.device().height ? 56 : 72;
-    props.labelText.font = pixelui::kBody;
+    props.labelText.font = chrome::lightHeader ? pixelui::kSmall : pixelui::kBody;
     props.labelText.maxLines = 1;
     props.rowPaddingY = 10;
-    props.rowStyles.normal.borderWidth = 1;
+    props.rowStyles.normal.borderWidth = chrome::lightHeader ? 0 : 1;
     props.valueText.font = pixelui::kBody;
   }
   rowText.bind(props, screen.target(), screen.body());

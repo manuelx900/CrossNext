@@ -9,7 +9,7 @@ namespace fui = freeink::ui;
 inline void text(fui::DrawTarget& target, fui::Rect r, const char* value, bool bold = false, int font = 0) {
   fui::TextStyle style;
   style.font = font;
-  style.bold = bold;
+  style.bold = bold && !chrome::lightHeader;
   style.maxLines = 2;
   target.text(r, value, style);
 }
@@ -49,7 +49,7 @@ void button(Screen& screen, fui::ButtonProps& props, fui::Rect box, const char* 
   props.action = action;
   props.value = value;
   props.text.font = 0;
-  props.text.bold = true;
+  props.text.bold = !chrome::lightHeader;
   props.text.align = fui::TextAlign::Center;
   props.styles = pixelui::buttonStyles();
   props.styles.normal.borderWidth = 2;
@@ -58,7 +58,10 @@ void button(Screen& screen, fui::ButtonProps& props, fui::Rect box, const char* 
   screen.button(props, box);
 }
 inline void detail(fui::DrawTarget& target, fui::Rect box, const char* title, const char* value) {
-  target.stroke(box, fui::Paint::solid(fui::Color::Black), 2);
+  if (chrome::lightHeader)
+    lightui::separator(target, box);
+  else
+    target.stroke(box, fui::Paint::solid(fui::Color::Black), 2);
   text(target, fui::makeRect(box.x + 14, box.y + 10, box.width - 28, 34), title, true);
   text(target, fui::makeRect(box.x + 14, box.y + 44, box.width - 28, box.height - 48), value, false, 4);
 }

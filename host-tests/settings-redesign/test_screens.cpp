@@ -1,4 +1,5 @@
 #include <FreeInkUIDisplayTarget.h>
+#include <FreeInkUIStroke.h>
 #include <I18n.h>
 
 #include <array>
@@ -6,6 +7,9 @@
 #include <cstdlib>
 #include <string>
 #include <vector>
+
+#include "../../src/apps_local/ShelfScreen.h"
+#include "../../src/apps_local/ui/LightOptionMenu.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
@@ -21,9 +25,11 @@
 #include "../../lib/EpdFont/builtinFonts/ubuntu_10_regular.h"
 #include "../../lib/EpdFont/builtinFonts/ubuntu_12_bold.h"
 #include "../../src/apps_local/home/HomeScreen.h"
+#include "../../src/apps_local/readertext/ContentsReturnScreen.h"
 #include "../../src/apps_local/readertext/ReaderSavedScreens.h"
 #include "../../src/apps_local/readertext/ReaderTextSheet.h"
 #include "../../src/apps_local/readertext/ReferenceSlider.h"
+#include "../../src/apps_local/ui/GamePanel.h"
 #include "../../src/apps_local/ui/QuickSettingsScreen.h"
 #include "../../src/apps_local/ui/SettingsHome.h"
 namespace fui = freeink::ui;
@@ -88,11 +94,13 @@ struct RecordingTarget : fui::DrawTarget {
   bool setClipRect(fui::Rect rect) override { return backend.setClipRect(rect); }
   void fill(fui::Rect r, fui::Paint p, uint8_t radius = 0, uint8_t corners = fui::CornersAll) override {
     if (p.color == fui::Color::Black) blackFills.push_back(r);
+    if (p.color == fui::Color::LightGray || p.color == fui::Color::DarkGray) grayFills.push_back(r);
     backend.fill(r, p, radius, corners);
   }
   void stroke(fui::Rect r, fui::Paint p, uint8_t width, uint8_t radius = 0,
               uint8_t corners = fui::CornersAll) override {
     frames.push_back(r);
+    if (radius) roundedFrames.push_back(r);
     backend.stroke(r, p, width, radius, corners);
   }
   void line(fui::Point a, fui::Point b, uint8_t w, fui::Paint p) override { backend.line(a, b, w, p); }
@@ -100,6 +108,7 @@ struct RecordingTarget : fui::DrawTarget {
   void bitmap(fui::Rect r, fui::BitmapRef ref, fui::BitmapMode mode,
               fui::Paint p = fui::Paint::solid(fui::Color::Black),
               fui::Rotation rotation = fui::Rotation::None) override {
+    if (mode == fui::BitmapMode::Tile) ++tiledBitmaps;
     CHECK(r.width > 0 && r.height > 0);
     const auto clip = clipRect();
     const bool inside = r.x >= clip.x && r.y >= clip.y && r.right() <= clip.right() && r.bottom() <= clip.bottom();
@@ -115,8 +124,9 @@ struct RecordingTarget : fui::DrawTarget {
   };
   bool allowEllipsis = false;
   bool allowClippedBitmap = false;
+  int tiledBitmaps = 0;
   std::vector<Label> labels;
-  std::vector<fui::Rect> blackFills, frames;
+  std::vector<fui::Rect> blackFills, grayFills, frames, roundedFrames;
   void text(fui::Rect box, const char* value, fui::TextStyle style) override {
     fui::layoutText(backend, box, value, style, [&](const char* run, fui::Rect line) {
       if (line.bottom() > box.bottom() || std::strstr(run, "…") || std::strstr(run, "..."))
@@ -158,7 +168,7 @@ struct Canvas {
     target.setFont(toybox::kDisplayFont, title.font);
   }
 
-  void checkHits() {
+  void checkHits(fui::ActionId guard = 0) {
     CHECK(!interactions.overflowed());
     paintclock::notePainted();
     for (size_t n = 0; n < interactions.count(); ++n) {
@@ -166,6 +176,7 @@ struct Canvas {
       const auto& r = slot.rect;
       CHECK(r.x >= 0 && r.y >= 0 && r.right() <= width && r.bottom() <= height);
       CHECK(r.width >= 24 && r.height >= 24);
+      if (guard && slot.action == guard) continue;
       fui::InputSnapshot tap;
       tap.touchReleased = true;
       tap.touchX = static_cast<int16_t>(r.x + r.width / 2);
@@ -204,7 +215,10 @@ struct Canvas {
       std::exit(2);
     }
     std::fprintf(file, "P4\n%d %d\n", width, height);
-    for (const auto byte : pixels) std::fputc(byte ^ 255, file);
+    for (size_t n = 0; n < pixels.size(); ++n)
+      std::fputc(
+          (pixels[n] ^ 255) ^ (chrome::lightHeader && n / ((width + 7) / 8) < size_t(chrome::headerHeight) ? 255 : 0),
+          file);
     std::fclose(file);
   }
 };
@@ -212,6 +226,58 @@ struct Canvas {
 }  // namespace
 
 int main(int argc, char** argv) {
+  for (int radius : {0, 2, 5, 8, 255})
+    for (int width : {1, 2, 3, 24})
+      for (uint8_t corners :
+           {uint8_t(fui::CornersAll), uint8_t(0), uint8_t(fui::CornerTopLeft | fui::CornerBottomRight)}) {
+        std::array<bool, 64 * 48> pixels{};
+        const auto box = fui::makeRect(11, 13, 64, 48);
+        fui::forEachRoundedStrokeBand(box, width, radius, corners, [&](fui::Rect band) {
+          CHECK(band.x >= box.x && band.right() <= box.right() && band.y >= box.y && band.bottom() <= box.bottom());
+          CHECK(band.width > 0 && band.height == 1);
+          for (int x = band.x; x < band.right(); ++x) {
+            auto& pixel = pixels[(band.y - box.y) * 64 + x - box.x];
+            CHECK(!pixel);
+            pixel = true;
+          }
+        });
+        if (width < 12) CHECK(!pixels[24 * 64 + 32]);
+        CHECK(std::count(pixels.begin(), pixels.end(), true) > 0);
+      }
+
+  for (bool light : {false, true, false, true}) {
+    chrome::lightHeader = light;
+    const auto styles = toybox::buttonStyles();
+    CHECK(styles.normal.foreground.color == fui::Color::Black);
+    CHECK(styles.selected.foreground.color == fui::Color::White);
+    CHECK(styles.selected.background.color == fui::Color::Black);
+    CHECK(styles.normal.border.color == fui::Color::Black);
+    CHECK(styles.normal.radius == (light ? lightui::kControlRadius : 0));
+    CHECK(toybox::themeTokens().button.selected.background.color == fui::Color::Black);
+  }
+  for (bool light : {false, true}) {
+    chrome::lightHeader = light;
+    Canvas c(480, 800);
+    const auto pixel = [&](int x, int y) {
+      return bool(c.pixels[y * ((c.width + 7) / 8) + x / 8] & (0x80 >> (x % 8)));
+    };
+    gamepanel::row(c.screen, fui::makeRect(20, 120, 400, 60), "New game", 91, 0, gamepanel::Mark::New, true);
+    dashboard::button(c.screen, fui::makeRect(20, 200, 400, 60), "Continue", 92, 0, true);
+    CHECK(pixel(20, 120) == light);
+    CHECK(pixel(20, 200) == light);
+    CHECK(!pixel(24, 140) && !pixel(24, 220));
+    CHECK(c.has(91) && c.has(92));
+    if (light) {
+      const auto tabs = lightui::tabStyles();
+      for (const auto* state : {&tabs.selected, &tabs.focused, &tabs.active}) {
+        CHECK(state->background.kind == fui::PaintKind::Solid);
+        CHECK(state->background.color == fui::Color::Black);
+        CHECK(state->foreground.color == fui::Color::White);
+      }
+    }
+  }
+  chrome::lightHeader = false;
+
   FontBridge labelFont(ubuntu_12_bold), captionFont(ubuntu_10_regular);
   for (bool wide : {false, true}) {
     Canvas c(wide ? 800 : 480, wide ? 480 : 800);
@@ -290,6 +356,135 @@ int main(int argc, char** argv) {
     fonts.checkHits();
   }
   // Fixed saved-list pages must preserve identity in both directions and after deletion.
+  chrome::lightHeader = true;
+  for (auto lang : {Language::EN, Language::ES})
+    for (bool wide : {false, true}) {
+      I18N.setLanguage(lang);
+      Canvas c(wide ? 800 : 480, wide ? 480 : 800);
+      const auto box = readertext::returnBox(c.target, c.device, 24);
+      readertext::returnControl(c.screen, box);
+      CHECK(c.has(1));
+      CHECK(c.label(tr(STR_READER_RETURN_POSITION)));
+      CHECK(box.height == 44 && box.bottom() < c.device.safeRect().bottom() - 24);
+      readertext::paintReturn(c.target, box, true);
+      for (int y = box.y; y < box.bottom(); ++y)
+        for (int x = box.x; x < box.right(); ++x)
+          CHECK(!(c.pixels[y * ((c.width + 7) / 8) + x / 8] & (0x80 >> (x % 8))));
+    }
+  {
+    Canvas group(480, 800);
+    const auto band = fui::makeRect(12, 120, 456, 52);
+    dashboard::segment(group.screen, band, 0, 2, "Computer", 75, 0, false);
+    dashboard::segment(group.screen, band, 1, 2, "Person", 75, 1, true);
+    CHECK(group.target.roundedFrames.size() == 1);
+    CHECK(group.target.roundedFrames[0].width == band.width);
+    CHECK(group.target.blackFills.size() == 1 && group.target.blackFills[0].width == band.width / 2 - 2);
+    CHECK(group.has(75, 0) && group.has(75, 1));
+  }
+  for (bool light : {false, true}) {
+    chrome::lightHeader = light;
+    Canvas cards(480, 800);
+    const auto box = fui::makeRect(30, 130, 120, 72);
+    dashboard::frame(cards.screen, box);
+    CHECK(cards.target.roundedFrames.empty() == !light);
+    cards.target.fill(box, lightui::ink);
+    lightui::trimCorners(cards.target, box);
+    const auto blackAt = [&](int x, int y) {
+      return !(cards.pixels[y * ((cards.width + 7) / 8) + x / 8] & (0x80 >> (x % 8)));
+    };
+    for (int cornerY : {int(box.y), int(box.bottom() - 1)})
+      for (int offset = 0; offset < 5; ++offset) {
+        CHECK(blackAt(box.x + offset, cornerY) == !light);
+        CHECK(blackAt(box.right() - 1 - offset, cornerY) == !light);
+      }
+    CHECK(blackAt(box.x + box.width / 2, box.y));
+    CHECK(blackAt(box.x + box.width / 2, box.y + box.height / 2));
+    CHECK(!blackAt(box.x - 1, box.y));
+  }
+  chrome::lightHeader = true;
+  for (auto lang : {Language::EN, Language::ES})
+    for (bool wide : {false, true}) {
+      I18N.setLanguage(lang);
+      readertext::Model m;
+      readertext::Work w;
+      m.contentsAvailable = true;
+      m.tab = 3;
+      m.listCount = 8;
+      m.listLabel = [](const void*, int n, char* out, size_t size) {
+        std::snprintf(out, size, "%s", n == 5 ? tr(STR_READING_STATS_TITLE) : tr(STR_READER_FINISH_BOOK));
+      };
+      for (int page = 0; page < 2; ++page) {
+        Canvas c(wide ? 800 : 480, wide ? 480 : 800);
+        m.listPage = page;
+        readertext::build(c.screen, m, w);
+        c.checkHits();
+        CHECK(readertext::sheetRowsPerPage(c.device, false, 3) == 5);
+        CHECK(c.has(6, readertext::MorePick + 4) == (page == 0));
+        CHECK(c.has(6, readertext::MorePick + 5) == (page == 1));
+        CHECK(c.has(6, readertext::MorePick + 6) == (page == 1));
+      }
+      {
+        Canvas layout(wide ? 800 : 480, wide ? 480 : 800);
+        readertext::Model spacing;
+        readertext::Work controls;
+        spacing.contentsAvailable = true;
+        spacing.tab = 1;
+        spacing.spacingLabel = "Normal";
+        readertext::build(layout.screen, spacing, controls);
+        layout.checkHits();
+        for (size_t n = 0; n < layout.interactions.count(); ++n) {
+          const auto& hit = layout.interactions.data()[n];
+          if (hit.action != 6) continue;
+          if (hit.value != readertext::SpacingDown && hit.value != readertext::SpacingUp &&
+              hit.value != readertext::MarginDown && hit.value != readertext::MarginUp)
+            continue;
+          bool padded = false;
+          for (const auto box : layout.target.roundedFrames)
+            if (box.width > hit.rect.width && box.x <= hit.rect.x && box.y <= hit.rect.y &&
+                box.right() >= hit.rect.right() && box.bottom() >= hit.rect.bottom() + 12)
+              padded = true;
+          CHECK(padded);
+        }
+        bool alignmentFrame = false;
+        for (const auto box : layout.target.roundedFrames)
+          if (box.width > 300 && box.height == 78) alignmentFrame = true;
+        CHECK(alignmentFrame);
+      }
+      Canvas families(wide ? 800 : 480, wide ? 480 : 800);
+      m.view = readertext::SheetView::Families;
+      m.fontCount = 1;
+      m.fontLabel = [](const void*, int) { return "Noto Serif"; };
+      readertext::build(families.screen, m, w);
+      families.checkHits();
+      CHECK(families.has(6, readertext::FontPick));
+      CHECK(!families.target.blackFills.empty());
+      CHECK(families.target.grayFills.empty());
+    }
+  chrome::lightHeader = false;
+  for (auto lang : {Language::EN, Language::ES})
+    for (bool wide : {false, true})
+      for (int tab = 0; tab < 4; ++tab) {
+        I18N.setLanguage(lang);
+        chrome::lightHeader = true;
+        Canvas c(wide ? 800 : 480, wide ? 480 : 800);
+        c.target.setFont(0, c.library.font);
+        c.target.setFont(1, c.prose.font);
+        readertext::Model m;
+        m.tab = tab;
+        m.contentsAvailable = true;
+        m.family = "Noto Serif";
+        m.spacingLabel = "1.1x";
+        m.listCount = 12;
+        m.listLabel = [](const void*, int, char* out, size_t size) { std::snprintf(out, size, "Chapter title"); };
+        if (tab == 3) m.view = readertext::SheetView::Style;
+        readertext::Work w;
+        readertext::build(c.screen, m, w);
+        c.checkHits();
+        const auto sheet = readertext::sheetRect(c.device);
+        CHECK(sheet.height < c.height * (wide ? 90 : 65) / 100);
+        for (const auto r : c.target.frames) CHECK(r.y >= sheet.y && r.bottom() <= c.height);
+      }
+  chrome::lightHeader = false;
   for (int count : {1, 2, 5, 10, 17}) {
     for (int capacity : {1, 3, 8}) {
       const int height = capacity * readersaved::RowHeight + (capacity - 1) * readersaved::RowGap;
@@ -478,6 +673,188 @@ int main(int argc, char** argv) {
                     std::to_string(size.first) + "x" + std::to_string(size.second) + "-appearance.pbm");
     }
   }
+  for (auto lang : {Language::EN, Language::ES})
+    for (bool light : {false, true})
+      for (auto size : {std::pair<int, int>{480, 800}, {800, 480}}) {
+        I18N.setLanguage(lang);
+        chrome::lightHeader = light;
+        Canvas c(size.first, size.second);
+        c.target.setFont(0, labelFont.font);
+        c.target.setFont(1, labelFont.font);
+        c.target.setFont(4, captionFont.font);
+        pixelui::begin(c.screen);
+        const auto initial = c.screen.body();
+        const auto body = fui::makeRect(initial.x, initial.y + 52, initial.width, initial.height - 52);
+        fui::ListItem choices[4];
+        const StrId names[] = {StrId::STR_HOME_FRAMED, StrId::STR_HOME_FOCUS_CAROUSEL, StrId::STR_HOME_BOOX,
+                               StrId::STR_HOME_LICORICE};
+        for (int n = 0; n < 4; ++n) {
+          choices[n].label = I18N.get(names[n]);
+          choices[n].icon = settingsart::CarouselPreview;
+          choices[n].subtitle = size.first < size.second ? tr(STR_HOME_CAROUSEL_HELP) : nullptr;
+          choices[n].actionValue = n;
+        }
+        fui::ListProps p;
+        settingsui::styleAppearance(p);
+        settingsui::styleThemeChoices(p, size.first > size.second);
+        p.items = choices;
+        p.count = 4;
+        p.action = 19;
+        p.selectedIndex = -1;
+        p.toggleCheckbox = true;
+        p.toggleWidth = p.toggleHeight = 34;
+        int total = 0;
+        for (const auto& item : choices)
+          total += fui::measureListRow(c.target, c.screen.frame().assets(), body.width, p, item).height;
+        CHECK(total <= 4 * p.rowHeight);
+        const auto actions = settingsui::appearanceActions(body, body.y + 4 * p.rowHeight, size.first > size.second);
+        CHECK(size.first > size.second ? actions.themes.x > body.x + body.width / 2
+                                       : actions.themes.y >= body.y + total);
+        CHECK(actions.recent.y == actions.themes.bottom() + 12);
+        CHECK(actions.font.bottom() <= body.bottom());
+        c.screen.setContentMarginAbsolute(fui::Insets{body.y, static_cast<int16_t>(c.device.width - body.right()),
+                                                      static_cast<int16_t>(c.device.height - body.y - 4 * p.rowHeight),
+                                                      body.x});
+        settingsui::appearanceList(c.screen, p);
+        int dividers = 0;
+        for (const auto& fill : c.target.blackFills)
+          if (fill.width == body.width && fill.height == pixelui::kBorder) ++dividers;
+        CHECK(dividers == (light ? 0 : 3));
+        for (int n = 0; n < 4; ++n) CHECK(c.has(19, n));
+      }
+  chrome::lightHeader = false;
+  for (auto lang : {Language::EN, Language::ES})
+    for (bool light : {false, true})
+      for (bool wide : {false, true}) {
+        I18N.setLanguage(lang);
+        chrome::lightHeader = light;
+        Canvas c(wide ? 800 : 480, wide ? 480 : 800);
+        c.target.allowEllipsis = true;
+        const auto paging = shelfui::pagingFor(c.device, 16);
+        fui::ListItem items[9];
+        const char* english[] = {"Chess", "Checkers",      "Go",        "Minesweeper", "Picross", "Wordle",
+                                 "2048",  "The Intercept", "Battleship"};
+        const char* spanish[] = {"Ajedrez", "Damas",         "Go",           "Buscaminas", "Picross", "Wordle",
+                                 "2048",    "The Intercept", "Batalla naval"};
+        const freeink::Icon* icons[] = {&icon_chess_32,       &icon_checkers_32,  &icon_go_32,
+                                        &icon_minesweeper_32, &icon_picross_32,   &icon_wordle_32,
+                                        &icon_connections_32, &icon_underhand_32, &icon_battleship_32};
+        if (light) {
+          c.target.setFont(0, c.prose.font);
+          c.target.setFont(1, c.prose.font);
+        }
+        for (int n = 0; n < paging.rowsPerPage; ++n) {
+          items[n].label = (lang == Language::ES ? spanish : english)[n];
+          items[n].icon = fui::bitmapFromIcon(*icons[n]);
+          items[n].actionValue = n;
+        }
+        shelfui::MenuModel m;
+        m.items = items;
+        m.title = tr(STR_SHORT_GAMES);
+        m.count = paging.rowsPerPage;
+        m.pageCount = paging.pageCount;
+        m.selected = -1;
+        shelfui::buildMenu(c.screen, m);
+        c.checkHits();
+        for (int n = 0; n < paging.rowsPerPage; ++n) CHECK(c.has(shelfui::ActionOpen, n));
+        CHECK(c.has(shelfui::ActionGoToPage, 1));
+        CHECK(!c.has(shelfui::ActionGoToPage, -1));
+        if (argc > 1 && light)
+          c.write(std::string(argv[1]) + "/shelf-" + (lang == Language::ES ? "es" : "en") +
+                  (wide ? "-wide.pbm" : "-tall.pbm"));
+      }
+  chrome::lightHeader = false;
+  for (auto lang : {Language::EN, Language::ES})
+    for (bool wide : {false, true}) {
+      I18N.setLanguage(lang);
+      chrome::lightHeader = true;
+      chrome::headerHeight = 72;
+      for (int count : {1, 2, 9, 16})
+        for (int focused = 0; focused < count; ++focused) {
+          Canvas c(wide ? 800 : 480, wide ? 480 : 800);
+          fui::DialogOption options[16];
+          for (int n = 0; n < count; ++n) {
+            options[n].label = tr(STR_HOME_FRAMED);
+            options[n].action = 71;
+            options[n].value = n;
+          }
+          lightui::ChoiceMenu menu;
+          menu.title = tr(STR_SLEEP_SCREEN);
+          menu.options = options;
+          menu.count = count;
+          menu.current = count - 1;
+          menu.focus = focused;
+          const auto g = lightui::choiceLayout(c.target, c.device.screen(), menu);
+          CHECK(g.panel.x >= 0 && g.panel.y >= chrome::headerHeight && g.panel.right() <= c.width &&
+                g.panel.bottom() <= c.height);
+          lightui::choiceMenu(c.frame, c.device.screen(), menu);
+          CHECK(c.has(71, focused));
+          CHECK(!c.interactions.overflowed());
+          for (size_t n = 0; n < c.interactions.count(); ++n) {
+            const auto hit = c.interactions.data()[n];
+            if (hit.action == menu.guard) continue;
+            CHECK(hit.rect.y >= g.panel.y && hit.rect.bottom() <= g.panel.bottom());
+            fui::InputSnapshot tap;
+            tap.touchReleased = true;
+            tap.touchX = hit.rect.x + hit.rect.width / 2;
+            tap.touchY = hit.rect.y + hit.rect.height / 2;
+            paintclock::notePainted();
+            const auto event = c.interactions.route(tap);
+            CHECK(event.action == hit.action && event.value == hit.value);
+          }
+          for (const auto r : c.target.blackFills) CHECK(r.height <= 2 || r.width < 24);
+        }
+      for (int count : {2, 16}) {
+        Canvas c(wide ? 800 : 480, wide ? 480 : 800);
+        fui::DialogOption options[16];
+        for (int n = 0; n < count; ++n) {
+          options[n].label = tr(STR_FORGET_NETWORK);
+          options[n].action = 71;
+          options[n].value = n;
+        }
+        lightui::ChoiceMenu menu;
+        menu.title = tr(STR_FORGET_NETWORK);
+        menu.headline = "Network: abcdefghijklmnopqrstuvwxyz123456";
+        menu.message = tr(STR_FORGET_AND_REMOVE);
+        menu.options = options;
+        menu.count = count;
+        menu.current = -1;
+        menu.focus = count - 1;
+        const auto g = lightui::choiceLayout(c.target, c.device.screen(), menu);
+        CHECK(g.panel.y >= chrome::headerHeight && g.panel.bottom() <= c.height);
+        lightui::choiceMenu(c.frame, c.device.screen(), menu);
+        CHECK(c.has(71, count - 1));
+        CHECK(!c.interactions.overflowed());
+      }
+      Canvas panel(wide ? 800 : 480, wide ? 480 : 800);
+      quickui::Model model;
+      quickui::Work work;
+      const auto g = quickui::layout(panel.device, true, true, true);
+      quickui::build(panel.screen, model, work);
+      CHECK(panel.target.tiledBitmaps > 0);
+      Canvas repainted(wide ? 800 : 480, wide ? 480 : 800);
+      model.shadeBackdrop = false;
+      quickui::build(repainted.screen, model, work);
+      CHECK(repainted.target.tiledBitmaps == 0);
+      CHECK(g.bottom < panel.height);
+      CHECK(g.brightness.bottom() < g.tiles.y);
+      CHECK(g.warmth.bottom() < g.tiles.y);
+      panel.checkHits();
+      for (const auto r : panel.target.frames) CHECK(r.right() <= panel.width && r.bottom() <= panel.height);
+      Canvas slider(wide ? 800 : 480, wide ? 480 : 800);
+      slider.target.setFont(0, slider.prose.font);
+      slider.target.setFont(1, slider.prose.font);
+      struct SliderSpec {
+        const char *title, *subtitle = nullptr, *readout = "3", *minLabel = "1", *maxLabel = "10";
+        int value = 2, max = 9;
+        fui::ActionId sliderAction = 11, stepAction = 12, okAction = 13, chromeAction = 14;
+      } spec{tr(STR_HOME_RECENT_BOOK_COUNT)};
+      referenceslider::build(slider.screen, spec, true);
+      slider.checkHits(14);
+      CHECK(slider.has(11) && slider.has(12, -1) && slider.has(12, 1) && slider.has(13));
+      for (const auto r : slider.target.blackFills) CHECK(r.height <= 4 || r.width < 24);
+    }
+  chrome::lightHeader = false;
   std::printf("settings redesign: %d checks, %d failures\n", checks, failures);
   return failures ? 1 : 0;
 }

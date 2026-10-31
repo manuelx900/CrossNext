@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "../../lib/GfxRenderer/ChromeRegion.h"
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #include "../../src/apps_local/ui/fonts/reading_serif_14.h"
@@ -20,6 +22,7 @@
 
 #include "../../lib/EpdFont/builtinFonts/ubuntu_10_regular.h"
 #include "../../lib/EpdFont/builtinFonts/ubuntu_12_bold.h"
+#include "../../src/apps_local/reading/ReadingGoalScreens.h"
 #include "../../src/apps_local/reading/ReadingStatsScreens.h"
 #include "../../src/apps_local/ui/QuickSettingsScreen.h"
 namespace fui = freeink::ui;
@@ -88,6 +91,7 @@ struct RecordingTarget : fui::DrawTarget {
   }
   void stroke(fui::Rect r, fui::Paint p, uint8_t width, uint8_t radius = 0,
               uint8_t corners = fui::CornersAll) override {
+    outlines.push_back(r);
     backend.stroke(r, p, width, radius, corners);
   }
   void line(fui::Point a, fui::Point b, uint8_t w, fui::Paint p) override { backend.line(a, b, w, p); }
@@ -108,6 +112,7 @@ struct RecordingTarget : fui::DrawTarget {
   };
   std::vector<Label> labels;
   std::vector<fui::Rect> blackFills;
+  std::vector<fui::Rect> outlines;
   void text(fui::Rect box, const char* value, fui::TextStyle style) override {
     fui::layoutText(backend, box, value, style, [&](const char*, fui::Rect line) {
       if (line.bottom() > box.bottom())
@@ -227,152 +232,230 @@ int main(int argc, char** argv) {
     record.firstCompletion = day % 19 == 0;
     summary.add(record);
   }
-  for (auto lang : {Language::EN, Language::ES}) {
-    I18N.setLanguage(lang);
-    for (auto size : {std::pair<int, int>{480, 800}, {800, 480}, {600, 800}, {800, 600}}) {
-      readingui::Model m;
-      m.summary = &summary;
-      m.books = books;
-      m.today = today;
-      m.displayedDay = today;
-      m.month = 2026 * 12 + 9;
-      m.bookTotal = 5;
-      m.battery = 100;
-      for (int tab = 0; tab < 4; ++tab) {
-        for (bool alternate : {false, true}) {
+  for (bool light : {false, true}) {
+    chrome::lightHeader = light;
+    for (auto lang : {Language::EN, Language::ES}) {
+      I18N.setLanguage(lang);
+      for (auto size : {std::pair<int, int>{480, 800}, {800, 480}, {600, 800}, {800, 600}}) {
+        readingui::Model m;
+        m.summary = &summary;
+        m.books = books;
+        m.today = today;
+        m.displayedDay = today;
+        m.month = 2026 * 12 + 9;
+        m.bookTotal = 5;
+        m.battery = 100;
+        for (int tab = 0; tab < 4; ++tab) {
+          for (bool alternate : {false, true}) {
+            Canvas c(size.first, size.second);
+            readingui::Work work;
+            m.tab = tab;
+            m.pageSize = readingui::capacity(c.device);
+            CHECK(m.pageSize == (size.first > size.second ? 3 : 5));
+            m.count = m.pageSize;
+            m.filter = alternate ? readingstats::BookFilter::Recent : readingstats::BookFilter::Finished;
+            m.weekStartsSunday = alternate;
+            readingui::build(c.screen, m, work);
+            c.checkHits();
+            CHECK(c.has(readingui::Tab, tab));
+            if (tab == 3) CHECK(c.hits(readingui::OpenBook) == m.pageSize);
+            if (tab == 2) {
+              const int first = readingstats::weekStart(today, alternate);
+              CHECK(c.hits(readingui::SelectChartDay) == today - first + 1);
+              CHECK(c.has(readingui::SelectWeek, first));
+            }
+            if (argc > 1)
+              c.write(std::string(argv[1]) + "/" + (lang == Language::ES ? "es" : "en") + "-" +
+                      (std::to_string(size.first) + "x" + std::to_string(size.second)) + "-tab" + std::to_string(tab) +
+                      (alternate ? "-alt" : "") + ".pbm");
+          }
+        }
+        for (auto period : {readingstats::Period::Day, readingstats::Period::Week, readingstats::Period::Month,
+                            readingstats::Period::Year}) {
+          readingstats::PeriodStats stats;
+          readingstats::setPeriod(stats, period, today - 10, false);
+          stats.seconds = 22680;
+          stats.sessions = 9;
+          stats.pages = 191;
+          for (int n = 0; n < 12; ++n) {
+            stats.annualSeconds[n] = 360000 + n * 3600;
+            stats.annualCompleted[n] = n % 5;
+          }
+          stats.hours[2] = 3480;
+          stats.hours[5] = 900;
+          for (int n = 0; n < 7; ++n) stats.dailySeconds[n] = 1800 + n * 60;
           Canvas c(size.first, size.second);
           readingui::Work work;
-          m.tab = tab;
-          m.pageSize = readingui::capacity(c.device);
-          CHECK(m.pageSize == (size.first > size.second ? 3 : 5));
-          m.count = m.pageSize;
-          m.filter = alternate ? readingstats::BookFilter::Recent : readingstats::BookFilter::Finished;
-          m.weekStartsSunday = alternate;
+          m.periodFromPicker = period == readingstats::Period::Month || period == readingstats::Period::Year;
+          m.tab = m.periodFromPicker ? 1 : 2;
+          m.period = period;
+          m.periodStats = &stats;
           readingui::build(c.screen, m, work);
           c.checkHits();
-          CHECK(c.has(readingui::Tab, tab));
-          if (tab == 3) CHECK(c.hits(readingui::OpenBook) == m.pageSize);
-          if (tab == 2) {
-            const int first = readingstats::weekStart(today, alternate);
-            CHECK(c.hits(readingui::SelectChartDay) == today - first + 1);
-            CHECK(c.has(readingui::SelectWeek, first));
+          CHECK(c.has(readingui::BackToCalendar));
+          CHECK(work.items[m.tab].selected);
+          if (m.periodFromPicker) CHECK(!work.items[2].selected);
+          if (period == readingstats::Period::Year) CHECK(c.label(tr(STR_STATS_MONTH_FINISHED)));
+          if (period == readingstats::Period::Month) {
+            CHECK(c.label(tr(STR_STATS_DAYS_TO_DATE)));
+            const auto& asOf = c.target.labels.back().box;
+            for (const auto& label : c.target.labels) {
+              char expected[96];
+              pixelui::copyCaps(expected, sizeof(expected), tr(STR_STATS_DAYS_TO_DATE));
+              if (label.value != expected) continue;
+              int dots = 0;
+              for (const auto& fill : c.target.blackFills) {
+                if (fill.height != 13 || fill.width > 13 || fill.y <= label.box.y) continue;
+                CHECK(label.box.bottom() <= fill.y);
+                CHECK(c.target.lastBitmap.bottom() <= fill.y);
+                CHECK(fill.bottom() <= asOf.y);
+                ++dots;
+              }
+              CHECK(dots > 0);
+            }
           }
           if (argc > 1)
             c.write(std::string(argv[1]) + "/" + (lang == Language::ES ? "es" : "en") + "-" +
-                    (std::to_string(size.first) + "x" + std::to_string(size.second)) + "-tab" + std::to_string(tab) +
-                    (alternate ? "-alt" : "") + ".pbm");
+                    (std::to_string(size.first) + "x" + std::to_string(size.second)) + "-period" +
+                    std::to_string(int(period)) + ".pbm");
         }
-      }
-      for (auto period : {readingstats::Period::Day, readingstats::Period::Week, readingstats::Period::Month,
-                          readingstats::Period::Year}) {
-        readingstats::PeriodStats stats;
-        readingstats::setPeriod(stats, period, today - 10, false);
-        stats.seconds = 22680;
-        stats.sessions = 9;
-        stats.pages = 191;
-        for (int n = 0; n < 12; ++n) {
-          stats.annualSeconds[n] = 360000 + n * 3600;
-          stats.annualCompleted[n] = n % 5;
+        for (int year : {2024, 2026}) {
+          Canvas c(size.first, size.second);
+          readingui::Work work;
+          m.tab = 1;
+          m.pickerVisible = true;
+          m.pickerYear = year;
+          readingui::build(c.screen, m, work);
+          c.checkHits();
+          CHECK(c.has(readingui::PickerYear, -1) && c.has(readingui::SelectYear));
+          CHECK(c.has(readingui::BackToData));
+          CHECK(work.items[1].selected && !work.items[2].selected);
+          CHECK(c.hits(readingui::PickerMonth) == (year == 2026 ? 10 : 12));
+          if (argc > 1)
+            c.write(std::string(argv[1]) + "/picker-" +
+                    (std::to_string(size.first) + "x" + std::to_string(size.second)) + "-" + std::to_string(year) +
+                    ".pbm");
         }
-        stats.hours[2] = 3480;
-        stats.hours[5] = 900;
-        for (int n = 0; n < 7; ++n) stats.dailySeconds[n] = 1800 + n * 60;
-        Canvas c(size.first, size.second);
-        readingui::Work work;
-        m.periodFromPicker = period == readingstats::Period::Month || period == readingstats::Period::Year;
-        m.tab = m.periodFromPicker ? 1 : 2;
-        m.period = period;
-        m.periodStats = &stats;
-        readingui::build(c.screen, m, work);
-        c.checkHits();
-        CHECK(c.has(readingui::BackToCalendar));
-        CHECK(work.items[m.tab].selected);
-        if (m.periodFromPicker) CHECK(!work.items[2].selected);
-        if (period == readingstats::Period::Year) CHECK(c.label(tr(STR_STATS_MONTH_FINISHED)));
-        if (period == readingstats::Period::Month) {
-          CHECK(c.label(tr(STR_STATS_DAYS_TO_DATE)));
-          const auto& asOf = c.target.labels.back().box;
-          for (const auto& label : c.target.labels) {
-            char expected[96];
-            pixelui::copyCaps(expected, sizeof(expected), tr(STR_STATS_DAYS_TO_DATE));
-            if (label.value != expected) continue;
-            int dots = 0;
-            for (const auto& fill : c.target.blackFills) {
-              if (fill.height != 13 || fill.width > 13 || fill.y <= label.box.y) continue;
-              CHECK(label.box.bottom() <= fill.y);
-              CHECK(c.target.lastBitmap.bottom() <= fill.y);
-              CHECK(fill.bottom() <= asOf.y);
-              ++dots;
-            }
-            CHECK(dots > 0);
-          }
+        m.pickerVisible = false;
+        m.period = readingstats::Period::Calendar;
+        m.periodStats = nullptr;
+        for (bool finished : {true, false}) {
+          Canvas c(size.first, size.second);
+          readingui::Work work;
+          m.detail = books;
+          books[0].completed = finished;
+          books[0].progressBp = finished ? 10000 : 5700;
+          readingui::build(c.screen, m, work);
+          c.checkHits();
+          CHECK(c.has(readingui::BackToBooks));
+          if (argc > 1)
+            c.write(std::string(argv[1]) + "/" + (lang == Language::ES ? "es" : "en") + "-" +
+                    (std::to_string(size.first) + "x" + std::to_string(size.second)) + "-book" +
+                    std::to_string(finished) + ".pbm");
         }
-        if (argc > 1)
-          c.write(std::string(argv[1]) + "/" + (lang == Language::ES ? "es" : "en") + "-" +
-                  (std::to_string(size.first) + "x" + std::to_string(size.second)) + "-period" +
-                  std::to_string(int(period)) + ".pbm");
-      }
-      for (int year : {2024, 2026}) {
+        m.detail = nullptr;
+        for (int state = 0; state < 4; ++state) {
+          Canvas c(size.first, size.second);
+          readingui::Work work;
+          m.tab = state ? 0 : 3;
+          m.count = 0;
+          m.failed = state == 1;
+          m.loading = state == 2;
+          m.damaged = state == 3;
+          readingui::build(c.screen, m, work);
+          c.checkHits();
+        }
         Canvas c(size.first, size.second);
-        readingui::Work work;
-        m.tab = 1;
-        m.pickerVisible = true;
-        m.pickerYear = year;
-        readingui::build(c.screen, m, work);
+        quickui::Work work;
+        quickui::Model quick;
+        quick.shortcuts[0] = 5;
+        quick.shortcuts[1] = 6;
+        quick.shortcuts[2] = 7;
+        quick.shortcuts[3] = 8;
+        quickui::build(c.screen, quick, work);
         c.checkHits();
-        CHECK(c.has(readingui::PickerYear, -1) && c.has(readingui::SelectYear));
-        CHECK(c.has(readingui::BackToData));
-        CHECK(work.items[1].selected && !work.items[2].selected);
-        CHECK(c.hits(readingui::PickerMonth) == (year == 2026 ? 10 : 12));
-        if (argc > 1)
-          c.write(std::string(argv[1]) + "/picker-" + (std::to_string(size.first) + "x" + std::to_string(size.second)) +
-                  "-" + std::to_string(year) + ".pbm");
-      }
-      m.pickerVisible = false;
-      m.period = readingstats::Period::Calendar;
-      m.periodStats = nullptr;
-      for (bool finished : {true, false}) {
-        Canvas c(size.first, size.second);
-        readingui::Work work;
-        m.detail = books;
-        books[0].completed = finished;
-        books[0].progressBp = finished ? 10000 : 5700;
-        readingui::build(c.screen, m, work);
-        c.checkHits();
-        CHECK(c.has(readingui::BackToBooks));
-        if (argc > 1)
-          c.write(std::string(argv[1]) + "/" + (lang == Language::ES ? "es" : "en") + "-" +
-                  (std::to_string(size.first) + "x" + std::to_string(size.second)) + "-book" +
-                  std::to_string(finished) + ".pbm");
-      }
-      m.detail = nullptr;
-      for (int state = 0; state < 4; ++state) {
-        Canvas c(size.first, size.second);
-        readingui::Work work;
-        m.tab = state ? 0 : 3;
-        m.count = 0;
-        m.failed = state == 1;
-        m.loading = state == 2;
-        m.damaged = state == 3;
-        readingui::build(c.screen, m, work);
-        c.checkHits();
-      }
-      Canvas c(size.first, size.second);
-      quickui::Work work;
-      quickui::Model quick;
-      quick.shortcuts[0] = 5;
-      quick.shortcuts[1] = 6;
-      quick.shortcuts[2] = 7;
-      quick.shortcuts[3] = 8;
-      quickui::build(c.screen, quick, work);
-      c.checkHits();
-      for (int n = 0; n < int(quickui::Shortcut::Count); ++n) {
-        const auto action = static_cast<quickui::Shortcut>(n);
-        CHECK(*quickui::label(action));
-        CHECK(quickui::icon(action).w > 0);
+        for (int n = 0; n < int(quickui::Shortcut::Count); ++n) {
+          const auto action = static_cast<quickui::Shortcut>(n);
+          CHECK(*quickui::label(action));
+          CHECK(quickui::icon(action).w > 0);
+        }
       }
     }
   }
+  for (auto lang : {Language::EN, Language::ES})
+    for (bool light : {false, true})
+      for (auto size : {std::pair<int, int>{480, 800}, {800, 480}}) {
+        I18N.setLanguage(lang);
+        chrome::lightHeader = light;
+        readingstats::Summary goalSummary;
+        goalSummary.anchorDay = readingstats::dayIndex({2026, 10, 30});
+        for (int n = 0; n < 30; ++n) goalSummary.dailySeconds[n] = n % 3 == 0 ? 0 : n % 3 == 1 ? 1500 : 2100;
+        for (unsigned goal : {0u, 5u, 30u, 120u}) {
+          Canvas c(size.first, size.second);
+          readingui::Work w;
+          readingui::Model m;
+          m.summary = &goalSummary;
+          m.today = goalSummary.anchorDay;
+          m.goalMinutes = goal;
+          readingui::build(c.screen, m, w);
+          c.checkHits();
+          CHECK(c.has(readingui::GoalChoose) == (goal == 0));
+          CHECK(c.has(readingui::GoalCalendar) == (goal > 0));
+          if (goal)
+            for (size_t n = 0; n < c.interactions.count(); ++n) {
+              const auto& hit = c.interactions.data()[n];
+              if (hit.action != readingui::GoalCalendar) continue;
+              CHECK(c.target.lastBitmap.x * 2 + c.target.lastBitmap.width == hit.rect.x * 2 + hit.rect.width);
+              CHECK(c.target.lastBitmap.y * 2 + c.target.lastBitmap.height == hit.rect.y * 2 + hit.rect.height);
+            }
+          Canvas unified(size.first, size.second);
+          readingstats::PeriodStats imported;
+          imported.seconds = 2700;
+          m.source = readingstats::Source::Unified;
+          m.dailyKnown = true;
+          m.periodStats = &imported;
+          readingui::build(unified.screen, m, w);
+          unified.checkHits();
+          CHECK(unified.label(tr(STR_READING_SYNC_DETAILS)));
+          CHECK(!unified.label(tr(STR_READING_SESSIONS)) && !unified.label(tr(STR_READING_PAGES)) &&
+                !unified.label(tr(STR_READING_FINISHED)));
+          CHECK(unified.has(readingui::GoalChoose) == (goal == 0));
+          m.source = readingstats::Source::Local;
+          m.periodStats = nullptr;
+          if (!goal) continue;
+          Canvas noClock(size.first, size.second);
+          m.today = 0;
+          m.goalCalendarVisible = true;
+          readingui::build(noClock.screen, m, w);
+          noClock.checkHits();
+          CHECK(noClock.has(readingui::GoalChoose) && noClock.has(readingui::GoalBack));
+          CHECK(!noClock.has(readingui::GoalMonth));
+          CHECK(noClock.label(tr(STR_READING_CLOCK)));
+          m.today = goalSummary.anchorDay;
+          Canvas calendar(size.first, size.second);
+          m.goalCalendarVisible = true;
+          m.month = 2026 * 12 + 9;
+          readingui::build(calendar.screen, m, w);
+          calendar.checkHits();
+          CHECK(calendar.label(tr(STR_GOAL_COMPLETE)) && calendar.label(tr(STR_GOAL_PARTIAL)) &&
+                calendar.label(tr(STR_GOAL_INCOMPLETE)));
+          for (const auto& label : calendar.target.labels) CHECK(label.value.find(" +") == std::string::npos);
+          Canvas wallpaper(size.first, size.second);
+          readingui::goalWallpaper(wallpaper.screen, &goalSummary, m.today, goal);
+          wallpaper.checkHits();
+          int bottom = 0;
+          for (const auto& box : wallpaper.target.outlines) bottom = std::max(bottom, int(box.bottom()));
+          const auto safe = wallpaper.device.safeRect();
+          CHECK(std::abs(wallpaper.target.labels.front().box.y + bottom - safe.y - safe.bottom()) <= 1);
+          if (argc > 1 && goal == 30) {
+            const auto suffix = std::string(lang == Language::ES ? "es" : "en") + "-" + std::to_string(size.first) +
+                                "-" + (light ? "light" : "box");
+            calendar.write(std::string(argv[1]) + "/goal-calendar-" + suffix + ".pbm");
+            wallpaper.write(std::string(argv[1]) + "/goal-wallpaper-" + suffix + ".pbm");
+          }
+        }
+      }
+  chrome::lightHeader = false;
   std::printf("Statistics reference geometry: %d checks, %d failed\n", checks, failures);
   return failures ? 1 : 0;
 }

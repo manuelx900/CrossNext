@@ -124,11 +124,13 @@ bool emit(study::ByteSource& source, HistoryWork& w, SessionVisitor visit, void*
   return true;
 }
 }  // namespace
-bool scanHistory(study::ByteSource& source, HistoryWork& work, SessionVisitor visit, void* ctx) {
+bool scanHistory(study::ByteSource& source, HistoryWork& work, SessionVisitor visit, void* ctx, HistoryLimit limit) {
   reset(work);
   const uint32_t end = source.size() / 32 * 32;
+  const uint32_t start = limit.records && end / 32 > limit.records ? end - limit.records * 32 : 0;
+  uint32_t emitted = 0;
   uint32_t firstMarked = end;
-  for (uint32_t p = 0; p < end; p += 32) {
+  for (uint32_t p = start; p < end; p += 32) {
     if (!source.read(p, work.record, 32)) return false;
     if (work.record[28] & kSessionStart) {
       firstMarked = p;
@@ -136,13 +138,15 @@ bool scanHistory(study::ByteSource& source, HistoryWork& work, SessionVisitor vi
     }
   }
   int64_t previous = 0;
-  for (uint32_t cursor = end; cursor >= 32;) {
+  for (uint32_t cursor = end; cursor > start;) {
     cursor -= 32;
     if (!source.read(cursor, work.record, 32)) return false;
     const int64_t at = number<int64_t>(work.record + 8);
     const bool boundary = work.record[28] & kSessionStart;
     if (cursor < firstMarked && live(work.record) && previous && (previous - at > 30 * 60 * 1000LL || at > previous)) {
+      const bool populated = work.session.answers != 0;
       if (!emit(source, work, visit, ctx)) return false;
+      if (populated && ++emitted == limit.sessions) return true;
       reset(work);
       if (!source.read(cursor, work.record, 32)) return false;
     }
@@ -150,12 +154,15 @@ bool scanHistory(study::ByteSource& source, HistoryWork& work, SessionVisitor vi
     add(work, cursor);
     if (valid) previous = at;
     if (boundary) {
+      const bool populated = work.session.answers != 0;
       if (!emit(source, work, visit, ctx)) return false;
+      if (populated && ++emitted == limit.sessions) return true;
       reset(work);
       previous = 0;
     }
   }
-  return emit(source, work, visit, ctx);
+  // A record window can begin inside a session. Do not report a partial session.
+  return start ? true : emit(source, work, visit, ctx);
 }
 bool summarize(study::ByteSource& source, uint32_t first, uint32_t end, HistoryWork& work, Session& result) {
   if (first % 32 || end % 32 || first > end || end > source.size()) return false;

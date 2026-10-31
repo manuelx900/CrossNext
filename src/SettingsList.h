@@ -290,6 +290,7 @@ inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* regist
     sleepScreenValues[CrossPointSettings::BLANK] = StrId::STR_NONE_OPT;
     sleepScreenValues[CrossPointSettings::QUICK_RESUME] = StrId::STR_QUICK_RESUME;
     sleepScreenValues[CrossPointSettings::TRANSPARENT_CUSTOM] = StrId::STR_TRANSPARENT;
+    sleepScreenValues[CrossPointSettings::READING_GOAL] = StrId::STR_GOAL_WALLPAPER;
     sleepScreenValues[CrossPointSettings::NOTE] = StrId::STR_SLEEP_NOTE;  // CrossPlay
 
     std::vector<StrId> statusBarClockValues(CrossPointSettings::STATUS_BAR_CLOCK_MODE_COUNT);
@@ -316,9 +317,10 @@ inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* regist
                           {StrId::STR_PAGES_1, StrId::STR_PAGES_5, StrId::STR_PAGES_10, StrId::STR_PAGES_15,
                            StrId::STR_PAGES_30, StrId::STR_NEVER},
                           "refreshFrequency", StrId::STR_CAT_DISPLAY),
-        SettingInfo::Enum(StrId::STR_HOME_LAYOUT, &CrossPointSettings::homeLayout,
-                          {StrId::STR_HOME_FRAMED, StrId::STR_HOME_FOCUS_CAROUSEL}, "homeLayout",
-                          StrId::STR_CAT_INTERFACE),
+        SettingInfo::Enum(
+            StrId::STR_HOME_LAYOUT, &CrossPointSettings::homeLayout,
+            {StrId::STR_HOME_FRAMED, StrId::STR_HOME_FOCUS_CAROUSEL, StrId::STR_HOME_BOOX, StrId::STR_HOME_LICORICE},
+            "homeLayout", StrId::STR_CAT_INTERFACE),
         SettingInfo::Enum(StrId::STR_MENU_FONT, &CrossPointSettings::menuFontStyle,
                           {StrId::STR_MENU_FONT_PIXEL, StrId::STR_MENU_FONT_CLASSIC, StrId::STR_MENU_FONT_NOTO_SANS,
                            StrId::STR_MENU_FONT_NOTO_SERIF},
@@ -444,6 +446,8 @@ inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* regist
                           {StrId::STR_TAP_AND_SWIPE, StrId::STR_TAP_ONLY, StrId::STR_SWIPE_ONLY,
                            StrId::STR_INVERTED_TAP, StrId::STR_DISABLED},
                           "previousPageGesture", StrId::STR_CAT_CONTROLS),
+        SettingInfo::Toggle(StrId::STR_XTC_COVER_CCW, &CrossPointSettings::xtcCoverRotation, "xtcCoverRotation",
+                            StrId::STR_CAT_READER),
         SettingInfo::Toggle(StrId::STR_XTC_INVERT_DIRECTION, &CrossPointSettings::xtcInvertPageDirection,
                             "xtcInvertPageDirection", StrId::STR_CAT_CONTROLS),
         // Persisted under the legacy "tapForReaderMenu" key: old saves map

@@ -6,6 +6,7 @@
 #include "../../apps_local/home/HomeMenuInput.h"
 #include "../../apps_local/home/HomeMenuIntegration.h"
 #include "./FileBrowserActivity.h"
+#include "CrossPointSettings.h"
 #include "RecentBooksStore.h"
 #include "activities/Activity.h"
 // Not a forward declaration: the std::vector<RecentBook> member below needs
@@ -25,6 +26,7 @@ class HomeActivity final : public Activity {
   int selectorIndex = 0;
   int recentBookIndex = 0;
   int recentBookCount = 0;
+  int shelfPage = 0, shelfPages = 1, shelfPageSize = 0;
   int recentSourceIndices[RecentBooksStore::MAX_RECENT_BOOKS]{};
   int displayBookCount() const {
     return coverGridUi ? static_cast<int>(recentBooks.size()) : recentBooks.empty() ? 0 : 1;
@@ -53,12 +55,23 @@ class HomeActivity final : public Activity {
 
   // Convert HomeMenuItem to menu index (used in onEnter)
   static int menuItemToIndex(HomeMenuItem item, bool hasOpdsUrl) {
+    if (SETTINGS.homeLayout == CrossPointSettings::HOME_BOOX) {
+      for (int n = 0; n < homeui::kPiccoActions; ++n)
+        if (indexToMenuItem(n, hasOpdsUrl) == item) return n;
+      return 0;
+    }
     const int index = homemenu::indexOf(homemenu::config(), homemenu::idFor(item), hasOpdsUrl);
     return index < 0 ? 0 : index;
   }
 
   // Convert menu index to HomeMenuItem (used in loop)
   static HomeMenuItem indexToMenuItem(int idx, bool hasOpdsUrl) {
+    if (SETTINGS.homeLayout == CrossPointSettings::HOME_BOOX) {
+      static constexpr HomeMenuItem actions[] = {
+          HomeMenuItem::FILE_BROWSER, HomeMenuItem::LIBRARY, HomeMenuItem::FILE_TRANSFER, HomeMenuItem::READING_STATS,
+          HomeMenuItem::APPS,         HomeMenuItem::GAMES,   HomeMenuItem::SETTINGS_MENU};
+      return idx >= 0 && idx < homeui::kPiccoActions ? actions[idx] : HomeMenuItem::NONE;
+    }
     return homemenu::item(homemenu::at(homemenu::config(), idx, hasOpdsUrl));
   }
   void onSelectBook(const std::string& path);
@@ -76,6 +89,7 @@ class HomeActivity final : public Activity {
   void loadRecentBooks(int maxBooks);
   bool loadRecentCovers(int coverHeight);
   void fillCoverGridFromLibrary();
+  void loadShelfPage();
   void resolveGridCoverPaths();
   void loadGridCover(RecentBook& book, int height, bool& showingLoading, Rect& popupRect);
 

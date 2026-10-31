@@ -27,7 +27,12 @@ inline Geometry draw(fui::DrawTarget& target, fui::Rect band, int page, int page
   const auto g = layout(band, maxHeight);
   const int h = g.before.height;
   const auto ink = fui::Paint::solid(fui::Color::Black);
-  for (const auto r : {g.before, g.count, g.after}) target.stroke(r, ink, pixelui::kBorder);
+  if (chrome::lightHeader) {
+    lightui::outline(target, fui::makeRect(g.before.x, g.before.y, g.after.right() - g.before.x, g.before.height), ink);
+    for (const int x : {int(g.before.right()), int(g.after.x)})
+      target.line({int16_t(x), int16_t(g.before.y + 1)}, {int16_t(x), int16_t(g.before.bottom() - 1)}, 1, ink);
+  } else
+    for (const auto r : {g.before, g.count, g.after}) target.stroke(r, ink, pixelui::kBorder);
   for (int n = 0; n < 2; ++n) {
     const auto r = n ? g.after : g.before;
     const int cx = r.x + r.width / 2, cy = r.y + r.height / 2, d = std::max(5, h / (maxHeight > 48 ? 5 : 7)),

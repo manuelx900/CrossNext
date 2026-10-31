@@ -48,7 +48,7 @@ void deductionExample(fui::DrawTarget& t, fui::Rect r) {
   static constexpr StrId claims[] = {StrId::STR_CAR_GUIDE_DEDUCE_CLAIM0, StrId::STR_CAR_GUIDE_DEDUCE_CLAIM1};
   for (int n = 0; n < 2; ++n) {
     const auto box = fui::makeRect(r.x + n * (w + gap), r.y + 38, w, 74);
-    t.stroke(box, black, 2);
+    lightui::outline(t, box, black, 2);
     caps(t, fui::makeRect(box.x + 4, box.y + 4, w - 8, 26), I18N.get(names[n]), 0, fui::TextAlign::Center);
     text(t, fui::makeRect(box.x + 4, box.y + 34, w - 8, 34), I18N.get(claims[n]), 4, 2, fui::TextAlign::Center);
   }
@@ -63,8 +63,8 @@ void button(fui::DrawTarget& t, Geometry& g, fui::Rect box, const char* label, i
   if (arrow)
     dashboard::action(t, box, label, mark, primary);
   else {
-    t.fill(box, primary ? black : white);
-    t.stroke(box, black, selected ? 4 : 2);
+    lightui::surface(t, box, primary ? black : white);
+    lightui::outline(t, box, black, selected ? 4 : 2);
     if (box.width < 300) mark = nullptr;
     const int side = std::min(40, int(box.height) - 12);
     if (mark) icon(t, fui::makeRect(box.x + 16, box.y + (box.height - side) / 2, side, side), *mark, primary);
@@ -77,8 +77,8 @@ void button(fui::DrawTarget& t, Geometry& g, fui::Rect box, const char* label, i
 }
 void noteCell(fui::DrawTarget& t, Geometry& g, fui::Rect box, const char* label, int action = fui::NO_ACTION,
               int value = 0, bool selected = false) {
-  t.fill(box, selected ? black : white);
-  t.stroke(box, black, 2);
+  lightui::surface(t, box, selected ? black : white);
+  lightui::outline(t, box, black, 2);
   text(t, box.inset({3, 6, 3, 6}), label, pixelui::kSmall, 1, fui::TextAlign::Center,
        selected ? fui::Color::White : fui::Color::Black);
   if (action != fui::NO_ACTION) hit(g, box, action, value);
@@ -89,9 +89,9 @@ void pager(fui::DrawTarget& t, Geometry& g, fui::Rect band, int page, int pages)
   if (page + 1 < pages) hit(g, nav.after, Next);
 }
 void checkbox(fui::DrawTarget& t, fui::Rect box, bool checked, bool inverse = false) {
-  t.stroke(box, inverse ? white : black, 2);
+  lightui::outline(t, box, inverse ? white : black, 2);
   if (!checked) return;
-  t.fill(box, inverse ? white : black);
+  lightui::surface(t, box, inverse ? white : black);
   icon(t, box.inset(fui::Insets{4, 4, 4, 4}), extra_check_32, !inverse);
 }
 const char* diet(int i) {
@@ -124,7 +124,7 @@ void difficultyGuide(fui::DrawTarget& t, Geometry& g, fui::Rect body, Model& m, 
     const auto& rules = carnivoro::rules(tier);
     const auto box = fui::makeRect(body.x + (wide ? n * (width + gap) : 0),
                                    body.y + 48 + (wide ? 0 : n * (height + gap)), width, height);
-    t.stroke(box, black, 2);
+    lightui::outline(t, box, black, 2);
     std::snprintf(m.formatted, sizeof(m.formatted), "%d %s", first + n + 1, difficultyName(tier));
     caps(t, fui::makeRect(box.x + 8, box.y + 4, box.width - 16, 30), m.formatted, 1);
     std::snprintf(m.formatted, sizeof(m.formatted),
@@ -213,7 +213,7 @@ void overview(fui::DrawTarget& t, Geometry& g, fui::Rect box, const carnivoro::C
     const auto name = fui::makeRect(row.x, row.y, nameW, row.height);
     const auto truth = fui::makeRect(name.right() + 6, row.y, truthW, row.height);
     const auto guilt = fui::makeRect(truth.right() + 6, row.y, row.right() - truth.right() - 6, row.height);
-    t.stroke(name, black, 2);
+    lightui::outline(t, name, black, 2);
     const int side = wide ? 0 : std::min(36, name.height - 8);
     if (side) portrait(t, fui::makeRect(name.x + 4, name.y + (name.height - side) / 2, side, side), i);
     text(t,
@@ -234,7 +234,7 @@ void overview(fui::DrawTarget& t, Geometry& g, fui::Rect box, const carnivoro::C
 void statementCard(fui::DrawTarget& t, Geometry& g, Model& m, const carnivoro::Case& c, fui::Rect box, int suspect,
                    bool reveal, bool compact = false) {
   const auto& state = *m.state;
-  t.stroke(box, black, 2);
+  lightui::outline(t, box, black, 2);
   const int bodyH = box.height - (reveal ? 34 : 42), side = std::min(80, std::max(32, bodyH - 24));
   portrait(t, fui::makeRect(box.x + 6 + (116 - side) / 2, box.y + 4, side, side), suspect);
   const int x = box.x + 130, width = box.right() - x - 10;
@@ -247,12 +247,12 @@ void statementCard(fui::DrawTarget& t, Geometry& g, Model& m, const carnivoro::C
   text(t, fui::makeRect(x, box.y + (compact ? 32 : 40), width, bodyH - (compact ? 32 : 40)), m.formatted, 4, 6);
   if (reveal) {
     const auto label = fui::makeRect(x, box.bottom() - 30, std::min(116, width), 26);
-    t.stroke(label, black, 2);
+    lightui::outline(t, label, black, 2);
     text(t, label, (m.solution.truth >> suspect) & 1 ? tr(STR_CAR_TRUTH) : tr(STR_CAR_LIE), 0, 1,
          fui::TextAlign::Center);
     if ((m.solution.guilty >> suspect) & 1) {
       const auto guilty = fui::makeRect(label.right() + 8, label.y, width - label.width - 8, 26);
-      t.fill(guilty, black);
+      lightui::surface(t, guilty, black);
       text(t, guilty, tr(STR_CAR_CULPRIT_BADGE), 0, 1, fui::TextAlign::Center, fui::Color::White);
     }
   } else
@@ -298,7 +298,7 @@ void draw(fui::DrawTarget& t, const fui::DeviceContext& device, Model& m, Geomet
     const int row = wide ? 54 : 64, gap = 8;
     const auto hero = wide ? fui::makeRect(body.x, body.y, body.width / 2 - 10, body.height)
                            : fui::makeRect(body.x, body.y, body.width, body.height - 4 * (row + gap) - 8);
-    t.stroke(hero, black, 2);
+    lightui::outline(t, hero, black, 2);
     text(t, fui::makeRect(hero.x + 12, hero.y + 12, hero.width - 24, 30), tr(STR_CAR_DEDUCTION), 0);
     text(t, fui::makeRect(hero.x + 8, hero.y + 46, hero.width - 16, 58), tr(STR_CAR_WHO), 2, 1, fui::TextAlign::Center);
     portraitRow(t, fui::makeRect(hero.x + 8, hero.y + 116, hero.width - 16, std::max(64, hero.height - 184)), 0, 3);
@@ -423,7 +423,7 @@ void draw(fui::DrawTarget& t, const fui::DeviceContext& device, Model& m, Geomet
     text(t, fui::makeRect(side.x + side.width / 2, progressY, side.width / 2, 34), m.formatted, 0, 1,
          fui::TextAlign::Right);
     const auto bar = fui::makeRect(side.x, progressY + 38, side.width, 12);
-    t.stroke(bar, black, 2);
+    lightui::outline(t, bar, black, 2);
     if (solved) t.fill(fui::makeRect(bar.x + 3, bar.y + 3, (bar.width - 6) * solved / carnivoro::kCases, 6), black);
     caps(t, fui::makeRect(side.x, body.y + (wide ? 100 : 120), side.width, 24), tr(STR_UI_DIFFICULTY_9106E9), 3);
     const int columns = wide ? 1 : 2, gap = 8;
@@ -449,14 +449,14 @@ void draw(fui::DrawTarget& t, const fui::DeviceContext& device, Model& m, Geomet
       const auto status = carnivoro::caseStatus(state, id);
       const bool playing = state.caseId == id && status == carnivoro::Status::Active;
       const bool inverse = m.keyboardFocus ? m.focusAction == ChooseCase && m.focusValue == id : playing;
-      t.fill(box, inverse ? black : white);
-      t.stroke(box, black, 2);
+      lightui::surface(t, box, inverse ? black : white);
+      lightui::outline(t, box, black, 2);
       std::snprintf(m.formatted, sizeof(m.formatted), "%02d", carnivoro::caseNumber(id));
       text(t, fui::makeRect(box.x + 4, box.y + 2, box.width - 8, box.height - 48), m.formatted, wide ? 0 : 1, 1,
            fui::TextAlign::Center, inverse ? fui::Color::White : fui::Color::Black);
       const auto label = fui::makeRect(box.x + 4, box.bottom() - 46, box.width - 8, 44);
       const bool solvedCase = state.status[id] == carnivoro::Status::Solved;
-      if (solvedCase) t.fill(label, black);
+      if (solvedCase) lightui::surface(t, label, black);
       const char* caption = solvedCase                               ? tr(STR_MR_SOLVED_CASE)
                             : status == carnivoro::Status::Exhausted ? tr(STR_CAR_EXHAUSTED)
                             : playing                                ? tr(STR_MR_IN_PROGRESS)
@@ -556,7 +556,7 @@ void draw(fui::DrawTarget& t, const fui::DeviceContext& device, Model& m, Geomet
     const int lifeY = lifeBeforeCast ? hero.y + mark + 118 : hero.bottom() - 48;
     const int top = wide ? hero.y + 110 : hero.y + mark + 118 + (lifeBeforeCast ? 54 : 0);
     const auto panel = fui::makeRect(hero.x, top, hero.width, hero.bottom() - top - (lifeBeforeCast ? 0 : 58));
-    t.stroke(panel, black, 2);
+    lightui::outline(t, panel, black, 2);
     if (solved) {
       int guilty = 0;
       while (guilty < c->count && !((m.solution.guilty >> guilty) & 1)) ++guilty;
@@ -570,7 +570,7 @@ void draw(fui::DrawTarget& t, const fui::DeviceContext& device, Model& m, Geomet
           ++shown;
         }
       const auto badge = fui::makeRect(panel.x + 10, panel.bottom() - 36, panel.width - 20, 30);
-      t.fill(badge, black);
+      lightui::surface(t, badge, black);
       text(t, badge, tr(STR_CAR_CULPRIT_BADGE), 1, 1, fui::TextAlign::Center, fui::Color::White);
     } else {
       text(t, fui::makeRect(panel.x + 8, panel.y + 8, panel.width - 16, 42),
@@ -579,7 +579,7 @@ void draw(fui::DrawTarget& t, const fui::DeviceContext& device, Model& m, Geomet
                   std::min(capacity, int(c->count) - m.page * capacity));
     }
     const auto lives = fui::makeRect(hero.x, lifeY, hero.width, 42);
-    t.stroke(lives, black, 2);
+    lightui::outline(t, lives, black, 2);
     icon(t, fui::makeRect(lives.x + 16, lives.y + 6, 30, 30), icon_hearts_32);
     std::snprintf(m.formatted, sizeof(m.formatted), remaining == 1 ? tr(STR_CAR_RESULT_LIFE) : tr(STR_CAR_RESULT_LIVES),
                   remaining);
@@ -607,7 +607,7 @@ void draw(fui::DrawTarget& t, const fui::DeviceContext& device, Model& m, Geomet
     return;
   }
   if (m.view == View::Intro) {
-    t.stroke(content, black, 2);
+    lightui::outline(t, content, black, 2);
     text(t, fui::makeRect(content.x + 8, content.y + 8, (wide ? content.width / 2 : content.width) - 16, 48),
          tr(STR_CAR_THE_CASE), 2, 1, fui::TextAlign::Center);
     const int first = 0, count = std::min(3, int(c->count));
@@ -626,7 +626,7 @@ void draw(fui::DrawTarget& t, const fui::DeviceContext& device, Model& m, Geomet
     }
     for (int n = 0; n < 3; ++n) {
       const auto box = fui::makeRect(factsX, factsY + n * 48, factsW, 44);
-      t.stroke(box, black, 2);
+      lightui::outline(t, box, black, 2);
       icon(t, fui::makeRect(box.x + 8, box.y + 6, 30, 30), *marks[n]);
       if (n == 0)
         std::snprintf(m.formatted, sizeof(m.formatted), labels[n], values[n]);
@@ -639,7 +639,7 @@ void draw(fui::DrawTarget& t, const fui::DeviceContext& device, Model& m, Geomet
     if (!wide) {
       const auto objective =
           fui::makeRect(content.x + 8, factsY + 150, content.width - 16, content.bottom() - 72 - factsY - 150);
-      t.stroke(objective, black, 2);
+      lightui::outline(t, objective, black, 2);
       caps(t, fui::makeRect(objective.x + 12, objective.y + 6, objective.width - 24, 30), tr(STR_CAR_OBJECTIVE), 1);
       text(t,
            fui::makeRect(objective.x + 12, objective.y + 44, objective.width - 24,
@@ -667,8 +667,8 @@ void draw(fui::DrawTarget& t, const fui::DeviceContext& device, Model& m, Geomet
       if (id >= c->count) break;
       const auto box = fui::makeRect(cards.x, cards.y + 84 + n * rowH, cards.width, rowH - 8);
       const bool selected = (state.picks >> id) & 1;
-      t.fill(box, selected ? black : white);
-      t.stroke(box, black, 2);
+      lightui::surface(t, box, selected ? black : white);
+      lightui::outline(t, box, black, 2);
       const int side = std::min(88, box.height - 8);
       portrait(t, fui::makeRect(box.x + 8, box.y + 4, side, side), id, selected);
       text(t, fui::makeRect(box.x + side + 24, box.y + 6, box.width - side - 88, box.height - 12), animalName(id), 1, 1,
@@ -687,7 +687,7 @@ void draw(fui::DrawTarget& t, const fui::DeviceContext& device, Model& m, Geomet
     if (!closed && carnivoro::population(state.picks) == c->culprits)
       button(t, g, confirm, tr(STR_CAR_CONFIRM), Confirm, 0, true, false, &extra_carnivoro_gavel_32);
     else {
-      t.stroke(confirm, black, 1);
+      lightui::outline(t, confirm, black, 1);
       text(t, confirm, tr(STR_CAR_CONFIRM), 0, 1, fui::TextAlign::Center);
     }
     button(t, g, fui::makeRect(controls.x, controls.bottom() - 38, controls.width, 38), tr(STR_CAR_BACK_CASE), Back);

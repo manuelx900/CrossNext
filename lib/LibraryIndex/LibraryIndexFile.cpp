@@ -5,6 +5,7 @@
 #include <Memory.h>
 
 #include <algorithm>
+#include <cstdlib>
 #include <cstring>
 
 #include "LibraryText.h"
@@ -44,12 +45,44 @@ bool LibraryIndexFile::openImpl(const char* path, const bool acceptStaleFold) {
 }
 
 void LibraryIndexFile::close() {
+  browseCache.reset();
+  cacheAttempted = false;
   if (file.isOpen()) file.close();
   opened = false;
 }
 
+bool LibraryIndexFile::cacheForBrowsing(void (*cooperate)()) {
+  if (browseCache) return true;
+  if (!opened || cacheAttempted) return false;
+  cacheAttempted = true;
+  if (!head.selfSize || head.selfSize > BROWSE_CACHE_LIMIT) return false;
+  // At most 2 MiB, once per open index; PSRAM keeps metadata off the task stack
+  // and internal heap. The file path remains available when PSRAM is exhausted.
+  auto buffer = HalMemory::allocatePsram(head.selfSize);
+  if (!buffer) {
+    LOG_ERR("LIBIDX", "PSRAM browse cache unavailable: %u bytes", unsigned(head.selfSize));
+    return false;
+  }
+  constexpr size_t CHUNK = 32 * 1024;
+  for (size_t offset = 0; offset < head.selfSize; offset += CHUNK) {
+    if (cooperate) cooperate();
+    const size_t size = std::min(CHUNK, size_t(head.selfSize) - offset);
+    if (!readAt(offset, buffer.get() + offset, size)) return false;
+  }
+  browseCache = std::move(buffer);
+  return true;
+}
+
 bool LibraryIndexFile::readAt(const uint32_t offset, void* dst, const size_t len) {
   if (!opened) return false;
+  if (offset > head.selfSize || len > head.selfSize - offset) {
+    readFailed = true;
+    return false;
+  }
+  if (browseCache) {
+    std::memcpy(dst, browseCache.get() + offset, len);
+    return true;
+  }
   // Every offset handed to this function comes from the header, and the header
   // was validated against the real file size, so a short read means the card
   // changed under us rather than a bad computation.
@@ -77,11 +110,34 @@ uint16_t LibraryIndexFile::ordinalForRow(const SortOrder order, const uint16_t r
       uint16_t ordinal = NONE;
       return readAt(authorOrderOffset(head, k), &ordinal, sizeof(ordinal)) && ordinal < head.bookCount ? ordinal : NONE;
     }
+    case SortOrder::AuthorFirstAsc:
+    case SortOrder::AuthorFirstDesc:
+    case SortOrder::SeriesAsc:
+    case SortOrder::SeriesDesc:
+    case SortOrder::GenreAsc:
+    case SortOrder::GenreDesc: {
+      const bool reverse =
+          order == SortOrder::AuthorFirstDesc || order == SortOrder::SeriesDesc || order == SortOrder::GenreDesc;
+      const uint16_t k = reverse ? head.bookCount - 1 - row : row;
+      const unsigned section = order == SortOrder::AuthorFirstAsc || order == SortOrder::AuthorFirstDesc ? 2
+                               : order == SortOrder::SeriesAsc || order == SortOrder::SeriesDesc         ? 3
+                                                                                                         : 4;
+      uint16_t ordinal = NONE;
+      return readAt(head.permStart + (section * uint32_t(head.bookCount) + k) * sizeof(uint16_t), &ordinal,
+                    sizeof(ordinal)) &&
+                     ordinal < head.bookCount
+                 ? ordinal
+                 : NONE;
+    }
+    case SortOrder::DateAddedAsc:
+    case SortOrder::DateAddedDesc:
     case SortOrder::RecentAsc:
     case SortOrder::RecentDesc: {
       // arrivalOrder runs oldest first, so both directions share one on-disk
       // permutation.
-      const uint16_t k = order == SortOrder::RecentAsc ? row : static_cast<uint16_t>(head.bookCount - 1 - row);
+      const uint16_t k = (order == SortOrder::RecentAsc || order == SortOrder::DateAddedAsc)
+                             ? row
+                             : static_cast<uint16_t>(head.bookCount - 1 - row);
       uint16_t ordinal = NONE;
       return readAt(arrivalOrderOffset(head, k), &ordinal, sizeof(ordinal)) && ordinal < head.bookCount ? ordinal
                                                                                                         : NONE;
@@ -218,7 +274,11 @@ bool LibraryIndexFile::readBlobField(const ClixRecord& record, const uint8_t fie
 }
 
 bool LibraryIndexFile::readAuthor(const ClixRecord& record, std::string& out) {
-  return readBlobField(record, 0, out) && !out.empty();
+  return readAuthorField(record, out) && !out.empty();
+}
+
+bool LibraryIndexFile::readAuthorField(const ClixRecord& record, std::string& out) {
+  return readBlobField(record, 0, out);
 }
 
 // The book's own title, after the name and the author. Absent (length 0) for a
@@ -229,6 +289,46 @@ bool LibraryIndexFile::readTitle(const ClixRecord& record, std::string& out) {
 
 bool LibraryIndexFile::readSourceAuthor(const ClixRecord& record, std::string& out) {
   return readBlobField(record, 2, out);
+}
+
+bool LibraryIndexFile::readSeries(const ClixRecord& record, std::string& out) { return readBlobField(record, 3, out); }
+bool LibraryIndexFile::readGenre(const ClixRecord& record, std::string& out) { return readBlobField(record, 4, out); }
+
+bool LibraryIndexFile::readSeriesPosition(const ClixRecord& record, uint32_t& out) {
+  std::string value;
+  out = UINT32_MAX;
+  if (!readBlobField(record, 5, value) || value.size() != 8) return false;
+  char* end = nullptr;
+  const auto parsed = strtoul(value.c_str(), &end, 16);
+  if (end != value.c_str() + value.size()) return false;
+  out = static_cast<uint32_t>(parsed);
+  return true;
+}
+
+bool LibraryIndexFile::readFolderOffsets(uint32_t* offsets, size_t capacity, void (*cooperate)()) {
+  if (!opened || !offsets || capacity < head.folderCount) return false;
+  uint32_t offset = head.folderStart;
+  const uint32_t end = head.folderStart + head.folderLen;
+  for (uint16_t n = 0; n < head.folderCount; ++n) {
+    uint8_t length = 0;
+    if (offset >= end || !readAt(offset, &length, 1) || !length || length > end - offset - 1u) return false;
+    offsets[n] = offset;
+    offset += 1u + length;
+    if (cooperate && (n & 63) == 63) cooperate();
+  }
+  return offset == end;
+}
+
+bool LibraryIndexFile::readFolder(uint16_t folder, const uint32_t* offsets, size_t count, std::string& out) {
+  out.clear();
+  if (!opened || !offsets || folder >= head.folderCount || folder >= count) return false;
+  const uint32_t offset = offsets[folder], end = head.folderStart + head.folderLen;
+  uint8_t length = 0;
+  if (offset < head.folderStart || offset >= end || !readAt(offset, &length, 1) || !length ||
+      length > end - offset - 1u)
+    return false;
+  out.resize(length);
+  return readAt(offset + 1, out.data(), length);
 }
 
 bool LibraryIndexFile::readPath(const ClixRecord& record, std::string& out) {

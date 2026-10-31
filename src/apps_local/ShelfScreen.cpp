@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstdio>
 
+#include "../../lib/GfxRenderer/ChromeRegion.h"
 #include "ui/BackButton.h"
 #include "ui/ExtraIcons.h"
 #include "ui/PageIndicator.h"
@@ -16,14 +17,19 @@ namespace shelfui {
 const UiLabel kDoneChip = trLabel(STR_UI_DONE_E782E7);
 constexpr int kPagerHeight = 64;
 constexpr int kPagerReserve = kPagerHeight + 16;
+int rowHeight() {
+  if (!chrome::lightHeader) return pixelui::kRowHeight;
+  return 74;
+}
+int pagerReserve() { return chrome::lightHeader ? 60 : kPagerReserve; }
 
 fui::Rect listBand(const fui::DeviceContext& device, bool hasPages) {
-  return pixelui::geometry(device, hasPages ? kPagerReserve : 0).body;
+  return pixelui::geometry(device, hasPages ? pagerReserve() : 0).body;
 }
 Paging pagingFor(const fui::DeviceContext& device, int count) {
-  const int whole = std::min(9, std::max(1, int(listBand(device, false).height) / pixelui::kRowHeight));
+  const int whole = std::min(9, std::max(1, int(listBand(device, false).height) / rowHeight()));
   if (count <= whole) return {whole, 1};
-  const int paged = std::min(9, std::max(1, int(listBand(device, true).height) / pixelui::kRowHeight));
+  const int paged = std::min(9, std::max(1, int(listBand(device, true).height) / rowHeight()));
   return {paged, pageCountFor(count, paged)};
 }
 
@@ -77,7 +83,7 @@ struct Rows {
       item.icon = fui::bitmapFromIcon(self.model.checks[index] ? extra_checked_32 : extra_unchecked_32);
       item.toggle = false;
     }
-    pixelui::copyCaps(self.label, sizeof(self.label), item.label);
+    pixelui::copyNatural(self.label, sizeof(self.label), item.label);
     item.label = self.label;
   }
 };
@@ -110,13 +116,34 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
   }
   screen.button(headerHit, headerTarget);
 
-  pixelui::begin(screen, model.pageCount > 1 ? kPagerReserve : 0);
+  pixelui::begin(screen, model.pageCount > 1 ? pagerReserve() : 0);
   if (model.pageCount > 1) {
     const auto body = pixelui::geometry(device).body;
-    const int rowsBottom = body.y + std::min(9, int(screen.body().height) / pixelui::kRowHeight) * pixelui::kRowHeight;
-    const auto bar = pageui::afterContent(body, rowsBottom, kPagerHeight);
-    pageui::build(screen, bar, model.page + 1, model.pageCount, ActionGoToPage, model.page - 1, ActionGoToPage,
-                  model.page + 1, pixelui::kBody, kPagerHeight);
+    const int rowsBottom = body.y + std::min(9, int(screen.body().height) / rowHeight()) * pixelui::kRowHeight;
+    if (chrome::lightHeader) {
+      const auto band = fui::makeRect(body.x, body.bottom() - 48, body.width, 48);
+      const auto ink = fui::Paint::solid(fui::Color::Black);
+      screen.target().fill(fui::makeRect(band.x, band.y, band.width, 1), fui::Paint::dither(fui::Color::DarkGray));
+      fui::TextStyle style;
+      style.font = 0;
+      style.align = fui::TextAlign::Center;
+      screen.target().text(fui::makeRect(band.x + 48, band.y, band.width - 96, band.height), counter, style);
+      for (int direction : {-1, 1}) {
+        const auto arrow = fui::makeRect(direction < 0 ? band.x : band.right() - 48, band.y, 48, 48);
+        const bool enabled = model.page + direction >= 0 && model.page + direction < model.pageCount;
+        const int cx = arrow.x + 24, cy = arrow.y + 24;
+        const auto paint = enabled ? ink : fui::Paint::dither(fui::Color::LightGray);
+        screen.target().line({int16_t(cx - direction * 4), int16_t(cy - 7)}, {int16_t(cx + direction * 4), int16_t(cy)},
+                             2, paint);
+        screen.target().line({int16_t(cx + direction * 4), int16_t(cy)}, {int16_t(cx - direction * 4), int16_t(cy + 7)},
+                             2, paint);
+        if (enabled) screen.frame().hit(arrow, ActionGoToPage, model.page + direction, fui::InputTouch);
+      }
+    } else {
+      const auto bar = pageui::afterContent(body, rowsBottom, kPagerHeight);
+      pageui::build(screen, bar, model.page + 1, model.pageCount, ActionGoToPage, model.page - 1, ActionGoToPage,
+                    model.page + 1, pixelui::kBody, kPagerHeight);
+    }
   }
   if (model.count <= 0) {
     const auto body = screen.body();
@@ -149,15 +176,31 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
   props.toggleCheckbox = true;
   props.toggleWidth = props.toggleHeight = 32;
   props.scrollIndicator = false;
-  pixelui::list(screen, props);
+  if (chrome::lightHeader) {
+    props.rowHeight = rowHeight();
+    props.rowPaddingY = 8;
+    props.iconSize = 30;
+    props.labelText.font = 1;
+    props.labelText.maxLines = 1;
+    props.rowStyles.normal.borderWidth = 0;
+    props.rowStyles.normal.background = fui::Paint::solid(fui::Color::White);
+    props.rowStyles.normal.foreground = fui::Paint::solid(fui::Color::Black);
+    props.rowStyles.selected = props.rowStyles.focused = props.rowStyles.active = props.rowStyles.normal;
+    props.separatorPaint = fui::Paint::dither(fui::Color::DarkGray);
+    props.selectionMarker = fui::SelectionMarker::Underline;
+    props.markerThickness = 1;
+    fui::list(screen.frame(), screen.body(), props);
+  } else
+    pixelui::list(screen, props);
   if (choosing && model.icons) {
     const auto body = screen.body();
     for (int n = 0; n < model.count; ++n)
       if (model.icons[n]) {
         const bool selected = n == props.selectedIndex;
-        screen.target().bitmap(fui::makeRect(body.right() - 46, body.y + n * pixelui::kRowHeight + 17, 32, 32),
-                               fui::bitmapFromIcon(*model.icons[n]), fui::BitmapMode::Contain,
-                               fui::Paint::solid(selected ? fui::Color::White : fui::Color::Black));
+        screen.target().bitmap(
+            fui::makeRect(body.right() - 46, body.y + n * rowHeight() + (rowHeight() - 32) / 2, 32, 32),
+            fui::bitmapFromIcon(*model.icons[n]), fui::BitmapMode::Contain,
+            fui::Paint::solid(selected && !chrome::lightHeader ? fui::Color::White : fui::Color::Black));
       }
   }
 }

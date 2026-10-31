@@ -61,11 +61,17 @@ inline void rivalIcon(toybox::Screen& s, fui::Rect r, bool person, bool inverse)
 }
 
 inline void choice(toybox::Screen& s, fui::Rect r, const char* label, fui::ActionId action, int value, bool chosen,
-                   bool icon = false) {
-  chosen = s.frame().buttonSelected(action, value, chosen);
-  if (chosen) s.target().fill(r, dashboard::ink);
-  dashboard::frame(s, r, pixelui::kBorder);
-  dashboard::hit(s, r, action, value);
+                   bool icon = false, int index = 0, int count = 1, bool enabled = true) {
+  const auto band = r;
+  r = lightui::segmentRect(band, index, count);
+  chosen = enabled && s.frame().buttonSelected(action, value, chosen);
+  if (chrome::lightHeader)
+    lightui::segment(s.target(), band, index, count, chosen);
+  else {
+    if (chosen) s.target().fill(r, dashboard::ink);
+    dashboard::frame(s, r, pixelui::kBorder);
+  }
+  if (enabled) dashboard::hit(s, r, action, value);
   if (icon) {
     const int side = std::min(32, int(r.height) - 16);
     const auto image = fui::makeRect(r.x + 24, r.y + (r.height - side) / 2, side, side);
@@ -106,9 +112,8 @@ inline void build(toybox::Screen& s, const Model& m) {
   auto pair = [&](const char* title, const char* first, const char* second, fui::ActionId action, bool chosen) {
     heading(title);
     for (int n = 0; n < 2; ++n) {
-      const int left = x + width * n / 2, right = x + width * (n + 1) / 2;
-      choice(s, fui::makeRect(left, top + titleHeight + 4, right - left, optionHeight), n ? second : first, action, n,
-             chosen == bool(n), true);
+      choice(s, fui::makeRect(x, top + titleHeight + 4, width, optionHeight), n ? second : first, action, n,
+             chosen == bool(n), true, n, 2);
     }
     top += step;
   };
@@ -118,9 +123,8 @@ inline void build(toybox::Screen& s, const Model& m) {
     heading(tr(STR_UI_LEVEL_F481CC));
     static constexpr StrId labels[] = {StrId::STR_UI_EASY_493F11, StrId::STR_CHESS_NORMAL, StrId::STR_UI_HARD_A06A58};
     for (int n = 0; n < 3; ++n) {
-      const int left = x + width * n / 3, right = x + width * (n + 1) / 3;
-      choice(s, fui::makeRect(left, top + titleHeight + 4, right - left, optionHeight), I18N.get(labels[n]), Difficulty,
-             n, n == m.level);
+      choice(s, fui::makeRect(x, top + titleHeight + 4, width, optionHeight), I18N.get(labels[n]), Difficulty, n,
+             n == m.level, false, n, 3, m.game != Game::ConnectFour || !m.local);
     }
     top += step;
   }

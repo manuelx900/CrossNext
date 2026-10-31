@@ -78,6 +78,7 @@ constexpr int kProseFontId = 0x70B0'000E;
 constexpr int kLibraryFontId = 0x70B0'000F;
 constexpr int kBookListFontId = 0x70B0'0010;
 constexpr int kCarouselTitleFontId = 0x70B0'0011;
+constexpr int kClockLabelFontId = 0x70B0'0012;
 
 // Call from an activity's onEnter() before drawing. Idempotent and cheap.
 void ensureFonts(GfxRenderer& renderer);

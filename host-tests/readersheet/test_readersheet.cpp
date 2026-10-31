@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "../../src/activities/reader/ReaderPanelRows.h"
+#include "../../src/apps_local/readertext/ContentsJump.h"
 #include "FreeInkApp.h"
 #include "FreeInkUICore.h"
 
@@ -57,6 +58,25 @@ fui::DeviceContext deviceCtx(bool touch) {
 }  // namespace
 
 int main() {
+  readertext::ContentsJump jump;
+  check(!jump.rendered({1, 5}), "no return before a chapter jump");
+  jump.remember({2, 9, 1234});
+  check(jump.rendered({8, 0}), "chapter landing arms return");
+  check(jump.origin().spine == 2 && jump.origin().page == 9 && jump.origin().offset == 1234,
+        "return retains the exact source position");
+  check(jump.rendered({8, 0}) && jump.rendered({8, 0}), "repaint and grayscale passes retain return");
+  check(!jump.rendered({8, 1}), "navigation removes return");
+  check(!jump.rendered({8, 0}), "navigating back does not resurrect return");
+  jump.remember({3, 4});
+  check(jump.rendered({7, 0}), "another chapter jump replaces the source");
+  jump.remember({7, 0});
+  check(jump.rendered({7, 6}) && jump.origin().spine == 7 && jump.origin().page == 0,
+        "intra-chapter anchors preserve the prior page");
+  check(!jump.rendered({9, 6}), "cross-chapter navigation removes return");
+  jump.remember({0, 14});
+  check(jump.rendered({0, 100}) && jump.origin().page == 14, "XTC uses absolute page positions");
+  jump.clear();
+  check(!jump.rendered({0, 100}), "activated return is one-shot");
   const fui::ThemeTokens tokens = fui::themeTokensForLineHeight(20);
   std::printf("theme: rowHeight=%d listRowGap=%d listTouchRowGap=%d\n", (int)tokens.rowHeight, (int)tokens.listRowGap,
               (int)tokens.listTouchRowGap);
