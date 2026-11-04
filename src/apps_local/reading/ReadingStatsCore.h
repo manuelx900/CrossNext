@@ -42,6 +42,7 @@ struct Record {
   bool firstCompletion = false;
   RecordKind kind = RecordKind::Session;
   int reversedCompletionDay = 0;
+  int startProgressBp = -1;  // -1: written before sessions recorded where they began
 };
 struct Summary {
   uint64_t seconds = 0, pages = 0;

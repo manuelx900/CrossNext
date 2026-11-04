@@ -19,6 +19,8 @@ namespace {
 // off a download, so the change is one-way and costs an existing user nothing.
 constexpr char DEVICE_NAME[] = "CrossNext";
 constexpr char DEVICE_ID[] = "crossplay-reader";
+// BookOrbit refuses the whole upload if this runs past 20 characters.
+constexpr char PAGE_STATS_CLIENT[] = "crossnext-1";
 
 // wolfSSL uses the default allocator, which can use PSRAM on supported builds.
 // Keep a free-space floor and room for a full TLS record when the server does
@@ -286,6 +288,58 @@ KOReaderSyncClient::Error KOReaderSyncClient::updateProgress(const KOReaderProgr
   // but Spring-based KOSync implementations (BookLore/grimmory) answer a PUT
   // with the idiomatic 201/204, which used to land in SERVER_ERROR and made
   // every sync against them fail after a successful pull — issue #2876.
+  if (httpCode >= 200 && httpCode < 300) return OK;
+  if (httpCode == 401) return AUTH_FAILED;
+  return SERVER_ERROR;
+}
+
+bool KOReaderSyncClient::supportsPageStats() {
+  lastHttpCode = 0;
+  if (!KOREADER_STORE.hasCredentials() || insufficientHeap()) return false;
+
+  freeink::SecureHttpClient http;
+  http.setInsecure();
+  if (!http.begin(KOREADER_STORE.getBaseUrl() + "/plugin/version")) return false;
+  applyAuthHeaders(http);
+  const int httpCode = http.GET();
+  http.end();
+  lastHttpCode = httpCode;
+
+  LOG_DBG("KOSync", "Page stats probe response: %d", httpCode);
+  return httpCode >= 200 && httpCode < 300;
+}
+
+KOReaderSyncClient::Error KOReaderSyncClient::uploadPageStats(const std::string& books) {
+  lastHttpCode = 0;
+  if (!KOREADER_STORE.hasCredentials()) return NO_CREDENTIALS;
+  if (insufficientHeap()) return LOW_MEMORY;
+
+  const std::string url = KOREADER_STORE.getBaseUrl() + "/plugin/page-stats";
+  std::string body = "{\"deviceId\":\"";
+  body += DEVICE_ID;
+  body += "\",\"deviceModel\":\"";
+  body += DEVICE_NAME;
+  body += "\",\"pluginVersion\":\"";
+  body += PAGE_STATS_CLIENT;
+  body += "\",\"books\":";
+  body += books;
+  body += "}";
+
+  freeink::SecureHttpClient http;
+  http.setInsecure();
+  if (!http.begin(url)) {
+    LOG_ERR("KOSync", "Bad URL: %s", url.c_str());
+    return NETWORK_ERROR;
+  }
+  applyAuthHeaders(http);
+  http.addHeader("Content-Type", "application/json");
+  const int httpCode = http.POST(body);
+  http.end();
+  lastHttpCode = httpCode;
+
+  LOG_DBG("KOSync", "Page stats response: %d", httpCode);
+
+  if (httpCode <= 0) return NETWORK_ERROR;
   if (httpCode >= 200 && httpCode < 300) return OK;
   if (httpCode == 401) return AUTH_FAILED;
   return SERVER_ERROR;

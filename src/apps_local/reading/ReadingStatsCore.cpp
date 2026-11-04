@@ -315,6 +315,7 @@ void encode(const Record& r, uint8_t* p) {
   write(p + 338, r.book.finishedDay, 4);
   write(p + 342, r.reversedCompletionDay, 4);
   p[346] = r.book.manuallyUnfinished;
+  write(p + 347, static_cast<uint64_t>(r.startProgressBp + 1), 2);  // zero stays "not recorded"
   write(p + kRecordBytes - 4, checksum(p, kRecordBytes - 4), 4);
 }
 bool decode(const uint8_t* p, Record& r) {
@@ -344,13 +345,14 @@ bool decode(const uint8_t* p, Record& r) {
   r.book.finishedDay = static_cast<int>(read(p + 338, 4));
   r.reversedCompletionDay = static_cast<int>(read(p + 342, 4));
   r.book.manuallyUnfinished = p[346];
+  r.startProgressBp = static_cast<int>(read(p + 347, 2)) - 1;
   const bool validKind =
       (r.kind == RecordKind::Session && r.seconds > 0 && r.book.sessions > 0) ||
       (r.kind == RecordKind::Completion && !r.seconds && !r.pages && r.book.progressBp == 10000 && r.book.completed) ||
       (r.kind == RecordKind::Reopen && !r.seconds && !r.pages && r.book.progressBp < 10000 && !r.book.completed &&
        r.book.manuallyUnfinished);
   return validKind && validDocument(r.book.document) && r.epoch > 0 && r.localDay >= 18262 && r.localDay <= 84005 &&
-         r.secondOfDay < 86400 && r.book.progressBp <= 10000 && p[12] <= 1 && p[329] <= 1 && p[346] <= 1 &&
+         r.secondOfDay < 86400 && r.book.progressBp <= 10000 && r.startProgressBp <= 10000 && p[12] <= 1 && p[329] <= 1 && p[346] <= 1 &&
          (!r.book.manuallyUnfinished || !r.book.completed) &&
          (!r.book.finishedDay || (r.book.finishedDay >= 18262 && r.book.finishedDay <= 84005)) &&
          (!r.reversedCompletionDay || (r.reversedCompletionDay >= 18262 && r.reversedCompletionDay <= 84005));

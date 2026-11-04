@@ -189,7 +189,7 @@ bool Repository::append(const Record& record) {
   return true;
 }
 bool Repository::record(const char* document, const char* title, const char* author, int64_t epoch, uint32_t seconds,
-                        uint32_t pages, uint16_t progressBp, bool* completed) {
+                        uint32_t pages, uint16_t progressBp, bool* completed, const int startProgressBp) {
   if (!seconds || !validDocument(document)) return false;
   const auto timestamp = static_cast<time_t>(epoch);
   tm local{};
@@ -202,6 +202,7 @@ bool Repository::record(const char* document, const char* title, const char* aut
   scratch.localDay = dayIndex({local.tm_year + 1900, local.tm_mon + 1, local.tm_mday});
   scratch.secondOfDay = local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec;
   scratch.book.progressBp = std::min<uint16_t>(10000, progressBp);
+  scratch.startProgressBp = std::min(10000, startProgressBp);
   copyText(scratch.book.document, sizeof(scratch.book.document), document);
   copyText(scratch.book.title, sizeof(scratch.book.title), title);
   copyText(scratch.book.author, sizeof(scratch.book.author), author);
@@ -262,14 +263,15 @@ bool Repository::reopen(const char* document, const char* title, const char* aut
   return append(scratch);
 }
 bool recordSession(const char* document, const char* title, const char* author, int64_t epoch, uint32_t seconds,
-                   uint32_t pages, uint16_t progressBp, bool* completed) {
+                   uint32_t pages, uint16_t progressBp, bool* completed, const int startProgressBp) {
   // Journal descriptors/buffers are about 1 KiB, allocated only while flushing.
   auto repository = makeUniqueNoThrow<Repository>();
   if (!repository) {
     LOG_ERR("READ-STATS", "OOM: journal workspace");
     return false;
   }
-  if (repository->record(document, title, author, epoch, seconds, pages, progressBp, completed)) return true;
+  if (repository->record(document, title, author, epoch, seconds, pages, progressBp, completed, startProgressBp))
+    return true;
   LOG_ERR("READ-STATS", "Could not record reading session");
   return false;
 }

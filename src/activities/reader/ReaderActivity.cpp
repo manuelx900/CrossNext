@@ -185,7 +185,8 @@ bool ReaderActivity::flushReaderSession() {
       bool completed = isBookFinished();
       saved = readingstats::recordSession(document.c_str(), getBookTitle().c_str(), getBookAuthor().c_str(),
                                           readerSession.startTime(), readerSession.durationSeconds(),
-                                          readerSession.pagesRead(), readerSession.endProgressBp(), &completed);
+                                          readerSession.pagesRead(), readerSession.endProgressBp(), &completed,
+                                          readerSession.startProgressBp());
       if (saved) bookFinished.store(completed, std::memory_order_release);
     }
     if (!pluginevents::anySubscriber(pluginevents::Event::ReaderSession)) {

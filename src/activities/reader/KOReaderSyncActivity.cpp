@@ -22,6 +22,7 @@
 #include "SilentRestart.h"
 #include "activities/ActivityManager.h"
 #include "activities/network/WifiSelectionActivity.h"
+#include "apps_local/reading/ReadingPageStats.h"
 #include "clippings/ClippingSync.h"
 #include "components/UITheme.h"
 #include "components/UiAppHelpers.h"  // list icons for the compare rows
@@ -173,6 +174,23 @@ void KOReaderSyncActivity::performSync() {
       requestUpdate(true);
       return;
     }
+  }
+
+  // Send Metadata is the switch for telling a server about your reading, and the
+  // CrossPoint server has its own statistics sync. Position sync does not depend
+  // on this, so a failure here is logged and retried next time rather than shown.
+  if (KOREADER_STORE.getSendMetadata() && KOREADER_STORE.getServerType() != KOReaderServerType::CROSSPOINT &&
+      KOReaderSyncClient::supportsPageStats()) {
+    {
+      RenderLock lock(*this);
+      statusMessage = tr(STR_SYNCING_READING_LOG);
+    }
+    requestUpdateAndWait();
+    const auto post = [](const std::string& books, void*) {
+      return KOReaderSyncClient::uploadPageStats(books) == KOReaderSyncClient::OK;
+    };
+    const bool sent = readingstats::uploadPageStats(post, nullptr);
+    if (!sent) LOG_ERR("KOSync", "Reading log upload failed (HTTP %d)", KOReaderSyncClient::lastHttpCode);
   }
 
   {

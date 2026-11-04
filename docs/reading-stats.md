@@ -63,6 +63,14 @@ Also test several books, including one absent from Recents and both XTC and XTCH
 
 The host suites under `host-tests/reading-cloud` and `host-tests/reading-progress` test frozen local prefixes, repeated imports/uploads, acknowledged and lost uploads, rollback detection, damaged storage, allocation failure, date batching, book merging, bulk position discovery and retries, both languages and orientations. Their integration harness runs the production client, uploader, importer and position state machine against an isolated checkout of the official server. HTTP is real loopback traffic; host adapters replace device TLS, Wi-Fi, SD hardware and EPUB/XTC pagination with deterministic fixtures. Existing XPath/comparison suites cover the shared mapping helpers; the complete simulator build compiles the actual parser and mapper integration. Physical TLS, SD interruption and screen timing remain unverified by these tests.
 
+## BookOrbit reading log
+
+BookOrbit builds its reading log from per-page events, not from synced positions. When a KOSync-type server answers `GET /plugin/version`, **Sync Progress** also posts every journal session after a saved cursor to `POST /plugin/page-stats`. Servers that do not answer receive nothing, and **Send Metadata** off disables the upload. A failed upload is logged and retried at the next sync; it never blocks position sync.
+
+The journal holds one record per session, so `ReadingPageStats` spreads a session's pages evenly over its active seconds. The server takes duration from the sum of the events and progress from the first and last, so those stay exact while per-page timing is an average. Events are deterministic and the server ignores any it already has, which makes resending safe: `/.crosspoint/reading-history/page-stats.bin` is a plain journal offset, and a missing or unusable one only causes a resend. A book the server does not have is skipped by the server and not retried.
+
+Sessions record where they began at byte 347 of the journal record, stored plus one so zero means not recorded. Older records fall back to the previous record's end for the same book. A session that follows a position jump from another device can therefore show too much progress if it predates this field.
+
 ## Persistence and resources
 
 The authoritative append-only journal is `/.crosspoint/reading-history/sessions.bin`, with a 16-byte versioned header and 384-byte checksummed records. Every record also holds a cumulative book snapshot, so disposable per-document `.idx` files can be rebuilt. Missing/stale indexes fall back to a sequential scan. A partial final record is discarded on the next append; invalid checksummed records are skipped without a persistent list banner, while I/O errors and unsupported headers stop the scan. A power cut can lose the unflushed session. Previous valid records remain available.

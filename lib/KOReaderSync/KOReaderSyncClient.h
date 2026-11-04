@@ -65,6 +65,8 @@ struct KOReaderProgress {
  *   GET /users/auth - Authenticate (validate credentials)
  *   GET /syncs/progress/:document - Get progress for a document
  *   PUT /syncs/progress - Update progress for a document
+ *   GET /plugin/version - Answered by BookOrbit, which adds a reading log
+ *   POST /plugin/page-stats - Per-page reading events for that log
  *
  * Authentication:
  *   x-auth-user: username
@@ -112,6 +114,19 @@ class KOReaderSyncClient {
    * @return OK on success, error code on failure
    */
   static Error updateProgress(const KOReaderProgress& progress);
+
+  /**
+   * Whether the server keeps a reading log. Plain KOSync servers do not, and
+   * reading history is never sent to one.
+   */
+  static bool supportsPageStats();
+
+  /**
+   * Upload reading events for the server's reading log.
+   * @param books JSON array of {hash, events}, from readingstats::uploadPageStats
+   * @return OK on success, error code on failure
+   */
+  static Error uploadPageStats(const std::string& books);
 
   /**
    * Get human-readable error message.

@@ -15,7 +15,7 @@ class Repository {
   ScanResult next(Record& record);
   void close();
   bool record(const char* document, const char* title, const char* author, int64_t epoch, uint32_t seconds,
-              uint32_t pages, uint16_t progressBp, bool* completed = nullptr);
+              uint32_t pages, uint16_t progressBp, bool* completed = nullptr, int startProgressBp = -1);
   bool loadBook(const char* document, Book& book);
   // Read the disposable cumulative snapshot without scanning the journal.
   bool cachedBook(const char* document, Book& book);
@@ -42,7 +42,7 @@ class Repository {
 };
 int today();
 bool recordSession(const char* document, const char* title, const char* author, int64_t epoch, uint32_t seconds,
-                   uint32_t pages, uint16_t progressBp, bool* completed = nullptr);
+                   uint32_t pages, uint16_t progressBp, bool* completed = nullptr, int startProgressBp = -1);
 bool recordCompletion(const char* document, const char* title, const char* author, int64_t epoch);
 bool recordReopening(const char* document, const char* title, const char* author, int64_t epoch, uint16_t progressBp);
 bool completionStatus(const char* document, bool& completed, bool& manuallyUnfinished);

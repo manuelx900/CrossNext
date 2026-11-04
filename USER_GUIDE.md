@@ -33,6 +33,7 @@ Welcome to the **CrossNext** firmware, a fork of CrossPlay and CrossPoint for th
         - [Option A: CrossPoint Sync Server (`sync.crosspointreader.com`, default)](#option-a-crosspoint-sync-server-synccrosspointreadercom-default)
         - [Option B: Legacy Public KOReader Server (`sync.koreader.rocks`)](#option-b-legacy-public-koreader-server-synckoreaderrocks)
         - [Option C: Self-Hosted Server (Docker Compose)](#option-c-self-hosted-server-docker-compose)
+        - [Option D: BookOrbit](#option-d-bookorbit)
         - [Syncing While Reading](#syncing-while-reading)
     - [3.7 Sleep Screen](#37-sleep-screen)
       - [Cover settings](#cover-settings)
@@ -588,6 +589,17 @@ If this returns `HTTP 402` with `{"code":2002,"message":"Username is already reg
    - Run **Authenticate**.
 
 If you use the HTTPS listener, use `https://<server-ip>:7200` (`curl -k` only for self-signed certificate testing).
+
+##### Option D: BookOrbit
+
+[BookOrbit](https://github.com/bookorbit/bookorbit) speaks the KOReader sync protocol and also keeps a reading log.
+
+1. In BookOrbit, open **Settings -> Devices & Sync -> KOReader** and choose **Create credentials**. These are separate from your web login.
+2. On the device, set **Sync Server URL** to `https://<your-server>/api/v1/koreader` and enter those credentials.
+3. Set **Server Type** to **KoSync** and **Document Matching** to **Binary**. BookOrbit identifies a book by its file, so the same EPUB has to be on the server and the device.
+4. Run **Authenticate**.
+
+Each **Sync Progress** also sends your finished reading sessions to BookOrbit's reading log, including any recorded before you set this up. CrossNext records sessions rather than individual pages, so session times and progress are accurate but the time spent on each page is an average. Turn **Send Metadata** off to keep reading sessions on the device.
 
 ##### Syncing While Reading
 

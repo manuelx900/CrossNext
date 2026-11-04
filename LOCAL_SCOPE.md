@@ -228,6 +228,7 @@ row formatting and framed chrome live in `src/apps_local/ui/PixelMenu*`.
 | --- | --- |
 | `lib/hal/HalStorage.{h,cpp}`, `scripts_local/sim_catchup.py` | Checked directory enumeration for bulk book-position sync; distinguish SD read failure from EOF, with a matching simulator overload |
 | `lib/KOReaderSync/KOReaderDocumentId.cpp` | Bulk sync reuses both document identifiers; bounded hash scratch and exact signed reads fail safely on damaged SD data |
+| `lib/KOReaderSync/KOReaderSyncClient.{h,cpp}`, `src/activities/reader/KOReaderSyncActivity.cpp`, `src/activities/reader/ReaderActivity.cpp` | BookOrbit reading log: probe and upload calls, one step in `performSync`, session start position passed to the journal | `src/apps_local/reading/ReadingPageStats` holds the rest |
 | `src/MappedInputManager.{cpp,h}`, `src/activities/ActivityManager.cpp` | bottom-edge reader settings shortcut takes priority over Home only on the active reader |
 | `src/activities/Activity.h`, `src/activities/reader/ReaderActivity.h`, `EpubReaderActivity.{cpp,h}`, `XtcReaderActivity.{cpp,h}` | Type-safe settings gesture capability and format-aware entry; existing EPUB repagination and XTC rendering retain ownership |
 | `src/CrossPointSettings.{cpp,h}`, `lib/Epub/Epub/ReaderRenderSpec.h`, `Section.cpp`, `parsers/ChapterHtmlSlimParser.{cpp,h}` | saved Regular/Bold reader weight, resolved before measurement; versioned section layout/cache and clipping signature include the weight |
