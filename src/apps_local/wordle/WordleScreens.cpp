@@ -148,6 +148,7 @@ KeyboardLayout buildGame(toybox::Screen& screen, const GameModel& model, Work& w
     const auto mark = game.key(char('A' + n));
     tones[n] = mark == Mark::Correct   ? wordlekeys::Tone::Correct
                : mark == Mark::Present ? wordlekeys::Tone::Present
+               : mark == Mark::Absent  ? wordlekeys::Tone::Absent
                                        : wordlekeys::Tone::Normal;
   }
   wordlekeys::draw(screen, controls, k, ActionKeyboard, tones);

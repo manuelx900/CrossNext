@@ -13301,6 +13301,36 @@ void everyKeyIsWhereItIsDrawn() {
   check(out.interactions.count() <= 24, "the game fits the interaction table", __LINE__);
 }
 
+// A letter the guesses ruled out fades, and only that: it keeps its place, still
+// answers a tap and can still be typed, as filler in a probing guess.
+void ruledOutLettersFadeButStayUsable() {
+  wordle::Game game;
+  game.start(0, "PLANT");
+  play(game, "CRANE");
+  wordleui::GameModel model;
+  model.game = &game;
+  model.date = "SEP 28";
+  Rendered out;
+  wordleui::KeyboardLayout keys;
+  buildGame(out, model, keys);
+
+  const auto faded = [&](const fui::Rect& key) {
+    int rows = 0;
+    for (const auto& fill : out.target.fills)
+      if (fill.height == 1 && fill.x == key.x && fill.width == key.width && fill.y >= key.y && fill.y < key.bottom())
+        ++rows;
+    return rows;
+  };
+  const auto c = wordlekeys::keyRect(keys, 2, 2), v = wordlekeys::keyRect(keys, 2, 3),
+             a = wordlekeys::keyRect(keys, 1, 0);
+  check(faded(c) == c.height / 2, "C, ruled out, loses every other pixel row", __LINE__);
+  check(faded(v) == 0, "V, not tried yet, stays solid", __LINE__);
+  check(faded(a) == 0, "A, in the word, stays solid", __LINE__);
+  check(wordleui::keyAt(keys, c.x + c.width / 2, c.y + c.height / 2) == 'C', "a faded key still answers a tap",
+        __LINE__);
+  check(game.type('C'), "a faded letter can still be typed", __LINE__);
+}
+
 // The end: the answer in the header, the result beside it, and any tap goes
 // back to the menu -- the keyboard stops taking letters.
 void aFinishedGameShowsTheAnswerAndLetsGo() {
@@ -13421,6 +13451,7 @@ int main() {
   testHeaderlessReaderClearsBack();
   notestest::aNoteAsleepIsReadOnlyAndTaller();
   wordletest::everyKeyIsWhereItIsDrawn();
+  wordletest::ruledOutLettersFadeButStayUsable();
   wordletest::aFinishedGameShowsTheAnswerAndLetsGo();
   wordletest::theNotAWordLineIsDrawn();
   wordletest::theMenuOffersTodayOnlyWhenThereIsOne();

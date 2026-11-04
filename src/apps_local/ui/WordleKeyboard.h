@@ -10,7 +10,7 @@ namespace wordlekeys {
 namespace fui = freeink::ui;
 inline constexpr char kEnter = '\n', kErase = '\b';
 inline constexpr const char* ROWS[] = {"QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM["};
-enum class Tone : uint8_t { Normal, Present, Correct };
+enum class Tone : uint8_t { Normal, Absent, Present, Correct };
 struct Layout {
   bool spanish = false;
   int16_t top = 0, keyW = 0, keyH = 0, gap = 0, wide = 0;
@@ -75,6 +75,11 @@ inline void draw(toybox::Screen& screen, const fui::Rect& controls, const Layout
       }
       pixelui::text(target, box, label, pixelui::kBody, tone == Tone::Correct ? fui::Color::White : fui::Color::Black,
                     fui::TextAlign::Center);
+      // There is no grey type on this panel (see ToyboxTokens.h), so a ruled-out
+      // key fades by clearing every other pixel row of what was just drawn.
+      if (tone == Tone::Absent)
+        for (int y = box.y + 1; y < box.bottom(); y += 2)
+          target.fill(fui::makeRect(box.x, y, box.width, 1), fui::Paint::solid(fui::Color::White));
     }
     const auto first = keyRect(k, row, 0), last = keyRect(k, row, count - 1);
     screen.frame().navigationGrid(fui::makeRect(first.x, first.y, last.right() - first.x, first.height), count, 1);
