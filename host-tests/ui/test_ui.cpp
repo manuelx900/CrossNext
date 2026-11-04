@@ -13277,7 +13277,7 @@ void everyKeyIsWhereItIsDrawn() {
     }
     if (run.rect.x < 0 || run.rect.x + run.rect.width > 480) allFound = false;
   }
-  check(letters == 23, "the 23 letters CRANE did not rule out are drawn below the grid", __LINE__);
+  check(letters == 26, "all 26 letter keys are drawn below the grid", __LINE__);
   check(allFound, "every drawn key resolves to its own letter, inside the panel", __LINE__);
 
   int enters = 0;
@@ -13301,58 +13301,12 @@ void everyKeyIsWhereItIsDrawn() {
   check(out.interactions.count() <= 24, "the game fits the interaction table", __LINE__);
 }
 
-// A letter the guesses ruled out leaves the keyboard: nothing drawn, nothing to
-// tap, and the button cursor walks past the hole. The keys around it stay put.
-void ruledOutLettersLeaveTheKeyboard() {
+// A letter the guesses ruled out fades, and only that: it keeps its place, still
+// answers a tap and can still be typed, as filler in a probing guess.
+void ruledOutLettersFadeButStayUsable() {
   wordle::Game game;
   game.start(0, "PLANT");
-  wordleui::GameModel model;
-  model.game = &game;
-  model.date = "SEP 28";
-  Rendered before;
-  wordleui::KeyboardLayout fresh;
-  buildGame(before, model, fresh);
-  check(fresh.gone == 0, "before any guess every letter is on offer", __LINE__);
-
   play(game, "CRANE");
-  Rendered out;
-  wordleui::KeyboardLayout keys;
-  buildGame(out, model, keys);
-
-  bool drawn = false;
-  for (const auto& run : out.target.texts)
-    if (run.rect.y >= keys.top && (run.text == "C" || run.text == "R" || run.text == "E")) drawn = true;
-  check(!drawn, "C, R and E are not drawn", __LINE__);
-
-  const auto c = wordlekeys::keyRect(keys, 2, 2), v = wordlekeys::keyRect(keys, 2, 3);
-  check(wordleui::keyAt(keys, c.x + c.width / 2, c.y + c.height / 2) == 0, "a tap on C's hole types nothing", __LINE__);
-  check(wordleui::keyAt(keys, v.x + v.width / 2, v.y + v.height / 2) == 'V', "V keeps its place beside the hole",
-        __LINE__);
-  const auto a = wordlekeys::keyRect(keys, 1, 0);
-  check(wordleui::keyAt(keys, a.x + a.width / 2, a.y + a.height / 2) == 'A', "a letter in the word stays", __LINE__);
-
-  fui::InputSnapshot step;
-  step.focusNext = true;
-  uint32_t seen = 0;
-  int holes = 0;
-  for (int n = 0; n < 60; ++n) {
-    out.interactions.route(step);
-    fui::Rect focus;
-    if (!out.interactions.buttonFocusRect(focus) || focus.y < keys.top) continue;
-    const char key = wordleui::keyAt(keys, focus.x + focus.width / 2, focus.y + focus.height / 2);
-    if (key >= 'A' && key <= 'Z') seen |= 1u << (key - 'A');
-    if (key == 0) ++holes;
-  }
-  const uint32_t all = (1u << 26) - 1;
-  check(seen == (all & ~keys.gone) && holes == 0, "the cursor reaches every remaining key and stops on no hole",
-        __LINE__);
-}
-
-// Focus is held by position in the interaction table, so the runs a guess adds
-// to a row must not slide OK out from under the cursor that just pressed it.
-void theCursorStaysOnOkWhenAGuessRemovesKeys() {
-  wordle::Game game;
-  game.start(0, "PLANT");
   wordleui::GameModel model;
   model.game = &game;
   model.date = "SEP 28";
@@ -13360,39 +13314,21 @@ void theCursorStaysOnOkWhenAGuessRemovesKeys() {
   wordleui::KeyboardLayout keys;
   buildGame(out, model, keys);
 
-  fui::InputSnapshot step;
-  step.focusNext = true;
-  const auto enter = wordlekeys::enterRect(keys);
-  fui::Rect focus;
-  bool onOk = false;
-  for (int n = 0; n < 60 && !onOk; ++n) {
-    out.interactions.route(step);
-    onOk = out.interactions.buttonFocusRect(focus) && focus.x == enter.x && focus.y == enter.y;
-  }
-  check(onOk, "the cursor can reach OK", __LINE__);
-
-  play(game, "CRANE");
-  buildGame(out, model, keys);
-  check(out.interactions.buttonFocusRect(focus) && focus.x == enter.x && focus.y == enter.y,
-        "after the guess the cursor is still on OK", __LINE__);
-}
-
-// The most holes three rows can have: every other key gone, so every remaining
-// key is its own run. That is the table's worst case.
-void theWorstKeyboardFitsTheInteractionTable() {
-  wordle::Game game;
-  game.start(0, "QQQQQ");
-  play(game, "WRYIP");
-  play(game, "SFHKS");
-  play(game, "XVNXV");
-  wordleui::GameModel model;
-  model.game = &game;
-  model.date = "SEP 28";
-  Rendered out;
-  wordleui::KeyboardLayout keys;
-  buildGame(out, model, keys);
-  check(out.interactions.count() <= 24 && !out.interactions.overflowed(), "fourteen runs still fit the table",
+  const auto faded = [&](const fui::Rect& key) {
+    int rows = 0;
+    for (const auto& fill : out.target.fills)
+      if (fill.height == 1 && fill.x == key.x && fill.width == key.width && fill.y >= key.y && fill.y < key.bottom())
+        ++rows;
+    return rows;
+  };
+  const auto c = wordlekeys::keyRect(keys, 2, 2), v = wordlekeys::keyRect(keys, 2, 3),
+             a = wordlekeys::keyRect(keys, 1, 0);
+  check(faded(c) == c.height / 2, "C, ruled out, loses every other pixel row", __LINE__);
+  check(faded(v) == 0, "V, not tried yet, stays solid", __LINE__);
+  check(faded(a) == 0, "A, in the word, stays solid", __LINE__);
+  check(wordleui::keyAt(keys, c.x + c.width / 2, c.y + c.height / 2) == 'C', "a faded key still answers a tap",
         __LINE__);
+  check(game.type('C'), "a faded letter can still be typed", __LINE__);
 }
 
 // The end: the answer in the header, the result beside it, and any tap goes
@@ -13515,9 +13451,7 @@ int main() {
   testHeaderlessReaderClearsBack();
   notestest::aNoteAsleepIsReadOnlyAndTaller();
   wordletest::everyKeyIsWhereItIsDrawn();
-  wordletest::ruledOutLettersLeaveTheKeyboard();
-  wordletest::theCursorStaysOnOkWhenAGuessRemovesKeys();
-  wordletest::theWorstKeyboardFitsTheInteractionTable();
+  wordletest::ruledOutLettersFadeButStayUsable();
   wordletest::aFinishedGameShowsTheAnswerAndLetsGo();
   wordletest::theNotAWordLineIsDrawn();
   wordletest::theMenuOffersTodayOnlyWhenThereIsOne();

@@ -10,14 +10,12 @@ namespace wordlekeys {
 namespace fui = freeink::ui;
 inline constexpr char kEnter = '\n', kErase = '\b';
 inline constexpr const char* ROWS[] = {"QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM["};
-enum class Tone : uint8_t { Normal, Present, Correct };
+enum class Tone : uint8_t { Normal, Absent, Present, Correct };
 struct Layout {
   bool spanish = false;
   int16_t top = 0, keyW = 0, keyH = 0, gap = 0, wide = 0;
   int16_t rowLeft[3]{};
-  uint32_t gone = 0;  // one bit per key - 'A': not drawn, not tappable, not focusable
 };
-inline bool isGone(const Layout& k, char key) { return (k.gone >> (key - 'A')) & 1; }
 inline int length(int row, bool spanish) { return row == 0 ? 10 : row == 1 ? 9 : spanish ? 8 : 7; }
 inline fui::Rect keyRect(const Layout& k, int row, int index) {
   return fui::makeRect(k.rowLeft[row] + (row == 2 ? k.wide + k.gap : 0) + index * (k.keyW + k.gap),
@@ -52,27 +50,17 @@ inline char keyAt(const Layout& k, int x, int y) {
   if (eraseRect(k).contains(x, y)) return kErase;
   for (int row = 0; row < 3; ++row)
     for (int n = 0; n < length(row, k.spanish); ++n)
-      if (keyRect(k, row, n).contains(x, y)) return isGone(k, ROWS[row][n]) ? 0 : ROWS[row][n];
+      if (keyRect(k, row, n).contains(x, y)) return ROWS[row][n];
   return 0;
 }
 inline void draw(toybox::Screen& screen, const fui::Rect& controls, const Layout& k, fui::ActionId action,
                  const Tone* tones = nullptr) {
   const auto ink = fui::Paint::solid(fui::Color::Black);
   auto& target = screen.target();
-  const auto enter = enterRect(k), erase = eraseRect(k);
-  // Ahead of the letters: focus is held by table position, and a guess that
-  // splits a row below must not slide OK out from under the cursor.
-  screen.frame().navigationGrid(enter, 1, 1);
-  screen.frame().navigationGrid(erase, 1, 1);
   for (int row = 0; row < 3; ++row) {
     const int count = length(row, k.spanish);
-    int first = 0;  // of the run of keys since the last gap, one grid per run
     for (int n = 0; n < count; ++n) {
       const char key = ROWS[row][n];
-      if (isGone(k, key)) {
-        first = n + 1;
-        continue;
-      }
       const auto tone = tones ? tones[key - 'A'] : Tone::Normal;
       const auto box = keyRect(k, row, n);
       if (tone == Tone::Correct)
@@ -87,13 +75,18 @@ inline void draw(toybox::Screen& screen, const fui::Rect& controls, const Layout
       }
       pixelui::text(target, box, label, pixelui::kBody, tone == Tone::Correct ? fui::Color::White : fui::Color::Black,
                     fui::TextAlign::Center);
-      if (n + 1 == count || isGone(k, ROWS[row][n + 1])) {
-        const auto start = keyRect(k, row, first);
-        screen.frame().navigationGrid(fui::makeRect(start.x, start.y, box.right() - start.x, start.height),
-                                      n - first + 1, 1);
-      }
+      // There is no grey type on this panel (see ToyboxTokens.h), so a ruled-out
+      // key fades by clearing every other pixel row of what was just drawn.
+      if (tone == Tone::Absent)
+        for (int y = box.y + 1; y < box.bottom(); y += 2)
+          target.fill(fui::makeRect(box.x, y, box.width, 1), fui::Paint::solid(fui::Color::White));
     }
+    const auto first = keyRect(k, row, 0), last = keyRect(k, row, count - 1);
+    screen.frame().navigationGrid(fui::makeRect(first.x, first.y, last.right() - first.x, first.height), count, 1);
   }
+  const auto enter = enterRect(k), erase = eraseRect(k);
+  screen.frame().navigationGrid(enter, 1, 1);
+  screen.frame().navigationGrid(erase, 1, 1);
   target.fill(enter, ink);
   pixelui::text(target, enter, tr(STR_WORDLE_OK), pixelui::kSmall, fui::Color::White, fui::TextAlign::Center);
   target.stroke(erase, ink, 2);
