@@ -11,10 +11,8 @@ void noticeWindow(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   lightui::surface(s.target(), box, paper);
   frame(s, box);
   const bool game = m.noticeKind == NoticeKind::Game;
-  const bool fed = m.noticeKind == NoticeKind::Fed;
-  const bool success = fed || m.noticeKind == NoticeKind::Cleaned || m.noticeKind == NoticeKind::Cured;
-  const auto& resultIcon = fed                                   ? extra_dashboard_apple_64
-                           : game                                ? extra_cards_64
+  const bool success = m.noticeKind == NoticeKind::Cleaned || m.noticeKind == NoticeKind::Cured;
+  const auto& resultIcon = game                                  ? extra_cards_64
                            : m.noticeKind == NoticeKind::Cleaned ? SOAP_ICON
                            : m.noticeKind == NoticeKind::Cured   ? MEDICINE_ICON
                                                                  : extra_information_32;
@@ -31,15 +29,12 @@ void noticeWindow(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
     case NoticeKind::Game:
       title = tr(STR_PET_GAME_RESULT_TITLE);
       break;
-    case NoticeKind::Fed:
-      title = tr(STR_PET_NOTICE_FED);
-      break;
   }
   const auto heading = rect(box.x + 12, box.y + 12, box.width - 24, 58);
   celebrationBanner(s, heading, title, resultIcon, m.noticeKind == NoticeKind::Cured,
                     success || (game && m.gameResult.outcome != GameOutcome::CareNeeded));
   const auto footer = rect(box.x + 12, box.bottom() - 66, box.width - 24, 54);
-  const bool receipt = game || (fed && m.feedResult.visible) || (success && m.careResult.visible);
+  const bool receipt = game || (success && m.careResult.visible);
   const auto result = wide ? rect(box.x + box.width / 2, footer.y - 84, box.width / 2 - 14, 74)
                            : rect(box.x + 12, footer.y - 84, box.width - 24, 74);
   const auto copy = wide ? rect(result.x, heading.bottom() + 10, result.width, result.y - heading.bottom() - 18)
@@ -57,9 +52,7 @@ void noticeWindow(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
     farewellPicture(s, m, picture);
   else
     celebrationPicture(s, m, companion, success || (game && m.gameResult.joyAfter > m.gameResult.joyBefore),
-                       m.noticeKind == NoticeKind::Cleaned ? Celebration::Clean
-                       : fed                               ? Celebration::Fed
-                                                           : Celebration::Joy);
+                       m.noticeKind == NoticeKind::Cleaned ? Celebration::Clean : Celebration::Joy);
   if (separateSoap) icon(s, rect(picture.x + 4, picture.y + 6, 64, 80), referenceicons::SOAP);
   if (receipt) {
     frame(s, result);
@@ -72,11 +65,6 @@ void noticeWindow(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
       std::snprintf(w.label, sizeof(w.label), tr(STR_PET_GAME_ENERGY_RESULT), unsigned(m.gameResult.energyBefore),
                     unsigned(m.gameResult.energyAfter));
       text(s, rect(x, result.y + 33, width, 25), w.label, 3);
-    } else if (fed && m.feedResult.visible) {
-      std::snprintf(w.label, sizeof(w.label), tr(STR_PET_FEED_CHANGE), unsigned(m.feedResult.before),
-                    unsigned(m.feedResult.after));
-      text(s, rect(x, result.y + 5, width, 25), w.label, 0);
-      text(s, rect(x, result.y + 33, width, 25), tr(STR_PET_FOOD_COST), 3);
     } else if (success && m.careResult.visible) {
       const auto& care = m.careResult;
       std::snprintf(w.label, sizeof(w.label), tr(STR_PET_HYGIENE_RESULT), unsigned(care.hygieneBefore),

@@ -1,0 +1,9 @@
+{
+  "name": "combat-sword-v2",
+  "tool": "image_gen",
+  "created": "2026-11-06",
+  "prompt_file": "combat-sword-v2-prompt.txt",
+  "source_path": "exec-6a3451b3-d7f4-4e8f-94df-cc8ee1a87fe1.png",
+  "purpose": "Exclusive illustrated sword; three rigid poses are prepared by the resource pipeline for the return-summary hit.",
+  "sha256": "e0da1a29a568008a94d5bc851b87500ba501ce1b748be1fbb597b46de2d636b0"
+}

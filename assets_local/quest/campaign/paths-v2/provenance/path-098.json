@@ -1,0 +1,17 @@
+{
+  "id": 98,
+  "saga": 9,
+  "step": 8,
+  "title": {
+    "en": "The route to the fortress",
+    "es": "La ruta a la fortaleza"
+  },
+  "enemy": "Ash sentinel",
+  "guardian": 57,
+  "master": "path-098.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The War for the Books. Path episode: The route to the fortress. Story action, which the scene must directly support: A map shows a road to the fortress. A soldier blocks the exit from the camp.\nEnemy identity, MUST match this exact anatomy: a round living fortress gate golem with a portcullis face and large stone fists. Eye-level view toward the last gate, enemy occupying the left half and the passage the right half. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-ecabd94d-c4ec-46ef-9e9f-321ec8a776bb.png",
+  "sha256": "dd86813d5561ba22b27db3406f415c4b19792bfb48ca9183c3c12bcee54fa515"
+}

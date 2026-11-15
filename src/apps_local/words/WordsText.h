@@ -1,6 +1,7 @@
 #pragma once
 #include "../study/StudyText.h"
 #include "../ui/PagedText.h"
+#include "../ui/TextAlignment.h"
 #include "../ui/WrapLine.h"
 namespace wordsui {
 struct Paragraph {
@@ -24,7 +25,7 @@ struct ParagraphPages {
 // Paginate styled source paragraphs without copying or truncating the entry.
 inline int paragraphs(freeink::ui::DrawTarget& target, freeink::ui::Rect box, const Paragraph* parts, int count,
                       int selected, pagedtext::Work& work, int gap = 12, int* usedHeight = nullptr,
-                      ParagraphPages* cache = nullptr, uint8_t* wordBreaks = nullptr) {
+                      ParagraphPages* cache = nullptr, uint8_t* wordBreaks = nullptr, uint8_t alignment = 0) {
   namespace fui = freeink::ui;
   const bool fitOnly = selected == -2;
   if (fitOnly) cache = nullptr;
@@ -129,7 +130,8 @@ inline int paragraphs(freeink::ui::DrawTarget& target, freeink::ui::Rect box, co
         if (prefix) target.text(fui::makeRect(box.x, box.y + y, prefix - 8, lineHeight), part.prefix, prefixStyle);
         std::memcpy(work.line, part.text + start, end - start);
         work.line[end - start] = 0;
-        target.text(fui::makeRect(box.x + prefix, box.y + y, width, lineHeight), work.line, style);
+        textalignment::line(target, fui::makeRect(box.x + prefix, box.y + y, width, lineHeight), work.line, style,
+                            alignment, !part.text[after] || part.text[end] == '\n' || part.text[end] == '\r');
       }
       y += lineHeight;
       at = after;

@@ -1,5 +1,10 @@
 #include "KeyboardLayoutSet.h"
 
+#include <HalStorage.h>
+
+#include <cstdio>
+#include <cstring>
+
 #include "CrossPointSettings.h"
 
 namespace keyboard_layouts {
@@ -34,8 +39,7 @@ uint16_t enabled() {
   // survives downgrades, so it can carry bits this build does not have. Left
   // in, such a mask would read as "configured" while enabling nothing.
   uint16_t configured = static_cast<uint16_t>(SETTINGS.keyboardLayouts & ALL_BITS);
-  if (configured && (I18N.getLanguage() == Language::EN || I18N.getLanguage() == Language::ES))
-    configured |= layoutBit(forLanguage(I18N.getLanguage()));
+  if (configured) configured |= layoutBit(forLanguage(I18N.getLanguage()));
   if (configured != 0) {
     if (configured & LATIN_BITS) return configured;
     return static_cast<uint16_t>(configured | layoutBit(freeink::ui::KeyboardLayoutId::QwertyEn));
@@ -49,7 +53,6 @@ uint16_t enabled() {
 freeink::ui::KeyboardLayoutId startingLayout() {
   const freeink::ui::KeyboardLayoutId preferred = forLanguage(I18N.getLanguage());
   if (enabled() & layoutBit(preferred)) return preferred;
-  // Switched off: opening on it anyway would ignore a deliberate choice.
   return next(preferred);
 }
 
@@ -61,6 +64,57 @@ freeink::ui::KeyboardLayoutId next(const freeink::ui::KeyboardLayoutId current) 
   for (uint8_t step = 1; step <= COUNT; ++step) {
     const uint8_t i = static_cast<uint8_t>((start + step) % COUNT);
     if (mask & bitAt(i)) return ALL[i].id;
+  }
+  return current;
+}
+
+bool builtinLanguage(Language language) {
+  for (const auto& layout : ALL)
+    if (layout.language == language) return true;
+  return false;
+}
+
+uint64_t scanCardLayouts() {
+  uint64_t mask = 0;
+  char path[80];
+  for (uint8_t n = 0; n < getLanguageCount(); ++n) {
+    if (builtinLanguage(static_cast<Language>(n))) continue;
+    std::snprintf(path, sizeof(path), "/languages/keyboards/%s.cpkbd", LANGUAGE_CODES[n]);
+    if (!Storage.exists(path)) continue;
+    HalFile file;
+    uint8_t header[16];
+    if (Storage.openFileForRead("KEYBOARD", path, file) && file.read(header, sizeof(header)) == sizeof(header) &&
+        std::memcmp(header, "CPKB", 4) == 0 && header[4] == 1 && file.size() <= 4112)
+      mask |= languageBit(static_cast<Language>(n));
+  }
+  return mask;
+}
+
+Selection startingSelection(uint64_t cardLayouts) {
+  const auto language = I18N.getLanguage();
+  return {forLanguage(language), language, !builtinLanguage(language) && (cardLayouts & languageBit(language)) != 0};
+}
+
+Selection nextSelection(Selection current, uint64_t cardLayouts) {
+  const uint16_t builtins = enabled();
+  const uint64_t optional = (SETTINGS.keyboardLanguageLayouts | languageBit(I18N.getLanguage())) & cardLayouts;
+  const int total = COUNT + getLanguageCount();
+  int from = -1;
+  for (int n = 0; n < total; ++n) {
+    const auto language = n < COUNT ? ALL[n].language : static_cast<Language>(n - COUNT);
+    if (language == current.language && (n < COUNT || !builtinLanguage(language))) {
+      from = n;
+      break;
+    }
+  }
+  for (int step = 1; step <= total; ++step) {
+    const int n = (from + step + total) % total;
+    const auto language = n < COUNT ? ALL[n].language : static_cast<Language>(n - COUNT);
+    const bool included = n < COUNT ? (builtins & bitAt(uint8_t(n))) != 0
+                                    : !builtinLanguage(language) && (optional & languageBit(language)) != 0;
+    if (included)
+      return {forLanguage(language), language,
+              !builtinLanguage(language) && (cardLayouts & languageBit(language)) != 0};
   }
   return current;
 }

@@ -1,0 +1,12 @@
+{
+  "id": "D027",
+  "master": "decor-027-v1.png",
+  "sha256": "26ede6dcea805c8911e0958ded7318c42296e54650bca75b9ff7264859f7e8b9",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original collectible decoration sprite for the e-ink fantasy reading app Aventura lectora. Reference fairy is STYLE ONLY. Friendly chibi storybook proportions, white and pale-gray flat fills, VERY THICK solid pure-BLACK outer contours (20-26px at1024px), strong black inner lines, simple broad shapes readable at112x144. Whole subject visible, centered with transparent padding. Genuine transparent background. No scenery, frame, UI, text, lettering, watermark, fine hatching or gray outlines. Do not include the player hero or PET. Subject: a folded-paper fish brought to life, with broad origami fins, clear smiling eyes and a few large bubbles. An airborne or hanging ornament; no ground base.",
+  "reference": "assets_local/quest/redesign/masters/decoration-fairy-v1.png",
+  "transparent": true,
+  "width": 1312,
+  "height": 1199,
+  "mode": "RGBA"
+}

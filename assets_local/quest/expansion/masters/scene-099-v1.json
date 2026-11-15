@@ -1,0 +1,12 @@
+{
+  "id": "S099",
+  "master": "scene-099-v1.png",
+  "sha256": "811acc38001b889af23166f534f02b5342ead22c2154949060be2894f897486f",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The last page. Chapter: The last page. Illustrate this already-authored event faithfully, without inventing another object or plot: The freed regions keep telling their own accounts while you hold the approach. The fortress cannot restore its old isolation; each surviving voice helps keep its stolen story within reach. Context only, do not try to draw all of it: The damaged crown draws the last captive ink around the throne. The Demon King remains between the restored stories and their return. You carry every opened seal into the final chapter, with no further bargain to accept.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

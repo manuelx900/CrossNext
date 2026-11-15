@@ -9,7 +9,8 @@ mkdir -p "$out"
  src/apps_local/chess/ChessScreens.cpp src/apps_local/chess/ChessCore.cpp \
  src/apps_local/connectfour/ConnectFourScreens.cpp src/apps_local/pocketgames/PocketGamesScreens.cpp \
  src/apps_local/pocketgames/OthelloScreens.cpp src/apps_local/pocketgames/PocketGamesCore.cpp \
- src/apps_local/cards/CardArt.cpp src/apps_local/pomodoro/PomodoroScreens.cpp src/apps_local/pomodoro/PomodoroCore.cpp \
+ src/apps_local/cards/CardArt.cpp src/apps_local/pomodoro/PomodoroScreens.cpp src/apps_local/pomodoro/PomodoroStatsScreens.cpp src/apps_local/pomodoro/PomodoroHistory.cpp src/apps_local/pomodoro/PomodoroCore.cpp \
+ src/apps_local/pomodoro/TimerSettingsUi.cpp \
  src/apps_local/words/WordsScreens.cpp src/apps_local/wallpapers/WallpapersScreens.cpp \
  src/apps_local/reading/ReadingStatsScreens.cpp src/apps_local/reading/ReadingGoalScreens.cpp src/apps_local/reading/ReadingStatsCore.cpp \
  src/apps_local/picross/PicrossScreens.cpp src/apps_local/picross/PicrossCore.cpp \

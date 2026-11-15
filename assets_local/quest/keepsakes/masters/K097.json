@@ -1,0 +1,18 @@
+{
+  "id": "K097",
+  "key": "Cuadrante",
+  "file": "K097.png",
+  "sample": {
+    "es": "Cuadrante pequeño",
+    "en": "Small dial"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Small dial.",
+  "requests": [
+    161
+  ],
+  "sha256": "1b6d066131e75c0e90c60d64ca08f7330ffa0c0476748467d541ee7f65bfbbd6",
+  "source": "exec-4b659cbe-ae35-46d5-9552-ea096165a207.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

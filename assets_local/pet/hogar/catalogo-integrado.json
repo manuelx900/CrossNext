@@ -305,8 +305,8 @@
     "nombre": "Hojas caídas",
     "descripcion": "Tres hojas anchas en un grupo bajo apoyado en el suelo.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-001.png",
@@ -334,8 +334,8 @@
     "nombre": "Estrellas dispersas",
     "descripcion": "Cinco estrellas pequeñas bien separadas en un grupo horizontal compacto.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-002.png",
@@ -346,7 +346,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 10,
-    "english_name": "Scattered stars"
+    "english_name": "Scattered stars",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-02.png",
+      "column": 0,
+      "row": 0,
+      "columns": 3,
+      "rows": 2
+    }
   },
   {
     "id": "entorno-003",
@@ -363,8 +370,8 @@
     "nombre": "Piedras lisas",
     "descripcion": "Tres cantos rodados de tamaños distintos en grupo bajo.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-003.png",
@@ -5723,8 +5730,8 @@
     "nombre": "Mata de musgo",
     "descripcion": "Dos montículos bajos de musgo con borde redondeado.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-004.png",
@@ -5752,8 +5759,8 @@
     "nombre": "Flores silvestres",
     "descripcion": "Grupo bajo de tres flores pequeñas de tallo corto.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-005.png",
@@ -5781,8 +5788,8 @@
     "nombre": "Hierba corta",
     "descripcion": "Tres mechones bajos de hierba de hojas anchas.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-006.png",
@@ -5810,8 +5817,8 @@
     "nombre": "Setas pequeñas",
     "descripcion": "Dos setas de tamaños distintos en un grupo bajo.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-007.png",
@@ -5839,8 +5846,8 @@
     "nombre": "Tréboles",
     "descripcion": "Tres tréboles anchos de tallo muy corto.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-008.png",
@@ -5868,8 +5875,8 @@
     "nombre": "Piñas de bosque",
     "descripcion": "Dos piñas pequeñas con pocas escamas grandes.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-009.png",
@@ -5897,8 +5904,8 @@
     "nombre": "Bellotas caídas",
     "descripcion": "Tres bellotas tumbadas en un grupo compacto.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-010.png",
@@ -5926,8 +5933,8 @@
     "nombre": "Pétalos sueltos",
     "descripcion": "Cuatro pétalos grandes formando un grupo bajo.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-011.png",
@@ -5955,8 +5962,8 @@
     "nombre": "Ramitas",
     "descripcion": "Dos ramitas cortas cruzadas con una hoja grande.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-012.png",
@@ -5984,8 +5991,8 @@
     "nombre": "Guijarros apilados",
     "descripcion": "Tres piedras planas formando una torre baja y estable.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-013.png",
@@ -6013,8 +6020,8 @@
     "nombre": "Conchas",
     "descripcion": "Dos conchas de siluetas distintas formando un grupo bajo.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-014.png",
@@ -6042,8 +6049,8 @@
     "nombre": "Arena ondulada",
     "descripcion": "Pequeño parche aislado de arena con tres ondas gruesas.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-015.png",
@@ -6071,8 +6078,8 @@
     "nombre": "Charco tranquilo",
     "descripcion": "Charco pequeño de contorno simple y dos ondas interiores.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-016.png",
@@ -6100,8 +6107,8 @@
     "nombre": "Hielo redondo",
     "descripcion": "Dos fragmentos de hielo bajos con facetas grandes.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-017.png",
@@ -6129,8 +6136,8 @@
     "nombre": "Cristales bajos",
     "descripcion": "Grupo de tres cristales cortos y anchos, sin detalles diminutos.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-018.png",
@@ -6158,8 +6165,8 @@
     "nombre": "Nieve suave",
     "descripcion": "Pequeño montículo aislado de nieve con dos lóbulos.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-019.png",
@@ -6187,8 +6194,8 @@
     "nombre": "Raíces expuestas",
     "descripcion": "Dos raíces cortas formando un grupo bajo, sin árbol.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-020.png",
@@ -6216,8 +6223,8 @@
     "nombre": "Luna y destellos",
     "descripcion": "Media luna pequeña con dos destellos, conjunto compacto para pared.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-021.png",
@@ -6228,7 +6235,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 200,
-    "english_name": "Moon and sparkles"
+    "english_name": "Moon and sparkles",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 0,
+      "row": 0,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-022",
@@ -6245,8 +6259,8 @@
     "nombre": "Constelación simple",
     "descripcion": "Cuatro estrellas grandes conectadas por tres segmentos cortos.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-022.png",
@@ -6257,7 +6271,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 201,
-    "english_name": "Simple constellation"
+    "english_name": "Simple constellation",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 1,
+      "row": 0,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-023",
@@ -6274,8 +6295,8 @@
     "nombre": "Nube suave",
     "descripcion": "Una nube ancha de tres lóbulos y contorno ligero.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-023.png",
@@ -6286,7 +6307,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 202,
-    "english_name": "Soft cloud"
+    "english_name": "Soft cloud",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 2,
+      "row": 0,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-024",
@@ -6303,8 +6331,8 @@
     "nombre": "Dos nubes",
     "descripcion": "Dos nubes pequeñas separadas que forman una composición horizontal.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-024.png",
@@ -6315,7 +6343,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 203,
-    "english_name": "Two clouds"
+    "english_name": "Two clouds",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 3,
+      "row": 0,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-025",
@@ -6332,8 +6367,8 @@
     "nombre": "Sol discreto",
     "descripcion": "Sol pequeño con seis rayos cortos y centro blanco.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-025.png",
@@ -6344,7 +6379,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 204,
-    "english_name": "Subtle sun"
+    "english_name": "Subtle sun",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 4,
+      "row": 0,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-026",
@@ -6361,8 +6403,8 @@
     "nombre": "Arcoíris de líneas",
     "descripcion": "Tres arcos negros separados por blanco y dos nubes pequeñas; sin color.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-026.png",
@@ -6373,7 +6415,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 205,
-    "english_name": "Line rainbow"
+    "english_name": "Line rainbow",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 0,
+      "row": 1,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-027",
@@ -6390,8 +6439,8 @@
     "nombre": "Copos",
     "descripcion": "Tres copos sencillos separados, cada uno de cuatro brazos gruesos.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-027.png",
@@ -6402,7 +6451,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 206,
-    "english_name": "Snowflakes"
+    "english_name": "Snowflakes",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 1,
+      "row": 1,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-028",
@@ -6419,8 +6475,8 @@
     "nombre": "Mariposas",
     "descripcion": "Dos mariposas de tamaños distintos flotando, sin plantas ni suelo.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-028.png",
@@ -6431,7 +6487,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 207,
-    "english_name": "Butterflies"
+    "english_name": "Butterflies",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 2,
+      "row": 1,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-029",
@@ -6448,8 +6511,8 @@
     "nombre": "Libélulas",
     "descripcion": "Dos siluetas pequeñas de libélula con alas gruesas.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-029.png",
@@ -6460,7 +6523,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 208,
-    "english_name": "Dragonflies"
+    "english_name": "Dragonflies",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 3,
+      "row": 1,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-030",
@@ -6477,8 +6547,8 @@
     "nombre": "Hojas flotantes",
     "descripcion": "Tres hojas anchas suspendidas, sin cuerda ni soporte.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-030.png",
@@ -6489,7 +6559,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 209,
-    "english_name": "Floating leaves"
+    "english_name": "Floating leaves",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 4,
+      "row": 1,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-031",
@@ -6506,8 +6583,8 @@
     "nombre": "Pétalos al viento",
     "descripcion": "Cinco pétalos separados en una curva horizontal compacta.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-031.png",
@@ -6518,7 +6595,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 210,
-    "english_name": "Windblown petals"
+    "english_name": "Windblown petals",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 0,
+      "row": 2,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-032",
@@ -6535,8 +6619,8 @@
     "nombre": "Remolino suave",
     "descripcion": "Dos trazos curvos grandes y una hoja, sin cubrir toda la escena.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-032.png",
@@ -6547,7 +6631,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 211,
-    "english_name": "Gentle swirl"
+    "english_name": "Gentle swirl",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 1,
+      "row": 2,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-033",
@@ -6564,8 +6655,8 @@
     "nombre": "Brillos redondos",
     "descripcion": "Cuatro destellos de cuatro puntas de tamaños distintos.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-033.png",
@@ -6576,7 +6667,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 212,
-    "english_name": "Round sparkles"
+    "english_name": "Round sparkles",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 2,
+      "row": 2,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-034",
@@ -6593,8 +6691,8 @@
     "nombre": "Estrella fugaz",
     "descripcion": "Una estrella grande y dos trazos de cola cortos.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-034.png",
@@ -6605,7 +6703,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 213,
-    "english_name": "Shooting star"
+    "english_name": "Shooting star",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 3,
+      "row": 2,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-035",
@@ -6622,8 +6727,8 @@
     "nombre": "Planetas pequeños",
     "descripcion": "Dos círculos de tamaños distintos, uno con anillo ancho.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-035.png",
@@ -6634,7 +6739,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 214,
-    "english_name": "Small planets"
+    "english_name": "Small planets",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 4,
+      "row": 2,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-036",
@@ -6651,8 +6763,8 @@
     "nombre": "Aurora estilizada",
     "descripcion": "Tres cintas de contorno ondulado sobre blanco, conjunto corto y ligero.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-036.png",
@@ -6663,7 +6775,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 215,
-    "english_name": "Stylized aurora"
+    "english_name": "Stylized aurora",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 0,
+      "row": 3,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-037",
@@ -6680,8 +6799,8 @@
     "nombre": "Rama de enredadera",
     "descripcion": "Enredadera horizontal corta con cuatro hojas grandes, sin maceta.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-037.png",
@@ -6692,7 +6811,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 216,
-    "english_name": "Vine branch"
+    "english_name": "Vine branch",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 1,
+      "row": 3,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-038",
@@ -6709,8 +6835,8 @@
     "nombre": "Enredadera curva",
     "descripcion": "Una guía curva con tres hojas anchas, forma lateral abierta.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-038.png",
@@ -6721,7 +6847,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 217,
-    "english_name": "Curved vine"
+    "english_name": "Curved vine",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 2,
+      "row": 3,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-039",
@@ -6738,8 +6871,8 @@
     "nombre": "Campanillas naturales",
     "descripcion": "Dos flores colgantes unidas a una rama pequeña, sin cuerda.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-039.png",
@@ -6750,7 +6883,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 218,
-    "english_name": "Natural bells"
+    "english_name": "Natural bells",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 3,
+      "row": 3,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-040",
@@ -6767,8 +6907,8 @@
     "nombre": "Plumas flotantes",
     "descripcion": "Dos plumas grandes separadas con pocas barbas gruesas.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-040.png",
@@ -6779,7 +6919,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 219,
-    "english_name": "Floating feathers"
+    "english_name": "Floating feathers",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-01.png",
+      "column": 4,
+      "row": 3,
+      "columns": 5,
+      "rows": 4
+    }
   },
   {
     "id": "entorno-041",
@@ -6796,8 +6943,8 @@
     "nombre": "Alfombra de hojas",
     "descripcion": "Pequeño parche bajo de cuatro hojas superpuestas, sin rectángulo de fondo.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-041.png",
@@ -6825,8 +6972,8 @@
     "nombre": "Círculo de piedras",
     "descripcion": "Cinco piedras formando un pequeño anillo horizontal visto de frente suave.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-042.png",
@@ -6854,8 +7001,8 @@
     "nombre": "Brote entre rocas",
     "descripcion": "Brote de dos hojas entre dos piedras bajas.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-043.png",
@@ -6883,8 +7030,8 @@
     "nombre": "Jardín de arena",
     "descripcion": "Parche bajo ovalado con dos surcos anchos y una piedra.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-044.png",
@@ -6912,8 +7059,8 @@
     "nombre": "Pétalos de loto",
     "descripcion": "Tres pétalos bajos junto a una hoja redonda, sin estanque.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-045.png",
@@ -6941,8 +7088,8 @@
     "nombre": "Fragmentos de corteza",
     "descripcion": "Dos piezas cortas de corteza con una marca interior cada una.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-046.png",
@@ -6970,8 +7117,8 @@
     "nombre": "Semillas aladas",
     "descripcion": "Tres semillas de arce tumbadas, cada una con ala grande.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-047.png",
@@ -6999,8 +7146,8 @@
     "nombre": "Caracolas pequeñas",
     "descripcion": "Dos caracolas bajas con una espiral gruesa cada una, sin animales.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-048.png",
@@ -7028,8 +7175,8 @@
     "nombre": "Roca lunar",
     "descripcion": "Una roca baja con dos cráteres grandes y base estable.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-049.png",
@@ -7057,8 +7204,8 @@
     "nombre": "Piedras volcánicas",
     "descripcion": "Tres rocas porosas bajas con dos agujeros grandes cada una; sin fuego.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-050.png",
@@ -7086,8 +7233,8 @@
     "nombre": "Flores de roca",
     "descripcion": "Dos flores cortas naciendo entre piedras anchas.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-051.png",
@@ -7115,8 +7262,8 @@
     "nombre": "Nido vacío pequeño",
     "descripcion": "Nido ornamental muy bajo de pocas ramas, sin huevos ni animales.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-052.png",
@@ -7144,8 +7291,8 @@
     "nombre": "Charco con nenúfar",
     "descripcion": "Charco pequeño con una hoja redonda aislada y borde blanco amplio.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-053.png",
@@ -7173,8 +7320,8 @@
     "nombre": "Montículo de tierra",
     "descripcion": "Montículo bajo con un brote de dos hojas, sin recipiente.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-054.png",
@@ -7202,8 +7349,8 @@
     "nombre": "Hojarasca curva",
     "descripcion": "Cuatro hojas anchas formando una media luna baja sobre el suelo.",
     "anclaje": "entorno_suelo",
-    "max_ancho_pantalla": 62,
-    "max_alto_pantalla": 24,
+    "max_ancho_pantalla": 84,
+    "max_alto_pantalla": 40,
     "pivote": "bottom-center",
     "capa": "ground",
     "archivo_futuro": "entorno-055.png",
@@ -7231,8 +7378,8 @@
     "nombre": "Burbujas decorativas",
     "descripcion": "Cinco círculos vacíos de tamaños distintos en una agrupación ligera.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-056.png",
@@ -7243,7 +7390,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 235,
-    "english_name": "Decorative bubbles"
+    "english_name": "Decorative bubbles",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-02.png",
+      "column": 1,
+      "row": 0,
+      "columns": 3,
+      "rows": 2
+    }
   },
   {
     "id": "entorno-057",
@@ -7260,8 +7414,8 @@
     "nombre": "Cometas lejanos",
     "descripcion": "Dos pequeñas estrellas con colas cortas, sin paisaje ni marco.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-057.png",
@@ -7272,7 +7426,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 236,
-    "english_name": "Distant comets"
+    "english_name": "Distant comets",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-02.png",
+      "column": 2,
+      "row": 0,
+      "columns": 3,
+      "rows": 2
+    }
   },
   {
     "id": "entorno-058",
@@ -7289,8 +7450,8 @@
     "nombre": "Cristales suspendidos",
     "descripcion": "Tres cristales pequeños de facetas grandes separados y sin cuerdas.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-058.png",
@@ -7301,7 +7462,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 237,
-    "english_name": "Hanging crystals"
+    "english_name": "Hanging crystals",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-02.png",
+      "column": 0,
+      "row": 1,
+      "columns": 3,
+      "rows": 2
+    }
   },
   {
     "id": "entorno-059",
@@ -7318,8 +7486,8 @@
     "nombre": "Ramas de invierno",
     "descripcion": "Dos ramitas desnudas cortas formando un arco lateral abierto.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-059.png",
@@ -7330,7 +7498,14 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 238,
-    "english_name": "Winter branches"
+    "english_name": "Winter branches",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-02.png",
+      "column": 1,
+      "row": 1,
+      "columns": 3,
+      "rows": 2
+    }
   },
   {
     "id": "entorno-060",
@@ -7347,8 +7522,8 @@
     "nombre": "Guirnalda botánica natural",
     "descripcion": "Una rama curva corta con dos hojas y una flor, sin cordel ni soporte.",
     "anclaje": "entorno_pared",
-    "max_ancho_pantalla": 96,
-    "max_alto_pantalla": 44,
+    "max_ancho_pantalla": 112,
+    "max_alto_pantalla": 72,
     "pivote": "center",
     "capa": "wall",
     "archivo_futuro": "entorno-060.png",
@@ -7359,6 +7534,13 @@
     "sheet_real_width": 1402,
     "sheet_real_height": 1122,
     "firmware_id": 239,
-    "english_name": "Botanical garland"
+    "english_name": "Botanical garland",
+    "grayscale_source": {
+      "file": "../v11/entorno-pared-02.png",
+      "column": 2,
+      "row": 1,
+      "columns": 3,
+      "rows": 2
+    }
   }
 ]

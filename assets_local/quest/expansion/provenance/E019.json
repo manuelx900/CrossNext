@@ -1,0 +1,12 @@
+{
+  "id": "E019",
+  "master": "enemy-019-v1.png",
+  "sha256": "528b7b70547c9d30e223140ee1d3f53cfa68968b190ba338bc8d3eff11492f21",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE game enemy sprite STRIP for Aventura lectora, matching reference visual style. Exactly THREE complete full-body poses of the SAME creature side by side in three equal columns on ONE wide3:1 genuine transparent canvas. LEFT ready and menacing, MIDDLE visibly weakened with lower guarded posture, RIGHT defeated/collapsed non-graphically. Same anatomy, same scale and shared feet baseline in all three, clear transparent gutters, never overlap or crop. Pure thick BLACK contours, white and flat gray fills, strong simple shapes, serious threatening expression, no smiles, no gore, no text, UI, scenery, frames or watermark. Reference wolf is STYLE AND THREE-POSE LAYOUT ONLY, not species. New creature: a sharp-beaked slate raven with broad stone feather plates and hooked claws. Regional setting: The echo mountains. Enemy role: Stone claw.",
+  "reference": "assets_local/quest/campaign/masters/shadow-wolf.png",
+  "transparent": true,
+  "width": 2172,
+  "height": 724,
+  "mode": "RGBA"
+}

@@ -257,9 +257,65 @@ void completionIndexTests() {
               static_cast<unsigned long long>(testStorage.readBytes));
   testStorage = {};
 }
+void legacyReopeningDayTests() {
+  using namespace readingstats;
+  testStorage = {};
+  Record origin;
+  origin.epoch = 1793154600;  // 2026-10-28 02:30 UTC, 23:30 on the recorded day.
+  origin.localDay = dayIndex({2026, 10, 27});
+  origin.secondOfDay = 23 * 3600 + 30 * 60;
+  origin.seconds = 600;
+  origin.pages = 4;
+  origin.book.progressBp = 10000;
+  copyText(origin.book.document, sizeof(origin.book.document), document);
+  updateBook(origin, Book{});
+  origin.book.finishedDay = 0;
+  auto& bytes = testStorage.files[kJournalPath];
+  bytes.assign(kJournalHeader, kJournalHeader + sizeof(kJournalHeader));
+  bytes.resize(16 + kRecordBytes);
+  encode(origin, bytes.data() + 16);
+  Repository journal;
+  CHECK(journal.reopen(document, "Book", "Author", origin.epoch + 86400, 9000));
+  PeriodStats day;
+  setPeriod(day, Period::Day, origin.localDay, false);
+  Record record;
+  CHECK(journal.begin(true));
+  CHECK(journal.next(record) == ScanResult::Record);
+  CHECK(record.kind == RecordKind::Reopen && record.reversedCompletionDay == origin.localDay);
+  day.add(record);
+  CHECK(journal.next(record) == ScanResult::Record);
+  day.add(record);
+  journal.close();
+  CHECK(day.completed == 0 && day.seconds == 600 && day.pages == 4);
+  // A neighbouring day's completion belongs to a different book.
+  testStorage = {};
+  Record other = origin;
+  other.localDay += 1;
+  other.epoch += 86400;
+  copyText(other.book.document, sizeof(other.book.document), "ffffffffffffffffffffffffffffffff");
+  auto& separate = testStorage.files[kJournalPath];
+  separate.assign(kJournalHeader, kJournalHeader + sizeof(kJournalHeader));
+  separate.resize(16 + 2 * kRecordBytes);
+  encode(origin, separate.data() + 16);
+  encode(other, separate.data() + 16 + kRecordBytes);
+  CHECK(journal.reopen(document, "Book", "Author", other.epoch + 86400, 9000));
+  PeriodStats following;
+  setPeriod(day, Period::Day, origin.localDay, false);
+  setPeriod(following, Period::Day, other.localDay, false);
+  CHECK(journal.begin());
+  while (journal.next(record) == ScanResult::Record) {
+    day.add(record);
+    following.add(record);
+  }
+  journal.close();
+  CHECK(day.completed == 0);
+  CHECK(following.completed == 1);
+  testStorage = {};
+}
 int main() {
   completionTests();
   reopeningTests();
+  legacyReopeningDayTests();
   completionIndexTests();
   std::printf("Manual completion: %d checks, %d failed\n", checks, failures);
   return failures != 0;

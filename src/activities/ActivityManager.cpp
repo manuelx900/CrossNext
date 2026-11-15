@@ -1,5 +1,6 @@
 #include "ActivityManager.h"
 
+#include <BlePageTurner.h>
 #include <BoardConfig.h>
 #include <FontCacheManager.h>
 #include <FsHelpers.h>
@@ -7,6 +8,7 @@
 #include <HalFrontlight.h>
 #include <HalPowerManager.h>
 #include <Memory.h>
+#include <Performance.h>
 #include <VectorFontSupport.h>
 
 #include <algorithm>
@@ -28,6 +30,7 @@
 #include "network/UsbDriveActivity.h"
 #include "plugins/PluginCatalogActivity.h"
 #include "reader/ReaderActivity.h"
+#include "reader/RemoteTurnGate.h"
 #include "settings/OpdsServerListActivity.h"
 #include "settings/SettingsActivity.h"
 #include "util/BmpViewerActivity.h"
@@ -157,7 +160,11 @@ void ActivityManager::renderTaskLoop() {
       // Activity::surfaceMeaning().
       currentActivity->noteSurfaceBuilt();
       paintclock::panelBusy().reset();
+      const uint32_t renderingVisit = screenVisit;
+      const auto operation = performance::current();
       currentActivity->render(std::move(lock));
+      if (currentActivity->presentationComplete()) performance::finish(operation, currentActivity.get());
+      paintedVisit.store(renderingVisit, std::memory_order_release);
       reportRepaint(currentActivity->name.c_str(), requestedAtMs, repaintStartMs);
       reportStackHeadroom(currentActivity->name.c_str());
     }
@@ -224,10 +231,11 @@ void ActivityManager::loop() {
     return;
   }
 
-  if (currentActivity) {
+  if (currentActivity && pendingAction == PendingAction::None) {
     // Reading reserves the bottom edge for format-aware text/page settings.
     // Resolve it before the global Home gesture on boards without a Home key.
-    if (mappedInput.wasReaderTextSettingsGesture() && currentActivity->handleReaderTextSettingsGesture()) {
+    if ((currentActivity->isReaderActivity() || mappedInput.wasReaderTextSettingsGesture()) &&
+        currentActivity->handleReaderTextSettingsGesture()) {
       return;
     }
     if (!currentActivity->isHomeActivity() && mappedInput.wasHomeGesture()) {
@@ -252,6 +260,15 @@ void ActivityManager::loop() {
   }
 
   while (pendingAction != PendingAction::None) {
+    const bool sleeping = pendingActivity && pendingActivity->name == "Sleep";
+    const Activity* next = pendingActivity            ? pendingActivity.get()
+                           : !stackActivities.empty() ? stackActivities.back().get()
+                                                      : nullptr;
+    const bool keepRadio =
+        next && (next->isReaderActivity() || next->allowsRemoteControl()) && !next->requiresExclusiveStorageLoop();
+    if (!sleeping && !bleturner::beforeScreenChange(0, keepRadio)) {
+      return;
+    }
     if (pendingAction == PendingAction::Pop) {
       RenderLock lock;
 
@@ -311,8 +328,10 @@ void ActivityManager::loop() {
           stackActivities.pop_back();
         }
       } else if (pendingAction == PendingAction::Push) {
+        if (currentActivity) currentActivity->prepareForChild();
         if (currentActivity && currentActivity->blockChildEdgeBack) pendingActivity->setEdgeBackEnabled(false, true);
         // Move current activity to stack
+        if (currentActivity) currentActivity->pauseReadingPace();
         stackActivities.push_back(std::move(currentActivity));
         // The parent's header back rect must not route taps on the pushed
         // screen (which may draw no header of its own).
@@ -323,7 +342,10 @@ void ActivityManager::loop() {
       setCurrentActivity(std::move(pendingActivity));
 
       lock.unlock();  // onEnter may acquire its own lock
-      currentActivity->onEnter();
+      {
+        performance::Scope entering(performance::Stage::Enter);
+        currentActivity->onEnter();
+      }
 
       // onEnter may request another pending action, we will handle it in the next loop iteration
       continue;
@@ -352,6 +374,9 @@ void ActivityManager::loop() {
 // assignment to currentActivity exists outside this function.
 void ActivityManager::setCurrentActivity(std::unique_ptr<Activity>&& next) {
   idleWorkOwner.store(nullptr);
+  ++screenVisit;
+  mappedInput.resetRemoteInput();
+  mappedInput.setReaderTextContext(false);
   mappedInput.swallowNextReleaseOfHeldButtons();
   currentActivity = std::move(next);
   UITheme::getInstance().setInterfaceSection(currentInterfaceFontSection());
@@ -363,6 +388,7 @@ void ActivityManager::exitActivity(const RenderLock& lock) {
   idleWorkOwner.store(nullptr);
   // Note: lock must be held by the caller
   if (currentActivity) {
+    performance::Scope leaving(performance::Stage::Leave);
     currentActivity->onExit();
     currentActivity.reset();
   }
@@ -372,6 +398,7 @@ void ActivityManager::exitActivity(const RenderLock& lock) {
 }
 
 void ActivityManager::replaceActivity(std::unique_ptr<Activity>&& newActivity) {
+  if (newActivity) performance::begin(performance::Operation::Navigation, newActivity.get());
   if (newActivity && currentActivity) newActivity->interfaceFontContext.inherit(currentActivity->interfaceFontContext);
   mappedInput.resetHomeButtonInput();
   // Note: no lock here, this is usually called by loop() and we may run into deadlock
@@ -387,6 +414,7 @@ void ActivityManager::replaceActivity(std::unique_ptr<Activity>&& newActivity) {
     RenderLock lock;
     setCurrentActivity(std::move(newActivity));
     lock.unlock();
+    performance::Scope entering(performance::Stage::Enter);
     currentActivity->onEnter();
   }
 }
@@ -498,6 +526,7 @@ void ActivityManager::goHome(HomeMenuItem initialMenuItem, bool cleanInitialRefr
 void ActivityManager::goToCrashReport() { replaceActivity(std::make_unique<CrashActivity>(renderer, mappedInput)); }
 
 void ActivityManager::pushActivity(std::unique_ptr<Activity>&& activity) {
+  if (activity) performance::begin(performance::Operation::Navigation, activity.get());
   if (activity && currentActivity) activity->interfaceFontContext.inherit(currentActivity->interfaceFontContext);
   mappedInput.resetHomeButtonInput();
   if (pendingActivity) {
@@ -510,6 +539,8 @@ void ActivityManager::pushActivity(std::unique_ptr<Activity>&& activity) {
 }
 
 void ActivityManager::popActivity() {
+  performance::begin(performance::Operation::Navigation,
+                     stackActivities.empty() ? nullptr : stackActivities.back().get());
   mappedInput.resetHomeButtonInput();
   if (pendingActivity) {
     // Should never happen in practice
@@ -544,6 +575,71 @@ bool ActivityManager::isReaderActivity() const {
   return std::any_of(stackActivities.begin(), stackActivities.end(),
                      [](const auto& activity) { return activity->isReaderActivity(); }) ||
          (currentActivity && currentActivity->isReaderActivity());
+}
+
+bool ActivityManager::isForegroundReader() const {
+  return pendingAction == PendingAction::None && currentActivity && currentActivity->isReaderActivity();
+}
+bool ActivityManager::readerTextInputActive() const {
+  return pendingAction == PendingAction::None && currentActivity && currentActivity->acceptsReaderTextInput();
+}
+
+bool ActivityManager::isRemoteReaderContext() const {
+  return pendingAction == PendingAction::None && currentActivity && currentActivity->acceptsRemoteInput();
+}
+
+bool ActivityManager::isRemoteControlContext() const {
+  return pendingAction == PendingAction::None && currentActivity && currentActivity->allowsRemoteControl() &&
+         !currentActivity->requiresExclusiveStorageLoop();
+}
+
+bool ActivityManager::isRemoteControlShown() const {
+  return isRemoteControlContext() && paintedVisit.load(std::memory_order_acquire) == screenVisit;
+}
+
+bool ActivityManager::remoteRadioReady() const {
+  RenderLock lock(RenderLock::Mode::Try);
+  if (!lock.ownsLock()) return false;
+  if (isForegroundHomeShown()) return true;
+  if (!isForegroundReader()) return isRemoteControlShown();
+  return static_cast<ReaderActivity*>(currentActivity.get())->canStartRemoteRadio();
+}
+
+bool ActivityManager::remoteClick(const RemoteButton button) {
+  if (!isRemoteControlShown()) return false;
+  return mappedInput.injectRemoteClick(button);
+}
+
+bool ActivityManager::isForegroundHomeShown() const {
+  return pendingAction == PendingAction::None && currentActivity && currentActivity->name == "Home" &&
+         paintedVisit.load(std::memory_order_acquire) == screenVisit;
+}
+
+bool ActivityManager::remoteShortcut(const bool readerMenu) {
+  if (!isForegroundReader() || requestedUpdate.load() || repaintNotified.load()) return false;
+  auto* reader = static_cast<ReaderActivity*>(currentActivity.get());
+  if (!remoteTurnAccepted(reader->pageRendered.load(std::memory_order_acquire), RenderLock::peek(),
+                          reader->inputOverPage())) {
+    return false;
+  }
+  return reader->remoteShortcut(readerMenu);
+}
+
+bool ActivityManager::remoteTurn(const bool forward, const bool chapter) {
+  if (!isRemoteControlShown() || mappedInput.hasRemoteClick() || requestedUpdate.load() || repaintNotified.load())
+    return false;
+  auto* reader = isForegroundReader() ? static_cast<ReaderActivity*>(currentActivity.get()) : nullptr;
+  if (!reader || reader->inputOverPage()) {
+    return !chapter && remoteClick(forward ? RemoteButton::Next : RemoteButton::Previous);
+  }
+  if (!remoteTurnAccepted(reader->pageRendered.load(std::memory_order_acquire), RenderLock::peek(),
+                          reader->inputOverPage())) {
+    return false;
+  }
+  const bool turned = chapter ? reader->skipPages(forward ? 1 : -1) : reader->pageTurn(forward);
+  reader->notePageTurn(!chapter && forward, turned);
+  if (turned) requestUpdate();
+  return turned;
 }
 
 bool ActivityManager::handleForcedRefresh() { return currentActivity && currentActivity->handleForcedRefresh(); }
@@ -675,3 +771,7 @@ void RenderLock::unlock() {
  *
  */
 bool RenderLock::peek() { return xQueuePeek(activityManager.renderingMutex, NULL, 0) != pdTRUE; };
+
+bool RenderLock::heldByCurrentTask() {
+  return xSemaphoreGetMutexHolder(activityManager.renderingMutex) == xTaskGetCurrentTaskHandle();
+}

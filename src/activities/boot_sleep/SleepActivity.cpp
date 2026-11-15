@@ -563,6 +563,11 @@ void SleepActivity::onEnter() {
     return renderTransparentCustomSleepScreen();
   }
 
+  if (SETTINGS.sleepReadingGoal &&
+      (SETTINGS.sleepScreen == CrossPointSettings::CUSTOM || SETTINGS.sleepScreen == CrossPointSettings::COVER ||
+       SETTINGS.sleepScreen == CrossPointSettings::COVER_CUSTOM))
+    prepareGoalOverlay();
+
   // Show popup with reader orientation only when going to sleep from reader
   if (APP_STATE.lastSleepFromReader) {
     ReaderUtils::applyOrientation(renderer, SETTINGS.orientation);
@@ -595,7 +600,8 @@ void SleepActivity::onEnter() {
       const bool available = summary && readinggoal::load(*summary, day);
       if (!summary) LOG_ERR("SLP", "OOM: daily goal screen");
       readingui::goalWallpaper(screen, available ? summary.get() : nullptr, day,
-                               readinggoal::target(SETTINGS.readingDailyGoal));
+                               readinggoal::target(SETTINGS.readingDailyGoal),
+                               SETTINGS.readingGoalLegacyHistory ? 0 : SETTINGS.readingGoalStartDay);
       chrome::lightHeader = previous;
       renderer.displayBuffer(HalDisplay::HALF_REFRESH);
       return;
@@ -624,6 +630,37 @@ void SleepActivity::onEnter() {
     default:
       return renderDefaultSleepScreen();
   }
+}
+
+void SleepActivity::prepareGoalOverlay() {
+  goalOverlay.goal = readinggoal::target(SETTINGS.readingDailyGoal);
+  if (!goalOverlay.goal) return;
+  goalOverlay.state = readinggoal::WallpaperState::Unavailable;
+  const int day = readingstats::today();
+  if (!day) return;
+  // The bounded daily summary is released before decoding the wallpaper.
+  auto summary = makeUniqueNoThrow<readingstats::Summary>();
+  if (!summary) {
+    LOG_ERR("SLP", "OOM: wallpaper goal summary");
+    return;
+  }
+  if (!readinggoal::load(*summary, day)) return;
+  goalOverlay.seconds = summary->onDay(day);
+  goalOverlay.streak = readinggoal::streak(*summary, day, goalOverlay.goal,
+                                           SETTINGS.readingGoalLegacyHistory ? 0 : SETTINGS.readingGoalStartDay);
+  goalOverlay.state = readinggoal::WallpaperState::Ready;
+}
+
+void SleepActivity::drawGoalOverlay() const {
+  if (!SETTINGS.sleepReadingGoal) return;
+  const bool previous = chrome::lightHeader;
+  const auto section = menufont::Section::Statistics;
+  chrome::lightHeader = interfacetheme::light(interfacetheme::resolve(
+      SETTINGS.homeLayout, SETTINGS.interfaceThemeStyle, section, SETTINGS.interfaceThemeOverrides[int(section)]));
+  auto target = toybox::makeTarget(renderer);
+  pixelui::bindFonts(target, renderer);
+  readingui::goalOverlay(target, target.deviceContext(), goalOverlay);
+  chrome::lightHeader = previous;
 }
 
 void SleepActivity::renderCustomSleepScreen() const {
@@ -719,6 +756,8 @@ void SleepActivity::renderBitmapSleepScreen(const Bitmap& bitmap, const bool pre
     renderer.invertScreen();
   }
 
+  if (!preserveBackground) drawGoalOverlay();
+
   const bool absolute = hasGreyscale && renderer.grayscaleCapabilities(sleepGrayscaleMode(renderer)).supported();
   if (absolute) {
     cleanBeforeAbsoluteGray(renderer);
@@ -746,6 +785,7 @@ void SleepActivity::renderBitmapSleepScreen(const Bitmap& bitmap, const bool pre
         ready = false;
         break;
       }
+      if (!preserveBackground) drawGoalOverlay();
       if (plane == GfxRenderer::GRAYSCALE_LSB)
         renderer.copyGrayscaleLsbBuffers();
       else

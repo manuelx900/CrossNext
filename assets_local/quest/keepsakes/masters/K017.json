@@ -1,0 +1,19 @@
+{
+  "id": "K017",
+  "key": "Cordel",
+  "file": "K017.png",
+  "sample": {
+    "es": "Cordel de las cartas",
+    "en": "Letter twine"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Letter twine.",
+  "requests": [
+    17,
+    131
+  ],
+  "sha256": "37be339a65c56c56a5e1d2c3f63b0d08e226e31aecc87c8b387033401c07fa84",
+  "source": "exec-b8771c2f-8da0-414f-a8f6-abcc3c4152d1.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

@@ -49,6 +49,26 @@ int main() {
   CHECK(!readinggoal::met(99999, 0));
   CHECK(!readinggoal::met(1799, 30));
   CHECK(readinggoal::met(1800, 30));
+  using GoalDay = readinggoal::DayState;
+  CHECK(readinggoal::dayState(day - 1, day, day, 0, 30) == GoalDay::Untracked);
+  CHECK(readinggoal::dayState(day + 1, day, day, 0, 30) == GoalDay::Untracked);
+  CHECK(readinggoal::dayState(day, day, 0, 0, 30) == GoalDay::Untracked);
+  CHECK(readinggoal::dayState(day, day, day, 0, 0) == GoalDay::Untracked);
+  CHECK(readinggoal::dayState(day, day, day, 900, 30) == GoalDay::InProgress);
+  CHECK(readinggoal::dayState(day - 1, day, day - 1, 900, 30) == GoalDay::Missed);
+  CHECK(readinggoal::dayState(day - 1, day, day - 1, 1800, 30) == GoalDay::Complete);
+  CHECK(readinggoal::dayState(day - 10, day, day, 1800, 30, true) == GoalDay::Complete);
+  CHECK(readinggoal::dayState(day - 10, day, day, 1799, 30, true) == GoalDay::Untracked);
+  CHECK(readinggoal::dayState(day - 10, day, day, 1800, 30, false) == GoalDay::Untracked);
+  // An unversioned save may already contain the erroneous migration cutoff.
+  const bool migrated = readinggoal::preserveLegacyHistory(0, false);
+  CHECK(migrated);
+  CHECK(readinggoal::dayState(day - 10, day, day, 1800, 30, migrated) == GoalDay::Complete);
+  CHECK(readinggoal::dayState(day - 10, day, day, 0, 30, migrated) == GoalDay::Untracked);
+  CHECK(readinggoal::preserveLegacyHistory(readinggoal::historyVersion, migrated));
+  const bool freshGoal = readinggoal::preserveLegacyHistory(readinggoal::historyVersion, false);
+  CHECK(!freshGoal);
+  CHECK(readinggoal::dayState(day - 1, day, day, 1800, 30, freshGoal) == GoalDay::Untracked);
   Summary s;
   s.anchorDay = day;
   s.dailySeconds[1] = 1800;
@@ -57,8 +77,20 @@ int main() {
   CHECK(readinggoal::streak(s, day, 30) == 2);
   s.dailySeconds[0] = 1900;
   CHECK(readinggoal::streak(s, day, 30) == 3);
+  CHECK(readinggoal::streak(s, day, 30, day) == 1);
+  CHECK(readinggoal::streak(s, day, 30, day - 1) == 2);
+  CHECK(readinggoal::streak(s, day, 30, day + 1) == 0);
   CHECK(readinggoal::streak(s, day + 2, 30) == 0);
   CHECK(readinggoal::streak(s, day, 60) == 0);
+  // Reset disables the goal without changing the authoritative reading history.
+  const auto readingSeconds = s.onDay(day);
+  CHECK(readinggoal::streak(s, day, readinggoal::target(0), 0) == 0);
+  CHECK(readinggoal::dayState(day, day, 0, readingSeconds, readinggoal::target(0), false) == GoalDay::Untracked);
+  CHECK(!readinggoal::preserveLegacyHistory(readinggoal::historyVersion, false));
+  // A newly configured goal starts today; old completed dates stay hidden.
+  CHECK(readinggoal::dayState(day - 1, day, day, s.onDay(day - 1), 30, false) == GoalDay::Untracked);
+  CHECK(s.onDay(day) == readingSeconds && s.onDay(day - 1) == 1800);
+
   testStorage = {};
   CHECK(readinggoal::load(s, day));
   CHECK(s.onDay(day) == 0);

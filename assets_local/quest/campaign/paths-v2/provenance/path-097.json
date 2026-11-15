@@ -1,0 +1,17 @@
+{
+  "id": 97,
+  "saga": 9,
+  "step": 7,
+  "title": {
+    "en": "The second seal",
+    "es": "El segundo sello"
+  },
+  "enemy": "Banner guardian",
+  "guardian": 56,
+  "master": "path-097.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The War for the Books. Path episode: The second seal. Story action, which the scene must directly support: You see the second seal in the chamber. A guardian stands between you and the seal.\nEnemy identity, MUST match this exact anatomy: a tall stern spear-carrying raven soldier with broad battered wing armor. Low view emphasizing the barrier and enemy, keep the full head, limbs, wings/tail inside safe margins. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-ed91cae8-6e1e-4323-992c-37b76ad0f635.png",
+  "sha256": "eea1b5251bd49e0732eae05614033ac056ceb907a7e5ea6947ab38f0b7e51892"
+}

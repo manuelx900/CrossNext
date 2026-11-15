@@ -1,0 +1,12 @@
+{
+  "id": "E027",
+  "master": "enemy-027-v1.png",
+  "sha256": "49b3f14e9c0fc14692c99a970b223ed475052b44583619ba7c64136782fc82d1",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE game enemy sprite STRIP for Aventura lectora, matching reference visual style. Exactly THREE complete full-body poses of the SAME creature side by side in three equal columns on ONE wide3:1 genuine transparent canvas. LEFT ready and menacing, MIDDLE visibly weakened with lower guarded posture, RIGHT defeated/collapsed non-graphically. Same anatomy, same scale and shared feet baseline in all three, clear transparent gutters, never overlap or crop. Pure thick BLACK contours, white and flat gray fills, strong simple shapes, serious threatening expression, no smiles, no gore, no text, UI, scenery, frames or watermark. Reference wolf is STYLE AND THREE-POSE LAYOUT ONLY, not species. New creature: a squat clay jar golem with a stern face and broad stone fists. Regional setting: The desert of names. Enemy role: Storm watcher.",
+  "reference": "assets_local/quest/campaign/masters/shadow-wolf.png",
+  "transparent": true,
+  "width": 2172,
+  "height": 724,
+  "mode": "RGBA"
+}

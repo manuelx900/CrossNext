@@ -1,0 +1,8 @@
+{
+  "id": "sand-lamp",
+  "path": "exec-5e61b57c-c990-44ee-9cf1-3d9beee9fbc7.png",
+  "prompt": "Production decoration sprite for Aventura lectora, ONE isolated object. Match the reference pets: thick clean pure black rounded outlines, white and soft flat gray shading, cute storybook cartoon, simple readable silhouette for 80x112 pixels, no fine texture. Full object centered with transparent margin, truly transparent RGBA background. No aura, no glow, no scenery, no letters, no frame, no other subjects. Subject: An ancient short round magic oil lamp on the ground, curved spout, a small embossed sun, no smoke",
+  "tool": "built-in image_gen",
+  "sha256": "803a258d1faafd56e70bcab0f09308d9e6a5e2fd0e0844c11966e914058cd6cf",
+  "name": "decoration-sand-lamp-v1"
+}

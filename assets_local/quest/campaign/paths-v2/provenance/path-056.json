@@ -1,0 +1,17 @@
+{
+  "id": 56,
+  "saga": 5,
+  "step": 6,
+  "title": {
+    "en": "The sandstorm",
+    "es": "La tormenta de arena"
+  },
+  "enemy": "Well stalker",
+  "guardian": 31,
+  "master": "path-056.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The Sea of Sand. Path episode: The sandstorm. Story action, which the scene must directly support: The storm hides the path. A creature moving in the sand prevents you from going any farther.\nEnemy identity, MUST match this exact anatomy: an armored desert beetle with a broad shield back and oversized mandibles. Medium view across an open area; enemy beside the key landmark, clear open sky or ceiling space. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-451c38b6-1885-4a53-a5b7-a7673581de18.png",
+  "sha256": "17a2bf80f0411a1eb75e3a04ce45e8fb61e64fc341588880307be299c9d40c3c"
+}

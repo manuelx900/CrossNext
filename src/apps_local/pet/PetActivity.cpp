@@ -13,8 +13,23 @@
 #include "../ui/PixelMenuTheme.h"
 #include "PetAlbum.h"
 #include "PetCatalogView.h"
+#include "PetDisplayPolicy.h"
+#include "PetFloating.h"
+#include "PetGrayTarget.h"
+#include "fontIds.h"
 
 namespace fui = freeink::ui;
+void PetActivity::enterName() {
+  navigation.clear();
+  pendingTap.clear();
+  if (!nameKeyboard.begin(I18N.getLanguage(), pet::NAME_BYTES - 1, pet::NAME_LIMIT, true, nameDraft)) {
+    LOG_ERR("PET", "Cannot open inline name keyboard");
+    show(pet::View::New);
+  }
+  ready = false;
+  requestUpdate();
+}
+
 std::unique_ptr<Activity> PetActivity::create(GfxRenderer& renderer, MappedInputManager& input) {
   // The fixed profile, history window and UI descriptors outlive individual stack frames.
   auto app = makeUniqueNoThrow<PetActivity>(renderer, input);
@@ -23,6 +38,7 @@ std::unique_ptr<Activity> PetActivity::create(GfxRenderer& renderer, MappedInput
 }
 void PetActivity::onEnter() {
   Activity::onEnter();
+  readingDisplay = petui::ReadingDisplay::Project;
   navigation.begin(mappedInput.isPressed(MappedInputManager::Button::NavNext) ||
                    mappedInput.isPressed(MappedInputManager::Button::NavPrevious));
   toybox::ensureFonts(renderer);
@@ -35,8 +51,8 @@ void PetActivity::onEnter() {
   loaded = store.load(profile, writable);
   historyStore.load(history, historyWritable);
   chosenSpecies = profile.species;
+  selectedFood = std::min(uint8_t(petfeed::choices(feedingArt) - 1), profile.foodChoice);
   selectedMode = profile.mode;
-  selectedGoal = profile.goalIndex;
   today = readingstats::today();
   summary.anchorDay = today;
   scanNow = std::time(nullptr);
@@ -54,14 +70,44 @@ bool PetActivity::openResources() {
     if (!pettingHandAvailable) art.open(petui::ART_PATH, petui::LEGACY_ART_COUNT, ART_PIXEL_CACHE_BYTES);
   }
   portraitBackgroundsAvailable = false;
+  fullRoomBackgroundsAvailable = false;
   if (Storage.exists(petui::HOME_ART_PATH)) {
+    fullRoomBackgroundsAvailable =
+        homeArt.open(petui::HOME_ART_PATH, petui::HOME_BACKGROUNDS_COUNT, ROOM_PIXEL_CACHE_BYTES);
     portraitBackgroundsAvailable =
-        homeArt.open(petui::HOME_ART_PATH, petui::HOME_BACKGROUNDS_COUNT, ART_PIXEL_CACHE_BYTES);
+        fullRoomBackgroundsAvailable ||
+        homeArt.open(petui::HOME_ART_PATH, petui::LEGACY_HOME_BACKGROUNDS_COUNT, ART_PIXEL_CACHE_BYTES);
     if (!portraitBackgroundsAvailable) homeArt.open(petui::HOME_ART_PATH, petui::HOME_ART_COUNT, ART_PIXEL_CACHE_BYTES);
   }
   if (Storage.exists(petui::HABITAT_ART_PATH))
     habitatArt.open(petui::HABITAT_ART_PATH, petui::HABITAT_ART_COUNT, ART_PIXEL_CACHE_BYTES);
-  if (Storage.exists(petsleep::ART_PATH)) sleepArt.open(petsleep::ART_PATH, petsleep::ART_COUNT, ART_PIXEL_CACHE_BYTES);
+  restArtAvailable = false;
+  feedingArt = petfeed::Art::Legacy;
+  curiosityAvailable = false;
+  reactionArt = petreact::Art::None;
+  if (Storage.exists(petsleep::ART_PATH)) {
+    if (sleepArt.open(petsleep::ART_PATH, petrest::ART_COUNT, ART_PIXEL_CACHE_BYTES)) {
+      restArtAvailable = true;
+      reactionArt = petreact::Art::Registered;
+      feedingArt = petfeed::Art::Extended;
+    } else if (sleepArt.open(petsleep::ART_PATH, petart::ART_COUNT, ART_PIXEL_CACHE_BYTES)) {
+      reactionArt = petreact::Art::Registered;
+      feedingArt = petfeed::Art::Extended;
+    } else if (sleepArt.open(petsleep::ART_PATH, petreact::ART_COUNT, ART_PIXEL_CACHE_BYTES))
+      reactionArt = petreact::Art::Registered;
+    else if (sleepArt.open(petsleep::ART_PATH, petreact::LEGACY_ART_COUNT, ART_PIXEL_CACHE_BYTES))
+      reactionArt = petreact::Art::Legacy;
+    curiosityAvailable = reactionArt != petreact::Art::None ||
+                         sleepArt.open(petsleep::ART_PATH, petcurious::ART_COUNT, ART_PIXEL_CACHE_BYTES);
+    if (feedingArt != petfeed::Art::Extended) {
+      if (curiosityAvailable || sleepArt.open(petsleep::ART_PATH, petfeed::ART_COUNT, ART_PIXEL_CACHE_BYTES))
+        feedingArt = petfeed::Art::Progressive;
+      else if (sleepArt.open(petsleep::ART_PATH, petfeed::SIMPLE_ART_COUNT, ART_PIXEL_CACHE_BYTES))
+        feedingArt = petfeed::Art::Simple;
+      else
+        sleepArt.open(petsleep::ART_PATH, petsleep::ART_COUNT, ART_PIXEL_CACHE_BYTES);
+    }
+  }
   const bool farewellReady = farewellArt.open(petui::FAREWELL_ART_PATH, petui::FAREWELL_ART_COUNT);
   farewellArt.close();
   const bool collectionReady = collectionArt.open(petui::COLLECTION_ART_PATH, petui::COLLECTION_ART_COUNT);
@@ -73,6 +119,12 @@ bool PetActivity::resourcesReady() const {
          (!farewellArtTried || farewellArt.ready()) && (!collectionArtTried || collectionArt.ready());
 }
 void PetActivity::onExit() {
+  nameKeyboard.close();
+  restClock.cancel();
+  restPending = petrest::Kind::None;
+  companionClock.cancel();
+  reactionClock.cancel();
+  curiosityClock.cancel();
   readings.close();
   collectionArt.close();
   collectionArtTried = false;
@@ -82,11 +134,32 @@ void PetActivity::onExit() {
   habitatArt.close();
   homeArt.close();
   portraitBackgroundsAvailable = false;
+  fullRoomBackgroundsAvailable = false;
   art.close();
   Activity::onExit();
 }
+void PetActivity::beginRestTransition() {
+  if (restPending == petrest::Kind::None) return;
+  companionClock.cancel();
+  if (restArtAvailable && petrest::eligible(profile, restPending)) {
+    const unsigned bed = profile.equipped[0];
+    restClock.start(restPending, bed < pet::OBJECT_COUNT && pet::objectSlot(bed) == 0);
+  } else if (restPending == petrest::Kind::Wake && feedingArt == petfeed::Art::Extended &&
+             petcompanion::awake(profile)) {
+    companionClock.start(petcompanion::Kind::Stretch);
+  }
+  restPending = petrest::Kind::None;
+}
 void PetActivity::show(pet::View next) {
-  if (next != pet::View::Notice) feedResult = {};
+  if (next != pet::View::Name) nameKeyboard.close();
+  restClock.cancel();
+  if (next != pet::View::Dashboard) restPending = petrest::Kind::None;
+  companionClock.cancel();
+  reactionClock.cancel();
+  curiosityClock.cancel();
+  feedingClock.cancel();
+  feedResult = {};
+  if (next != pet::View::Care) choosingFood = false;
   if (next != pet::View::Notice) {
     careResult = {};
     gameResult = {};
@@ -100,6 +173,7 @@ void PetActivity::show(pet::View next) {
   syncCollectionArt();
   ready = false;
   interactions.setFocusedIndex(-1);
+  if (next == pet::View::Dashboard) beginRestTransition();
   requestUpdate();
 }
 void PetActivity::notice(const char* text, pet::View next, petui::NoticeKind kind, petui::CareResult result) {
@@ -115,6 +189,14 @@ bool PetActivity::commit() {
     notice(tr(STR_PET_SAVE_FAILED), view);
     return false;
   }
+  if (profile.created && draft.generation == profile.generation) {
+    if (view == pet::View::Dashboard && profile.resting != draft.resting)
+      restPending = draft.resting ? petrest::Kind::Sleep : petrest::Kind::Wake;
+    discoveryPending = discoveryPending || pet::ownedCount(draft) > pet::ownedCount(profile);
+  } else {
+    restPending = petrest::Kind::None;
+    discoveryPending = false;
+  }
   profile = draft;
   syncFarewellArt();
   return true;
@@ -129,7 +211,7 @@ void PetActivity::syncCollectionArt() {
   if (collectionArtTried) return;
   collectionArtTried = true;
   if (Storage.exists(petui::COLLECTION_ART_PATH))
-    collectionArt.open(petui::COLLECTION_ART_PATH, petui::COLLECTION_ART_COUNT);
+    collectionArt.open(petui::COLLECTION_ART_PATH, petui::COLLECTION_ART_COUNT, COLLECTION_PIXEL_CACHE_BYTES);
 }
 void PetActivity::syncFarewellArt() {
   if (!profile.created || profile.lifeStatus != pet::LifeStatus::Lost) {
@@ -139,7 +221,8 @@ void PetActivity::syncFarewellArt() {
   }
   if (farewellArtTried) return;
   farewellArtTried = true;
-  if (Storage.exists(petui::FAREWELL_ART_PATH)) farewellArt.open(petui::FAREWELL_ART_PATH, petui::FAREWELL_ART_COUNT);
+  if (Storage.exists(petui::FAREWELL_ART_PATH))
+    farewellArt.open(petui::FAREWELL_ART_PATH, petui::FAREWELL_ART_COUNT, ART_PIXEL_CACHE_BYTES);
 }
 void PetActivity::acknowledgeDeath(bool openHistory) {
   if (view != pet::View::Death || !pet::deathPending(profile)) return;
@@ -234,7 +317,8 @@ void PetActivity::finishScan(bool failed) {
   }
   if (pet::stage(profile.readingSeconds) > profile.noticedStage)
     show(pet::View::Evolution);
-  else if (profile.readingSeconds / 60 > profile.noticedSeconds / 60)
+  else if (profile.readingSeconds / 60 > profile.noticedSeconds / 60 ||
+           (!pet::owns(profile, profile.project) && pet::projectRemaining(profile) == 0 && pet::homeUnlocked(profile)))
     show(pet::View::Reward);
   else
     show(pet::View::Dashboard);
@@ -272,7 +356,12 @@ bool PetActivity::updateHabits() {
 }
 bool PetActivity::archiveDraft() {
   historyDraft = history;
-  if (pet::addLife(historyDraft, draft) && !historyStore.save(historyDraft, historyWritable)) {
+  int32_t endedDay = 0;
+  const auto ended = time_t(draft.endedAt);
+  tm date{};
+  if (draft.endedAt >= 1577836800 && draft.endedAt <= 7258118399LL && localtime_r(&ended, &date))
+    endedDay = readingstats::dayIndex({date.tm_year + 1900, date.tm_mon + 1, date.tm_mday});
+  if (pet::addLife(historyDraft, draft, endedDay) && !historyStore.save(historyDraft, historyWritable)) {
     notice(tr(STR_PET_ARCHIVE_FAILED), view);
     return false;
   }
@@ -325,22 +414,37 @@ bool PetActivity::refreshDay() {
       today = previous;
       return false;
     }
+    requestUpdate();
   }
   return updateCare();
 }
+int PetActivity::nextTab(int amount) const {
+  if (pet::stage(profile.readingSeconds) == pet::Stage::Egg) {
+    const int index = tab == pet::Tab::Album ? 1 : 0;
+    return (index + amount % 2 + 2) % 2 ? int(pet::Tab::Album) : int(pet::Tab::Pet);
+  }
+  const int next = (int(tab) + amount % 4 + 4) % 4;
+  return next;
+}
 void PetActivity::changeTab(int value) {
   if (!profile.created || value < 0 || value >= 4) return;
+  if (pet::stage(profile.readingSeconds) == pet::Stage::Egg &&
+      (value == int(pet::Tab::Care) || value == int(pet::Tab::Home)))
+    return;
   tab = pet::Tab(value);
   static constexpr pet::View pages[] = {pet::View::Dashboard, pet::View::Care, pet::View::Home, pet::View::Album};
   if (view == pages[value]) return;
   show(pages[value]);
 }
-void PetActivity::acknowledge() {
+void PetActivity::acknowledge(bool collectProject) {
   if (view == pet::View::Evolution) {
     show(pet::View::Reward);
     return;
   }
   draft = profile;
+  if (collectProject && !pet::owns(profile, profile.project) && pet::homeUnlocked(profile) &&
+      pet::projectRemaining(profile) == 0)
+    pet::chooseProject(draft, profile.project);
   draft.noticedSeconds = profile.readingSeconds;
   draft.noticedFood = profile.earnedFood;
   draft.noticedMedicine = profile.earnedMedicine;
@@ -348,6 +452,12 @@ void PetActivity::acknowledge() {
   if (commit()) {
     changeTab(0);
   }
+}
+void PetActivity::react(petreact::Kind kind) {
+  tab = pet::Tab::Pet;
+  curiosityOnEntry = false;
+  show(pet::View::Dashboard);
+  reactionClock.start(kind);
 }
 void PetActivity::back() {
   if (!resourcesReady()) {
@@ -373,10 +483,19 @@ void PetActivity::back() {
       shelf::leave(renderer, mappedInput);
       return;
     case pet::View::Dashboard:
+      shelf::leave(renderer, mappedInput);
+      return;
     case pet::View::Care:
+      if (choosingFood) {
+        choosingFood = false;
+        show(pet::View::Care);
+        return;
+      }
+      changeTab(0);
+      return;
     case pet::View::Home:
     case pet::View::Album:
-      shelf::leave(renderer, mappedInput);
+      changeTab(0);
       return;
     case pet::View::Info:
     case pet::View::Rules:
@@ -384,7 +503,6 @@ void PetActivity::back() {
       return;
     case pet::View::Settings:
       selectedMode = profile.mode;
-      selectedGoal = profile.goalIndex;
       show(returnView);
       return;
     case pet::View::SettingsConfirm:
@@ -396,9 +514,11 @@ void PetActivity::back() {
     case pet::View::ProjectPreview:
       show(pet::View::Projects);
       return;
-    case pet::View::Health:
     case pet::View::Games:
-      changeTab(1);
+      changeTab(0);
+      return;
+    case pet::View::Health:
+      changeTab(0);
       return;
     case pet::View::HealthHelp:
       show(pet::View::Health);
@@ -435,7 +555,6 @@ void PetActivity::saveSettings(bool acceptExpiry) {
   if (!writable) return;
   draft = profile;
   draft.mode = selectedMode;
-  draft.goalIndex = selectedGoal;
   const auto now = std::time(nullptr);
   if (pet::absenceExpired(draft, now)) {
     if (!acceptExpiry) {
@@ -475,12 +594,29 @@ void PetActivity::createCompanion() {
   draft.birthDaySeconds = summary.onDay(today);
   draft.bornDay = today;
   draft.mode = selectedMode;
-  draft.goalIndex = selectedGoal;
   draft.careAt = draft.lastReadAt = std::time(nullptr);
   if (commit()) {
+    readingDisplay = petui::ReadingDisplay::Project;
     todaySeconds = 0;
     weekDays = 0;
     changeTab(0);
+  }
+}
+bool PetActivity::wakeBeforeCare(fui::ActionId action) {
+  if (!profile.resting) return false;
+  switch (action) {
+    case petui::OpenFood:
+    case petui::Feed:
+    case petui::SelectFood:
+    case petui::Stroke:
+    case petui::Clean:
+    case petui::Cure:
+      choosingFood = false;
+      tab = pet::Tab::Care;
+      show(pet::View::Care);
+      return true;
+    default:
+      return false;  // Navigation and waking remain available during rest.
   }
 }
 void PetActivity::action(fui::ActionId action, int value) {
@@ -495,8 +631,21 @@ void PetActivity::action(fui::ActionId action, int value) {
     back();
     return;
   }
+  if (wakeBeforeCare(action)) return;
   draft = profile;
   switch (action) {
+    case petui::TouchCompanion:
+      if (view != pet::View::Dashboard || !pet::canCare(profile) || feedingClock.active() || reactionClock.active() ||
+          restClock.active())
+        return;
+      curiosityClock.cancel();
+      companionClock.start(petcompanion::touchKind(profile, nextTouchPose));
+      nextTouchPose = nextTouchPose == petcompanion::Kind::Sit ? petcompanion::Kind::Greet : petcompanion::Kind::Sit;
+      requestUpdate();
+      return;
+    case petui::OpenAlbum:
+      changeTab(3);
+      return;
     case petui::OpenReadingInfo:
       returnView = view;
       show(pet::View::ReadingInfo);
@@ -535,6 +684,7 @@ void PetActivity::action(fui::ActionId action, int value) {
         return;
       std::memset(nameDraft, 0, sizeof(nameDraft));
       show(pet::View::Name);
+      enterName();
       return;
     case petui::NameKey:
       if (view != pet::View::Name) return;
@@ -551,15 +701,10 @@ void PetActivity::action(fui::ActionId action, int value) {
     case petui::OpenSettings:
       returnView = view;
       selectedMode = profile.mode;
-      selectedGoal = profile.goalIndex;
       show(pet::View::Settings);
       return;
     case petui::SelectMode:
       if (value >= 0 && value < 4) selectedMode = pet::Mode(value);
-      show(pet::View::Settings);
-      return;
-    case petui::SelectGoal:
-      if (value >= 0 && value < 4) selectedGoal = uint8_t(value);
       show(pet::View::Settings);
       return;
     case petui::SaveSettings:
@@ -574,18 +719,40 @@ void PetActivity::action(fui::ActionId action, int value) {
     case petui::OpenAccumulatedHelp:
       notice(tr(STR_PET_READING_ACCUMULATED_HELP), view);
       return;
+    case petui::OpenFood:
+      if (view != pet::View::Care || !pet::canCare(profile) || !writable) return;
+      selectedFood = std::min(uint8_t(petfeed::choices(feedingArt) - 1), profile.foodChoice);
+      choosingFood = true;
+      show(pet::View::Care);
+      return;
+    case petui::FoodPage:
+      if (view != pet::View::Care || !choosingFood || (value != -1 && value != 1)) return;
+      {
+        const int page = int(selectedFood / petfeed::FOODS_PER_PAGE) + value;
+        if (page < 0 || page >= int(petfeed::choices(feedingArt) / petfeed::FOODS_PER_PAGE)) return;
+        selectedFood = uint8_t(page * petfeed::FOODS_PER_PAGE);
+        show(pet::View::Care);
+      }
+      return;
+    case petui::SelectFood:
     case petui::Feed:
+      if (view != pet::View::Care || !choosingFood || !writable || value < 0 ||
+          value >= int(petfeed::choices(feedingArt)))
+        return;
       feedResult = {};
       if (!pet::feed(draft)) {
         notice(tr(STR_PET_FEED_HINT), view);
         return;
       }
-      if (value >= 0 && value < 3) draft.foodChoice = uint8_t(value);
+      draft.foodChoice = uint8_t(value);
       {
         const uint8_t before = profile.saciety;
         if (commit()) {
+          selectedFood = uint8_t(value);
+          tab = pet::Tab::Pet;
+          show(pet::View::Dashboard);
           feedResult = {before, profile.saciety, true};
-          notice(tr(STR_PET_FED_MESSAGE), pet::View::Care, petui::NoticeKind::Fed);
+          feedingClock.start();
         }
       }
       return;
@@ -593,14 +760,17 @@ void PetActivity::action(fui::ActionId action, int value) {
       if (!pet::canCare(draft)) return;
       affection = pet::affection(draft, today);
       if (affection.first && !commit()) return;
-      affectionReturn = view;
-      show(pet::View::Affection);
+      react(petreact::Kind::Petting);
       return;
     case petui::Rest:
       if (!pet::canCare(draft)) return;
       draft.resting = !draft.resting;
       draft.restAt = draft.resting ? std::time(nullptr) : 0;
-      if (commit()) show(pet::View::Care);
+      if (commit()) {
+        restPending = profile.resting ? petrest::Kind::Sleep : petrest::Kind::Wake;
+        tab = pet::Tab::Pet;
+        show(pet::View::Dashboard);
+      }
       return;
     case petui::OpenGames:
       if (!pet::canCare(profile)) return;
@@ -647,16 +817,13 @@ void PetActivity::action(fui::ActionId action, int value) {
                                            ? petui::GameOutcome::CareNeeded
                                            : petui::GameOutcome::Practice};
         if ((rewarded || won) && !commit()) return;
+        react(petreact::Kind::Game);
         gameResult = result;
-        notice(rewarded                                           ? tr(STR_PET_GAME_REWARDED)
-               : result.outcome == petui::GameOutcome::CareNeeded ? tr(STR_PET_GAME_RESULT_CARE)
-                                                                  : tr(STR_PET_GAME_RESULT_PRACTICE),
-               pet::View::Games, petui::NoticeKind::Game);
       }
       return;
     case petui::OpenHealth:
       if (pet::stage(profile.readingSeconds) == pet::Stage::Egg) return;
-      tab = pet::Tab::Care;
+      tab = pet::Tab::Pet;
       show(pet::View::Health);
       return;
     case petui::OpenHealthHelp:
@@ -666,7 +833,10 @@ void PetActivity::action(fui::ActionId action, int value) {
     case petui::Clean: {
       if (!pet::clean(draft)) return;
       const petui::CareResult result{profile.hygiene, draft.hygiene, profile.joy, draft.joy, 0, true};
-      if (commit()) notice(tr(STR_PET_CLEANED), pet::View::Health, petui::NoticeKind::Cleaned, result);
+      if (commit()) {
+        react(petreact::Kind::Cleaning);
+        careResult = result;
+      }
       return;
     }
     case petui::Cure: {
@@ -677,7 +847,10 @@ void PetActivity::action(fui::ActionId action, int value) {
                                      draft.joy,
                                      uint8_t(draft.spentMedicine - profile.spentMedicine),
                                      true};
-      if (commit()) notice(tr(STR_PET_CURED), pet::View::Health, petui::NoticeKind::Cured, result);
+      if (commit()) {
+        react(petreact::Kind::Healing);
+        careResult = result;
+      }
       return;
     }
     case petui::OpenLife:
@@ -702,6 +875,18 @@ void PetActivity::action(fui::ActionId action, int value) {
         show(pet::View::New);
       }
       return;
+    case petui::ToggleReadingDisplay:
+      if (view != pet::View::Dashboard || reactionClock.active() || !petui::hasReadingProject(profile)) return;
+      switch (readingDisplay) {
+        case petui::ReadingDisplay::Project:
+          readingDisplay = petui::ReadingDisplay::Lifetime;
+          break;
+        case petui::ReadingDisplay::Lifetime:
+          readingDisplay = petui::ReadingDisplay::Project;
+          break;
+      }
+      requestUpdate();
+      return;
     case petui::Read: {
       const auto& books = RECENT_BOOKS.getBooks();
       if (!books.empty())
@@ -725,14 +910,16 @@ void PetActivity::action(fui::ActionId action, int value) {
       show(pet::View::Projects);
       return;
     case petui::SelectCatalogFilter:
-      if (view != pet::View::Projects || !pet::homeUnlocked(profile) || value < 0 || value > 1) return;
+      if ((view != pet::View::Projects && view != pet::View::ProjectPreview) || !pet::homeUnlocked(profile) ||
+          value < 0 || value > 1)
+        return;
       catalogFilter = petui::CatalogFilter(value);
       page = 0;
       show(pet::View::Projects);
       return;
     case petui::OpenProjectPreview:
-      if (view != pet::View::Projects || !pet::homeUnlocked(profile) || value < 0 ||
-          pet::objectSlot(unsigned(value)) != unsigned(projectSlot) ||
+      if ((view != pet::View::Projects && view != pet::View::ProjectPreview) || !pet::homeUnlocked(profile) ||
+          value < 0 || pet::objectSlot(unsigned(value)) != unsigned(projectSlot) ||
           !petui::catalogMatches(profile, unsigned(value), catalogFilter))
         return;
       previewItem = uint8_t(value);
@@ -743,7 +930,7 @@ void PetActivity::action(fui::ActionId action, int value) {
       const auto next = petui::catalogAdjacent(profile, unsigned(projectSlot), catalogFilter, previewItem, value);
       if (next >= pet::OBJECT_COUNT) return;
       previewItem = uint8_t(next);
-      const unsigned perPage = renderer.getScreenWidth() > renderer.getScreenHeight() ? 4 : 6;
+      const unsigned perPage = petui::catalogPageSize(profile, renderer.getScreenWidth() > renderer.getScreenHeight());
       page = int(petui::catalogOrdinal(profile, unsigned(projectSlot), catalogFilter, next) / perPage);
       show(pet::View::ProjectPreview);
       return;
@@ -756,7 +943,9 @@ void PetActivity::action(fui::ActionId action, int value) {
         return;
       if (commit()) {
         if (pet::owns(profile, previewItem)) catalogFilter = petui::CatalogFilter::Owned;
-        const unsigned perPage = renderer.getScreenWidth() > renderer.getScreenHeight() ? 4 : 6;
+        if (!pet::owns(profile, previewItem)) readingDisplay = petui::ReadingDisplay::Project;
+        const unsigned perPage =
+            petui::catalogPageSize(profile, renderer.getScreenWidth() > renderer.getScreenHeight());
         page = int(petui::catalogOrdinal(profile, unsigned(projectSlot), catalogFilter, previewItem) / perPage);
         if (pet::owns(profile, previewItem))
           changeTab(int(pet::Tab::Home));
@@ -788,7 +977,22 @@ void PetActivity::action(fui::ActionId action, int value) {
       show(pet::View::Lives);
       return;
     case petui::Continue:
-      acknowledge();
+      if (view != pet::View::Evolution && view != pet::View::Reward) return;
+      if (view == pet::View::Evolution) {
+        if (!reactionClock.active()) {
+          curiosityOnEntry = false;
+          curiosityClock.cancel();
+          reactionClock.start(petreact::Kind::Growth);
+          requestUpdate();
+        }
+        return;
+      }
+      acknowledge(true);
+      return;
+    case petui::DismissReaction:
+      if (view == pet::View::Dashboard && reactionClock.active()) {
+        show(pet::View::Dashboard);
+      }
       return;
     case petui::Retry:
       return;
@@ -807,11 +1011,45 @@ void PetActivity::swipeCatalog(int dx, int dy) {
   const int next = std::clamp(page - dx, 0, std::max(0, work.pages - 1));
   if (next != page) action(petui::Page, -dx);
 }
+void PetActivity::swipePages(int dx, int dy) {
+  if (dy || (dx != -1 && dx != 1)) return;
+  const int step = -dx;
+  switch (view) {
+    case pet::View::Projects:
+      swipeCatalog(dx, dy);
+      return;
+    case pet::View::ProjectPreview:
+      action(petui::PreviewStep, step);
+      return;
+    case pet::View::Memories:
+    case pet::View::Lives: {
+      const int current = std::clamp(page, 0, std::max(0, work.pages - 1));
+      if (current + step >= 0 && current + step < work.pages) action(petui::Page, step);
+      return;
+    }
+    case pet::View::Care:
+      if (choosingFood) {
+        action(petui::FoodPage, step);
+        return;
+      }
+      [[fallthrough]];
+    case pet::View::Dashboard:
+    case pet::View::Home:
+    case pet::View::Album:
+      action(petui::ChangeTab, nextTab(step));
+      return;
+    case pet::View::Games:
+      if (int(selectedGame) + step >= 0 && int(selectedGame) + step < 3)
+        action(petui::SelectGame, int(selectedGame) + step);
+      return;
+    default:
+      return;  // Other views have no horizontal page navigation.
+  }
+}
 void PetActivity::loop() {
-  if (!navigation.capture(mappedInput, millis())) LOG_ERR("PET", "Navigation queue full");
-  const bool sliding = view == pet::View::Projects || (view == pet::View::Play && game.kind == pet::Game::Puzzle);
-  const auto swipe = sliding ? mappedInput.wasSwipe() : MappedInputManager::SwipeDir::None;
-  if (sliding) {
+  if (view != pet::View::Name && !navigation.capture(mappedInput, millis())) LOG_ERR("PET", "Navigation queue full");
+  const auto swipe = mappedInput.wasSwipe();
+  {
     int x = 0, y = 0;
     const auto shown = (paintedRevision.load(std::memory_order_acquire) << 2) ^ uint32_t(renderer.getOrientation());
     if (mappedInput.wasScreenTouchPressed(x, y)) pendingSlide.begin(x, y, shown);
@@ -836,10 +1074,26 @@ void PetActivity::loop() {
       pendingSlide.end(dx, dy, shown);
   }
   int tapX = 0, tapY = 0;
-  if (swipe == MappedInputManager::SwipeDir::None && mappedInput.wasScreenTapped(tapX, tapY))
+  if (view == pet::View::Name) nameKeyboard.capture(mappedInput);
+  if (view != pet::View::Name && swipe == MappedInputManager::SwipeDir::None && mappedInput.wasScreenTapped(tapX, tapY))
     pendingTap.capture(tapX, tapY, paintedRevision.load(std::memory_order_acquire));
   RenderLock lock(RenderLock::Mode::Try);
   if (!lock.ownsLock()) return;
+  if (view == pet::View::Name && ready) {
+    const auto key = nameKeyboard.poll(mappedInput, false);
+    if (key != EmbeddedKeyboard::Event::None) {
+      pendingTap.clear();
+      if (key == EmbeddedKeyboard::Event::Cancel) back();
+      if (key == EmbeddedKeyboard::Event::Changed) requestUpdate();
+      if (key == EmbeddedKeyboard::Event::Submit) {
+        std::snprintf(nameDraft, sizeof(nameDraft), "%s", nameKeyboard.text());
+        if (pet::finishName(nameDraft)) createCompanion();
+      }
+      return;
+    }
+    return;
+  }
+
   if (!resourcesReady()) {
     sectionnav::Input::Event command{};
     fui::InputSnapshot input{};
@@ -876,10 +1130,90 @@ void PetActivity::loop() {
         (view == pet::View::Dashboard || view == pet::View::Home || view == pet::View::ReadingInfo))
       requestUpdate();
   }
-  const bool animated = petsleep::breathing(profile, view) &&
-                        ((pet::stage(profile.readingSeconds) == pet::Stage::Egg && sleepArt.ready()) ||
-                         petsleep::moodVisible(profile, view));
-  if (sleepClock.update(millis(), !loading && animated, petsleep::frameInterval(profile))) requestUpdate();
+  if (!loading && curiosityOnEntry && view == pet::View::Dashboard && !restClock.active() && !companionClock.active()) {
+    curiosityOnEntry = false;
+    if (feedingArt == petfeed::Art::Extended && petcompanion::awake(profile) && !reactionClock.active()) {
+      companionClock.start(petcompanion::Kind::Greet);
+      requestUpdate();
+    } else if (curiosityAvailable && !reactionClock.active() && petcurious::eligible(profile, view)) {
+      curiosityClock.start();
+      requestUpdate();
+    }
+  }
+  if (curiosityClock.active() && (feedingClock.active() || !petcurious::eligible(profile, view))) {
+    curiosityClock.cancel();
+    sleepClock.restart(millis());
+    requestUpdate();
+  }
+  if (!loading && curiosityClock.update(millis())) {
+    if (!curiosityClock.active()) sleepClock.restart(millis());
+    requestUpdate();
+  }
+  const auto reaction = reactionClock.kind();
+  if (!loading && reactionClock.update(millis())) {
+    if (!reactionClock.active()) {
+      sleepClock.restart(millis());
+      if (reaction == petreact::Kind::Growth && view == pet::View::Evolution) {
+        show(pet::View::Reward);
+        return;
+      }
+      show(pet::View::Dashboard);
+      return;
+    }
+    requestUpdate();
+  }
+  const auto feedingBefore = feedingClock.phase();
+  if (!loading && feedingClock.update(millis())) {
+    if (feedingArt == petfeed::Art::Extended && feedingBefore != petfeed::Phase::Result &&
+        feedingClock.phase() == petfeed::Phase::Result)
+      companionClock.start(petcompanion::Kind::Satisfied);
+    if (!feedingClock.active()) {
+      feedResult = {};
+      sleepClock.restart(millis());
+    }
+    requestUpdate();
+  }
+  if (restClock.active() && (view != pet::View::Dashboard || !petrest::eligible(profile, restClock.kind()) ||
+                             feedingClock.active() || reactionClock.active())) {
+    restClock.cancel();
+    sleepClock.restart(millis());
+    requestUpdate();
+  }
+  if (!loading && restClock.update(millis())) {
+    if (!restClock.active()) sleepClock.restart(millis());
+    requestUpdate();
+  }
+  bool roomFree = !loading && view == pet::View::Dashboard && !feedingClock.active() && !reactionClock.active() &&
+                  !curiosityClock.active() && !restClock.active();
+  if (companionClock.active() && (view != pet::View::Dashboard || reactionClock.active() || restClock.active() ||
+                                  petfeed::eating(feedingClock.phase())))
+    companionClock.cancel();
+  if (roomFree && restPending != petrest::Kind::None) {
+    beginRestTransition();
+    roomFree = !restClock.active();
+    requestUpdate();
+  }
+
+  if (roomFree && !companionClock.active() && feedingArt == petfeed::Art::Extended && petcompanion::awake(profile) &&
+      discoveryPending) {
+    companionClock.start(petcompanion::Kind::Discover);
+    discoveryPending = false;
+    requestUpdate();
+  }
+  if (!loading && companionClock.update(millis())) requestUpdate();
+  if (companionClock.scheduleIdle(millis(), petdisplay::AMBIENT_MOTION && roomFree &&
+                                                feedingArt == petfeed::Art::Extended && petcompanion::calm(profile)))
+    requestUpdate();
+  const bool animated =
+      petdisplay::AMBIENT_MOTION && !restClock.active() &&
+      (!companionClock.active() || companionClock.kind() == petcompanion::Kind::WakeFirst) && !feedingClock.active() &&
+      !curiosityClock.active() && !reactionClock.active() && petsleep::roomMotionVisible(view) &&
+      petsleep::breathing(profile, view) &&
+      ((pet::stage(profile.readingSeconds) == pet::Stage::Egg && sleepArt.ready()) || petsleep::enabled(profile, view));
+  const bool floating = petdisplay::AMBIENT_MOTION && petfarewell::floating(profile, view) && farewellArt.ready();
+  if (sleepClock.update(millis(), !loading && (animated || floating),
+                        floating ? petfarewell::FRAME_MS : petsleep::frameInterval(profile)))
+    requestUpdate();
   pet::View before = view;
   sectionnav::Input::Event command{};
   fui::InputSnapshot input{};
@@ -892,7 +1226,7 @@ void PetActivity::loop() {
       case sectionnav::Input::Kind::Step:
       case sectionnav::Input::Kind::Section:
         if (profile.created && view != pet::View::Name && view != pet::View::Death)
-          action(petui::ChangeTab, (int(tab) + command.amount % 4 + 4) % 4);
+          action(petui::ChangeTab, nextTab(command.amount));
         return;
       case sectionnav::Input::Kind::Confirm:
         input.confirm = true;
@@ -904,12 +1238,11 @@ void PetActivity::loop() {
   const uint32_t gestureRevision = (viewRevision << 2) ^ uint32_t(renderer.getOrientation());
   if (pendingSlide.take(gestureRevision, slideX, slideY, dx, dy)) {
     pendingTap.clear();
-    if (view == pet::View::Projects) {
-      swipeCatalog(dx, dy);
-    } else if (view == pet::View::Play && game.kind == pet::Game::Puzzle && game.phase == pet::GamePhase::Playing) {
+    if (view == pet::View::Play && game.kind == pet::Game::Puzzle && game.phase == pet::GamePhase::Playing) {
       const int tile = work.puzzleLayout.slide(game.puzzle, slideX, slideY, dx, dy);
       if (tile >= 0) action(petui::GamePick, tile);
-    }
+    } else
+      swipePages(dx, dy);
     return;
   }
   int x = 0, y = 0;
@@ -947,15 +1280,45 @@ bool PetActivity::drawHomeArt(void* context, fui::DrawTarget& target, fui::Rect 
   auto& pack = *static_cast<sdart::Pack*>(context);
   if (!pack.ready()) return false;
   const auto image = pack.image(id);
-  if (image.width != 224 || image.height != 144) return false;
+  const bool room = id >= petui::ROOM_PORTRAIT_ART && id < petui::HOME_BACKGROUNDS_COUNT;
+  if (room ? (image.width < 2 || image.height < 2) : (image.width != 224 || image.height != 144)) return false;
   pack.draw(target, box, id, fui::BitmapMode::Stretch, inverse ? fui::Color::White : fui::Color::Black);
   return pack.ready();
 }
 void PetActivity::render(RenderLock&&) {
   renderer.clearScreen();
   auto target = toybox::makeTarget(renderer);
-  pixelui::bindFonts(target, renderer, I18N.getLanguage() != Language::EN);
+  target.setFont(0, UI_12_FONT_ID);
+  target.setFont(1, UI_12_FONT_ID);
+  target.setFont(2, UI_12_FONT_ID);
+  target.setFont(3, SMALL_FONT_ID);
+  target.setFont(4, UI_10_FONT_ID);
+  target.setFont(fui::HEADER_CLOCK_FONT, toybox::kUiFontId);
   const fui::InputSnapshot input{};
+  const auto status = toybox::headerStatus(renderer);
+  if (view == pet::View::Name) {
+    toybox::Frame frame(target, target.deviceContext(), input, interactions, nullptr, status);
+    toybox::Screen screen(frame);
+    EmbeddedKeyboard::NamePresentation name;
+    name.prompt = tr(STR_PET_NAME_TITLE);
+    name.subtitle = tr(STR_PET_NAME_INTRO);
+    name.cardTitle = petui::eggName(chosenSpecies);
+    name.cardText = tr(STR_PET_NAME_COMPANION);
+    name.fieldLabel = tr(STR_PET_NAME_LABEL);
+    name.placeholder = tr(STR_PET_NAME_PLACEHOLDER);
+    name.confirmLabel = tr(STR_PET_NAME_CONFIRM);
+    name.artContext = this;
+    name.drawArt = drawPetArt;
+    name.artId = unsigned(chosenSpecies);
+    name.enabled = writable && today != 0 && !historyChanged;
+    nameKeyboard.drawName(screen, tr(STR_PET_APP), name);
+    ready = true;
+    renderer.displayBuffer(HalDisplay::FAST_REFRESH);
+    nameKeyboard.didPaint();
+    paintedRevision.store(viewRevision, std::memory_order_release);
+    return;
+  }
+
   model = {};
   model.resourcesReady = resourcesReady();
   model.profile = &profile;
@@ -968,7 +1331,6 @@ void PetActivity::render(RenderLock&&) {
   model.memoryReturn = memoryReturn;
   model.lifeReturn = lifeReturn;
   model.selectedMode = selectedMode;
-  model.selectedGoal = selectedGoal;
   model.dateOrder = dateformat::fromStored(SETTINGS.dateFormat);
   model.selectedGame = selectedGame;
   model.now = std::time(nullptr);
@@ -978,6 +1340,7 @@ void PetActivity::render(RenderLock&&) {
   model.page = page;
   model.projectSlot = projectSlot;
   model.catalogFilter = catalogFilter;
+  model.readingDisplay = readingDisplay;
   model.previewItem = previewItem;
   model.memory = memory;
   if (view == pet::View::LifeDetail && memory >= 0 && memory < history.count) {
@@ -996,24 +1359,78 @@ void PetActivity::render(RenderLock&&) {
   model.art = {this, drawPetArt};
   model.scenes = {&homeArt, drawHomeArt};
   model.portraitBackgrounds = portraitBackgroundsAvailable;
+  model.fullRoomBackgrounds = fullRoomBackgroundsAvailable;
   model.habitat = {&habitatArt, drawArt};
   model.sleepArt = {&sleepArt, drawArt};
   model.farewellArt = {&farewellArt, drawArt};
   model.collectionArt = {&collectionArt, drawArt};
   model.sleepStep = uint8_t(sleepClock.step());
+  model.selectedFood = selectedFood;
+  model.choosingFood = choosingFood;
+  model.feedingArt = feedingArt;
+  model.feedingPhase = feedingClock.phase();
+  model.curiosityPhase = curiosityClock.phase();
+  model.restPhase = restClock.phase();
+  model.restArtAvailable = restArtAvailable;
+  model.companionKind = companionClock.kind();
+  model.companionPhase = companionClock.phase();
+  model.reactionKind = reactionClock.kind();
+  model.reactionPhase = reactionClock.phase();
+  model.curiosityAvailable = curiosityAvailable;
+  model.reactionArt = reactionArt;
+  model.foodStage = uint8_t(feedingClock.foodStage());
   model.affection = affection;
   model.feedResult = feedResult;
   model.careResult = careResult;
   model.gameResult = gameResult;
-  petui::render(target, target.deviceContext(), input, interactions, toybox::headerStatus(renderer), model, work);
+  petui::render(target, target.deviceContext(), input, interactions, status, model, work);
   if (model.resourcesReady && !resourcesReady()) {
     renderer.clearScreen();
     model.resourcesReady = false;
-    petui::render(target, target.deviceContext(), input, interactions, toybox::headerStatus(renderer), model, work);
+    petui::render(target, target.deviceContext(), input, interactions, status, model, work);
+  }
+  bool grayShown = false;
+  if (petdisplay::NATIVE_GRAYSCALE && model.resourcesReady && fullRoomBackgroundsAvailable &&
+      renderer.grayscaleCapabilities(HalDisplay::GrayscaleMode::Absolute).supported() &&
+      renderer.displayGrayscaleBase(HalDisplay::GrayscaleMode::Absolute)) {
+    for (const auto mode : {GfxRenderer::GRAYSCALE_LSB, GfxRenderer::GRAYSCALE_MSB}) {
+      renderer.clearScreen();
+      renderer.setRenderMode(mode);
+      petui::GrayTarget plane(target, mode == GfxRenderer::GRAYSCALE_MSB);
+      petui::render(plane, target.deviceContext(), input, interactions, status, model, work);
+      if (!resourcesReady()) break;
+      if (mode == GfxRenderer::GRAYSCALE_LSB) {
+        renderer.copyGrayscaleLsbBuffers();
+      } else {
+        renderer.copyGrayscaleMsbBuffers();
+        renderer.displayGrayBuffer();
+        grayShown = true;
+      }
+    }
+    renderer.setRenderMode(GfxRenderer::BW);
+    // Reuse the sole framebuffer as the monochrome baseline for later popups.
+    renderer.clearScreen();
+    model.resourcesReady = resourcesReady();
+    petui::render(target, target.deviceContext(), input, interactions, status, model, work);
+    if (model.resourcesReady && !resourcesReady()) {
+      renderer.clearScreen();
+      model.resourcesReady = false;
+      petui::render(target, target.deviceContext(), input, interactions, status, model, work);
+    }
+    if (!model.resourcesReady) grayShown = false;
+    renderer.cleanupGrayscaleWithFrameBuffer();
   }
   ready = true;
   toybox::reportOverflow(interactions, "Pet", &renderer);
-  renderer.displayBuffer();
+  if (!grayShown) renderer.displayBuffer();
+  if (model.resourcesReady) {
+    feedingClock.painted(millis());
+    companionClock.painted(millis(), model.companionKind, model.companionPhase);
+    restClock.painted(millis(), model.restPhase);
+    if (model.curiosityPhase != petcurious::Phase::Idle && model.curiosityPhase == curiosityClock.phase())
+      curiosityClock.painted(millis());
+    reactionClock.painted(millis(), model.reactionKind, model.reactionPhase);
+  }
   if (animationRebasePending) {
     // Let the newly visible section settle before its first animation refresh.
     sleepClock.restart(millis());

@@ -1,186 +1,144 @@
-<h1 align="center">
-  <img src="site/assets/logo.svg#gh-light-mode-only" width="72" alt="CrossNext"><img src="site/assets/logo-dark.svg#gh-dark-mode-only" width="72" alt="CrossNext"><br>
-  CrossNext
-</h1>
+# CrossNext 2.0.0
 
-[Español](README.es.md) · [Changes and upstream credits](docs/crossnext-changes.md) · [Installation](docs/install.md)
+[Español](README.es.md) · [Installation](docs/install.md) · [Releases](https://github.com/manuelx900/CrossNext/releases)
 
-CrossNext brings reading, study tools and games to the **Xteink X4 Pro**.
-Read a book, save new vocabulary, review flashcards, track your reading and take
-a break with a game, all on the same e-ink device.
+![CrossNext: reading, study and games](docs/images/overview.png)
 
-[![Support me on Ko-fi](site/assets/support-ko-fi.svg)](https://ko-fi.com/manuelx900)
+CrossNext is open-source e-reader firmware for **Xteink X4 Pro (ESP32-S3)**.
+It combines EPUB reading, a library, reading statistics, study tools, small apps
+and games. **CrossNext 2.0.0 is based on [CrossPoint 2.0.0](https://github.com/crosspoint-reader/crosspoint-reader/releases/tag/2.0.0)**, with the app/game foundation inherited from [CrossPlay 1.14.2](https://github.com/ma-r-s/crossplay/releases/tag/v1.14.2).
+The packages described here target X4 Pro; do not install them on X4 or X3.
 
-Choose Framed, Carousel, Carousel 2 or Bookshelf for Home, arrange your own app and game
-shortcuts, and adjust the fonts, reading controls and sleep wallpapers to suit you.
-This release supports **X4 Pro only** (ESP32-S3).
+## Install or update
 
-CrossNext is based on [CrossPlay 1.14.2](https://github.com/ma-r-s/crossplay)
-and [CrossPoint 1.6.5](https://github.com/crosspoint-reader/crosspoint-reader),
-with the FreeInk SDK. The reader and most games and apps come from those projects.
-CrossNext adapts their interface, navigation and study workflows. Additional
-references include [CrossInk](https://github.com/uxjulia/CrossInk),
-[CrossDiTo](https://github.com/dito94/CrossDiTo) and
-[VCodex](https://github.com/franssjz/cpr-vcodex); see the [credits](docs/crossnext-changes.md).
+Download the X4 Pro firmware and matching resources from
+[GitHub Releases](https://github.com/manuelx900/CrossNext/releases).
+See the [full changes from 1.4.0](docs/releases/2.0.0.md) and choose the matching 2.0.0 attachments.
+Back up the microSD, including the hidden `/.crosspoint/` folder containing saves.
 
-![CrossNext for Xteink X4 Pro](docs/images/overview.png)
+1. For an existing compatible installation, copy `CrossNext-X4PRO-Firmware-v2.0.0.bin`
+   to the card. Open **Settings → Device → Update firmware**, select it and confirm.
+2. Extract `CrossNext-Resources.zip` into the microSD root, merging its folders.
+   Keep the licences and your existing saves. Restart after updating resources.
+3. Put books in a normal card folder such as `/books`, then open **Files** or **Library**.
+   Fresh settings use English. Change the interface language in Settings.
 
-## PET: your reading companion
+The `-factory.bin` image is for USB installation at `0x0`, with bootloader and
+partitions included. It is **not** an SD updater image. Application slots must
+fit the firmware; an SD update cannot enlarge an old partition table.
+See [installation, factory flashing and OTA](docs/install.md) for the exact routes.
+Never clear the whole `/.crosspoint/` folder to refresh covers or compare engines:
+it contains personal reading and app data as well as generated caches.
 
-PET turns your reading routine into a story with a virtual companion. Choose an
-egg, name your pet and watch it grow as you read.
+## Make reading your own
 
-- **Reading statistics:** follow your reading time, reading days and streaks.
-- **Difficulty and goals:** adjust the care difficulty and daily reading goal
-  to suit your routine.
-- **Daily care:** feed, clean and care for your pet, keeping an eye on its
-  needs and health.
-- **Games and affection:** pet your companion and play minigames to lift its mood.
-- **A home of its own:** unlock furnishings through reading and arrange its
-  room to your liking.
-- **Memories and generations:** discover memories as you progress, follow your
-  pet's life stages and revisit previous generations.
+Four home appearances are available: Carousel, Framed, Carousel2 and Bookshelf.
+Library offers Recent, Collections and Filter, in list or cover views.
+List views show book text directly. Cover views show default book placeholders
+while images load; files without cover artwork retain their named fallback.
+The home cover-loading notice can be enabled separately for each appearance.
 
-![PET: status, care, home and memories](docs/images/pet.png)
+![The four appearances](docs/images/appearances.png)
 
-Install **CrossNext-Resources.zip** on the microSD to use PET.
-See [PET's guide](docs/apps/pet.md) and
-[what's new in v1.4.0](docs/releases/CrossNext-v1.4.0.md).
+Open the book's lower panel to change font, size, weight, spacing, margins,
+alignment and chapters. Configure how it opens under
+**Settings → Controls → Buttons → Open book settings**. The default is a swipe
+up from the bottom. Top-edge and bottom-edge taps are also available. The separate **Reading menu** option chooses a toolbar or
+a list presentation; it does not choose the opening gesture.
 
-The interface starts with Noto Sans. Choose Noto Sans, Ubuntu or Noto Serif
-globally, by section, or for an individual app or game. Reading fonts are
-configured separately. Saved Jersey 25 choices migrate to Noto Sans.
+![Book settings](docs/images/reading.png)
+![Alternative interface](docs/images/alternative-ui.png)
 
-## Read, study and play
+The EPUB engine selector is under **Settings → Reading → EPUB engine**:
+**New** or **Classic (1.4)**. Each engine keeps its own prepared pages.
+[Download the original comparison EPUB](docs/downloads/CrossNext-EPUB-Comparison.epub)
+and follow the [comparison guide](docs/epub-engine-comparison.md).
+Both [the comparison book](docs/downloads/CrossNext-EPUB-Comparison.epub) and [the reader showcase](docs/downloads/CrossNext-Reader-Showcase.epub) contain only English. They include numbered passages, typography and PNG/JPEG patterns;
+test the same book and layout on your reader, separating cold and warm openings.
 
-- EPUB, text, Markdown and XTC/XTCH reading, a file browser and a cover library.
-- Reading history, statistics, calendars and Reading Quest.
-- Flashcards imported from files/Anki, local FSRS review and a saved vocabulary app.
-- Independent title/question and content sizes: 10, 12, 14, 16 and 18 pt.
-  Smart sizing is enabled by default; long text keeps complete pagination.
-- Horizontal paging in supported app/puzzle selectors and study cards.
-- Anki image zoom uses a separate high-resolution copy only while enlarged;
-  normal cards keep the small preview. Rotation toggles between two positions.
-- Pomodoro's physical button starts and pauses; XTC/XTCH can reverse swipes
-  and page-tap zones for manga reading.
+## Prepare books on your computer
 
-The active shelf contains these **16 games**:
-Chess (including puzzles), Checkers, Go, Minesweeper, Picross, Wordle, 2048,
-The Intercept, Battleship, Solitaire, Hearts, Murdle, Carnivore, Connect Four,
-Sudoku and Othello.
+**CrossNext Book Preparer 2.0.0** prepares metadata, page layouts, processed images
+and the cover sizes used by the firmware. Its engine is compiled from the real
+firmware pipeline. Preparation moves that work to the computer; it cannot remove
+the display's physical refresh time or prepare every future layout automatically.
 
-Its **13 app entries** are Reading Quest, PET, Habits, To Do List, Notes, Pomodoro,
-Wallpapers, Quotes, Flashcards, Words, Calendar, Clock and Counter.
+1. Close the book on the reader and safely remove the microSD. Connect it to the computer.
+2. Windows: open `CrossNext-Book-Preparer-Windows-v2.0.0.exe`.
+   macOS: open the matching arm64 (Apple Silicon) or x64 (Intel) `.dmg` and drag the application to Applications.
+3. Select the **card root**, not the books folder. The program detects saved reading
+   settings and installed fonts from `/fonts` and `/.fonts`.
+4. Choose the same EPUB engine as the reader, formats, fonts and sizes. Start preparation.
+   Large libraries and many font/size combinations can take hours and use card space.
+5. Cancel preserves completed outputs. Run again to continue, then safely eject the card.
 
-Fresh settings start in **English**. Spanish is available in the language
-settings; an existing installation keeps its saved language.
+The program writes generated cache files under `/.crosspoint/` and preserves books,
+settings, progress and statistics. Changing engine, font, size, orientation or layout
+can require new pages. It reuses compatible caches rather than deleting the library.
+See [Book Preparer instructions](docs/desktop-book-preparer.md) and
+[on-reader preparation](docs/book-preparation.md). macOS packages are unsigned and
+not Apple-notarized. The DMGs are created and verified on macOS; Windows packaging includes the same preparation-engine revision.
 
+## Reading, study and play
 
-## In pictures
-
-### Two Home layouts
-
-![Two Home layouts](docs/images/appearances.png)
-
-### Reading statistics
+Statistics show time, pages, sessions, streaks, calendar and finished books.
 
 ![Reading statistics](docs/images/statistics.png)
 
-Optional **CrossPoint Sync** keeps your account history and new local reading in one statistics view. Read offline, then use the sync shortcut beside the battery to synchronize statistics and book positions together. Each book on the microSD keeps the furthest position from the reader or your account. The shortcut appears only after configuring a compatible sync account. See [reading statistics](docs/reading-stats.md#crosspoint-sync).
+PET grows through reading, with care, decoration, memories and previous generations.
 
-### Games
+![PET](docs/images/pet.png)
+
+Reading Quest adds a campaign, repeatable Hunts, equipment and a shop extending
+through level 150. Every battle has its own reading objective: extra minutes are
+recorded in statistics and do not prepay the next battle. Repeat Hunts award EXP
+and coins; unique outfits and other objects are obtained once.
+
+![Reading Quest](docs/images/quest.png)
+
+Study with Flashcards and saved Words. Small tools include Habits, Tasks, Notes,
+Pomodoro, Wallpapers, Quotes, Calendar, Clock, Counter, Focus and Calculator.
+
+![Flashcards and Words](docs/images/study.png)
+![Apps](docs/images/apps.png)
+
+Games include Chess, Checkers, Go, Minesweeper, Picross, Wordle, 2048, The Intercept,
+Battleship, Solitaire, Hearts, Murdle, Carnivore, Connect four, Sudoku and Othello.
 
 ![Games](docs/images/games.png)
 
-### Apps and productivity
+## Simulator and development
 
-![Apps and productivity](docs/images/apps.png)
+The showcase starts in English and offers a language selector, sample books and
+synthetic app/game progress. Its data is separate from the reader's card.
+See [simulator setup](docs/simulator-windows.md) and [showcase controls](docs/simulator-showcase.md).
+Browser rendering does not reproduce physical e-ink refresh, sleep or SD timing.
 
-### Flashcards and saved words
+Develop in an isolated worktree. Run `./scripts_local/check.sh` and
+`./scripts_local/sim-shot.sh` there; format C/C++ with `./bin/clang-format-fix -g`.
+The device environment is `gh_release_x4pro`/`x4pro`; the upstream `default`
+environment targets another chip. Device testing remains required before publishing.
 
-![Flashcards and saved words](docs/images/study.png)
+## Credits and licence
 
-### Reading controls
+Keep [LICENSE](LICENSE), [third-party notices](THIRD-PARTY-NOTICES.md), SDK licences
+and bundled asset licences. CrossPlay supplies the app/game shelf and implementations;
+CrossPoint supplies the reading foundation. See [CrossNext changes and references](docs/crossnext-changes.md).
+The comparison book's original text and generated patterns are dedicated under CC0 1.0.
 
-![Reading controls](docs/images/reading.png)
+[![Support CrossNext on Ko-fi](site/assets/support-ko-fi.svg)](https://ko-fi.com/manuelx900)
 
-### Everyday tools
+## Fonts and editable translations
 
-![Everyday tools](docs/images/tools.png)
+Install the matching Resources ZIP in the microSD root. Full book fonts are
+loaded from `/fonts`, including the supplied Noto Serif and optional Noto Sans
+families. Ubuntu remains the built-in reading fallback. Compact Noto Sans/Noto
+Serif interface cuts stay in flash; the interface font is a separate setting.
+See [SD fonts](docs/sd-card-fonts.md).
 
-## Install it
-
-Choose the package matching the device:
-
-| Model | ZIP | Application / SD update | Factory / USB installation |
-| --- | --- | --- | --- |
-| X4 Pro | `CrossNext-X4PRO-Firmware-v1.4.0.zip` | `CrossNext-X4PRO-Firmware-v1.4.0.bin` | `CrossNext-X4PRO-Firmware-v1.4.0-factory.bin` |
-
-Generated ZIPs are in `dist/`, and raw images in `dist/CrossNext/`.
-Each firmware ZIP includes SHA-256 checksums, model-specific images and notes.
-Application images belong in a compatible SD updater/OTA slot, or at `0x10000`;
-factory images contain the bootloader and partitions and belong at `0x0` over USB.
-Read [the installation guide](docs/install.md) and back up the microSD first.
-The plain X4/X3 use another chip; these packages do not target them or PaperMono.
-
-Use **Settings → Device → Check for Updates** to get updates from
-[CrossNext GitHub Releases](https://github.com/manuelx900/CrossNext/releases).
-The updater checks for a newer version and asks before installing the X4 Pro
-application. Release maintainers attach `CrossNext-X4PRO-OTA.bin` alongside the
-versioned ZIP; see [online updates](docs/install.md#online-update-source).
-
-`CrossNext-Resources.zip` contains reader fonts, dictionaries and the contents
-required by Reading Quest, PET and The Intercept. Merge its folders into the
-microSD root and preserve its licences. Install the updated resources with this
-firmware; an older pack may be missing the new app contents.
-It contains no firmware or personal reading/game history.
-
-`CrossNext-source.zip` is the clean source export, including required SDK sources,
-assets, tests and notices. Firmware/resources ZIPs are release attachments and
-do not need to enter the source repository's Git history.
-
-## Try the local simulator
-
-Follow [Windows setup](docs/simulator-windows.md#setup-from-a-source-export), then
-run `Start-Simulator.cmd`. The local browser opens `http://127.0.0.1:8765/` and
-runs the firmware from these sources. The showcase supplies books with original
-notices, synthetic statistics, files and saved app/game examples for screenshots.
-It uses separate demonstration data rather than the reader's personal records.
-
-See [the showcase guide](docs/simulator-showcase.md). Browser-specific network
-and sleep adaptations are described in [the site documentation](site/README.md).
-The original [CrossPlay demo](https://crossplay.ma-r-s.com) is maintained upstream.
-
-## Develop and verify
-
-Use `x4pro` for the device and `simulator_x4_pro` for the simulator;
-the upstream `default` environment targets a different chip. In a configured
-development checkout, run `./scripts_local/check.sh` from your own worktree.
-Use the repository's `./bin/clang-format-fix -g` wrapper for changed C/C++ files.
-Read the [contributor guide](docs/contributing/getting-started.md) and
-[local script documentation](scripts_local/README.md) before changing firmware.
-Inherited CrossPlay automation is restricted to its original repository; CrossNext
-releases are published manually.
-
-Useful feature details: [Flashcards](docs/apps/flashcards-ui.md),
-[Words](docs/apps/words.md), [Pomodoro](docs/pomodoro.md),
-[Library performance](docs/library-performance.md) and
-[the render audit](docs/render-performance.md).
-Builds, native tests and simulator checks do not replace physical-device testing
-of display refresh, SD behavior, memory and all orientations before publication.
-
-## Licence and attribution
-
-Keep [LICENSE](LICENSE), original copyright notices and bundled asset licences.
-CrossPlay supplies the app/game shelf and implementations; CrossPoint supplies
-the e-reader foundation. [CrossNext changes](docs/crossnext-changes.md) describes
-this fork's adaptations without claiming those inherited projects as new work.
-
-[What’s new in v1.4.0](docs/releases/CrossNext-v1.4.0.md)
-
-## Support CrossNext
-
-Thank you for using CrossNext and helping it improve. If you would like to support
-its ongoing development, please consider supporting me on Ko-fi.
-
-[![Support me on Ko-fi](site/assets/support-ko-fi.svg)](https://ko-fi.com/manuelx900)
+Resources language packs are designed for community corrections. `languages`
+contains the CSV template, readable translation sources and a build guide. Edit
+wording while preserving keys and format placeholders, then compile a `.cplang`
+with `tools_local/language_packs.py`. Do not edit the binary pack as text.
+Replace the matching pack on the card and restart. Please report context and the
+language when suggesting a correction. See [language packs](docs/language-packs.md).

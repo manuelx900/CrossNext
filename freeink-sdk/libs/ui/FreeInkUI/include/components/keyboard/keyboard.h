@@ -92,7 +92,7 @@ struct KeyboardProps {
   TextStyle labelText{FONT_SLOT_BODY};
   // Style for the small corner hint drawn on keys that define `alt`. The
   // color follows the key's resolved foreground; set the font here (typically
-  // the small slot).
+  // the small slot). Also used for primary labels that exceed their key width.
   TextStyle altText{};
   StyleSet keyStyles{};
   Insets padding{4, 4, 4, 4};
@@ -124,6 +124,10 @@ struct KeyboardProps {
   // letters, numbers, or symbols use the narrowest unit that fits any such
   // row, while control-only rows continue to fill their available width.
   bool uniformKeyWidth = true;
+  // Optional function-key styles; the reference must live through keyboard().
+  const StyleSet* controlStyles = nullptr;
+  State shiftState = StateNormal;
+  bool showAltHints = true;
 };
 
 // Preferred total height for touch entry. Match the height of a character key
@@ -133,8 +137,8 @@ struct KeyboardProps {
 inline int16_t keyboardPreferredHeight(int16_t width, uint8_t rowCount, Insets padding = Insets{4, 4, 4, 4},
                                        int16_t rowGap = 6, int16_t minRowHeight = 28, int16_t keyGap = 6) {
   if (rowCount == 0) return 0;
-  const int32_t usableWidth = static_cast<int32_t>(width) - padding.left - padding.right -
-                              (keyGap > 0 ? keyGap : 0) * 9;
+  const int32_t usableWidth =
+      static_cast<int32_t>(width) - padding.left - padding.right - (keyGap > 0 ? keyGap : 0) * 9;
   int32_t rowHeight = usableWidth > 0 ? (usableWidth * 4 + 15) / 30 : 0;
   if (rowHeight < minRowHeight) rowHeight = minRowHeight;
   const int16_t maxRowHeight = minRowHeight > 56 ? minRowHeight : 56;
@@ -168,11 +172,11 @@ const KeyboardLayout& builtinKeyboardLayout(KeyboardLayoutId id, bool shifted = 
 // into it stays valid until the next build into the same buffer.
 //
 // Only the character rows are copied in; the bottom control rows point at
-// shared tables. About 1.2 KB on a 32-bit target.
+// shared tables. About 1.4 KB on a 32-bit target.
 struct KeyboardLayoutBuffer {
-  // The widest built-in layer: a digit row over Arabic's 12/11/12 letters.
-  static constexpr uint8_t MAX_KEYS = 48;
-  static constexpr uint8_t MAX_ROWS = 5;
+  // Kazakh plus its digit row uses 53 copied keys and six rows including the footer.
+  static constexpr uint8_t MAX_KEYS = 56;
+  static constexpr uint8_t MAX_ROWS = 6;
   // NUL-terminated label and alternate text for those keys.
   static constexpr uint16_t TEXT_BYTES = 256;
 
@@ -628,10 +632,13 @@ void keyboard(Frame<MaxInteractions>& frame, Rect rect, const KeyboardProps& pro
   int16_t rowHitOverflow = 0;  // set per row: bottomHitOverflow on the last row
   auto drawKey = [&](Rect keyRect, const KeyboardKey& key, int16_t selectedIndex) {
     State state = StateNormal;
+    if (key.kind == KeyKind::Shift) state |= props.shiftState;
     if (props.selectedIndex == selectedIndex) state |= props.inactiveSelection ? StateFocused : StateSelected;
     if (!key.enabled || key.kind == KeyKind::Disabled) state |= StateDisabled;
     const ActionId action = actionFor(key.kind);
-    const bool hasAltHint = key.kind == KeyKind::Normal && key.alt;
+    const bool hasAltHint = props.showAltHints && key.kind == KeyKind::Normal && key.alt;
+    const bool functionKey = key.kind == KeyKind::Mode || key.kind == KeyKind::Delete || key.kind == KeyKind::Ok;
+    const StyleSet& keyStyles = functionKey && props.controlStyles ? *props.controlStyles : styles;
     ButtonProps bp;
     const char* label =
         (key.kind == KeyKind::Space || key.kind == KeyKind::Delete || key.kind == KeyKind::Lang) ? nullptr : key.label;
@@ -654,7 +661,24 @@ void keyboard(Frame<MaxInteractions>& frame, Rect rect, const KeyboardProps& pro
       bp.text.align = TextAlign::Center;
       bp.text.maxLines = 1;
     }
-    bp.styles = styles;
+    TextStyle labelText = bp.text;
+    const char* fittedLabel = hasAltHint ? label : bp.label;
+    const bool hasDigitLabel = label && label[0] >= '0' && label[0] <= '9' && label[1] == '\0';
+    const int32_t labelContentWidth = static_cast<int32_t>(keyRect.width) - 4;
+    const int32_t maxLabelOffset = labelContentWidth > 1 ? (labelContentWidth - 1) / 2 : 0;
+    int32_t labelOffsetX = hasDigitLabel ? props.digitLabelOffsetX : 0;
+    if (labelOffsetX < -maxLabelOffset) labelOffsetX = -maxLabelOffset;
+    if (labelOffsetX > maxLabelOffset) labelOffsetX = maxLabelOffset;
+    const int32_t labelOffsetMagnitude = labelOffsetX < 0 ? -labelOffsetX : labelOffsetX;
+    const int16_t labelWidth = static_cast<int16_t>(labelContentWidth - labelOffsetMagnitude * 2);
+    const int16_t contentWidth = hasAltHint ? labelWidth : static_cast<int16_t>(keyRect.width - 8);
+    if (fittedLabel && contentWidth > 0 &&
+        frame.target().measureText(labelText.font, fittedLabel, labelText).width > contentWidth &&
+        frame.target().measureText(props.altText.font, fittedLabel, props.altText).width <= contentWidth) {
+      labelText.font = props.altText.font;
+      bp.text.font = labelText.font;
+    }
+    bp.styles = keyStyles;
     bp.minTouchSize = props.minTouchSize;
     bp.hitPadding.bottom = rowHitOverflow;
     bp.radius = props.keyRadius;
@@ -676,8 +700,19 @@ void keyboard(Frame<MaxInteractions>& frame, Rect rect, const KeyboardProps& pro
     // Shift keys keep their explicit "#+=" / "123" labels.
     const bool iconShift = key.kind == KeyKind::Shift && !key.label && !props.shiftLabel;
     if (key.kind == KeyKind::Delete || key.kind == KeyKind::Lang || iconShift) {
-      const Paint ink = styles.resolve(frame.stateFor(action, key.value, state)).foreground;
+      const Paint ink = keyStyles.resolve(frame.stateFor(action, key.value, state)).foreground;
       const int16_t maxSize = keyRect.height < keyRect.width ? keyRect.height : keyRect.width;
+      if (iconShift && hasState(props.shiftState, StateSelected)) {
+        const int16_t side = maxSize > 36 ? 28 : static_cast<int16_t>(maxSize > 8 ? maxSize - 8 : 1);
+        const int16_t cx = static_cast<int16_t>(keyRect.x + keyRect.width / 2);
+        const int16_t cy = static_cast<int16_t>(keyRect.y + keyRect.height / 2);
+        frame.target().triangle({static_cast<int16_t>(cx - side / 2), cy}, {cx, static_cast<int16_t>(cy - side / 2)},
+                                {static_cast<int16_t>(cx + side / 2), cy}, ink);
+        frame.target().fill(Rect{static_cast<int16_t>(cx - side / 6), cy, static_cast<int16_t>(side / 3),
+                                 static_cast<int16_t>(side / 2)},
+                            ink);
+        return;
+      }
       const BitmapRef icon = key.kind == KeyKind::Delete
                                  ? lucideDeleteIcon28()
                                  : (key.kind == KeyKind::Lang ? lucideGlobeIcon24() : lucideArrowBigUpIcon24());
@@ -706,25 +741,17 @@ void keyboard(Frame<MaxInteractions>& frame, Rect rect, const KeyboardProps& pro
       // alternates otherwise overlap their digit. Keep the label's full line
       // box inside compact keys; a shorter box makes renderers draw the glyph
       // from its top and lets the digit escape below the key.
-      const bool hasDigitLabel = label && label[0] >= '0' && label[0] <= '9' && label[1] == '\0';
-      const int32_t labelContentWidth = static_cast<int32_t>(keyRect.width) - 4;
-      const int32_t maxLabelOffset = labelContentWidth > 1 ? (labelContentWidth - 1) / 2 : 0;
-      int32_t labelOffsetX = hasDigitLabel ? props.digitLabelOffsetX : 0;
-      if (labelOffsetX < -maxLabelOffset) labelOffsetX = -maxLabelOffset;
-      if (labelOffsetX > maxLabelOffset) labelOffsetX = maxLabelOffset;
-      const int32_t labelOffsetMagnitude = labelOffsetX < 0 ? -labelOffsetX : labelOffsetX;
       const int16_t labelX = static_cast<int16_t>(keyRect.x + 2 + (labelOffsetX > 0 ? labelOffsetX * 2 : 0));
-      const int16_t labelLh = frame.target().lineHeight(keyText.font);
+      const int16_t labelLh = frame.target().lineHeight(labelText.font);
       const int16_t centeredLabelTop = static_cast<int16_t>(keyRect.y + (keyRect.height - labelLh) / 2);
       const int16_t lowestLabelTop = static_cast<int16_t>(keyRect.bottom() - 2 - labelLh);
-      const int16_t labelWidth = static_cast<int16_t>(labelContentWidth - labelOffsetMagnitude * 2);
       const int16_t labelGap = props.altLabelGap > 0 ? props.altLabelGap : 0;
       int32_t labelTop = static_cast<int32_t>(hintTop) + altLh + labelGap;
       if (labelTop < centeredLabelTop) labelTop = centeredLabelTop;
       if (labelTop > lowestLabelTop) labelTop = lowestLabelTop;
       if (labelTop < keyRect.y + 2) labelTop = static_cast<int16_t>(keyRect.y + 2);
       if (label && labelLh > 0 && labelWidth > 0) {
-        TextStyle labelStyle = textStyleWithForeground(keyText, styles.resolve(resolvedState).foreground);
+        TextStyle labelStyle = textStyleWithForeground(labelText, styles.resolve(resolvedState).foreground);
         labelStyle.align = TextAlign::Center;
         labelStyle.maxLines = 1;
         frame.target().text(Rect{labelX, static_cast<int16_t>(labelTop), labelWidth, labelLh}, label, labelStyle);
@@ -774,14 +801,16 @@ void keyboard(Frame<MaxInteractions>& frame, Rect rect, const KeyboardProps& pro
       const int16_t w = !useUniformWidth && col + 1 == layoutRow.count ? static_cast<int16_t>(rowRight - x)
                                                                        : static_cast<int16_t>(unitW * keyUnits);
       Rect keyRect{x, y, w, rowH};
-      // Align outer controls with the top row without moving the inner keys.
+      // Extend outer controls into spare gutter without shrinking wider rows.
       if (!topRowBounds.empty() && layoutRow.insetUnits == 0) {
         if (col == 0 && (key.kind == KeyKind::Shift || key.kind == KeyKind::Mode)) {
-          keyRect.width = static_cast<int16_t>(keyRect.right() - topRowBounds.x);
-          keyRect.x = topRowBounds.x;
+          const int16_t left = keyRect.x < topRowBounds.x ? keyRect.x : topRowBounds.x;
+          keyRect.width = static_cast<int16_t>(keyRect.right() - left);
+          keyRect.x = left;
         }
         if (col + 1 == layoutRow.count && (key.kind == KeyKind::Delete || key.kind == KeyKind::Ok)) {
-          keyRect.width = static_cast<int16_t>(topRowBounds.right() - keyRect.x);
+          const int16_t right = keyRect.right() > topRowBounds.right() ? keyRect.right() : topRowBounds.right();
+          keyRect.width = static_cast<int16_t>(right - keyRect.x);
         }
       }
       drawKey(keyRect, key, logicalIndex++);

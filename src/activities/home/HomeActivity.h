@@ -1,10 +1,14 @@
 #pragma once
+#include <Bitmap.h>
+
+#include <atomic>
 #include <functional>
 #include <vector>
 
 #include "../../apps_local/home/HomeDashboardUi.h"
 #include "../../apps_local/home/HomeMenuInput.h"
 #include "../../apps_local/home/HomeMenuIntegration.h"
+#include "../../apps_local/library/PreparedCoverCache.h"
 #include "./FileBrowserActivity.h"
 #include "CrossPointSettings.h"
 #include "RecentBooksStore.h"
@@ -19,6 +23,26 @@
 struct Rect;
 
 class HomeActivity final : public Activity {
+  libraryui::PreparedCoverCache libraryWarmup;
+  HalFile libraryWarmFile;
+  Bitmap libraryWarmBitmap{libraryWarmFile};
+  std::atomic<bool> libraryWarmInterrupted{true};
+  std::atomic<unsigned> libraryWarmIndex{0};
+  unsigned long libraryWarmInputAt = 0;
+  size_t gridPreparationIndex = 0, shelfNativeIndex = 0;
+  uint32_t libraryWarmMediaRevision = 0;
+  bool prepareGridCover(RecentBook& book, int height);
+  bool nativeShelfPending() const {
+    return coverGridUi && SETTINGS.homeLayout == CrossPointSettings::HOME_LICORICE &&
+           shelfNativeIndex < recentBooks.size();
+  }
+  uint32_t libraryWarmRevision = 0, libraryWarmArtRevision = 0;
+  uint8_t libraryWarmOrientation = 0;
+  char libraryWarmPath[112]{};
+  freeink::ui::Rect libraryWarmArea{};
+  int libraryWarmFallbackHeight = 0;
+  void configureLibraryWarmup();
+  static bool continueLibraryWarmup(void* context);
   std::unique_ptr<CoverGridHomeUi> coverGridUi;
   ButtonNavigator buttonNavigator{140, 400};
   homeui::MenuInput menuInput;
@@ -30,6 +54,13 @@ class HomeActivity final : public Activity {
   int recentSourceIndices[RecentBooksStore::MAX_RECENT_BOOKS]{};
   int displayBookCount() const {
     return coverGridUi ? static_cast<int>(recentBooks.size()) : recentBooks.empty() ? 0 : 1;
+  }
+  enum class EntryPhase : uint8_t { Blocking, Shell, Preparing, Painting, Ready };
+  std::atomic<EntryPhase> entryPhase{EntryPhase::Blocking};
+  void initializeContent();
+  bool menuCursorVisible = false;
+  int paintedSelection() const {
+    return SETTINGS.homeLayout == CrossPointSettings::HOME_BOOX && !menuCursorVisible ? -1 : selectorIndex;
   }
   bool recentsLoading = false;
   bool recentsLoaded = false;
@@ -105,7 +136,12 @@ class HomeActivity final : public Activity {
   void onEnter() override;
   void onExit() override;
   void loop() override;
-  std::optional<uint32_t> nextLoopWakeDelayMs(uint32_t) const override { return 1000; }
+  std::optional<uint32_t> nextLoopWakeDelayMs(uint32_t) const override {
+    return entryPhase != EntryPhase::Ready || recentsLoading || libraryWarmIndex.load() < 9 || nativeShelfPending()
+               ? 20
+               : 1000;
+  }
+  void runIdleWork() override;
   void render(RenderLock&&) override;
   bool isHomeActivity() const override { return true; }
 };

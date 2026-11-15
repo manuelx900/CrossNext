@@ -1,0 +1,17 @@
+{
+  "id": "S029",
+  "kind": "scene",
+  "master": "scene-029-v2.png",
+  "reference": "assets_local/quest/redesign/portraits/iri-source.png",
+  "transparent": false,
+  "prompt": "Use case: illustration-story. ONE complete landscape 3:2 narrative illustration for the monochrome e-ink game Aventura lectora. Clean expressive chibi storybook art, thick smooth PURE BLACK contours, white and sparse flat light-gray fills. No color, gradients, crosshatching, collage, lettering, captions, UI or watermark. Large clear clues readable at480x320. Player hero and PET are OFF CAMERA. Depict only people actually physically present in the described event; a person mentioned in a letter or record does NOT appear alive beside its reader. The attached portraits are IDENTITY references, NOT additional cast: match face, age, hairstyle, clothing and distinctive accessories exactly for any named person present. Do not invent another person or clue. Fill the scene to its edges, keep all important faces and objects in frame. IRI: woman with straight dark chin-length bob, shell hair clasp, short dark cape and round throat brooch; no glasses, white bun or beard. Region: The sunken library. Chapter: The atlas key. Draw exactly this already-known moment: The final record identifies who drew the maps and why Aren treasured the book. Recover it before using the cabinet's contents to interpret his choices. Context for setting and continuity only: Ada's record points to a sealed cabinet shaped like the atlas's binding. Iri kept it closed because its missing access record named the book's maker. Opening it may explain why its maps respond to recovered stories. MANDATORY PHYSICAL SETTING: the atlas-shaped cabinet lock INSIDE the library. Do not anthropomorphize books, pages or objects. No invented smiling ghosts. No person replaces a written record. EXHAUSTIVE VISIBLE CAST (do not add anyone else): Iri. The reference is STYLE ONLY for any person not explicitly in this cast.",
+  "references": [
+    "assets_local/quest/redesign/portraits/iri-source.png"
+  ],
+  "sha256": "24bcb224e0f64254fc13b62bf1c03a7ad4ddac48d22c7560317bd16d0ef7098b",
+  "tool": "built-in image_gen",
+  "source": "exec-86a99286-f1d4-4d3d-b0c7-8a2b68d9c7b8.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

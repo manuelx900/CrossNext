@@ -223,7 +223,7 @@ int main(int argc, char** argv) {
                                        : 0;
             if (view == 8 && carnivoro::lives(carnivoro::difficulty(caseId)) < 2) continue;
             const int count = carnivoro::getCase(caseId)->count;
-            const int pageCount = view == 7                               ? (size.first == 480 ? 5 : 10)
+            const int pageCount = view == 7                               ? (size.first == 480 ? 9 : 10)
                                   : view == 3 || view == 10 || view == 11 ? count
                                   : view == 4 && size.first == 800        ? (count + 2) / 3
                                                                           : 1;

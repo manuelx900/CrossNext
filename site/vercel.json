@@ -70,6 +70,15 @@
       ]
     },
     {
+      "source": "/showcase/wordle/(.*).cpwb",
+      "headers": [
+        {
+          "key": "Content-Encoding",
+          "value": "br"
+        }
+      ]
+    },
+    {
       "source": "/study/NotoSansCJK.otf",
       "headers": [
         {

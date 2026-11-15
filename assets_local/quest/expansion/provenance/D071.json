@@ -1,0 +1,12 @@
+{
+  "id": "D071",
+  "master": "decor-071-v1.png",
+  "sha256": "7f43de292b6227ebefe85d05330014926fd1019ac917eeba093493ad79fc37be",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original collectible decoration sprite for the e-ink fantasy reading app Aventura lectora. Reference fairy is STYLE ONLY. Friendly chibi storybook proportions, white and pale-gray flat fills, VERY THICK solid pure-BLACK outer contours (20-26px at1024px), strong black inner lines, simple broad shapes readable at112x144. Whole subject visible, centered with transparent padding. Genuine transparent background. No scenery, frame, UI, text, lettering, watermark, fine hatching or gray outlines. Do not include the player hero or PET. Subject: a flying gentle bird carrying one broad flowering twig, a long ribbon-like tail and white wings. An airborne or hanging ornament; no ground base.",
+  "reference": "assets_local/quest/redesign/masters/decoration-fairy-v1.png",
+  "transparent": true,
+  "width": 1312,
+  "height": 1199,
+  "mode": "RGBA"
+}

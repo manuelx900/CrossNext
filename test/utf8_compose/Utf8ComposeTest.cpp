@@ -42,6 +42,13 @@ TEST_P(Utf8ComposeNfc, ComposesSingleMark) {
   EXPECT_EQ(compose("a" + kCombGrave), "\xC3\xA0");  // a + ̀  -> à  (U+00E0)
 }
 
+TEST_P(Utf8ComposeNfc, ComposesArabicAndPersianLetters) {
+  EXPECT_EQ(compose(u8"ا\u0653ب"), u8"آب");
+  EXPECT_EQ(compose(u8"ا\u0654 و\u0654 ا\u0655 ي\u0654"), u8"أ ؤ إ ئ");
+  EXPECT_EQ(compose(u8"ە\u0654 ہ\u0654 ے\u0654"), u8"ۀ ۂ ۓ");
+  EXPECT_EQ(compose(u8"كتاب سلام"), u8"كتاب سلام");
+}
+
 // Vietnamese letters carry two stacked marks; composition must accumulate them
 // onto the intermediate precomposed character (this is the crux of the feature).
 TEST_P(Utf8ComposeNfc, ComposesStackedVietnameseMarks) {

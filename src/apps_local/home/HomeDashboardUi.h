@@ -18,9 +18,11 @@ class HomeDashboardUi : public UiAppHost {
   void begin();
   bool pollDate();
   bool draw(const RecentBook* book, bool librarySlot, bool plugins, int selected, int recentIndex = 0,
-            int recentCount = 1, const RecentBook* const* neighbors = nullptr);
+            int recentCount = 1, const RecentBook* const* neighbors = nullptr, bool loadingShell = false);
+  bool restoreCover(const RecentBook& book);
   void paintCover(const RecentBook& book);
   void finishCover();
+  void paintPlaceholders();
   bool canRepaintSelection(int selected);
   bool repaintSelection(int selected);
   int selectedAction(const MappedInputManager& input);

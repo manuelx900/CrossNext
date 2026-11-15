@@ -1,0 +1,157 @@
+Reading performance
+
+Home retains up to three cover scenes in PSRAM. Returning to an unchanged scene
+reuses its pixels. File transfers, cover/cache changes and library rebuilds
+invalidate that data; USB Drive ends with a restart, which discards RAM caches.
+Bookshelf also retains a bounded catalog of up to 60 newest books. Recent reading
+order is merged from the current recent-book list each time Home is entered.
+Paths and text are materialized only for visible entries, not the whole catalog.
+The featured progress still reads the saved progress file, so finishing a reading
+session updates its percentage. The optional caches have storage-based fallbacks.
+
+Library remembers previously computed filter choices while the Library activity
+remains open, with a total 128 KiB PSRAM limit. Leaving Library releases them.
+The first visit to a category still needs to collect its choices.
+
+Wrapped UI lists share an optional 3 KiB PSRAM cache of row geometry, keyed by
+content, font metrics, language, orientation and available width. It holds no
+book strings or file handles. Mutable microSD font metrics use ordinary sizing;
+if PSRAM allocation fails, all lists retain their uncached behavior.
+
+While adjusting brightness or warmth, the panel rebuilds its interaction table
+but clips drawing and requests display of only the changed band. Opening,
+rotation, mode inversion and unsupported clipping retain the complete repaint.
+This reuses the existing framebuffer; it does not allocate a second one.
+
+In the reader, rapid text adjustments update the controls immediately and group
+the page preview reflow after a short pause. Closing the panel applies the final
+value. A new font/layout may still need pagination; up to four saved chapter
+layouts remain reusable. No reading-session or progress saves are removed.
+
+The CSS cache of up to four recently opened books can reuse its prior complete
+validation when the path, size and modification time match. Cache rewrites and
+cache deletion discard that validation. Missing timestamps or PSRAM use full
+validation. Protected-book access checks still run on open.
+
+Hardware comparison: use the same card and settings, separate the first open
+from ten warm repetitions. Test all four themes and portrait/landscape with EPUB
+and XTC: open/read/return, change recent book, revisit filters, switch A/B/A fonts,
+rapidly adjust size then close, and drag brightness/warmth to the end. The final
+value, reading position, covers and progress must remain correct. Replace a book
+through a transfer and clear its cache: its old cover/data must not remain.
+LOG_LEVEL=2 reports Home preparation, list correction passes and CPU/display time.
+Host tests cannot establish X4 Pro median/P95 latency or actual panel ghosting.
+
+Home repaints its resolved thumbnails in the same visit, including when the
+thumbnail was already on the card but the first frame used provisional art.
+Loading-message visibility does not decide whether to repaint. Unchanged warm
+cover scenes still bypass thumbnail preparation.
+
+Reader glyph prewarming targets the actual regular/bold/italic face at each
+CSS size. SD bitmap fonts accumulate their bounded 512-glyph working set between
+reader pages. Vector faces retain their existing glyph caches; the 512-pair
+kerning cache keeps common pairs when full and computes uncached pairs exactly,
+without clearing all previously prepared pairs. Memory limits are unchanged.
+Indexing stores layout and page data; rendering a previously unseen glyph or
+size can still require font work. Hardware timing remains a separate check.
+
+Optional whole-card preparation
+-------------------------------
+Settings > Library > Prepare books scans visible folders for EPUB, XTC and XTCH.
+It first counts the files, then prepares one book and one chapter at a time.
+The file list is a temporary length-prefixed queue on microSD, not an array
+proportional to the library in RAM. Paths are capped at 1023 bytes, depth at
+32 directories, and the scan at one million directory entries. Skipped paths
+and failed preparations are reported; a failure is counted per book/font pass.
+Unreadable/protected books do not stop the rest.
+
+The font picker offers Current, All, None and individual family checkboxes.
+Starting with one family saves it as the default reader font; starting with
+several preserves the existing default. Each family uses the current point
+size, snapped to its nearest installed size, and the current layout/orientation.
+It does not prepare every point size. Names must fit the reader's existing
+31-byte family setting; longer names must be shortened before they can be used.
+Choosing multiple families requires confirmation: a large library can take
+several hours, slow progress is normal, and each layout uses additional SD space.
+Keep the reader powered. Cancelling keeps saved pages for the next run.
+
+Settings > Reading > EPUB engine selects New (the default) or Classic (based on
+v1.4). Classic retains the earlier parser and text layout while sharing current
+fonts, CSS parsing, rendering, controls and storage. Only the selected parser runs.
+Prepare books and Prepare full book on opening prepare EPUB pages for the chosen
+engine only. Before a manual preparation starts, a notice identifies that engine
+and explains how to prepare the other: change EPUB engine in Settings and run the
+preparation again. Each engine keeps its own page layouts and preparation stamps;
+switching engines does not erase the other engine's prepared pages. Covers,
+thumbnails, extracted HTML and eligible XML event streams remain shared. XTC has
+no EPUB layout engine and keeps the same fixed-page preparation in either mode.
+Neither mode promises zero repagination after changing fonts, size, margins or
+orientation. Runtime speed and heap headroom still require checks on the device.
+
+EPUB preparation writes named chapter layouts for the selected families outside
+the ordinary four-slot reader cache, so preparing a fifth family retains the
+first. Normal reading probes a matching prepared layout before its four slots.
+Matching existing layouts are copied, preserving the primary cache used by
+progress synchronization. Reading a named layout mirrors it to the primary
+cache once, retaining the named copy. This requires a temporary 4 KiB buffer
+and additional SD I/O on the first read of a prepared variant; warm opens reuse
+the matching primary. Copy failure leaves the named copy intact and reports an
+error rather than exposing incompatible page mappings.
+Changing font size, reading layout or orientation can require preparation again.
+The card is scanned once; a temporary file queue is replayed for each family.
+Only one family is loaded at a time and the saved default is restored on exit.
+Incomplete bundled Noto Serif resources must be repaired before preparing that
+family, matching the normal reader's availability contract.
+XTC pages are already fixed; their header
+and thumbnails are prepared. Thumbnail sizes cover all four Home appearances,
+their side/hero slots and Library grids (including filtered grids), in all four
+screen orientations, using the current XTC cover-rotation setting. Duplicate
+heights are generated once, on the first font pass. Only one thumbnail is processed per idle step so
+cancel can be handled between variants. Missing cover art keeps the placeholder.
+Supported cover conversion failures count as failed books; a missing or
+unsupported EPUB illustration uses the placeholder without blocking preparation.
+Cover Grid Home shares its measurement function with the preparation action.
+Changing reading settings can require a new layout. The operation does not
+mark books as read, change progress, add recents or write reading statistics.
+
+The shared render task performs bounded incremental layout chunks under
+RenderLock, with the existing framebuffer loan. No worker or second framebuffer
+is created. The job's fixed path buffers/file handles are allocated once, and
+only one book/parser is retained. Auto-sleep is inhibited only during the job.
+Cancel keeps completed and partial reader caches, closes the handles and removes
+the temporary queue. Running the action again scans the card and reuses valid
+caches. The first metadata/cover operation for an individual book can delay
+cancellation until that operation returns. Manual sleep/exit closes the job.
+
+The progress screen is updated at most once per second except for phase changes;
+normal reading does not keep an indexing task alive. Preparing every chapter can
+consume substantial microSD space. Runtime power/heap and thousands-of-books
+completion timing still require measurements on an X4 Pro.
+
+Optional full-book preparation on opening
+-----------------------------------------
+Settings > Reading > Prepare full book on opening is off by default. Turning
+it on prepares the book you open before displaying its first page: every EPUB
+chapter in your current reading format, image pixel caches and thumbnail sizes
+for all four Home appearances and their orientations. XTC pages are already
+fixed-layout images, so this prepares their cover variants, not EPUB pagination.
+The compact preparation popup shows a percentage of completed preparation units, not
+an estimate of remaining time. It can take minutes for a large illustrated book.
+It preserves the screen that opened the book. Cancel keeps completed caches;
+opening again continues preparation. The separate whole-card preparation screen
+also supports horizontal swipes between pages of reading-font choices.
+
+A completed preparation is recorded on microSD and reused on later openings.
+Changing the reading font, size, margins, orientation, image mode or other layout
+options can need another format. Updated source files, font resources, cache
+formats, cleared or damaged caches can also require work again. Turning this
+option off retains the ordinary quick, incremental opening path and does not
+delete prepared data. The existing Prepare books action still prepares a whole
+card and can prepare several selected fonts in advance.
+
+One incremental Section and one Page are retained, with the existing renderer
+worker and storage mutex; no new framebuffer or worker is created. JPEG, PNG
+and GIF decoding can write their pixel cache without painting over the progress
+screen. Image cache names include the output dimensions so another size does
+not overwrite a prepared variant. Completion markers are disposable book-cache
+data, not reading history or daily-goal statistics.

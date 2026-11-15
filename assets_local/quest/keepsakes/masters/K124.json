@@ -1,0 +1,21 @@
+{
+  "id": "K124",
+  "key": "Medalla-library",
+  "file": "K124.png",
+  "sample": {
+    "es": "Medalla del salvamento",
+    "en": "Salvage medal"
+  },
+  "requests": [
+    99
+  ],
+  "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: open book beneath a glass dome.",
+  "transparent": true,
+  "kind": "keepsake",
+  "sha256": "8e555f66b41ac1af8889b1c86ccd3902ec5aa833da72e266f3c06067c3301bac",
+  "tool": "built-in image_gen",
+  "source": "exec-0a37fc02-0a62-4ab1-b89f-570eba4a2bd2.png",
+  "width": 1180,
+  "height": 1333,
+  "mode": "RGBA"
+}

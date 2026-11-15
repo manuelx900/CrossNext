@@ -1,0 +1,22 @@
+{
+  "id": "K007",
+  "key": "Tablilla",
+  "file": "K007.png",
+  "sample": {
+    "es": "Tablilla del cruce",
+    "en": "Crossing tablet"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Crossing tablet.",
+  "requests": [
+    7,
+    50,
+    127,
+    212,
+    240
+  ],
+  "sha256": "d653644f62d08261a95e4a1010357f090b18c2d3a29ed4038e724a75c21a31fc",
+  "source": "exec-0c327e82-3f1a-400d-b66b-8ff8ce29a311.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

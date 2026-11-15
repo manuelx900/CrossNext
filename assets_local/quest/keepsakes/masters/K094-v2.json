@@ -1,0 +1,18 @@
+{
+  "id": "K094",
+  "key": "Calibrador",
+  "file": "K094-v2.png",
+  "sample": {
+    "es": "Calibrador de Orin",
+    "en": "Orin's gauge"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: one antique craftsman's vernier caliper, very recognizable two opposing measuring jaws and a short rectangular sliding beam with five broad measurement ticks, large simple sturdy black contours. A tool used to measure dimensions. No round dial, no watch, no clock.",
+  "requests": [
+    156
+  ],
+  "sha256": "99756149368a22b4be079852fa795a4de17165bff5e73e7e2ed78ba4c88bc316",
+  "source": "exec-0821c60d-2405-4fdf-a7a5-acc0ce3f54fb.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

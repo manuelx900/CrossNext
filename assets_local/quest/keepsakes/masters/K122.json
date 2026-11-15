@@ -1,0 +1,21 @@
+{
+  "id": "K122",
+  "key": "Medalla-city",
+  "file": "K122.png",
+  "sample": {
+    "es": "Medalla de la ciudad",
+    "en": "City medal"
+  },
+  "requests": [
+    49
+  ],
+  "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: city gate with a small hanging bell.",
+  "transparent": true,
+  "kind": "keepsake",
+  "sha256": "3b5effa4561e0f11241186780d793fd80ba9d41ae1bad9a8670e6141098c3ac9",
+  "tool": "built-in image_gen",
+  "source": "exec-4428b82d-be8a-4742-8e77-0e65d3ca1817.png",
+  "width": 1199,
+  "height": 1312,
+  "mode": "RGBA"
+}

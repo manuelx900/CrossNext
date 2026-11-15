@@ -8,10 +8,56 @@
 #include "../../src/apps_local/pet/PetStore.h"
 
 namespace {
-constexpr const char* A = "/.crosspoint/pet/state-a.bin";
-constexpr const char* B = "/.crosspoint/pet/state-b.bin";
+constexpr const char* A = "/.crosspoint/pet-v2/state-a.bin";
+constexpr const char* B = "/.crosspoint/pet-v2/state-b.bin";
+void generationIsolation() {
+  pet::Store store;
+  pet::HistoryStore lives;
+  pet::Profile old;
+  old.created = true;
+  old.generation = 9;
+  old.readingSeconds = 90000;
+  std::strcpy(old.name, "OLD");
+  std::vector<uint8_t> bytes(pet::STATE_BYTES);
+  pet::encode(old, bytes.data());
+  testStorage.files["/.crosspoint/pet/state-a.bin"] = bytes;
+  testStorage.files["/.crosspoint/pet/state-b.bin"] = bytes;
+  pet::History archive;
+  assert(pet::endLife(old, pet::LifeStatus::Retired, 1700000000));
+  assert(pet::addLife(archive, old));
+  bytes.resize(pet::HISTORY_BYTES);
+  pet::encodeHistory(archive, bytes.data());
+  testStorage.files["/.crosspoint/pet/lives-a.bin"] = bytes;
+  testStorage.files["/.crosspoint/pet/lives-b.bin"] = bytes;
+  testStorage.files["/.crosspoint/reading-history/sessions.bin"] = {1, 2, 3};
+  const auto originals = testStorage.files;
+  pet::Profile fresh, loaded;
+  pet::History history, loadedHistory;
+  bool writable = false;
+  assert(store.load(fresh, writable) && writable && !fresh.created && !fresh.readingSeconds);
+  assert(lives.load(history, writable) && writable && history.count == 0);
+  assert(testStorage.files == originals && testStorage.writes == 0);
+  fresh.created = true;
+  fresh.generation = 1;
+  fresh.readingSeconds = 60;
+  std::strcpy(fresh.name, "NEW");
+  assert(store.save(fresh, writable));
+  assert(store.load(loaded, writable) && loaded.generation == 1 && loaded.readingSeconds == 60);
+  assert(!std::strcmp(loaded.name, "NEW"));
+  assert(pet::endLife(fresh, pet::LifeStatus::Retired, 1700100000));
+  assert(pet::addLife(history, fresh) && lives.save(history, writable));
+  assert(lives.load(loadedHistory, writable) && loadedHistory.count == 1);
+  assert(loadedHistory.records[0].generation == 1 && !std::strcmp(loadedHistory.records[0].name, "NEW"));
+  testStorage.files[B][0] = 0;
+  assert(!store.load(loaded, writable) && !writable);
+  testStorage.files["/.crosspoint/pet-v2/lives-b.bin"][0] = 0;
+  assert(!lives.load(loadedHistory, writable) && !writable);
+  for (const auto& file : originals) assert(testStorage.files.at(file.first) == file.second);
+  testStorage = {};
+}
 }  // namespace
 int main() {
+  generationIsolation();
   pet::Store store;
   pet::Profile p;
   bool writable = false;
@@ -47,7 +93,7 @@ int main() {
   testStorage.files[B][0] = 'P';
   testStorage.files[B][1] = 'E';
   testStorage.files[B][2] = 'T';
-  testStorage.files[B][3] = '8';
+  testStorage.files[B][3] = ':';
   assert(!store.load(restored, writable) && !writable);
   const int writes = testStorage.writes;
   assert(!store.save(p, writable) && testStorage.writes == writes);
@@ -57,6 +103,37 @@ int main() {
   assert(lifeStore.load(history, writable) && writable && !history.count);
   p.lifeStatus = pet::LifeStatus::Retired;
   p.endedAt = 1700000000;
+  {
+    static_assert(sizeof(pet::LifeRecord) == 56);
+    pet::Profile aged = p;
+    aged.generation = 1;
+    aged.bornDay = 20000;
+    aged.sharedDays = 3;
+    pet::History ages, roundtrip;
+    uint8_t bytes[pet::HISTORY_BYTES];
+    for (const int days : {0, 1, 23, 70000}) {
+      const int endedDay = aged.bornDay + days;
+      aged.endedAt = int64_t(endedDay) * 86400;
+      assert(pet::addLife(ages, aged, endedDay));
+      assert(!pet::addLife(ages, aged, endedDay));
+      pet::encodeHistory(ages, bytes);
+      assert(pet::decodeHistory(bytes, roundtrip));
+      assert(roundtrip.count == 1 && roundtrip.records[0].ageKnown);
+      assert(roundtrip.records[0].ageDays == std::min(days, int(UINT16_MAX)) && roundtrip.records[0].days == 3);
+    }
+    const auto seal = [&]() {
+      const auto crc = pet::checksum(bytes, sizeof(bytes) - 4);
+      for (unsigned i = 0; i < 4; ++i) bytes[sizeof(bytes) - 4 + i] = uint8_t(crc >> (8 * i));
+    };
+    bytes[12 + 49] = bytes[12 + 50] = bytes[12 + 51] = 0;
+    seal();
+    assert(pet::decodeHistory(bytes, roundtrip) && !roundtrip.records[0].ageKnown);
+    bytes[12 + 51] = 2;
+    seal();
+    assert(!pet::decodeHistory(bytes, roundtrip));
+    assert(!pet::addLife(ages, aged) && ages.records[0].ageKnown);
+    assert(!pet::addLife(ages, aged, aged.bornDay + 2) && ages.records[0].ageDays == UINT16_MAX);
+  }
   for (unsigned i = 1; i <= 14; ++i) {
     p.generation = i;
     assert(pet::addLife(history, p));
@@ -76,9 +153,9 @@ int main() {
   assert(lifeStore.load(loadedHistory, writable) && loadedHistory.records[11].generation == 14);
   assert(lifeStore.save(history, writable));
   assert(lifeStore.load(loadedHistory, writable) && loadedHistory.records[11].generation == 15);
-  testStorage.files["/.crosspoint/pet/lives-a.bin"][40] ^= 1;
+  testStorage.files["/.crosspoint/pet-v2/lives-a.bin"][40] ^= 1;
   assert(lifeStore.load(loadedHistory, writable) && loadedHistory.records[11].generation == 14);
-  testStorage.files["/.crosspoint/pet/lives-a.bin"][3] = '3';
+  testStorage.files["/.crosspoint/pet-v2/lives-a.bin"][3] = '3';
   assert(!lifeStore.load(loadedHistory, writable) && !writable);
   assert(!lifeStore.save(history, writable));
   testStorage.files.clear();
@@ -95,10 +172,11 @@ int main() {
     std::copy(modern.begin() + 12 + i * 52, modern.begin() + 36 + i * 52, legacy.begin() + 12 + i * 32);
   const auto checksum = pet::checksum(legacy.data(), legacy.size() - 4);
   for (unsigned i = 0; i < 4; ++i) legacy[legacy.size() - 4 + i] = uint8_t(checksum >> (8 * i));
-  testStorage.files["/.crosspoint/pet/lives-a.bin"] = legacy;
+  testStorage.files["/.crosspoint/pet-v2/lives-a.bin"] = legacy;
   assert(lifeStore.load(loadedHistory, writable) && writable && loadedHistory.count == 12);
   for (unsigned i = 0; i < 12; ++i)
-    assert(!loadedHistory.records[i].name[0] && loadedHistory.records[i].generation == i + 1);
+    assert(!loadedHistory.records[i].name[0] && loadedHistory.records[i].generation == i + 1 &&
+           !loadedHistory.records[i].ageKnown);
   assert(lifeStore.save(loadedHistory, writable));
   assert(lifeStore.load(loadedHistory, writable) && loadedHistory.count == 12);
   testStorage.files.clear();

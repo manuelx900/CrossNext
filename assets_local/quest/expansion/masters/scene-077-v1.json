@@ -1,0 +1,12 @@
+{
+  "id": "S077",
+  "master": "scene-077-v1.png",
+  "sha256": "e94eab15f2da885d27209c3e01325309cafbb08f181cc3aba39f5407d7c5c479",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The war of stories. Chapter: The truce of voices. Illustrate this already-authored event faithfully, without inventing another object or plot: Two rival towns tell opposite war stories. Their truce begins when each preserves the other's account alongside its own. Context only, do not try to draw all of it: Two frontier towns blame one another for the war. Both hold accounts needed by the seal of Memory, but neither will risk sending witnesses into the other's camp. You help arrange a protected meeting.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

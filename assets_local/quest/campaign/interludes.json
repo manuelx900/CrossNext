@@ -1,0 +1,2076 @@
+{
+  "version": 1,
+  "description": "Short actions connecting the four existing story beats across six reading steps; no new plot milestones.",
+  "chapters": [
+    {
+      "id": 0,
+      "bridges": [
+        {
+          "en": "Liora knelt beside the songbook and brushed away the fallen leaves.",
+          "es": "Liora se arrodilló junto al cancionero y apartó las hojas caídas."
+        },
+        {
+          "en": "Letters gleamed among the roots. Ink covered the verses.",
+          "es": "Entre las raíces brillaban letras. La tinta ocultaba los versos."
+        },
+        {
+          "en": "You held the pages open while Liora searched for the refrain.",
+          "es": "Sostuviste las páginas abiertas mientras Liora buscaba el estribillo."
+        }
+      ],
+      "opening": {
+        "es": "La campanilla de Ada brillaba junto al sendero. El lobo de tinta se interpuso cuando intentaste acercarte. Liora se quedó a tu lado. Estaba olvidando la canción de su madre, y las mismas manchas que cubrían aquel recuerdo formaban el cuerpo del guardián. Para alcanzar la pista, primero debías debilitar la tinta recuperando sus palabras.",
+        "en": "Ada's handbell gleamed beside the path. The ink wolf blocked your way when you tried to reach it. Liora stayed beside you. She was forgetting her mother's song, and the stains covering that memory also formed the guardian's body. To reach the clue, you first had to weaken the ink by recovering its words."
+      },
+      "titles": [
+        {
+          "en": "The ink wolf",
+          "es": "El lobo de tinta"
+        },
+        {
+          "en": "Ada's handbell",
+          "es": "La campanilla de Ada"
+        },
+        {
+          "en": "The songbook in the leaves",
+          "es": "El cancionero entre las hojas"
+        },
+        {
+          "en": "The song beneath the ink",
+          "es": "La canción bajo la tinta"
+        },
+        {
+          "en": "The stuck pages",
+          "es": "Las páginas pegadas"
+        },
+        {
+          "en": "The missing refrain",
+          "es": "El estribillo perdido"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "bridges": [
+        {
+          "en": "You stopped before the ravine and spread the letter on a stone.",
+          "es": "Te detuviste antes del barranco y extendiste la carta sobre una piedra."
+        },
+        {
+          "en": "Beneath the false words, traces of other directions showed through.",
+          "es": "Bajo las palabras falsas asomaban trazos de otra indicación."
+        },
+        {
+          "en": "Liora held the paper while you carefully cleared the ink.",
+          "es": "Liora sujetó el papel mientras retirabas la tinta con cuidado."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "bridges": [
+        {
+          "en": "The girl called from the far bank. Her father still could not find the planks.",
+          "es": "La niña os llamó desde la otra orilla. Su padre seguía sin encontrar las tablas."
+        },
+        {
+          "en": "You followed the bell rope to the roots holding it fast.",
+          "es": "Seguiste la cuerda de la campana hasta las raíces que la sujetaban."
+        },
+        {
+          "en": "Liora asked the girl to remember how they had crossed together.",
+          "es": "Liora pidió a la niña que recordara cómo habían cruzado juntos."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "bridges": [
+        {
+          "en": "Liora sat beside her and gave her time to answer.",
+          "es": "Liora se sentó con ella y le dio tiempo para responder."
+        },
+        {
+          "en": "You listened to the conversation from the start without interrupting.",
+          "es": "Escuchaste la conversación desde el principio, sin interrumpirla."
+        },
+        {
+          "en": "At the missing part, the woman clasped her hands tightly.",
+          "es": "Al llegar a la parte borrada, la mujer apretó las manos."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "bridges": [
+        {
+          "en": "You gathered the tablets from the ground and laid them beside the well.",
+          "es": "Recogiste las tablillas del suelo y las pusiste junto al brocal."
+        },
+        {
+          "en": "The same mark appeared on two tablets. You brought them to Liora.",
+          "es": "Una misma marca aparecía en dos tablillas. Las acercaste a Liora."
+        },
+        {
+          "en": "The librarian compared every mark before speaking the names.",
+          "es": "La bibliotecaria comparó cada trazo antes de pronunciar los nombres."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "bridges": [
+        {
+          "en": "You waited for the deer to move and checked the atlas again.",
+          "es": "Esperaste a que el ciervo avanzara y comprobaste otra vez el atlas."
+        },
+        {
+          "en": "Ink had hardened around the edges of the door.",
+          "es": "La tinta se había endurecido en los bordes de la puerta."
+        },
+        {
+          "en": "You followed the trail markings to the cabin threshold.",
+          "es": "Seguiste las señales del sendero hasta el umbral de la cabaña."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "bridges": [
+        {
+          "en": "Liora laid the letters side by side to compare the accounts.",
+          "es": "Liora puso una carta junto a otra para comparar los testimonios."
+        },
+        {
+          "en": "One voice kept repeating a phrase. You moved closer to listen.",
+          "es": "Una voz insistía en la misma frase. Te acercaste para escucharla."
+        },
+        {
+          "en": "Liora searched the letters for the person the voice might belong to.",
+          "es": "Liora buscó entre las cartas a quién podía pertenecer aquella voz."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "bridges": [
+        {
+          "en": "You spread the atlas so everyone could point out what they remembered.",
+          "es": "Extendiste el atlas para que todos pudieran señalar sus recuerdos."
+        },
+        {
+          "en": "You compared their directions with the unfinished edge of the map.",
+          "es": "Comparaste sus indicaciones con el borde incompleto del mapa."
+        },
+        {
+          "en": "Liora asked them to repeat the route from the fountain.",
+          "es": "Liora pidió que repitieran el recorrido desde la fuente."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "bridges": [
+        {
+          "en": "You set the pen on the table and listened to the family.",
+          "es": "Dejaste la pluma sobre la mesa y escuchaste a la familia."
+        },
+        {
+          "en": "Liora closed the book she had planned to share with the neighbours.",
+          "es": "Liora cerró el libro que pensaba compartir con los vecinos."
+        },
+        {
+          "en": "Together you prepared a separate place to keep that account.",
+          "es": "Preparasteis un lugar aparte para guardar aquel relato."
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "bridges": [
+        {
+          "en": "Liora asked the neighbours to speak one at a time.",
+          "es": "Liora pidió a los vecinos que hablaran de uno en uno."
+        },
+        {
+          "en": "A root struck the ground. The neighbours kept their voices steady.",
+          "es": "Una raíz golpeó el suelo. Los vecinos mantuvieron sus voces firmes."
+        },
+        {
+          "en": "You reached the pages caught among the remaining roots.",
+          "es": "Alcanzaste las páginas sujetas entre las últimas raíces."
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "bridges": [
+        {
+          "en": "You showed him the letter's leaf emblem to help him remember.",
+          "es": "Le mostraste la hoja de la carta para ayudarlo a recordar."
+        },
+        {
+          "en": "The merchant searched his papers for the day of that visit.",
+          "es": "El comerciante buscó entre sus papeles el día de aquella visita."
+        },
+        {
+          "en": "You waited while his finger traced the missing conversation.",
+          "es": "Esperaste mientras recorría con el dedo la conversación borrada."
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "bridges": [
+        {
+          "en": "The painter set the portrait where the light reached the signature.",
+          "es": "La pintora apoyó el retrato donde la luz alcanzaba la firma."
+        },
+        {
+          "en": "You examined Ada's notes without touching the damaged paint.",
+          "es": "Examinaste las notas de Ada sin rozar la pintura dañada."
+        },
+        {
+          "en": "The painter compared the marks remaining around the face.",
+          "es": "La pintora comparó los trazos que aún quedaban alrededor del rostro."
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "bridges": [
+        {
+          "en": "You asked the girl what she remembered about that afternoon.",
+          "es": "Preguntaste a ambas qué recordaban de aquella tarde."
+        },
+        {
+          "en": "You brought the records to the square to read with them.",
+          "es": "Llevaste los registros hasta la plaza para leerlos con ellas."
+        },
+        {
+          "en": "The girl moved closer when she heard a familiar detail.",
+          "es": "La niña se acercó al escuchar un detalle que conocía."
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "bridges": [
+        {
+          "en": "You marked the corner to check when you returned to the same place.",
+          "es": "Marcaste la esquina para comprobar cuándo volvías al mismo lugar."
+        },
+        {
+          "en": "You held the book away from the stains covering the pavement.",
+          "es": "Sostuviste el libro lejos de las manchas que cubrían el suelo."
+        },
+        {
+          "en": "The neighbour leaned beside you over the newly uncovered pages.",
+          "es": "El vecino se inclinó contigo sobre las páginas recién descubiertas."
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "bridges": [
+        {
+          "en": "You separated the orders to preserve their dates and signatures.",
+          "es": "Separaste las órdenes para conservar sus fechas y firmas."
+        },
+        {
+          "en": "You moved the sheets the spreading stain had not yet reached.",
+          "es": "Apartaste las hojas que la mancha todavía no había alcanzado."
+        },
+        {
+          "en": "You searched the intact edges for words that had survived.",
+          "es": "Buscaste entre los bordes intactos alguna palabra que hubiera resistido."
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "bridges": [
+        {
+          "en": "The seamstress found a garment to show you the ticket's hiding place.",
+          "es": "La costurera buscó una prenda para mostrarte el escondite del billete."
+        },
+        {
+          "en": "You spread her notes beside the clothes without disturbing the seams.",
+          "es": "Extendiste sus anotaciones junto a la ropa, sin alterar las costuras."
+        },
+        {
+          "en": "She retraced the journey from Ada's visit to the workshop.",
+          "es": "Ella repasó el viaje desde la visita de Ada al taller."
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "bridges": [
+        {
+          "en": "You joined the neighbours clearing the letters on the wall.",
+          "es": "Te uniste a los vecinos que limpiaban las letras del muro."
+        },
+        {
+          "en": "You searched for other references to the girl's inscription.",
+          "es": "Buscaste otras referencias a la inscripción de la niña."
+        },
+        {
+          "en": "You copied the name as it appeared without filling in the damaged parts.",
+          "es": "Copiaste el nombre tal como aparecía, sin completar las partes dañadas."
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "bridges": [
+        {
+          "en": "The keeper searched for where he had kept that memory.",
+          "es": "El encargado buscó el lugar donde había guardado aquel recuerdo."
+        },
+        {
+          "en": "You held the page to the light to make out the erased lines.",
+          "es": "Acercaste la página a la luz para distinguir las líneas borradas."
+        },
+        {
+          "en": "The handbell rested on the table while you pieced together the account.",
+          "es": "La campanilla quedó sobre la mesa mientras reconstruías el testimonio."
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "bridges": [
+        {
+          "en": "You wrote down both routes before dismissing either.",
+          "es": "Anotaste ambas rutas antes de descartar ninguna."
+        },
+        {
+          "en": "You kept the records open to check the final stop.",
+          "es": "Mantuviste abiertos los registros para comprobar la última escala."
+        },
+        {
+          "en": "You traced the route that vanished beside the coast.",
+          "es": "Seguiste con el dedo el recorrido que desaparecía junto a la costa."
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "bridges": [
+        {
+          "en": "The neighbours approached the tower with their accounts.",
+          "es": "Los vecinos fueron acercándose a la torre con sus relatos."
+        },
+        {
+          "en": "The sound briefly vanished beneath the guardian's blows.",
+          "es": "El sonido se perdió un instante entre los golpes del guardián."
+        },
+        {
+          "en": "You stayed beside the bells while the neighbours kept remembering.",
+          "es": "Permaneciste junto a las campanas mientras los vecinos seguían recordando."
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "bridges": [
+        {
+          "en": "You helped her sort the lists by arrival date.",
+          "es": "Le ayudaste a ordenar las listas por fecha de llegada."
+        },
+        {
+          "en": "Mara searched the dock records for Ada's ship.",
+          "es": "Mara buscó el barco de Ada entre las anotaciones del muelle."
+        },
+        {
+          "en": "You compared the dates with the letters you had brought.",
+          "es": "Comparaste las fechas con las cartas que habías llevado."
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "bridges": [
+        {
+          "en": "From the dock, Mara showed you where the chest was tied.",
+          "es": "Mara te mostró desde el muelle dónde estaba atado el cofre."
+        },
+        {
+          "en": "You tested the new rope before putting your weight on it.",
+          "es": "Probaste la nueva cuerda antes de cargar en ella tu peso."
+        },
+        {
+          "en": "You secured the chest so the waves could not carry it away again.",
+          "es": "Afianzaste el cofre para que las olas no volvieran a llevárselo."
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "bridges": [
+        {
+          "en": "You carefully dried the objects before sorting them.",
+          "es": "Secaste los objetos con cuidado antes de separarlos."
+        },
+        {
+          "en": "The neighbours approached the table where you had gathered the belongings.",
+          "es": "Los vecinos se acercaron a la mesa donde habíais reunido las pertenencias."
+        },
+        {
+          "en": "Mara wrote each name beside the object its owner had recognised.",
+          "es": "Mara anotó cada nombre junto al objeto reconocido."
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "bridges": [
+        {
+          "en": "The sailor stayed by the doorway while you checked Ada's notes.",
+          "es": "Pediste al capitán que os acompañara hasta la puerta."
+        },
+        {
+          "en": "Mara held the notes while you examined the maps.",
+          "es": "Mara sostuvo las anotaciones mientras examinabas los mapas."
+        },
+        {
+          "en": "You moved the telescope away from the ink to read what lay beneath it.",
+          "es": "Apartaste el telescopio de la tinta para leer lo que había debajo."
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "bridges": [
+        {
+          "en": "Mara drew the details while listening to the sailors.",
+          "es": "Mara dibujó los detalles mientras escuchaba a los marineros."
+        },
+        {
+          "en": "You compared the recovered outline with the old sea routes.",
+          "es": "Comparaste el contorno recuperado con las antiguas rutas marinas."
+        },
+        {
+          "en": "The sailors pointed to where they remembered the stairway.",
+          "es": "Los marineros señalaron el lugar donde recordaban la escalera."
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "bridges": [
+        {
+          "en": "You searched with her for a way to reach the lamp mechanism.",
+          "es": "Buscaste con ella el acceso al mecanismo de la lámpara."
+        },
+        {
+          "en": "Mara ran to the lamp while you held the shutter.",
+          "es": "Mara corrió a la lámpara mientras tú sujetabas la compuerta."
+        },
+        {
+          "en": "From the window, you followed the ship's outline among the rocks.",
+          "es": "Desde la ventana seguiste la silueta del barco entre las rocas."
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "bridges": [
+        {
+          "en": "You walked the deck with him so he could recognise its stations.",
+          "es": "Lo acompañaste por la cubierta para que reconociera sus puestos."
+        },
+        {
+          "en": "The captain listened to the song beside the wheel.",
+          "es": "El capitán escuchó la canción junto al timón."
+        },
+        {
+          "en": "Mara reread the passages about his crew.",
+          "es": "Mara volvió a leer los pasajes que hablaban de su tripulación."
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "bridges": [
+        {
+          "en": "You searched the atlas for the area where the ship had stopped.",
+          "es": "Buscaste en el atlas la zona donde se había detenido el barco."
+        },
+        {
+          "en": "You secured the boat as the current returned.",
+          "es": "Afianzaste la barca al notar que regresaba la corriente."
+        },
+        {
+          "en": "Mara signalled from shore to guide your return.",
+          "es": "Mara te hizo una señal desde la costa para orientar el regreso."
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "bridges": [
+        {
+          "en": "You tested the signals before approaching the stairway.",
+          "es": "Probasteis las señales antes de acercaros a la escalera."
+        },
+        {
+          "en": "Mara checked the knots in the rope you would take with you.",
+          "es": "Mara comprobó los nudos de la cuerda que llevarías contigo."
+        },
+        {
+          "en": "The sailors took their places by the water.",
+          "es": "Los marineros ocuparon sus puestos frente al agua."
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "bridges": [
+        {
+          "en": "You sheltered the letters under your arm to keep them from blowing away.",
+          "es": "Resguardaste las cartas bajo el brazo para impedir que salieran volando."
+        },
+        {
+          "en": "You answered the signal from the dock, keeping the stairway in sight.",
+          "es": "Respondiste a la señal del muelle sin perder de vista la escalera."
+        },
+        {
+          "en": "Mara kept the rope taut while you faced the final gusts.",
+          "es": "Mara mantuvo la cuerda tensa mientras afrontabas las últimas ráfagas."
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "bridges": [
+        {
+          "en": "You laid the atlas on the counter so Iri could examine it.",
+          "es": "Dejaste el atlas sobre el mostrador para que Iri pudiera examinarlo."
+        },
+        {
+          "en": "Iri searched the inventory for the exact reference.",
+          "es": "Iri buscó la referencia exacta entre las páginas del inventario."
+        },
+        {
+          "en": "You compared the record's description with the book you carried.",
+          "es": "Comparaste la descripción del registro con el libro que llevabas."
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "bridges": [
+        {
+          "en": "Iri opened both volumes at the pages Ada had marked.",
+          "es": "Iri abrió ambos volúmenes por las páginas que Ada había señalado."
+        },
+        {
+          "en": "You moved a thread of ink from the margin without damaging the paper.",
+          "es": "Apartaste un hilo de tinta del margen sin dañar el papel."
+        },
+        {
+          "en": "Iri held the intact book so you could keep comparing them.",
+          "es": "Iri sostuvo el libro intacto para que pudieras seguir comparando."
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "bridges": [
+        {
+          "en": "Iri helped you find the accounts kept with the chronicle.",
+          "es": "Iri buscó contigo los testimonios escritos junto a la crónica."
+        },
+        {
+          "en": "You remained silent for a moment before reading on.",
+          "es": "Permaneciste un momento en silencio antes de seguir leyendo."
+        },
+        {
+          "en": "Iri moved Elia's record beside her father's pages.",
+          "es": "Iri acercó el registro de Elia a las páginas de su padre."
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "bridges": [
+        {
+          "en": "You moved closer to the vessel the voice came from.",
+          "es": "Te acercaste al recipiente del que salía aquella voz."
+        },
+        {
+          "en": "You waited to hear the start of the recording again.",
+          "es": "Esperaste hasta escuchar de nuevo el principio de la grabación."
+        },
+        {
+          "en": "Iri helped you check that even the pauses repeated exactly.",
+          "es": "Iri comprobó contigo que la voz repetía incluso las mismas pausas."
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "bridges": [
+        {
+          "en": "Iri held the atlas steady to keep the markings aligned.",
+          "es": "Iri sostuvo el atlas para que las marcas no dejaran de coincidir."
+        },
+        {
+          "en": "You helped her find the entry for that lock.",
+          "es": "Buscaste con ella la entrada correspondiente a aquella cerradura."
+        },
+        {
+          "en": "The record's pages were stuck at the edges. You separated them slowly.",
+          "es": "Las páginas del registro estaban pegadas por los bordes. Las separaste despacio."
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "bridges": [
+        {
+          "en": "You carried the page to a table where it could be read without getting wet.",
+          "es": "Llevaste la página hasta una mesa donde pudiera leerse sin mojarla."
+        },
+        {
+          "en": "Iri invited the traveller closer to listen to the rest.",
+          "es": "Iri invitó al viajero a acercarse y escuchar el resto."
+        },
+        {
+          "en": "You compared his memory with the words Ada had marked.",
+          "es": "Comparaste su recuerdo con las palabras que Ada había marcado."
+        }
+      ]
+    },
+    {
+      "id": 36,
+      "bridges": [
+        {
+          "en": "You placed a vessel beneath the falling water.",
+          "es": "Acercaste un recipiente al lugar donde caía el agua."
+        },
+        {
+          "en": "Iri showed you the seals surrounding the shelves.",
+          "es": "Iri te mostró los sellos que rodeaban los estantes."
+        },
+        {
+          "en": "You looked at the books, then at the water beginning to seep in.",
+          "es": "Miraste los libros y después el agua que empezaba a entrar."
+        }
+      ]
+    },
+    {
+      "id": 37,
+      "bridges": [
+        {
+          "en": "Iri held the recording above the rising water.",
+          "es": "Iri sostuvo la grabación por encima del agua que avanzaba."
+        },
+        {
+          "en": "You tucked the note into the atlas to protect it from the damp.",
+          "es": "Guardaste la nota en el atlas para protegerla de la humedad."
+        },
+        {
+          "en": "Before leaving, you checked the mountains' name with Iri.",
+          "es": "Antes de marcharte, comprobaste con Iri el nombre de las montañas."
+        }
+      ]
+    },
+    {
+      "id": 38,
+      "bridges": [
+        {
+          "en": "You set down your box and approached the trapped sailor.",
+          "es": "Dejaste tu caja y te acercaste al marinero atrapado."
+        },
+        {
+          "en": "Iri checked the rescued sailor while you gathered the boxes.",
+          "es": "Iri miró el catálogo bajo la madera y se arrodilló a tu lado."
+        },
+        {
+          "en": "You helped the sailor join his companions on the stairs.",
+          "es": "El marinero intentó moverse. Le pediste que esperara mientras examinabas el estante."
+        }
+      ]
+    },
+    {
+      "id": 39,
+      "bridges": [
+        {
+          "en": "You checked the rope while Iri searched for a firm foothold.",
+          "es": "Comprobaste la cuerda mientras Iri buscaba un apoyo firme."
+        },
+        {
+          "en": "The glass cracked again. You held the atlas against your chest.",
+          "es": "El cristal volvió a crujir. Apretaste el atlas contra el pecho."
+        },
+        {
+          "en": "Iri kept the rope within reach while you faced the guardian.",
+          "es": "Iri mantuvo la cuerda a tu alcance mientras enfrentabas al guardián."
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "bridges": [
+        {
+          "en": "Taren spread his maps on a rock before setting out.",
+          "es": "Taren extendió sus mapas sobre una roca antes de ponerse en marcha."
+        },
+        {
+          "en": "You stepped away from the edge and listened to your guide.",
+          "es": "Te alejaste del borde y escuchaste las indicaciones del guía."
+        },
+        {
+          "en": "You checked the path beneath your feet before answering the echoes.",
+          "es": "Comprobaste el sendero bajo tus pies antes de responder a los ecos."
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "bridges": [
+        {
+          "en": "Taren brushed dust from the mark so you could compare it.",
+          "es": "Taren limpió el polvo de la marca para que pudieras compararla."
+        },
+        {
+          "en": "You copied the inscription beside Ada's notes.",
+          "es": "Copiaste la inscripción junto a las notas de Ada."
+        },
+        {
+          "en": "The guide pointed out the marks that still helped travellers find their way.",
+          "es": "El guía señaló las marcas que todavía servían para orientarse."
+        }
+      ]
+    },
+    {
+      "id": 42,
+      "bridges": [
+        {
+          "en": "You sat beside him while his parents looked for the notes.",
+          "es": "Te sentaste a su lado mientras sus padres buscaban las notas."
+        },
+        {
+          "en": "The child clutched the blanket. You stopped reaching for it.",
+          "es": "El niño abrazó la manta. Dejaste de extender la mano."
+        },
+        {
+          "en": "You asked what the family could tell you without taking away his blanket.",
+          "es": "Preguntaste a la familia qué podía contarte sin quitarle su abrigo."
+        }
+      ]
+    },
+    {
+      "id": 43,
+      "bridges": [
+        {
+          "en": "Taren caught your arm before you climbed down towards the voice.",
+          "es": "Taren te sujetó del brazo antes de que bajaras hacia la voz."
+        },
+        {
+          "en": "From the path, you asked a question and waited for an answer.",
+          "es": "Desde el sendero hiciste una pregunta y esperaste la respuesta."
+        },
+        {
+          "en": "The echo called again without answering your question.",
+          "es": "El eco volvió a llamarte sin responder a lo que habías preguntado."
+        }
+      ]
+    },
+    {
+      "id": 44,
+      "bridges": [
+        {
+          "en": "Taren held the plans to protect them from the wind.",
+          "es": "Taren sostuvo los planos para protegerlos del viento."
+        },
+        {
+          "en": "You marked the changes Ada had observed in each seal.",
+          "es": "Marcaste los cambios que Ada había observado en cada sello."
+        },
+        {
+          "en": "You compared those marks with the barriers drawn in the observatory.",
+          "es": "Comparaste aquellas marcas con las barreras dibujadas en el observatorio."
+        }
+      ]
+    },
+    {
+      "id": 45,
+      "bridges": [
+        {
+          "en": "Taren stopped beside the stone and looked away.",
+          "es": "Taren se detuvo junto a la piedra y evitó mirarte."
+        },
+        {
+          "en": "You waited without asking him to repeat his brother's words.",
+          "es": "Esperaste sin pedirle que repitiera las palabras de su hermano."
+        },
+        {
+          "en": "The guide rested his hand on his map beside the erased mark.",
+          "es": "El guía apoyó la mano en su mapa, junto a la marca borrada."
+        }
+      ]
+    },
+    {
+      "id": 46,
+      "bridges": [
+        {
+          "en": "Taren pointed out the receipt among the captive belongings.",
+          "es": "Taren señaló el recibo entre los objetos retenidos."
+        },
+        {
+          "en": "You cleared ink from the signature without damaging the receipt.",
+          "es": "Apartaste la tinta de la firma sin dañar el recibo."
+        },
+        {
+          "en": "The guide compared the visible letters with Ada's notes.",
+          "es": "El guía comparó las letras visibles con las notas de Ada."
+        }
+      ]
+    },
+    {
+      "id": 47,
+      "bridges": [
+        {
+          "en": "You opened the letter while the messenger caught his breath.",
+          "es": "Abriste la carta mientras el mensajero recuperaba el aliento."
+        },
+        {
+          "en": "Taren asked you to read the news from the forest aloud.",
+          "es": "Taren te pidió que leyeras en voz alta las noticias del bosque."
+        },
+        {
+          "en": "You carefully folded the letter again to keep it safe on the journey.",
+          "es": "Volviste a doblar la carta con cuidado para conservarla durante el viaje."
+        }
+      ]
+    },
+    {
+      "id": 48,
+      "bridges": [
+        {
+          "en": "You helped gather those who had fallen behind.",
+          "es": "Ayudaste a reunir a quienes habían quedado rezagados."
+        },
+        {
+          "en": "Taren showed the detour on his map before setting off.",
+          "es": "Taren mostró el desvío en su mapa antes de iniciar la marcha."
+        },
+        {
+          "en": "You matched your pace to the family walking beside you.",
+          "es": "Ajustaste el paso al de la familia que caminaba a tu lado."
+        }
+      ]
+    },
+    {
+      "id": 49,
+      "bridges": [
+        {
+          "en": "You compared what you heard with the accounts entrusted to you.",
+          "es": "Comparaste lo que oías con los relatos que te habían confiado."
+        },
+        {
+          "en": "The voices mingled among the rocks. Taren held his position.",
+          "es": "Las voces se mezclaron entre las rocas. Taren sostuvo su posición."
+        },
+        {
+          "en": "You followed the true account as the guardian tried to interrupt it.",
+          "es": "Seguiste el relato verdadero mientras el guardián intentaba interrumpirlo."
+        }
+      ]
+    },
+    {
+      "id": 50,
+      "bridges": [
+        {
+          "en": "You drank before taking the receipt from your notes.",
+          "es": "Bebiste antes de sacar el recibo de entre las notas."
+        },
+        {
+          "en": "Nadir traced the caravan's lost route in the sand.",
+          "es": "Nadir trazó en la arena el camino que la caravana había perdido."
+        },
+        {
+          "en": "You helped him compare the wells with the atlas markings.",
+          "es": "Le ayudaste a comparar los pozos con las marcas del atlas."
+        }
+      ]
+    },
+    {
+      "id": 51,
+      "bridges": [
+        {
+          "en": "The woman loosened the ribbon just enough to show its markings.",
+          "es": "La mujer desató la cinta lo justo para mostrarte sus marcas."
+        },
+        {
+          "en": "Nadir gathered the accounts of those who travelled with her.",
+          "es": "Nadir reunió los relatos de quienes viajaban con ella."
+        },
+        {
+          "en": "You held the ribbons while the woman retraced each destination.",
+          "es": "Sujetaste las cintas mientras la mujer repasaba cada destino."
+        }
+      ]
+    },
+    {
+      "id": 52,
+      "bridges": [
+        {
+          "en": "Nadir knelt to brush sand from the old channel.",
+          "es": "Nadir se arrodilló para apartar la arena del antiguo cauce."
+        },
+        {
+          "en": "You followed the channel markings on the recovered maps.",
+          "es": "Seguiste las marcas de los canales en los mapas recuperados."
+        },
+        {
+          "en": "The travellers pointed out where they had once found water.",
+          "es": "Los viajeros fueron señalando los lugares donde antes encontraban agua."
+        }
+      ]
+    },
+    {
+      "id": 53,
+      "bridges": [
+        {
+          "en": "Nadir asked the woman to stay beside you.",
+          "es": "Nadir pidió a la mujer que permaneciera junto a vosotros."
+        },
+        {
+          "en": "You caught the accounts before the merchant could hide them.",
+          "es": "Sujetaste las cuentas antes de que el mercader pudiera ocultarlas."
+        },
+        {
+          "en": "The traveller pointed out the details that identified his family.",
+          "es": "El viajero señaló los detalles que permitían reconocer a su familia."
+        }
+      ]
+    },
+    {
+      "id": 54,
+      "bridges": [
+        {
+          "en": "Nadir brushed sand from the stones surrounding the garden.",
+          "es": "Nadir apartó arena de las piedras que delimitaban el jardín."
+        },
+        {
+          "en": "You kept the seed safe while you searched for the channels' course.",
+          "es": "Guardaste la semilla mientras buscabais el trazado de los canales."
+        },
+        {
+          "en": "You checked with Nadir where the water should enter again.",
+          "es": "Comprobaste con Nadir dónde debía volver a entrar el agua."
+        }
+      ]
+    },
+    {
+      "id": 55,
+      "bridges": [
+        {
+          "en": "Nadir asked the travellers who had kept the compass.",
+          "es": "Nadir preguntó a los viajeros quién había guardado la brújula."
+        },
+        {
+          "en": "You slowly turned the compass and watched the needle respond.",
+          "es": "Giraste la brújula despacio y observaste cómo respondía la aguja."
+        },
+        {
+          "en": "You brought Ada's notes towards the place it pointed to.",
+          "es": "Acercaste las notas de Ada al lugar que señalaba."
+        }
+      ]
+    },
+    {
+      "id": 56,
+      "bridges": [
+        {
+          "en": "Nadir cleared the entrance while you examined the inscription.",
+          "es": "Nadir despejó la entrada mientras tú examinabas la inscripción."
+        },
+        {
+          "en": "You read the tale without separating its pages from the cover.",
+          "es": "Leíste el cuento sin separar las hojas de su cubierta."
+        },
+        {
+          "en": "You laid the compass beside the book and searched for Ada's marks.",
+          "es": "Dejaste la brújula junto al libro y buscaste las marcas de Ada."
+        }
+      ]
+    },
+    {
+      "id": 57,
+      "bridges": [
+        {
+          "en": "Nadir asked the caravan to listen before answering.",
+          "es": "Nadir pidió a la caravana que escuchara antes de responder."
+        },
+        {
+          "en": "Together you arranged the accounts by period without discarding any.",
+          "es": "Ordenasteis los relatos por épocas, sin descartar ninguno."
+        },
+        {
+          "en": "Nadir read with you the parts the shadows had mixed together.",
+          "es": "Nadir leyó contigo las partes que las sombras habían mezclado."
+        }
+      ]
+    },
+    {
+      "id": 58,
+      "bridges": [
+        {
+          "en": "You helped secure the water containers for the journey.",
+          "es": "Ayudaste a sujetar los recipientes de agua para el viaje."
+        },
+        {
+          "en": "You laid the atlas beside the supplies to check the next route.",
+          "es": "Protegiste la semilla entre las hojas del atlas."
+        },
+        {
+          "en": "Nadir went over the directions with you before saying goodbye.",
+          "es": "Nadir repasó contigo las indicaciones antes de despedirse."
+        }
+      ]
+    },
+    {
+      "id": 59,
+      "bridges": [
+        {
+          "en": "The travellers gathered at a safe distance from the scorpion.",
+          "es": "Los viajeros se reunieron a una distancia segura del escorpión."
+        },
+        {
+          "en": "Nadir kept the caravan clear of the sandy claws.",
+          "es": "Nadir mantuvo a la caravana alejada de las pinzas de arena."
+        },
+        {
+          "en": "You gathered the notes scattered by the wind beside the passage.",
+          "es": "Recogiste las notas que el viento había esparcido junto al paso."
+        }
+      ]
+    },
+    {
+      "id": 60,
+      "bridges": [
+        {
+          "en": "Orin led you to a place where you could watch the patrol.",
+          "es": "Orin te llevó hasta un lugar desde donde podíais observar la patrulla."
+        },
+        {
+          "en": "You compared his notes with the hands moving around the clock.",
+          "es": "Comparaste sus anotaciones con el recorrido de las agujas."
+        },
+        {
+          "en": "You waited beside him for the hour when the rain would begin.",
+          "es": "Esperaste junto a él la hora en que debía empezar la lluvia."
+        }
+      ]
+    },
+    {
+      "id": 61,
+      "bridges": [
+        {
+          "en": "Orin stayed on the threshold while you looked at the table.",
+          "es": "Orin se quedó en el umbral mientras tú mirabas la mesa."
+        },
+        {
+          "en": "You brought a photograph beside the tools he still kept.",
+          "es": "Acercaste una fotografía a las herramientas que aún conservaba."
+        },
+        {
+          "en": "The clockmaker finally sat down to examine the details with you.",
+          "es": "El relojero se sentó por fin y empezó a revisar contigo los detalles."
+        }
+      ]
+    },
+    {
+      "id": 62,
+      "bridges": [
+        {
+          "en": "Orin showed you the gap where the piece belonged.",
+          "es": "Orin te mostró el hueco donde debía encajar la pieza."
+        },
+        {
+          "en": "Together you removed the gear before the hands caught it.",
+          "es": "Retirasteis el engranaje antes de que las agujas lo atraparan."
+        },
+        {
+          "en": "The clockmaker examined the marks Ada had left on its teeth.",
+          "es": "El relojero examinó las marcas que Ada había dejado en sus dientes."
+        }
+      ]
+    },
+    {
+      "id": 63,
+      "bridges": [
+        {
+          "en": "You checked the date with Orin before opening the rest of the letter.",
+          "es": "Comprobaste la fecha con Orin antes de abrir el resto de la carta."
+        },
+        {
+          "en": "The clockmaker searched for the palace on his workshop maps.",
+          "es": "El relojero buscó aquel palacio en los mapas de su taller."
+        },
+        {
+          "en": "You kept the letter beside the gear Ada had removed.",
+          "es": "Guardaste la carta junto al engranaje que Ada había separado."
+        }
+      ]
+    },
+    {
+      "id": 64,
+      "bridges": [
+        {
+          "en": "Orin listened to his neighbours without looking away from the door.",
+          "es": "Orin escuchó a sus vecinos sin apartar la mirada de la puerta."
+        },
+        {
+          "en": "You let the clockmaker read the accounts for himself.",
+          "es": "Dejaste que el relojero leyera por sí mismo los testimonios."
+        },
+        {
+          "en": "Orin rested both hands on the table and returned to the beginning.",
+          "es": "Orin apoyó ambas manos en la mesa y volvió al comienzo."
+        }
+      ]
+    },
+    {
+      "id": 65,
+      "bridges": [
+        {
+          "en": "You helped make room in the workshop for those waiting outside.",
+          "es": "Ayudaste a hacer sitio en el taller para quienes esperaban fuera."
+        },
+        {
+          "en": "Orin laid the orders beside the great clock's plans.",
+          "es": "Orin colocó las órdenes junto a los planos del gran reloj."
+        },
+        {
+          "en": "The neighbours compared the signatures with the dates they remembered.",
+          "es": "Los vecinos compararon las firmas con las fechas que recordaban."
+        }
+      ]
+    },
+    {
+      "id": 66,
+      "bridges": [
+        {
+          "en": "Orin traced the experiment's connections on the plan.",
+          "es": "Orin siguió en el plano las conexiones de aquel experimento."
+        },
+        {
+          "en": "You held the sheet while the clockmaker checked that the memory remained intact.",
+          "es": "Sostuviste la hoja mientras el relojero comprobaba que el recuerdo seguía intacto."
+        },
+        {
+          "en": "Orin moved the page away from the documents controlling the hands.",
+          "es": "Orin apartó la página de los documentos que controlaban las agujas."
+        }
+      ]
+    },
+    {
+      "id": 67,
+      "bridges": [
+        {
+          "en": "You approached the gate with those who had waited for years.",
+          "es": "Te acercaste a la puerta con quienes llevaban años esperando."
+        },
+        {
+          "en": "You pulled out a chair so they could sit and talk.",
+          "es": "Apartaste una silla para que pudieran sentarse a hablar."
+        },
+        {
+          "en": "Orin stayed there, listening to what had happened on the other side.",
+          "es": "Orin permaneció allí, escuchando lo que había ocurrido al otro lado."
+        }
+      ]
+    },
+    {
+      "id": 68,
+      "bridges": [
+        {
+          "en": "You held the gear while Orin prepared his tools.",
+          "es": "Sostuviste el engranaje mientras Orin preparaba las herramientas."
+        },
+        {
+          "en": "The automaton struck the mechanism. You stepped between it and the clockmaker.",
+          "es": "El autómata golpeó el mecanismo. Te interpusiste para proteger al relojero."
+        },
+        {
+          "en": "Orin checked that the gear's teeth turned without catching.",
+          "es": "Orin comprobó que los dientes de la pieza giraban sin atascarse."
+        }
+      ]
+    },
+    {
+      "id": 69,
+      "bridges": [
+        {
+          "en": "You searched the plans for how those orders reached the mechanism.",
+          "es": "Buscaste en los planos cómo alcanzaban aquellas órdenes al mecanismo."
+        },
+        {
+          "en": "Orin showed you which parts had to keep turning.",
+          "es": "Orin te indicó qué piezas debían seguir girando."
+        },
+        {
+          "en": "The neighbours steadied the mechanism while you followed the automaton's bond.",
+          "es": "Los vecinos sostuvieron el mecanismo mientras seguías el vínculo del autómata."
+        }
+      ]
+    },
+    {
+      "id": 70,
+      "bridges": [
+        {
+          "en": "Sera asked for the records of Ada's visit to be brought out.",
+          "es": "Sera pidió que trajeran los registros de la visita de Ada."
+        },
+        {
+          "en": "You laid your journey's letters beside the court documents.",
+          "es": "Dejaste las cartas del viaje junto a los documentos de la corte."
+        },
+        {
+          "en": "The queen stayed beside you as you examined the reference to the pact.",
+          "es": "La reina permaneció contigo mientras examinabas la mención del pacto."
+        }
+      ]
+    },
+    {
+      "id": 71,
+      "bridges": [
+        {
+          "en": "Sera stopped before the cloth before allowing you closer.",
+          "es": "Sera se detuvo ante la tela antes de permitir que te acercaras."
+        },
+        {
+          "en": "The queen recognised her signature in the reflection.",
+          "es": "La reina reconoció su firma en el reflejo."
+        },
+        {
+          "en": "You held the cloth while Sera watched that scene.",
+          "es": "Sostuviste la tela mientras Sera observaba aquella escena."
+        }
+      ]
+    },
+    {
+      "id": 72,
+      "bridges": [
+        {
+          "en": "Sera laid the pact on the table to examine it with you.",
+          "es": "Sera puso el pacto sobre la mesa para revisarlo contigo."
+        },
+        {
+          "en": "You pointed out the added clauses to distinguish them from the first promise.",
+          "es": "Señalaste las cláusulas añadidas para distinguirlas de la primera promesa."
+        },
+        {
+          "en": "The queen reread the place where she had signed.",
+          "es": "La reina volvió a leer el lugar donde había estampado su firma."
+        }
+      ]
+    },
+    {
+      "id": 73,
+      "bridges": [
+        {
+          "en": "You spread out both versions so they could be read together.",
+          "es": "Extendiste ambas versiones para que pudieran leerse juntas."
+        },
+        {
+          "en": "The witnesses pointed out the parts they knew from their own experience.",
+          "es": "Los testigos señalaron las partes que conocían por su propia experiencia."
+        },
+        {
+          "en": "Sera asked for the uncomfortable words to be kept as well.",
+          "es": "Sera pidió que se conservaran también las palabras incómodas."
+        }
+      ]
+    },
+    {
+      "id": 74,
+      "bridges": [
+        {
+          "en": "The gardener laid the objects on a cloth to show you.",
+          "es": "El jardinero puso los objetos sobre un paño para mostrártelos."
+        },
+        {
+          "en": "You asked him to tell what he had seen without filling in his silences.",
+          "es": "Le pediste que contara lo que había visto, sin completar sus silencios."
+        },
+        {
+          "en": "Sera listened to the account beside that night's records.",
+          "es": "Sera escuchó el testimonio junto a los registros de aquella noche."
+        }
+      ]
+    },
+    {
+      "id": 75,
+      "bridges": [
+        {
+          "en": "The refugees took their places before the uncovered mirror.",
+          "es": "Los refugiados ocuparon sus lugares frente al espejo descubierto."
+        },
+        {
+          "en": "Sera asked for the next person to be allowed to speak.",
+          "es": "Sera pidió que la siguiente persona pudiera hablar."
+        },
+        {
+          "en": "You wrote down what was said so it could be consulted again.",
+          "es": "Conservaste por escrito lo dicho para que pudiera volver a consultarse."
+        }
+      ]
+    },
+    {
+      "id": 76,
+      "bridges": [
+        {
+          "en": "Sera compared the garden's first plans with you.",
+          "es": "Sera comparó contigo los primeros planos del jardín."
+        },
+        {
+          "en": "You followed the compass needle over the forgotten routes.",
+          "es": "Seguiste la aguja de la brújula sobre las rutas olvidadas."
+        },
+        {
+          "en": "The queen pointed out where the maps stopped matching.",
+          "es": "La reina señaló dónde dejaban de coincidir los mapas."
+        }
+      ]
+    },
+    {
+      "id": 77,
+      "bridges": [
+        {
+          "en": "Sera leaned over the pool to check the reflection.",
+          "es": "Sera se inclinó sobre el estanque para comprobar el reflejo."
+        },
+        {
+          "en": "Together you sorted the coastal messages by arrival time.",
+          "es": "Ordenasteis los mensajes de la costa según su hora de llegada."
+        },
+        {
+          "en": "The queen searched the palace records for the night of the pact.",
+          "es": "La reina buscó la noche del pacto en los registros del palacio."
+        }
+      ]
+    },
+    {
+      "id": 78,
+      "bridges": [
+        {
+          "en": "Sera spread the returned letters beside the oath document.",
+          "es": "Sera extendió las cartas devueltas junto al documento del juramento."
+        },
+        {
+          "en": "The queen showed you how the same ink mark repeated.",
+          "es": "La reina te mostró cómo se repetía la misma marca de tinta."
+        },
+        {
+          "en": "You held the document while Sera worked on the bond.",
+          "es": "Sujetaste el documento mientras Sera trabajaba sobre el vínculo."
+        }
+      ]
+    },
+    {
+      "id": 79,
+      "bridges": [
+        {
+          "en": "Sera gathered the accounts, keeping the chains from closing the entrance.",
+          "es": "Sera reunió los testimonios sin dejar que las cadenas cerraran la entrada."
+        },
+        {
+          "en": "The spectre turned towards the queen. You protected the pages you carried.",
+          "es": "El espectro se volvió hacia la reina. Protegiste las páginas que llevabas."
+        },
+        {
+          "en": "You read the agreement's words while Sera held the passage open.",
+          "es": "Leíste las palabras del acuerdo mientras Sera sostenía el paso."
+        }
+      ]
+    },
+    {
+      "id": 80,
+      "bridges": [
+        {
+          "en": "You followed the dry channel, looking for where the water had stopped.",
+          "es": "Recorriste el cauce seco buscando dónde había dejado de pasar el agua."
+        },
+        {
+          "en": "Aster showed you the tools she still recognised.",
+          "es": "Aster te mostró las herramientas que todavía reconocía."
+        },
+        {
+          "en": "You opened the atlas beside her to compare the paths.",
+          "es": "Abriste el atlas junto a ella para comparar los senderos."
+        }
+      ]
+    },
+    {
+      "id": 81,
+      "bridges": [
+        {
+          "en": "Aster accompanied you to one of the statues.",
+          "es": "Aster te acompañó hasta una de las estatuas."
+        },
+        {
+          "en": "You waited while the keeper reached towards the closed book.",
+          "es": "Esperaste mientras la cuidadora acercaba las manos al libro cerrado."
+        },
+        {
+          "en": "You read with her the requests she had chosen to set aside.",
+          "es": "Leíste con ella las peticiones que había preferido apartar."
+        }
+      ]
+    },
+    {
+      "id": 82,
+      "bridges": [
+        {
+          "en": "You spread out both versions to check where the conditions changed.",
+          "es": "Extendiste las dos versiones para comprobar dónde cambiaban las condiciones."
+        },
+        {
+          "en": "Aster held the cut edge without looking at the signature.",
+          "es": "Aster sostuvo el borde recortado sin mirar la firma."
+        },
+        {
+          "en": "You searched the documents for the missing fragment.",
+          "es": "Buscaste entre los documentos el fragmento que faltaba."
+        }
+      ]
+    },
+    {
+      "id": 83,
+      "bridges": [
+        {
+          "en": "Aster showed you the pages Ada had examined.",
+          "es": "Aster te mostró las páginas que Ada había examinado."
+        },
+        {
+          "en": "You compared the endings without treating them as events that had already happened.",
+          "es": "Comparaste los finales sin tratarlos como hechos que ya hubieran ocurrido."
+        },
+        {
+          "en": "You pointed to the accounts where the peoples managed to find one another.",
+          "es": "Señalaste los relatos donde los pueblos conseguían encontrarse."
+        }
+      ]
+    },
+    {
+      "id": 84,
+      "bridges": [
+        {
+          "en": "Aster laid the fragment on the table beside the rest.",
+          "es": "Aster dejó el fragmento sobre la mesa, junto al resto."
+        },
+        {
+          "en": "The keeper traced the lines of her signature with a finger.",
+          "es": "La cuidadora recorrió las líneas de su firma con un dedo."
+        },
+        {
+          "en": "You gave her time to finish her account before answering.",
+          "es": "Le diste tiempo para terminar su relato antes de responder."
+        }
+      ]
+    },
+    {
+      "id": 85,
+      "bridges": [
+        {
+          "en": "You helped prepare copies for those who were leaving.",
+          "es": "Ayudaste a preparar las copias para quienes se marchaban."
+        },
+        {
+          "en": "Aster checked with you that the paths remained open.",
+          "es": "Aster comprobó contigo que los caminos quedaban abiertos."
+        },
+        {
+          "en": "The travellers filled their containers at the restored channels.",
+          "es": "Los viajeros llenaron sus recipientes en los canales recuperados."
+        }
+      ]
+    },
+    {
+      "id": 86,
+      "bridges": [
+        {
+          "en": "You arranged the documents in three groups to keep the seals apart.",
+          "es": "Ordenaste los documentos en tres grupos para no confundir los sellos."
+        },
+        {
+          "en": "Aster searched the records for the drawing of the key.",
+          "es": "Aster buscó el dibujo de la llave entre los registros."
+        },
+        {
+          "en": "You compared its spaces with the symbols of Memory, Will and Farewell.",
+          "es": "Comparaste sus espacios con los símbolos de Memoria, Voluntad y Despedida."
+        }
+      ]
+    },
+    {
+      "id": 87,
+      "bridges": [
+        {
+          "en": "You held the letter to the light and checked its leaf emblem.",
+          "es": "Acercaste la carta a la luz y comprobaste la marca de la hoja."
+        },
+        {
+          "en": "Aster helped you shelter the message from the archive's stains.",
+          "es": "Aster te ayudó a resguardar el mensaje de las manchas del archivo."
+        },
+        {
+          "en": "You reread Ada's directions to locate the Threshold.",
+          "es": "Volviste sobre las indicaciones de Ada para localizar el Umbral."
+        }
+      ]
+    },
+    {
+      "id": 88,
+      "bridges": [
+        {
+          "en": "Aster gathered those who wished to accompany her beyond the garden.",
+          "es": "Aster reunió a quienes querían acompañarla fuera del jardín."
+        },
+        {
+          "en": "You helped distribute the tools among those who needed them.",
+          "es": "Ayudaste a repartir las herramientas entre quienes las necesitaban."
+        },
+        {
+          "en": "Together you compared the routes before dividing up the supplies.",
+          "es": "Comparasteis las rutas antes de separar las provisiones."
+        }
+      ]
+    },
+    {
+      "id": 89,
+      "bridges": [
+        {
+          "en": "Aster handed you the records without trying to justify the order.",
+          "es": "Aster te entregó los registros sin intentar justificar la orden."
+        },
+        {
+          "en": "The colossus struck the ground while you searched for the clause it obeyed.",
+          "es": "El coloso golpeó el suelo mientras buscabas la cláusula que obedecía."
+        },
+        {
+          "en": "Aster held the pages so you could distinguish the order from the pact.",
+          "es": "Aster sostuvo las páginas para que pudieras distinguir la orden del pacto."
+        }
+      ]
+    },
+    {
+      "id": 90,
+      "bridges": [
+        {
+          "en": "You approached the wagons, following the familiar signals.",
+          "es": "Te acercaste a los carros siguiendo las señales conocidas."
+        },
+        {
+          "en": "Nadir made room for those arriving from the villages.",
+          "es": "Nadir hizo sitio para quienes llegaban desde las aldeas."
+        },
+        {
+          "en": "You helped check the routes the allies kept open.",
+          "es": "Ayudaste a comprobar las rutas que los aliados mantenían abiertas."
+        }
+      ]
+    },
+    {
+      "id": 91,
+      "bridges": [
+        {
+          "en": "Liora asked you to help distribute the books among the wagons.",
+          "es": "Liora te pidió ayuda para repartir los libros entre los carros."
+        },
+        {
+          "en": "You wrote down where each copy was kept so people could find it.",
+          "es": "Anotaste dónde quedaba cada copia para que pudieran encontrarla."
+        },
+        {
+          "en": "A family came to ask for their account. You accompanied them to the wagon.",
+          "es": "Una familia se acercó a preguntar por su relato. La acompañaste hasta el carro."
+        }
+      ]
+    },
+    {
+      "id": 92,
+      "bridges": [
+        {
+          "en": "Liora laid both versions on the table without choosing one.",
+          "es": "Liora dejó las dos versiones sobre la mesa sin escoger una."
+        },
+        {
+          "en": "You asked the witnesses which parts they had seen themselves.",
+          "es": "Preguntaste a los testigos qué partes habían presenciado."
+        },
+        {
+          "en": "Together you separated the verified facts from what remained disputed.",
+          "es": "Separasteis los datos comprobados de aquello en lo que seguían discrepando."
+        }
+      ]
+    },
+    {
+      "id": 93,
+      "bridges": [
+        {
+          "en": "Liora searched the copies for their families' names.",
+          "es": "Liora buscó entre las copias los nombres de sus familias."
+        },
+        {
+          "en": "You listened to each soldier's decision without imposing another.",
+          "es": "Escuchaste la decisión de cada soldado sin imponerle otra."
+        },
+        {
+          "en": "Taren marked the evacuation routes on his maps.",
+          "es": "Taren señaló en sus mapas las rutas de evacuación."
+        }
+      ]
+    },
+    {
+      "id": 94,
+      "bridges": [
+        {
+          "en": "Liora laid the king's documents beside those of the families.",
+          "es": "Liora puso los documentos del rey junto a los de las familias."
+        },
+        {
+          "en": "The witnesses moved closer to check the recovered names.",
+          "es": "Los testigos se acercaron para comprobar los nombres recuperados."
+        },
+        {
+          "en": "Together you spoke the names before the seal, leaving none out.",
+          "es": "Pronunciasteis los nombres ante el sello sin dejar ninguno fuera."
+        }
+      ]
+    },
+    {
+      "id": 95,
+      "bridges": [
+        {
+          "en": "You put down the books and cleared a path towards the children.",
+          "es": "Dejaste los libros y abriste paso hacia los niños."
+        },
+        {
+          "en": "Liora showed you where she had seen the last missing children.",
+          "es": "Liora te indicó dónde había visto a los últimos que faltaban."
+        },
+        {
+          "en": "You protected the exit while the allies led the families away from the fire.",
+          "es": "Protegiste la salida mientras los aliados alejaban a las familias del fuego."
+        }
+      ]
+    },
+    {
+      "id": 96,
+      "bridges": [
+        {
+          "en": "You listened to the proposals before approaching the crown.",
+          "es": "Escuchaste las propuestas antes de acercarte a la corona."
+        },
+        {
+          "en": "You left the crown where everyone could see it.",
+          "es": "Dejaste la corona donde todos podían verla."
+        },
+        {
+          "en": "You asked for the representatives to be allowed to answer one another.",
+          "es": "Pediste que los representantes pudieran responderse entre ellos."
+        }
+      ]
+    },
+    {
+      "id": 97,
+      "bridges": [
+        {
+          "en": "Liora helped arrange the accounts around the seal.",
+          "es": "Liora ayudó a disponer los testimonios alrededor del sello."
+        },
+        {
+          "en": "The soldiers pointed out which decisions they recognised as their own.",
+          "es": "Los soldados señalaron qué decisiones reconocían como propias."
+        },
+        {
+          "en": "You moved Aren's signed orders apart from those answers.",
+          "es": "Apartaste las órdenes firmadas por Aren de aquellas respuestas."
+        }
+      ]
+    },
+    {
+      "id": 98,
+      "bridges": [
+        {
+          "en": "You put away the letter without folding it over the signature.",
+          "es": "Guardaste la carta de forma que no se doblara sobre la firma."
+        },
+        {
+          "en": "Liora showed you the copies that would travel along other roads.",
+          "es": "Liora te mostró las copias que viajarían por otros caminos."
+        },
+        {
+          "en": "You checked the atlas before saying goodbye to the neighbours.",
+          "es": "Revisaste el atlas antes de despedirte de los vecinos."
+        }
+      ]
+    },
+    {
+      "id": 99,
+      "bridges": [
+        {
+          "en": "You brought the marshal the record where his name should appear.",
+          "es": "Acercaste al mariscal el registro donde debía figurar su nombre."
+        },
+        {
+          "en": "You protected the pages so the threat could not cover the evidence.",
+          "es": "Protegiste las páginas para que la amenaza no cubriera las pruebas."
+        },
+        {
+          "en": "You kept searching for the guardian's name among the king's orders.",
+          "es": "Seguiste buscando el nombre del guardián entre las órdenes del rey."
+        }
+      ]
+    },
+    {
+      "id": 100,
+      "bridges": [
+        {
+          "en": "You marked the atlas junctions to recognise those you had already passed.",
+          "es": "Marcaste los cruces del atlas para reconocer los que ya habías recorrido."
+        },
+        {
+          "en": "You compared the shadows of the shelves with Ada's notes.",
+          "es": "Esperaste la respuesta antes de abrir otra puerta."
+        },
+        {
+          "en": "You took out the handbell and held it ready.",
+          "es": "La campanilla volvió a sonar. Seguiste su respuesta entre los estantes."
+        }
+      ]
+    },
+    {
+      "id": 101,
+      "bridges": [
+        {
+          "en": "Ada compared the message with the copies you had protected.",
+          "es": "Ada comparó el mensaje con las copias que habías protegido."
+        },
+        {
+          "en": "You brought her paper and ink so she could write to her sister.",
+          "es": "Le acercaste papel y tinta para que pudiera escribir a su hermana."
+        },
+        {
+          "en": "Ada checked the letter with you before putting it away.",
+          "es": "Ada comprobó contigo la carta antes de guardarla."
+        }
+      ]
+    },
+    {
+      "id": 102,
+      "bridges": [
+        {
+          "en": "Ada spread the earlier plans beside the added walls.",
+          "es": "Ada extendió los planos anteriores junto a los muros añadidos."
+        },
+        {
+          "en": "You helped her mark the passages that remained safe.",
+          "es": "La ayudaste a marcar los pasos que seguían siendo seguros."
+        },
+        {
+          "en": "Together you checked each exit on the plans before trying to open it.",
+          "es": "Comprobasteis cada salida en los planos antes de intentar abrirla."
+        }
+      ]
+    },
+    {
+      "id": 103,
+      "bridges": [
+        {
+          "en": "Ada sorted the orders by the region they affected.",
+          "es": "Ada separó las órdenes según la región a la que afectaban."
+        },
+        {
+          "en": "You checked the signatures to preserve who had made each decision.",
+          "es": "Revisaste las firmas para conservar quién había tomado cada decisión."
+        },
+        {
+          "en": "You placed beside each order the account of those who had suffered it.",
+          "es": "Dejaste junto a cada orden el testimonio de quienes la habían sufrido."
+        }
+      ]
+    },
+    {
+      "id": 104,
+      "bridges": [
+        {
+          "en": "Ada held the page by its edges to show you the date.",
+          "es": "Ada sostuvo la página por los bordes para mostrarte la fecha."
+        },
+        {
+          "en": "You compared the handwriting with the records confirming its origin.",
+          "es": "Comparaste la escritura con los registros que confirmaban su origen."
+        },
+        {
+          "en": "You prepared a dry place to keep the page while you read on.",
+          "es": "Preparaste un lugar seco donde conservar la página mientras seguíais leyendo."
+        }
+      ]
+    },
+    {
+      "id": 105,
+      "bridges": [
+        {
+          "en": "Ada placed paper beside the original before the ink spread.",
+          "es": "Ada colocó papel junto al original antes de que la tinta avanzara."
+        },
+        {
+          "en": "You held the key steady so Ada could keep copying.",
+          "es": "Mantuviste la llave firme para que Ada pudiera seguir copiando."
+        },
+        {
+          "en": "The ink reached the margin. You protected the final lines.",
+          "es": "La tinta alcanzó el margen. Protegiste las últimas líneas."
+        }
+      ]
+    },
+    {
+      "id": 106,
+      "bridges": [
+        {
+          "en": "Ada stayed beside you while you listened to the offer.",
+          "es": "Ada se quedó a tu lado mientras escuchabas la oferta."
+        },
+        {
+          "en": "You looked at the accounts still waiting to leave the archive.",
+          "es": "Miraste las historias que todavía esperaban salir del archivo."
+        },
+        {
+          "en": "The key remained in your hand as you prepared your answer.",
+          "es": "La llave permaneció en tu mano mientras preparabas tu respuesta."
+        }
+      ]
+    },
+    {
+      "id": 107,
+      "bridges": [
+        {
+          "en": "You stopped on the threshold before entering that life.",
+          "es": "Te detuviste en el umbral antes de entrar en aquella vida."
+        },
+        {
+          "en": "Ada showed you where its inhabitants' decisions were missing.",
+          "es": "Ada te mostró dónde faltaban las decisiones de sus habitantes."
+        },
+        {
+          "en": "You listened to the corridor's voices before choosing where to go.",
+          "es": "Escuchaste las voces del corredor antes de elegir por dónde seguir."
+        }
+      ]
+    },
+    {
+      "id": 108,
+      "bridges": [
+        {
+          "en": "Ada showed you the copy she would carry back to the village.",
+          "es": "Ada te mostró la copia que llevaría consigo hasta la aldea."
+        },
+        {
+          "en": "Together you checked that each copy was protected separately.",
+          "es": "Comprobasteis que cada ejemplar quedaba protegido por separado."
+        },
+        {
+          "en": "You searched the atlas for the point where your paths divided.",
+          "es": "Buscaste en el atlas el punto donde se dividían vuestros caminos."
+        }
+      ]
+    },
+    {
+      "id": 109,
+      "bridges": [
+        {
+          "en": "You checked the doors with the key without leaving the true path.",
+          "es": "Comprobaste las puertas con la llave sin abandonar el sendero verdadero."
+        },
+        {
+          "en": "The serpent changed another corridor. You checked the markings again.",
+          "es": "La serpiente cambió otro corredor. Volviste a comprobar las marcas."
+        },
+        {
+          "en": "You sheltered the accounts as you moved towards the exit.",
+          "es": "Resguardaste los testimonios mientras avanzabas hacia la salida."
+        }
+      ]
+    },
+    {
+      "id": 110,
+      "bridges": [
+        {
+          "en": "Among the voices, you recognised names you had written down on your journey.",
+          "es": "Reconociste entre las voces los nombres que habías anotado durante el viaje."
+        },
+        {
+          "en": "The handbell answered another voice behind the books.",
+          "es": "La campanilla respondió a otra voz detrás de los libros."
+        },
+        {
+          "en": "You checked the atlas for the passage that had just opened.",
+          "es": "Comprobaste en el atlas el paso que acababa de abrirse."
+        }
+      ]
+    },
+    {
+      "id": 111,
+      "bridges": [
+        {
+          "en": "You stopped before the seat without taking it.",
+          "es": "Te detuviste frente al asiento sin llegar a ocuparlo."
+        },
+        {
+          "en": "You reread the offer to check what it demanded.",
+          "es": "Leíste de nuevo la oferta para comprobar lo que exigía."
+        },
+        {
+          "en": "You looked at the captive accounts before answering the king.",
+          "es": "Miraste las historias cautivas antes de responder al rey."
+        }
+      ]
+    },
+    {
+      "id": 112,
+      "bridges": [
+        {
+          "en": "You listened to the memory without setting aside the evidence you carried.",
+          "es": "Escuchaste el recuerdo sin apartar las pruebas que llevabas."
+        },
+        {
+          "en": "You kept that page without hiding Aren's signed orders.",
+          "es": "Guardaste aquella página sin esconder las órdenes firmadas por Aren."
+        },
+        {
+          "en": "You checked that both parts of his history remained legible.",
+          "es": "Comprobaste que ambas partes de su historia permanecían legibles."
+        }
+      ]
+    },
+    {
+      "id": 113,
+      "bridges": [
+        {
+          "en": "You protected the seal's accounts as the scene changed again.",
+          "es": "Protegiste los testimonios del sello mientras la escena volvía a cambiar."
+        },
+        {
+          "en": "You marked the matching moments so the next repetition would not erase them.",
+          "es": "Marcaste las coincidencias para no perderlas en la siguiente repetición."
+        },
+        {
+          "en": "You returned to the corridor's entrance carrying the evidence.",
+          "es": "Regresaste al inicio del corredor llevando contigo las pruebas."
+        }
+      ]
+    },
+    {
+      "id": 114,
+      "bridges": [
+        {
+          "en": "You walked the streets looking for a sign of the two sisters.",
+          "es": "Recorriste las calles buscando alguna señal de las dos hermanas."
+        },
+        {
+          "en": "You held the handbell to your ear to remember why you had come this far.",
+          "es": "Acercaste la campanilla al oído para recordar por qué habías llegado hasta allí."
+        },
+        {
+          "en": "You looked at the village again before answering the offer.",
+          "es": "Miraste de nuevo la aldea antes de contestar a la oferta."
+        }
+      ]
+    },
+    {
+      "id": 115,
+      "bridges": [
+        {
+          "en": "You spread the page so its final lines could be seen.",
+          "es": "Extendiste la página para que pudieran verse sus últimas líneas."
+        },
+        {
+          "en": "You held the original beside the copy you had protected.",
+          "es": "Sostuviste el original junto a la copia que habías protegido."
+        },
+        {
+          "en": "The ink pressed over the date. You kept the evidence in sight.",
+          "es": "La tinta insistió sobre la fecha. Mantuviste las pruebas a la vista."
+        }
+      ]
+    },
+    {
+      "id": 116,
+      "bridges": [
+        {
+          "en": "You took out the copy before the ink could cover your memory of the account.",
+          "es": "Sacaste la copia antes de que la tinta cubriera tu memoria del relato."
+        },
+        {
+          "en": "You read the passage again so the voice could hold.",
+          "es": "Volviste a leer el pasaje para que la voz pudiera mantenerse."
+        },
+        {
+          "en": "Other pages answered the sound travelling through the hall.",
+          "es": "Otras páginas respondieron al sonido que recorría el salón."
+        }
+      ]
+    },
+    {
+      "id": 117,
+      "bridges": [
+        {
+          "en": "You checked that the key's three seals remained together.",
+          "es": "Comprobaste que los tres sellos permanecían juntos en la llave."
+        },
+        {
+          "en": "You named the regions where copies of the accounts were kept.",
+          "es": "Nombraste las regiones donde se conservaban copias de los testimonios."
+        },
+        {
+          "en": "The crown darkened the pages before you again.",
+          "es": "La corona volvió a oscurecer las páginas que tenías delante."
+        }
+      ]
+    },
+    {
+      "id": 118,
+      "bridges": [
+        {
+          "en": "You followed the bond from the armour to the captive memories.",
+          "es": "Seguiste el vínculo desde la armadura hasta los recuerdos cautivos."
+        },
+        {
+          "en": "You held the key steady as ink covered the crown again.",
+          "es": "Mantuviste la llave firme mientras la tinta cubría de nuevo la corona."
+        },
+        {
+          "en": "Aren closed his hand around the page. You held your ground before him.",
+          "es": "Aren cerró la mano sobre la página. Te mantuviste frente a él."
+        }
+      ]
+    },
+    {
+      "id": 119,
+      "bridges": [
+        {
+          "en": "You recognised each voice as the shadows tried to cover them.",
+          "es": "Reconociste cada voz mientras las sombras intentaban cubrirlas."
+        },
+        {
+          "en": "The voices held the passage open as you advanced with the key.",
+          "es": "Las voces sostuvieron el paso mientras avanzabas con la llave."
+        },
+        {
+          "en": "Before the final bond, you listened again to the families accompanying you.",
+          "es": "Ante el último vínculo, volviste a escuchar a las familias que te acompañaban."
+        }
+      ]
+    }
+  ]
+}

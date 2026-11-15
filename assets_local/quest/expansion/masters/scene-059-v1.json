@@ -1,0 +1,12 @@
+{
+  "id": "S059",
+  "master": "scene-059-v1.png",
+  "sha256": "d30ac76190c6c7fc03506e3578772c180ec067232024be9142f710cf98144e38",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The kingdom beneath the moon. Chapter: The palace of two moons. Illustrate this already-authored event faithfully, without inventing another object or plot: Sera recognizes Ada's route. She confirms that the traveler passed through her court seeking the seals' origin, but the palace's captive records prevent a complete account. Context only, do not try to draw all of it: Ada's letter and the atlas lead to Sera's palace beneath two moons. Sera is the queen who gave refugees shelter during the war. You seek her account of the pact that helped Aren close the roads.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

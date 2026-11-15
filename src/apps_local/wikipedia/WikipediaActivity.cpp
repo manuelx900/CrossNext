@@ -16,6 +16,7 @@
 #include "../../SilentRestart.h"
 #include "../../activities/RenderLock.h"
 #include "../../activities/reader/EpubReaderUtils.h"
+#include "../../activities/util/KeyboardEntryActivity.h"
 #include "../../components/UITheme.h"
 #include "../../fontIds.h"
 #include "../../util/QrUtils.h"
@@ -118,7 +119,6 @@ void WikipediaActivity::onEnter() {
   // a storage handoff (and a wake) lands here directly: on the panel every
   // Jersey string on the home was missing, the serif prose intact.
   toybox::ensureFonts(renderer);
-  keyboardShown_ = false;
   packOpen_ = pack_.open();
   if (packOpen_) {
     pack_.loadState(state_);
@@ -172,7 +172,6 @@ bool WikipediaActivity::skipLoopDelay() {
 void WikipediaActivity::go(const View next) {
   view_ = next;
   interactionsReady_ = false;
-  if (next == View::Search) kbGate_.arm();
   requestUpdate();
 }
 
@@ -194,44 +193,21 @@ void WikipediaActivity::refreshResults() {
   pack_.prefix(query_, wikiui::kMaxResults + 1, results_);
 }
 
-void WikipediaActivity::handleKey(const int value) {
-  const fui::KeyboardLayout& layout =
-      fui::builtinKeyboardLayout(fui::KeyboardLayoutId::QwertyEn, shifted_, symbols_, true, false);
-  switch (value) {
-    case fui::QWERTY_KEY_SHIFT:
-      shifted_ = !shifted_;
-      break;
-    case fui::QWERTY_KEY_MODE:
-      symbols_ = !symbols_;
-      shifted_ = false;
-      break;
-    case fui::QWERTY_KEY_LANG:
-      return;
-    case fui::QWERTY_KEY_ENTER:
-      // GO means "done typing": the keyboard goes down and the matches get
-      // the panel. It used to open the first match, which for "albert" was
-      // Albert A. Michelson.
-      keyboardShown_ = false;
-      break;
-    case fui::QWERTY_KEY_BACKSPACE: {
-      if (query_.empty()) break;
-      size_t pos = query_.size() - 1;
-      while (pos > 0 && (static_cast<uint8_t>(query_[pos]) & 0xC0) == 0x80) --pos;
-      query_.erase(pos);
-      refreshResults();
-      break;
-    }
-    default: {
-      const char* out = fui::keyboardOutputFor(layout, static_cast<int16_t>(value));
-      if (!out) return;
-      if (query_.size() + strlen(out) > 120) return;
-      query_ += out;
-      if (shifted_ && !symbols_) shifted_ = false;
-      refreshResults();
-      break;
-    }
+void WikipediaActivity::openSearchKeyboard() {
+  auto keyboard = makeUniqueNoThrow<KeyboardEntryActivity>(renderer, mappedInput, tr(STR_SEARCH), query_, 120);
+  if (!keyboard) {
+    LOG_ERR(kTag, "OOM: search keyboard");
+    return;
   }
-  requestUpdate();
+  interactionsReady_ = false;
+  startActivityForResult(std::move(keyboard), [this](const ActivityResult& result) {
+    RenderLock lock(*this);
+    if (!result.isCancelled) {
+      query_ = std::get<KeyboardResult>(result.data).text;
+      refreshResults();
+    }
+    go(View::Search);
+  });
 }
 
 void WikipediaActivity::noticeAbout(const char* headline, const char* fmt, const std::string& title) {
@@ -262,55 +238,6 @@ void WikipediaActivity::openRandom() {
     return;
   }
   openLocator(entry.locator, 0, "", entry.title);
-}
-
-fui::Rect WikipediaActivity::keyboardRect() const {
-  const auto& metrics = UITheme::getInstance().getMetrics();
-  const int pageWidth = renderer.getScreenWidth();
-  const int pageHeight = renderer.getScreenHeight();
-  const fui::KeyboardLayout& layout =
-      fui::builtinKeyboardLayout(fui::KeyboardLayoutId::QwertyEn, shifted_, symbols_, true, false);
-  const int rows = layout.rowCount;
-  const int gap = metrics.keyboardKeySpacing;
-  const int height = rows * metrics.keyboardKeyHeight + (rows > 1 ? (rows - 1) * gap : 0);
-  const int width = pageWidth * metrics.keyboardWidthPercent / 100;
-  const int x = (pageWidth - width) / 2;
-  const int y = pageHeight - 8 - height;
-  return fui::Rect{static_cast<int16_t>(x), static_cast<int16_t>(y), static_cast<int16_t>(width),
-                   static_cast<int16_t>(height)};
-}
-
-// The keyboard has its own table: it registers more hit rects than a toybox
-// screen holds, and it is routed first.
-void WikipediaActivity::drawKeyboard() {
-  const auto& metrics = UITheme::getInstance().getMetrics();
-  kbInteractions_.beginPublishCycle();
-  fui::GfxRendererTarget target(renderer);
-  target.setFont(fui::GfxRendererTarget::FONT_SMALL, SMALL_FONT_ID);
-  target.setFont(fui::GfxRendererTarget::FONT_BODY, UI_12_FONT_ID);
-  const fui::DeviceContext device = target.deviceContext();
-  const fui::InputSnapshot noInput{};
-  fui::Frame<56> frame(target, device, noInput, kbInteractions_);
-
-  fui::KeyboardProps props;
-  const fui::KeyboardLayout& layout =
-      fui::builtinKeyboardLayout(fui::KeyboardLayoutId::QwertyEn, shifted_, symbols_, true, false);
-  props.layout = &layout;
-  props.keyAction = wikiui::ActionKey;
-  props.okLabel = "GO";
-  props.shiftLabel = tr(STR_KEY_SHIFT);
-  props.modeLabel = symbols_ ? tr(STR_KEY_MODE_ABC) : tr(STR_KEY_MODE_SYMBOLS);
-  props.inputMask = static_cast<uint16_t>(fui::InputTouch);
-  props.selectedIndex = -1;
-  props.labelText.font = fui::GfxRendererTarget::FONT_BODY;
-  props.altText.font = fui::GfxRendererTarget::FONT_SMALL;
-  props.gap = static_cast<int16_t>(metrics.keyboardKeySpacing);
-  props.padding = fui::Insets{0, 0, 0, 0};
-  const fui::Rect kb = keyboardRect();
-  props.bottomHitOverflow = static_cast<int16_t>(renderer.getScreenHeight() - kb.bottom());
-  fui::keyboard(frame, kb, props);
-  kbInteractions_.publish();
-  kbGate_.markBuilt();
 }
 
 // --------------------------------------------------------------- article
@@ -735,18 +662,13 @@ void WikipediaActivity::routeAction(const int action, const int value) {
       openRandom();
       return;
     case wikiui::ActionClear:
-      // The X closes the search: the text goes and the keyboard with it.
-      keyboardShown_ = false;
+      // Clear the query and its result list.
       query_.clear();
       results_.clear();
       requestUpdate();
       return;
     case wikiui::ActionField:
-      if (!keyboardShown_) {
-        keyboardShown_ = true;
-        kbGate_.arm();
-        requestUpdate();
-      }
+      openSearchKeyboard();
       return;
     case wikiui::ActionInstall:
       enterInstall();
@@ -896,9 +818,7 @@ void WikipediaActivity::loop() {
           query_.clear();
           results_.clear();
           requestUpdate();
-        } else if (keyboardShown_) {
-          keyboardShown_ = false;
-          requestUpdate();
+
         } else {
           shelf::leave(renderer, mappedInput);
         }
@@ -992,13 +912,6 @@ void WikipediaActivity::loop() {
   input.touchX = static_cast<int16_t>(tapX);
   input.touchY = static_cast<int16_t>(tapY);
 
-  if (view_ == View::Search && keyboardShown_ && kbGate_.revealed()) {
-    const fui::ActionEvent key = kbInteractions_.routePublished(input);
-    if (key.action == wikiui::ActionKey) {
-      handleKey(static_cast<int>(key.value));
-      return;
-    }
-  }
   if (!interactionsReady_) return;
 
   if (view_ == View::Article) {
@@ -1093,10 +1006,6 @@ void WikipediaActivity::render(RenderLock&&) {
       }
       model.footer = footer_.c_str();
       model.partsLine = partsLine_.empty() ? nullptr : partsLine_.c_str();
-      if (keyboardShown_) {
-        const fui::Rect kb = keyboardRect();
-        model.keyboardHeight = static_cast<int16_t>(renderer.getScreenHeight() - kb.y + 8);
-      }
       wikiui::buildSearch(screen, model);
       break;
     }
@@ -1147,6 +1056,5 @@ void WikipediaActivity::render(RenderLock&&) {
   }
   interactionsReady_ = true;
   toybox::reportOverflow(interactions_, "Wikipedia", &renderer);
-  if (view_ == View::Search && keyboardShown_) drawKeyboard();
   renderer.displayBuffer();
 }

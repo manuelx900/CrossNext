@@ -1,0 +1,5 @@
+These vector silhouettes reproduce the icons supplied by the user in reference screenshots 1-5. REFERENCE.json records the source images and regions. The original screenshots are not required to rebuild the firmware masks from these vendored SVG sources. tools_local/settings_art/trace_reference_icons.py regenerates the vector traces from the original references; build_option_icons.py generates the flash masks.
+
+Settings option-row fallbacks reuse the existing assets_local/settings_art PNG illustrations. build_option_icons.py trims their white border, fits the ink to 44 px, and centers it in a 64 px mask. This normalization is performed by the resource generator; category/home illustrations keep their existing sources and rendering.
+
+Quick Settings silhouettes reproduce the additional clean-contour reference supplied by the user (REFERENCE.json, Quick* regions). RotateRight mirrors Rotate. LightOff and WarmOff add a diagonal off mark to the corresponding silhouettes. These masks use the same centered 44 px ink extent in a 64 px canvas. All state/direction variants are compiled into flash; the overlay and its configuration list share them.

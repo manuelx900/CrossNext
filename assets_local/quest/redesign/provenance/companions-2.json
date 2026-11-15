@@ -1,0 +1,13 @@
+{
+  "name": "companions-2",
+  "kind": "pets",
+  "first": 20,
+  "count": 10,
+  "columns": 5,
+  "rows": 2,
+  "prompt": "Use case: illustration-story. ONE production atlas of TEN full-body Reading Adventure animal/creature companions.\nStyle reference1 is the APPROVED puppy/cat/hamster/fox/dragons atlas: match its soft organic smooth black outlines, clean white and light/mid-gray filled cel shading, gentle expressive eyes and rounded dimensional anatomy. Same illustrator, no pixel art, sharp stair-stepped edges, generic vector icons, hatching, grain, dithering, photorealism or3D.\nExactly FIVE equal columns by TWO equal rows on actual TRANSPARENT background, with opaque white interiors. EXACTLY ONE complete creature per cell, each distinct, in row-major order. Generous transparent gutters, margins and same ground baseline in each row. Calm friendly pose facing slightly left toward a hero but face readable. All paws/wings/tails must connect logically and fit safely inside cell. No giant surrounding effects, aura, floating sparkles, ground, cast shadow, scenery, text, labels, UI, grids or dividing lines.\nBLACK outer contour about1.3%of subject height, stronger than inner gray shading; broad clean surfaces. Creature silhouettes must read at96\u2013190px native height. Large legendary creatures have clear bold contours and restrained broad details. Avoid tiny filigree or black masses. Keep natural species proportions.\nTHE TEN CREATURES IN ORDER:\n1. Friendly slime: Friendly slime\n2. Mushroom sprite: Mushroom sprite\n3. Spirit rabbit: Spirit rabbit\n4. Spirit fox: Spirit fox\n5. Moon cat: Moon cat\n6. Jackalope: Jackalope\n7. Shadow wolf: Shadow wolf\n8. Mandrake: Mandrake\n9. Rune owl: Rune owl\n10. Spark drake: Spark drake",
+  "tool": "built-in image_gen",
+  "source": "exec-cc43ca90-96c6-458a-9a34-7abcb8347aeb.png",
+  "date": "2026-11-05",
+  "sha256": "3bb16491b3a26c67c47c779a05f56c24785ae5c959f600c6df28e894ad8c0fb1"
+}

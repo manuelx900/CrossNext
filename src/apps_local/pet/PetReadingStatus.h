@@ -39,10 +39,12 @@ inline bool readingUrgent(const Model& m) {
          m.profile->mode != pet::Mode::Relaxed && remaining >= 0 &&
          remaining <= std::min<int64_t>(86400, pet::absenceGrace(m.profile->mode) / 4);
 }
-inline void readingLife(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, bool compact = false) {
+inline void readingLife(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, bool compact = false,
+                        bool interactive = true) {
   const bool relaxed = m.profile->mode == pet::Mode::Relaxed;
   const bool urgent = readingUrgent(m);
-  const bool inverse = button(s, w, r, "", urgent ? Read : OpenReadingInfo, 0, urgent, nullptr, !urgent || !m.loading);
+  const bool inverse = button(s, w, r, "", interactive ? (urgent ? Read : OpenReadingInfo) : fui::NO_ACTION, 0, urgent,
+                              nullptr, !urgent || !m.loading);
   const int side = compact ? 22 : 26;
   icon(s, rect(r.x + 10, r.y + (r.height - side) / 2, side, side), extra_reading_book_32, inverse);
   const int x = r.x + side + 20, width = r.right() - x - 26;

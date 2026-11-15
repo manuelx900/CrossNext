@@ -9,8 +9,10 @@ struct LifeRecord {
   uint64_t readingSeconds = 0;
   int64_t endedAt = 0;
   uint16_t days = 0;
+  uint16_t ageDays = 0;
   Species species = Species::Silva;
   LifeStatus reason = LifeStatus::Retired;
+  bool ageKnown = false;
   char name[NAME_BYTES]{};
 };
 struct History {
@@ -18,7 +20,7 @@ struct History {
   uint8_t count = 0;
   LifeRecord records[HISTORY_CAPACITY]{};
 };
-bool addLife(History&, const Profile&);
+bool addLife(History&, const Profile&, int32_t endedDay = 0);
 void encodeHistory(const History&, uint8_t out[HISTORY_BYTES]);
 bool decodeHistory(const uint8_t*, History&, size_t bytes = HISTORY_BYTES);
 class HistoryStore {

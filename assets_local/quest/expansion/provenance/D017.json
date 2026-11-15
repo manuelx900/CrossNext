@@ -1,0 +1,12 @@
+{
+  "id": "D017",
+  "master": "decor-017-v1.png",
+  "sha256": "a130f297c3c1a8a7aff1563b375ae13690bff2ee95627846907cc5e2db3db74b",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original collectible decoration sprite for the e-ink fantasy reading app Aventura lectora. Reference fairy is STYLE ONLY. Friendly chibi storybook proportions, white and pale-gray flat fills, VERY THICK solid pure-BLACK outer contours (20-26px at1024px), strong black inner lines, simple broad shapes readable at112x144. Whole subject visible, centered with transparent padding. Genuine transparent background. No scenery, frame, UI, text, lettering, watermark, fine hatching or gray outlines. Do not include the player hero or PET. Subject: a hanging miniature nautical weather vane, with a broad arrow, a small gull-shaped silhouette over a rounded ship-wheel medallion and two short ribbons. An airborne hanging ornament, no ground base.",
+  "reference": "assets_local/quest/redesign/masters/decoration-fairy-v1.png",
+  "transparent": true,
+  "width": 1312,
+  "height": 1199,
+  "mode": "RGBA"
+}

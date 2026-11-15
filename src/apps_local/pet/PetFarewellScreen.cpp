@@ -17,12 +17,12 @@ void deathWindow(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   const int titleFont = s.target().measureText(1, w.label, {}).width <= content.width ? 1 : 0;
   text(s, rect(content.x, titleY, content.width, 44), w.label, titleFont, false, fui::TextAlign::Center);
   std::snprintf(w.label, sizeof(w.label), tr(STR_PET_GENERATION), static_cast<unsigned long>(m.profile->generation));
-  text(s, rect(content.x, titleY + 44, content.width, 22), w.label, 3, false, fui::TextAlign::Center);
+  text(s, rect(content.x, titleY + 44, wide ? 160 : content.width, 22), w.label, 3, false, fui::TextAlign::Center);
   if (wide) {
     const int imageW = 160;
     const auto picture = rect(content.x, content.y + 76, imageW, content.height - 76);
     farewellPicture(s, m, picture);
-    const auto copy = rect(picture.right() + 16, picture.y, content.width - imageW - 16, picture.height);
+    const auto copy = rect(picture.right() + 16, content.y + 44, content.width - imageW - 16, content.height - 44);
     prose(s, rect(copy.x, copy.y, copy.width, 52), tr(STR_PET_DIED_REASON), 3);
     prose(s, rect(copy.x, copy.y + 54, copy.width, copy.height - 54), tr(STR_PET_DIED_KEPT), 4);
   } else {

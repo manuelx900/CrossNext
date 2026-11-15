@@ -1,0 +1,17 @@
+{
+  "id": 21,
+  "saga": 2,
+  "step": 1,
+  "title": {
+    "en": "A light in the mist",
+    "es": "Una luz en la niebla"
+  },
+  "enemy": "Buoy prowler",
+  "guardian": 13,
+  "master": "path-021.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The Harbor of Mist. Path episode: A light in the mist. Story action, which the scene must directly support: A light flickers in the mist, but a guardian blocks access to the boats.\nEnemy identity, MUST match this exact anatomy: a tall mist sailor skeleton made of driftwood and knotted rope, no gore. Low eye-level view along the path; enemy large in the right foreground, landmark behind it to the left. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-fc51f997-e30c-4cc9-8792-00550656f495.png",
+  "sha256": "3b9f3ff909009186af3c6a7491065139b9edf08bb43418648737c48a89dffeab"
+}

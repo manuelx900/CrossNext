@@ -145,7 +145,7 @@
     var rotation = 90;
     var Module = null;
     var framePtr = 0;
-    var consumeDirty, frameRotation, injectTouch, injectKey;
+    var consumeDirty, consumeRestart, frameRotation, injectTouch, injectKey;
     var painted = false;
 
     function sizeCanvas() {
@@ -237,6 +237,14 @@
     }
 
     function frame() {
+      if (options.onRestart && consumeRestart && consumeRestart()) {
+        visible = false;
+        options.onRestart({
+          settings: Module.FS.readFile('/fs_/.crosspoint/settings.json', {encoding: 'utf8'}),
+          state: Module.FS.readFile('/fs_/.crosspoint/state.json', {encoding: 'utf8'}),
+        });
+        return;
+      }
       if (visible && consumeDirty && consumeDirty()) paint();
       requestAnimationFrame(frame);
     }
@@ -431,11 +439,10 @@
                   mod.FS.writeFile(path, files[path]);
                 }
               } catch (e) {
-                console.warn(
-                  "[device] card injection failed:",
-                  (e && (e.message || e.errno)) || e,
-                );
+                reject(new Error("Could not prepare simulator data: " + ((e && (e.message || e.errno)) || e)));
+                return;
               }
+              if (mod._crossplay_start) mod._crossplay_start();
             },
           ],
           print: function (t) {
@@ -449,7 +456,47 @@
             Module = mod;
             framePtr = mod.cwrap("crossplay_frame_ptr", "number", [])();
             consumeDirty = mod.cwrap("crossplay_consume_dirty", "number", []);
+            consumeRestart = mod._crossplay_consume_restart
+              ? mod.cwrap("crossplay_consume_restart", "number", []) : null;
             frameRotation = mod.cwrap("crossplay_frame_rotation", "number", []);
+            var queueReading = mod._crossplay_quest_reading
+              ? mod.cwrap("crossplay_quest_reading", "number", ["number"]) : null;
+            var readingState = mod._crossplay_quest_reading_status
+              ? mod.cwrap("crossplay_quest_reading_status", "number", []) : null;
+            var questRenderCount = mod._crossplay_quest_render_count
+              ? mod.cwrap("crossplay_quest_render_count", "number", []) : null;
+            var readingInFlight = false;
+            // Values are the browser-only ReadingResult contract in QuestSimulatorReading.h.
+            var readingErrors = {
+              0: "unavailable", 1: "notReady", 5: "needsHero", 6: "finishScreen",
+              7: "storage", 8: "invalidMinutes", 9: "busy", 10: "notReady",
+            };
+            function readingError(code) {
+              var error = new Error("Reading simulation: " + (readingErrors[code] || "failed"));
+              error.code = readingErrors[code] || "failed";
+              return error;
+            }
+            function simulateReading(minutes) {
+              if (!Number.isInteger(minutes) || minutes < 0 || minutes > 1440)
+                return Promise.reject(readingError(8));
+              if (readingInFlight) return Promise.reject(readingError(9));
+              var accepted = queueReading(minutes);
+              if (accepted !== 2) return Promise.reject(readingError(accepted));
+              readingInFlight = true;
+              return new Promise(function (resolveReading, rejectReading) {
+                function pollReading() {
+                  var state = readingState();
+                  if (state === 2 || state === 3) {
+                    requestAnimationFrame(pollReading);
+                    return;
+                  }
+                  readingInFlight = false;
+                  if (state === 4) resolveReading({minutes: minutes});
+                  else rejectReading(readingError(state));
+                }
+                pollReading();
+              });
+            }
             injectTouch = mod.cwrap("crossplay_touch", null, [
               "number",
               "number",
@@ -474,9 +521,22 @@
             requestAnimationFrame(frame);
             resolve({
               canvas: canvas,
+              screenshot: function () {
+                if (!painted) throw new Error("Wait for the first frame before taking a screenshot.");
+                var shot = document.createElement("canvas");
+                shot.width = logicalW;
+                shot.height = logicalH;
+                var target = shot.getContext("2d");
+                target.translate(logicalW / 2, logicalH / 2);
+                target.rotate((rotation * Math.PI) / 180);
+                target.drawImage(off, -PANEL_W / 2, -PANEL_H / 2);
+                return shot.toDataURL("image/png");
+              },
               bindButton: bindButton,
               swipeBack: swipeBack,
               scancodes: SCANCODE,
+              simulateReading: queueReading && readingState ? simulateReading : null,
+              questRenderCount: questRenderCount,
               // Raw touch injection in logical panel pixels (phase 0 down,
               // 1 move, 2 up), for pages that drive the device from script:
               // the installer's tests do, and synthetic PointerEvents cannot

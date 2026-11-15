@@ -1,0 +1,10 @@
+{
+  "id": 22,
+  "book": 3,
+  "step": 4,
+  "master": "path-03-4-v1.png",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape 3:2 composition, filled scene reaching the edges, large readable foreground subjects and clear depth. Match the reference storybook artwork: bold smooth rounded pure-black contours, simple expressive chibi proportions, clean white and flat soft gray shading, no sketch texture, no crosshatching, no color. No UI, no text, no lettering or captions. The playable hero and PET are off camera: this is the reader's viewpoint and must work equally for a male or female hero. Any named people below are story NPCs. Hostile creatures look serious and threatening, never cheerful. No graphic violence. Keep important objects clear at480x320. The reference is STYLE ONLY; do not add its librarian unless the scene specifically names Liora. Scene: An atlas spine fits into a giant book-shaped lock made of stone and roots; an elderly keeper holds a lantern while a sealed passage waits behind the mechanism.",
+  "generatedPath": "exec-e5798252-8cae-4ff5-ba48-5854497575f3.png",
+  "tool": "built-in image_gen",
+  "sha256": "4ce870187f6c45aa1cfe4ad3974a0d60a4db661beb84ce48154e0b9b62769933"
+}

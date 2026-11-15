@@ -1,0 +1,8 @@
+{
+  "id": "dragon-crystal",
+  "path": "exec-2677c2b7-acef-4e1e-8f5b-0eef4651d79b.png",
+  "prompt": "Production decoration sprite for Aventura lectora, ONE isolated object. Match the reference pets: thick clean pure black rounded outlines, white and soft flat gray shading, cute storybook cartoon, simple readable silhouette for 80x112 pixels, no fine texture. Full object centered with transparent margin, truly transparent RGBA background. No aura, no glow, no scenery, no letters, no frame, no other subjects. Subject: A smooth faceted crystal cradled between two small curled stone dragon wings, standing on the ground",
+  "tool": "built-in image_gen",
+  "sha256": "f817ad4940c393f685dac2b7eedf31e0ff3fbd73a848f210111806e9dacffaaa",
+  "name": "decoration-dragon-crystal-v1"
+}

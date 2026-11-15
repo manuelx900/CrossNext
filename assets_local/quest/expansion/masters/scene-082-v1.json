@@ -1,0 +1,12 @@
+{
+  "id": "S082",
+  "master": "scene-082-v1.png",
+  "sha256": "6411a21cc00f65f786ba39d0242cd28e70db8e8fe677d3d5e2f0299e895fbc64",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The war of stories. Chapter: The storyless marshal. Illustrate this already-authored event faithfully, without inventing another object or plot: The restored records include the marshal's name and the life erased when he joined the army. His command cannot hide that person indefinitely. Context only, do not try to draw all of it: The marshal controls the crossing to the star threshold, a doorway into the old store of possible stories. The two opened seals weakened his command, but the final frontier bond still closes the passage.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

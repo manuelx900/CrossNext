@@ -1,0 +1,8 @@
+{
+  "id": "plant",
+  "path": "exec-a744e8de-6954-4e3b-a068-49dd2cf65c2d.png",
+  "prompt": "Production decoration sprite for Aventura lectora, ONE isolated object. Match the reference pets: thick clean pure black rounded outlines, white and soft flat gray shading, cute storybook cartoon, simple readable silhouette for 112x144 pixels, no fine texture. Full object centered with transparent margin, truly transparent RGBA background. No aura, no glow, no scenery, no letters, no frame, no other subjects. Subject: A small flourishing sprout with three large leaves growing from a round ceramic pot, a tiny open book emblem on the pot",
+  "tool": "built-in image_gen",
+  "sha256": "d6f105e3e2fa01e0d391366af3dbdbdfbc0fcdd2fb15598b359401a8e111dcf7",
+  "name": "decoration-plant-v1"
+}

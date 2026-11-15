@@ -1,17 +1,34 @@
 #include "WordleScreens.h"
 
 #include <I18n.h>
+#include <Utf8.h>
 
 #include <algorithm>
 #include <cstdio>
+#include <cstring>
 
 #include "../ui/GameGuide.h"
 #include "../ui/GamePanel.h"
+#include "../ui/KeyboardStyle.h"
 #include "../ui/PixelMenu.h"
 namespace wordleui {
 namespace {
 constexpr auto ink = fui::Paint::solid(fui::Color::Black);
 constexpr auto grey = fui::Paint::dither(fui::Color::LightGray);
+wordlekeys::Tone keyTone(Mark mark) {
+  switch (mark) {
+    case Mark::Empty:
+    case Mark::Typed:
+      return wordlekeys::Tone::Normal;
+    case Mark::Absent:
+      return wordlekeys::Tone::Absent;
+    case Mark::Present:
+      return wordlekeys::Tone::Present;
+    case Mark::Correct:
+      return wordlekeys::Tone::Correct;
+  }
+  return wordlekeys::Tone::Normal;
+}
 void chrome(toybox::Screen& screen, const char* title, const char* right = nullptr) {
   pixelui::begin(screen);
   pixelui::Header header;
@@ -74,7 +91,7 @@ KeyboardLayout buildGame(toybox::Screen& screen, const GameModel& model, Work& w
     } else
       answer[at++] = game.answer()[n];
   }
-  chrome(screen, tr(STR_WORDLE_NAME));
+  chrome(screen, tr(STR_WORDLE_NAME), I18N.getLanguageName(model.language ? Language::ES : Language::EN));
   auto& target = screen.target();
   const auto body = screen.body();
   const bool wide = body.width > body.height;
@@ -141,35 +158,48 @@ KeyboardLayout buildGame(toybox::Screen& screen, const GameModel& model, Work& w
            model.canNext ? ActionNext : fui::NO_ACTION);
     return {};
   }
-  auto k = keyboardLayout(controls, controls.y);
+  auto k = keyboardLayout(controls, controls.y, model.language == 1);
 
   wordlekeys::Tone tones[27];
   for (int n = 0; n < 27; ++n) {
-    const auto mark = game.key(char('A' + n));
-    tones[n] = mark == Mark::Correct   ? wordlekeys::Tone::Correct
-               : mark == Mark::Present ? wordlekeys::Tone::Present
-                                       : wordlekeys::Tone::Normal;
+    tones[n] = keyTone(game.key(char('A' + n)));
   }
   wordlekeys::draw(screen, controls, k, ActionKeyboard, tones);
   return k;
 }
 void buildMenu(toybox::Screen& screen, const MenuModel& model, Work& work) {
-  chrome(screen, tr(STR_WORDLE_NAME));
+  chrome(screen, tr(STR_WORDLE_NAME),
+         I18N.getLanguageName(model.localized ? model.localized->language()
+                                              : (model.language ? Language::ES : Language::EN)));
   auto& target = screen.target();
   const auto body = screen.body();
   const bool wide = body.width > body.height;
   const auto main = wide ? fui::makeRect(body.x, body.y, body.width / 2 - 8, body.height) : body;
   const int tiles = model.letters;
   const int tile = std::min(58, (int(main.width) - 30) / tiles);
-  const char* sample = tiles == 4   ? tr(STR_WORDLE_SAMPLE_4)
-                       : tiles == 6 ? tr(STR_WORDLE_SAMPLE_6)
-                                    : tr(STR_WORDLE_SAMPLE_5);
+  // These tiles demonstrate the active word bank, not bytes of a translated
+  // sentence. A localized UTF-8 sample need not have one byte per game tile.
+  const char* sample = localwordle::wordAt(std::max(4, tiles), 0, model.language);
+  const bool nativeSample = model.localized && model.localized->sample(tiles, work.sample, work.boundaries);
   const int x = main.x + (main.width - tiles * (tile + 4) + 4) / 2;
-  for (int n = 0; n < tiles; ++n)
-    cell(target, fui::makeRect(x + n * (tile + 4), main.y, tile, tile), sample[n],
-         n == 0   ? Mark::Correct
-         : n == 1 ? Mark::Present
-                  : Mark::Empty);
+  for (int n = 0; n < tiles; ++n) {
+    const auto box = fui::makeRect(x + n * (tile + 4), main.y, tile, tile);
+    const auto mark = n == 0 ? Mark::Correct : n == 1 ? Mark::Present : Mark::Empty;
+    if (model.localized) {
+      char value[16]{};
+      if (nativeSample) {
+        const unsigned from = n ? work.boundaries[n - 1] : 0, to = work.boundaries[n];
+        std::memcpy(value, work.sample + from, to - from);
+      }
+      if (mark == Mark::Correct)
+        target.fill(box, ink);
+      else if (mark == Mark::Present)
+        target.fill(box, grey);
+      target.stroke(box, ink, pixelui::kBorder);
+      text(target, box, value, pixelui::kBody, 1, mark == Mark::Correct ? fui::Color::White : fui::Color::Black);
+    } else
+      cell(target, box, sample[n], mark);
+  }
   localwordle::Record fallback;
   fallback.played = model.stats.played;
   fallback.won = model.stats.won;
@@ -274,7 +304,7 @@ void buildConfirm(toybox::Screen& screen, Work&) {
   button(screen, fui::makeRect(body.x, body.bottom() - 136, body.width, 60), tr(STR_WORDLE_START_NEW), ActionConfirm);
   button(screen, fui::makeRect(body.x, body.bottom() - 64, body.width, 60), tr(STR_WORDLE_CANCEL), ActionArchive);
 }
-void buildHowTo(toybox::Screen& screen) {
+void buildHowTo(toybox::Screen& screen, bool localized) {
   chrome(screen, tr(STR_WORDLE_HELP));
   dashboard::text(screen, screen.takeTop(42, 8), tr(STR_GUIDE_WORDLE_GOAL), 0);
   dashboard::button(screen, screen.takeBottom(54, 12), tr(STR_UI_GOT_IT_C3A894), ActionArchive, 0, true, nullptr,
@@ -316,8 +346,98 @@ void buildHowTo(toybox::Screen& screen) {
                            {int16_t(r.x + 36), int16_t(r.y + (h - 30) / 2 + 26)}, 4, ink);
     } else
       guideui::grid(screen, fui::makeRect(r.x + 10, r.y + (h - 30) / 2, 30, 30), 3);
-    guideui::text(screen, fui::makeRect(r.x + 52, r.y + 6, r.width - 64, h - 12), I18N.get(notices[n]), 2,
+    guideui::text(screen, fui::makeRect(r.x + 52, r.y + 6, r.width - 64, h - 12),
+                  I18N.get(localized && n == 2 ? StrId::STR_WORDLE_NATIVE_ACCENTS : notices[n]), 2,
                   fui::TextAlign::Left, 4);
+  }
+}
+void buildNativeGame(toybox::Screen& screen, const wordle::NativeWordle& game, const char* message, Work& work,
+                     EmbeddedKeyboard& keyboard) {
+  chrome(screen, tr(STR_WORDLE_NAME), I18N.getLanguageName(game.language()));
+  auto& target = screen.target();
+  const auto body = screen.body();
+  const bool wide = body.width > body.height;
+  const int keyHeight = keyboard.preferredHeight();
+  const auto grid = wide ? fui::makeRect(body.x, body.y, body.width * 46 / 100, body.height)
+                         : fui::makeRect(body.x, body.y, body.width, body.height - keyHeight - 44);
+  const auto controls = wide ? fui::makeRect(grid.right() + 12, body.y + (body.height - keyHeight - 44) / 2 + 44,
+                                             body.right() - grid.right() - 12, keyHeight)
+                             : fui::makeRect(body.x, body.bottom() - keyHeight, body.width, keyHeight);
+  const unsigned letters = game.letters();
+  const bool rtl =
+      game.language() == Language::AR || game.language() == Language::FA || game.language() == Language::HE;
+  const int gap = 6;
+  const int tile = std::min(
+      {68, (int(grid.width) - (int(letters) - 1) * gap) / int(letters), (int(grid.height) - 40 - 5 * gap) / 6});
+  const int x = grid.x + (grid.width - int(letters) * tile - (int(letters) - 1) * gap) / 2;
+  std::snprintf(work.label, sizeof(work.label), tr(STR_WORDLE_LETTERS), letters);
+  pixelui::text(target, fui::makeRect(grid.x, grid.y, grid.width / 2, 28), work.label, 0);
+  std::snprintf(work.label, sizeof(work.label), tr(STR_REDESIGN_ATTEMPT), std::min(6u, game.guesses() + 1));
+  pixelui::text(target, fui::makeRect(grid.x + grid.width / 2, grid.y, grid.width / 2, 28), work.label, 0,
+                fui::Color::Black, fui::TextAlign::Right);
+  for (unsigned row = 0; row < 6; ++row)
+    for (unsigned col = 0; col < letters; ++col) {
+      const auto column = rtl ? letters - 1 - col : col;
+      const auto box = fui::makeRect(x + column * (tile + gap), grid.y + 32 + row * (tile + gap), tile, tile);
+      const auto mark = row < game.guesses() ? game.mark(row, col) : Mark::Empty;
+      if (mark == Mark::Correct)
+        target.fill(box, ink);
+      else if (mark == Mark::Present)
+        target.fill(box, grey);
+      target.stroke(box, ink, 3);
+      char value[16]{}, label[16]{};
+      if (row < game.guesses())
+        game.unit(row, col, value);
+      else if (row == game.guesses() && !game.over())
+        keyboard.unit(col, value);
+      const auto* cursor = reinterpret_cast<const unsigned char*>(value);
+      char* out = label;
+      while (*cursor && out - label < 11) {
+        auto cp = utf8NextCodepoint(&cursor);
+        cp = keyboardview::upperCodepoint(cp, game.language());
+        out = utf8AppendCodepoint(out, cp);
+      }
+      *out = 0;
+      text(target, box, label, pixelui::kBody, 1, mark == Mark::Correct ? fui::Color::White : fui::Color::Black);
+      if (row == game.guesses() && !game.over()) target.stroke(box, ink, 4);
+    }
+  if (game.over()) {
+    text(target, fui::makeRect(controls.x, controls.y, controls.width, 48),
+         game.victory() ? tr(STR_WORDLE_WELL_DONE) : tr(STR_WORDLE_TRY_ANOTHER), 0, 2);
+    text(target, fui::makeRect(controls.x, controls.y + 52, controls.width, 52), game.word(6), 1, 2);
+    const int width = (controls.width - 12) / 2;
+    button(screen, fui::makeRect(controls.x, controls.bottom() - 60, width, 56), tr(STR_WORDLE_MENU), ActionArchive);
+    button(screen, fui::makeRect(controls.x + width + 12, controls.bottom() - 60, width, 56), tr(STR_WORDLE_PLAY_AGAIN),
+           ActionNext, 0, true);
+    return;
+  }
+  const auto legend = fui::makeRect(controls.x, controls.y - 36, controls.width, 30);
+  if (message)
+    text(target, legend, message, 3, 2);
+  else {
+    const StrId labels[] = {StrId::STR_REDESIGN_CORRECT, StrId::STR_REDESIGN_MISPLACED, StrId::STR_REDESIGN_ABSENT};
+    for (int n = 0; n < 3; ++n) {
+      const int width = legend.width / 3;
+      const auto swatch = fui::makeRect(legend.x + n * width, legend.y + 5, 20, 20);
+      if (n < 2) target.fill(swatch, n == 0 ? ink : grey);
+      target.stroke(swatch, ink, 1);
+      text(target, fui::makeRect(swatch.right() + 6, legend.y, width - 28, 30), I18N.get(labels[n]), 3, 2);
+    }
+  }
+  keyboard.drawGame(target, screen.device(), controls, &game, [](const void* context, const char* key) {
+    return keyTone(static_cast<const wordle::NativeWordle*>(context)->keyMark(key));
+  });
+}
+void buildNativeLengths(toybox::Screen& screen, const wordle::NativeWordle& game, unsigned selected, Work& work) {
+  chrome(screen, tr(STR_WORDLE_LENGTH));
+  dashboard::button(screen, screen.takeBottom(54, 8), tr(STR_GUIDE_APPLY), ActionApplyLength, 0, true);
+  const auto body = screen.body();
+  const int h = std::min(88, (int(body.height) - 32) / 5);
+  for (unsigned n = 2; n <= 6; ++n) {
+    if (!game.supports(n)) continue;
+    std::snprintf(work.label, sizeof(work.label), tr(STR_WORDLE_LETTERS), n);
+    button(screen, fui::makeRect(body.x, body.y + (n - 2) * (h + 8), body.width, h), work.label, ActionLength, n,
+           n == selected);
   }
 }
 }  // namespace wordleui

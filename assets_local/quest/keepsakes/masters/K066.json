@@ -1,0 +1,18 @@
+{
+  "id": "K066",
+  "key": "Tira",
+  "file": "K066.png",
+  "sample": {
+    "es": "Tira de fechas",
+    "en": "Date strip"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Date strip.",
+  "requests": [
+    94
+  ],
+  "sha256": "a7a4c95bd3f5ff08b2af4a7c23e1f13b5784f3942ac07a7dbc2746e01cbdc0b1",
+  "source": "exec-ede0861f-49da-4970-b6f0-b74f928e6c41.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

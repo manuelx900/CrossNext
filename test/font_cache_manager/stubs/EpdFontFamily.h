@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstring>
 
 struct EpdFontData {
   const void* groups = nullptr;
@@ -8,7 +9,7 @@ struct EpdFontData {
 
 class EpdFontFamily {
  public:
-  enum Style : uint8_t { REGULAR = 0, BOLD = 1, ITALIC = 2, BOLD_ITALIC = 3 };
+  enum Style : uint8_t { REGULAR = 0, BOLD = 1, ITALIC = 2, BOLD_ITALIC = 3, SMALL_CAPS = 128 };
 
   EpdFontFamily() = default;
   EpdFontFamily(const EpdFontData* regular, const EpdFontData* bold, const EpdFontData* italic,
@@ -21,6 +22,13 @@ class EpdFontFamily {
     if ((requested & BOLD) && styleData[BOLD]) return styleData[BOLD];
     if ((requested & ITALIC) && styleData[ITALIC]) return styleData[ITALIC];
     return styleData[REGULAR];
+  }
+  uint32_t applyLigatures(uint32_t cp, const char*& suffix, Style) const {
+    if (cp == 0x0e01 && std::strncmp(suffix, "ิ่", 6) == 0) {
+      suffix += 6;
+      return 0xe001;
+    }
+    return cp;
   }
 
  private:

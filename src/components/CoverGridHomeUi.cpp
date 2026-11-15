@@ -3,6 +3,7 @@
 #include <BoardConfig.h>
 #include <ChromeRegion.h>
 #include <FreeInkUIIcon.h>
+#include <FsHelpers.h>
 #include <GfxRenderer.h>
 #include <HalClock.h>
 #include <I18n.h>
@@ -18,6 +19,7 @@
 #include <utility>
 
 #include "../apps_local/Shelf.h"  // fork-local seam
+#include "../apps_local/home/CoverLoadingNotice.h"
 #include "../apps_local/home/CoverSceneCache.h"
 #include "../apps_local/home/HomeMenuIntegration.h"
 #include "../apps_local/home/HomeScreen.h"
@@ -28,6 +30,9 @@
 #include "../util/DateFormat.h"
 #include "MappedInputManager.h"
 #include "UITheme.h"
+#include "UiAppHelpers.h"
+#include "apps_local/library/LibraryLoadingNotice.h"
+#include "apps_local/ui/StatusBattery.h"
 #include "icons/blocks.h"
 #include "icons/book.h"
 #include "icons/folder.h"
@@ -36,6 +41,7 @@
 #include "icons/shelfIcons.h"  // fork-local seam
 #include "icons/transfer.h"
 #include "util/BookProgress.h"
+#include "util/ReadingTimeMemo.h"
 
 namespace fui = freeink::ui;
 namespace {
@@ -44,6 +50,33 @@ constexpr fui::ActionId SELECT = 1;
 // inset so the cover columns land on the header chrome's inset line.
 constexpr int16_t COVER_CELL_INSET = 6;
 constexpr int COVER_ROW_EXTRA_HEIGHT = 8;
+struct CoverGeometry {
+  fui::Rect body, tabs;
+  int rowGap, coverRowHeight, featuredHeight;
+};
+CoverGeometry coverGeometry(GfxRenderer& renderer, const fui::ThemeTokens& theme, const fui::DrawTarget& target) {
+  const auto& metrics = UITheme::getInstance().getMetrics();
+  const auto safe = UITheme::getInstance().getScreenSafeArea(renderer, true);
+  const bool touch = BoardConfig::hasTouch(), wide = renderer.getScreenWidth() > renderer.getScreenHeight();
+  const int hInset = std::max(0, int(metrics.headerSidePadding) - COVER_CELL_INSET - safe.x);
+  const int topInset = touch ? theme.spaceLg : theme.spaceSm + 4;
+  const int tabGap = touch ? theme.spaceSm : 4;
+  CoverGeometry out;
+  out.tabs = fui::makeRect(safe.x + hInset, safe.y + safe.height - theme.spaceSm - metrics.coverGridTabBarHeight,
+                           safe.width - hInset * 2, metrics.coverGridTabBarHeight);
+  const int top = safe.y + topInset + metrics.batteryBarHeight + theme.spaceSm;
+  out.body = fui::makeRect(safe.x + hInset, top, safe.width - hInset * 2, out.tabs.y - tabGap - top);
+  out.rowGap = std::max(4, int(out.body.width) / 100);
+  out.coverRowHeight = std::max(1, (out.body.height - theme.spaceSm - 2 * out.rowGap) / 3 + COVER_ROW_EXTRA_HEIGHT);
+  out.featuredHeight = std::min<int>(
+      out.body.height, std::max(out.coverRowHeight, target.lineHeight(theme.bodyText.font) * (wide ? 1 : 2) +
+                                                        target.lineHeight(theme.smallText.font) * 2 + 32));
+  return out;
+}
+int slotCoverHeight(fui::Rect rect, int rowHeight) {
+  const int maxCoverWidth = rect.width / CoverGridHomeUi::GRID_COLUMNS - 2 * COVER_CELL_INSET;
+  return std::max(1, std::min(std::min<int>(rect.height, rowHeight) - 12, maxCoverWidth * 3 / 2));
+}
 void softCoverOutline(fui::DrawTarget& target, fui::Rect art) {
   const auto ink = fui::Paint::solid(fui::Color::Black), paper = fui::Paint::solid(fui::Color::White);
   static constexpr int cuts[] = {5, 3, 2, 1, 1};
@@ -75,8 +108,7 @@ CoverGridHomeUi::CoverGridHomeUi(GfxRenderer& renderer)
 void CoverGridHomeUi::begin(const std::vector<RecentBook>& recent, bool opds, bool continuing, bool plugins) {
   hasPlugins = plugins;
   books = &recent;
-  if (SETTINGS.homeLayout == CrossPointSettings::HOME_LICORICE)
-    noteThumbHeight(homeui::shelfLayout(uiTarget.deviceContext()).artHeight);
+  prepareGeometry();
   hasOpds = opds;
   hasContinueReading = continuing;
   if (!recent.empty()) coverCache.begin(SETTINGS.homeLayout == CrossPointSettings::HOME_LICORICE);
@@ -86,28 +118,26 @@ void CoverGridHomeUi::begin(const std::vector<RecentBook>& recent, bool opds, bo
   refreshCoverPaths();
   if (SETTINGS.homeLayout == CrossPointSettings::HOME_LICORICE && !readingTimeLoaded && !recent.empty()) {
     readingTimeLoaded = true;
-    struct ReadingSnapshot {
-      readingstats::Repository repository;
-      readingstats::Book book;
-    };
-    // Repository scratch and Book exceed the render-task stack budget.
-    auto snapshot = makeUniqueNoThrow<ReadingSnapshot>();
-    if (snapshot) {
-      const auto document = KOReaderDocumentId::calculate(recent.front().path);
-      readingTimeKnown = snapshot->repository.cachedBook(document.c_str(), snapshot->book);
-      if (readingTimeKnown)
-        readingSeconds = snapshot->book.seconds;
-      else
-        readingTimeKnown = !document.empty() && !Storage.exists(readingstats::kJournalPath);
-    } else
-      LOG_ERR("HOME", "OOM: featured reading snapshot");
-  }
-  if (SETTINGS.homeLayout == CrossPointSettings::HOME_LICORICE) {
-    // Eighteen shelf slots plus the featured book, PSRAM-only and activity-owned.
-    if (!progressMemory) {
-      progressMemory = HalMemory::allocatePsram(PROGRESS_RESULTS * sizeof(ProgressResult));
-      if (!progressMemory)
-        LOG_ERR("HOME", "OOM: %u-byte shelf progress cache", unsigned(PROGRESS_RESULTS * sizeof(ProgressResult)));
+    if (!readingtime::lookup(recent.front().path.c_str(), readingSeconds, readingTimeKnown)) {
+      const auto resource = Storage.resourceRevision(), media = Storage.mediaRevision();
+      const auto journal = Storage.stateFileRevision(readingstats::kJournalPath);
+      struct ReadingSnapshot {
+        readingstats::Repository repository;
+        readingstats::Book book;
+      };
+      // Repository scratch and Book exceed the render-task stack budget.
+      auto snapshot = makeUniqueNoThrow<ReadingSnapshot>();
+      if (snapshot) {
+        const auto document = KOReaderDocumentId::calculate(recent.front().path);
+        readingTimeKnown = snapshot->repository.cachedBook(document.c_str(), snapshot->book);
+        if (readingTimeKnown)
+          readingSeconds = snapshot->book.seconds;
+        else
+          readingTimeKnown = !document.empty() && !Storage.exists(readingstats::kJournalPath);
+        readingtime::remember(recent.front().path.c_str(), document.c_str(), readingSeconds, readingTimeKnown, resource,
+                              media, journal);
+      } else
+        LOG_ERR("HOME", "OOM: featured reading snapshot");
     }
   }
   progress = hasContinueReading && !books->empty()
@@ -122,19 +152,11 @@ void CoverGridHomeUi::begin(const std::vector<RecentBook>& recent, bool opds, bo
 }
 
 int CoverGridHomeUi::shelfProgress(const RecentBook& book) {
-  auto* results = reinterpret_cast<ProgressResult*>(progressMemory.get());
-  for (int n = 0; results && n < progressCount; ++n)
-    if (!std::strcmp(results[n].path, book.path.c_str())) return results[n].percent;
   int percent = loadBookProgress(book.path);
   if (percent < 0) {
     const auto& history = RECENT_BOOKS.getBooks();
     if (std::any_of(history.begin(), history.end(), [&](const RecentBook& recent) { return recent.path == book.path; }))
       percent = 0;
-  }
-  if (results && progressCount < PROGRESS_RESULTS && book.path.size() < sizeof(results[0].path)) {
-    auto& result = results[progressCount++];
-    std::memcpy(result.path, book.path.c_str(), book.path.size() + 1);
-    result.percent = percent;
   }
   return percent;
 }
@@ -142,6 +164,13 @@ int CoverGridHomeUi::shelfProgress(const RecentBook& book) {
 void CoverGridHomeUi::refreshCoverPaths() {
   coverCache.invalidate();
   for (size_t i = 0; i < books->size() && i < coverPaths.size(); ++i) refreshCoverPath(i);
+}
+
+void CoverGridHomeUi::prepareGeometry() {
+  if (SETTINGS.homeLayout == CrossPointSettings::HOME_LICORICE)
+    noteThumbHeight(homeui::shelfLayout(uiTarget.deviceContext()).artHeight);
+  else
+    noteThumbHeight(std::max(1, preparationThumbHeight(renderer) - 8));
 }
 
 void CoverGridHomeUi::refreshCoverPath(size_t index) {
@@ -153,6 +182,15 @@ void CoverGridHomeUi::refreshCoverPath(size_t index) {
 
 int CoverGridHomeUi::thumbHeightFor() const { return thumbHeight > 0 ? thumbHeight : THUMB_HEIGHT; }
 
+int CoverGridHomeUi::preparationThumbHeight(GfxRenderer& renderer) {
+  auto target = makeUiTarget(renderer);
+  const auto& theme = refreshSharedUiThemeTokens(target);
+  const auto geometry = coverGeometry(renderer, theme, target);
+  auto featured = geometry.body;
+  featured.height = geometry.featuredHeight;
+  return generatedThumbHeight(slotCoverHeight(featured, geometry.coverRowHeight));
+}
+
 bool CoverGridHomeUi::takeThumbHeightChanged() { return std::exchange(thumbHeightChanged, false); }
 
 void CoverGridHomeUi::noteThumbHeight(int slotHeight) {
@@ -160,7 +198,7 @@ void CoverGridHomeUi::noteThumbHeight(int slotHeight) {
   // size). The +8 surplus gives the paint clip a little bleed so the art's
   // rightward nudge never exposes the left edge; covers narrower than the
   // 2:3 slot may show a thin sliver at the sides rather than being cropped.
-  const int height = std::max(1, slotHeight + 8);
+  const int height = generatedThumbHeight(slotHeight);
   if (thumbHeight != height) {
     thumbHeight = height;
     thumbHeightChanged = true;
@@ -184,7 +222,16 @@ int CoverGridHomeUi::selectedAction(const MappedInputManager& input) {
   return touch.snap.touchReleased ? pending : -1;
 }
 
-void CoverGridHomeUi::screenFn(UiScreen& screen, void* user) { static_cast<CoverGridHomeUi*>(user)->draw(screen); }
+void CoverGridHomeUi::screenFn(UiScreen& screen, void* user) {
+  auto& self = *static_cast<CoverGridHomeUi*>(user);
+  self.allCoversReady = true;
+  self.draw(screen);
+  if (self.coverLoading && !self.allCoversReady) {
+    const auto area = homeui::coverLoadingNoticeArea(screen.device().safeRect(), self.coverAreas[0],
+                                                     SETTINGS.homeLayout == CrossPointSettings::HOME_FRAMED);
+    libraryui::loadingNotice(screen.target(), area, tr(STR_LIBRARY_LOADING_COVERS));
+  }
+}
 
 void CoverGridHomeUi::draw(UiScreen& screen) {
   if (SETTINGS.homeLayout == CrossPointSettings::HOME_LICORICE) {
@@ -193,29 +240,33 @@ void CoverGridHomeUi::draw(UiScreen& screen) {
   }
   coverCache.prepare();
   const auto& theme = screen.theme();
-  const auto safe = UITheme::getInstance().getScreenSafeArea(renderer, true);
-  screen.setContentMarginFromScreen(fui::Insets{
-      static_cast<int16_t>(safe.y), static_cast<int16_t>(renderer.getScreenWidth() - safe.x - safe.width),
-      static_cast<int16_t>(renderer.getScreenHeight() - safe.y - safe.height), static_cast<int16_t>(safe.x)});
-  // Horizontal inset sized so the outer cover columns (content x plus the
-  // grid's cell inset) sit on the theme's side-padding line: the heading and
-  // tabs then align with the clock and battery, which tuck a few px further
-  // in (headerStatusInset's optical bias).
-  const int16_t hInset = std::max<int16_t>(
-      0, static_cast<int16_t>(UITheme::getInstance().getMetrics().headerSidePadding - COVER_CELL_INSET - safe.x));
-  // Drop the status band, hero, and grid down: touch boards get a full step
-  // (no button-hint band to fit), button boards a modest nudge. The tabs stay
-  // put (bottom-anchored below).
-  const int16_t topInset =
-      BoardConfig::hasTouch() ? static_cast<int16_t>(theme.spaceLg) : static_cast<int16_t>(theme.spaceSm + 4);
-  screen.insetContent(fui::Insets{topInset, hInset, theme.spaceSm, hInset});
-  const bool landscape = renderer.getScreenWidth() > renderer.getScreenHeight();
-  // Reserve the band's slot in the flow (its content draws at a fixed screen
-  // position in drawHeaderBand); the slot doubles as padding above the heading.
-  screen.takeTop(UITheme::getInstance().getMetrics().batteryBarHeight, theme.spaceSm);
-  // Button boards run tighter above the tabs to make room for the top step.
-  const int16_t tabGap = BoardConfig::hasTouch() ? theme.spaceSm : static_cast<int16_t>(4);
-  auto tabRect = screen.takeBottom(UITheme::getInstance().getMetrics().coverGridTabBarHeight, tabGap);
+  const auto geometry = coverGeometry(renderer, theme, screen.target());
+  const auto body = geometry.body;
+  screen.setContentMarginAbsolute(fui::Insets{body.y, static_cast<int16_t>(renderer.getScreenWidth() - body.right()),
+                                              static_cast<int16_t>(renderer.getScreenHeight() - body.bottom()),
+                                              body.x});
+  auto tabRect = geometry.tabs;
+  if (loadingShell) {
+    allCoversReady = false;
+    const auto featured = screen.takeTop(geometry.featuredHeight, theme.spaceSm);
+    const int height = slotCoverHeight(featured, geometry.coverRowHeight), width = std::max(1, height * 2 / 3);
+    const auto hero =
+        fui::makeRect(featured.x + COVER_CELL_INSET, featured.y + (featured.height - height) / 2, width, height);
+    coverAreas[0] = hero;
+    GUI.drawCoverPlaceholder(renderer, Rect{hero.x, hero.y, hero.width, hero.height});
+    const auto rest = screen.body();
+    const int rowHeight = height + 2 * COVER_CELL_INSET;
+    const int step = std::max(0, (rest.width - 2 * COVER_CELL_INSET - width) / (GRID_COLUMNS - 1));
+    for (int n = 0; n < GRID_COLUMNS * GRID_ROWS; ++n) {
+      const auto art =
+          fui::makeRect(rest.x + COVER_CELL_INSET + n % GRID_COLUMNS * step,
+                        rest.y + COVER_CELL_INSET + n / GRID_COLUMNS * (rowHeight + geometry.rowGap), width, height);
+      GUI.drawCoverPlaceholder(renderer, Rect{art.x, art.y, art.width, art.height});
+    }
+    drawTabs(screen, tabRect.inset(fui::Insets{0, COVER_CELL_INSET, 0, COVER_CELL_INSET}));
+    drawHeaderBand();
+    return;
+  }
   if (books->empty()) {
     drawTabs(screen, tabRect.inset(fui::Insets{0, COVER_CELL_INSET, 0, COVER_CELL_INSET}));
     drawEmpty(screen);
@@ -226,14 +277,9 @@ void CoverGridHomeUi::draw(UiScreen& screen) {
   // cover rows (hero + two grid rows), so the featured section is one row
   // tall and every cover on screen shares one size. The metadata floor still
   // applies when the rows would be too short for the hero's text lines.
-  const fui::Rect body = screen.body();
-  const int rowGap = std::max<int>(4, body.width / 100);
+  const int rowGap = geometry.rowGap;
   grid.gap = grid.rowGap = rowGap;
-  const int coverRowHeight = std::max(1, (body.height - theme.spaceSm - 2 * rowGap) / 3 + COVER_ROW_EXTRA_HEIGHT);
-  const int16_t featuredHeight = std::min<int>(
-      body.height, std::max<int>(coverRowHeight, screen.target().lineHeight(theme.bodyText.font) * (landscape ? 1 : 2) +
-                                                     screen.target().lineHeight(theme.smallText.font) * 2 + 32));
-  drawCurrent(screen, screen.takeTop(featuredHeight, theme.spaceSm), coverRowHeight);
+  drawCurrent(screen, screen.takeTop(geometry.featuredHeight, theme.spaceSm), geometry.coverRowHeight);
   drawGrid(screen);
   tabRect.x = gridBounds.x + grid.cellInset.left;
   tabRect.width = gridBounds.width - grid.cellInset.left - grid.cellInset.right;
@@ -242,7 +288,7 @@ void CoverGridHomeUi::draw(UiScreen& screen) {
 }
 
 void CoverGridHomeUi::drawLicorice(UiScreen& screen) {
-  coverCache.prepare();
+  if (!loadingShell) coverCache.prepare();
   const auto safe = screen.device().safeRect();
   const bool wide = screen.device().width > screen.device().height;
   const int band = safe.y + 44;
@@ -260,12 +306,9 @@ void CoverGridHomeUi::drawLicorice(UiScreen& screen) {
     target.text(r, value, style);
   };
   target.fill(fui::makeRect(0, 0, screen.device().width, band), ink);
-  const auto battery = fui::makeRect(safe.right() - 40, safe.y + 14, 26, 16);
-  target.stroke(battery, paper, 1);
-  target.fill(fui::makeRect(battery.right(), battery.y + 4, 3, 8), paper);
-  target.fill(fui::makeRect(battery.x + 3, battery.y + 3,
-                            20 * std::clamp(int(shelfStatus.status.battery.percent), 0, 100) / 100, 10),
-              paper);
+  const auto battery = fui::makeRect(safe.right() - 40, safe.y + 12, statusbattery::width, statusbattery::height);
+  statusbattery::draw(target, battery, shelfStatus.status.battery.percent, shelfStatus.status.battery.charging,
+                      fui::Color::White);
   if (shelfStatus.status.battery.label) {
     char value[8];
     std::snprintf(value, sizeof(value), "%d%%", int(shelfStatus.status.battery.percent));
@@ -294,6 +337,23 @@ void CoverGridHomeUi::drawLicorice(UiScreen& screen) {
   const auto footer = layout.footer, gridArea = layout.grid;
   const int columns = 3, rows = layout.rows, gap = layout.gap, cellWidth = layout.cellWidth,
             artHeight = layout.artHeight;
+  if (loadingShell) {
+    allCoversReady = false;
+    // The catalog is not loaded yet; paint fixed slots without touching cover resources.
+    for (int n = 0; n < rows * columns; ++n) {
+      const int x = gridArea.x + n % columns * (cellWidth + gap);
+      const int y = gridArea.y + n / columns * (artHeight + 34 + gap);
+      const auto art = fui::makeRect(x + (cellWidth - artHeight * 2 / 3) / 2, y, artHeight * 2 / 3, artHeight);
+      GUI.drawCoverPlaceholder(renderer, Rect{art.x, art.y, art.width, art.height});
+      softCoverOutline(target, art);
+    }
+    target.fill(fui::makeRect(0, footer.y, screen.device().width, 4), fui::Paint::dither(fui::Color::DarkGray));
+    const int height = footer.height + 8;
+    const auto art = fui::makeRect(footer.x + 2, footer.y - 18, height * 2 / 3, height);
+    GUI.drawCoverPlaceholder(renderer, Rect{art.x, art.y, art.width, art.height});
+    softCoverOutline(target, art);
+    return;
+  }
   noteThumbHeight(artHeight);
   uint64_t key = 14695981039346656037ULL;
   const auto hash = [&key](const void* data, size_t size) {
@@ -312,7 +372,6 @@ void CoverGridHomeUi::drawLicorice(UiScreen& screen) {
     hash(book.path.c_str(), book.path.size() + 1);
     hash(book.title.c_str(), book.title.size() + 1);
     hash(coverPaths[n].c_str(), coverPaths[n].size() + 1);
-    hash(&bookProgress[n], sizeof(bookProgress[n]));
   }
   const bool cached = homecover::restoreScene(renderer, gridArea, key);
   for (int n = 0; n < rows * columns && size_t(n + 1) < books->size(); ++n) {
@@ -320,16 +379,21 @@ void CoverGridHomeUi::drawLicorice(UiScreen& screen) {
     const int x = gridArea.x + n % columns * (cellWidth + gap);
     const int y = gridArea.y + n / columns * (artHeight + 34 + gap);
     const auto art = fui::makeRect(x + (cellWidth - artHeight * 2 / 3) / 2, y, artHeight * 2 / 3, artHeight);
+    coverAreas[index] = art;
     screen.frame().hit(fui::makeRect(x, y, cellWidth, artHeight + 32), SELECT, index, fui::InputTouch);
     if (cached) continue;
     coverCache.paint(art, index, coverPaths[index], true, true);
     if (!coverCache.hasImage(index)) {
-      fui::TextStyle placeholder;
-      placeholder.font = 0;
-      placeholder.maxLines = 3;
-      placeholder.align = fui::TextAlign::Center;
-      target.text(art.inset({16, 8, 16, 8}), (*books)[index].title.c_str(), placeholder);
+      allCoversReady = false;
+      GUI.drawCoverPlaceholder(renderer, Rect{art.x, art.y, art.width, art.height});
     }
+    softCoverOutline(target, art);
+    label(fui::makeRect(x, art.bottom() + 4, cellWidth, 26), (*books)[index].title.c_str());
+  }
+  if (!cached) homecover::storeScene(renderer);
+  // Progress overlays are rebuilt after restoring the unchanged artwork.
+  for (int index = 1; index <= rows * columns && size_t(index) < books->size(); ++index) {
+    const auto art = coverAreas[index];
     char value[24];
     if (bookProgress[index] >= 0)
       std::snprintf(value, sizeof(value), "%d%%", bookProgress[index]);
@@ -345,9 +409,7 @@ void CoverGridHomeUi::drawLicorice(UiScreen& screen) {
     coverBadge(target, tag);
     label(tag, badgeText, 0, true, fui::TextAlign::Center);
     softCoverOutline(target, art);
-    label(fui::makeRect(x, art.bottom() + 4, cellWidth, 26), (*books)[index].title.c_str());
   }
-  if (!cached) homecover::storeScene(renderer);
   const auto pager = fui::makeRect(safe.x + safe.width / 2 - 60, footer.y - 32, 120, 24);
   char pageText[24];
   std::snprintf(pageText, sizeof(pageText), "%d / %d", page + 1, pages);
@@ -360,13 +422,19 @@ void CoverGridHomeUi::drawLicorice(UiScreen& screen) {
   if (!books->empty()) {
     const int height = footer.height + 8;
     const auto art = fui::makeRect(footer.x + 2, footer.y - 18, height * 2 / 3, height);
+    coverAreas[0] = art;
     target.fill(art, paper);
-    coverCache.paint(art, 0, coverPaths[0], true);
+    coverCache.paint(art, 0, coverPaths[0], true, true);
+    if (!coverCache.hasImage(0)) {
+      allCoversReady = false;
+      GUI.drawCoverPlaceholder(renderer, Rect{art.x, art.y, art.width, art.height});
+    }
     softCoverOutline(target, art);
     const int x = art.right() + 14;
     const int copyY = footer.y + (footer.height - 100) / 2;
     label(fui::makeRect(x, copyY, footer.right() - x, 30), books->front().title.c_str(), 1);
-    label(fui::makeRect(x, copyY + 34, footer.right() - x, 24), books->front().author.c_str());
+    label(fui::makeRect(x, copyY + 34, footer.right() - x, 24),
+          books->front().author.empty() ? tr(STR_LIBRARY_UNKNOWN_AUTHOR) : books->front().author.c_str());
     char value[64];
     if (readingTimeKnown)
       std::snprintf(value, sizeof(value), tr(STR_HOME_READING_VALUE), std::max(0, progress),
@@ -459,7 +527,7 @@ void CoverGridHomeUi::drawCurrent(UiScreen& screen, fui::Rect rect, const int co
   const auto& theme = screen.theme();
   const auto& book = books->front();
   card.title = book.title.c_str();
-  card.author = book.author.empty() ? nullptr : book.author.c_str();
+  card.author = book.author.empty() ? tr(STR_LIBRARY_UNKNOWN_AUTHOR) : book.author.c_str();
   card.meta = nullptr;
   card.progressLabel = progress >= 0 ? progressText : nullptr;
   card.centerTextOnCover = true;
@@ -489,8 +557,7 @@ void CoverGridHomeUi::drawCurrent(UiScreen& screen, fui::Rect rect, const int co
   // Fit the shared 2:3 cover box within both the row and a grid column. No
   // gap reserve: the cell insets already keep adjacent covers apart, and the
   // SpaceBetween layout absorbs whatever slack remains.
-  const int maxCoverWidth = rect.width / GRID_COLUMNS - 2 * COVER_CELL_INSET;
-  card.coverSize.height = std::max(1, std::min(std::min<int>(rect.height, coverRowHeight) - 12, maxCoverWidth * 3 / 2));
+  card.coverSize.height = slotCoverHeight(rect, coverRowHeight);
   card.coverSize.width = std::max(1, card.coverSize.height * 2 / 3);
   noteThumbHeight(card.coverSize.height);
   gridBounds = layoutGrid(screen.body());
@@ -586,7 +653,7 @@ void CoverGridHomeUi::drawTabs(UiScreen& screen, fui::Rect rect) {
         icon = LibraryIcon;
         break;
       case homemenu::Id::Stats:
-        icon = BlocksIcon;
+        icon = navicons::StatsLegacy32Bits;
         break;
       case homemenu::Id::Settings:
         icon = Settings2Icon;
@@ -634,5 +701,6 @@ bool CoverGridHomeUi::paintFramedCover(fui::DrawTarget& target, fui::Rect rect, 
   // The false spine draws inside the cover paint (HomeCoverCache), glued to
   // the art's left edge, so it stays aligned whatever each cover's margin is.
   const bool drawn = index < coverPaths.size() && coverCache.paint(rect, index, coverPaths[index]);
+  if (!coverCache.hasImage(index)) allCoversReady = false;
   return drawn;
 }

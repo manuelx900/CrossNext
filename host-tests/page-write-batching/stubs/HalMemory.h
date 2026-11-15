@@ -15,6 +15,10 @@ class HalMemory {
       }
     }
   };
+  struct Stats {
+    size_t freeBytes = 8388608, largestBlockBytes = 8388608;
+  };
+  static Stats getPsramHeap() { return {}; }
   using PsramBuffer = std::unique_ptr<uint8_t[], PsramDeleter>;
   static PsramBuffer allocatePsram(size_t bytes) {
     ++allocations;

@@ -183,7 +183,7 @@ bool FontDownloadActivity::fetchAndParseManifest() {
   auto result = HttpDownloader::downloadToFile(FONT_MANIFEST_URL, MANIFEST_TMP, nullptr);
   if (result != HttpDownloader::OK) {
     LOG_ERR("FONT", "Failed to fetch manifest from %s", FONT_MANIFEST_URL);
-    errorMessage_ = "Failed to fetch font list";
+    errorMessage_ = tr(STR_FONT_FETCH_LIST_FAILED);
     Storage.remove(MANIFEST_TMP);
     return false;
   }
@@ -193,7 +193,7 @@ bool FontDownloadActivity::fetchAndParseManifest() {
   if (!Storage.openFileForRead("FONT", MANIFEST_TMP, manifestFile)) {
     LOG_ERR("FONT", "Failed to open temp manifest");
     Storage.remove(MANIFEST_TMP);
-    errorMessage_ = "Failed to read font list";
+    errorMessage_ = tr(STR_FONT_READ_LIST_FAILED);
     return false;
   }
 
@@ -227,7 +227,7 @@ bool FontDownloadActivity::fetchAndParseManifest() {
   int version = doc["version"] | 0;
   if (version != FONTS_MANIFEST_VERSION) {
     LOG_ERR("FONT", "Unsupported manifest version: %d", version);
-    errorMessage_ = "Unsupported manifest version";
+    errorMessage_ = tr(STR_FONT_MANIFEST_VERSION_UNSUPPORTED);
     return false;
   }
 
@@ -558,7 +558,7 @@ void FontDownloadActivity::downloadFamily(ManifestFamily& family) {
   if (!fontInstaller_.ensureFamilyDir(str(family.name))) {
     RenderLock lock(*this);
     state_ = ERROR;
-    errorMessage_ = "Failed to create font directory";
+    errorMessage_ = tr(STR_FONT_CREATE_DIRECTORY_FAILED);
     return;
   }
 
@@ -624,7 +624,7 @@ void FontDownloadActivity::downloadFamily(ManifestFamily& family) {
       family.hasUpdate = false;
       RenderLock lock(*this);
       state_ = ERROR;
-      errorMessage_ = std::string("Download failed: ") + str(file.name);
+      errorMessage_ = std::string(tr(STR_FONT_DOWNLOAD_FILE_FAILED)) + ": " + str(file.name);
       return;
     }
 
@@ -636,7 +636,7 @@ void FontDownloadActivity::downloadFamily(ManifestFamily& family) {
       family.hasUpdate = false;
       RenderLock lock(*this);
       state_ = ERROR;
-      errorMessage_ = std::string("Failed to compute checksum: ") + str(file.name);
+      errorMessage_ = std::string(tr(STR_FONT_CHECKSUM_FAILED)) + ": " + str(file.name);
       return;
     }
     if (actualCrc != file.crc32) {
@@ -646,7 +646,7 @@ void FontDownloadActivity::downloadFamily(ManifestFamily& family) {
       family.hasUpdate = false;
       RenderLock lock(*this);
       state_ = ERROR;
-      errorMessage_ = std::string("Checksum mismatch: ") + str(file.name);
+      errorMessage_ = std::string(tr(STR_FONT_CHECKSUM_MISMATCH)) + ": " + str(file.name);
       return;
     }
     LOG_DBG("FONT", "Downloaded %s (size=%u crc32=%08x)", str(file.name), file.size, actualCrc);
@@ -658,7 +658,7 @@ void FontDownloadActivity::downloadFamily(ManifestFamily& family) {
       family.hasUpdate = false;
       RenderLock lock(*this);
       state_ = ERROR;
-      errorMessage_ = std::string("Invalid font file: ") + str(file.name);
+      errorMessage_ = std::string(tr(STR_FONT_FILE_INVALID)) + ": " + str(file.name);
       return;
     }
     currentFileIndex_++;
@@ -703,7 +703,7 @@ void FontDownloadActivity::onDeleteConfirmationResult(const ActivityResult& resu
   if (fontInstaller_.deleteFamily(str(family.name)) != FontInstaller::Error::OK) {
     RenderLock lock(*this);
     state_ = ERROR;
-    errorMessage_ = "Failed to delete font";
+    errorMessage_ = tr(STR_FONT_DELETE_FAILED);
   } else {
     fontInstaller_.refreshRegistry();
     family.installed = false;
@@ -990,10 +990,20 @@ void FontDownloadActivity::render(RenderLock&&) {
     const auto labels = mappedInput.mapLabels(tr(STR_BACK), "", "", "");
     GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);
   } else if (state_ == ERROR) {
-    renderer.drawCenteredText(UI_10_FONT_ID, centerY - lineHeight, tr(STR_FONT_INSTALL_FAILED), true,
-                              EpdFontFamily::BOLD);
+    UITheme::drawCenteredWrappedText(
+        renderer,
+        Rect{metrics.contentSidePadding, centerY - 2 * lineHeight, pageWidth - 2 * metrics.contentSidePadding,
+             2 * renderer.getLineHeight(UI_10_FONT_ID)},
+        UI_10_FONT_ID, tr(STR_FONT_INSTALL_FAILED), 2, true, EpdFontFamily::BOLD, UITheme::TextVerticalAlignment::TOP);
     if (!errorMessage_.empty()) {
-      renderer.drawCenteredText(UI_10_FONT_ID, centerY + metrics.verticalSpacing, errorMessage_.c_str());
+      auto area = UITheme::getContentArea(renderer);
+      const int bottom = area.y + area.height - metrics.buttonHintsHeight - metrics.verticalSpacing;
+      area.x += metrics.contentSidePadding;
+      area.width -= metrics.contentSidePadding * 2;
+      area.y = centerY + metrics.verticalSpacing;
+      area.height = std::max(0, bottom - area.y);
+      UITheme::drawCenteredWrappedText(renderer, area, UI_10_FONT_ID, errorMessage_.c_str(),
+                                       std::max(1, area.height / lineHeight));
     }
     const auto labels = mappedInput.mapLabels(tr(STR_BACK), tr(STR_RETRY), "", "");
     GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);

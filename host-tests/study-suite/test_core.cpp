@@ -140,6 +140,9 @@ int main(int argc, char** argv) {
   assert(content::hiddenContent("/FLASHCARDS/Biology/a.csv"));
   assert(content::hiddenContent("/sleep/a.bmp"));
   assert(content::hiddenContent("/WALLPAPER/x.png"));
+  assert(content::hiddenContent("/LANGUAGES/ja.cplang"));
+  assert(content::hiddenContent("/languages/fonts/ja.ttf"));
+  assert(!content::hiddenContent("/Books/languages/Manual.epub"));
   assert(!content::hiddenContent("/Books/sleep.txt"));
   for (const auto* path : {"/fonts/Inter/Regular.ttf", "/LICENSES/OFL.txt", "/apps/reading-adventure/graphics.bin",
                            "/dictionaries/Spanish Wiktionary/es-es.dict"})
@@ -203,11 +206,13 @@ int main(int argc, char** argv) {
   }
   quest::Profile rich;
   rich.xp = 1000000000;
-  assert(quest::count(quest::Slot::Body) == 100 && quest::count(quest::Slot::Aura) == 50 &&
-         quest::count(quest::Slot::Pet) == 50);
+  assert(quest::count(quest::Slot::Body) == 101 && quest::count(quest::Slot::Background) == 51 &&
+         quest::count(quest::Slot::Pet) == 51);
   for (int slot = 0; slot < quest::kSlotCount; ++slot) {
-    for (int n = quest::first(quest::Slot(slot)); n < quest::first(quest::Slot(slot)) + quest::count(quest::Slot(slot));
-         ++n) {
+    const int earned = quest::catalogItem(quest::Slot(slot), quest::count(quest::Slot(slot)) - 1);
+    assert(!quest::equip(rich, earned) && quest::grantItem(rich, earned));
+    for (int index = 0; index < quest::count(quest::Slot(slot)); ++index) {
+      const int n = quest::catalogItem(quest::Slot(slot), index);
       assert(int(quest::slot(n)) == slot);
       const bool wasOwned = quest::owns(rich, n);
       const int shopBefore = quest::shopCount(rich, quest::Slot(slot));

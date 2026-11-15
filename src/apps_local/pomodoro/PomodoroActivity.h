@@ -3,9 +3,9 @@
 
 #include "../../activities/Activity.h"
 #include "../ui/SectionNavigation.h"
+#include "PomodoroHistoryStore.h"
 #include "PomodoroInput.h"
 #include "PomodoroScreens.h"
-#include "PomodoroStore.h"
 class PomodoroActivity final : public Activity {
  public:
   PomodoroActivity(GfxRenderer& renderer, MappedInputManager& input) : Activity("Pomodoro", renderer, input) {}
@@ -26,13 +26,24 @@ class PomodoroActivity final : public Activity {
   int stagePage = 0;
   void save();
   void pause();
+  bool tick(uint32_t now);
+  void beginStats(pomodoro::Period period, int day);
+  void scanHistory();
+  void credit(const pomodoro::Pending& delta);
   void action(freeink::ui::ActionId action, int value);
   pomodoro::State state;
-  pomodoro::Store store;
+  pomodoro::HistoryStore store;
+  pomodoro::Pending pending, elapsedCredit, scanCredit, activeCredit;
+  pomodoro::Stats stats, accumulation;
+  pomodoro::DisplayOptions options;
+  pomodoro::Clock lastClock;
+  int today = 0;
   pomodoroui::Work work;
   pomodoroui::View view = pomodoroui::View::Timer;
   toybox::Interactions interactions;
   uint32_t lastTick = 0, lastSave = 0, shownSeconds = 0, saveRequestedAt = 0;
   uint8_t paints = 0;
   bool ready = false, dirty = false, saveFailed = false, saveSoon = false;
+  bool scanning = false, historyFailed = false, choosingAccumulation = false;
+  bool restartScan = false;
 };

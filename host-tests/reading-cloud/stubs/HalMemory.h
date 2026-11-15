@@ -15,5 +15,6 @@ struct HalMemory {
   static PsramBuffer allocatePsram(size_t n) {
     return PsramBuffer(failPsram ? nullptr : static_cast<uint8_t*>(std::malloc(n)));
   }
+  static HeapStats getPsramHeap() { return getDefaultHeap(); }
   static HeapStats getDefaultHeap() { return {10000000, 10000000, 10000000, 10000000}; }
 };

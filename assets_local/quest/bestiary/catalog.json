@@ -1,0 +1,1013 @@
+{
+  "version": 1,
+  "monsters": [
+    {
+      "id": 306,
+      "sheet": "forest",
+      "row": 0,
+      "column": 0,
+      "name": {
+        "en": "Spore Boar",
+        "es": "Jabalí de esporas"
+      },
+      "outfit": {
+        "en": "Spore Vest",
+        "es": "Chaleco de esporas"
+      },
+      "rank": "Elite",
+      "minutes": 90,
+      "paths": 1,
+      "chapter": 0
+    },
+    {
+      "id": 307,
+      "sheet": "forest",
+      "row": 0,
+      "column": 3,
+      "name": {
+        "en": "Thorn Stag",
+        "es": "Venado de espinas"
+      },
+      "outfit": {
+        "en": "Thorn Mantle",
+        "es": "Manto de espinas"
+      },
+      "rank": "Elite",
+      "minutes": 105,
+      "paths": 2,
+      "chapter": 0
+    },
+    {
+      "id": 308,
+      "sheet": "forest",
+      "row": 1,
+      "column": 0,
+      "name": {
+        "en": "Leaf Lynx",
+        "es": "Lince de hojarasca"
+      },
+      "outfit": {
+        "en": "Leaf Cloak",
+        "es": "Capa de hojarasca"
+      },
+      "rank": "Elite",
+      "minutes": 120,
+      "paths": 3,
+      "chapter": 0
+    },
+    {
+      "id": 309,
+      "sheet": "forest",
+      "row": 1,
+      "column": 3,
+      "name": {
+        "en": "Acorn Badger",
+        "es": "Tejón de bellotas"
+      },
+      "outfit": {
+        "en": "Acorn Armor",
+        "es": "Armadura de bellotas"
+      },
+      "rank": "Elite",
+      "minutes": 135,
+      "paths": 4,
+      "chapter": 0
+    },
+    {
+      "id": 310,
+      "sheet": "forest",
+      "row": 2,
+      "column": 0,
+      "name": {
+        "en": "Bramble Bear",
+        "es": "Oso de zarzas"
+      },
+      "outfit": {
+        "en": "Bramble Cuirass",
+        "es": "Coraza de zarzas"
+      },
+      "rank": "Elite",
+      "minutes": 150,
+      "paths": 5,
+      "chapter": 0
+    },
+    {
+      "id": 311,
+      "sheet": "forest",
+      "row": 2,
+      "column": 3,
+      "name": {
+        "en": "Oak Beetle",
+        "es": "Escarabajo del roble"
+      },
+      "outfit": {
+        "en": "Oak Helm",
+        "es": "Yelmo del roble"
+      },
+      "rank": "Elite",
+      "minutes": 165,
+      "paths": 6,
+      "chapter": 0
+    },
+    {
+      "id": 312,
+      "sheet": "forest",
+      "row": 3,
+      "column": 0,
+      "name": {
+        "en": "Moss Turtle",
+        "es": "Tortuga de musgo"
+      },
+      "outfit": {
+        "en": "Moss Mantle",
+        "es": "Manto de musgo"
+      },
+      "rank": "Legendary",
+      "minutes": 240,
+      "paths": 7,
+      "chapter": 0
+    },
+    {
+      "id": 313,
+      "sheet": "forest",
+      "row": 3,
+      "column": 3,
+      "name": {
+        "en": "Vine Griffin",
+        "es": "Grifo de enredaderas"
+      },
+      "outfit": {
+        "en": "Vine Cape",
+        "es": "Capa de enredaderas"
+      },
+      "rank": "Legendary",
+      "minutes": 300,
+      "paths": 8,
+      "chapter": 0
+    },
+    {
+      "id": 314,
+      "sheet": "tidal",
+      "row": 0,
+      "column": 0,
+      "name": {
+        "en": "Barnacle Crab",
+        "es": "Cangrejo de percebes"
+      },
+      "outfit": {
+        "en": "Reef Cuirass",
+        "es": "Coraza del arrecife"
+      },
+      "rank": "Elite",
+      "minutes": 105,
+      "paths": 21,
+      "chapter": 20
+    },
+    {
+      "id": 315,
+      "sheet": "tidal",
+      "row": 0,
+      "column": 3,
+      "name": {
+        "en": "Abyssal Sawfish",
+        "es": "Pez sierra abisal"
+      },
+      "outfit": {
+        "en": "Fin Armor",
+        "es": "Armadura de aletas"
+      },
+      "rank": "Elite",
+      "minutes": 120,
+      "paths": 22,
+      "chapter": 20
+    },
+    {
+      "id": 316,
+      "sheet": "tidal",
+      "row": 1,
+      "column": 0,
+      "name": {
+        "en": "Kelp Kelpie",
+        "es": "Kelpie de algas"
+      },
+      "outfit": {
+        "en": "Kelp Mantle",
+        "es": "Manto de algas"
+      },
+      "rank": "Elite",
+      "minutes": 135,
+      "paths": 23,
+      "chapter": 20
+    },
+    {
+      "id": 317,
+      "sheet": "tidal",
+      "row": 1,
+      "column": 3,
+      "name": {
+        "en": "Shell Serpent",
+        "es": "Serpiente de concha"
+      },
+      "outfit": {
+        "en": "Shell Cuirass",
+        "es": "Coraza de conchas"
+      },
+      "rank": "Elite",
+      "minutes": 150,
+      "paths": 24,
+      "chapter": 20
+    },
+    {
+      "id": 318,
+      "sheet": "tidal",
+      "row": 2,
+      "column": 0,
+      "name": {
+        "en": "Coral Octopus",
+        "es": "Pulpo de coral"
+      },
+      "outfit": {
+        "en": "Coral Mantle",
+        "es": "Manto de coral"
+      },
+      "rank": "Elite",
+      "minutes": 165,
+      "paths": 25,
+      "chapter": 20
+    },
+    {
+      "id": 319,
+      "sheet": "tidal",
+      "row": 2,
+      "column": 3,
+      "name": {
+        "en": "Armored Walrus",
+        "es": "Morsa acorazada"
+      },
+      "outfit": {
+        "en": "Breakwater Coat",
+        "es": "Abrigo del rompeolas"
+      },
+      "rank": "Elite",
+      "minutes": 180,
+      "paths": 26,
+      "chapter": 20
+    },
+    {
+      "id": 320,
+      "sheet": "tidal",
+      "row": 3,
+      "column": 0,
+      "name": {
+        "en": "Wandering Nautilus",
+        "es": "Nautilo errante"
+      },
+      "outfit": {
+        "en": "Spiral Cape",
+        "es": "Capa de la espiral"
+      },
+      "rank": "Legendary",
+      "minutes": 270,
+      "paths": 27,
+      "chapter": 20
+    },
+    {
+      "id": 321,
+      "sheet": "tidal",
+      "row": 3,
+      "column": 3,
+      "name": {
+        "en": "Reef Drake",
+        "es": "Draco del arrecife"
+      },
+      "outfit": {
+        "en": "Reef Armor",
+        "es": "Armadura del arrecife"
+      },
+      "rank": "Legendary",
+      "minutes": 330,
+      "paths": 28,
+      "chapter": 20
+    },
+    {
+      "id": 322,
+      "sheet": "frost",
+      "row": 0,
+      "column": 0,
+      "name": {
+        "en": "Snowfang",
+        "es": "Colmillo de nieve"
+      },
+      "outfit": {
+        "en": "Fang Coat",
+        "es": "Abrigo de colmillos"
+      },
+      "rank": "Elite",
+      "minutes": 120,
+      "paths": 41,
+      "chapter": 40
+    },
+    {
+      "id": 323,
+      "sheet": "frost",
+      "row": 0,
+      "column": 3,
+      "name": {
+        "en": "Frost Raven",
+        "es": "Cuervo de escarcha"
+      },
+      "outfit": {
+        "en": "Frost Mantle",
+        "es": "Manto de escarcha"
+      },
+      "rank": "Elite",
+      "minutes": 135,
+      "paths": 42,
+      "chapter": 40
+    },
+    {
+      "id": 324,
+      "sheet": "frost",
+      "row": 1,
+      "column": 0,
+      "name": {
+        "en": "Ice Ibex",
+        "es": "Íbice de hielo"
+      },
+      "outfit": {
+        "en": "Ice Cuirass",
+        "es": "Coraza de hielo"
+      },
+      "rank": "Elite",
+      "minutes": 150,
+      "paths": 43,
+      "chapter": 40
+    },
+    {
+      "id": 325,
+      "sheet": "frost",
+      "row": 1,
+      "column": 3,
+      "name": {
+        "en": "Glacier Yeti",
+        "es": "Yeti del glaciar"
+      },
+      "outfit": {
+        "en": "Glacier Coat",
+        "es": "Abrigo del glaciar"
+      },
+      "rank": "Elite",
+      "minutes": 165,
+      "paths": 44,
+      "chapter": 40
+    },
+    {
+      "id": 326,
+      "sheet": "frost",
+      "row": 2,
+      "column": 0,
+      "name": {
+        "en": "Quartz Armadillo",
+        "es": "Armadillo de cuarzo"
+      },
+      "outfit": {
+        "en": "Quartz Armor",
+        "es": "Armadura de cuarzo"
+      },
+      "rank": "Elite",
+      "minutes": 180,
+      "paths": 45,
+      "chapter": 40
+    },
+    {
+      "id": 327,
+      "sheet": "frost",
+      "row": 2,
+      "column": 3,
+      "name": {
+        "en": "Antlered Hare",
+        "es": "Liebre astada"
+      },
+      "outfit": {
+        "en": "White Leap Cape",
+        "es": "Capa del salto blanco"
+      },
+      "rank": "Elite",
+      "minutes": 195,
+      "paths": 46,
+      "chapter": 40
+    },
+    {
+      "id": 328,
+      "sheet": "frost",
+      "row": 3,
+      "column": 0,
+      "name": {
+        "en": "Glacier Caiman",
+        "es": "Caimán glaciar"
+      },
+      "outfit": {
+        "en": "Glacier Cuirass",
+        "es": "Coraza de glaciares"
+      },
+      "rank": "Legendary",
+      "minutes": 300,
+      "paths": 47,
+      "chapter": 40
+    },
+    {
+      "id": 329,
+      "sheet": "frost",
+      "row": 3,
+      "column": 3,
+      "name": {
+        "en": "Snow Wyvern",
+        "es": "Guiverno de nieve"
+      },
+      "outfit": {
+        "en": "Blizzard Wings",
+        "es": "Alas de la ventisca"
+      },
+      "rank": "Legendary",
+      "minutes": 360,
+      "paths": 48,
+      "chapter": 40
+    },
+    {
+      "id": 330,
+      "sheet": "dunes",
+      "row": 0,
+      "column": 0,
+      "name": {
+        "en": "Horned Viper",
+        "es": "Víbora cornuda"
+      },
+      "outfit": {
+        "en": "Viper Mantle",
+        "es": "Manto de la víbora"
+      },
+      "rank": "Elite",
+      "minutes": 135,
+      "paths": 51,
+      "chapter": 50
+    },
+    {
+      "id": 331,
+      "sheet": "dunes",
+      "row": 0,
+      "column": 3,
+      "name": {
+        "en": "Lantern Scorpion",
+        "es": "Escorpión del farol"
+      },
+      "outfit": {
+        "en": "Stinger Armor",
+        "es": "Armadura del aguijón"
+      },
+      "rank": "Elite",
+      "minutes": 150,
+      "paths": 52,
+      "chapter": 50
+    },
+    {
+      "id": 332,
+      "sheet": "dunes",
+      "row": 1,
+      "column": 0,
+      "name": {
+        "en": "Pyramid Tortoise",
+        "es": "Tortuga de pirámide"
+      },
+      "outfit": {
+        "en": "Pyramid Cuirass",
+        "es": "Coraza de la pirámide"
+      },
+      "rank": "Elite",
+      "minutes": 165,
+      "paths": 53,
+      "chapter": 50
+    },
+    {
+      "id": 333,
+      "sheet": "dunes",
+      "row": 1,
+      "column": 3,
+      "name": {
+        "en": "Armored Fennec",
+        "es": "Fénec acorazado"
+      },
+      "outfit": {
+        "en": "Fennec Cape",
+        "es": "Capa del fénec"
+      },
+      "rank": "Elite",
+      "minutes": 180,
+      "paths": 54,
+      "chapter": 50
+    },
+    {
+      "id": 334,
+      "sheet": "dunes",
+      "row": 2,
+      "column": 0,
+      "name": {
+        "en": "Obsidian Scarab",
+        "es": "Escarabajo de obsidiana"
+      },
+      "outfit": {
+        "en": "Obsidian Armor",
+        "es": "Armadura de obsidiana"
+      },
+      "rank": "Elite",
+      "minutes": 195,
+      "paths": 55,
+      "chapter": 50
+    },
+    {
+      "id": 335,
+      "sheet": "dunes",
+      "row": 2,
+      "column": 3,
+      "name": {
+        "en": "Dune Camel",
+        "es": "Camello de las dunas"
+      },
+      "outfit": {
+        "en": "Dune Mantle",
+        "es": "Manto de las dunas"
+      },
+      "rank": "Elite",
+      "minutes": 210,
+      "paths": 56,
+      "chapter": 50
+    },
+    {
+      "id": 336,
+      "sheet": "dunes",
+      "row": 3,
+      "column": 0,
+      "name": {
+        "en": "Stone Sphinx",
+        "es": "Esfinge de piedra"
+      },
+      "outfit": {
+        "en": "Sphinx Regalia",
+        "es": "Regalia de la esfinge"
+      },
+      "rank": "Legendary",
+      "minutes": 330,
+      "paths": 57,
+      "chapter": 50
+    },
+    {
+      "id": 337,
+      "sheet": "dunes",
+      "row": 3,
+      "column": 3,
+      "name": {
+        "en": "Sand Basilisk",
+        "es": "Basilisco de arena"
+      },
+      "outfit": {
+        "en": "Basilisk Armor",
+        "es": "Armadura del basilisco"
+      },
+      "rank": "Legendary",
+      "minutes": 390,
+      "paths": 58,
+      "chapter": 50
+    },
+    {
+      "id": 338,
+      "sheet": "clockwork",
+      "row": 0,
+      "column": 0,
+      "name": {
+        "en": "Brass Mantis",
+        "es": "Mantis de latón"
+      },
+      "outfit": {
+        "en": "Brass Armor",
+        "es": "Armadura de latón"
+      },
+      "rank": "Elite",
+      "minutes": 150,
+      "paths": 61,
+      "chapter": 60
+    },
+    {
+      "id": 339,
+      "sheet": "clockwork",
+      "row": 0,
+      "column": 3,
+      "name": {
+        "en": "Steam Ram",
+        "es": "Carnero de vapor"
+      },
+      "outfit": {
+        "en": "Steam Coat",
+        "es": "Abrigo de vapor"
+      },
+      "rank": "Elite",
+      "minutes": 165,
+      "paths": 62,
+      "chapter": 60
+    },
+    {
+      "id": 340,
+      "sheet": "clockwork",
+      "row": 1,
+      "column": 0,
+      "name": {
+        "en": "Spring Centipede",
+        "es": "Ciempiés de resortes"
+      },
+      "outfit": {
+        "en": "Spring Cuirass",
+        "es": "Coraza de resortes"
+      },
+      "rank": "Elite",
+      "minutes": 180,
+      "paths": 63,
+      "chapter": 60
+    },
+    {
+      "id": 341,
+      "sheet": "clockwork",
+      "row": 1,
+      "column": 3,
+      "name": {
+        "en": "Gear Rhinoceros",
+        "es": "Rinoceronte de engranajes"
+      },
+      "outfit": {
+        "en": "Gear Armor",
+        "es": "Armadura de engranajes"
+      },
+      "rank": "Elite",
+      "minutes": 195,
+      "paths": 64,
+      "chapter": 60
+    },
+    {
+      "id": 342,
+      "sheet": "clockwork",
+      "row": 2,
+      "column": 0,
+      "name": {
+        "en": "Clockwork Dragonfly",
+        "es": "Libélula de cuerda"
+      },
+      "outfit": {
+        "en": "Dragonfly Cape",
+        "es": "Capa de libélula"
+      },
+      "rank": "Elite",
+      "minutes": 210,
+      "paths": 65,
+      "chapter": 60
+    },
+    {
+      "id": 343,
+      "sheet": "clockwork",
+      "row": 2,
+      "column": 3,
+      "name": {
+        "en": "Riveted Gorilla",
+        "es": "Gorila remachado"
+      },
+      "outfit": {
+        "en": "Riveted Cuirass",
+        "es": "Coraza remachada"
+      },
+      "rank": "Elite",
+      "minutes": 225,
+      "paths": 66,
+      "chapter": 60
+    },
+    {
+      "id": 344,
+      "sheet": "clockwork",
+      "row": 3,
+      "column": 0,
+      "name": {
+        "en": "Pendulum Cat",
+        "es": "Gato del péndulo"
+      },
+      "outfit": {
+        "en": "Pendulum Mantle",
+        "es": "Manto del péndulo"
+      },
+      "rank": "Legendary",
+      "minutes": 360,
+      "paths": 67,
+      "chapter": 60
+    },
+    {
+      "id": 345,
+      "sheet": "clockwork",
+      "row": 3,
+      "column": 3,
+      "name": {
+        "en": "Walking Furnace",
+        "es": "Horno caminante"
+      },
+      "outfit": {
+        "en": "Forge Armor",
+        "es": "Armadura de la forja"
+      },
+      "rank": "Legendary",
+      "minutes": 420,
+      "paths": 68,
+      "chapter": 60
+    },
+    {
+      "id": 346,
+      "sheet": "night",
+      "row": 0,
+      "column": 0,
+      "name": {
+        "en": "Moon Bat",
+        "es": "Murciélago de luna"
+      },
+      "outfit": {
+        "en": "Bat Mantle",
+        "es": "Manto del murciélago"
+      },
+      "rank": "Elite",
+      "minutes": 165,
+      "paths": 71,
+      "chapter": 70
+    },
+    {
+      "id": 347,
+      "sheet": "night",
+      "row": 0,
+      "column": 3,
+      "name": {
+        "en": "Candle Salamander",
+        "es": "Salamandra de velas"
+      },
+      "outfit": {
+        "en": "Candle Cape",
+        "es": "Capa de las velas"
+      },
+      "rank": "Elite",
+      "minutes": 180,
+      "paths": 72,
+      "chapter": 70
+    },
+    {
+      "id": 348,
+      "sheet": "night",
+      "row": 1,
+      "column": 0,
+      "name": {
+        "en": "Many-Eyed Spider",
+        "es": "Araña de mil ojos"
+      },
+      "outfit": {
+        "en": "Many-Eyed Mantle",
+        "es": "Manto de los mil ojos"
+      },
+      "rank": "Elite",
+      "minutes": 195,
+      "paths": 73,
+      "chapter": 70
+    },
+    {
+      "id": 349,
+      "sheet": "night",
+      "row": 1,
+      "column": 3,
+      "name": {
+        "en": "Moon Jackal",
+        "es": "Chacal lunar"
+      },
+      "outfit": {
+        "en": "Jackal Armor",
+        "es": "Armadura del chacal"
+      },
+      "rank": "Elite",
+      "minutes": 210,
+      "paths": 74,
+      "chapter": 70
+    },
+    {
+      "id": 350,
+      "sheet": "night",
+      "row": 2,
+      "column": 0,
+      "name": {
+        "en": "Lantern Jellyfish",
+        "es": "Medusa farol"
+      },
+      "outfit": {
+        "en": "Lantern Mantle",
+        "es": "Manto del farol"
+      },
+      "rank": "Elite",
+      "minutes": 225,
+      "paths": 75,
+      "chapter": 70
+    },
+    {
+      "id": 351,
+      "sheet": "night",
+      "row": 2,
+      "column": 3,
+      "name": {
+        "en": "Hollow Stump Owl",
+        "es": "Búho del tronco hueco"
+      },
+      "outfit": {
+        "en": "Hollow Wood Coat",
+        "es": "Abrigo del bosque hueco"
+      },
+      "rank": "Elite",
+      "minutes": 240,
+      "paths": 76,
+      "chapter": 70
+    },
+    {
+      "id": 352,
+      "sheet": "night",
+      "row": 3,
+      "column": 0,
+      "name": {
+        "en": "Spectral Steed",
+        "es": "Corcel espectral"
+      },
+      "outfit": {
+        "en": "Spectral Cape",
+        "es": "Capa espectral"
+      },
+      "rank": "Legendary",
+      "minutes": 390,
+      "paths": 77,
+      "chapter": 70
+    },
+    {
+      "id": 353,
+      "sheet": "night",
+      "row": 3,
+      "column": 3,
+      "name": {
+        "en": "Night Gargoyle",
+        "es": "Gárgola de la noche"
+      },
+      "outfit": {
+        "en": "Gargoyle Armor",
+        "es": "Armadura de gárgola"
+      },
+      "rank": "Legendary",
+      "minutes": 450,
+      "paths": 78,
+      "chapter": 70
+    },
+    {
+      "id": 354,
+      "sheet": "astral",
+      "row": 0,
+      "column": 0,
+      "name": {
+        "en": "Comet Peacock",
+        "es": "Pavo real de cometas"
+      },
+      "outfit": {
+        "en": "Comet Mantle",
+        "es": "Manto del cometa"
+      },
+      "rank": "Elite",
+      "minutes": 180,
+      "paths": 101,
+      "chapter": 100
+    },
+    {
+      "id": 355,
+      "sheet": "astral",
+      "row": 0,
+      "column": 3,
+      "name": {
+        "en": "Star Pangolin",
+        "es": "Pangolín estelar"
+      },
+      "outfit": {
+        "en": "Star Cuirass",
+        "es": "Coraza estelar"
+      },
+      "rank": "Elite",
+      "minutes": 195,
+      "paths": 102,
+      "chapter": 100
+    },
+    {
+      "id": 356,
+      "sheet": "astral",
+      "row": 1,
+      "column": 0,
+      "name": {
+        "en": "Meteor Golem",
+        "es": "Gólem de meteoritos"
+      },
+      "outfit": {
+        "en": "Meteor Armor",
+        "es": "Armadura de meteoritos"
+      },
+      "rank": "Elite",
+      "minutes": 210,
+      "paths": 103,
+      "chapter": 100
+    },
+    {
+      "id": 357,
+      "sheet": "astral",
+      "row": 1,
+      "column": 3,
+      "name": {
+        "en": "Ring Kitsune",
+        "es": "Kitsune del anillo"
+      },
+      "outfit": {
+        "en": "Ring Mantle",
+        "es": "Manto del anillo"
+      },
+      "rank": "Elite",
+      "minutes": 225,
+      "paths": 104,
+      "chapter": 100
+    },
+    {
+      "id": 358,
+      "sheet": "astral",
+      "row": 2,
+      "column": 0,
+      "name": {
+        "en": "Feathered Serpent",
+        "es": "Serpiente emplumada"
+      },
+      "outfit": {
+        "en": "Feather Cape",
+        "es": "Capa emplumada"
+      },
+      "rank": "Elite",
+      "minutes": 240,
+      "paths": 105,
+      "chapter": 100
+    },
+    {
+      "id": 359,
+      "sheet": "astral",
+      "row": 2,
+      "column": 3,
+      "name": {
+        "en": "Sun Crown Lion",
+        "es": "León de la corona solar"
+      },
+      "outfit": {
+        "en": "Sun Crown Armor",
+        "es": "Armadura de la corona solar"
+      },
+      "rank": "Elite",
+      "minutes": 255,
+      "paths": 106,
+      "chapter": 100
+    },
+    {
+      "id": 360,
+      "sheet": "astral",
+      "row": 3,
+      "column": 0,
+      "name": {
+        "en": "Nebula Lizard",
+        "es": "Lagarto de nebulosa"
+      },
+      "outfit": {
+        "en": "Nebula Mantle",
+        "es": "Manto de nebulosa"
+      },
+      "rank": "Legendary",
+      "minutes": 420,
+      "paths": 107,
+      "chapter": 100
+    },
+    {
+      "id": 361,
+      "sheet": "astral",
+      "row": 3,
+      "column": 3,
+      "name": {
+        "en": "Cosmic Qilin",
+        "es": "Qilin cósmico"
+      },
+      "outfit": {
+        "en": "Qilin Armor",
+        "es": "Armadura del qilin"
+      },
+      "rank": "Legendary",
+      "minutes": 480,
+      "paths": 108,
+      "chapter": 100
+    }
+  ]
+}

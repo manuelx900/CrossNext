@@ -3,6 +3,7 @@ import importlib.util
 import json
 from pathlib import Path
 import shutil
+import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = ROOT / "tools_local/wasm/sdcard"
@@ -24,7 +25,7 @@ def prepare():
     (card / MARKER).write_text('{"format": 1}\n', encoding="utf-8")
     def ignore(directory, names):
         return [name for name in names if name == "__pycache__" or
-                (Path(directory).resolve() == BASE.resolve() and name in ("fonts", "dictionaries", "study"))]
+                (Path(directory).resolve() == BASE.resolve() and name in ("fonts", "dictionaries", "study", "wordle"))]
     shutil.copytree(BASE, card, dirs_exist_ok=True, ignore=ignore)
     for source in (ROOT / "assets_local/reader-fonts/sd-card/fonts", ADDITIONS / "fonts"):
         shutil.copytree(source, card / "fonts", dirs_exist_ok=True)
@@ -52,6 +53,8 @@ def prepare():
     spec = importlib.util.spec_from_file_location("app_resources", ROOT / "tools_local/build_app_resources.py")
     apps = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(apps)
+    # Artwork builders share sibling helpers when loaded through this entry point.
+    sys.path.insert(0, str(ROOT / "tools_local/quest"))
     apps.build(card / "apps")
     inventory = {"format": 1, "apps": list(apps.APPS), "fonts": sorted(p.name for p in (card / "fonts").iterdir() if p.is_dir()),
                  "dictionaries": sorted(p.name for p in (card / "dictionaries").iterdir() if p.is_dir()),
@@ -59,6 +62,8 @@ def prepare():
     (card / MARKER).write_text(json.dumps(inventory, indent=2) + "\n", encoding="utf-8")
     from seed_showcase import seed
     inventory["showcase"] = seed(card)
+    from prepare_promotion import prepare as prepare_promotion
+    inventory["promotion"] = prepare_promotion(card)
     inventory["dictionaries"] = sorted(p.name for p in (card / "dictionaries").iterdir() if p.is_dir())
     (card / MARKER).write_text(json.dumps(inventory, indent=2) + "\n", encoding="utf-8")
     print("CrossNext showcase:", inventory["showcase"], flush=True)

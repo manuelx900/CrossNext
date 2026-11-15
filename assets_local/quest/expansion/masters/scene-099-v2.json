@@ -1,0 +1,21 @@
+{
+  "id": "S099",
+  "kind": "scene",
+  "master": "scene-099-v2.png",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-11-5-v2.png",
+  "transparent": false,
+  "prompt": "Use case: illustration-story. ONE complete landscape 3:2 narrative illustration for the monochrome e-ink game Aventura lectora. Clean expressive chibi storybook art, thick smooth PURE BLACK contours, white and sparse flat light-gray fills. No color, gradients, crosshatching, collage, lettering, captions, UI or watermark. Large clear clues readable at480x320. Player hero and PET are OFF CAMERA. Depict only people actually physically present in the described event; a person mentioned in a letter or record does NOT appear alive beside its reader. The attached portraits are IDENTITY references, NOT additional cast: match face, age, hairstyle, clothing and distinctive accessories exactly for any named person present. Do not invent another person or clue. Fill the scene to its edges, keep all important faces and objects in frame. AREN AS KING: the imposing horned black-armored king in the reference, heavy helmet/crown, layered gray-black armor. A memory of young Aren is a child without that armor. Do not draw the king when he is merely mentioned in documents. Region: The last page. Chapter: The last page. Draw exactly this already-known moment (Spanish is authoritative): Las regiones recuperadas continuaron contando sus historias. Sus voces mantuvieron abiertos los caminos y evitaron que la fortaleza volviera a dejar aislados los relatos. Context only: La última tinta cautiva rodeaba el trono. El Rey demonio seguía impidiendo que los recuerdos regresaran a sus dueños. Llegaste hasta él con la llave completa y el relato de Elia. MANDATORY PHYSICAL SETTING: the final throne confrontation, king still guarding the captive ink while recovered voices keep roads open. Do not anthropomorphize books, pages or objects. No invented smiling ghosts. No person replaces a written record. EXHAUSTIVE VISIBLE CAST (do not add anyone else): the armored king still guarding the throne, no living Ada or Elia. The reference is STYLE ONLY for any person not explicitly in this cast. LAST REFERENCE is the actual guardian IDENTITY: keep its species, face, anatomy and armor recognizable. It is a THREE-POSE sprite strip for identity only. Draw ONLY ONE guardian in ONE pose within the scene, never a strip or repeated poses. Do not add the guardian if the described event is focused on witnesses instead.",
+  "references": [
+    "assets_local/quest/campaign/path-art/masters/path-11-5-v2.png",
+    "assets_local/quest/campaign/masters/demon-king-states.png"
+  ],
+  "chapter": 119,
+  "beat": "discovery",
+  "eventEs": "Las regiones recuperadas continuaron contando sus historias. Sus voces mantuvieron abiertos los caminos y evitaron que la fortaleza volviera a dejar aislados los relatos.",
+  "sha256": "5a99f68cd084414d72942e1d76e9364c822b7ffd50da049a9fedb4b2fa6ffbb5",
+  "tool": "built-in image_gen",
+  "source": "exec-cd03696b-e5f7-4576-b489-34fbbe83b4ca.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

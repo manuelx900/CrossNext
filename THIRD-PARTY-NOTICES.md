@@ -165,3 +165,13 @@ the maintainer and include earlier screenshots, as documented beside the images.
 Binary packages retain full available dependency/font/icon license files under
 licenses/ with their source-tree paths. Resource packages retain their own
 font, dictionary and illustration notices. Keep those notices with redistribution.
+
+## AnimatedGIF
+
+Static GIF decoding uses AnimatedGIF by Larry Bank / BitBank Software, Inc.,
+commit `67cfacafe12ef4926c7713342c57d2a4af040e5e`, under the Apache License 2.0.
+Copyright 2020 BitBank Software, Inc. All rights reserved.
+Source: https://github.com/bitbank2/AnimatedGIF
+The decoder includes local bounds and palette-initialization patches in
+`scripts/patch_animatedgif.py`. The license is included in
+`licenses/AnimatedGIF-Apache-2.0.txt`.

@@ -1,0 +1,18 @@
+{
+  "id": "K119",
+  "key": "Escama",
+  "file": "K119-v2.png",
+  "sample": {
+    "es": "Escama de piedra estelar",
+    "en": "Star stone scale"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: exactly one large dragon scale carved from star stone, rounded shield-like top and a pointed lower tip, a small five-point star carved into its surface. This is one detached creature scale or scute, not a weighing device. Absolutely no balance scales, no pans, no weights, no animal.",
+  "requests": [
+    273
+  ],
+  "sha256": "88da775f78fe32c4aa70dc04c71602f4c5f6e4202967cc0fbe292593b7b77ba4",
+  "source": "exec-2b1ab5ef-2244-4b92-a435-6b6784dc73d4.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

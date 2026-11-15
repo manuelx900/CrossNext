@@ -1,2 +1,0 @@
-- [ ] Regar las plantas
-- [ ] Ordenar libros

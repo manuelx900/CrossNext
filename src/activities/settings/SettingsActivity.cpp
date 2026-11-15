@@ -14,6 +14,7 @@
 #include <cstring>
 
 #include "AboutActivity.h"
+#include "BleSettingsActivity.h"
 #include "ButtonRemapActivity.h"
 #include "ClearCacheActivity.h"
 #include "ClockSettingsActivity.h"
@@ -35,7 +36,9 @@
 #include "activities/network/WifiSelectionActivity.h"
 #include "activities/plugins/PluginCatalogActivity.h"
 #include "activities/util/IntervalSelectionActivity.h"
+#include "apps_local/bookprep/BookPreparationActivity.h"
 #include "apps_local/home/HomeMenuSettingsActivity.h"
+#include "apps_local/reading/ReadingStatsSyncActivity.h"
 #include "apps_local/tools/FontManagementActivity.h"
 #include "apps_local/tools/PresentationSettingsActivity.h"
 #include "apps_local/tools/QuickSettingsConfigActivity.h"
@@ -43,12 +46,15 @@
 #include "apps_local/ui/SettingsArt.h"
 #include "apps_local/ui/SettingsHome.h"
 #include "apps_local/ui/SettingsMenuStyle.h"
+#include "apps_local/ui/SettingsRowIcon.h"
 #include "apps_local/ui/ToyboxIcons.h"
 #include "components/UITheme.h"
 #include "components/UIThemeTokens.h"
 #include "components/UiAppHelpers.h"
+#include "components/icons/BluetoothIcon.h"
 #include "components/icons/listIcons.h"
 #include "fontIds.h"
+#include "util/PluginEvents.h"
 
 namespace fui = freeink::ui;
 namespace {
@@ -74,6 +80,8 @@ int settingsGroup(const SettingInfo& s, int category) {
     if (s.valuePtr == &CrossPointSettings::touchScreenLocked ||
         s.valuePtr == &CrossPointSettings::touchReaderControls || s.valuePtr == &CrossPointSettings::pageTurnGesture ||
         s.valuePtr == &CrossPointSettings::previousPageGesture ||
+        s.valuePtr == &CrossPointSettings::leftEdgeLightAction ||
+        s.valuePtr == &CrossPointSettings::rightEdgeLightAction ||
         s.valuePtr == &CrossPointSettings::xtcInvertPageDirection)
       return 1;
     if (s.valuePtr == &CrossPointSettings::vibration || s.valuePtr == &CrossPointSettings::hapticIntensity) return 2;
@@ -85,8 +93,9 @@ int settingsGroup(const SettingInfo& s, int category) {
       s.valuePtr == &CrossPointSettings::removeReadBooksFromRecents ||
       s.valuePtr == &CrossPointSettings::moveFinishedToReadFolder)
     return 2;
-  if (s.action == SettingAction::Network || s.action == SettingAction::KOReaderSync ||
-      s.action == SettingAction::OPDSBrowser)
+  if (s.action == SettingAction::Bluetooth || s.action == SettingAction::Network ||
+      s.action == SettingAction::KOReaderSync || s.action == SettingAction::OPDSBrowser ||
+      s.action == SettingAction::Plugins || s.valuePtr == &CrossPointSettings::pluginsEnabled)
     return 3;
   if (s.action == SettingAction::ClockSettings) return 4;
   return 5;
@@ -125,6 +134,8 @@ StrId settingHelp(const SettingInfo& setting) {
       return StrId::STR_SETTINGS_STATUS_HELP;
     case SettingAction::Network:
       return StrId::STR_SETTINGS_WIFI_HELP;
+    case SettingAction::Bluetooth:
+      return StrId::STR_BT_SETTINGS_HELP;
     case SettingAction::KOReaderSync:
       return StrId::STR_SETTINGS_SYNC_HELP;
     case SettingAction::OPDSBrowser:
@@ -149,6 +160,7 @@ SettingsActivity::SettingsActivity(GfxRenderer& renderer, MappedInputManager& ma
 }
 
 void SettingsActivity::rebuildSettingsLists() {
+  const bool mangaOpen = currentSettings == &mangaSettings;
   displaySettings.clear();
   readerSettings.clear();
   controlsSettings.clear();
@@ -156,6 +168,7 @@ void SettingsActivity::rebuildSettingsLists() {
   librarySettings.clear();
   connectivitySettings.clear();
   deviceSettings.clear();
+  mangaSettings.clear();
   displaySettings.reserve(32);
   readerSettings.reserve(32);
   controlsSettings.reserve(32);
@@ -163,6 +176,7 @@ void SettingsActivity::rebuildSettingsLists() {
   librarySettings.reserve(8);
   connectivitySettings.reserve(8);
   deviceSettings.reserve(16);
+  mangaSettings.reserve(2);
 
   // Pick up any fonts uploaded/deleted over the web server since the last
   // reader activity ran — otherwise the font-family picker shows stale list.
@@ -179,6 +193,11 @@ void SettingsActivity::rebuildSettingsLists() {
 
   for (auto& setting : getSettingsList(&sdFontSystem.registry(), &dictionaries)) {
     if (setting.nameId == StrId::STR_DEVICE_REPORT) continue;
+    if (setting.valuePtr == &CrossPointSettings::xtcCoverRotation ||
+        setting.valuePtr == &CrossPointSettings::xtcInvertPageDirection) {
+      mangaSettings.push_back(setting);
+      continue;
+    }
     // home_button::isSetting: upstream's Home Button Gestures rows render on
     // their own screen, not in this list.
     if (setting.category == StrId::STR_NONE_OPT || home_button::isSetting(setting.valuePtr)) continue;
@@ -239,6 +258,9 @@ void SettingsActivity::rebuildSettingsLists() {
                             SettingInfo::Action(StrId::STR_HOME_BUTTON, SettingAction::HomeButton));
   }
   systemSettings.push_back(SettingInfo::Action(StrId::STR_WIFI_NETWORKS, SettingAction::Network));
+#if FREEINK_CAP_BLE_HID_HOST || defined(SIMULATOR)
+  systemSettings.push_back(SettingInfo::Action(StrId::STR_BT_PAGE_TURNER, SettingAction::Bluetooth));
+#endif
   // Clock configuration only exists where the RTC probe found hardware; on
   // clockless boards there is nothing to set.
   if (halClock.isAvailable()) {
@@ -247,10 +269,12 @@ void SettingsActivity::rebuildSettingsLists() {
   systemSettings.push_back(SettingInfo::Action(StrId::STR_KOREADER_SYNC, SettingAction::KOReaderSync));
   systemSettings.push_back(SettingInfo::Action(StrId::STR_OPDS_SERVERS, SettingAction::OPDSBrowser));
   systemSettings.push_back(SettingInfo::Action(StrId::STR_CLEAR_READING_CACHE, SettingAction::ClearCache));
+  systemSettings.push_back(SettingInfo::Action(StrId::STR_PREPARE_BOOKS, SettingAction::PrepareBooks));
   if (BoardConfig::isX4Pro())
     systemSettings.push_back(SettingInfo::Action(StrId::STR_CHECK_UPDATES, SettingAction::CheckForUpdates));
   systemSettings.push_back(SettingInfo::Action(StrId::STR_SD_FIRMWARE_UPDATE, SettingAction::SdFirmwareUpdate));
   systemSettings.push_back(SettingInfo::Action(StrId::STR_PLUGINS, SettingAction::Plugins));
+  systemSettings.push_back(SettingInfo::Action(StrId::STR_CROSSINK_IMPORT, SettingAction::ImportCrossInk));
   systemSettings.push_back(SettingInfo::Action(StrId::STR_KEYBOARD_LAYOUTS, SettingAction::KeyboardLayouts));
   systemSettings.push_back(SettingInfo::Action(StrId::STR_ABOUT, SettingAction::About));
   systemSettings.push_back(SettingInfo::Action(StrId::STR_LANGUAGE, SettingAction::Language));
@@ -263,8 +287,7 @@ void SettingsActivity::rebuildSettingsLists() {
                         SettingInfo::Action(StrId::STR_READING_FORMATS, SettingAction::ReadingFormats));
   readerSettings.insert(readerSettings.begin(),
                         SettingInfo::Action(StrId::STR_TEXT_SETTINGS, SettingAction::TextSettings));
-  readerSettings.insert(readerSettings.begin() + 1,
-                        SettingInfo::Action(StrId::STR_MANAGE_FONTS, SettingAction::DownloadFonts));
+  readerSettings.push_back(SettingInfo::Action(StrId::STR_SETTINGS_MANGA, SettingAction::Manga));
   readerSettings.push_back(SettingInfo::Action(StrId::STR_CUSTOMISE_STATUS_BAR, SettingAction::CustomiseStatusBar));
   displaySettings.push_back(SettingInfo::Action(StrId::STR_QUICK_CUSTOMISE, SettingAction::QuickSettings));
 
@@ -280,9 +303,11 @@ void SettingsActivity::rebuildSettingsLists() {
   // settings registry and JSON API categories remain compatible.
   for (auto it = systemSettings.begin(); it != systemSettings.end();) {
     const int group = settingsGroup(*it, 3);
-    auto* destination = group == 2 || it->action == SettingAction::ClearCache ? &librarySettings
-                        : group == 3                                          ? &connectivitySettings
-                                                                              : nullptr;
+    auto* destination = group == 2 || it->action == SettingAction::ClearCache ||
+                                it->action == SettingAction::PrepareBooks || it->action == SettingAction::ImportCrossInk
+                            ? &librarySettings
+                        : group == 3 ? &connectivitySettings
+                                     : nullptr;
     if (it->action == SettingAction::KeyboardLayouts) destination = &controlsSettings;
     if (group == 5 && !destination) destination = &deviceSettings;
     if (destination) {
@@ -291,9 +316,23 @@ void SettingsActivity::rebuildSettingsLists() {
     } else
       ++it;
   }
+  // Keep the registry/JSON category stable while presenting both preparation controls together.
+  for (auto it = readerSettings.begin(); it != readerSettings.end(); ++it) {
+    if (it->valuePtr != &CrossPointSettings::prepareBookOnOpen) continue;
+    auto after = std::find_if(librarySettings.begin(), librarySettings.end(),
+                              [](const auto& row) { return row.action == SettingAction::PrepareBooks; });
+    if (after != librarySettings.end()) ++after;
+    librarySettings.insert(after, std::move(*it));
+    readerSettings.erase(it);
+    break;
+  }
   if (categoryHome)
     showCategoryHome();
-  else
+  else if (mangaOpen) {
+    currentSettings = &mangaSettings;
+    settingsCount = int(mangaSettings.size());
+    rebuildRowItems();
+  } else
     selectCategory(selectedCategoryIndex);
 }
 
@@ -337,10 +376,14 @@ void SettingsActivity::rebuildRowItems() {
     item.label = I18N.get(settings[i].nameId);
     item.actionValue = static_cast<int16_t>(i);
     const auto section = [&](const SettingInfo& setting) -> StrId {
+      if (currentSettings == &mangaSettings) return StrId::STR_NONE_OPT;
       if (selectedCategoryIndex < 3)
         return settingsGroupLabel(settingsGroup(setting, selectedCategoryIndex), selectedCategoryIndex);
       if (selectedCategoryIndex == 3) {
-        if (setting.action == SettingAction::ClearCache) return StrId::STR_SETTINGS_MAINTENANCE;
+        if (setting.action == SettingAction::ClearCache || setting.action == SettingAction::PrepareBooks ||
+            setting.action == SettingAction::ImportCrossInk ||
+            setting.valuePtr == &CrossPointSettings::prepareBookOnOpen)
+          return StrId::STR_SETTINGS_MAINTENANCE;
         return setting.valuePtr == &CrossPointSettings::removeReadBooksFromRecents ||
                        setting.valuePtr == &CrossPointSettings::moveFinishedToReadFolder
                    ? StrId::STR_SETTINGS_FINISHED_BOOKS
@@ -353,10 +396,11 @@ void SettingsActivity::rebuildRowItems() {
     const auto heading = section(settings[i]);
     if (heading != StrId::STR_NONE_OPT && (i == 0 || heading != section(settings[i - 1])))
       item.sectionHeading = I18N.get(heading);
-    if (selectedCategoryIndex == 1 || selectedCategoryIndex == 4 || selectedCategoryIndex == 5 ||
-        selectedCategoryIndex == 6) {
+    item.icon = settingsicons::rowIcon(settings[i].nameId);
+    if (!item.icon.data) {
       const auto& s = settings[i];
-      item.icon = s.action == SettingAction::Network                       ? settingsart::Wifi
+      item.icon = s.action == SettingAction::Bluetooth                     ? fui::bitmapFromIcon(bluetoothIcon)
+                  : s.action == SettingAction::Network                     ? settingsart::Wifi
                   : s.action == SettingAction::HomeMenu                    ? settingsart::Home
                   : s.action == SettingAction::Language                    ? settingsart::Globe
                   : s.action == SettingAction::ClockSettings               ? settingsart::Clock
@@ -374,10 +418,33 @@ void SettingsActivity::rebuildRowItems() {
                   : s.action == SettingAction::About                       ? settingsart::Info
                   : s.nameId == StrId::STR_DEV_MODE                        ? settingsart::Code
                   : selectedCategoryIndex == 4                             ? settingsart::Grid
+                  : selectedCategoryIndex == 0                             ? settingsart::Display
+                  : selectedCategoryIndex == 2                             ? settingsart::Hand
+                  : selectedCategoryIndex == 3                             ? settingsart::Folder
                                                                            : settingsart::Book;
     }
+    item.icon = settingsicons::normalizeRowIcon(item.icon);
     rowItems_.push_back(item);
   }
+}
+
+void SettingsActivity::openManga() {
+  mangaReturnTop = activeNav().top;
+  mangaReturnSelection = activeNav().selected;
+  currentSettings = &mangaSettings;
+  settingsCount = int(mangaSettings.size());
+  activeNav().reset();
+  rebuildRowItems();
+  resetUi();
+  requestUpdate();
+}
+
+void SettingsActivity::closeManga() {
+  selectCategory(1);
+  activeNav().top = mangaReturnTop;
+  activeNav().selected = mappedInput.hasTouch() ? 0 : mangaReturnSelection;
+  resetUi();
+  requestUpdate();
 }
 
 void SettingsActivity::showCategoryHome() {
@@ -493,6 +560,10 @@ bool SettingsActivity::handleButtons() {
     if (categoryHome) {
       activateIndex(std::max(0, ringPos() - 1));
     } else if (ringPos() == 0) {
+      if (currentSettings == &mangaSettings) {
+        closeManga();
+        return true;
+      }
       showCategoryHome();
       requestUpdate();
     } else {
@@ -503,6 +574,10 @@ bool SettingsActivity::handleButtons() {
   }
 
   if (mappedInput.wasReleased(MappedInputManager::Button::Back)) {
+    if (currentSettings == &mangaSettings) {
+      closeManga();
+      return true;
+    }
     if (!categoryHome) {
       showCategoryHome();
       requestUpdate();
@@ -561,6 +636,16 @@ void SettingsActivity::toggleCurrentSetting() {
   }
 
   if (setting.type == SettingType::TOGGLE && setting.valuePtr != nullptr) {
+    if (setting.valuePtr == &CrossPointSettings::pluginsEnabled) {
+      SETTINGS.pluginsEnabled = !SETTINGS.pluginsEnabled;
+      SETTINGS.pluginHubPromptHidden = 0;
+      pluginevents::refreshSubscriptions();
+      SETTINGS.saveToFile();
+      rebuildRowItems();
+      requestUpdate();
+      return;
+    }
+
     // Toggle the boolean value using the member pointer
     const bool currentValue = SETTINGS.*(setting.valuePtr);
     SETTINGS.*(setting.valuePtr) = !currentValue;
@@ -625,6 +710,9 @@ void SettingsActivity::toggleCurrentSetting() {
     auto resultHandler = [this](const ActivityResult&) { SETTINGS.saveToFile(); };
 
     switch (setting.action) {
+      case SettingAction::Manga:
+        openManga();
+        return;
       case SettingAction::QuickSettings: {
         auto next = makeUniqueNoThrow<QuickSettingsConfigActivity>(renderer, mappedInput);
         if (next)
@@ -670,6 +758,15 @@ void SettingsActivity::toggleCurrentSetting() {
       case SettingAction::OPDSBrowser:
         startActivityForResult(std::make_unique<OpdsServerListActivity>(renderer, mappedInput), resultHandler);
         break;
+      case SettingAction::Bluetooth: {
+        auto activity = makeUniqueNoThrow<BleSettingsActivity>(renderer, mappedInput);
+        if (!activity) {
+          LOG_ERR("SETTINGS", "OOM: Bluetooth settings");
+          break;
+        }
+        startActivityForResult(std::move(activity), resultHandler);
+        break;
+      }
       case SettingAction::Network: {
         auto activity =
             makeUniqueNoThrow<WifiSelectionActivity>(renderer, mappedInput, false, WifiSelectionPurpose::Manage);
@@ -683,6 +780,14 @@ void SettingsActivity::toggleCurrentSetting() {
       case SettingAction::ClearCache:
         startActivityForResult(std::make_unique<ClearCacheActivity>(renderer, mappedInput), resultHandler);
         break;
+      case SettingAction::PrepareBooks: {
+        auto next = makeUniqueNoThrow<BookPreparationActivity>(renderer, mappedInput);
+        if (next)
+          startActivityForResult(std::move(next), [this](const ActivityResult&) { requestUpdate(); });
+        else
+          LOG_ERR("SETTINGS", "OOM: book preparation");
+        break;
+      }
       case SettingAction::CheckForUpdates: {
         auto updater = makeUniqueNoThrow<OtaUpdateActivity>(renderer, mappedInput);
         if (!updater) {
@@ -719,14 +824,31 @@ void SettingsActivity::toggleCurrentSetting() {
         // Row labels are translated once in rebuildRowItems() and don't
         // re-run on Pop (see ActivityManager::loop()), so a language switch
         // needs an explicit rebuild here rather than the generic resultHandler.
-        startActivityForResult(std::make_unique<LanguageSelectActivity>(renderer, mappedInput),
-                               [this](const ActivityResult&) {
-                                 SETTINGS.saveToFile();
-                                 rebuildSettingsLists();
-                               });
+        if (auto selector = makeUniqueNoThrow<LanguageSelectActivity>(renderer, mappedInput)) {
+          startActivityForResult(std::move(selector), [this](const ActivityResult&) { rebuildSettingsLists(); });
+        } else {
+          LOG_ERR("SETTINGS", "OOM: LanguageSelectActivity");
+        }
         break;
+      case SettingAction::ImportCrossInk: {
+        auto activity = makeUniqueNoThrow<ReadingStatsSyncActivity>(renderer, mappedInput, true);
+        if (activity)
+          startActivityForResult(std::move(activity), resultHandler);
+        else
+          LOG_ERR("SETTINGS", "OOM: CrossInk importer");
+        break;
+      }
       case SettingAction::Plugins:
-        startActivityForResult(std::make_unique<PluginCatalogActivity>(renderer, mappedInput), resultHandler);
+        if (!SETTINGS.pluginsEnabled || SETTINGS.pluginHubPromptHidden) {
+          SETTINGS.pluginsEnabled = 1;
+          SETTINGS.pluginHubPromptHidden = 0;
+          SETTINGS.saveToFile();
+          pluginevents::refreshSubscriptions();
+        }
+        if (auto activity = makeUniqueNoThrow<PluginCatalogActivity>(renderer, mappedInput))
+          startActivityForResult(std::move(activity), resultHandler);
+        else
+          LOG_ERR("SETTINGS", "OOM: plugin catalog");
         break;
       case SettingAction::KeyboardLayouts:
         if (auto activity = makeUniqueNoThrow<KeyboardLayoutsActivity>(renderer, mappedInput)) {
@@ -810,7 +932,7 @@ void SettingsActivity::openSleepTimeoutPicker() {
 
 std::string SettingsActivity::settingValueText(const SettingInfo& setting) {
   if (setting.action == SettingAction::HomeButton) return tr(STR_CONFIGURE);
-  if (setting.action == SettingAction::Language) return I18N.getLanguageName(I18N.getLanguage());
+  if (setting.action == SettingAction::Language) return I18N.getLanguageName();
   if (setting.type == SettingType::ENUM && setting.valuePtr != nullptr) {
     // Guard like the valueGetter branch below: a corrupt/migrated settings
     // byte must not index past the enum table.
@@ -860,7 +982,6 @@ void SettingsActivity::buildScreen(UiScreen& screen) {
   const auto& settings = *currentSettings;
   for (size_t i = 0; !categoryHome && i < settings.size(); i++) {
     const auto& setting = settings[i];
-    if (chrome::lightHeader) rowItems_[i].icon = {};
     const auto labels = setting.enumLabels();
     const auto helpId = settingHelp(setting);
     const char* help = helpId == StrId::STR_NONE_OPT ? nullptr : I18N.get(helpId);
@@ -879,8 +1000,7 @@ void SettingsActivity::buildScreen(UiScreen& screen) {
       rowItems_[i].subtitle = rowValues_[i].empty() ? help : rowValues_[i].c_str();
       rowItems_[i].value = ">";
       {
-        if (chrome::lightHeader) rowItems_[i].icon = {};
-        const int available = screen.body().width - (chrome::lightHeader ? 64 : 108);
+        const int available = screen.body().width - (rowItems_[i].icon.data ? 118 : 64);
         fui::TextStyle titleStyle;
         titleStyle.font = 0;
         fui::TextStyle valueStyle;
@@ -901,20 +1021,20 @@ void SettingsActivity::buildScreen(UiScreen& screen) {
   props.count = static_cast<uint16_t>(rowItems_.size());
   props.action = ACTION_ROW;
   props.inputMask = fui::InputTouch;  // physical buttons stay in loop()
-  settingsui::styleRows(props);
+  settingsui::styleRows(props, !categoryHome);
   if (categoryHome) settingsui::styleHome(props);
 
   props.rtl =
       (I18N.getLanguage() == Language::AR || I18N.getLanguage() == Language::FA || I18N.getLanguage() == Language::HE);
   syncTabListViewport(screen, props);
-  if (chrome::lightHeader)
-    fui::list(screen.frame(), screen.body(), props);
-  else
-    pixelui::list(screen, props, false, true, pixelui::kBorder, true);
+  settingsui::drawRows(screen, props, categoryHome);
 }
 
 void SettingsActivity::drawChrome() {
-  pixelui::drawHeader(renderer, categoryHome ? tr(STR_SETTINGS_TITLE) : I18N.get(categoryNames[selectedCategoryIndex]),
+  pixelui::drawHeader(renderer,
+                      categoryHome                        ? tr(STR_SETTINGS_TITLE)
+                      : currentSettings == &mangaSettings ? tr(STR_SETTINGS_MANGA)
+                                                          : I18N.get(categoryNames[selectedCategoryIndex]),
                       I18N.getLanguage() != Language::EN);
 }
 

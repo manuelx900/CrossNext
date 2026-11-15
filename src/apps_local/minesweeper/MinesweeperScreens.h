@@ -28,6 +28,7 @@ enum : fui::ActionId {
   ActionSettings = 11,
   ActionHowToPage = 12,
   ActionSaveSize = 13,
+  ActionMineCount = 14,
 };
 
 enum class MenuRow : int { Play = 0, HowTo, Settings, Count };
@@ -36,6 +37,7 @@ struct MenuModel {
   int selected = -1;
   bool settings = false;
   int size = 10;
+  int mines = 15;
   // The last finished board and the tally, drawn as the front door's ornament.
   bool hasHistory = false;
   minesweeper::Game lastBoard{};

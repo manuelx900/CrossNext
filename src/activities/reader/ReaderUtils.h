@@ -119,14 +119,6 @@ inline TouchPageTurn detectTouchPageTurn(const GfxRenderer& renderer, const Mapp
   }
 
   const int width = renderer.getScreenWidth();
-  const int height = renderer.getScreenHeight();
-  // Edge taps complement swipe-only preferences and leave the centre for selection.
-  const int edge = std::max(32, width * 15 / 100);
-  if (y >= 32 && y < height - 32 && (x < edge || x >= width - edge)) {
-    result.prev = (x < edge) != invertDirection;
-    result.next = !result.prev;
-    return result;
-  }
   if (!nextTaps && !prevTaps) return result;
   // Give the whole page to the sole tap-enabled direction. When both accept
   // taps, split at the left third. RTL books and Inverted Tap each reverse

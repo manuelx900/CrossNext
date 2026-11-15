@@ -1,0 +1,17 @@
+{
+  "id": 34,
+  "saga": 3,
+  "step": 4,
+  "title": {
+    "en": "The guarded room",
+    "es": "La sala protegida"
+  },
+  "enemy": "Dark maw",
+  "guardian": 22,
+  "master": "path-034.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The Library Beneath the Sea. Path episode: The guarded room. Story action, which the scene must directly support: A guardian keeps you out of the room where the oldest books might tell you about the castle.\nEnemy identity, MUST match this exact anatomy: a thick-bodied coiled serpent with large broken-shell plates. Eye-level approach across foreground stones, enemy full-body in the center-right, destination visible behind. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-991f62a8-f5b9-4567-8666-51fddfb78c5a.png",
+  "sha256": "2e0ce0671ead0d16bd9d1de7465271dd6c49ddcded89389a367c2916ba366298"
+}

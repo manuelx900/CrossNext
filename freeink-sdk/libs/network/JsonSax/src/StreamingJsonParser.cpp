@@ -65,6 +65,10 @@ void StreamingJsonParser::handleScanning(char c) {
       expectingValue = false;
       break;
     case '}':
+      if (nestingDepth == 0 || nestingStack[nestingDepth - 1] != Container::OBJECT) {
+        error = true;
+        return;
+      }
       if (cb.onObjectEnd) cb.onObjectEnd(cb.ctx);
       if (nestingDepth > 0) --nestingDepth;
       expectingValue = false;
@@ -80,6 +84,10 @@ void StreamingJsonParser::handleScanning(char c) {
       expectingValue = false;
       break;
     case ']':
+      if (nestingDepth == 0 || nestingStack[nestingDepth - 1] != Container::ARRAY) {
+        error = true;
+        return;
+      }
       if (cb.onArrayEnd) cb.onArrayEnd(cb.ctx);
       if (nestingDepth > 0) --nestingDepth;
       expectingValue = false;

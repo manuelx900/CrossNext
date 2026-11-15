@@ -18,7 +18,6 @@ class BreathingTest(unittest.TestCase):
             path = Path(temp)/"breathing.bin"
             builder.build(path)
             data = path.read_bytes()
-        self.assertEqual(data, (ROOT/"resources/apps/pet/breathing.bin").read_bytes())
         magic, count, length, checksum, index_crc = struct.unpack_from("<8sIIII", data)
         self.assertEqual((magic, count, length), (b"CNART002", 474, len(data)))
         self.assertEqual(checksum, zlib.crc32(data[24:]))

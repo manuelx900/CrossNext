@@ -84,7 +84,7 @@ void setPeriod(PeriodStats& stats, Period period, int day, bool sunday) {
     case Period::Year: {
       const auto d = dateFromDay(day);
       stats.first = dayIndex({d.year, 1, 1});
-      stats.last = dayIndex({d.year + 1, 1, 1}) - 1;
+      stats.last = stats.first + 365 + (daysInMonth(d.year, 2) == 29) - 1;
       stats.annual = true;
       break;
     }
@@ -97,6 +97,43 @@ void setPeriod(PeriodStats& stats, Period period, int day, bool sunday) {
   }
 }
 void Streak::begin(int through) { first = minimumDay = (last = through) + 1; }
+void RecordedYears::addDay(int day) {
+  if (day <= 0) return;
+  const int year = dateFromDay(day).year;
+  if (year < firstYear || year > lastYear) return;
+  const int n = year - firstYear;
+  bits[n / 64] |= uint64_t{1} << (n % 64);
+}
+void RecordedYears::add(const Record& record) {
+  if (record.seconds) {
+    const int last = record.localDay + int((uint64_t(record.secondOfDay) + record.seconds - 1) / 86400);
+    const int first = std::max(firstYear, dateFromDay(record.localDay).year);
+    const int end = std::min(lastYear, dateFromDay(last).year);
+    for (int year = first; year <= end; ++year) {
+      const int n = year - firstYear;
+      bits[n / 64] |= uint64_t{1} << (n % 64);
+    }
+  }
+  if (record.firstCompletion) addDay(record.localDay + int((uint64_t(record.secondOfDay) + record.seconds) / 86400));
+  if (record.kind == RecordKind::Reopen) addDay(record.reversedCompletionDay);
+}
+int RecordedYears::count() const {
+  int result = 0;
+  for (auto word : bits)
+    while (word) {
+      word &= word - 1;
+      ++result;
+    }
+  return result;
+}
+int RecordedYears::at(int index) const {
+  if (index < 0) return 0;
+  for (int year = lastYear; year >= firstYear; --year) {
+    const int n = year - firstYear;
+    if ((bits[n / 64] & (uint64_t{1} << (n % 64))) && !index--) return year;
+  }
+  return 0;
+}
 void Streak::add(const Record& r) {
   if (!last || !r.seconds || r.localDay > last) return;
   const int end = std::min(last, r.localDay + static_cast<int>((uint64_t(r.secondOfDay) + r.seconds - 1) / 86400));
@@ -169,6 +206,28 @@ int PeriodStats::daysReadThrough(int day) const {
   for (int n = 0; n <= std::min(annual ? 365 : 30, std::min(day, last) - first); ++n)
     count += annual ? ((annualDays[n / 64] >> (n % 64)) & 1) != 0 : dailySeconds[n] > 0;
   return count;
+}
+uint32_t PeriodStats::currentStreak(int today) const {
+  int day = std::min(today, last);
+  const auto read = [this](int at) {
+    const int n = at - first;
+    return n >= 0 && n <= last - first &&
+           (annual ? n < 366 && ((annualDays[n / 64] >> (n % 64)) & 1) != 0 : n < 31 && dailySeconds[n] > 0);
+  };
+  if (day == today && !read(day)) --day;
+  if (day < today - 1) return 0;
+  uint32_t count = 0;
+  while (day >= first && read(day--)) ++count;
+  return count;
+}
+uint32_t PeriodStats::longestStreakThrough(int day) const {
+  uint32_t longest = 0, run = 0;
+  for (int n = 0; n <= std::min(annual ? 365 : 30, std::min(day, last) - first); ++n) {
+    const bool read = annual ? ((annualDays[n / 64] >> (n % 64)) & 1) != 0 : dailySeconds[n] > 0;
+    run = read ? run + 1 : 0;
+    longest = std::max(longest, run);
+  }
+  return longest;
 }
 void addRecent(Book* books, int& count, const Book& book) {
   int at = 0;

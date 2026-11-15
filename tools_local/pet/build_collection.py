@@ -34,4 +34,9 @@ def build(output=ROOT / "resources/apps/pet/collection.bin"):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "resources/apps/pet/collection.bin")
-    build(parser.parse_args().output)
+    from gray_assets import available, build as build_gray
+    output = parser.parse_args().output
+    if available():
+        build_gray("collection", output)
+    else:
+        build(output)

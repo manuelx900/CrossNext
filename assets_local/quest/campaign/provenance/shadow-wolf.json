@@ -1,0 +1,9 @@
+{
+  "name": "shadow-wolf",
+  "prompt": "Use case: illustration-story. Asset type: a single production character-state atlas for a monochrome e-reader fantasy RPG mockup. Reference image is STYLE ONLY: borrow smooth confident black contours and clean white/light/mid/dark gray cel shading. Do NOT borrow the friendly faces, puppy anatomy, happy mood or huge cute eyes. Enemies must look genuinely hostile and monstrous while staying in the same illustrated universe as PET-style heroes. Broad readable shapes at 180px high, strong black outer outlines, 4 clean gray values plus white, no color, no texture noise, no halftone, no pixel art, no gradients. Transparent background, opaque white interiors. No aura, no glow, no scenery, ground, cast shadow, labels, text or panel borders. All silhouettes complete with safe outer margins and no cropped horns, claws or feet. Exactly THREE equal columns, ONE row. The SAME large full-body monstrous shadow wolf in three states: LEFT prowling aggressively with lowered head and bared pointed fangs; CENTER weakened, shoulders drooping and one foreleg bent; RIGHT defeated lying low on its belly, head down and eyes closed, tail resting. Identity: a muscular predatory wolf with jagged dark-gray mane, flattened pointed ears, massive clawed paws, long thick tail, narrow hostile eyes under heavy angular brows, snarling teeth; a recognizable beast rather than a smiling dog or cute pet. Keep its markings and anatomy consistent across the three states. No blood, no detached parts. Exact common camera scale and ground baseline; ample transparent gutters.",
+  "original": "exec-fc649e99-f4d7-4fc6-a185-d1469cec6081.png",
+  "date": "2026-11-05",
+  "tool": "built-in image_gen",
+  "purpose": "Campaign mockup only",
+  "sha256": "3339ff016a707b55b9d8504ee6c51faf13d65facd9debf3ab209593ab3c9579c"
+}

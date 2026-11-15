@@ -1,5 +1,7 @@
 #include "TtfEpdFont.h"
 
+#include <atomic>
+
 #if CROSSPOINT_VECTOR_FONTS
 
 #include <Logging.h>
@@ -8,6 +10,9 @@
 #include <esp_heap_caps.h>
 
 #include <algorithm>
+#include <cstring>
+
+#include "PreparedFontPairs.h"
 
 namespace {
 
@@ -104,15 +109,23 @@ void TtfEpdFont::resolveFaces() {
 
 bool TtfEpdFont::load(const uint16_t pointSize, const bool twoBit, const size_t glyphCacheBytes,
                       const uint16_t maxGlyphs) {
+  // Distinguish reloads and recycled object addresses within a live parser.
+  static std::atomic<uint32_t> next{1};
+  uint32_t identity = next.load();
+  while (identity && !next.compare_exchange_weak(identity, identity == UINT32_MAX ? 0 : identity + 1)) {
+  }
+  metricsIdentity_ = identity;
+
   loaded_ = false;
   if (!sources_[Regular].present) return false;
+  pointSize_ = pointSize;
   // CrossPoint speaks point-size-at-150-DPI (matching the .cpfont converter's
   // FT_Set_Char_Size(size, size, 150, 150)); FreeInkFont speaks pixels. Convert
   // so vector fonts match the on-glyph size and metrics of the bitmap fonts:
   //   ppem = pointSize * 150 / 72, kept in 26.6 so the fractional part survives
   // (glyphs raster and advance at the exact ppem; the per-face sizePx is the
   // rounded form for the integer-pixel Font API).
-  size26_6_ = (static_cast<uint32_t>(pointSize) * 150u * 64u + 36u) / 72u;
+  size26_6_ = (static_cast<uint32_t>(pointSize) * FONT_RASTER_DPI * 64u + 36u) / 72u;
   const uint16_t sizePx = static_cast<uint16_t>((size26_6_ + 32u) >> 6);
   resolveFaces();
   for (int i = 0; i < 4; ++i) {
@@ -134,6 +147,13 @@ bool TtfEpdFont::load(const uint16_t pointSize, const bool twoBit, const size_t 
   }
   initFace(faces_[0]);  // regular eagerly: validates the font + gives metrics
   if (!faces_[0].ready) return false;
+  // Prepared Thai clusters must also be available for measuring a lazy bold
+  // face before its first glyph fault. Ordinary fonts keep their lazy path.
+  if (sources_[Regular].preparedPairCount) {
+    for (Source& source : sources_) {
+      if (source.present && !loadPreparedPairs(source)) return false;
+    }
+  }
   for (int i = 1; i < 4; ++i) setupFace(faces_[i]);  // handlers + placeholder metrics (regular's)
   loaded_ = true;
   return true;
@@ -172,7 +192,12 @@ void TtfEpdFont::initFace(Face& f) {
     // when the C3 is poorest (a font big enough to stream, i.e. CJK, where
     // Latin pair kerning barely matters). Budget 0 = streamed faces skip it.
     f.ft.setGposByteBudget(0);
-    resolveLigatures(f);
+    if (!loadPreparedPairs(sources_[f.srcIndex])) {
+      f.ft.deinit();
+      f.ready = false;
+    } else {
+      resolveLigatures(f);
+    }
   }
   // Caches are NOT pre-reserved: the byte arena (f.bmp) and the glyph tables
   // grow on demand in faultGlyph and converge on the book's page needs (see the
@@ -180,7 +205,47 @@ void TtfEpdFont::initFace(Face& f) {
   setupFace(f);
 }
 
+unsigned long TtfEpdFont::readSource(void* ctx, const unsigned long offset, unsigned char* buffer,
+                                     const unsigned long count) {
+  const auto& source = *static_cast<Source*>(ctx);
+  if (source.streamed) return source.read(source.ctx, offset, buffer, count);
+  if (offset > source.len || count > source.len - offset) return 0;
+  memcpy(buffer, source.data + offset, count);
+  return count;
+}
+
+bool TtfEpdFont::loadPreparedPairs(Source& source) {
+  using State = Source::PairState;
+  if (source.pairState != State::Unchecked) return source.pairState != State::Failed;
+  source.pairState = State::Failed;
+  preparedFont::Table table{};
+  const auto status =
+      preparedFont::findTable(readSource, &source, source.streamed ? source.fileSize : source.len, table);
+  if (status == preparedFont::Status::Absent) {
+    source.pairState = State::Absent;
+    return true;
+  }
+  if (status != preparedFont::Status::Ready) {
+    LOG_ERR("TTF", "Invalid prepared cluster table");
+    return false;
+  }
+  auto pairs = HalMemory::allocatePsram(table.count * sizeof(EpdLigaturePair));
+  if (!pairs) {
+    LOG_ERR("TTF", "OOM: prepared clusters (%u bytes PSRAM)", table.count * unsigned(sizeof(EpdLigaturePair)));
+    return false;
+  }
+  if (!preparedFont::readPairs(readSource, &source, table, reinterpret_cast<EpdLigaturePair*>(pairs.get()))) {
+    LOG_ERR("TTF", "Invalid prepared cluster pairs");
+    return false;
+  }
+  source.preparedPairCount = table.count;
+  source.preparedPairs = std::move(pairs);
+  source.pairState = State::Ready;
+  return true;
+}
+
 void TtfEpdFont::resolveLigatures(Face& f) {
+  if (sources_[f.srcIndex].preparedPairCount) return;
   // One GSUB pass per face init: resolve the standard Latin ligatures to glyph
   // IDs, then drop the table — nothing else queries GSUB, so a streamed face
   // never keeps its (budgeted) table copy resident.
@@ -234,8 +299,10 @@ void TtfEpdFont::setupFace(Face& f) {
   // GSUB-derived ligature pairs (resolveLigatures). Empty until this face
   // inits — a lazy style renders its first pass ligature-free, then picks
   // them up once its glyphs fault the face in.
-  f.data.ligaturePairs = f.ligPairCount ? f.ligPairs : nullptr;
-  f.data.ligaturePairCount = f.ligPairCount;
+  const auto& source = sources_[f.srcIndex];
+  f.data.ligaturePairs = source.preparedPairCount ? reinterpret_cast<const EpdLigaturePair*>(source.preparedPairs.get())
+                                                  : (f.ligPairCount ? f.ligPairs : nullptr);
+  f.data.ligaturePairCount = source.preparedPairCount ? source.preparedPairCount : f.ligPairCount;
   f.data.kernHandler = &TtfEpdFont::kernThunk;
 }
 
@@ -256,6 +323,25 @@ void TtfEpdFont::clearCache() {
   for (Face& f : faces_) {
     if (f.inited) flushFace(f);
   }
+}
+
+size_t TtfEpdFont::residentCacheBytes() const {
+  size_t bytes = 0;
+  for (const auto& source : sources_)
+    if (source.preparedPairs) bytes += source.preparedPairCount * sizeof(EpdLigaturePair);
+  for (const auto& face : faces_)
+    bytes += face.bmp.capacity() + face.glyphs.capacity() * sizeof(EpdGlyph) + face.cps.capacity() * sizeof(uint32_t) +
+             face.slot.capacity() * sizeof(uint16_t) + face.kernKeys.capacity() * sizeof(uint64_t) +
+             face.kernVals.capacity() * sizeof(int8_t);
+  return bytes;
+}
+
+uint64_t TtfEpdFont::metricsIdentity(uint8_t styleMask) const {
+  if (!metricsIdentity_) return 0;
+  for (uint8_t i = 0; i < 4; ++i) {
+    if ((styleMask & (1u << i)) && (!faces_[i].ready || faces_[i].retryGlyphs)) return 0;
+  }
+  return (uint64_t(metricsIdentity_) << 32) | 1;
 }
 
 void TtfEpdFont::discardFailedGlyphs() {
@@ -302,7 +388,7 @@ const EpdGlyph* TtfEpdFont::faultGlyph(Face& f, const uint32_t cp) {
   // presentation codepoints (whose glyphs commonly have no cmap entry at all).
   freeink::font::FtFont::GlyphId gid = f.ft.glyphId(cp);
   if (gid == 0 && cp >= 0xFB00u && cp <= 0xFB04u) gid = f.ligGid[cp - 0xFB00u];
-  if (gid == 0) return nullptr;
+  if (gid == 0 && cp != REPLACEMENT_GLYPH) return nullptr;
 
   // Glyph-ID render at the exact fractional ppem. The metrics pass costs a
   // second glyph load per MISS only (hits come from the cache) and yields the
@@ -341,7 +427,11 @@ const EpdGlyph* TtfEpdFont::faultGlyph(Face& f, const uint32_t cp) {
   };
   if (!growTables()) {
     evictOthers();
-    if (!growTables()) return nullptr;
+    if (!growTables()) {
+      metricsIdentity_ = 0;
+      f.retryGlyphs = true;
+      return nullptr;
+    }
   }
   if (px && !reserveChecked(f.bmp, f.used + bytes, 4096, f.cap)) {
     evictOthers();
@@ -392,6 +482,7 @@ const EpdGlyph* TtfEpdFont::faultGlyph(Face& f, const uint32_t cp) {
     eg.dataLength = 0;
   }
 
+  if (retryGlyph) metricsIdentity_ = 0;
   f.retryGlyphs |= retryGlyph;
   f.glyphs.push_back(eg);
   const uint16_t newIdx = static_cast<uint16_t>(f.glyphs.size() - 1);
@@ -419,13 +510,10 @@ int8_t TtfEpdFont::faultKern(Face& f, const uint32_t leftCp, const uint32_t righ
   if (k4 < -128) k4 = -128;
   if (k4 > 127) k4 = 127;
 
-  // Text uses few distinct pairs; the cap only guards against pathological
-  // content churning the cache without bound.
-  static constexpr size_t kKernCap = 512;
-  if (f.kernKeys.size() >= kKernCap) {
-    f.kernKeys.clear();
-    f.kernVals.clear();
-  }
+  // Keep the common pairs when full. Rare pairs still use exact FreeType
+  // kerning, without evicting every warm pair on a long or varied page.
+  const size_t kKernCap = f.cap >= 128 * 1024 ? 4096 : 512;
+  if (f.kernKeys.size() >= kKernCap) return static_cast<int8_t>(k4);
   // One-time exact reserve: with capacity pinned at the cap, the sorted
   // inserts below never touch the allocator. Uncached result if the heap
   // cannot fund the cache at all.
@@ -462,18 +550,27 @@ bool TtfEpdFont::coverageThunk(void* ctx, const uint32_t codepoint) {
 }
 
 EpdFontFamily TtfEpdFont::family() const {
-  return EpdFontFamily(&faces_[0].font, &faces_[1].font, &faces_[2].font, &faces_[3].font);
+  return EpdFontFamily(pointSize_, &faces_[0].font, &faces_[1].font, &faces_[2].font, &faces_[3].font);
 }
 
-bool TtfEpdFont::build(const char* utf8) {
+bool TtfEpdFont::build(const char* utf8, const uint8_t styleMask) {
   if (!loaded_) return false;
-  flushFace(faces_[0]);
-  return addCoverage(utf8);
+  for (uint8_t style = 0; style < 4; ++style)
+    if (styleMask & (1 << style)) flushFace(faces_[style]);
+  return addCoverage(utf8, styleMask);
 }
-bool TtfEpdFont::addCoverage(const char* utf8) {
+bool TtfEpdFont::addCoverage(const char* utf8, const uint8_t styleMask) {
   if (!loaded_ || utf8 == nullptr) return false;
-  const auto* p = reinterpret_cast<const unsigned char*>(utf8);
-  while (*p != '\0') faultGlyph(faces_[0], utf8NextCodepoint(&p));
+  for (uint8_t style = 0; style < 4; ++style) {
+    if (!(styleMask & (1 << style))) continue;
+    initFace(faces_[style]);
+    const char* p = utf8;
+    while (*p != '\0') {
+      uint32_t cp = utf8NextCodepoint(reinterpret_cast<const unsigned char**>(&p));
+      cp = faces_[style].font.applyLigatures(cp, p);
+      faultGlyph(faces_[style], cp);
+    }
+  }
   return true;
 }
 

@@ -1,0 +1,13 @@
+{
+  "name": "background-49",
+  "kind": "background",
+  "first": 49,
+  "count": 1,
+  "columns": 1,
+  "rows": 1,
+  "prompt": "Use case: illustration-story. ONE landscape3:2 background environment in EXACT same smooth black-contour grayscale storybook style as reference image1 (the approved forest background). Highest progression tier: ultimate divine library palace, great distant empty throne recessed behind high arched doorway, layered feather-carved side pillars, pale cosmic sky and spacious foreground terrace. No people, gods, pets or living creatures, only the majestic place. Broad clear foreground ground plane bottom35%, completely empty center70% for a human and pet. Feet will stand at90%height. Celestial detail stays high and at sides, central white airy space keeps faces readable. Finely rounded black contours, pale gray cel shading, white carved stone. Majestic yet quiet and approachable, coherent with cozy PET illustration. No dense little lines, dark sky, large black fill, text, UI, border, grain, dithering, gradientwash, 3D or photorealism. Full landscape, safe clean composition.",
+  "tool": "built-in image_gen",
+  "source": "exec-f2867e42-8bca-48e9-9c88-bebde68448c4.png",
+  "date": "2026-11-05",
+  "sha256": "1159f4af5f3e75abd4e7e1cd9738b082b91a0be1ab1074d02ba7c52e9f058785"
+}

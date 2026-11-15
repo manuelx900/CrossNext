@@ -1,4 +1,5 @@
 #include <FreeInkUIDisplayTarget.h>
+#include <HalStorage.h>
 #include <I18n.h>
 
 #include <array>
@@ -87,6 +88,7 @@ struct RecordingTarget : fui::DrawTarget {
   bool setClipRect(fui::Rect rect) override { return backend.setClipRect(rect); }
   void fill(fui::Rect r, fui::Paint p, uint8_t radius = 0, uint8_t corners = fui::CornersAll) override {
     if (p.color == fui::Color::Black) blackFills.push_back(r);
+    if (p.color == fui::Color::LightGray) grayFills.push_back(r);
     backend.fill(r, p, radius, corners);
   }
   void stroke(fui::Rect r, fui::Paint p, uint8_t width, uint8_t radius = 0,
@@ -94,7 +96,10 @@ struct RecordingTarget : fui::DrawTarget {
     outlines.push_back(r);
     backend.stroke(r, p, width, radius, corners);
   }
-  void line(fui::Point a, fui::Point b, uint8_t w, fui::Paint p) override { backend.line(a, b, w, p); }
+  void line(fui::Point a, fui::Point b, uint8_t w, fui::Paint p) override {
+    if (w >= 2 && std::abs(a.x - b.x) >= 8 && std::abs(a.y - b.y) >= 4) ++thickDiagonals;
+    backend.line(a, b, w, p);
+  }
   void triangle(fui::Point a, fui::Point b, fui::Point c, fui::Paint p) override { backend.triangle(a, b, c, p); }
   fui::Rect lastBitmap;
   void bitmap(fui::Rect r, fui::BitmapRef ref, fui::BitmapMode mode,
@@ -112,6 +117,8 @@ struct RecordingTarget : fui::DrawTarget {
   };
   std::vector<Label> labels;
   std::vector<fui::Rect> blackFills;
+  std::vector<fui::Rect> grayFills;
+  int thickDiagonals = 0;
   std::vector<fui::Rect> outlines;
   void text(fui::Rect box, const char* value, fui::TextStyle style) override {
     fui::layoutText(backend, box, value, style, [&](const char*, fui::Rect line) {
@@ -210,6 +217,8 @@ int main(int argc, char** argv) {
   const int today = readingstats::dayIndex({2026, 10, 18});
   readingstats::Summary summary;
   summary.anchorDay = today;
+  readingstats::PeriodStats annual;
+  readingstats::setPeriod(annual, readingstats::Period::Year, today, false);
   readingstats::Book books[5]{};
   for (int n = 0; n < 5; ++n) {
     auto& b = books[n];
@@ -231,6 +240,7 @@ int main(int argc, char** argv) {
     record.pages = 20;
     record.firstCompletion = day % 19 == 0;
     summary.add(record);
+    annual.add(record);
   }
   for (bool light : {false, true}) {
     chrome::lightHeader = light;
@@ -239,6 +249,7 @@ int main(int argc, char** argv) {
       for (auto size : {std::pair<int, int>{480, 800}, {800, 480}, {600, 800}, {800, 600}}) {
         readingui::Model m;
         m.summary = &summary;
+        m.annualStats = &annual;
         m.books = books;
         m.today = today;
         m.displayedDay = today;
@@ -258,6 +269,14 @@ int main(int argc, char** argv) {
             readingui::build(c.screen, m, work);
             c.checkHits();
             CHECK(c.has(readingui::Tab, tab));
+            if (tab == 1) {
+              CHECK(c.has(readingui::ChoosePeriod));
+              CHECK(c.has(readingui::ChooseStatsScope));
+              char expected[128];
+              std::snprintf(expected, sizeof(expected), "%s - 2026", tr(STR_STATS_TOTAL_MINUTES));
+              CHECK(c.label(expected));
+              CHECK(!c.label(tr(STR_RT_ALL)));
+            }
             if (tab == 3) CHECK(c.hits(readingui::OpenBook) == m.pageSize);
             if (tab == 2) {
               const int first = readingstats::weekStart(today, alternate);
@@ -270,6 +289,30 @@ int main(int argc, char** argv) {
                       (alternate ? "-alt" : "") + ".pbm");
           }
         }
+        for (bool imported : {false, true}) {
+          Canvas c(size.first, size.second);
+          readingui::Work work;
+          m.tab = 1;
+          m.statsScope = imported ? readingui::StatsScope::Year : readingui::StatsScope::AllTime;
+          m.source = imported ? readingstats::Source::Unified : readingstats::Source::Local;
+          m.annualKnown = !imported;
+          readingui::build(c.screen, m, work);
+          c.checkHits();
+          CHECK(c.has(readingui::ChooseStatsScope) && c.has(readingui::ChoosePeriod));
+          if (imported)
+            CHECK(c.label(tr(STR_STATS_YEAR_UNAVAILABLE)));
+          else {
+            CHECK(c.label(tr(STR_STATS_TOTAL_MINUTES)));
+            CHECK(!c.label(tr(STR_RT_ALL)));
+          }
+          if (argc > 1)
+            c.write(std::string(argv[1]) + "/" + (lang == Language::ES ? "es" : "en") + "-" +
+                    std::to_string(size.first) + "x" + std::to_string(size.second) +
+                    (imported ? "-annual-unavailable" : "-all-time") + ".pbm");
+        }
+        m.statsScope = readingui::StatsScope::Year;
+        m.source = readingstats::Source::Local;
+        m.annualKnown = true;
         for (auto period : {readingstats::Period::Day, readingstats::Period::Week, readingstats::Period::Month,
                             readingstats::Period::Year}) {
           readingstats::PeriodStats stats;
@@ -397,10 +440,17 @@ int main(int argc, char** argv) {
           m.summary = &goalSummary;
           m.today = goalSummary.anchorDay;
           m.goalMinutes = goal;
+          m.goalStartDay = m.today - 7;
           readingui::build(c.screen, m, w);
           c.checkHits();
           CHECK(c.has(readingui::GoalChoose) == (goal == 0));
           CHECK(c.has(readingui::GoalCalendar) == (goal > 0));
+          if (!goal) {
+            for (const auto& title : c.target.labels)
+              if (title.value == tr(STR_GOAL_DAILY))
+                for (const auto& hint : c.target.labels)
+                  if (hint.value == tr(STR_GOAL_SET_HINT)) CHECK(title.box.bottom() < hint.box.y);
+          }
           if (goal)
             for (size_t n = 0; n < c.interactions.count(); ++n) {
               const auto& hit = c.interactions.data()[n];
@@ -428,7 +478,8 @@ int main(int argc, char** argv) {
           m.goalCalendarVisible = true;
           readingui::build(noClock.screen, m, w);
           noClock.checkHits();
-          CHECK(noClock.has(readingui::GoalChoose) && noClock.has(readingui::GoalBack));
+          CHECK(noClock.has(readingui::GoalChoose) && noClock.has(readingui::GoalBack) &&
+                noClock.has(readingui::GoalReset));
           CHECK(!noClock.has(readingui::GoalMonth));
           CHECK(noClock.label(tr(STR_READING_CLOCK)));
           m.today = goalSummary.anchorDay;
@@ -437,8 +488,20 @@ int main(int argc, char** argv) {
           m.month = 2026 * 12 + 9;
           readingui::build(calendar.screen, m, w);
           calendar.checkHits();
-          CHECK(calendar.label(tr(STR_GOAL_COMPLETE)) && calendar.label(tr(STR_GOAL_PARTIAL)) &&
-                calendar.label(tr(STR_GOAL_INCOMPLETE)));
+          CHECK(calendar.has(readingui::GoalReset));
+          for (size_t i = 0; i < calendar.interactions.count(); ++i) {
+            const auto& reset = calendar.interactions.data()[i];
+            if (reset.action != readingui::GoalReset) continue;
+            for (size_t j = 0; j < calendar.interactions.count(); ++j) {
+              const auto& other = calendar.interactions.data()[j];
+              if (other.action == readingui::GoalChoose) CHECK(other.rect.right() < reset.rect.x);
+              if (other.action == readingui::GoalBack) CHECK(reset.rect.right() < other.rect.x);
+            }
+          }
+          CHECK(calendar.label(tr(STR_GOAL_COMPLETE)) && calendar.label(tr(STR_GOAL_INCOMPLETE)));
+          if (size.first < size.second) CHECK(calendar.label(tr(STR_SLEEP_GOAL_STREAK)));
+          CHECK(calendar.target.thickDiagonals >= 2);
+          CHECK(!calendar.target.grayFills.empty());  // Today is gray even before any reading.
           for (const auto& label : calendar.target.labels) CHECK(label.value.find(" +") == std::string::npos);
           Canvas wallpaper(size.first, size.second);
           readingui::goalWallpaper(wallpaper.screen, &goalSummary, m.today, goal);
@@ -455,6 +518,38 @@ int main(int argc, char** argv) {
           }
         }
       }
+  if (argc > 2) {
+    FILE* file = std::fopen(argv[2], "rb");
+    CHECK(file != nullptr);
+    if (file) {
+      std::fseek(file, 0, SEEK_END);
+      const auto length = std::ftell(file);
+      std::rewind(file);
+      auto& bytes = Storage.files["/languages/fr.cplang"];
+      bytes.resize(length);
+      CHECK(std::fread(bytes.data(), 1, bytes.size(), file) == bytes.size());
+      std::fclose(file);
+      CHECK(I18N.loadLanguagePack("fr.cplang"));
+      CHECK(std::strcmp(tr(STR_GOAL_DAILY), "Objectif de lecture quotidien") == 0);
+      for (bool light : {false, true}) {
+        chrome::lightHeader = light;
+        Canvas c(800, 480);
+        readingui::Model m;
+        readingui::goalCard(c.screen, fui::makeRect(10, 200, 469, 167), m);
+        c.checkHits();
+        for (const auto& hint : c.target.labels)
+          if (hint.value == tr(STR_GOAL_SET_HINT)) {
+            for (const auto& title : c.target.labels)
+              if (title.value == tr(STR_GOAL_DAILY)) CHECK(title.box.bottom() < hint.box.y);
+            for (size_t n = 0; n < c.interactions.count(); ++n) {
+              const auto& hit = c.interactions.data()[n];
+              if (hit.action == readingui::GoalChoose) CHECK(hint.box.bottom() < hit.rect.y);
+            }
+          }
+      }
+      I18N.setLanguage(Language::EN);
+    }
+  }
   chrome::lightHeader = false;
   std::printf("Statistics reference geometry: %d checks, %d failed\n", checks, failures);
   return failures ? 1 : 0;

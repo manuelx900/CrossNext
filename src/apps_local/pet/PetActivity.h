@@ -1,8 +1,8 @@
 #pragma once
-
 #include <atomic>
 
 #include "../../activities/Activity.h"
+#include "../../activities/util/EmbeddedKeyboard.h"
 #include "../reading/ReadingStatsStore.h"
 #include "../ui/SdBitmapPack.h"
 #include "../ui/SectionNavigation.h"
@@ -28,6 +28,9 @@ class PetActivity final : public Activity {
  private:
   // Reused source sprites in PSRAM, not a display buffer; released with each pack on exit.
   static constexpr size_t ART_PIXEL_CACHE_BYTES = 64 * 1024;
+  // All portrait or landscape source tiles fit together; this is packed artwork, not a framebuffer.
+  static constexpr size_t ROOM_PIXEL_CACHE_BYTES = 96 * 1024;
+  static constexpr size_t COLLECTION_PIXEL_CACHE_BYTES = 16 * 1024;
   pet::Profile profile, draft;
   pet::GameState game;
   pet::Store store;
@@ -38,6 +41,19 @@ class PetActivity final : public Activity {
   pet::Affection affection;
   sdart::Pack art, homeArt, habitatArt, sleepArt, farewellArt, collectionArt;
   petsleep::Clock sleepClock;
+  petfeed::Clock feedingClock;
+  petcurious::Clock curiosityClock;
+  petreact::Clock reactionClock;
+  petcompanion::Clock companionClock;
+  petcompanion::Kind nextTouchPose = petcompanion::Kind::Sit;
+  petrest::Clock restClock;
+  petrest::Kind restPending = petrest::Kind::None;
+  bool restArtAvailable = false, discoveryPending = false;
+  bool curiosityAvailable = false, curiosityOnEntry = true;
+  petreact::Art reactionArt = petreact::Art::None;
+  uint8_t selectedFood = 0;
+  bool choosingFood = false;
+  petfeed::Art feedingArt = petfeed::Art::Legacy;
   bool animationRebasePending = true;
   petinput::PendingTap pendingTap;
   petinput::PendingSlide pendingSlide;
@@ -55,16 +71,17 @@ class PetActivity final : public Activity {
   pet::View memoryReturn = pet::View::Memories, lifeReturn = pet::View::Lives;
   pet::Tab tab = pet::Tab::Pet;
   pet::Mode selectedMode = pet::Mode::Relaxed;
-  uint8_t selectedGoal = 1;
   pet::Species chosenSpecies = pet::Species::Silva;
   bool historyWritable = true;
   bool farewellArtTried = false, collectionArtTried = false;
   bool contentsAvailable = false;
   bool pettingHandAvailable = false;
   bool portraitBackgroundsAvailable = false;
+  bool fullRoomBackgroundsAvailable = false;
   uint32_t careCheckedAt = 0;
   pet::Game selectedGame = pet::Game::Pairs;
   petui::CatalogFilter catalogFilter = petui::CatalogFilter::Unowned;
+  petui::ReadingDisplay readingDisplay = petui::ReadingDisplay::Project;
   uint8_t previewItem = pet::OBJECT_COUNT;
   petui::FeedResult feedResult;
   petui::CareResult careResult;
@@ -84,13 +101,20 @@ class PetActivity final : public Activity {
   bool archiveDraft();
   bool updateCare();
   void action(freeink::ui::ActionId, int);
+  bool wakeBeforeCare(freeink::ui::ActionId);
   void swipeCatalog(int dx, int dy);
+  void swipePages(int dx, int dy);
+  void beginRestTransition();
   void show(pet::View);
+  void enterName();
+  EmbeddedKeyboard nameKeyboard;
   void back();
   void changeTab(int);
+  int nextTab(int) const;
   bool commit();
   void notice(const char*, pet::View, petui::NoticeKind = petui::NoticeKind::Information, petui::CareResult = {});
-  void acknowledge();
+  void acknowledge(bool collectProject = false);
+  void react(petreact::Kind);
   bool openResources();
   bool resourcesReady() const;
   void syncFarewellArt();

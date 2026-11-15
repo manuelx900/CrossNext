@@ -1,0 +1,12 @@
+{
+  "id": "C002",
+  "master": "crown-pet-v1.png",
+  "sha256": "74ea2dc8a53c86ec8446489553664cd29cfec800cbea162e911db977ca0f3d65",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE new friendly full-body chibi PET sprite for Aventura lectora: a tiny reformed shadow dragon with two rounded horn nubs, a small horned royal circlet, broad white wing membranes with thick black edges, a soft white belly, round expressive eyes, four clear paws and a curled dark tail. Friendly proud expression. Three-quarter pose facing left, complete head/wings/tail/feet inside transparent padding. Genuine transparent background, VERY THICK solid BLACK contours, clean white and flat pale-gray fills. No scenery, text, UI, frame, hero or other pet. Fairy reference is STYLE ONLY, not a humanoid subject.",
+  "reference": "assets_local/quest/redesign/masters/decoration-fairy-v1.png",
+  "transparent": true,
+  "width": 1312,
+  "height": 1199,
+  "mode": "RGBA"
+}

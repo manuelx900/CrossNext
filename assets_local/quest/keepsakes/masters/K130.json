@@ -1,0 +1,21 @@
+{
+  "id": "K130",
+  "key": "Medalla-alliance",
+  "file": "K130.png",
+  "sample": {
+    "es": "Medalla de los relatos",
+    "en": "Accounts medal"
+  },
+  "requests": [
+    249
+  ],
+  "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: two clasped hands beneath a plain banner.",
+  "transparent": true,
+  "kind": "keepsake",
+  "sha256": "d4ce8217b2ba35ec0eee4ddbbea067d48c4cb870be07b15f741c7b8093038e39",
+  "tool": "built-in image_gen",
+  "source": "exec-cc1e70ec-ebaf-4953-8555-40c8e11beed4.png",
+  "width": 1199,
+  "height": 1312,
+  "mode": "RGBA"
+}

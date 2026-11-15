@@ -11,6 +11,7 @@
 #include "MappedInputManager.h"
 #include "RevealedInteractions.h"
 #include "apps_local/ui/LightOptionMenu.h"
+#include "apps_local/ui/PageIndicator.h"
 #include "apps_local/ui/PixelMenuTheme.h"
 #include "components/UITheme.h"
 #include "components/UiAppHelpers.h"
@@ -62,9 +63,10 @@ class OptionPopup {
   // Message dialog: a wrapped body under the (optional) title, like the
   // Wi-Fi forget-network prompt. Pass an empty title for a message-only look.
   void showMessage(const char* titleStr, const char* messageStr, const char* const* options, int optionCount,
-                   int currentIndex, std::function<void(int)> onSelect) {
+                   int currentIndex, std::function<void(int)> onSelect, int maxMessageLines = 0) {
     show(titleStr, options, optionCount, currentIndex, std::move(onSelect));
     message = messageStr ? messageStr : "";
+    messageLineLimit = std::clamp(maxMessageLines, 0, 32);
   }
 
   void show(StrId titleId, const std::vector<std::string>& options, int currentIndex,
@@ -75,10 +77,33 @@ class OptionPopup {
     activate(currentIndex, std::move(onSelect));
   }
 
+  void show(StrId titleId, std::vector<std::string>&& options, int currentIndex, std::function<void(int)> onSelect) {
+    title = I18N.get(titleId);
+    headline.clear();
+    ownedStrings = std::move(options);
+    activate(currentIndex, std::move(onSelect));
+  }
+
   bool handleInput(MappedInputManager& input, const std::function<void()>& requestUpdate) {
     if (!active) return false;
 
     const freeink::ui::InputSnapshot snap = touchSnapshotFrom(input);
+    const auto swipe = input.wasSwipe();
+    if (swipe == MappedInputManager::SwipeDir::Left || swipe == MappedInputManager::SwipeDir::Right) {
+      if (uiReady && interactions.publishedRoutable()) {
+        interactions.routePublished(snap);
+        const bool next = swipe == MappedInputManager::SwipeDir::Left;
+        for (size_t i = 0; i < interactions.publishedCount(); ++i) {
+          const auto& hit = interactions.publishedData()[i];
+          if (hit.action == ACTION_PAGE && (next ? hit.value > selectedIndex : hit.value < selectedIndex)) {
+            selectedIndex = hit.value;
+            requestUpdate();
+            break;
+          }
+        }
+      }
+      return true;
+    }
     if (snap.touchPressed || snap.touchReleased || snap.touchHeld) {
       // Interactions are registered on the render task; only route once the
       // first render after show() has populated the table (uiReady handshake).
@@ -143,7 +168,7 @@ class OptionPopup {
   bool handleButtons(const bool previous, const bool next, const bool confirm, const bool back,
                      const std::function<void()>& requestUpdate) {
     if (!active) return false;
-    const int count = std::min<int>(ownedStrings.size(), MAX_OPTIONS);
+    const int count = static_cast<int>(ownedStrings.size());
     if (previous) {
       selectedIndex = (selectedIndex - 1 + count) % count;
       requestUpdate();
@@ -205,34 +230,28 @@ class OptionPopup {
     pixelui::FontScope fonts(target, const_cast<GfxRenderer&>(renderer), I18N.getLanguage() != Language::EN);
     if (!chrome::lightHeader) target.setFont(pixelui::kSmall, toybox::kTileFontId);
     const auto& metrics = UITheme::getInstance().getMetrics();
-    const int totalOptions = static_cast<int>(ownedStrings.size());
-    const uint8_t count = static_cast<uint8_t>(totalOptions > MAX_OPTIONS ? MAX_OPTIONS : totalOptions);
-
-    fui::DialogOption options[MAX_OPTIONS];
-    for (uint8_t i = 0; i < count; ++i) {
-      options[i].label = ownedStrings[i].c_str();
-      options[i].action = ACTION_OPTION;
-      options[i].value = static_cast<int16_t>(i);
-      options[i].state = (i == selectedIndex) ? fui::StateFocused : fui::StateNormal;
-    }
+    const int count = static_cast<int>(ownedStrings.size());
 
     if (chrome::lightHeader) {
       lightui::ChoiceMenu menu;
       menu.title = title.c_str();
       menu.headline = headline.c_str();
       menu.message = message.c_str();
-      menu.options = options;
+      menu.labels = ownedStrings.data();
       menu.count = count;
       menu.current = currentIndex;
       menu.focus = selectedIndex;
       menu.guard = ACTION_CHROME;
       menu.pageAction = ACTION_PAGE;
-      lightui::choiceMenu(frame, device.screen(), menu);
+      menu.optionAction = ACTION_OPTION;
+      if (messageLineLimit) menu.messageMaxLines = messageLineLimit;
+      lightui::choiceMenu(frame, device.safeRect(), menu);
       interactions.publish();
       uiReady = true;
       return;
     }
 
+    fui::DialogOption options[MAX_PAGE_OPTIONS];
     fui::OptionDialogProps props;
     props.title = title.empty() ? nullptr : title.c_str();
     props.headline = headline.empty() ? nullptr : headline.c_str();
@@ -240,10 +259,10 @@ class OptionPopup {
       props.message = message.c_str();
       props.messageText.font = pixelui::kSmall;
       props.messageText.align = fui::TextAlign::Center;
-      props.messageText.maxLines = 6;
+      props.messageText.maxLines = messageLineLimit ? messageLineLimit : 6;
     }
     props.options = options;
-    props.optionCount = count;
+    props.optionCount = static_cast<uint8_t>(std::min(count, MAX_PAGE_OPTIONS));
     props.verticalOptions = true;
     // Touch only: physical buttons stay on the legacy wrap/confirm path above,
     // so the buffer never competes with it for focus/confirm dispatch.
@@ -263,6 +282,7 @@ class OptionPopup {
     props.gap = static_cast<int16_t>(metrics.optionPopupItemSpacing);
     props.buttonStyles = pixelui::buttonStyles();
     props.buttonText.font = pixelui::kSmall;
+    props.buttonText.maxLines = 2;
     // defaultPopupStyles() has no border, so opt in using the per-theme frame metrics.
     props.styles = fui::defaultPopupStyles();
     props.styles.normal.border = fui::Paint::solid(fui::Color::Black);
@@ -276,16 +296,65 @@ class OptionPopup {
 
     // Fixed fraction of the screen, clamped by the theme's side margins; the
     // old max-text-width sizing is gone, long labels wrap inside the buttons.
-    const fui::Rect screen = device.screen();
+    const fui::Rect screen = device.safeRect();
     const int16_t width =
         fui::clampI16(std::min<int>(screen.width * 3 / 4, screen.width - metrics.optionPopupDialogSideMargin * 2));
-    const int16_t height = fui::clampI16(fui::optionDialogHeight(target, props, width), 0, screen.height);
-    const fui::Rect dialogRect = fui::centeredRect(screen, fui::Size{width, height});
+    if (count > MAX_PAGE_OPTIONS)
+      props.buttonHeight =
+          fui::clampI16(std::max(int(props.buttonHeight), 2 * int(target.lineHeight(pixelui::kSmall)) + 12));
+    else
+      for (int i = 0; i < count; ++i) {
+        const auto size =
+            fui::measureWrappedText(target, ownedStrings[i].c_str(), props.buttonText, width - innerPadding * 2 - 24);
+        props.buttonHeight = std::max<int16_t>(props.buttonHeight, size.height + 12);
+      }
+    const int available = screen.height - 24;
+    int height = fui::optionDialogHeight(target, props, width);
+    int capacity = std::min(count, MAX_PAGE_OPTIONS), first = 0;
+    const int pagerHeight = 52;
+    if (count > capacity || height > available) {
+      props.optionCount = 1;
+      for (auto* style : {&props.messageText, &props.headlineText, &props.titleText})
+        while (style->maxLines > 1 && fui::optionDialogHeight(target, props, width) + pagerHeight > available)
+          --style->maxLines;
+      const int chromeHeight = fui::optionDialogHeight(target, props, width) - props.buttonHeight;
+      capacity = std::clamp((available - chromeHeight - pagerHeight + props.gap) / (props.buttonHeight + props.gap), 1,
+                            std::min(count, MAX_PAGE_OPTIONS));
+      first = selectedIndex / capacity * capacity;
+      // Keep the outer panel stable, including a short final page: the host
+      // may repaint only the popup, without restoring the screen behind it.
+      props.optionCount = static_cast<uint8_t>(capacity);
+      height = fui::optionDialogHeight(target, props, width) + pagerHeight;
+      props.optionCount = static_cast<uint8_t>(std::min(capacity, count - first));
+    }
+    for (int i = 0; i < props.optionCount; ++i) {
+      options[i].label = ownedStrings[first + i].c_str();
+      options[i].action = ACTION_OPTION;
+      options[i].value = static_cast<int16_t>(first + i);
+      options[i].state = first + i == selectedIndex ? fui::StateFocused : fui::StateNormal;
+    }
+    const fui::Rect dialogRect = fui::centeredRect(screen, fui::Size{width, fui::clampI16(height)});
 
     // Chrome guard first, options after: route() scans newest-first, so the
     // option buttons win inside the dialog and the guard absorbs the rest.
     frame.hit(dialogRect, ACTION_CHROME, 0, fui::InputTouch);
-    fui::optionDialog(frame, dialogRect, props);
+    if (capacity < count) {
+      target.fill(dialogRect, fui::Paint::solid(fui::Color::White));
+      target.stroke(dialogRect, fui::Paint::solid(fui::Color::Black), pixelui::kBorder);
+      props.styles.normal.borderWidth = 0;
+      fui::optionDialog(
+          frame,
+          fui::makeRect(dialogRect.x, dialogRect.y, dialogRect.width, fui::optionDialogHeight(target, props, width)),
+          props);
+      const auto pager = pageui::draw(
+          target,
+          fui::makeRect(dialogRect.x + 12, dialogRect.bottom() - pagerHeight, dialogRect.width - 24, pagerHeight - 8),
+          first / capacity + 1, (count + capacity - 1) / capacity);
+      target.stroke(dialogRect, fui::Paint::solid(fui::Color::Black), pixelui::kBorder);
+      if (first > 0) frame.hit(pager.before, ACTION_PAGE, first - capacity, fui::InputTouch);
+      if (first + capacity < count) frame.hit(pager.after, ACTION_PAGE, first + capacity, fui::InputTouch);
+    } else
+      fui::optionDialog(frame, dialogRect, props);
     // Atomically make this generation the one handleInput() reads, now that
     // every hit() call for this frame is done.
     interactions.publish();
@@ -302,20 +371,20 @@ class OptionPopup {
   }
 
  private:
-  // Keep option storage bounded. The light picker pages within this set;
-  // its routing table also reserves a guard and two page controls.
-  static constexpr int MAX_OPTIONS = 16;
-  static constexpr size_t INTERACTION_CAPACITY = MAX_OPTIONS + 3;
+  // Only the visible page needs controls; labels remain in the existing snapshot.
+  static constexpr int MAX_PAGE_OPTIONS = lightui::ChoiceMenu::MAX_VISIBLE;
+  static constexpr size_t INTERACTION_CAPACITY = MAX_PAGE_OPTIONS + 3;
   static constexpr freeink::ui::ActionId ACTION_OPTION = 1;
   static constexpr freeink::ui::ActionId ACTION_CHROME = 2;
   static constexpr freeink::ui::ActionId ACTION_PAGE = 3;
 
   void activate(int currentIndex, std::function<void(int)> onSelect) {
-    const int count = std::min<int>(ownedStrings.size(), MAX_OPTIONS);
+    const int count = static_cast<int>(ownedStrings.size());
     this->currentIndex = currentIndex;
     selectedIndex = currentIndex >= 0 && currentIndex < count ? currentIndex : 0;
     onSelectCallback = std::move(onSelect);
     message.clear();
+    messageLineLimit = 0;
     uiReady = false;
     active = count > 0;
   }
@@ -326,6 +395,7 @@ class OptionPopup {
   std::string message;
   std::vector<std::string> ownedStrings;
   int selectedIndex = 0, currentIndex = 0;
+  int messageLineLimit = 0;
   std::function<void(int)> onSelectCallback;
   // Written by the render task (frame registration), routed by the loop task;
   // uiReady closes the rebuild window exactly like UiListActivity::uiReady.

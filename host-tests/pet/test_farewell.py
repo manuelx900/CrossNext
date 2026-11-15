@@ -8,7 +8,12 @@ import tempfile
 import zlib
 
 ROOT = Path(__file__).resolve().parents[2]
-path = ROOT / "resources/apps/pet/farewell.bin"
+spec=importlib.util.spec_from_file_location('farewell_builder',ROOT/'tools_local/pet/build_farewell.py')
+module=importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+fixture=tempfile.TemporaryDirectory()
+path=Path(fixture.name)/'farewell.bin'
+module.build(path)
 data = path.read_bytes()
 magic, count, size, crc, index_crc = struct.unpack_from("<8sIIII", data)
 assert magic == b"CNART002" and count == 6 and size == len(data)
@@ -32,9 +37,6 @@ for i in range(0,count,2):
 for row in manifest['sources']:
     original=ROOT/'assets_local/pet/farewell'/row['file']
     assert hashlib.sha256(original.read_bytes()).hexdigest() == row['sha256']
-spec=importlib.util.spec_from_file_location('farewell_builder',ROOT/'tools_local/pet/build_farewell.py')
-module=importlib.util.module_from_spec(spec)
-spec.loader.exec_module(module)
 with tempfile.TemporaryDirectory() as temp:
     copy=Path(temp)/'farewell.bin'
     module.build(copy)

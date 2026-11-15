@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Bitmap.h>
+#include <FacetCache.h>
 #include <HalMemory.h>
 #include <HalStorage.h>
 #include <LibraryFilter.h>
@@ -16,7 +17,9 @@
 #include "RecentBooksStore.h"
 #include "activities/UiTabListActivity.h"
 #include "apps_local/library/LibraryControls.h"
+#include "apps_local/library/LibraryCoverPrefetch.h"
 #include "apps_local/library/LibraryMenu.h"
+#include "apps_local/library/PreparedCoverCache.h"
 #include "components/OptionPopup.h"
 
 // The sort strip and book rows share UiTabListActivity's navigation ring.
@@ -29,6 +32,8 @@ class LibraryListActivity final : public UiTabListActivity {
 
   void onEnter() override;
   void onExit() override;
+  void runIdleWork() override;
+  bool presentationComplete() const override;
 
  protected:
   // --- UiListActivity / UiTabListActivity contract ---------------------------
@@ -79,13 +84,16 @@ class LibraryListActivity final : public UiTabListActivity {
   void showCategories();
   void chooseFacet(int row);
   bool resultMapped() const { return filtering() || libraryui::resultMapRequired(preferences()); }
+  void openCollections(const std::string& book = {});
   void openSortPicker();
   void openFilterMenu();
   void openFacetPicker(library::Facet facet);
   bool filtering() const { return !query.empty() || facetFilter.active(); }
   uint16_t facetOrdinal(int row) const;
   library::LibraryFilter facetFilter;
-  HalMemory::PsramBuffer facetChoices;
+  library::FacetCache facetChoices;
+  void closeIndex();
+  bool openIndexForBrowsing();
   uint16_t facetCount = 0;
   enum class PendingMenu : int8_t { None = -1, Settings, Rebuild };
   PendingMenu pendingFilterMenu = PendingMenu::None;
@@ -128,6 +136,16 @@ class LibraryListActivity final : public UiTabListActivity {
   static void rebuildActionTrampoline(const freeink::ui::ActionEvent& event, void* user);
   static void backActionTrampoline(const freeink::ui::ActionEvent& event, void* user);
 
+  bool restoreResidentLibrary();
+  int entryBookCount() const;
+  void initializeLibrary();
+  enum class EntryPhase : uint8_t { Shell, Preparing, Ready };
+  std::atomic<EntryPhase> entryPhase{EntryPhase::Shell};
+  unsigned long entryStartedAt = 0;
+  bool libraryReady() const { return entryPhase == EntryPhase::Ready; }
+  enum class CoverPresentation : uint8_t { Unannounced, Notice, Loading, Complete };
+  std::atomic<CoverPresentation> coverPresentation{CoverPresentation::Unannounced};
+
   // Data
   void applyFilter();
   int bookRowCount() const;
@@ -146,6 +164,7 @@ class LibraryListActivity final : public UiTabListActivity {
   // Materializes ListItems and their strings for the visible window only.
   void buildRows(UiScreen& screen);
   void buildGrid(UiScreen& screen);
+  uint64_t gridSceneKey(int first, int count, int pageSize);
   static constexpr freeink::ui::ActionId ACTION_GRID_PAGE = ACTION_VIEW;
   bool gridView() const;
   uint8_t& recentViewSetting() const;
@@ -153,6 +172,9 @@ class LibraryListActivity final : public UiTabListActivity {
   int gridPageSize() const;
   void toggleView();
   bool loadPendingCover();
+  void prefetchNextCover();
+  void prepareVisibleCover();
+  static bool continueCoverPreparation(void* context);
   void ensureGridBuffer();
   void invalidateGrid();
   static constexpr size_t GRID_CACHE_BYTES = 40 * 1024;
@@ -164,6 +186,18 @@ class LibraryListActivity final : public UiTabListActivity {
   bool gridCacheValid = false;
   bool gridInverted = false;
   std::atomic<bool> coverWorkRequested{false};
+  std::atomic<bool> prefetchCancelled{true};
+  libraryui::CoverPrefetch coverPrefetch;
+  libraryui::PreparedCoverCache preparedCover;
+  libraryui::GridLayout gridLayout;
+  uint16_t nativeMissing = 0;
+  int nativeHeights[9]{};
+  uint64_t prefetchSceneKey = 0;
+  uint32_t gridLibraryRevision = 0, gridSceneRevision = 0;
+  int prefetchFirst = -1, prefetchSlot = 0;
+  bool prefetchFallbackHeight = false;
+  int gridCoverHeight = 0, gridPreparedCoverHeight = 0;
+  uint32_t prefetchRevision = 0, prefetchArtRevision = 0, prefetchWorkPaint = 0;
   std::atomic<bool> presentationPending{true};
   uint32_t coverWorkPaint = 0;
   unsigned long lastNavigationAt = 0;
@@ -176,7 +210,6 @@ class LibraryListActivity final : public UiTabListActivity {
   uint32_t coverAttempts = 0;
   static void formatInitialHeading(uint32_t initial, std::string& out);
   void formatAuthorHeading(const std::string& author, std::string& out) const;
-  void drawPositionReadout() const;
   void drawHoldHelp() const;
   const char* headerTitle() const override;
 
@@ -247,6 +280,7 @@ class LibraryListActivity final : public UiTabListActivity {
   uint16_t overlapRows[RecentBooksStore::MAX_RECENT_BOOKS] = {};
   uint8_t pinnedTotal = 0;
   uint8_t overlapCount = 0;
+  bool pinnedRowsReady = false;
 
   bool lockNextConfirmRelease = false;
   bool lockNextBackRelease = false;

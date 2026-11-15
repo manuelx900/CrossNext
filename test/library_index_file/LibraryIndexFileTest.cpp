@@ -25,6 +25,163 @@ std::vector<uint8_t> makeBlob(const uint64_t pathHash, const std::initializer_li
 
 }  // namespace
 
+class LibraryRetainedIndex : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    library::LibraryIndexFile::releaseRetainedBrowseCache();
+    HalMemory::unavailable = false;
+    HalMemory::freePsram = 8 * 1024 * 1024;
+  }
+  void TearDown() override {
+    library::LibraryIndexFile::releaseRetainedBrowseCache();
+    HalMemory::unavailable = false;
+    HalMemory::freePsram = 8 * 1024 * 1024;
+  }
+  std::vector<uint8_t> image(uint16_t books = 2000) {
+    library::ClixHeader header{};
+    std::memcpy(header.magic, library::CLIX_MAGIC, sizeof(header.magic));
+    header.formatVersion = library::CLIX_FORMAT_VERSION;
+    header.foldVersion = library::CLIX_FOLD_VERSION;
+    header.bookCount = books;
+    library::layoutSections(header, 0, 0);
+    std::vector<uint8_t> bytes(header.selfSize, 0);
+    std::memcpy(bytes.data(), &header, sizeof(header));
+    return bytes;
+  }
+};
+
+TEST_F(LibraryRetainedIndex, ResidentEntryNeedsNoFileReadsAndRejectsStorageChanges) {
+  Storage.setFile("/retained.clx", image());
+  library::LibraryIndexFile first;
+  ASSERT_TRUE(first.open("/retained.clx"));
+  ASSERT_TRUE(first.cacheForBrowsing(nullptr, 77));
+  first.retainBrowseCache(77);
+  first.close();
+  HalFile::resetIoCounts();
+  library::LibraryIndexFile second;
+  ASSERT_TRUE(second.openRetained("/retained.clx", 77));
+  library::ClixRecord record{};
+  ASSERT_TRUE(second.readRecord(0, record));
+  EXPECT_EQ(HalFile::readCount(), 0u);
+  EXPECT_EQ(HalFile::seekCount(), 0u);
+  second.retainBrowseCache(77);
+  second.close();
+  ++Storage.content;
+  EXPECT_FALSE(second.openRetained("/retained.clx", 77));
+  --Storage.content;
+  ++Storage.media;
+  EXPECT_FALSE(second.openRetained("/retained.clx", 77));
+  --Storage.media;
+  EXPECT_FALSE(second.openRetained("/other.clx", 77));
+  EXPECT_FALSE(second.openRetained("/retained.clx", 78));
+  ASSERT_TRUE(second.openRetained("/retained.clx", 77));
+}
+
+TEST_F(LibraryRetainedIndex, ReentryValidatesOnlyHeaderAndTransfersWithoutAllocation) {
+  Storage.setFile("/retained.clx", image());
+  {
+    library::LibraryIndexFile index;
+    ASSERT_TRUE(index.open("/retained.clx"));
+    ASSERT_TRUE(index.cacheForBrowsing(nullptr, 7));
+    index.retainBrowseCache(7);
+  }
+  HalMemory::unavailable = true;
+  HalMemory::attempts = 0;
+  HalFile::resetIoCounts();
+  library::LibraryIndexFile index;
+  ASSERT_TRUE(index.open("/retained.clx"));
+  ASSERT_TRUE(index.canReuseBrowseCache(7));
+  ASSERT_TRUE(index.cacheForBrowsing(nullptr, 7));
+  EXPECT_EQ(HalFile::readCount(), 1u);
+  EXPECT_EQ(HalMemory::attempts, 0u);
+  HalFile::resetIoCounts();
+  library::ClixRecord record{};
+  for (uint16_t i = 0; i < index.bookCount(); ++i) ASSERT_TRUE(index.readRecord(i, record));
+  EXPECT_EQ(HalFile::readCount(), 0u);
+}
+
+TEST_F(LibraryRetainedIndex, ChangedRevisionRejectsSameHeaderAndNewRecordIsRead) {
+  auto bytes = image();
+  Storage.setFile("/retained.clx", bytes);
+  library::LibraryIndexFile index;
+  ASSERT_TRUE(index.open("/retained.clx"));
+  ASSERT_TRUE(index.cacheForBrowsing(nullptr, 7));
+  index.retainBrowseCache(7);
+  index.close();
+  library::ClixHeader header{};
+  std::memcpy(&header, bytes.data(), sizeof(header));
+  library::ClixRecord expected{};
+  expected.fileSize = 12345;
+  std::memcpy(bytes.data() + header.recordStart, &expected, sizeof(expected));
+  Storage.setFile("/retained.clx", bytes);
+  ASSERT_TRUE(index.open("/retained.clx"));
+  HalFile::resetIoCounts();
+  EXPECT_FALSE(index.canReuseBrowseCache(8));
+  ASSERT_TRUE(index.cacheForBrowsing(nullptr, 8));
+  EXPECT_GT(HalFile::readCount(), 0u);
+  library::ClixRecord actual{};
+  ASSERT_TRUE(index.readRecord(0, actual));
+  EXPECT_EQ(actual.fileSize, expected.fileSize);
+}
+
+TEST_F(LibraryRetainedIndex, ReuseEligibilityMissNeverLoadsOrAllocatesColdSnapshot) {
+  for (uint16_t count : {2000, 4096}) {
+    Storage.setFile("/retained.clx", image(count));
+    library::LibraryIndexFile index;
+    ASSERT_TRUE(index.open("/retained.clx"));
+    HalFile::resetIoCounts();
+    HalMemory::attempts = 0;
+    EXPECT_FALSE(index.canReuseBrowseCache(7));
+    EXPECT_EQ(HalFile::readCount(), 0u);
+    EXPECT_EQ(HalMemory::attempts, 0u);
+    ASSERT_TRUE(index.cacheForBrowsing(nullptr, 7));
+    index.retainBrowseCache(7);
+    index.close();
+    ASSERT_TRUE(index.open("/retained.clx"));
+    HalFile::resetIoCounts();
+    HalMemory::attempts = 0;
+    EXPECT_EQ(index.canReuseBrowseCache(7), count == 2000);
+    EXPECT_EQ(HalFile::readCount(), 0u);
+    EXPECT_EQ(HalMemory::attempts, 0u);
+    library::LibraryIndexFile::releaseRetainedBrowseCache();
+  }
+}
+
+TEST_F(LibraryRetainedIndex, ChangedPathOrHeaderRejectsRetainedSnapshot) {
+  for (bool changePath : {false, true}) {
+    auto bytes = image();
+    Storage.setFile("/retained.clx", bytes);
+    library::LibraryIndexFile index;
+    ASSERT_TRUE(index.open("/retained.clx"));
+    ASSERT_TRUE(index.cacheForBrowsing(nullptr, 7));
+    index.retainBrowseCache(7);
+    index.close();
+    if (!changePath) bytes[offsetof(library::ClixHeader, metadataEnabled)] = 1;
+    const char* path = changePath ? "/other.clx" : "/retained.clx";
+    Storage.setFile(path, bytes);
+    ASSERT_TRUE(index.open(path));
+    HalFile::resetIoCounts();
+    ASSERT_TRUE(index.cacheForBrowsing(nullptr, 7));
+    EXPECT_GT(HalFile::readCount(), 0u);
+  }
+}
+
+TEST_F(LibraryRetainedIndex, LargeOrLowMemoryOrStaleSnapshotsAreNotRetained) {
+  for (unsigned condition = 0; condition < 3; ++condition) {
+    Storage.setFile("/retained.clx", image(condition == 0 ? 4096 : 2000));
+    library::LibraryIndexFile index;
+    ASSERT_TRUE(index.open("/retained.clx"));
+    ASSERT_TRUE(index.cacheForBrowsing(nullptr, 7));
+    HalMemory::freePsram = condition == 1 ? 1024 : 8 * 1024 * 1024;
+    index.retainBrowseCache(condition == 2 ? 8 : 7);
+    index.close();
+    ASSERT_TRUE(index.open("/retained.clx"));
+    HalMemory::attempts = 0;
+    ASSERT_TRUE(index.cacheForBrowsing(nullptr, 7));
+    EXPECT_EQ(HalMemory::attempts, 1u);
+  }
+}
+
 TEST(LibraryIndexFile, BrowseSnapshotEliminatesRepeatedFacetIoAndReopensFresh) {
   library::ClixHeader header{};
   std::memcpy(header.magic, library::CLIX_MAGIC, sizeof(header.magic));

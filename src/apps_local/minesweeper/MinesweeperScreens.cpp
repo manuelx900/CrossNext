@@ -194,6 +194,15 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
     dashboard::button(screen, screen.takeBottom(64, 0), tr(STR_GUIDE_SAVE), ActionSaveSize, 0, true, &extra_check_32,
                       pixelui::kBody);
     dashboard::text(screen, screen.takeBottom(34, 18), tr(STR_GUIDE_NEXT_GAME), 0);
+    const auto mines = screen.takeBottom(60, 12);
+    char mineLabel[48];
+    std::snprintf(mineLabel, sizeof(mineLabel), tr(STR_MINES_COUNT), model.mines);
+    dashboard::frame(screen, mines, pixelui::kBorder);
+    dashboard::text(screen, fui::makeRect(mines.x + 120, mines.y, mines.width - 240, mines.height), mineLabel, 0);
+    dashboard::button(screen, fui::makeRect(mines.x + 8, mines.y + 6, 48, 48), "-5", ActionMineCount, -5);
+    dashboard::button(screen, fui::makeRect(mines.x + 64, mines.y + 6, 48, 48), "-", ActionMineCount, -1);
+    dashboard::button(screen, fui::makeRect(mines.right() - 112, mines.y + 6, 48, 48), "+", ActionMineCount, 1);
+    dashboard::button(screen, fui::makeRect(mines.right() - 56, mines.y + 6, 48, 48), "+5", ActionMineCount, 5);
     const auto area = screen.body();
     const int sizes[] = {10, 15, 20};
     const int gap = 16, w = wide ? (area.width - 2 * gap) / 3 : area.width,
@@ -201,26 +210,22 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
     for (int n = 0; n < 3; ++n) {
       const auto r = fui::makeRect(area.x + (wide ? n * (w + gap) : 0), area.y + (wide ? 0 : n * (h + gap)), w, h);
       dashboard::frame(screen, r, pixelui::kBorder);
-      const int icon = wide ? 68 : 80;
+      const int icon = wide ? 36 : 80;
       guideui::grid(screen, fui::makeRect(r.x + 16, r.y + 16, icon, icon), sizes[n]);
       char label[40];
       std::snprintf(label, sizeof(label), "%d x %d", sizes[n], sizes[n]);
-      const auto name = wide ? fui::makeRect(r.x + 8, r.y + icon + 24, r.width - 16, 34)
+      const auto name = wide ? fui::makeRect(r.x + 8, r.y + icon + 18, r.width - 16, 30)
                              : fui::makeRect(r.x + 112, r.y + 18, r.width - 178, 42);
       dashboard::text(screen, name, label, 1, fui::TextAlign::Left);
       std::snprintf(label, sizeof(label), tr(STR_GUIDE_CELLS), sizes[n] * sizes[n]);
-      dashboard::text(screen,
-                      wide ? fui::makeRect(r.x + 8, name.bottom() + 4, r.width - 16, 28)
-                           : fui::makeRect(r.x + 112, r.y + 68, r.width - 178, 30),
-                      label, 3, fui::TextAlign::Left);
+      if (!wide)
+        dashboard::text(screen,
+                        wide ? fui::makeRect(r.x + 8, name.bottom() + 4, r.width - 16, 28)
+                             : fui::makeRect(r.x + 112, r.y + 68, r.width - 178, 30),
+                        label, 3, fui::TextAlign::Left);
       const auto check = fui::makeRect(r.right() - 46, r.y + 24, 28, 28);
       const bool selected = screen.frame().buttonSelected(ActionBoardSize, sizes[n], model.size == sizes[n]);
-      if (chrome::lightHeader)
-        dashboard::check(screen, check, selected);
-      else {
-        dashboard::frame(screen, check, pixelui::kBorder);
-        if (selected) screen.target().fill(check, dashboard::ink);
-      }
+      dashboard::check(screen, check, selected);
       screen.frame().hit(r, ActionBoardSize, sizes[n]);
     }
     return;

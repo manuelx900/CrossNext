@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstdio>
+#include <cstring>
 
 int main() {
   std::vector<uint8_t> input(15000);
@@ -39,11 +40,72 @@ int main() {
     assert(writer.write(uint8_t(1)) == 0 && !writer.drain() && calls == file.calls);
     assert(file.bytes.size() == allowance);
   }
+  {
+    HalFile file;
+    PageCacheWriter writer(file);
+    assert(writer.deferPersistence());
+    assert(writer.write(input.data(), input.size()) == input.size());
+    assert(writer.drain() && file.calls == 0 && writer.position() == input.size());
+    assert(!std::memcmp(writer.resident(0, input.size()), input.data(), input.size()));
+    assert(!writer.resident(1, input.size()) && !writer.resident(input.size() + 1, 0));
+    writer.allowPersistence();
+    assert(writer.flushSome(1234) && file.bytes.size() == 1234);
+    assert(writer.flushing() && writer.position() == input.size());
+    assert(writer.resident(0, input.size()));
+    assert(writer.flushAll() && file.bytes == input && !writer.flushing());
+    assert(writer.position() == input.size());
+  }
+  {
+    HalFile file;
+    {
+      PageCacheWriter writer(file);
+      assert(writer.deferPersistence());
+      assert(writer.write(input.data(), input.size()) == input.size());
+    }
+    assert(file.bytes.empty() && HalMemory::active == 0);
+  }
+  {
+    HalFile file;
+    PageCacheWriter writer(file);
+    assert(writer.deferPersistence());
+    std::vector<uint8_t> huge(300000, 42);
+    assert(writer.write(input.data(), input.size()) == input.size());
+    assert(writer.write(huge.data(), huge.size()) == huge.size());
+    assert(writer.flushAll() && file.bytes.size() == input.size() + huge.size());
+    assert(std::equal(input.begin(), input.end(), file.bytes.begin()));
+    assert(std::equal(huge.begin(), huge.end(), file.bytes.begin() + input.size()));
+  }
+  for (size_t allowance : {size_t(0), size_t(3), size_t(8193)}) {
+    HalFile file;
+    PageCacheWriter writer(file);
+    assert(writer.deferPersistence());
+    assert(writer.write(input.data(), input.size()) == input.size());
+    file.allowance = allowance;
+    assert(!writer.flushAll());
+    const auto calls = file.calls;
+    assert(!writer.flushAll() && writer.write(uint8_t(0)) == 0 && calls == file.calls);
+  }
+  {
+    HalFile file;
+    PageCacheWriter writer(file);
+    assert(writer.deferPersistence());
+    std::vector<uint8_t> prefix(140000, 7);
+    assert(writer.write(prefix.data(), prefix.size()) == prefix.size());
+    assert(writer.spoolNeedsDrain() && file.calls == 0);
+    writer.allowPersistence();
+    while (writer.flushing()) {
+      const auto before = file.bytes.size();
+      assert(writer.flushSome());
+      assert(file.bytes.size() - before <= 8192);
+    }
+    assert(file.bytes == prefix);
+  }
   HalMemory::fail = true;
   {
     HalFile file;
     PageCacheWriter writer(file);
     assert(HalMemory::active == 0);
+    assert(!writer.deferPersistence());
     assert(writer.write(nullptr, 0) == 0 && file.calls == 0);
     assert(writer.write(input.data(), input.size()) == input.size());
     assert(writer.drain() && file.bytes == input && file.calls == 1);

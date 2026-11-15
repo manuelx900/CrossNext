@@ -78,7 +78,7 @@ void textSettings(toybox::Screen& screen, const TextSettingsModel& model) {
   fittext::draw(screen.target(), makeRect(body.x + 4, body.y + 58, body.width - 8, helpHeight), tr(STR_CARD_SMART_HELP),
                 3, 2);
   body.y += top;
-  body.height -= (model.error ? 112 : 72) + top;
+  body.height -= (model.error ? 112 : 72) + top + 60;
   if (wide) {
     const int width = (body.width - 12) / 2;
     panel(screen, makeRect(body.x, body.y, width, body.height), true, model.question, words);
@@ -92,6 +92,15 @@ void textSettings(toybox::Screen& screen, const TextSettingsModel& model) {
   }
   if (model.error)
     fittext::draw(screen.target(), makeRect(done.x, done.y - 48, done.width, 40), tr(STR_FLASH_SIZE_SAVE_ERROR), 3, 2);
+  const auto alignment = makeRect(done.x, done.y - (model.error ? 108 : 60), done.width, 48);
+  dashboard::frame(screen, alignment);
+  static constexpr StrId names[] = {StrId::STR_ALIGN_LEFT, StrId::STR_CENTER, StrId::STR_ALIGN_RIGHT,
+                                    StrId::STR_JUSTIFY};
+  fittext::draw(screen.target(), makeRect(alignment.x + 10, alignment.y, alignment.width / 2 - 12, 48),
+                tr(STR_ALIGNMENT), 0, 1);
+  fittext::draw(screen.target(), makeRect(alignment.x + alignment.width / 2, alignment.y, alignment.width / 2 - 10, 48),
+                I18N.get(names[std::min<int>(model.alignment, 3)]), 0, 1, fui::TextAlign::Right);
+  screen.frame().hit(alignment, Alignment, 0, fui::InputTouch);
   dashboard::action(screen, done, tr(STR_DONE), SettingsBack, nullptr, false);
 }
 }  // namespace flashui

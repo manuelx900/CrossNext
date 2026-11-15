@@ -1,0 +1,12 @@
+{
+  "id": "S068",
+  "master": "scene-068-v1.png",
+  "sha256": "21f97e3feeb99fd24cbec8d9d2e8a73748709fd3e70c26add3f697a0bc2d9e8a",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The garden of gods. Chapter: Hands of stone. Illustrate this already-authored event faithfully, without inventing another object or plot: One book held the account of a family the gods had failed to shelter. Aster asked to leave it until later, then opened it beside you. Before taking other books to the villages, the garden's keepers would have to hear what their own doors had kept out. Context only, do not try to draw all of it: Aster leads you among statues holding closed books. These were offerings of people's stories. The gods stopped opening them when their uncertain endings challenged the orderly world the keepers wanted.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

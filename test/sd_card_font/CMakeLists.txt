@@ -1,5 +1,7 @@
 add_executable(SdCardFontTest
   SdCardFontTest.cpp
+  NotoSerifResourcesTest.cpp
+  LanguageUiResourcesTest.cpp
   ${REPO_ROOT}/lib/EpdFont/EpdFont.cpp
   ${REPO_ROOT}/lib/EpdFont/SdCardFont.cpp
   ${REPO_ROOT}/lib/Utf8/Utf8.cpp
@@ -12,4 +14,4 @@ target_include_directories(SdCardFontTest PRIVATE
 )
 target_link_libraries(SdCardFontTest PRIVATE crosspoint_test_common GTest::gtest_main)
 target_compile_options(SdCardFontTest PRIVATE -fno-exceptions)
-gtest_discover_tests(SdCardFontTest)
+gtest_discover_tests(SdCardFontTest WORKING_DIRECTORY "${REPO_ROOT}")

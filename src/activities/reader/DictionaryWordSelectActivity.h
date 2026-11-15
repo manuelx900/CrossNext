@@ -3,6 +3,7 @@
 #include <Epub/Page.h>
 #include <I18n.h>
 
+#include <cstdio>
 #include <memory>
 #include <string>
 
@@ -20,7 +21,7 @@ class DictionaryWordSelectActivity final : public Activity {
                                         std::unique_ptr<Page> page, int marginLeft, int marginTop,
                                         std::string lookupText = {}, std::unique_ptr<vocabulary::Context> source = {},
                                         std::string sourceLanguage = {}, bool captureRequested = false,
-                                        bool translate = false)
+                                        bool translate = false, const char* dictionary = nullptr)
       : Activity("DictionaryWordSelect", renderer, mappedInput),
         page(std::move(page)),
         marginLeft(marginLeft),
@@ -29,7 +30,10 @@ class DictionaryWordSelectActivity final : public Activity {
         source(std::move(source)),
         sourceLanguage(std::move(sourceLanguage)),
         captureRequested(captureRequested),
-        translate(translate) {}
+        translate(translate),
+        dictionaryOverride(dictionary != nullptr) {
+    if (dictionary) std::snprintf(dictionaryName, sizeof(dictionaryName), "%s", dictionary);
+  }
 
   void onEnter() override;
   void loop() override;
@@ -50,6 +54,8 @@ class DictionaryWordSelectActivity final : public Activity {
   std::string sourceLanguage;
   const bool captureRequested;
   const bool translate;
+  const bool dictionaryOverride;
+  char dictionaryName[32]{};
   bool lookupPending = false;
   Dictionary dict;
   bool dictOpenAttempted = false;

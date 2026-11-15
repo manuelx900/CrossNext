@@ -63,7 +63,7 @@ void QuickSettingsConfigActivity::buildScreen(UiScreen& screen) {
   props.count = listCount();
   props.action = ACTION_ROW;
   syncListViewport(screen, props);
-  quickui::styleConfiguration(props);
+  quickui::styleConfiguration(props, slot >= 0);
   pixelui::list(screen, props);
   if (saveFailed) {
     const auto safe = screen.device().safeRect();

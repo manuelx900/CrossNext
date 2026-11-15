@@ -62,7 +62,8 @@ void session(toybox::Screen&, const SessionModel&);
 void completed(toybox::Screen&, const SessionModel&);
 void cards(toybox::Screen&, const CardsModel&);
 void help(toybox::Screen&, int page);
-int textPage(fui::DrawTarget&, fui::Rect, const char*, int, char*, size_t, TextPageCache* = nullptr, int fontKey = -1);
+int textPage(fui::DrawTarget&, fui::Rect, const char*, int, char*, size_t, TextPageCache* = nullptr, int fontKey = -1,
+             uint8_t alignment = 0);
 void interval(char*, size_t, int minutes, int days);
 void duration(char*, size_t, uint64_t, bool known = true);
 }  // namespace flashui

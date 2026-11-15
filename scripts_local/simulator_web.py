@@ -22,47 +22,19 @@ SITE = REPO / "site"
 STATE = REPO / ".pio" / "build" / "wasm" / "local-state.json"
 BUILD_LOCK = REPO / ".pio" / "local-build.lock"
 ARTIFACTS = ("crossplay.js", "crossplay.wasm", "crossplay.data")
-SERVER_ID = hashlib.sha256(str(REPO).encode("utf-8")).hexdigest()
-PAGE = """<!doctype html>
-<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CrossNext local simulator</title>
-<style>
-*{box-sizing:border-box}body{margin:0;background:#ecece9;color:#171717;font:16px system-ui,sans-serif}
-main{display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px}
-h1{font-size:20px;margin:0}p{margin:0;text-align:center}
-#device{position:relative;width:min(480px,calc(100vw - 32px),calc((100vh - 170px)*.6));aspect-ratio:3/5;background:white;outline:1px solid #777}
-#device[data-orient=landscape]{width:min(800px,calc(100vw - 32px));aspect-ratio:5/3}
-.device-canvas{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none}.device-canvas:focus-visible{outline:3px solid #555}
-nav{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}button{font:inherit;min-width:48px;min-height:44px;cursor:pointer}
-small{max-width:600px;text-align:center}
-</style>
-<main><h1>CrossNext local simulator</h1><p id="status" role="status">Loading firmware…</p>
-<div id="device"></div><nav aria-label="Device controls">
-<button id="back" disabled>Back</button><button id="up" disabled aria-label="Up">↑</button>
-<button id="down" disabled aria-label="Down">↓</button></nav>
-<small>Click or swipe the screen. Keyboard: Up/Down arrows. Simulator data resets when you reload.</small></main>
-<script src="/assets/emulator.js"></script><script>
-const status=document.getElementById('status');
-Crossplay.boot(document.getElementById('device'),{onFirstFrame(){status.textContent='Firmware running';}})
-.then(device=>{
-  document.querySelectorAll('button').forEach(button=>button.disabled=false);
-  document.getElementById('back').addEventListener('click',()=>{
-    device.swipeBack();device.canvas.focus({preventScroll:true});
-  });
-  for(const key of ['up','down'])device.bindButton(document.getElementById(key),device.scancodes[key]);
-  device.canvas.focus({preventScroll:true});
-}).catch(error=>{status.textContent='Could not start: '+error.message;console.error(error);});
-</script></html>"""
+PAGE = (SITE / "showcase/index.html").read_text(encoding="utf-8")
+SERVER_ID = hashlib.sha256(str(REPO).encode("utf-8") + Path(__file__).read_bytes() + PAGE.encode("utf-8")).hexdigest()
 
 
 def source_digest():
     digest = hashlib.sha256()
     digest.update(("showcase-day:" + dt.date.today().isoformat()).encode("ascii"))
-    roots = ("src", "lib", "sim-stubs", "freeink-sdk/libs", "tools_local/wasm", "tools_local/pet", "tools_local/intercept", "tools_local/quest", "scripts",
-             "assets_local/reader-fonts/sd-card/fonts", "assets_local/sd-resources", "assets_local/quest/encoded", "assets_local/pet", "assets_local/intercept",
-             "assets_local/simulator/showcase-books", "assets_local/simulator/showcase-progress",
+    roots = ("src", "lib", "sim-stubs", "freeink-sdk/libs", "tools_local/wasm", "tools_local/pet", "tools_local/intercept", "tools_local/quest", "tools_local/wordle", "assets_local/wordle", "scripts",
+             "assets_local/reader-fonts/sd-card/fonts", "assets_local/sd-resources", "assets_local/quest", "assets_local/pet", "assets_local/intercept", "REDISEÑOS/PET/assets",
+             "assets_local/language-fonts", "assets_local/language-keyboards", "assets_local/wordle-languages", "assets_local/simulator/showcase-books", "assets_local/simulator/showcase-progress",
              ".pio/libdeps/simulator_x4_pro")
-    files = [REPO / "platformio.ini", REPO / "platformio.sim.ini", REPO / "tools_local/build_app_resources.py"]
+    files = [REPO / "platformio.ini", REPO / "platformio.sim.ini", REPO / "tools_local/build_app_resources.py",
+             REPO / "tools_local/language_packs.py"]
     files.extend(REPO / "scripts_local" / name for name in ("sim_catchup.py", "sim_host_libs.py", "sconsign_per_tree.py"))
     for root in roots:
         files.extend(p for p in (REPO / root).rglob("*") if p.is_file() and "__pycache__" not in p.parts)
@@ -87,6 +59,20 @@ def current_build():
         return state["source"] == source_digest() and state["artifacts"] == artifact_digests()
     except (OSError, ValueError, KeyError):
         return False
+
+
+def validate_bundle():
+    manifest = json.loads((REPO / "simulator-bundle.json").read_text(encoding="utf-8"))
+    if manifest.get("format") != 1 or not manifest.get("files"):
+        raise RuntimeError("Invalid prebuilt simulator manifest")
+    for relative, expected in manifest["files"].items():
+        path = (REPO / relative).resolve()
+        if not path.is_relative_to(SITE.resolve()) or hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+            raise RuntimeError("Simulator bundle is incomplete or changed: " + relative)
+    for name in ARTIFACTS:
+        if "site/emulator/" + name not in manifest["files"]:
+            raise RuntimeError("Missing simulator artifact in manifest: " + name)
+    return manifest
 
 
 def build():
@@ -127,7 +113,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_header("X-CrossPlay-Simulator", SERVER_ID)
         file = Path(self.translate_path(self.path))
         path = file.relative_to(SITE).as_posix()
-        if file.is_file() and (path.startswith(("emulator/", "pyodide/")) or path == "study/NotoSansCJK.otf"):
+        if file.is_file() and (path.startswith(("emulator/", "pyodide/")) or path == "study/NotoSansCJK.otf"
+                               or (path.startswith("showcase/wordle/") and file.suffix == ".cpwb")):
             self.send_header("Content-Encoding", "br")
         super().end_headers()
 
@@ -196,9 +183,13 @@ def build_lock():
                 fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
 
 
-def prepare_server(port, force=False):
+def prepare_server(port, force=False, prebuilt=False):
     with build_lock():
-        if force or not current_build():
+        if prebuilt:
+            if force:
+                raise RuntimeError("A prebuilt bundle cannot be rebuilt. Use the source checkout.")
+            validate_bundle()
+        elif force or not current_build():
             print("Building this checkout's firmware for the browser…", flush=True)
             build()
         url = f"http://127.0.0.1:{port}/"
@@ -212,8 +203,9 @@ def main():
     parser.add_argument("--rebuild", action="store_true", help="Recompile before starting")
     parser.add_argument("--no-browser", action="store_true", help="Keep the server running without opening a browser")
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--prebuilt", action="store_true", help="Verify and serve a packaged simulator without build tools")
     args = parser.parse_args()
-    url, server = prepare_server(args.port, args.rebuild)
+    url, server = prepare_server(args.port, args.rebuild, args.prebuilt)
     if server is None:
         print(f"Simulator already running: {url}", flush=True)
         if not args.no_browser:

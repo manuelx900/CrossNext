@@ -10,6 +10,7 @@
 #include <Logging.h>
 #include <Memory.h>
 
+#include <algorithm>
 #include <cstring>
 #include <ctime>
 #include <functional>
@@ -76,7 +77,7 @@ void HomeDashboardUi::addRow(const char* label, const homeui::Icon icon) {
 }
 
 bool HomeDashboardUi::draw(const RecentBook* book, bool librarySlot, bool plugins, int selected, int recentIndex,
-                           int recentCount, const RecentBook* const* sides) {
+                           int recentCount, const RecentBook* const* sides, bool loadingShell) {
   model.style =
       static_cast<homeui::Style>(SETTINGS.homeLayout <= CrossPointSettings::HOME_BOOX ? SETTINGS.homeLayout : 0);
   model.recentIndex = recentIndex;
@@ -88,6 +89,7 @@ bool HomeDashboardUi::draw(const RecentBook* book, bool librarySlot, bool plugin
   }
   model.unicode = false;
   model.hasBook = book != nullptr;
+  model.loadingShell = loadingShell;
   model.canPrevious = model.canNext = recentCount > 1;
   model.selected = selected;
   model.count = 0;
@@ -106,7 +108,8 @@ bool HomeDashboardUi::draw(const RecentBook* book, bool librarySlot, bool plugin
   model.unicode |= homeui::copyLabel(model.emptyHelp, sizeof(model.emptyHelp), tr(STR_START_READING));
   if (book) {
     model.unicode |= homeui::copyLabel(model.title, sizeof(model.title), book->title.c_str());
-    model.unicode |= homeui::copyLabel(model.author, sizeof(model.author), book->author.c_str());
+    model.unicode |= homeui::copyLabel(model.author, sizeof(model.author),
+                                       book->author.empty() ? tr(STR_LIBRARY_UNKNOWN_AUTHOR) : book->author.c_str());
   }
   status.status.battery.label = nullptr;
   GUI.applyHeaderStatus(renderer, status);
@@ -116,7 +119,8 @@ bool HomeDashboardUi::draw(const RecentBook* book, bool librarySlot, bool plugin
 
   if (model.style == homeui::Style::Boox && book) {
     std::snprintf(model.title, sizeof(model.title), "%s", book->title.c_str());
-    std::snprintf(model.author, sizeof(model.author), "%s", book->author.c_str());
+    std::snprintf(model.author, sizeof(model.author), "%s",
+                  book->author.empty() ? tr(STR_LIBRARY_UNKNOWN_AUTHOR) : book->author.c_str());
   }
   const auto next = homeui::layout(uiTarget.deviceContext(), model.count, model.style, &model);
   const auto& cover = next.cover;
@@ -137,7 +141,7 @@ bool HomeDashboardUi::draw(const RecentBook* book, bool librarySlot, bool plugin
   return changed;
 }
 
-void HomeDashboardUi::paintCover(const RecentBook& book) {
+bool HomeDashboardUi::restoreCover(const RecentBook& book) {
   uint64_t key = 14695981039346656037ULL;
   const auto bytes = [&key](const void* data, size_t count) {
     const auto* p = static_cast<const uint8_t*>(data);
@@ -148,7 +152,10 @@ void HomeDashboardUi::paintCover(const RecentBook& book) {
     bytes(&present, sizeof(present));
     if (item) {
       bytes(item->path.c_str(), item->path.size() + 1);
-      bytes(item->coverBmpPath.c_str(), item->coverBmpPath.size() + 1);
+      // EPUB/XTC art is resolved from the book path, size and rotation by the painter.
+      // Persisted template/concrete aliases must identify the same rendered scene.
+      if (!FsHelpers::hasEpubExtension(item->path) && !FsHelpers::hasXtcExtension(item->path))
+        bytes(item->coverBmpPath.c_str(), item->coverBmpPath.size() + 1);
     }
   };
   const auto rect = [&bytes](fui::Rect value) {
@@ -167,7 +174,11 @@ void HomeDashboardUi::paintCover(const RecentBook& book) {
       rect(layout.sides[n]);
       source(neighbors[n]);
     }
-  if (homecover::restoreScene(renderer, layout.coverRegion, key)) return;
+  return homecover::restoreScene(renderer, layout.coverRegion, key);
+}
+
+void HomeDashboardUi::paintCover(const RecentBook& book) {
+  if (restoreCover(book)) return;
   if (model.style != homeui::Style::Framed) {
     const int order[] = {1, 2};
     for (int n : order)
@@ -223,4 +234,22 @@ int HomeDashboardUi::selectedAction(const MappedInputManager& input) {
   pending = -1;
   const auto touch = routeTouch(input);
   return touch.snap.touchReleased ? pending : -1;
+}
+
+void HomeDashboardUi::paintPlaceholders() {
+  const auto previous = uiTarget.clipRect();
+  const auto area = layout.coverRegion;
+  const auto clipped = freeink::ui::makeRect(std::max(area.x, previous.x), std::max(area.y, previous.y),
+                                             std::min(area.right(), previous.right()) - std::max(area.x, previous.x),
+                                             std::min(area.bottom(), previous.bottom()) - std::max(area.y, previous.y));
+  if (clipped.empty() || !uiTarget.setClipRect(clipped)) return;
+  if (model.style != homeui::Style::Framed) {
+    for (int index : {1, 2}) {
+      const auto art = layout.sides[index];
+      GUI.drawCoverPlaceholder(renderer, Rect{art.x, art.y, art.width, art.height});
+    }
+  }
+  const auto art = layout.cover;
+  GUI.drawCoverPlaceholder(renderer, Rect{art.x, art.y, art.width, art.height});
+  uiTarget.setClipRect(previous);
 }

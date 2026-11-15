@@ -111,30 +111,25 @@ class GfxRendererTarget final : public DrawTarget {
                 static_cast<int16_t>(renderer.getLineHeight(fontId))};
   }
 
+  template <typename R>
+  static auto metricsKey(const R& r, int font, const char* text, EpdFontFamily::Style style, int)
+      -> decltype(r.textMetricsKey(font, text, style)) {
+    return r.textMetricsKey(font, text, style);
+  }
+  template <typename R>
+  static uint64_t metricsKey(const R&, int, const char*, EpdFontFamily::Style, long) {
+    return 0;
+  }
+  uint64_t textMetricsKey(FontId font, const char* text, TextStyle style) const override {
+    return metricsKey(renderer, gfxFont(font), text, fontStyle(style), 0);
+  }
+
   int16_t lineHeight(const FontId font) const override {
     return static_cast<int16_t>(renderer.getLineHeight(gfxFont(font)));
   }
 
-  // Ink from glyph metrics: drawText puts the baseline `ascender` below the
-  // line top, and a glyph's ink starts `top` above the baseline.
-  // ponytail: ASCII only (status labels, clocks); other text keeps the line box.
   Rect inkBounds(const FontId font, const char* text, const TextStyle style) const override {
-    const Rect lineBox = DrawTarget::inkBounds(font, text, style);
-    const int fontId = gfxFont(font);
-    const auto it = renderer.getFontMap().find(fontId);
-    if (!text || it == renderer.getFontMap().end()) return lineBox;
-    const int ascender = renderer.getFontAscenderSize(fontId);
-    int top = lineBox.height;
-    int bottom = 0;
-    for (const char* p = text; *p; ++p) {
-      if (static_cast<unsigned char>(*p) >= 0x80) return lineBox;
-      const auto glyph = it->second.getGlyph(static_cast<uint32_t>(*p), fontStyle(style));
-      if (!glyph || glyph->height <= 0) continue;
-      top = std::min(top, ascender - static_cast<int>(glyph->top));
-      bottom = std::max(bottom, ascender - static_cast<int>(glyph->top) + static_cast<int>(glyph->height));
-    }
-    if (top >= bottom) return lineBox;
-    return Rect{0, static_cast<int16_t>(top), lineBox.width, static_cast<int16_t>(bottom - top)};
+    return inkBoundsFor(renderer, font, text, style, 0);
   }
 
   void fill(const Rect rect, const Paint paint, const uint8_t radius = 0, const uint8_t corners = CornersAll) override {
@@ -364,6 +359,33 @@ class GfxRendererTarget final : public DrawTarget {
   }
 
  private:
+  template <class Renderer>
+  auto inkBoundsFor(const Renderer& source, FontId font, const char* text, TextStyle style, int) const
+      -> decltype(source.getTextBounds(0, text, EpdFontFamily::REGULAR).left, Rect{}) {
+    const auto bounds = source.getTextBounds(gfxFont(font), text, fontStyle(style));
+    return Rect{static_cast<int16_t>(bounds.left), static_cast<int16_t>(bounds.top), static_cast<int16_t>(bounds.width),
+                static_cast<int16_t>(bounds.height)};
+  }
+  template <class Renderer>
+  Rect inkBoundsFor(const Renderer& source, FontId font, const char* text, TextStyle style, long) const {
+    const Rect lineBox = DrawTarget::inkBounds(font, text, style);
+    const int fontId = gfxFont(font);
+    const auto it = source.getFontMap().find(fontId);
+    if (!text || it == source.getFontMap().end()) return lineBox;
+    const int ascender = source.getFontAscenderSize(fontId);
+    int top = lineBox.height;
+    int bottom = 0;
+    for (const char* p = text; *p; ++p) {
+      if (static_cast<unsigned char>(*p) >= 0x80) return lineBox;
+      const auto glyph = it->second.getGlyph(static_cast<uint32_t>(*p), fontStyle(style));
+      if (!glyph || glyph->height <= 0) continue;
+      top = std::min(top, ascender - static_cast<int>(glyph->top));
+      bottom = std::max(bottom, ascender - static_cast<int>(glyph->top) + static_cast<int>(glyph->height));
+    }
+    if (top >= bottom) return lineBox;
+    return Rect{0, static_cast<int16_t>(top), lineBox.width, static_cast<int16_t>(bottom - top)};
+  }
+
   Rect clip_{0, 0, 32767, 32767};
   const GfxRenderer& renderer;
   bool hasTouch_ = false;

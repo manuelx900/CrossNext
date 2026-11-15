@@ -20,7 +20,7 @@ static void write(const fs::path& dir, const char* name, const uint8_t* bytes, s
 }
 int main(int argc, char** argv) {
   if (argc != 2) return 1;
-  const auto dir = fs::weakly_canonical(fs::path(argv[1]));
+  const auto dir = fs::path(argv[1]);
   if (dir.filename() != ".crosspoint" || !fs::exists(dir.parent_path() / "CROSSNEXT-SIMULATOR-CARD.json")) return 1;
   uint8_t bytes[carnivoro::kSaveBytes]{};
   uint32_t generation = 0;
@@ -57,12 +57,12 @@ int main(int argc, char** argv) {
   write(dir, "carnivoro.bin", bytes, sizeof(bytes));
 
   localwordle::State wordle, wordleCopy;
-  wordle.language = 1;
+  wordle.language = 0;
   wordle.seed = 20261021;
   localwordle::start(wordle);
-  const char* guess = localwordle::wordAt(5, 2, 1);
+  const char* guess = localwordle::wordAt(5, 2, 0);
   for (int n = 0; n < 5; ++n) wordle.game.type(guess[n]);
-  wordle.game.submit([](void*, const char* text) { return localwordle::contains(5, text, 1); }, nullptr);
+  wordle.game.submit([](void*, const char* text) { return localwordle::contains(5, text, 0); }, nullptr);
   wordle.record = {42, 37, 6, 9, {2, 5, 11, 12, 5, 2}};
   localwordle::encode(wordle, 1, bytes);
   if (!localwordle::decode(bytes, wordleCopy, generation)) return 6;

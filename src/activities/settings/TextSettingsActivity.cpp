@@ -15,6 +15,7 @@
 #include "ReaderFontSizes.h"
 #include "SdCardFontSystem.h"
 #include "TextSettingsPreview.h"
+#include "apps_local/readertext/BookTextPreferences.h"
 #include "apps_local/ui/PixelMenuTheme.h"
 #include "apps_local/ui/SettingsMenuStyle.h"
 #include "components/UITheme.h"
@@ -24,7 +25,7 @@ namespace fui = freeink::ui;
 
 namespace {
 // Tab labels for Font | Size | Layout | Style.
-constexpr StrId TAB_NAME_IDS[] = {StrId::STR_FONT, StrId::STR_SIZE, StrId::STR_LAYOUT, StrId::STR_STYLE};
+constexpr StrId TAB_NAME_IDS[] = {StrId::STR_FONT, StrId::STR_SIZE, StrId::STR_LAYOUT, StrId::STR_TOOL_MORE};
 
 constexpr StrId LAYOUT_ROW_NAME_IDS[] = {
     StrId::STR_LINE_SPACING,          StrId::STR_WORD_SPACING, StrId::STR_CHARACTER_SPACING, StrId::STR_EXTRA_SPACING,
@@ -32,21 +33,13 @@ constexpr StrId LAYOUT_ROW_NAME_IDS[] = {
 constexpr StrId STYLE_ROW_NAME_IDS[] = {StrId::STR_FOCUS_READING, StrId::STR_HYPHENATION, StrId::STR_EMBEDDED_STYLE,
                                         StrId::STR_TEXT_AA};
 
-int findCurrentFontIndex(const SdCardFontRegistry* registry, const char* sdFontFamilyName, uint8_t fontFamily) {
-  if (sdFontFamilyName[0] != '\0' && registry) {
-    const auto& families = registry->getFamilies();
-    const auto family = std::find_if(families.begin(), families.end(), [sdFontFamilyName](const auto& candidate) {
-      return candidate.name == sdFontFamilyName;
-    });
-    if (family != families.end()) {
-      return CrossPointSettings::BUILTIN_FONT_COUNT + static_cast<int>(family - families.begin());
-    }
-  }
-
-  return fontFamily < CrossPointSettings::BUILTIN_FONT_COUNT ? fontFamily : 0;
+int findCurrentFontIndex(const SdCardFontRegistry* registry, const char* sdFontFamilyName, uint8_t) {
+  return readerFontFamilyIndex(registry, sdFontFamilyName);
 }
 
-constexpr StrId LINE_SPACING_IDS[] = {StrId::STR_TIGHT, StrId::STR_NORMAL, StrId::STR_WIDE, StrId::STR_EXTRA_WIDE};
+constexpr StrId LINE_SPACING_IDS[] = {
+    StrId::STR_LINE_HEIGHT_100, StrId::STR_LINE_HEIGHT_110, StrId::STR_LINE_HEIGHT_120, StrId::STR_LINE_HEIGHT_130,
+    StrId::STR_LINE_HEIGHT_145, StrId::STR_LINE_HEIGHT_160, StrId::STR_LINE_HEIGHT_175};
 constexpr StrId WORD_SPACING_IDS[] = {StrId::STR_SPACING_50_PERCENT,  StrId::STR_SPACING_75_PERCENT,
                                       StrId::STR_SPACING_100_PERCENT, StrId::STR_SPACING_125_PERCENT,
                                       StrId::STR_SPACING_150_PERCENT, StrId::STR_SPACING_175_PERCENT,
@@ -83,10 +76,11 @@ void TextSettingsActivity::onEnter() {
 
   fonts_.clear();
   fonts_.reserve(CrossPointSettings::BUILTIN_FONT_COUNT + (registry_ ? registry_->getFamilyCount() : 0));
-  fonts_.push_back({I18N.get(StrId::STR_NOTO_SERIF), true, static_cast<uint8_t>(CrossPointSettings::NOTOSERIF)});
+  fonts_.push_back({I18N.get(StrId::STR_MENU_FONT_CLASSIC), true, static_cast<uint8_t>(CrossPointSettings::NOTOSERIF)});
   if (registry_) {
     const auto& families = registry_->getFamilies();
     for (int i = 0; i < static_cast<int>(families.size()); i++) {
+      if (readerFontUpgradesUbuntu(families[i])) continue;
       fonts_.push_back({families[i].name, false, static_cast<uint8_t>(CrossPointSettings::BUILTIN_FONT_COUNT + i)});
     }
   }
@@ -103,6 +97,19 @@ void TextSettingsActivity::onEnter() {
   tabNavs[static_cast<int>(tab_)].selected = 0;  // screen opens with the tab bar focused, not a list row
 
   rebuildRowItems();
+  if (mappedInput.hasTouch()) {
+    if (tab_ == Tab::Size) tab_ = Tab::Family;
+    if (tab_ == Tab::Style) sheetView_ = readertext::SheetView::Style;
+    app.on(1, [](const fui::ActionEvent&, void* p) { static_cast<TextSettingsActivity*>(p)->finish(); }, this);
+    app.on(
+        6,
+        [](const fui::ActionEvent& event, void* p) {
+          auto& self = *static_cast<TextSettingsActivity*>(p);
+          self.app.clearTapFlash();
+          self.sheetControl(event.value);
+        },
+        this);
+  }
 }
 
 // Rebuilds rowItems_ (label + actionValue) for the active tab. Structural —
@@ -162,6 +169,14 @@ void TextSettingsActivity::rebuildSizeList() {
 }
 
 void TextSettingsActivity::onTabAction(const int index) {
+  if (mappedInput.hasTouch()) {
+    tab_ = index == 0 ? Tab::Family : index == 1 ? Tab::Layout : Tab::Style;
+    sheetView_ = tab_ == Tab::Style ? readertext::SheetView::Style : readertext::SheetView::Controls;
+    rebuildRowItems();
+    resetUi();
+    requestUpdate();
+    return;
+  }
   if (optionPopup_.isActive()) return;
   if (tab_ != static_cast<Tab>(index)) {
     tab_ = static_cast<Tab>(index);
@@ -185,7 +200,25 @@ void TextSettingsActivity::activateIndex(const int index) {
 }
 
 bool TextSettingsActivity::handleCustomInput() {
-  return optionPopup_.handleInput(mappedInput, [this] { requestUpdate(); });
+  if (optionPopup_.handleInput(mappedInput, [this] { requestUpdate(); })) return true;
+  if (!mappedInput.hasTouch()) return false;
+  const auto swipe = mappedInput.wasSwipe();
+  const int direction = swipe == MappedInputManager::SwipeDir::Left    ? 1
+                        : swipe == MappedInputManager::SwipeDir::Right ? -1
+                                                                       : 0;
+  const int tab = tab_ == Tab::Layout ? 1 : tab_ == Tab::Style ? 3 : 0;
+  const auto control = readertext::pageSwipeControl(tab, sheetView_, direction);
+  if (mappedInput.wasReleased(MappedInputManager::Button::Back) && control == readertext::NoPage) {
+    finish();
+    return true;
+  }
+  const auto input = routeTouch(mappedInput, false, false, true);
+  if (control != readertext::NoPage) {
+    if (routingReady()) sheetControl(control);
+    return true;
+  }
+  if (input.routed && app.invalidated()) requestUpdate();
+  return true;
 }
 
 bool TextSettingsActivity::handleButtons() {
@@ -207,6 +240,10 @@ bool TextSettingsActivity::handleButtons() {
 }
 
 void TextSettingsActivity::buildScreen(UiScreen& screen) {
+  if (mappedInput.hasTouch()) {
+    buildSheet(screen);
+    return;
+  }
   pixelui::FontScope fonts(uiTarget, renderer, I18N.getLanguage() != Language::EN);
   uiTarget.setFont(pixelui::kSmall, UI_12_FONT_ID);
   uiTarget.setFont(4, UI_10_FONT_ID);
@@ -296,21 +333,18 @@ const char* TextSettingsActivity::confirmLabelText() const {
 }
 
 void TextSettingsActivity::drawChrome() {
-  const auto pageWidth = renderer.getScreenWidth();
-
   pixelui::drawHeader(renderer, tr(STR_TEXT_SETTINGS), I18N.getLanguage() != Language::EN);
 
-  const char* familyName = (currentFamilyIndex_ >= 0 && currentFamilyIndex_ < static_cast<int>(fonts_.size()))
-                               ? fonts_[currentFamilyIndex_].name.c_str()
-                               : "";
-  const char* sizeName = (currentSizeIndex_ >= 0 && currentSizeIndex_ < static_cast<int>(sizes_.size()))
-                             ? sizes_[currentSizeIndex_].name.c_str()
-                             : "";
-  textsettings::renderPreview(renderer, previewLayout_, metrics_.previewPadding, metrics_.verticalSpacing, afterHeader,
-                              previewHeight, familyName, sizeName);
+  if (mappedInput.hasTouch()) {
+    const auto device = toybox::makeTarget(renderer).deviceContext();
+    previewHeight = std::max(0, previewBottom() - afterHeader - 4);
+  }
+  if (previewHeight < renderer.getTextHeight(UI_10_FONT_ID) + metrics_.previewPadding * 2) return;
+  textsettings::renderPreview(renderer, previewLayout_, metrics_.previewPadding, afterHeader, previewHeight);
 }
 
 void TextSettingsActivity::drawFooter() {
+  if (mappedInput.hasTouch()) return;
   if (!focusedRowHasNoPreview()) {
     renderer.drawText(UI_10_FONT_ID, metrics_.previewPadding,
                       afterHeader + usableHeight - renderer.getTextHeight(UI_10_FONT_ID), tr(STR_SR_PREVIEW_CHANGES));
@@ -337,6 +371,7 @@ void TextSettingsActivity::render(RenderLock&& lock) {
 // arrays out from under prewarmStyle() (crash: null s.miniGlyphs mid-read/sort).
 void TextSettingsActivity::applyFamily(int listIndex) {
   RenderLock lock;
+  sheetLayoutPage_ = 0;
   const auto& font = fonts_[listIndex];
   if (font.isBuiltin) {
     SETTINGS.fontFamily = font.settingIndex;
@@ -374,7 +409,7 @@ void TextSettingsActivity::activateRow(int row) {
         // gesture/key or a sleep. Saved here, not inside applyFamily, so the
         // SD write happens outside its RenderLock.
         if (currentFamilyIndex_ == row) {
-          SETTINGS.saveToFile();
+          booktext::persist();
         }
         requestUpdate();
       }
@@ -382,7 +417,7 @@ void TextSettingsActivity::activateRow(int row) {
     case Tab::Size:
       if (row != currentSizeIndex_) {
         applySize(row);
-        SETTINGS.saveToFile();
+        booktext::persist();
         requestUpdate();
       }
       break;
@@ -402,6 +437,7 @@ void TextSettingsActivity::activateRow(int row) {
 void TextSettingsActivity::applySize(int listIndex) {
   RenderLock lock;
 
+  sheetLayoutPage_ = 0;
   currentSizeIndex_ = listIndex;
   SETTINGS.fontPointSize = sizes_[listIndex].pointSize;
   sdFontSystem.ensureLoaded(renderer);
@@ -411,7 +447,7 @@ void TextSettingsActivity::confirmLayoutRow(int row) {
   switch (static_cast<LayoutRow>(row)) {
     case LayoutRow::ParaSpacing:
       SETTINGS.extraParagraphSpacing = !SETTINGS.extraParagraphSpacing;
-      SETTINGS.saveToFile();
+      booktext::persist();
       requestUpdate();
       break;
     case LayoutRow::ParaIndentation: {
@@ -421,7 +457,7 @@ void TextSettingsActivity::confirmLayoutRow(int row) {
       for (int spaces = 1; spaces <= 5; ++spaces) options.push_back(std::to_string(spaces));
       optionPopup_.show(StrId::STR_PARAGRAPH_INDENTATION, options, SETTINGS.paragraphIndentSpaces, [](int idx) {
         SETTINGS.paragraphIndentSpaces = static_cast<uint8_t>(idx);
-        SETTINGS.saveToFile();
+        booktext::persist();
       });
       requestUpdate();
       break;
@@ -430,7 +466,7 @@ void TextSettingsActivity::confirmLayoutRow(int row) {
       optionPopup_.show(StrId::STR_LINE_SPACING, LINE_SPACING_IDS, static_cast<int>(std::size(LINE_SPACING_IDS)),
                         SETTINGS.lineSpacing, [](int idx) {
                           SETTINGS.lineSpacing = static_cast<uint8_t>(idx);
-                          SETTINGS.saveToFile();
+                          booktext::persist();
                         });
       requestUpdate();
       break;
@@ -438,7 +474,7 @@ void TextSettingsActivity::confirmLayoutRow(int row) {
       optionPopup_.show(StrId::STR_ALIGNMENT, ALIGNMENT_IDS, static_cast<int>(std::size(ALIGNMENT_IDS)),
                         SETTINGS.paragraphAlignment, [](int idx) {
                           SETTINGS.paragraphAlignment = static_cast<uint8_t>(idx);
-                          SETTINGS.saveToFile();
+                          booktext::persist();
                         });
       requestUpdate();
       break;
@@ -448,7 +484,7 @@ void TextSettingsActivity::confirmLayoutRow(int row) {
       optionPopup_.show(StrId::STR_WORD_SPACING, WORD_SPACING_IDS, static_cast<int>(std::size(WORD_SPACING_IDS)), cur,
                         [](int idx) {
                           SETTINGS.wordSpacing = static_cast<uint8_t>(WORD_SPACING_MIN + idx * WORD_SPACING_STEP);
-                          SETTINGS.saveToFile();
+                          booktext::persist();
                         });
       requestUpdate();
       break;
@@ -457,7 +493,7 @@ void TextSettingsActivity::confirmLayoutRow(int row) {
       optionPopup_.show(StrId::STR_CHARACTER_SPACING, CHARACTER_SPACING_IDS,
                         static_cast<int>(std::size(CHARACTER_SPACING_IDS)), SETTINGS.characterSpacing, [](int idx) {
                           SETTINGS.characterSpacing = static_cast<uint8_t>(idx);
-                          SETTINGS.saveToFile();
+                          booktext::persist();
                         });
       requestUpdate();
       break;
@@ -468,7 +504,7 @@ void TextSettingsActivity::confirmLayoutRow(int row) {
       const int cur = (std::clamp<int>(SETTINGS.screenMargin, MARGIN_MIN, MARGIN_MAX) - MARGIN_MIN) / MARGIN_STEP;
       optionPopup_.show(StrId::STR_SCREEN_MARGIN, options, cur, [](int idx) {
         SETTINGS.screenMargin = static_cast<uint8_t>(MARGIN_MIN + idx * MARGIN_STEP);
-        SETTINGS.saveToFile();
+        booktext::persist();
       });
       requestUpdate();
       break;
@@ -483,7 +519,7 @@ std::string TextSettingsActivity::layoutValueText(int row) const {
   switch (static_cast<LayoutRow>(row)) {
     case LayoutRow::LineSpacing: {
       const uint8_t v = SETTINGS.lineSpacing;
-      return v < std::size(LINE_SPACING_IDS) ? I18N.get(LINE_SPACING_IDS[v]) : I18N.get(StrId::STR_NORMAL);
+      return v < std::size(LINE_SPACING_IDS) ? I18N.get(LINE_SPACING_IDS[v]) : I18N.get(StrId::STR_LINE_HEIGHT_120);
     }
     case LayoutRow::ParaIndentation: {
       const int spaces = std::clamp<int>(SETTINGS.paragraphIndentSpaces, 0, 5);
@@ -526,7 +562,7 @@ void TextSettingsActivity::confirmStyleRow(int row) {
     default:
       return;
   }
-  SETTINGS.saveToFile();
+  booktext::persist();
   requestUpdate();
 }
 
@@ -580,4 +616,188 @@ int TextSettingsActivity::listCount() const {
     default:
       return 0;
   }
+}
+
+void TextSettingsActivity::buildSheet(UiScreen& screen) {
+  pixelui::FontScope fonts(uiTarget, renderer, I18N.getLanguage() != Language::EN);
+  readertext::Model model;
+  model.globalSettings = !booktext::isActive();
+  model.standalone = true;
+  model.useDefaults = SETTINGS.perBookTextSettings == 0;
+  model.minTop = previewBottom();
+  model.tab = tab_ == Tab::Layout ? 1 : tab_ == Tab::Style ? 3 : 0;
+  model.view = sheetView_;
+  model.fontPage = sheetFontPage_;
+  model.fontCount = int(fonts_.size());
+  model.fontSelected = currentFamilyIndex_;
+  model.fontContext = this;
+  model.fontLabel = [](const void* context, int index) {
+    const auto& self = *static_cast<const TextSettingsActivity*>(context);
+    return index >= 0 && index < int(self.fonts_.size()) ? self.fonts_[index].name.c_str() : "";
+  };
+  model.family = currentFamilyIndex_ >= 0 && currentFamilyIndex_ < int(fonts_.size())
+                     ? fonts_[currentFamilyIndex_].name.c_str()
+                     : "";
+  model.size = SETTINGS.fontPointSize;
+  model.sizeIndex = currentSizeIndex_;
+  model.sizeCount = int(sizes_.size());
+  model.bold = SETTINGS.fontWeight == CrossPointSettings::FONT_WEIGHT_BOLD;
+  model.spacing = SETTINGS.lineSpacing;
+  model.spacingCount = CrossPointSettings::LINE_COMPRESSION_COUNT;
+  model.spacingLabel = I18N.get(LINE_SPACING_IDS[SETTINGS.lineSpacing % std::size(LINE_SPACING_IDS)]);
+  model.alignmentIndex = SETTINGS.paragraphAlignment;
+  model.alignment = I18N.get(ALIGNMENT_IDS[SETTINGS.paragraphAlignment % std::size(ALIGNMENT_IDS)]);
+  model.margin = SETTINGS.screenMargin;
+  model.marginIndex = (SETTINGS.screenMargin - MARGIN_MIN) / MARGIN_STEP;
+  model.marginCount = (MARGIN_MAX - MARGIN_MIN) / MARGIN_STEP + 1;
+  model.layoutPage = sheetLayoutPage_;
+  model.indent = SETTINGS.paragraphIndentSpaces;
+  model.wordSpacing = SETTINGS.wordSpacing;
+  model.characterSpacing = SETTINGS.characterSpacing;
+  model.paragraphs = SETTINGS.extraParagraphSpacing;
+  model.focus = SETTINGS.focusReadingEnabled;
+  model.hyphenation = SETTINGS.hyphenationEnabled;
+  model.embedded = SETTINGS.embeddedStyle;
+  model.antialiasing = SETTINGS.textAntiAliasing;
+  readertext::build(screen, model, sheetWork_);
+}
+void TextSettingsActivity::sheetControl(int control) {
+  const bool fontPage = control == readertext::FontPrevious || control == readertext::FontNext;
+  const bool layoutPage = control == readertext::LayoutPrevious || control == readertext::LayoutNext;
+  if (fontPage || layoutPage) {
+    RenderLock lock(*this);
+    const int pages = fontPage
+                          ? std::max(1, (int(fonts_.size()) +
+                                         readertext::fontRowsPerPage(uiTarget.deviceContext(), previewBottom()) - 1) /
+                                            readertext::fontRowsPerPage(uiTarget.deviceContext(), previewBottom()))
+                          : readertext::layoutPageCount(uiTarget.deviceContext(), previewBottom(), true);
+    int& current = fontPage ? sheetFontPage_ : sheetLayoutPage_;
+    const int direction = control == readertext::FontNext || control == readertext::LayoutNext ? 1 : -1;
+    const int page = std::clamp(current + direction, 0, pages - 1);
+    if (page == current) return;
+    current = page;
+    resetUi();
+    requestUpdate();
+    return;
+  }
+
+  if (sheetView_ == readertext::SheetView::Families && control >= readertext::FontPick &&
+      control < readertext::FontPick + int(fonts_.size())) {
+    applyFamily(control - readertext::FontPick);
+    booktext::persist();
+    sheetView_ = readertext::SheetView::Controls;
+  } else
+    switch (control) {
+      case readertext::Family:
+        sheetView_ = readertext::SheetView::Families;
+        sheetFontPage_ = 0;
+        break;
+      case readertext::FontBack:
+        sheetView_ = readertext::SheetView::Controls;
+        break;
+      case readertext::StyleBack:
+        tab_ = Tab::Family;
+        sheetView_ = readertext::SheetView::Controls;
+        break;
+      case readertext::CopyDefaults:
+        if (!booktext::setPerBook(SETTINGS.perBookTextSettings == 0)) {
+          const char* choices[] = {tr(STR_CONFIRM)};
+          optionPopup_.showMessage(tr(STR_TEXT_SETTINGS), tr(STR_SDK_SETTINGS_SAVE_FAILED), choices, 1, -1, [](int) {});
+        }
+        break;
+      case readertext::DefaultsInfo: {
+        const char* choices[] = {tr(STR_OK_BUTTON)};
+        optionPopup_.showMessage(
+            tr(STR_TEXT_COPY_DEFAULTS), tr(STR_TEXT_DEFAULTS_HELP), choices, 1, -1, [](int) {}, 12);
+        break;
+      }
+      case readertext::AlignmentLeft:
+      case readertext::AlignmentCenter:
+      case readertext::AlignmentJustify:
+      case readertext::AlignmentRight:
+      case readertext::AlignmentBook:
+        SETTINGS.paragraphAlignment = control == readertext::AlignmentLeft     ? CrossPointSettings::LEFT_ALIGN
+                                      : control == readertext::AlignmentCenter ? CrossPointSettings::CENTER_ALIGN
+                                      : control == readertext::AlignmentRight  ? CrossPointSettings::RIGHT_ALIGN
+                                      : control == readertext::AlignmentBook   ? CrossPointSettings::BOOK_STYLE
+                                                                               : CrossPointSettings::JUSTIFIED;
+        booktext::persist();
+        break;
+      case readertext::SizeDown:
+      case readertext::SizeUp:
+        applySize(std::clamp(currentSizeIndex_ + (control == readertext::SizeUp ? 1 : -1), 0, int(sizes_.size()) - 1));
+        booktext::persist();
+        break;
+      case readertext::WeightDown:
+      case readertext::WeightUp:
+        SETTINGS.fontWeight = control == readertext::WeightUp ? CrossPointSettings::FONT_WEIGHT_BOLD
+                                                              : CrossPointSettings::FONT_WEIGHT_REGULAR;
+        booktext::persist();
+        break;
+      case readertext::SpacingDown:
+      case readertext::SpacingUp:
+        SETTINGS.lineSpacing = std::clamp(int(SETTINGS.lineSpacing) + (control == readertext::SpacingUp ? 1 : -1), 0,
+                                          int(std::size(LINE_SPACING_IDS)) - 1);
+        booktext::persist();
+        break;
+      case readertext::MarginDown:
+      case readertext::MarginUp:
+        SETTINGS.screenMargin =
+            std::clamp(int(SETTINGS.screenMargin) + (control == readertext::MarginUp ? MARGIN_STEP : -MARGIN_STEP),
+                       MARGIN_MIN, MARGIN_MAX);
+        booktext::persist();
+        break;
+      case readertext::IndentDown:
+      case readertext::IndentUp:
+        SETTINGS.paragraphIndentSpaces =
+            std::clamp(int(SETTINGS.paragraphIndentSpaces) + (control == readertext::IndentUp ? 1 : -1), 0, 5);
+        booktext::persist();
+        break;
+      case readertext::WordDown:
+      case readertext::WordUp:
+        SETTINGS.wordSpacing = std::clamp(int(SETTINGS.wordSpacing) + (control == readertext::WordUp ? 25 : -25),
+                                          WORD_SPACING_MIN, WORD_SPACING_MAX);
+        booktext::persist();
+        break;
+      case readertext::CharacterDown:
+      case readertext::CharacterUp:
+        SETTINGS.characterSpacing =
+            std::clamp(int(SETTINGS.characterSpacing) + (control == readertext::CharacterUp ? 1 : -1), 0, 4);
+        booktext::persist();
+        break;
+      case readertext::AlignmentDown:
+      case readertext::AlignmentUp:
+        SETTINGS.paragraphAlignment =
+            std::clamp(int(SETTINGS.paragraphAlignment) + (control == readertext::AlignmentUp ? 1 : -1), 0,
+                       int(std::size(ALIGNMENT_IDS)) - 1);
+        booktext::persist();
+        break;
+      case readertext::Paragraphs:
+        confirmLayoutRow(int(LayoutRow::ParaSpacing));
+        break;
+      case readertext::Focus:
+        confirmStyleRow(int(StyleRow::FocusReading));
+        break;
+      case readertext::Hyphenation:
+        confirmStyleRow(int(StyleRow::Hyphenation));
+        break;
+      case readertext::Embedded:
+        confirmStyleRow(int(StyleRow::EmbeddedStyle));
+        break;
+      case readertext::Antialiasing:
+        confirmStyleRow(int(StyleRow::AntiAliasing));
+        break;
+      default:
+        return;
+    }
+  resetUi();
+  requestUpdate();
+}
+
+int TextSettingsActivity::previewBottom() const {
+  const auto device = uiTarget.deviceContext();
+  const bool wide = device.width > device.height;
+  const int desired = device.safeRect().height * 15 / 100;
+  const int minPanel = wide ? 300 : 500;
+  return std::max(afterHeader, std::min(afterHeader + desired, int(device.safeRect().bottom()) - minPanel));
 }

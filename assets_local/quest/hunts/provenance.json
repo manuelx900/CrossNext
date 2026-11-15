@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "masters": [
+    {
+      "master": "outfits-v2.png",
+      "tool": "built-in image_gen",
+      "reference": "assets_local/quest/redesign/masters/heroes-approved.png",
+      "promptSummary": "Eight new outfit variants of the two reference avatars. Exact 4 columns and 2 rows. Preserve oval eyes, hair, mitten hands, chunky boots and approximately 2.8-head proportions. Storm owl, crystal deer, phoenix and ink dragon. Transparent background, thick outlines and flat grayscale.",
+      "sha256": "b8ce5d418f6e272e518f3008f7ef1c8f228262f25c63eb3fd3f86b09c1cef4d0"
+    },
+    {
+      "master": "beasts-v2.png",
+      "tool": "built-in image_gen",
+      "reference": "assets_local/quest/expansion/masters/enemy-000-v1.png",
+      "promptSummary": "Four new monsters with three separately illustrated poses in a 3-column by 4-row sheet. Storm owl, crystal deer, ash phoenix and ink dragon. Ready, weakened with bent limbs, fallen with folded limbs and closed eyes. Match the reference monochrome contours. Transparent background.",
+      "sha256": "7d31af68b5a9705bb8fd86b2583d93dc1e50b31f883a9b0491bbb8731e65cc74"
+    }
+  ],
+  "unusedDrafts": [
+    "outfits-v1.png",
+    "beasts-v1.png"
+  ]
+}

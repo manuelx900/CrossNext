@@ -7,9 +7,9 @@
 
 #include "ZipFile.h"
 
-bool ZipEntryReader::open(const std::string& archive, const char* entry) {
+bool ZipEntryReader::open(const std::string& archive, const char* entry, ZipFile::Catalog* catalog) {
   close();
-  ZipFile zip(archive);
+  ZipFile zip(archive, catalog);
   ZipFile::FileStatSlim stat{};
   if (!zip.open() || !zip.loadFileStatSlim(entry, &stat)) return false;
   const long offset = zip.getDataOffset(stat);

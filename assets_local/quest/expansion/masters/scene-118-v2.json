@@ -1,0 +1,21 @@
+{
+  "id": "S118",
+  "kind": "scene",
+  "master": "scene-118-v2.png",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-10-0-v1.png",
+  "transparent": false,
+  "prompt": "Use case: illustration-story. ONE complete landscape 3:2 narrative illustration for the monochrome e-ink game Aventura lectora. Clean expressive chibi storybook art, thick smooth PURE BLACK contours, white and sparse flat light-gray fills. No color, gradients, crosshatching, collage, lettering, captions, UI or watermark. Large clear clues readable at480x320. Player hero and PET are OFF CAMERA. Depict only people actually physically present in the described event; a person mentioned in a letter or record does NOT appear alive beside its reader. The attached portraits are IDENTITY references, NOT additional cast: match face, age, hairstyle, clothing and distinctive accessories exactly for any named person present. Do not invent another person or clue. Fill the scene to its edges, keep all important faces and objects in frame. ADA: adult woman traveler with short wavy dark bob, light travel scarf and practical long coat, NO GLASSES and NO BRAID; use the traveler in the reference, never Liora. Region: The star threshold. Chapter: Ada's return. Draw exactly this already-known moment (Spanish is authoritative): Ada llegó a la aldea y volvió a encontrarse con Liora. Tú conservaste la campanilla para el último tramo del viaje, con la llave y la página de Elia a salvo. Context only: Los caminos recuperados ya conectaban el archivo con la biblioteca de Liora. Ada se preparó para volver, mientras tú llevarías la llave completa hacia la fortaleza. MANDATORY PHYSICAL SETTING: LIORA'S VILLAGE LIBRARY, Ada's actual reunion with Liora; no longer the star archive. Do not anthropomorphize books, pages or objects. No invented smiling ghosts. No person replaces a written record. EXHAUSTIVE VISIBLE CAST (do not add anyone else): Ada AND Liora reunited, each keeping her distinct reference appearance. The reference is STYLE ONLY for any person not explicitly in this cast.",
+  "references": [
+    "assets_local/quest/campaign/path-art/masters/path-10-0-v1.png",
+    "assets_local/quest/redesign/portraits/liora-source.png"
+  ],
+  "chapter": 108,
+  "beat": "text",
+  "eventEs": "Ada llegó a la aldea y volvió a encontrarse con Liora. Tú conservaste la campanilla para el último tramo del viaje, con la llave y la página de Elia a salvo.",
+  "sha256": "15a5f40ef34435e31d7f2a55a57751af3c752fba74af1001f3c6a2ff57ea8cad",
+  "tool": "built-in image_gen",
+  "source": "exec-daf354c2-fa84-4fef-8d33-6c715927c702.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

@@ -1,0 +1,18 @@
+{
+  "id": "K075",
+  "key": "Visor",
+  "file": "K075.png",
+  "sample": {
+    "es": "Visor de cumbre",
+    "en": "Summit viewer"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Summit viewer.",
+  "requests": [
+    116
+  ],
+  "sha256": "4b2c31a38625df991a6f3d4a9339fe2afb14e639379f9a946220d96467fe98d0",
+  "source": "exec-484dba8f-0c4a-4b47-8acd-3da87a2bbe82.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

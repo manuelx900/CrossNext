@@ -11,7 +11,9 @@
 
 #include "DictZip.h"
 #include "DictionaryRegistry.h"
+#include "EnglishInflections.h"
 #include "StringUtils.h"
+#include "WordEdges.h"
 
 namespace {
 
@@ -62,11 +64,11 @@ uint32_t readBe32(const uint8_t* p) {
 
 // Word characters for cleaning: ASCII alphanumerics plus any UTF-8
 // continuation/lead byte, so accented words keep their edges.
-bool isWordByte(unsigned char c) { return c >= 0x80 || std::isalnum(c) != 0; }
 
 // Facts read from the .ifo at open time. Only the first 2KB is scanned — .ifo
 // headers are tiny and both keys always appear early when present.
 struct IfoFacts {
+  bool englishSource = false;
   bool offsets64 = false;        // idxoffsetbits=64 (unsupported)
   bool htmlDefinitions = false;  // sametypesequence=h (definitions are HTML)
 };
@@ -79,6 +81,8 @@ IfoFacts readIfoFacts(const std::string& ifoPath) {
   const int n = ifo.read(buf, sizeof(buf) - 1);
   if (n <= 0) return facts;
   buf[n] = '\0';
+  facts.englishSource = strstr(buf, "bookname=English-") || strstr(buf, "bookname=Wiktionary English-") ||
+                        strstr(buf, "lang_from=en\n") || strstr(buf, "lang_from=en\r");
   const char* line = strstr(buf, "idxoffsetbits");
   const char* eq = line ? strchr(line, '=') : nullptr;
   facts.offsets64 = eq && strtol(eq + 1, nullptr, 10) == 64;
@@ -98,6 +102,7 @@ bool Dictionary::open(const char* folderName) {
   basePath.clear();
   hasSyn = false;
   htmlDefinitions = false;
+  englishSource = false;
   std::string resolved;
   if (!DictionaryRegistry::resolveBasePath(folderName, resolved)) {
     LOG_ERR("DICT", "No dictionary found in folder '%s'", folderName ? folderName : "");
@@ -126,6 +131,7 @@ bool Dictionary::open(const char* folderName) {
   }
   hasSyn = Storage.exists((resolved + ".syn").c_str());
   htmlDefinitions = ifo.htmlDefinitions;
+  englishSource = ifo.englishSource;
 
   basePath = std::move(resolved);
   return true;
@@ -671,31 +677,9 @@ bool Dictionary::readDefinitions(LookupSession& session, const DictLocation& fir
 
 std::string Dictionary::cleanWord(const char* word) {
   if (!word) return "";
-  const auto* b = reinterpret_cast<const unsigned char*>(word);
-  size_t start = 0;
-  size_t end = strlen(word);
-  // Curly quotes and dashes (General Punctuation U+2000-U+206F = E2 80/81 xx)
-  // are all >= 0x80, so isWordByte keeps them; strip those 3-byte codepoints
-  // from the edges too, or EPUB text like garage.” never matches a headword.
-  while (start < end) {
-    if (!isWordByte(b[start]))
-      start++;
-    else if (end - start >= 3 && b[start] == 0xE2 && (b[start + 1] == 0x80 || b[start + 1] == 0x81))
-      start += 3;
-    else
-      break;
-  }
-  while (end > start) {
-    if (!isWordByte(b[end - 1]))
-      end--;
-    else if (end - start >= 3 && b[end - 3] == 0xE2 && (b[end - 2] == 0x80 || b[end - 2] == 0x81))
-      end -= 3;
-    else
-      break;
-  }
-  if (start >= end) return "";
-
-  std::string result(word + start, end - start);
+  const auto span = wordedges::trim(word);
+  if (span.first >= span.end) return "";
+  std::string result(word + span.first, span.end - span.first);
   std::transform(result.begin(), result.end(), result.begin(),
                  [](unsigned char c) { return c >= 0x80 ? c : static_cast<unsigned char>(std::tolower(c)); });
   return result;
@@ -703,7 +687,7 @@ std::string Dictionary::cleanWord(const char* word) {
 
 void Dictionary::stemVariants(const std::string& word, std::vector<std::string>& out) {
   out.clear();
-  out.reserve(6);
+  out.reserve(12);
   const size_t n = word.size();
   const auto add = [&out](std::string v) {
     if (std::find(out.begin(), out.end(), v) == out.end()) out.push_back(std::move(v));
@@ -768,6 +752,12 @@ bool Dictionary::lookup(const char* word, std::string& definitionOut, std::strin
       searchFailed = searchFailed || location.readError;
     }
 
+    if (!location.found && englishSource) {
+      if (const char* lemma = englishinflections::lemma(cleaned.c_str())) {
+        location = locate(session, lemma, &matchedHeadwordOut);
+        searchFailed = searchFailed || location.readError;
+      }
+    }
     if (!location.found) {
       std::vector<std::string> variants;
       stemVariants(cleaned, variants);

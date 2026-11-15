@@ -1,0 +1,36 @@
+{
+  "id": "K021",
+  "key": "Ficha",
+  "file": "K021.png",
+  "sample": {
+    "es": "Ficha de préstamo de Liora",
+    "en": "Liora's loan card"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Liora's loan card.",
+  "requests": [
+    21,
+    26,
+    75,
+    95,
+    121,
+    132,
+    157,
+    169,
+    176,
+    183,
+    215,
+    225,
+    237,
+    244,
+    255,
+    264,
+    277,
+    280,
+    291
+  ],
+  "sha256": "d83f72f1120e36aeac776275a53fd76c4799ec6bf43d0a4418350a0d169be31c",
+  "source": "exec-d70d22ee-3a56-4f17-8452-bc7b081985bf.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

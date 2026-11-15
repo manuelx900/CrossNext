@@ -141,7 +141,7 @@ struct SyncFlowModel {
   char title[24] = "";
   char body[192] = "";
   char whatNow[96] = "";
-  char factLines[3][40] = {"", "", ""};
+  char factLines[3][128] = {"", "", ""};
   int factCount = 0;
   SyncSafety safety = SyncSafety::None;
   // Whether leaving is safe RIGHT NOW: true from the moment the bridge owns

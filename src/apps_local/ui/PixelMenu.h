@@ -39,13 +39,16 @@ struct Header {
   fui::ActionId markAction = 0;
   fui::BitmapRef secondaryMark{};
   fui::ActionId secondaryMarkAction = 0;
+  const char* secondaryLabel = nullptr;
   uint16_t actionInputMask = fui::InputTouch;
   bool compactPercent = false;
+  LabelCase titleCase = LabelCase::Sentence;
 };
 void header(toybox::Screen& screen, Header model);
 void header(fui::DrawTarget& target, const fui::DeviceContext& device, const Header& model);
 void text(fui::DrawTarget& target, fui::Rect box, const char* label, fui::FontId font = kBody,
-          fui::Color color = fui::Color::Black, fui::TextAlign align = fui::TextAlign::Left, bool emphasis = false);
+          fui::Color color = fui::Color::Black, fui::TextAlign align = fui::TextAlign::Left, bool emphasis = false,
+          LabelCase casing = LabelCase::Sentence);
 fui::StyleSet rowStyles();
 fui::StyleSet buttonStyles();
 void styleList(fui::ListProps& props, bool dense = false);
@@ -105,14 +108,14 @@ void tabs(Screen& screen, const fui::TabItem* items, int count, fui::ActionId ac
 // The same SDK row measurement as list(), including wrapped names and values.
 template <typename Screen>
 void list(Screen& screen, fui::ListProps& props, bool fillFrame = false, bool frameSections = false,
-          uint8_t frameWidth = kBorder, bool trailingPreview = false) {
+          uint8_t frameWidth = kBorder, bool trailingPreview = false, bool frameInLight = false) {
   props = screen.resolveListProps(props);
   props.rowRadius = 0;
   props.partialTrailingRow = trailingPreview;
   const auto band = screen.body();
   const auto rows = rowArea(band, props);
   fui::list(screen.frame(), band, props);
-  if (chrome::lightHeader) return;
+  if (chrome::lightHeader && !frameInLight) return;
   int height = 0;
   int frameTop = -1;
   const auto finishFrame = [&]() {

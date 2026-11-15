@@ -30,6 +30,7 @@ class Activity {
   paintclock::SurfaceGate surfaceGate;
   bool edgeBackEnabled = true;
   bool blockChildEdgeBack = false;
+  bool remoteControlEnabled = false;
   menufont::Context interfaceFontContext;
 
  public:
@@ -46,11 +47,16 @@ class Activity {
   virtual bool allowsEdgeBack() const { return edgeBackEnabled; }
   virtual void onEnter();
   virtual void onExit();
+  // Called under RenderLock before stacking this live parent below a child.
+  virtual void prepareForChild() {}
   // Last chance to queue activity-owned state before sleep events are drained.
   virtual void prepareForSleep() {}
+  virtual void pauseReadingPace() {}
   virtual void loop() {}
 
   virtual void render(RenderLock&&) {}
+  // False while an intermediate render is waiting for its final content.
+  virtual bool presentationComplete() const { return true; }
   // Optional work on the existing render task, under RenderLock, without painting.
   virtual void runIdleWork() {}
 
@@ -70,8 +76,12 @@ class Activity {
   // transitions so no filesystem code races a raw SD-card owner.
   virtual bool requiresExclusiveStorageLoop() const { return false; }
   virtual bool isReaderActivity() const { return false; }
+  virtual bool acceptsRemoteInput() const { return false; }
+  virtual bool allowsRemoteControl() const { return remoteControlEnabled || acceptsRemoteInput() || isHomeActivity(); }
+  void setRemoteControlEnabled() { remoteControlEnabled = true; }
   // Reading-context screens need not own a document or its settings.
   virtual bool handleReaderTextSettingsGesture() { return false; }
+  virtual bool acceptsReaderTextInput() const { return false; }
   // Returns true when the activity schedules its own forced refresh.
   virtual bool handleForcedRefresh() { return false; }
   virtual bool isHomeActivity() const { return false; }

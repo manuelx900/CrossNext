@@ -1,0 +1,12 @@
+{
+  "id": "S092",
+  "master": "scene-092-v1.png",
+  "sha256": "b6ffed812baac3ebe3d4771667c1800fc4826cc6c53baab33433f1f7813a814a",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The last page. Chapter: The hall of crowns. Illustrate this already-authored event faithfully, without inventing another object or plot: Protect the recovered accounts while refusing the crown's claim. The route onward must remain a choice to free the world, not a contest to possess it. Context only, do not try to draw all of it: A hall of crowns stands between you and the inner palace. Its records belong to keepers who claimed the right to choose other people's endings. The last stand is empty and carries a place prepared for you.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

@@ -1,0 +1,12 @@
+{
+  "id": "C001",
+  "master": "crown-background-v1.png",
+  "sha256": "91eff56873700af84c7048f142a3b227f03113c36f18278f8970e26384224f13",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE landscape3:2 full background scene for Aventura lectora in its chibi fantasy storybook black-and-white style. The throne room after the Demon King defeat: a broad recovered stone hall, a broken dark crown above an empty royal throne at the back, restored shelves of books along the outer sides, large arched windows showing a bright calm sky. Foreground middle and lower center remain clear white stone floor for the separately rendered hero and PET. Fill the edges with coherent architecture, not blank margins. Thick BLACK outer contours, simple gray planes, no hatching, no text, characters, UI or frame. Reference scene is STYLE ONLY; no wolf, no bell or forest.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

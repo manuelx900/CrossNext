@@ -28,12 +28,15 @@ constexpr size_t kHeaderBytes = 3264, kDayBytes = 16, kBookBytes = 384;
 constexpr uint32_t kMaxBooks = 20000, kMaxDays = 36600;
 constexpr const char* kRoot = "/.crosspoint/reading-history";
 constexpr const char* kResponse = "/.crosspoint/reading-history/sync-response.json";
+enum class SnapshotKind { Cloud, CrossInk };
+const char* snapshotPath(SnapshotKind kind, int slot);
 struct Header {
   Summary summary;
   uint8_t active[92]{}, known[92]{};
   uint32_t generation = 0, books = 0, finished = 0, days = 0;
   int64_t importedAt = 0;
   uint64_t account = 0;
+  uint32_t unattributedCompleted = 0;
   uint64_t localIdentity = 0, localLength = 16, localHash = 14695981039346656037ULL;
 };
 void encodeHeader(const Header& header, uint8_t* bytes);
@@ -45,7 +48,7 @@ const char* slotPath(int slot);
 // Snapshot files are separate from the authoritative local session journal.
 class Reader {
  public:
-  Result open();
+  Result open(SnapshotKind kind = SnapshotKind::Cloud);
   void close();
   const Header& data() const { return header; }
   int activeSlot() const { return slot; }

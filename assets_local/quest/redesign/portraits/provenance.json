@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "portraits": [
+    {
+      "name": "liora",
+      "tool": "built-in image_gen",
+      "prompt": "Create a standalone Liora head-and-shoulders portrait, preserving the prologue librarian's round glasses, dark wavy hair and long braid. Match Murdle's friendly chibi portrait presentation in Aventura lectora's thick black monochrome fantasy style. Transparent background, whole head and shoulders, upper-chest crop, no scenery, hands, text, UI, frame or watermark. Identity reference: assets_local/quest/redesign/masters/prologue-liora.png; portrait-style reference: user-supplied Murdle screenshot.",
+      "file": "assets_local/quest/redesign/portraits/liora-source.png",
+      "sha256": "606c6530861bbcb277ad0155f059f3f07a806f9c1f159c6511bdaf8a2024bd1c",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "name": "market",
+      "tool": "built-in image_gen",
+      "prompt": "Create ONE new standalone head-and-shoulders chibi character portrait for Aventura lectora. The attached Liora portrait is a STYLE reference only; create a distinct character, not another Liora. Match its clean friendly fantasy comic language, large clear eyes, thick solid BLACK contours, white highlights, a few flat gray fills, simple forms legible at96 pixels on e-ink. Slight three-quarter front-facing bust, complete hair/head/shoulders within frame, upper-chest crop, head large about70% of canvas, hands not shown. Genuine transparent background. No scenery, no book icons, no text, labels, frames, UI, watermark, fine hatching or pixel art. Character: ONE GROUP PORTRAIT representing THE MARKET NEIGHBOURS: two friendly adult villagers side by side, a woman seamstress with dark hair in a bun and a light collared blouse, and a male bookseller with short curly hair and a simple dark apron. Both full faces clear and similarly large, shoulders overlapping slightly, no hands or objects. Do not add names or a third person. This is one compact two-person bust asset on a transparent background, not a scene.",
+      "file": "assets_local/quest/redesign/portraits/market-source.png",
+      "sha256": "255236ab3f34ab40021c4b66d1e4d9dbb4a1d520665ac38ecb8b1ca184a32244",
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "name": "mara",
+      "tool": "built-in image_gen",
+      "prompt": "Create ONE new standalone head-and-shoulders chibi character portrait for Aventura lectora. The attached Liora portrait is a STYLE reference only; create the distinct character described below, not another Liora. Match its clean friendly fantasy comic language, large clear expressive eyes, thick solid BLACK outlines, white highlights, a few flat gray fills, simple forms legible at96 pixels on e-ink. Front-facing slight three-quarter bust, whole head/hair and both shoulders fully inside canvas, crop at upper chest, head large about70% of canvas, no hands. Genuine transparent background. No scenery, no book icon, no text, no labels, no border/frame/UI/watermark, no fine texture/hatching, no pixel art. Character: MARA, an adult woman who keeps the harbour lighthouse. Short dark wavy hair under a simple knit sailor cap, a warm practical face and a small smile, sailor jacket with broad light collar, one simple anchor-shaped clasp. No glasses or braid. Distinct confident maritime silhouette.",
+      "file": "assets_local/quest/redesign/portraits/mara-source.png",
+      "sha256": "b5f073ca0a0ccb9ba785e92c4e934af48e22181e0411e923e50e835d45c61c09",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "name": "iri",
+      "tool": "built-in image_gen",
+      "prompt": "Create ONE new standalone head-and-shoulders chibi character portrait for Aventura lectora. The attached Liora portrait is a STYLE reference only; create the distinct character described below, not another Liora. Match its clean friendly fantasy comic language, large clear expressive eyes, thick solid BLACK outlines, white highlights, a few flat gray fills, simple forms legible at96 pixels on e-ink. Front-facing slight three-quarter bust, whole head/hair and both shoulders fully inside canvas, crop at upper chest, head large about70% of canvas, no hands. Genuine transparent background. No scenery, no book icon, no text, no labels, no border/frame/UI/watermark, no fine texture/hatching, no pixel art. Character: IRI, an adult female librarian of a library beneath the sea. Straight dark chin-length bob with neat bangs, a small shell-shaped hair clasp, a light high-collared tunic and dark short mantle, thoughtful gentle expression. No glasses, no braid, no crown. A human fantasy librarian, not a mermaid.",
+      "file": "assets_local/quest/redesign/portraits/iri-source.png",
+      "sha256": "aa32c307e9a00bee22fad76812b5be9c42cc79da2a33a0dd0ba233955cb53570",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "name": "taren",
+      "tool": "built-in image_gen",
+      "prompt": "Create ONE new standalone head-and-shoulders chibi character portrait for Aventura lectora. The attached Liora portrait is a STYLE reference only; create the distinct character described below, not another Liora. Match its clean friendly fantasy comic language, large clear expressive eyes, thick solid BLACK outlines, white highlights, a few flat gray fills, simple forms legible at96 pixels on e-ink. Front-facing slight three-quarter bust, whole head/hair and both shoulders fully inside canvas, crop at upper chest, head large about70% of canvas, no hands. Genuine transparent background. No scenery, no book icon, no text, no labels, no border/frame/UI/watermark, no fine texture/hatching, no pixel art. Character: TAREN, an adult male mountain guide. Tousled medium-dark hair, thick eyebrows, a short neatly kept beard, a warm scarf and simple travel cloak with a mountain-shaped clasp. Calm capable friendly expression. No hat, no glasses, no crown. Distinct broad mountain-traveller silhouette.",
+      "file": "assets_local/quest/redesign/portraits/taren-source.png",
+      "sha256": "9819db140bda83e17c07c15d4fce5a7d6ccd883b378298f2d926d7d9ec52bea8",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "name": "nadir",
+      "tool": "built-in image_gen",
+      "prompt": "Create ONE new standalone head-and-shoulders chibi character portrait for Aventura lectora. The attached Liora portrait is a STYLE reference only; create the distinct character described below, not another Liora. Match its clean friendly fantasy comic language, large clear expressive eyes, thick solid BLACK outlines, white highlights, a few flat gray fills, simple forms legible at96 pixels on e-ink. Front-facing slight three-quarter bust, whole head/hair and both shoulders fully inside canvas, crop at upper chest, head large about70% of canvas, no hands. Genuine transparent background. No scenery, no book icon, no text, no labels, no border/frame/UI/watermark, no fine texture/hatching, no pixel art. Character: NADIR, an adult male guide of a desert caravan. A light wrapped headscarf with the face completely uncovered, dark eyebrows, short dark beard, travel vest over a light tunic, one tied ribbon on the shoulder as his route-marker motif. Kind attentive expression, dignified practical traveller. No glasses, no crown, no modern objects.",
+      "file": "assets_local/quest/redesign/portraits/nadir-source.png",
+      "sha256": "cf41f5a0c180480a1a6c6346650085cfd6abe48ed4fddaeadc6ffd115f7de8a2",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "name": "orin",
+      "tool": "built-in image_gen",
+      "prompt": "Create ONE new standalone head-and-shoulders chibi character portrait for Aventura lectora. The attached Liora portrait is a STYLE reference only; create a distinct character, not another Liora. Match its clean friendly fantasy comic language, large clear eyes, thick solid BLACK contours, white highlights, a few flat gray fills, simple forms legible at96 pixels on e-ink. Slight three-quarter front-facing bust, complete hair/head/shoulders within frame, upper-chest crop, head large about70% of canvas, hands not shown. Genuine transparent background. No scenery, no book icons, no text, labels, frames, UI, watermark, fine hatching or pixel art. Character: ORIN, an older adult male clockmaker. Short silver-gray hair with a slightly receding hairline, rounded friendly face, a large neat white moustache, small round work goggles resting on his forehead (eyes unobstructed), light shirt and dark work apron, one small gear-shaped collar pin. Warm thoughtful smile. No beard, no wizard hat.",
+      "file": "assets_local/quest/redesign/portraits/orin-source.png",
+      "sha256": "b0d422a3a3d8748fe34f8aa5555585689216225ccccce30999f2b424aef6558d",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "name": "sera",
+      "tool": "built-in image_gen",
+      "prompt": "Create ONE new standalone head-and-shoulders chibi character portrait for Aventura lectora. The attached Liora portrait is a STYLE reference only; create a distinct character, not another Liora. Match its clean friendly fantasy comic language, large clear eyes, thick solid BLACK contours, white highlights, a few flat gray fills, simple forms legible at96 pixels on e-ink. Slight three-quarter front-facing bust, complete hair/head/shoulders within frame, upper-chest crop, head large about70% of canvas, hands not shown. Genuine transparent background. No scenery, no book icons, no text, labels, frames, UI, watermark, fine hatching or pixel art. Character: QUEEN SERA, an adult queen of a lunar palace. Long dark flowing hair, a small elegant crown with a single crescent moon motif, simple pale royal cape with a crescent clasp. Composed kind face, confident attentive expression. Crown modest and complete within frame, not huge. No glasses, no braid, no horns.",
+      "file": "assets_local/quest/redesign/portraits/sera-source.png",
+      "sha256": "68d5cc82c8616d6e2a34318b0971be6bd11e4ceae47f1d60379f57723d746d0e",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "name": "aster",
+      "tool": "built-in image_gen",
+      "prompt": "Create ONE new standalone head-and-shoulders chibi character portrait for Aventura lectora. The attached Liora portrait is a STYLE reference only; create a distinct character, not another Liora. Match its clean friendly fantasy comic language, large clear eyes, thick solid BLACK contours, white highlights, a few flat gray fills, simple forms legible at96 pixels on e-ink. Slight three-quarter front-facing bust, complete hair/head/shoulders within frame, upper-chest crop, head large about70% of canvas, hands not shown. Genuine transparent background. No scenery, no book icons, no text, labels, frames, UI, watermark, fine hatching or pixel art. Character: ASTER, an adult female caretaker of the garden of the gods. Light silver wavy shoulder-length hair, a small flower-and-leaf hair ornament, a broad simple leaf-shaped collar and gardener's light tunic, gentle wise face, relaxed smile. Distinct soft flowing silhouette. Human fantasy woman, no wings, no antlers, no royal crown, no glasses.",
+      "file": "assets_local/quest/redesign/portraits/aster-source.png",
+      "sha256": "62260db36d1e7ec7ebdce3678c87dbbdcffdecb36eabbed3de92ed2fd07bd2fa",
+      "size": [
+        1254,
+        1254
+      ]
+    }
+  ]
+}

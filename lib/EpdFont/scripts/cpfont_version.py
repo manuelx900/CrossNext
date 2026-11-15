@@ -10,6 +10,8 @@
 
 # .cpfont binary format version. Bump when the on-disk struct layout changes.
 CPFONT_VERSION = 4
+# Optional extended-count format; ordinary reading fonts and release URLs stay v4.
+CPFONT_EXTENDED_LIGATURE_VERSION = 5
 
 # JSON manifest schema version. Bump when the manifest shape changes.
 FONTS_MANIFEST_VERSION = 1

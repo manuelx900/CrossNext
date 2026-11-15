@@ -23,6 +23,7 @@ void ReadingStatsSyncActivity::onEnter() {
   requestUpdate();
 }
 void ReadingStatsSyncActivity::onExit() {
+  if (crossink) crossink->cancel();
   if (importer) {
     importer->cancel();
     importer.reset();
@@ -43,6 +44,24 @@ void ReadingStatsSyncActivity::onExit() {
   }
 }
 const char* ReadingStatsSyncActivity::message() const {
+  if (fromCrossInk) {
+    switch (result) {
+      case Result::Idle:
+        return tr(STR_CROSSINK_HELP);
+      case Result::Busy:
+        return tr(STR_CROSSINK_BUSY);
+      case Result::Success:
+        return tr(STR_CROSSINK_DONE);
+      case Result::Empty:
+        return tr(STR_CROSSINK_EMPTY);
+      case Result::Unsupported:
+        return tr(STR_CROSSINK_LIBRARY);
+      case Result::LowMemory:
+        return tr(STR_MEMORY_ERROR);
+      default:
+        return tr(STR_READING_STORAGE_ERROR);
+    }
+  }
   if (phase == Phase::Progress && result != Result::Idle && result != Result::Busy && result != Result::Success)
     return tr(STR_READING_SYNC_PROGRESS_FAILED);
   switch (result) {
@@ -90,6 +109,20 @@ void ReadingStatsSyncActivity::done() {
 }
 void ReadingStatsSyncActivity::start() {
   if (result == Result::Busy) return;
+  cancelFlag = false;
+  lastProgressMs = millis();
+  importCounts[0] = 0;
+  if (fromCrossInk) {
+    crossink = makeUniqueNoThrow<readingstats::crossink::Importer>();
+    const auto next = crossink ? crossink->begin() : Result::LowMemory;
+    if (!crossink) LOG_ERR("CROSSINK", "OOM: importer");
+    RenderLock lock;
+    result = next;
+    books = 0;
+    ready = false;
+    requestUpdate();
+    return;
+  }
   client.close();
   importer.reset();
   uploader.reset();
@@ -199,6 +232,36 @@ void ReadingStatsSyncActivity::action(fui::ActionId selected) {
 void ReadingStatsSyncActivity::loop() {
   if (mappedInput.wasReleased(MappedInputManager::Button::Back)) {
     done();
+    return;
+  }
+  if (fromCrossInk && result == Result::Busy) {
+    if (!ready) {
+      requestUpdateAndWait();
+      return;
+    }
+    int x = 0, y = 0;
+    if (mappedInput.wasScreenTapped(x, y)) {
+      fui::InputSnapshot input;
+      input.touchReleased = true;
+      input.touchX = x;
+      input.touchY = y;
+      if (interactions.route(input).action == readingui::ImportDone) cancelFlag = true;
+    }
+    const auto total = crossink->total();
+    const auto next = cancelFlag ? Result::Cancelled : crossink->step();
+    const auto processed = crossink->processed();
+    if (next != Result::Busy && next != Result::Success) crossink->cancel();
+    const auto now = millis();
+    if (next != Result::Busy || now - lastProgressMs >= 1000) {
+      RenderLock lock;
+      std::snprintf(importCounts, sizeof(importCounts), tr(STR_CROSSINK_COUNTS), static_cast<unsigned long>(processed),
+                    static_cast<unsigned long>(total), static_cast<unsigned long>(crossink->matched()));
+      books = processed;
+      result = next;
+      lastProgressMs = now;
+      ready = false;
+      requestUpdate();
+    }
     return;
   }
   if (result == Result::Busy && !waitingWifi) {
@@ -313,7 +376,13 @@ void ReadingStatsSyncActivity::render(RenderLock&&) {
   model.message = message();
   model.books = books;
   model.progress = phase == Phase::Progress;
-  model.setup = !KOREADER_STORE.hasCredentials() || result == Result::AuthFailed;
+  model.setup = !fromCrossInk && (!KOREADER_STORE.hasCredentials() || result == Result::AuthFailed);
+  if (fromCrossInk) {
+    model.title = tr(STR_CROSSINK_HISTORY);
+    model.headline = tr(STR_CROSSINK_HISTORY);
+    model.startLabel = tr(STR_CROSSINK_IMPORT_ACTION);
+    model.counter = *importCounts ? importCounts : nullptr;
+  }
   GUI.applyHeaderStatus(renderer, work.status);
   model.battery = work.status.status.battery.percent;
   readingui::buildImport(screen, model, work);

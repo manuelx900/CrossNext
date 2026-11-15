@@ -1,0 +1,17 @@
+{
+  "id": 1,
+  "saga": 0,
+  "step": 1,
+  "title": {
+    "en": "A dangerous crossing",
+    "es": "Un camino peligroso"
+  },
+  "enemy": "Shadowless pack",
+  "guardian": 1,
+  "master": "path-001.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The Forest of Monsters. Path episode: A dangerous crossing. Story action, which the scene must directly support: You find fallen trees and torn books. A pack of wolves watches the crossroads ahead.\nEnemy identity, MUST match this exact anatomy: two intertwined lean ink wolves with blank pale eyes and long ribbon-like shadows. Low eye-level view along the path; enemy large in the right foreground, landmark behind it to the left. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-da4678e4-5068-48bf-b2c8-7ad2b413c3e0.png",
+  "sha256": "627f2d415635d2bd53156a50c39378d16a7d4e99b7b7fa73738882a06bbc939c"
+}

@@ -32,6 +32,8 @@ class FrontlightPanelActivity final : public Activity, private UiAppHost {
   // reflected user intent in the first place.
   bool lightOnChanged = false;
   bool draggingSlider = false;
+  bool sliderPaintPending = false;
+  std::atomic<unsigned long> lastPanelPaint{0};
   bool suspendedForWifi = false;
   unsigned long lastClockPoll = 0;
   std::atomic<int> shownMinute{-1};
@@ -44,6 +46,10 @@ class FrontlightPanelActivity final : public Activity, private UiAppHost {
   static constexpr int kTileCount = 4;
 
   quickui::Work panelWork;
+  quickui::Model panelModel, paintedModel;
+  int paintedWidth = 0, paintedHeight = 0;
+  uint8_t paintedOrientation = 0;
+  bool paintedLightHeader = false;
   freeink::ui::HeaderProps status;
 
   static void panelScreen(UiScreen& screen, void* user);
@@ -54,7 +60,7 @@ class FrontlightPanelActivity final : public Activity, private UiAppHost {
   static void onTileEvent(const freeink::ui::ActionEvent& event, void* user);
 
   void buildPanelScreen(UiScreen& screen);
-  int computePanelBottom() const;
+  void preparePanelModel();
   void adjustBrightness(int delta);
   void adjustWarmth(int delta);
   void toggleLight();

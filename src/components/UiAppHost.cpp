@@ -2,6 +2,7 @@
 
 #include "SideButtonNavigation.h"
 #include "UiAppHelpers.h"
+#include "UiListLayoutCache.h"
 
 namespace fui = freeink::ui;
 
@@ -14,10 +15,15 @@ void UiAppHost::resetUi() {
   // table is rebuilt below. See UiAppHost::revealed().
   reveal_.arm();
   applySharedUiTheme(app, uiTarget);
+  sharedUiListLayoutCache().prepare();
 }
 
 void UiAppHost::renderUi() {
-  app.setDevice(uiTarget.deviceContext());
+  const auto device = uiTarget.deviceContext();
+  app.setDevice(device);
+  const auto context = uint64_t(device.width) | (uint64_t(device.height) << 16) | (uint64_t(device.orientation) << 32) |
+                       (uint64_t(I18N.getLanguage()) << 40);
+  app.setListLayoutCache(sharedUiListLayoutCache().get(), context);
   app.render();
   // Stamped on every build while a reveal is pending, so a render() that
   // rebuilds several times before its single displayBuffer() (UiListActivity

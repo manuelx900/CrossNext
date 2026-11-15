@@ -1,0 +1,21 @@
+{
+  "id": "K128",
+  "key": "Medalla-moon",
+  "file": "K128.png",
+  "sample": {
+    "es": "Medalla de las lunas",
+    "en": "Moons medal"
+  },
+  "requests": [
+    199
+  ],
+  "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: two crescent moons above a small palace roof.",
+  "transparent": true,
+  "kind": "keepsake",
+  "sha256": "66bfc88756b49b098f27d9480696238330a25487444101bcec20c6859f75636f",
+  "tool": "built-in image_gen",
+  "source": "exec-d4b0c255-4162-4bb7-a17c-fe322a0c769f.png",
+  "width": 1086,
+  "height": 1448,
+  "mode": "RGBA"
+}

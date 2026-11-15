@@ -1,0 +1,18 @@
+Hidden folders / Carpetas ocultas
+
+EN: In Files, hold a custom folder and choose Hide. The folder keeps its name,
+path and contents; apps can still access it directly. Settings > Library > Show
+hidden files reveals hidden folders. Hold one and choose Show to remove its
+custom hidden state. Resource folders (sleep, fonts, languages, dictionaries,
+notes and other app resources) and dot folders are hidden by default; use the
+settings toggle to browse them.
+
+ES: En Archivos, mantén pulsada una carpeta y elige Ocultar. Conserva su nombre,
+ruta y contenido; las apps siguen accediendo directamente. Ajustes > Biblioteca >
+Mostrar archivos ocultos permite verla. Mantén pulsada una carpeta oculta y elige
+Mostrar para quitar su marca. Las carpetas de recursos y las que empiezan con
+punto se muestran mediante el ajuste general.
+
+A custom hidden folder contains a one-byte .crossnext-hidden marker. Hiding
+never moves, renames or deletes books. The explorer checks this marker only for
+folders while hidden items are disabled; the library inventory is unchanged.

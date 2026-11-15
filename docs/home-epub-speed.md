@@ -1,0 +1,37 @@
+# Home and EPUB work reuse
+
+This batch targets X4 Pro (ESP32-S3 with 8 MiB PSRAM). It removes repeated storage and text-analysis work while retaining the existing font metrics, compositor, image dimensions, dithering, grayscale planes and panel refresh policy. It does not establish device latency or a ranking against stock firmware.
+
+## Home / Shelf
+
+Cover-grid geometry is resolved before the first composition. A prepared page is composed once. A page with missing thumbnails first presents its existing placeholders and translated black loading-covers window. The existing idle render worker generates missing thumbnails, then requests the final composition. Generation is cancellable between books; the existing EPUB/XTC thumbnail generator can still occupy the worker for one book. Native raster preparation and writes retain the existing bounded steps and input cancellation. There is no new task or framebuffer.
+
+Shelf scene snapshots contain cover artwork, titles and outlines. Percent badges are drawn after the art snapshot, so progress changes do not invalidate otherwise unchanged art. The featured footer remains dynamic. Flat fill covers first try the same validated native raster used by Library and fall back to the same BMP painter. Orientation, inversion, exact destination geometry and source validation still apply.
+
+Progress results retain a validated source stamp. After a successful reader progress write, an existing trusted result can receive the new percentage; unknown sources are never made trusted by publication. A bounded HAL table tracks canonical EPUB/XTC progress files and the reading journal under the existing storage mutex. Known progress/journal writes change their state revisions; unknown resource writes and media transitions invalidate source stamps. State queries perform no SD access. Reading-time summaries retain only a known result with a nonempty document identity. Unknown results and identity/read failures retry the ordinary path on the next entry. Summaries use the journal revision and source/media stamps; the journal remains authoritative if its derived index cannot be written. Direct host filesystem changes are unobservable, so simulator state revisions are zero and the fast summary path stays disabled.
+
+## EPUB
+
+A validated complete prepared layout is read in place. A partial prepared layout also stays in place unless an existing reader profile covers at least as much of the chapter. Its ordinary partial-build path can extend it. Opening a prepared layout no longer copies it to the reader profile first. Cache signatures, validation and committed/partial formats are unchanged.
+
+Each parser can memoize language-specific hyphenation breaks and exact prefix widths. Prefix keys include font and emphasis identities, all eight style bits, focus boundary, tracking, spacing and whether a visible hyphen is inserted. Unstable font metrics and unavailable memory use direct measurement. Break keys include the selected immutable language rules and fallback policy. Tie-breaking, rounding and selected line breaks are unchanged.
+
+A reader-session arena retains normalized token input for bounded, plain-text `p` paragraphs. A later parse must match every original raw text callback byte and callback boundary, the freshly resolved block style and text semantics before restoring tokens. Source offsets are rebased to the current paragraph. Nested markup, entities, ruby, links, tables, lists, preserved whitespace, inline size changes, drop caps, NFC source maps, long paragraphs and unsupported state retain ordinary parsing. A mismatching deferred prefix is replayed through the original callback sequence. Font-dependent layout, CSS length resolution, pagination, anchors and clipping ranges are still computed normally. This is an input cache, not a cached page or pagination checkpoint.
+
+## Ownership and resource bounds
+
+The HAL state table uses approximately 1 KiB static internal storage and adds a 16-byte key to writable/read handles. Optional progress data is 38,408 bytes on the 32-bit host and holds 64 validated books, replacing the former roughly 31 KiB per-Home progress-path table. Four reading summaries take roughly 2.4 KiB. These summaries are shared across activity lifetimes and accessed by the existing serialized activity/render owner. They contain no EPUB objects, tasks or open files. Admission leaves 512 KiB PSRAM headroom and failure retains ordinary reads.
+
+Home's native painter can allocate 32 KiB optional PSRAM scratch independently of its cover region cache, because cached regions must remain intact during native validation. Existing idle native preparation owns its separate workspace and file until completion or cancellation.
+
+A parser can use at most 6 KiB extra prefix entries and 2 KiB extra break entries, in addition to its existing 48 KiB word and 16 KiB paragraph-gap caches. The paragraph input arena has a 128 KiB payload and at most 192 KiB total PSRAM, bounded to 512 entries, 128 tokens, 8 KiB raw text and 24 KiB per paragraph. A nonblocking single-parser lease protects it. It is released on reader exit, with deferred release if still leased, and is dropped at the next acquire under pressure. Allocation requires 2 MiB headroom and no internal-RAM fallback. The existing event replay retention remains separately capped at 256 KiB.
+
+## Verification
+
+Run `python host-tests/home-epub/run.py`, `python host-tests/home-cache/run.py`, `python host-tests/library-native-covers/run.py`, `python host-tests/reader-next/run.py --only hal-policy`, and `python host-tests/reader-io/run.py --only profiles --small`. The chapter-layout runner requires `CROSSNEXT_GTEST` pointing at GoogleTest. It links the real language hyphenator.
+
+Tests compare serialized pages across font/focus/width changes; normalized input round trips, truncation, fallback and lease failure; all style bits and language/fallback changes; art/badge pixel overlap against the frozen pre-change grid; native/BMP cover pixels across orientation, inversion, palette and row order; summary publication and source/media/journal invalidation; and no profile mutations on prepared hits. Host display doubles verify drawing logic rather than the physical panel.
+
+On X4 Pro, use the same SD card, books and visual settings for baseline and candidate. Record cold and 30 warm Home returns, drawer/menu navigation, page changes and Library round trips. Test portrait and both landscape directions, inverted modes, absent/corrupt covers, many books, sleep/resume and repeated entry/exit. A warm unchanged Shelf should avoid progress reads and art decoding; changing progress should update only dynamic data.
+
+For EPUB, compare opening prepared and partial chapters, small/large font changes at early/middle/late positions, rapid repeated changes, language/focus changes, complex CSS, ruby, RTL/CJK/Thai, tables, image-heavy books and end-of-book state. Compare text, page breaks, clipping source positions and image planes. Trace operation counts with existing performance instrumentation; `EHP` debug logs report paragraph input hits. Observe internal/PSRAM free and largest blocks, stack high-water marks and input latency during a cold thumbnail. Missing text, stale percentages, altered pixels, unbounded heap loss or long input stalls are failure signs. Physical quality and timing require this device check before a PR.

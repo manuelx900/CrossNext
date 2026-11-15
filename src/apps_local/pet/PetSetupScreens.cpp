@@ -13,21 +13,15 @@ void ruleCard(toybox::Screen& s, fui::Rect r, const char* title, const char* bod
   frame(s, r);
   if (inlineCopy) {
     icon(s, rect(r.x + 12, r.y + (r.height - 28) / 2, 28, 28), mark);
-    text(s, rect(r.x + 52, r.y + (r.height - 30) / 2, 142, 30), title, 0);
-    fui::TextStyle copy;
-    copy.font = 4;
-    copy.maxLines = 2;
-    s.target().text(rect(r.x + 206, r.y + 4, r.width - 218, r.height - 8), body, copy);
+    text(s, rect(r.x + 52, r.y + 8, 142, r.height - 16), title, 0);
+    prose(s, rect(r.x + 206, r.y + 4, r.width - 218, r.height - 8), body, 16);
     return;
   }
   const bool compact = r.width > r.height * 2;
   icon(s, rect(r.x + 12, r.y + 10, compact ? 30 : 42, compact ? 30 : 42), mark);
   text(s, rect(r.x + (compact ? 56 : 68), r.y + 8, r.width - (compact ? 68 : 80), 30), title, 1);
   const int top = compact ? 48 : 65;
-  fui::TextStyle copy;
-  copy.font = 4;
-  copy.maxLines = 8;
-  s.target().text(rect(r.x + 12, r.y + top, r.width - 24, r.height - top - 8), body, copy);
+  prose(s, rect(r.x + 12, r.y + top, r.width - 24, r.height - top - 8), body, 16);
 }
 }  // namespace
 void setup(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
@@ -37,14 +31,14 @@ void setup(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
     const bool inlineCopy = wide && !rules;
     if (!inlineCopy)
       text(s, rect(r.x + 6, r.y, r.width - 12, 42), rules ? tr(STR_PET_HOW_TO) : tr(STR_PET_READ_TO_GROW), 2);
-    const int perPage = rules ? (wide ? 1 : 2) : 3;
+    const int perPage = rules ? (wide ? 1 : 2) : wide ? 2 : 3;
     w.pages = 6 / perPage;
     const int page = std::clamp(m.page, 0, w.pages - 1);
     const int top = r.y + (inlineCopy ? 0 : 56);
     const int footer = inlineCopy ? 108 : 112;
     const int height = (r.bottom() - top - footer - GAP * (perPage - 1)) / perPage;
-    static constexpr StrId titles[] = {StrId::STR_PET_APP,    StrId::STR_PET_SACIETY, StrId::STR_PET_JOY,
-                                       StrId::STR_PET_ENERGY, StrId::STR_PET_HYGIENE, StrId::STR_PET_HOME};
+    static constexpr StrId titles[] = {StrId::STR_PET_APP,    StrId::STR_PET_FULLNESS, StrId::STR_PET_JOY,
+                                       StrId::STR_PET_ENERGY, StrId::STR_PET_HYGIENE,  StrId::STR_PET_HOME};
     static constexpr StrId rulesTitles[] = {StrId::STR_PET_FOODS,       StrId::STR_PET_MEDICINE,
                                             StrId::STR_PET_GAMES_SHORT, StrId::STR_PET_HYGIENE,
                                             StrId::STR_PET_DIFFICULTY,  StrId::STR_PET_HOME};
@@ -75,7 +69,7 @@ void setup(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   }
   const int footerH = 54;
   text(s, rect(r.x + 7, r.y, r.width - 14, 48), tr(STR_PET_CHOOSE_EGG), 2);
-  prose(s, rect(r.x + 8, r.y + 49, r.width - 16, 32), tr(STR_PET_EGG_INTRO), 1);
+  prose(s, rect(r.x + 8, r.y + 43, r.width - 16, 46), tr(STR_PET_EGG_INTRO), 2);
   const int cardsH = wide ? r.height - 95 - footerH - GAP : std::max(176, int(r.height) * 40 / 100);
   const int cardsWidth = wide ? r.width * 59 / 100 : r.width;
   const auto cards = rect(r.x, r.y + 89, cardsWidth, cardsH);
@@ -116,9 +110,7 @@ void setup(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
        inverse);
   const int copyX = configuration.x + UI_INSET + mark + 12, copyW = configuration.right() - UI_INSET - 44 - copyX;
   std::snprintf(w.label, sizeof(w.label), tr(STR_PET_DIFFICULTY_VALUE), modeName(m.selectedMode));
-  text(s, rect(copyX, configuration.y + (wide ? 4 : 9), copyW, 24), w.label, wide ? 3 : 0, inverse);
-  std::snprintf(w.label, sizeof(w.label), tr(STR_PET_GOAL_VALUE), unsigned(pet::GOALS[m.selectedGoal]));
-  text(s, rect(copyX, configuration.y + (wide ? 29 : 39), copyW, 21), w.label, 3, inverse);
+  text(s, rect(copyX, configuration.y + 4, copyW, configH - 8), w.label, wide ? 3 : 0, inverse);
   button(s, w, rect(r.x, r.bottom() - footerH, r.width, footerH), tr(STR_PET_BEGIN), Start, 0, true,
          &extra_dashboard_play_64, m.writable && m.clockKnown && !m.historyChanged);
 }
@@ -141,8 +133,8 @@ void settings(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   const int footerH = 52;
   const auto footer = rect(r.x, r.bottom() - footerH, r.width, footerH);
   const int groupGap = UI_GAP, inset = UI_INSET;
-  const int modeW = wide ? r.width * 57 / 100 : r.width;
-  const int modeH = wide ? footer.y - r.y - groupGap : footer.y - r.y - 112 - 2 * groupGap;
+  const int modeW = r.width;
+  const int modeH = footer.y - r.y - groupGap;
   const auto modes = rect(r.x, r.y, modeW, modeH);
   frame(s, modes);
   text(s, rect(modes.x + inset, modes.y + 8, modes.width - inset * 2, 36), tr(STR_PET_DIFFICULTY), wide ? 1 : 2);
@@ -171,19 +163,6 @@ void settings(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
     const auto radio = rect(box.right() - 32, box.y + (box.height - 23) / 2, 23, 23);
     s.target().stroke(radio, inverse ? paper : ink, 2, 12);
     if (i == int(m.selectedMode)) s.target().fill(radio.inset({6, 6, 6, 6}), inverse ? paper : ink, 6);
-  }
-  const auto goals =
-      wide ? rect(modes.right() + groupGap, r.y + (modes.height - 152) / 2, r.right() - modes.right() - groupGap, 152)
-           : rect(r.x, modes.bottom() + groupGap, r.width, 112);
-  frame(s, goals);
-  text(s, rect(goals.x + inset, goals.y + 10, goals.width - inset * 2, 32), tr(STR_PET_DAILY_GOAL), 1);
-  const auto choices = rect(goals.x + inset, goals.y + 52, goals.width - inset * 2, wide ? 86 : 44);
-  for (int i = 0; i < 4; ++i) {
-    std::snprintf(w.label, sizeof(w.label), tr(STR_PET_MINUTES), static_cast<unsigned long long>(pet::GOALS[i]));
-    const auto box = wide ? rect(choices.x + (i % 2) * (choices.width + 8) / 2, choices.y + (i / 2) * 47,
-                                 (choices.width - 8) / 2, 39)
-                          : cell(choices, i, 4, 8);
-    button(s, w, box, w.label, SelectGoal, i, i == m.selectedGoal);
   }
   button(s, w, footer, tr(STR_PET_SAVE), SaveSettings, 0, true, &extra_check_32, m.writable);
 }

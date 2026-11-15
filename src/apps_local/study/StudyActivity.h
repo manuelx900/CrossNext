@@ -40,6 +40,7 @@ struct Rect;
 
 class StudyActivity final : public Activity {
  public:
+  bool allowsRemoteControl() const override { return false; }
   StudyActivity(GfxRenderer& renderer, MappedInputManager& mappedInput)
       : Activity("Study", renderer, mappedInput), fsrs_(nullptr), scheduler_(fsrs_, study::Steps::defaults()) {}
   ~StudyActivity() override = default;

@@ -17,18 +17,33 @@
 namespace fui = freeink::ui;
 
 void MappedInputManager::update(const bool deferHomeButtonAction) const {
+  remoteInput.reset();
   gpio.update();
+  edgeLight = {};
+  if (Frontlight.present()) {
+    int sx = 0, sy = 0, ex = 0, ey = 0;
+    if (decodeSwipe(sx, sy, ex, ey))
+      edgeLight = edgelight::classify(sx, sy, ex, ey, renderer.getScreenWidth(), renderer.getScreenHeight(),
+                                      SETTINGS.leftEdgeLightAction, SETTINGS.rightEdgeLightAction);
+  }
   const bool pagePressed =
       SETTINGS.vibration == CrossPointSettings::VIBRATION_TOUCH_PAGE && gpio.wasCapacitivePagePressed();
   HalHaptics::feedback(SETTINGS.vibration != CrossPointSettings::VIBRATION_OFF, pagePressed, SETTINGS.hapticIntensity);
   homeAction = HomeButtonAction::Ignore;
   if (gpio.hasHomeKey()) {
+    const bool readerHome =
+        readerTextContext && readertext::menuTrigger(SETTINGS.readerTextTrigger) == readertext::MenuTrigger::HomeHold;
+    if (!readerHome) readerHomeOwned = false;
+    if (gpio.wasHomeKeyPressed()) readerHomeOwned = readerHome;
     homeButtonInput.setWindow(SETTINGS.homeButtonDoubleTapTiming);
     homeAction = homeButtonInput.update(
         millis(), gpio.wasHomeKeyTapped(), gpio.wasHomeKeyLongPressed(), wasSwipe() != SwipeDir::None,
         gpio.wasHomeKeyPressed(), static_cast<HomeButtonAction>(SETTINGS.homeButtonTapAction),
         static_cast<HomeButtonAction>(SETTINGS.homeButtonDoubleTapAction),
-        static_cast<HomeButtonAction>(SETTINGS.homeButtonLongPressAction), isTouchscreenLocked());
+        readerHomeOwned ? HomeButtonAction::ReaderMenu
+                        : static_cast<HomeButtonAction>(SETTINGS.homeButtonLongPressAction),
+        isTouchscreenLocked());
+    if (gpio.wasHomeKeyTapped() || gpio.wasHomeKeyLongPressed()) readerHomeOwned = false;
     if (gpio.wasHomeKeyLongPressed() && homeAction != HomeButtonAction::Ignore) {
       HalHaptics::longPress(SETTINGS.vibration != CrossPointSettings::VIBRATION_OFF, SETTINGS.hapticIntensity);
     } else if (homeAction != HomeButtonAction::Ignore) {
@@ -39,11 +54,24 @@ void MappedInputManager::update(const bool deferHomeButtonAction) const {
   // Repeating this for the same frame's edges is idempotent.
   settleReleaseGate();
   sideEvent = {};
+  const uint8_t readerHeld =
+      (gpio.isPressed(HalGPIO::BTN_UP) && !releaseGate.swallowsRelease(HalGPIO::BTN_UP) ? 1u : 0u) |
+      (gpio.isPressed(HalGPIO::BTN_DOWN) && !releaseGate.swallowsRelease(HalGPIO::BTN_DOWN) ? 2u : 0u);
+  const auto readerSides =
+      readerMenuButtons.update(readerTextContext && !isTouchscreenLocked() && homeAction == HomeButtonAction::Ignore,
+                               readertext::menuTrigger(SETTINGS.readerTextTrigger), readerHeld, millis());
+  if (readerSides) {
+    if (readerSides & 1u) suppressedNavigationReleases |= uint8_t(1u << HalGPIO::BTN_UP);
+    if (readerSides & 2u) suppressedNavigationReleases |= uint8_t(1u << HalGPIO::BTN_DOWN);
+    homeAction = HomeButtonAction::ReaderMenu;
+  }
   if (gpio.hasTouch() && homeAction == HomeButtonAction::Ignore) {
     sideEvent =
         sideReleasedEvent(SETTINGS.sideLeftAction, SETTINGS.sideRightAction,
-                          !releaseGate.swallowsRelease(HalGPIO::BTN_UP) && gpio.wasReleased(HalGPIO::BTN_UP),
-                          !releaseGate.swallowsRelease(HalGPIO::BTN_DOWN) && gpio.wasReleased(HalGPIO::BTN_DOWN));
+                          !(suppressedNavigationReleases & (1u << HalGPIO::BTN_UP)) &&
+                              !releaseGate.swallowsRelease(HalGPIO::BTN_UP) && gpio.wasReleased(HalGPIO::BTN_UP),
+                          !(suppressedNavigationReleases & (1u << HalGPIO::BTN_DOWN)) &&
+                              !releaseGate.swallowsRelease(HalGPIO::BTN_DOWN) && gpio.wasReleased(HalGPIO::BTN_DOWN));
     homeAction = sideHomeAction(sideEvent.action);
   }
   if (deferHomeButtonAction) {
@@ -114,10 +142,23 @@ MappedInputManager::Button MappedInputManager::mapScreenDirection(const Button b
 }
 
 bool MappedInputManager::readButton(const uint8_t buttonIndex, bool (HalGPIO::*fn)(uint8_t) const) const {
+  const bool remoteSide = (remoteInput.button == RemoteButton::SideLeft && buttonIndex == HalGPIO::BTN_UP) ||
+                          (remoteInput.button == RemoteButton::SideRight && buttonIndex == HalGPIO::BTN_DOWN);
+  if (remoteSide && (fn == &HalGPIO::wasPressed || fn == &HalGPIO::wasReleased)) return true;
   // Reassigned side keys have one owner: no page turn, menu step or held repeat.
   if (gpio.hasTouch() && ((buttonIndex == HalGPIO::BTN_UP && !sideNavigates(SETTINGS.sideLeftAction)) ||
                           (buttonIndex == HalGPIO::BTN_DOWN && !sideNavigates(SETTINGS.sideRightAction))))
     return false;
+  const bool readerHold =
+      readerTextContext && (buttonIndex == HalGPIO::BTN_UP || buttonIndex == HalGPIO::BTN_DOWN) &&
+      readertext::holdsSide(readertext::menuTrigger(SETTINGS.readerTextTrigger), buttonIndex == HalGPIO::BTN_DOWN);
+  if (readerHold) {
+    // Defer a short page press until release so a menu hold cannot first turn a page.
+    if (fn == &HalGPIO::isPressed) return false;
+    if (fn == &HalGPIO::wasPressed)
+      return gpio.wasReleased(buttonIndex) && !releaseGate.swallowsRelease(buttonIndex) &&
+             !(suppressedNavigationReleases & (1u << buttonIndex));
+  }
   // The release half of a press some earlier activity already acted on is not
   // this activity's input. Comparing the member pointer keeps the gate on the
   // ONE edge it is about: presses and levels are read raw, so a held button
@@ -327,7 +368,7 @@ MappedInputManager::RowTouch MappedInputManager::colTouch(int& col, const int le
 }
 
 bool MappedInputManager::decodeSwipe(int& sx, int& sy, int& ex, int& ey) const {
-  if (isTouchscreenLocked()) return false;
+  if (isTouchscreenLocked() || edgeLight.action != edgelight::Action::None) return false;
   float nxs = 0.0f;
   float nys = 0.0f;
   float nxe = 0.0f;
@@ -427,7 +468,39 @@ bool MappedInputManager::wasPowerConfirmClick() const {
 }
 #endif
 
+bool MappedInputManager::injectRemoteClick(const RemoteButton button) {
+  if (gpio.wasAnyPressed() || gpio.wasAnyReleased() || gpio.wasTouchActivity() ||
+      homeAction != HomeButtonAction::Ignore || sideEvent.action != SideButtonAction::Navigation ||
+      isPressed(Button::Confirm) || isPressed(Button::Back))
+    return false;
+  if (!remoteInput.click(button)) return false;
+  if (button == RemoteButton::SideLeft || button == RemoteButton::SideRight) {
+    const bool left = button == RemoteButton::SideLeft;
+    const auto action = static_cast<SideButtonAction>(left ? SETTINGS.sideLeftAction : SETTINGS.sideRightAction);
+    sideEvent = {action, left ? SideButtonKey::Left : SideButtonKey::Right};
+    homeAction = sideHomeAction(action);
+    if (!sideNavigates(static_cast<uint8_t>(action))) remoteInput.button = RemoteButton::None;
+  }
+  return true;
+}
+
+bool MappedInputManager::injectRemoteAction(const SideButtonAction action) {
+  if (!selectableSideAction(action) || action == SideButtonAction::Navigation ||
+      !injectRemoteClick(RemoteButton::Confirm))
+    return false;
+  remoteInput.button = action == SideButtonAction::Confirm ? RemoteButton::Confirm : RemoteButton::None;
+  sideEvent = {action == SideButtonAction::OpenShortcut ? SideButtonAction::Navigation : action, SideButtonKey::Left};
+  homeAction = sideHomeAction(action);
+  return true;
+}
+
 bool MappedInputManager::wasPressed(const Button button) const {
+  if (button == Button::Confirm && remoteInput.button == RemoteButton::Confirm) return true;
+  if (button == Button::Back && remoteInput.button == RemoteButton::Back) return true;
+  if ((button == Button::NavNext || button == Button::Right) && remoteInput.button == RemoteButton::Next) return true;
+  if ((button == Button::NavPrevious || button == Button::Left) && remoteInput.button == RemoteButton::Previous)
+    return true;
+
   if (button == Button::Confirm && homeAction == HomeButtonAction::Confirm) return true;
   if (button == Button::Back && wasBackGesture()) return true;
 #if FREEINK_CAP_TOUCH
@@ -437,6 +510,12 @@ bool MappedInputManager::wasPressed(const Button button) const {
 }
 
 bool MappedInputManager::wasReleased(const Button button) const {
+  if (button == Button::Confirm && remoteInput.button == RemoteButton::Confirm) return true;
+  if (button == Button::Back && remoteInput.button == RemoteButton::Back) return true;
+  if ((button == Button::NavNext || button == Button::Right) && remoteInput.button == RemoteButton::Next) return true;
+  if ((button == Button::NavPrevious || button == Button::Left) && remoteInput.button == RemoteButton::Previous)
+    return true;
+
   if (button == Button::Confirm && homeAction == HomeButtonAction::Confirm) return true;
   if (button == Button::Back && wasBackGesture()) return true;
 #if FREEINK_CAP_TOUCH
@@ -524,7 +603,7 @@ void MappedInputManager::swallowNextReleaseOfHeldButtons() const {
 
 unsigned long MappedInputManager::getHeldTime() const {
   // A mapped action has its own meaning, independent of the contact duration.
-  if (homeAction != HomeButtonAction::Ignore) return 0;
+  if (homeAction != HomeButtonAction::Ignore || remoteInput.button != RemoteButton::None) return 0;
   if (!gpio.wasAnyPressed() && !gpio.wasAnyReleased() && touchHeldOverrideValid &&
       millis() - touchHeldOverrideAt <= TOUCH_HELD_OVERRIDE_WINDOW_MS) {
     return touchHeldOverrideMs;

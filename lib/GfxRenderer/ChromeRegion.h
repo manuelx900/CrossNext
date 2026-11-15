@@ -3,5 +3,10 @@
 namespace chrome {
 inline int headerHeight = 0;
 inline bool lightHeader = false;
-inline bool invertHeaderForOutput(bool invertedDisplay) { return invertedDisplay != lightHeader; }
+inline bool framebufferLightHeader = false;
+inline void beginFrame() {
+  headerHeight = 0;
+  framebufferLightHeader = lightHeader;
+}
+inline bool invertHeaderForOutput(bool invertedDisplay) { return invertedDisplay != framebufferLightHeader; }
 }  // namespace chrome

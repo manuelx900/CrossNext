@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <string>
 #include <vector>
@@ -21,6 +22,13 @@ class CoverGridHomeUi final : public UiAppHost {
   explicit CoverGridHomeUi(GfxRenderer& renderer);
   void begin(const std::vector<RecentBook>& books, bool hasOpds, bool hasContinueReading, bool plugins = false);
   void refreshCoverPaths();
+  void prepareGeometry();
+  void setCoverLoading(bool value) { coverLoading = value; }
+  void setLoadingShell(bool value) { loadingShell = value; }
+  bool coversReady() const { return allCoversReady; }
+  freeink::ui::Rect coverArea(size_t index) const {
+    return index < coverAreas.size() ? coverAreas[index] : freeink::ui::Rect{};
+  }
   void setSelection(int selection) { selected = selection; }
   void showDrawer() {
     drawer = true;
@@ -37,6 +45,8 @@ class CoverGridHomeUi final : public UiAppHost {
   // Thumbs must be generated at the drawn size: rescaling a dithered 1-bit
   // image aliases badly.
   int thumbHeightFor() const;
+  static int preparationThumbHeight(GfxRenderer& renderer);
+  static constexpr int generatedThumbHeight(int slotHeight) { return std::max(1, slotHeight + 8); }
   bool takeThumbHeightChanged();
   static constexpr int PAGE_PREVIOUS = -6, PAGE_NEXT = -7, MENU_TOGGLE = -4, MENU_IGNORE = -8;
   void setPage(int current, int total) {
@@ -68,14 +78,9 @@ class CoverGridHomeUi final : public UiAppHost {
   int selected = 0;
   int page = 0, pages = 1;
   bool drawer = false;
+  bool coverLoading = false, allCoversReady = false, loadingShell = false;
+  std::array<freeink::ui::Rect, MAX_BOOKS> coverAreas{};
   int bookProgress[MAX_BOOKS]{};
-  struct ProgressResult {
-    char path[512]{};
-    int percent = -1;
-  };
-  static constexpr int PROGRESS_RESULTS = 61;
-  HalMemory::PsramBuffer progressMemory;
-  int progressCount = 0;
   int shelfProgress(const RecentBook& book);
   int pending = -1;
   int progress = -1;

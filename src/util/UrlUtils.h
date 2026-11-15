@@ -25,4 +25,9 @@ std::string encodeUnsafeUrlChars(const std::string& url);
  */
 std::string buildUrl(const std::string& serverUrl, const std::string& path);
 
+// Resolve a URI reference against a document URL, including query-only links and dot segments.
+std::string resolveReference(const std::string& documentUrl, const std::string& reference);
+
+bool resolveServerPath(std::string& path, const std::string& requestUrl);
+
 }  // namespace UrlUtils

@@ -19,6 +19,7 @@
 #include "components/UITheme.h"
 #include "fontIds.h"
 #include "util/DictHtmlPages.h"
+#include "util/DictionaryLookupWord.h"
 #include "util/HtmlToPlainText.h"
 
 namespace {
@@ -110,7 +111,7 @@ void DictionaryDefinitionActivity::onEnter() {
   Activity::onEnter();
   resetUi();
   app.setScreen(&DictionaryDefinitionActivity::noticeScreen, this);
-  setEdgeBackEnabled(false);
+  setEdgeBackEnabled(true);
   for (auto action : {dictionaryui::Back, dictionaryui::Save, dictionaryui::Previous, dictionaryui::Next}) {
     app.on(
         action,
@@ -119,7 +120,7 @@ void DictionaryDefinitionActivity::onEnter() {
           self.app.clearTapFlash();
           switch (event.action) {
             case dictionaryui::Back:
-              self.finish();
+              self.goBack();
               break;
             case dictionaryui::Save:
               if (self.captureNotice.token.valid)
@@ -139,6 +140,15 @@ void DictionaryDefinitionActivity::onEnter() {
   }
   noticeAt = millis();
   noticeBrief = captureNotice.attempted;
+  prepareDefinition();
+  requestUpdate();
+}
+
+void DictionaryDefinitionActivity::prepareDefinition() {
+  pages.clear();
+  lines.clear();
+  currentPage = 0;
+  totalPages = 1;
   // Normalize StarDict multi-type separators so the wrap loop and the
   // C-string font APIs below both see the whole definition.
   std::replace(definition.begin(), definition.end(), '\0', '\n');
@@ -160,7 +170,6 @@ void DictionaryDefinitionActivity::onEnter() {
   } else {
     LOG_INF("DICT", "Styled definition: %u pages", static_cast<unsigned>(pages.size()));
   }
-  requestUpdate();
 }
 
 void DictionaryDefinitionActivity::onExit() {
@@ -171,7 +180,7 @@ void DictionaryDefinitionActivity::onExit() {
 }
 
 DictionaryDefinitionActivity::BodyArea DictionaryDefinitionActivity::bodyArea() const {
-  const auto body = dictionaryui::layout(uiTarget.deviceContext()).body;
+  const auto body = dictionaryui::layout(uiTarget.deviceContext(), lookupDictionary != nullptr).body;
   return {body.x, body.y, body.width, body.height};
 }
 
@@ -315,9 +324,13 @@ void DictionaryDefinitionActivity::wrapText() {
 }
 
 void DictionaryDefinitionActivity::loop() {
+  if (navigation != Navigation::None) {
+    navigateDefinition();
+    return;
+  }
   RenderLock lock;
   const auto routed = routeTouch(mappedInput);
-  if (source || captureNotice.attempted) {
+  if (historyDepth == 0 && (source || captureNotice.attempted)) {
     if (mappedInput.wasReleased(MappedInputManager::Button::Confirm)) {
       if (captureNotice.token.valid)
         undoPending = true;
@@ -351,10 +364,22 @@ void DictionaryDefinitionActivity::loop() {
     }
   }
   if (mappedInput.wasReleased(MappedInputManager::Button::Back)) {
-    finish();
+    goBack();
     return;
   }
 
+  if (lookupMessageVisible && millis() - lookupMessageAt >= 1500) {
+    lookupMessageVisible = false;
+    requestUpdate();
+  }
+  int heldX = 0, heldY = 0;
+  if (lookupDictionary && routingReady() && mappedInput.wasScreenLongPress(heldX, heldY)) {
+    pendingWord = wordAt(heldX, heldY);
+    if (!pendingWord.empty()) {
+      navigation = Navigation::Lookup;
+      return;
+    }
+  }
   const auto swipe = mappedInput.wasSwipe();
   if (swipe == MappedInputManager::SwipeDir::Left) {
     turnPage(1);
@@ -412,13 +437,18 @@ void DictionaryDefinitionActivity::render(RenderLock&&) {
   drawBody(fontId, body.x, body.y);
 
   const auto labels = mappedInput.mapLabels(tr(STR_BACK),
-                                            captureNotice.token.valid ? tr(STR_WORDS_UNDO)
-                                            : source                  ? tr(STR_WORD_SAVE)
-                                                                      : "",
+                                            historyDepth                ? ""
+                                            : captureNotice.token.valid ? tr(STR_WORDS_UNDO)
+                                            : source                    ? tr(STR_WORD_SAVE)
+                                                                        : "",
                                             (currentPage > 0 ? "<" : ""), (currentPage + 1 < totalPages ? ">" : ""));
   GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);
   renderUi();
-  if (noticeBrief && captureNotice.attempted) {
+  if (lookupMessageVisible) {
+    GUI.drawPopup(renderer, I18N.get(lookupMessage));
+    return;
+  }
+  if (historyDepth == 0 && noticeBrief && captureNotice.attempted) {
     const bool failed =
         captureNotice.status == vocabulary::Capture::Failed || captureNotice.status == vocabulary::Capture::Rejected;
     GUI.drawPopup(renderer, undone ? tr(STR_WORDS_UNDONE) : failed ? tr(STR_WORDS_NOT_SAVED) : tr(STR_WORDS_SAVED));
@@ -442,6 +472,156 @@ void DictionaryDefinitionActivity::noticeScreen(UiScreen& screen, void* p) {
   model.word = self.headword.c_str();
   model.page = self.currentPage + 1;
   model.pages = self.totalPages;
-  model.saveLabel = self.captureNotice.token.valid ? tr(STR_WORDS_UNDO) : self.source ? tr(STR_WORD_SAVE) : nullptr;
+  model.lookup = self.lookupDictionary != nullptr;
+  model.saveLabel = self.historyDepth                ? nullptr
+                    : self.captureNotice.token.valid ? tr(STR_WORDS_UNDO)
+                    : self.source                    ? tr(STR_WORD_SAVE)
+                                                     : nullptr;
   dictionaryui::build(screen, model, self.chrome);
+}
+
+void DictionaryDefinitionActivity::enableLookup(Dictionary& dictionary, const std::string& query) {
+  if (query.empty() || query.size() >= sizeof(currentQuery)) return;
+  lookupDictionary = &dictionary;
+  memcpy(currentQuery, query.c_str(), query.size() + 1);
+}
+
+void DictionaryDefinitionActivity::goBack() {
+  if (historyDepth)
+    navigation = Navigation::Back;
+  else
+    finish();
+}
+
+void DictionaryDefinitionActivity::showLookupMessage(const StrId message) {
+  lookupMessage = message;
+  lookupMessageAt = millis();
+  lookupMessageVisible = true;
+  requestUpdate();
+}
+
+std::string DictionaryDefinitionActivity::wordAt(const int x, const int y) const {
+  const auto body = bodyArea();
+  if (x < body.x || x >= body.x + body.width || y < body.y || y >= body.y + body.height) return {};
+  if (!pages.empty()) {
+    for (const auto& element : pages[currentPage]->elements) {
+      if (element->getTag() != TAG_PageLine) continue;
+      const auto& line = static_cast<const PageLine&>(*element);
+      const auto* block = line.getBlock();
+      if (!block || !block->valid()) continue;
+      for (uint16_t i = 0; i < block->wordCount(); ++i) {
+        const auto geometry = block->wordGeometry(renderer, definitionFontId, i);
+        const int left = body.x + line.xPos + block->wordXpos(i) + block->wordXOffset(i);
+        const int top = body.y + line.yPos + geometry.y;
+        if (x >= left && x < left + geometry.width && y >= top && y < top + geometry.height) {
+          const auto range = block->wordSourceRange(i);
+          const dictionaryLookup::Fragment hit{block->wordText(i), range.start, range.end,
+                                               block->wordHasDiscretionaryHyphen(i), block->wordStartsParagraph(i)};
+          const auto word = dictionaryLookup::joinWord(
+              hit, this, [](const void* context, const uint32_t boundary, const bool previous) {
+                const auto& self = *static_cast<const DictionaryDefinitionActivity*>(context);
+                for (const auto& page : self.pages) {
+                  for (const auto& item : page->elements) {
+                    if (item->getTag() != TAG_PageLine) continue;
+                    const auto* candidate = static_cast<const PageLine&>(*item).getBlock();
+                    if (!candidate || !candidate->valid()) continue;
+                    for (uint16_t n = 0; n < candidate->wordCount(); ++n) {
+                      const auto source = candidate->wordSourceRange(n);
+                      if (source.start == UINT32_MAX || source.end <= source.start) continue;
+                      if ((previous ? source.end : source.start) == boundary)
+                        return dictionaryLookup::Fragment{candidate->wordText(n), source.start, source.end,
+                                                          candidate->wordHasDiscretionaryHyphen(n),
+                                                          candidate->wordStartsParagraph(n)};
+                    }
+                  }
+                }
+                return dictionaryLookup::Fragment{};
+              });
+          return Dictionary::cleanWord(word.c_str());
+        }
+      }
+    }
+    return {};
+  }
+  const int lineHeight = renderer.getLineHeight(definitionFontId, PLAIN_TEXT_LINE_SPACING);
+  const size_t n = currentPage * linesPerPage + (y - body.y) / std::max(1, lineHeight);
+  if (n >= lines.size()) return {};
+  const auto& line = lines[n];
+  const char* text = definition.c_str() + line.start;
+  size_t start = 0;
+  while (start < line.len) {
+    while (start < line.len && static_cast<uint8_t>(text[start]) <= ' ') ++start;
+    size_t end = start;
+    while (end < line.len && static_cast<uint8_t>(text[end]) > ' ') ++end;
+    if (end == start) break;
+    const int left = body.x + measureSpan(definitionFontId, text, start);
+    const int right = body.x + measureSpan(definitionFontId, text, end);
+    if (x >= left && x < right) {
+      const auto word = dictionaryLookup::plainWord(definition, line.start + start);
+      return Dictionary::cleanWord(word.c_str());
+    }
+    start = end;
+  }
+  return {};
+}
+
+void DictionaryDefinitionActivity::navigateDefinition() {
+  const bool back = navigation == Navigation::Back;
+  navigation = Navigation::None;
+  if (!lookupDictionary || (back && historyDepth == 0)) return;
+  if (!back && historyDepth == history.size()) {
+    RenderLock lock;
+    showLookupMessage(StrId::STR_DICT_HISTORY_FULL);
+    return;
+  }
+  const char* query = back ? history[historyDepth - 1].query : pendingWord.c_str();
+  if (!*query || strlen(query) >= sizeof(currentQuery)) return;
+  {
+    RenderLock lock;
+    showLookupMessage(StrId::STR_DICT_LOOKING_UP);
+  }
+  requestUpdateAndWait();
+  std::string nextText, nextHeadword;
+  Dictionary::LookupResult status = Dictionary::LookupResult::NotFound;
+  const bool found = lookupDictionary->lookup(query, nextText, nextHeadword, &status);
+  RenderLock lock;
+  if (!found) {
+    StrId message = StrId::STR_DICT_NOT_FOUND;
+    switch (status) {
+      case Dictionary::LookupResult::Found:
+        break;
+      case Dictionary::LookupResult::NotFound:
+        break;
+      case Dictionary::LookupResult::LowMemory:
+        message = StrId::STR_DICT_LOW_MEMORY;
+        break;
+      case Dictionary::LookupResult::Decompress:
+        message = StrId::STR_DICT_DECOMPRESS_ERROR;
+        break;
+      case Dictionary::LookupResult::ReadError:
+        message = StrId::STR_DICT_READ_FAILED;
+        break;
+    }
+    showLookupMessage(message);
+    return;
+  }
+  const int restoredPage = back ? history[historyDepth - 1].page : 0;
+  if (!back) {
+    auto& previous = history[historyDepth++];
+    memcpy(previous.query, currentQuery, sizeof(currentQuery));
+    previous.page = currentPage;
+    memcpy(currentQuery, pendingWord.c_str(), pendingWord.size() + 1);
+  } else {
+    --historyDepth;
+    memcpy(currentQuery, history[historyDepth].query, sizeof(currentQuery));
+  }
+  definition = std::move(nextText);
+  headword = std::move(nextHeadword);
+  htmlDefinition = lookupDictionary->definitionsAreHtml();
+  lookupMessageVisible = false;
+  noticeBrief = false;
+  prepareDefinition();
+  currentPage = std::clamp(restoredPage, 0, totalPages - 1);
+  resetUi();
+  requestUpdate();
 }

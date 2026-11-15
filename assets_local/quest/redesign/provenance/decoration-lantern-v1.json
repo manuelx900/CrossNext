@@ -1,0 +1,8 @@
+{
+  "id": "lantern",
+  "path": "exec-6f3d0c97-a7ac-4e6c-b689-03568b22b428.png",
+  "prompt": "Production decoration sprite for Aventura lectora, ONE isolated object. Match the reference pets: thick clean pure black rounded outlines, white and soft flat gray shading, cute storybook cartoon, simple readable silhouette for 80x112 pixels, no fine texture. Full object centered with transparent margin, truly transparent RGBA background. No aura, no glow, no scenery, no letters, no frame, no other subjects. Subject: Liora's sturdy old lantern with an open-book emblem on the base, squat lantern standing on the ground, leaf-shaped handle",
+  "tool": "built-in image_gen",
+  "sha256": "b5a1bbba71a926cb395500f1288de6cfdb3006d583f02e9b39c52e74c94385d1",
+  "name": "decoration-lantern-v1"
+}

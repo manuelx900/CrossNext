@@ -8,6 +8,8 @@
 #include <array>
 #include <string>
 
+#include "apps_local/library/PreparedCoverCache.h"
+
 class GfxRenderer;
 
 // Screen-lifetime thumbnail decoding and PSRAM region snapshots.
@@ -32,8 +34,9 @@ class HomeCoverCache {
     bool flat = false;
     bool fillSlot = false;
   };
-  HalMemory::PsramBuffer coverCache, samplingScratch;
-  size_t samplingCapacity = 0;
+  HalMemory::PsramBuffer coverCache;
+  // Native validation needs separate 32 KiB scratch: cached cover pixels must remain intact.
+  libraryui::PreparedCoverCache nativeCover;
   bool paintFlatBitmap(freeink::ui::Rect rect, bool fillSlot);
   std::array<CachedCover, MAX_COVERS> cachedCovers{};
   size_t coverCacheCapacity = 0;

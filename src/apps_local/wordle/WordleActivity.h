@@ -1,5 +1,6 @@
 #pragma once
 #include "../../activities/Activity.h"
+#include "../../activities/util/EmbeddedKeyboard.h"
 #include "LocalWordle.h"
 #include "WordleScreens.h"
 class WordleActivity final : public Activity {
@@ -17,6 +18,9 @@ class WordleActivity final : public Activity {
   void save();
   void play(bool replace = false);
   void submit();
+  EmbeddedKeyboard keyboard;
+  wordle::NativeWordle native;
+  bool localized = false;
   localwordle::State state;
   localwordle::Store store;
   wordleui::Work work;

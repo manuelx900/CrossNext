@@ -650,10 +650,10 @@ void KOReaderSyncActivity::render(RenderLock&&) {
 
   int top = screen.y + screen.height / 2 - 40;
   if (state == NO_CREDENTIALS) {
-    UITheme::drawCenteredText(renderer, screen, UI_10_FONT_ID, top, tr(STR_NO_CREDENTIALS_MSG), true,
-                              EpdFontFamily::BOLD);
-    UITheme::drawCenteredText(renderer, screen, UI_10_FONT_ID, top + 40, tr(STR_KOREADER_SETUP_HINT), true,
-                              EpdFontFamily::BOLD);
+    UITheme::drawCenteredWrappedText(renderer, Rect{screen.x, top - 30, screen.width, 60}, UI_10_FONT_ID,
+                                     tr(STR_NO_CREDENTIALS_MSG), 2, true, EpdFontFamily::BOLD);
+    UITheme::drawCenteredWrappedText(renderer, Rect{screen.x, top + 40, screen.width, 90}, UI_10_FONT_ID,
+                                     tr(STR_KOREADER_SETUP_HINT), 3, true, EpdFontFamily::BOLD);
 
     const auto labels = mappedInput.mapLabels(tr(STR_BACK), "", "", "");
     GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);

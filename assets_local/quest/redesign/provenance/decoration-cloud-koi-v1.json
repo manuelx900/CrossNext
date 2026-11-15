@@ -1,0 +1,8 @@
+{
+  "id": "cloud-koi",
+  "path": "exec-c2dc2b1f-2d66-41cc-bc13-80af2c8ec4e4.png",
+  "prompt": "Production decoration sprite for Aventura lectora, ONE isolated object. Match the reference pets: thick clean pure black rounded outlines, white and soft flat gray shading, cute storybook cartoon, simple readable silhouette for 80x112 pixels, no fine texture. Full object centered with transparent margin, truly transparent RGBA background. No aura, no glow, no scenery, no letters, no frame, no other subjects. Subject: One tiny magical koi fish floating in the air, broad curved tail and a small round cloud beneath its belly",
+  "tool": "built-in image_gen",
+  "sha256": "9cf858d2f02e8d13d61c3367ade15556b7e1731b7402079fae57d281130b041f",
+  "name": "decoration-cloud-koi-v1"
+}

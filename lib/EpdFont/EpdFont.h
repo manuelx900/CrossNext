@@ -2,9 +2,10 @@
 #include "EpdFontData.h"
 
 class EpdFont {
+ public:
+  // Baseline coordinates: positive Y is above the baseline.
   void getTextBounds(const char* string, int startX, int startY, int* minX, int* minY, int* maxX, int* maxY) const;
 
- public:
   const EpdFontData* data;
   explicit EpdFont(const EpdFontData* data) : data(data) {}
   ~EpdFont() = default;

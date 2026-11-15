@@ -1,0 +1,8 @@
+{
+  "id": "phoenix-feather",
+  "path": "exec-3ab710cf-685a-4767-86a1-f9f26e5c044b.png",
+  "prompt": "Production decoration sprite for Aventura lectora, ONE isolated object. Match the reference pets: thick clean pure black rounded outlines, white and soft flat gray shading, cute storybook cartoon, simple readable silhouette for 80x112 pixels, no fine texture. Full object centered with transparent margin, truly transparent RGBA background. No aura, no glow, no scenery, no letters, no frame, no other subjects. Subject: A large elegantly curved phoenix feather standing upright in a tiny stone base, dark gray outer edge, white central vein",
+  "tool": "built-in image_gen",
+  "sha256": "21a8b97867b4a49c867d2b1f339782d7114967e462de84a2feb60b51ca65022a",
+  "name": "decoration-phoenix-feather-v1"
+}

@@ -1,11 +1,13 @@
 #include "ClearCacheActivity.h"
 
+#include <Epub/css/CssParser.h>
 #include <GfxRenderer.h>
 #include <HalStorage.h>
 #include <I18n.h>
 #include <Logging.h>
 
 #include "MappedInputManager.h"
+#include "apps_local/home/CoverSceneCache.h"
 #include "apps_local/ui/PixelMenuTheme.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
@@ -38,11 +40,16 @@ void ClearCacheActivity::render(RenderLock&&) {
   pixelui::drawHeader(renderer, tr(STR_CLEAR_READING_CACHE), I18N.getLanguage() != Language::EN);
 
   if (state == WARNING) {
-    renderer.drawCenteredText(UI_10_FONT_ID, pageHeight / 2 - 60, tr(STR_CLEAR_CACHE_WARNING_1), true);
-    renderer.drawCenteredText(UI_10_FONT_ID, pageHeight / 2 - 30, tr(STR_CLEAR_CACHE_WARNING_2), true,
-                              EpdFontFamily::BOLD);
-    renderer.drawCenteredText(UI_10_FONT_ID, pageHeight / 2 + 10, tr(STR_CLEAR_CACHE_WARNING_3), true);
-    renderer.drawCenteredText(UI_10_FONT_ID, pageHeight / 2 + 30, tr(STR_CLEAR_CACHE_WARNING_4), true);
+    static constexpr StrId warnings[] = {StrId::STR_CLEAR_CACHE_WARNING_1, StrId::STR_CLEAR_CACHE_WARNING_2,
+                                         StrId::STR_CLEAR_CACHE_WARNING_3, StrId::STR_CLEAR_CACHE_WARNING_4};
+    const int rowHeight = 2 * renderer.getLineHeight(UI_10_FONT_ID);
+    const int top = std::max(UITheme::getContentArea(renderer).y, (pageHeight - 4 * rowHeight - 24) / 2);
+    for (int row = 0; row < 4; ++row)
+      UITheme::drawCenteredWrappedText(renderer,
+                                       Rect{metrics.contentSidePadding, top + row * (rowHeight + 8),
+                                            pageWidth - 2 * metrics.contentSidePadding, rowHeight},
+                                       UI_10_FONT_ID, I18N.get(warnings[row]), 2, true,
+                                       row == 1 ? EpdFontFamily::BOLD : EpdFontFamily::REGULAR);
 
     if (confirmPopup.processRender(renderer, mappedInput)) return;
 
@@ -75,7 +82,12 @@ void ClearCacheActivity::render(RenderLock&&) {
   if (state == FAILED) {
     renderer.drawCenteredText(UI_10_FONT_ID, pageHeight / 2 - 20, tr(STR_CLEAR_CACHE_FAILED), true,
                               EpdFontFamily::BOLD);
-    renderer.drawCenteredText(UI_10_FONT_ID, pageHeight / 2 + 10, tr(STR_CHECK_SERIAL_OUTPUT));
+    UITheme::drawCenteredWrappedText(
+        renderer,
+        Rect{metrics.contentSidePadding, pageHeight / 2 + 10, pageWidth - 2 * metrics.contentSidePadding,
+             3 * renderer.getLineHeight(UI_10_FONT_ID)},
+        UI_10_FONT_ID, tr(STR_CHECK_SERIAL_OUTPUT), 3, true, EpdFontFamily::REGULAR,
+        UITheme::TextVerticalAlignment::TOP);
 
     const auto labels = mappedInput.mapLabels(tr(STR_BACK), "", "", "");
     GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);
@@ -95,6 +107,8 @@ void ClearCacheActivity::beginClear() {
 }
 
 void ClearCacheActivity::clearCache() {
+  homecover::invalidateScenes();
+  CssParser::invalidateValidationMemo();
   LOG_DBG("CLEAR_CACHE", "Clearing cache...");
 
   // Open .crosspoint directory

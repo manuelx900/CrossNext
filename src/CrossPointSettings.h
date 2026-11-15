@@ -1,12 +1,14 @@
 #pragma once
-
 #include <ArduinoJson.h>
+#include <BlePageTurner.h>
 #include <Epub/ReaderRenderSpec.h>
 #include <PersistableStore.h>
 
 #include <cstdint>
 
 #include "apps_local/power/PowerWakePolicy.h"
+#include "apps_local/readerbars/ReaderBarsConfig.h"
+#include "apps_local/readertext/ReaderMenuTrigger.h"
 #include "apps_local/ui/QuickAction.h"
 #include "util/HomeButtonInput.h"
 #include "util/MenuFontStyle.h"
@@ -20,6 +22,7 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   friend class PersistableStore<CrossPointSettings>;
 
  public:
+  bleturner::Config ble;
   enum SLEEP_SCREEN_MODE {
     DARK = 0,
     LIGHT = 1,
@@ -113,7 +116,7 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   };
 
   // Font family options (built-in fonts only; SD card fonts use sdFontFamilyName)
-  enum FONT_FAMILY { NOTOSERIF = 0, FONT_FAMILY_COUNT };
+  enum FONT_FAMILY { UBUNTU = 0, NOTOSERIF = UBUNTU, FONT_FAMILY_COUNT };
   static constexpr uint8_t LEGACY_OPENDYSLEXIC = 2;
   static constexpr uint8_t BUILTIN_FONT_COUNT = FONT_FAMILY_COUNT;
   // Reader font size is a point size, not an enum slot — see fontPointSize.
@@ -121,7 +124,16 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   // slot; fromJson() folds that range up (see LEGACY_FONT_SIZE_MAX).
   static constexpr uint8_t LEGACY_FONT_SIZE_MAX = 3;
   static constexpr uint8_t DEFAULT_FONT_POINT_SIZE = 14;
-  enum LINE_COMPRESSION { TIGHT = 0, NORMAL = 1, WIDE = 2, EXTRA_WIDE = 3, LINE_COMPRESSION_COUNT };
+  enum LINE_COMPRESSION {
+    LINE_SPACING_100 = 0,
+    LINE_SPACING_110,
+    LINE_SPACING_120,
+    LINE_SPACING_130,
+    LINE_SPACING_145,
+    LINE_SPACING_160,
+    LINE_SPACING_175,
+    LINE_COMPRESSION_COUNT
+  };
   enum PARAGRAPH_ALIGNMENT {
     JUSTIFIED = 0,
     LEFT_ALIGN = 1,
@@ -192,7 +204,13 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   enum UI_THEME { CLASSIC = 0, LYRA = 1, LYRA_3_COVERS = 2, ROUNDEDRAFF = 3, COVER_GRID = 4 };
 
   // Image rendering in EPUB reader
-  enum IMAGE_RENDERING { IMAGES_DISPLAY = 0, IMAGES_PLACEHOLDER = 1, IMAGES_SUPPRESS = 2, IMAGE_RENDERING_COUNT };
+  enum IMAGE_RENDERING {
+    IMAGES_DISPLAY = 0,
+    IMAGES_PLACEHOLDER = 1,
+    IMAGES_SUPPRESS = 2,
+    IMAGES_DISPLAY_BW = 3,
+    IMAGE_RENDERING_COUNT
+  };
 
   // How Select opens the reader menu: the classic full-screen list, or a toolbar
   // overlay (top/bottom bars with Contents / Text / More bottom-sheet panels)
@@ -240,6 +258,9 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   uint8_t sleepScreenCoverMode = FIT;
   // Sleep screen cover filter
   uint8_t sleepScreenCoverFilter = NO_FILTER;
+  uint8_t sleepReadingGoal = 0;
+  readerbars::Settings readerBars;
+  readerbars::Config readerBar(readerbars::Position position) const;
   // Status bar settings
   uint8_t statusBarChapterPageCount = 1;
   uint8_t statusBarBookProgressPercentage = 1;
@@ -269,6 +290,7 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   // Resetting to 0 (e.g. via the web UI) forces a re-sync on next WiFi connect.
   uint8_t clockHasBeenSynced = 0;
   // Text rendering settings
+  uint8_t perBookTextSettings = 1;
   uint8_t extraParagraphSpacing = 1;
   uint8_t paragraphIndentSpaces = 2;
   static constexpr uint8_t WORD_SPACING_MIN = 50;
@@ -281,6 +303,8 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   uint8_t textAntiAliasing = 0;
   // Short power button click behaviour
   uint8_t shortPwrBtn = IGNORE;
+  uint8_t touchPowerShortAction = 0, touchPowerLongAction = 1;
+  uint8_t leftEdgeLightAction = 0, rightEdgeLightAction = 0;
   uint8_t powerWakeMode = static_cast<uint8_t>(powermenu::WakeMode::ShortPress);
   // X4 Pro: double-click power toggles the frontlight. Disabling frees the
   // power button for shortPwrBtn actions without the double-click wait.
@@ -314,7 +338,7 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   uint8_t fontPointSize = DEFAULT_FONT_POINT_SIZE;
   enum FONT_WEIGHT { FONT_WEIGHT_REGULAR = 0, FONT_WEIGHT_BOLD = 1, FONT_WEIGHT_COUNT };
   uint8_t fontWeight = FONT_WEIGHT_REGULAR;
-  uint8_t lineSpacing = NORMAL;
+  uint8_t lineSpacing = LINE_SPACING_120;
   uint8_t paragraphAlignment = JUSTIFIED;
   // Auto-sleep timeout setting (default 10 minutes). Legacy sleepTimeout enum values are migration-only.
   uint8_t sleepTimeoutMinutes = 10;
@@ -347,6 +371,7 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   uint8_t libraryView = 0;
   uint8_t libraryLayout = 0;
   uint8_t libraryClassicGrid = 1, libraryClassicExpanded = 0;
+  uint8_t libraryCollectionGrid = 1;
   uint8_t librarySortMethod = 0, librarySortDirections = 1;
   uint8_t libraryExpandedList = 1;
   uint8_t libraryDisplay = 7;     // Finished books, series and genre.
@@ -355,6 +380,11 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   uint8_t readingFormats = 7;
   enum HOME_LAYOUT { HOME_FRAMED = 0, HOME_CAROUSEL, HOME_BOOX, HOME_LICORICE, HOME_LAYOUT_COUNT };
   uint8_t homeLayout = HOME_FRAMED;
+  uint8_t homeCoverLoadingMask = 1u << HOME_LICORICE;
+  bool homeCoverNotice(uint8_t theme) const {
+    return theme < HOME_LAYOUT_COUNT && (homeCoverLoadingMask & (1u << theme));
+  }
+
   uint8_t interfaceThemeStyle = 0;
   uint8_t interfaceThemeOverrides[menufont::kSectionCount]{};
   uint8_t menuFontStyle = uint8_t(menufont::kDefault);
@@ -366,11 +396,14 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   uint8_t pwrBtnFootnoteBack = 1;
   // Use book's embedded CSS styles for EPUB rendering (1 = enabled, 0 = disabled)
   uint8_t embeddedStyle = 1;
+  uint8_t prepareBookOnOpen = 0;
+  uint8_t epubEngine = 0;
   // Focus Reading - emphasizes the first part of words with bold
   uint8_t focusReadingEnabled = 0;
   uint8_t readerMenuStyle = READER_MENU_LIST;
+  uint8_t readerTextTrigger = uint8_t(readertext::MenuTrigger::SwipeUp);
   // SD card font family name (empty = use built-in fontFamily)
-  char sdFontFamilyName[32] = "";
+  char sdFontFamilyName[32] = "Noto Serif";
   // Dictionary folder name under /dictionaries (empty = no dictionary)
   char dictionaryName[32] = "";
   char translationDictionaryName[32] = "";
@@ -391,6 +424,8 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   // network at boot and keeps a paired-only control server up, so it can be
   // reflashed and driven without a cable. Off is the shipped default and turns
   // all of it off again; see src/DevMode.h.
+  uint8_t pluginsEnabled = 0;
+  uint8_t pluginHubPromptHidden = 0;
   uint8_t devMode = 0;
   // Anonymous device info on requests to CrossPlay's own services (0 = off,
   // 1 = on): a hashed id, the board and a small report ride as headers on
@@ -417,16 +452,19 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   char sideRightShortcutTitle[40] = "READING QUEST";
   uint8_t rotationDirection = 0;  // 0 left, 1 right
   // Which gestures turn the page in each direction (PAGE_TURN_GESTURE).
-  uint8_t pageTurnGesture = SWIPE_ONLY;
-  uint8_t previousPageGesture = SWIPE_ONLY;
+  uint8_t pageTurnGesture = TAP_AND_SWIPE;
+  uint8_t previousPageGesture = TAP_AND_SWIPE;
   // Swap both horizontal page swipes and tap zones for fixed-layout manga.
   uint8_t xtcInvertPageDirection = 0;
   uint8_t xtcCoverRotation = 0;
   uint8_t readingDailyGoal = 0;
+  int32_t readingGoalStartDay = 0;
+  bool readingGoalLegacyHistory = false;
   uint8_t flashcardQuestionSize = 0;
   uint8_t flashcardAnswerSize = 0;
   uint8_t flashcardSmartSize = 1;
   uint8_t wordsQuestionSize = 1;
+  uint8_t wordsTextAlignment = 0, flashcardTextAlignment = 0;
   uint8_t wordsAnswerSize = 0;
   uint8_t wordsSmartSize = 1;
   // Reader menu open gesture (SHOW_READER_MENU: off / center tap / bottom-edge
@@ -444,12 +482,14 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   uint8_t frontlightRestoreOnWake = 1;
   // Language setting (Language enum index, default 0 = EN)
   uint8_t language = 0;
+  char languagePack[64] = {};
   // Keyboard layouts the user can reach, using keyboard_layouts::ALL table bits.
   // 0 means "not configured", resolved to the UI language's layout plus English.
   // Any other value is an explicit choice and is used as-is: the language of the
   // books someone reads is not necessarily the language of their UI.
   // See keyboard_layouts:: for the bit assignment and the defaulting rules.
   uint16_t keyboardLayouts = 0;
+  uint64_t keyboardLanguageLayouts = 0;
   // Quick Resume: keep current content visible with moon icon instead of showing a static sleep screen.
   uint8_t quickResumeSleepScreen = QUICK_RESUME_NEVER;
 
@@ -461,6 +501,8 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   // Returns font ID or 0 if not found.
   using SdFontIdResolver = int (*)(void* ctx, const char* familyName, uint8_t fontSize);
   SdFontIdResolver sdFontIdResolver = nullptr;
+  using SdFontHashResolver = uint32_t (*)(void* ctx, const char* familyName, uint8_t fontSize);
+  SdFontHashResolver sdFontHashResolver = nullptr;
   void* sdFontResolverCtx = nullptr;
 
   uint16_t getPowerButtonDuration() const {

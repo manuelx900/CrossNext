@@ -1,0 +1,12 @@
+{
+  "id": "S025",
+  "master": "scene-025-v1.png",
+  "sha256": "c51d9a6db8cfb6c48d19a644bb07b857b07caf7f6f01130a6714cadf4d6a8476",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The sunken library. Chapter: The water hall. Illustrate this already-authored event faithfully, without inventing another object or plot: Iri recognizes the atlas's binding. Recovering its arrival record will show why the book matters to the king beyond the paths it restores. Context only, do not try to draw all of it: The dome keeps a pocket of dry air beneath the sea. Iri, the elderly librarian who maintains it, welcomes you after hearing the harbor bell. She protects the books Aren sent away and remembers Ada examining them.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

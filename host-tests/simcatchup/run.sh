@@ -178,6 +178,33 @@ ok((tmp / "HalStorage.h").read_text() == header and
    (tmp / "HalStorage.cpp").read_text() == source and not sc._UNAPPLIED,
    "checked enumeration patches are idempotent")
 
+# Resource APIs must patch both pristine and previously patched host HALs.
+reset()
+header_path = tmp / "HalStorage.h"
+source_path = tmp / "HalStorage.cpp"
+for older in (False, True):
+    header_path.write_text("class HalStorage {\n  bool begin();\n" +
+                           ("  uint32_t contentRevision() const { return 0; }\n"
+                            "  uint32_t mediaRevision() const { return 0; }\n" if older else "") + "};\n")
+    source_path.write_text("bool HalStorage::begin() { return true; }\n")
+    sc.patch_storage_revisions(tmp)
+    sc.patch_derived_storage(tmp)
+    sc.require_all_applied()
+    header, source = header_path.read_text(), source_path.read_text()
+    ok(header.count("stateFileRevision(const char *) { return 0; }") == 1 and
+       header.count("resourceRevision() const { return 0; }") == 1 and
+       header.count("contentRevision() const") == 1 and header.count("mediaRevision() const") == 1,
+       "host revisions stay disabled on pristine and previously patched HALs")
+    ok("removeDerivedCache(" in header and "renameDerivedCache(" in header and "replaceDerivedCache(" in header and
+       "openDerivedCacheForWrite(" in header and "openDerivedCoverForUpdate(" in header and
+       "return openFileForWrite(moduleName, path, file);" in source and
+       "return openFileForUpdate(moduleName, path, file);" in source,
+       "derived host writes retain ordinary file I/O")
+    sc.patch_storage_revisions(tmp)
+    sc.patch_derived_storage(tmp)
+    ok(header_path.read_text() == header and source_path.read_text() == source and not sc._UNAPPLIED,
+       "resource and derived-write patches are idempotent")
+
 print(f"{PASS + FAIL} checks, {FAIL} failed")
 raise SystemExit(1 if FAIL else 0)
 PY

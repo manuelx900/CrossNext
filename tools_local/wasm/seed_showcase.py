@@ -103,12 +103,12 @@ def reading_history(card, books, today):
             b = running.setdefault(uid, dict(seconds=0, sessions=0, pages=0, first=0, finished=0, days=set(), buckets=[0]*4))
             seconds = 1100 + (ago * 137 + session * 557) % 3100
             pages = 9 + ago % 23
-            hour = 9 if session == 0 else 20
-            epoch = int(dt.datetime.combine(day, dt.time(hour, 15)).timestamp())
+            hour = 9 if session == 0 else 14
+            epoch = int(dt.datetime.combine(day, dt.time(hour, 15), dt.timezone.utc).timestamp())
             localday = (day - dt.date(1970, 1, 1)).days
             b["seconds"] += seconds; b["sessions"] += 1; b["pages"] += pages
             b["first"] = b["first"] or epoch; b["days"].add(localday)
-            b["buckets"][1 if session == 0 else 3] += seconds
+            b["buckets"][1 if session == 0 else 2] += seconds
             first = index >= len(books)-3 and not b["finished"] and ago < 20
             if first:
                 b["finished"] = epoch + seconds
@@ -153,7 +153,7 @@ def seed(card):
             shutil.rmtree(path)
     (card / "FLASHCARDS/Prueba directa 100 tarjetas.apkg").unlink(missing_ok=True)
     today = dt.date.today()
-    recent = json.loads((data / "recent.json").read_text("utf-8"))["books"]
+    recent = json.loads((ROOT / "tools_local/wasm/sdcard/.crosspoint/recent.json").read_text("utf-8"))["books"]
     added = []
     sources = []
     for item, path in checked_assets(ASSETS / "showcase-books"):
@@ -170,23 +170,36 @@ def seed(card):
     # Eight habits fill more than one page, with 60 days of synthetic check-ins.
     anchor = (today-dt.date(1970,1,1)).days
     habits = bytearray(1208); habits[:4] = b"HBT1"; put(habits,4,1,4); put(habits,8,anchor,4); habits[12] = 8
-    for n, name in enumerate(("Leer", "Caminar", "Beber agua", "Repasar palabras", "Escribir", "Dormir bien", "Ejercicio", "Practicar ajedrez")):
+    for n, name in enumerate(("Read", "Walk", "Drink water", "Review words", "Write", "Sleep well", "Exercise", "Practice chess")):
         offset=16+n*99; text(habits,offset,33,name); put(habits,offset+33,anchor-60,4)
         for ago in range(60):
             if (ago+n)%7 not in (1,5):
                 slot=399-ago; habits[offset+49+slot//8] |= 1 << (slot%8)
     put(habits,1204,zlib.crc32(habits[:1204]),4); (data / "habits-a.bin").write_bytes(habits)
     notes = card / "notes"
+    examples = {
+        "Casa": ("Home", "Water the plants", "Organize the books"),
+        "Estudio": ("Study", "Review notes", "Solve an exercise"),
+        "Lecturas": ("Reading", "Read for twenty minutes", "Write down an idea"),
+        "Proyectos": ("Projects", "Prepare materials", "Review progress"),
+        "Semana": ("This week", "Plan my reading", "Visit the library"),
+        "Viaje": ("Travel", "Choose a destination", "Book the train"),
+    }
+    for previous, (name, first, second) in examples.items():
+        (notes / (previous + ".md")).unlink(missing_ok=True)
+        (notes / (name + ".md")).write_text(f"- [x] {first}\n- [ ] {second}\n", "utf-8")
     for n in range(1,19):
-        (notes/f"Lista {n:02} - Lectura y proyectos.md").write_text("\n".join(f"- [{'x' if i%3==0 else ' '}] Actividad {i+1}: "+("Leer un capítulo" if i%2 else "Anotar una idea") for i in range(12))+"\n",encoding="utf-8")
-    (notes/".crossplay-free-tasks.md").write_text("\n".join(f"- [{'x' if n%4==0 else ' '}] "+name for n,name in enumerate(["Leer Frankenstein", "Revisar notas", "Caminar", "Repasar palabras", "Regar plantas", "Resolver un problema", "Organizar biblioteca", "Preparar mochila"]*3))+"\n",encoding="utf-8")
-    documents = card / "Documentos"; documents.mkdir(exist_ok=True)
+        (notes/f"Reading project {n:02}.md").write_text("\n".join(f"- [{'x' if i%3==0 else ' '}] Task {i+1}: "+("Read a chapter" if i%2 else "Write down an idea") for i in range(12))+"\n",encoding="utf-8")
+    (notes/".crossplay-free-tasks.md").write_text("\n".join(f"- [{'x' if n%4==0 else ' '}] "+name for n,name in enumerate(["Read Frankenstein", "Review notes", "Go for a walk", "Review words", "Water the plants", "Solve a puzzle", "Organize the library", "Pack a bag"]*3))+"\n",encoding="utf-8")
+    documents = card / "Documents"; documents.mkdir(exist_ok=True)
     for n in range(1,25):
-        (documents/f"Cuaderno {n:02}.txt").write_text(f"Cuaderno de demostración {n}\n\nLecturas, ideas y proyectos.\n"*6,encoding="utf-8")
+        (documents/f"Notebook {n:02}.txt").write_text(f"Demonstration notebook {n}\n\nBooks, ideas and projects.\n"*6,encoding="utf-8")
     for name in ("wifi.json", "koreader.json", "credentials.json"):
         (data / name).unlink(missing_ok=True)
     settings_path=data/"settings.json"; settings=json.loads(settings_path.read_text("utf-8"))
-    settings.update(language="ES", libraryView=1)
+    settings.update(language="EN", languagePack="", libraryView=1, homeLayout=3, homeLayoutVersion=2,
+                    orientation=0, clockUtcOffsetQ=0, clockHasBeenSynced=1, homeRecentBookCount=3,
+                    menuFontStyle=2, sleepTimeoutMinutes=31)
     settings_path.write_text(json.dumps(settings,ensure_ascii=False),encoding="utf-8")
     (card/"SHOWCASE-SOURCES.md").write_text("# CrossNext browser demonstration\n\nAll reading/app/game progress is synthetic. Only the generated browser card is populated; device SD cards are never changed.\n\n"+"\n".join(sources)+"\n",encoding="utf-8")
     inventory=dict(books=len(books),recentBooks=min(10,len(books)),readingRecords=records,historyDays=120,

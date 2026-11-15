@@ -1,0 +1,13 @@
+{
+  "name": "backgrounds-13",
+  "kind": "backgrounds",
+  "first": 13,
+  "count": 6,
+  "columns": 3,
+  "rows": 2,
+  "prompt": "Use case: illustration-story. Asset type: a production environment atlas for Reading Adventure.\nSTYLE REFERENCE image1 is the user-approved forest background. Preserve its organic smooth BLACK outlines, gentle grayscale cel shading, white highlights, rounded illustrated forms, friendly hand-drawn quality and clear storybook depth. Same illustrator, same world. This is NOT pixel art and NOT sterile vector icon art.\nLAYOUT: ONE landscape atlas of SIX distinct landscape scenes, exactly THREE columns by TWO rows. Every scene fills its own equal cell all the way to its edges; no gutters, borders, labels, dividers, text or numbering. The overall atlas aspect ratio is 9:4, each scene is 3:2. Use generous resolution.\nSHARED CAMERA IN ALL SIX: a wide flat foreground ground plane occupying bottom35%, completely clear in the middle70% for a hero and a pet. Horizon at60% of each cell's height; the two characters' future feet will be at90%. Scene content stays at outer edges and distant background; center above foreground remains mostly white and airy so faces stay readable. No step or ledge under the landing area. No humans, animals, pets or auras anywhere.\nAll scenes use black fine contours and gray filled shadows with clean WHITE surfaces. Keep backgrounds light, no large black masses, no dark skies. Complexity appears in distant architecture and edge framing, NEVER clutter the foreground. Richness follows scene descriptions but keep details broad and readable at480x320. No ground oval shadow. No grain, dithering, hatch, blur, gradient wash, photorealism or 3D. No lettering or readable symbols. Each scene must be different and exactly follow its description.\nSCENES IN ROW-MAJOR ORDER:\n1. Hillside observatory: small domed observatory behind right side, low telescope silhouette and distant hills.\n2. Monastery cloister: simple rounded stone arches, quiet side garden and pale courtyard paving.\n3. Moonlit garden: crescent moon in white sky, rounded hedges and pale flowers at edges, no dark sky.\n4. Seaside archive: arched library terrace overlooking pale sea, side book stacks and open floor.\n5. Scholar workshop: rounded shelves and writing desk at far edge, simple alcove behind, empty central floor.\n6. Forest sanctuary: large ancient tree arch, broad roots framing edges, small hanging lantern at side.",
+  "tool": "built-in image_gen",
+  "source": "exec-8a2274a1-565c-40cc-a688-14ef484d85ec.png",
+  "date": "2026-11-05",
+  "sha256": "3c2d341e1e7c04e3cc07e13b010f1ae3db01b1102523fb66c99450986674587f"
+}

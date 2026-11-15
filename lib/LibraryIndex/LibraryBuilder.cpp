@@ -13,6 +13,7 @@
 #include <Xtc.h>
 
 #include <algorithm>
+#include <atomic>
 #include <cstddef>
 #include <cstring>
 
@@ -32,6 +33,7 @@ constexpr char CACHE_DIR[] = "/.crosspoint";
 // Sticky fallback when the marker could not be persisted (card unavailable at
 // write time): callers must still see the index as stale until a rebuild clears it.
 bool dirtyInMemory = false;
+std::atomic<uint32_t> contentRevision{1};
 constexpr size_t LIBRARY_IO_BUFFER_SIZE = 4096;
 
 // Matches lib/FileIndex's buffer so a name this walk accepts is one the file
@@ -184,6 +186,7 @@ bool installNewIndex() {
 }
 
 void clearLibraryIndexDirty() {
+  contentRevision.fetch_add(1);
   dirtyInMemory = false;
   if (Storage.exists(DIRTY_PATH) && !Storage.remove(DIRTY_PATH)) {
     LOG_ERR("LIBIDX", "cannot clear dirty marker");
@@ -1090,7 +1093,10 @@ bool emitIndex(const char* folderStagePath, WalkState& st, const uint16_t* order
 
 const char* libraryIndexPath() { return INDEX_PATH; }
 
+uint32_t libraryContentRevision() { return contentRevision.load(); }
+
 bool markLibraryIndexDirty() {
+  contentRevision.fetch_add(1);
   if (Storage.exists(DIRTY_PATH)) return true;
   if (!Storage.exists(CACHE_DIR) && !Storage.mkdir(CACHE_DIR)) {
     LOG_ERR("LIBIDX", "cannot create cache directory for dirty marker");

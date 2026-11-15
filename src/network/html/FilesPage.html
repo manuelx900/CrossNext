@@ -1630,37 +1630,38 @@
       color: #f39c12;
     }
   </style>
+<!--#include file="shared/UiText.html.inc" -->
 </head>
 <body>
 <h1>CrossNext</h1>
 
 <div class="nav-links">
-  <a href="/">Home</a>
-  <a href="/files" class="active">File Manager</a>
-  <a href="/settings">Settings</a>
-  <a href="/fonts">Fonts</a>
+  <a href="/" data-ui>Home</a>
+  <a href="/files" class="active" data-ui>File Manager</a>
+  <a href="/settings" data-ui>Settings</a>
+  <a href="/fonts" data-ui>Fonts</a>
 </div>
 
 <div class="page-header">
   <div class="page-header-left">
-    <h2>📁 File Manager</h2>
+    <h2 data-ui>📁 File Manager</h2>
   </div>
 
   <div class="action-buttons">
-    <button class="action-btn upload-action-btn" onclick="openUploadModal()">📤 Upload</button>
-    <button class="action-btn folder-action-btn" onclick="openFolderModal()">📁 New Folder</button>
-    <button class="action-btn delete-action-btn" onclick="openDeleteSelectedModal()">🗑️ Delete Selected</button>
+    <button class="action-btn upload-action-btn" onclick="openUploadModal()" data-ui>📤 Upload</button>
+    <button class="action-btn folder-action-btn" onclick="openFolderModal()" data-ui>📁 New Folder</button>
+    <button class="action-btn delete-action-btn" onclick="openDeleteSelectedModal()" data-ui>🗑️ Delete Selected</button>
   </div>
 </div>
 
 <!-- Failed Uploads Banner -->
 <div class="failed-uploads-banner" id="failedUploadsBanner">
   <div class="failed-uploads-header">
-    <h3 class="failed-uploads-title">⚠️ Some files failed to upload</h3>
-    <button class="dismiss-btn" onclick="dismissFailedUploads()" title="Dismiss">&times;</button>
+    <h3 class="failed-uploads-title" data-ui>⚠️ Some files failed to upload</h3>
+    <button class="dismiss-btn" onclick="dismissFailedUploads()" title="Dismiss" data-ui>&times;</button>
   </div>
   <div id="failedFilesList"></div>
-  <button class="retry-all-btn" onclick="retryAllFailedUploads()">Retry All Failed Uploads</button>
+  <button class="retry-all-btn" onclick="retryAllFailedUploads()" data-ui>Retry All Failed Uploads</button>
 </div>
 
 <div class="card">
@@ -1688,24 +1689,24 @@
 <div class="modal-overlay" id="uploadModal">
   <div class="modal">
     <button class="modal-close" id="uploadModalClose" onclick="closeUploadModal()">&times;</button>
-    <h3>📤 Upload file</h3>
+    <h3 data-ui>📤 Upload file</h3>
     <div class="upload-form">
-      <p class="file-info">Select a file to upload to <strong id="uploadPathDisplay"></strong></p>
+      <p class="file-info" data-ui>Select a file to upload to <strong id="uploadPathDisplay"></strong></p>
       <div class="drop-zone" id="dropZone">
         <input type="file" id="fileInput" onchange="validateFile()" multiple>
-        <p class="drop-zone-hint">⬇ Drop files here — or click to browse</p>
+        <p class="drop-zone-hint" data-ui>⬇ Drop files here — or click to browse</p>
       </div>
       <div class="picker-columns" id="pickerColumns">
         <div class="convert-options" id="convertOptions" style="display:none;">
           <div class="convert-row">
             <label class="convert-checkbox">
               <input type="checkbox" id="convertBeforeUpload" onchange="toggleConvertOptions()">
-              <span>Optimize EPUB</span>
+              <span data-ui>Optimize EPUB</span>
             </label>
             <span class="convert-separator">—</span>
             <span class="advanced-options-toggle" id="advancedOptionsToggle" onclick="toggleAdvancedOptions()">
               <span class="advanced-options-arrow" id="advancedOptionsArrow">▶</span>
-              <span class="advanced-options-text">Advanced Mode</span>
+              <span class="advanced-options-text" data-ui>Advanced Mode</span>
             </span>
           </div>
 
@@ -1714,8 +1715,8 @@
 
           <div class="advanced-setting-row">
             <div class="setting-label">
-              <div class="setting-title">Rename from Book Metadata</div>
-              <div class="setting-desc">Use Title - Author.epub when available</div>
+              <div class="setting-title" data-ui>Rename from Book Metadata</div>
+              <div class="setting-desc" data-ui>Use Title - Author.epub when available</div>
             </div>
             <div class="setting-controls">
               <label class="toggle-switch">
@@ -1726,23 +1727,23 @@
           </div>
 
           <div class="convert-settings" id="convertSettings" style="display:block;">
-            <span>⚫ True-Grayscale</span>
-          <span id="convertSizeSummary">📏 Max 480×800px</span>
-          <span>📦 85% JPEG</span>
-          <span>🔧 Fix SVG</span>
+            <span data-ui>⚫ True-Grayscale</span>
+          <span id="convertSizeSummary" data-ui>📏 Max 480×800px</span>
+          <span data-ui>📦 85% JPEG</span>
+          <span data-ui>🔧 Fix SVG</span>
         </div>
         <!-- Advanced Settings Content -->
         <div class="advanced-settings-content" id="advancedSettingsContent">
           <!-- JPEG Quality -->
           <div class="advanced-setting-row quality-row">
-            <div class="setting-title">📦 JPEG Quality</div>
+            <div class="setting-title" data-ui>📦 JPEG Quality</div>
             <div class="quality-presets">
-              <button class="quality-preset" data-value="30" onclick="setQualityPreset(30)" title="Minimum quality">30%</button>
-              <button class="quality-preset" data-value="45" onclick="setQualityPreset(45)" title="Low quality">45%</button>
-              <button class="quality-preset" data-value="60" onclick="setQualityPreset(60)" title="Medium-low quality">60%</button>
-              <button class="quality-preset" data-value="75" onclick="setQualityPreset(75)" title="Medium quality">75%</button>
-              <button class="quality-preset active" data-value="85" onclick="setQualityPreset(85)" title="High quality">85%</button>
-              <button class="quality-preset" data-value="95" onclick="setQualityPreset(95)" title="Maximum quality">95%</button>
+              <button class="quality-preset" data-value="30" onclick="setQualityPreset(30)" title="Minimum quality" data-ui>30%</button>
+              <button class="quality-preset" data-value="45" onclick="setQualityPreset(45)" title="Low quality" data-ui>45%</button>
+              <button class="quality-preset" data-value="60" onclick="setQualityPreset(60)" title="Medium-low quality" data-ui>60%</button>
+              <button class="quality-preset" data-value="75" onclick="setQualityPreset(75)" title="Medium quality" data-ui>75%</button>
+              <button class="quality-preset active" data-value="85" onclick="setQualityPreset(85)" title="High quality" data-ui>85%</button>
+              <button class="quality-preset" data-value="95" onclick="setQualityPreset(95)" title="Maximum quality" data-ui>95%</button>
             </div>
             <!-- Hidden inputs to maintain compatibility -->
             <input type="hidden" id="qualitySlider" value="85">
@@ -1765,8 +1766,8 @@
           <!-- Auto-crop Margins -->
           <div class="advanced-setting-row">
             <div class="setting-label">
-              <div class="setting-title">✂ Auto-crop Margins</div>
-              <div class="setting-desc">Trim uniform borders and scale image content to fit</div>
+              <div class="setting-title" data-ui>✂ Auto-crop Margins</div>
+              <div class="setting-desc" data-ui>Trim uniform borders and scale image content to fit</div>
             </div>
             <div class="setting-controls">
               <label class="toggle-switch">
@@ -1777,11 +1778,11 @@
           </div>
           <!-- Target Device -->
           <div class="advanced-setting-row" id="deviceSettingRow">
-            <div class="setting-title">📱 Target Device</div>
+            <div class="setting-title" data-ui>📱 Target Device</div>
             <div class="setting-controls">
               <div class="rotation-buttons">
                 <button class="rotation-btn device-btn active" data-value="auto" onclick="setDeviceTarget('auto')">
-                  <span id="deviceAutoLabel">Auto</span>
+                  <span id="deviceAutoLabel" data-ui>Auto</span>
                 </button>
                 <button class="rotation-btn device-btn" data-value="X4" onclick="setDeviceTarget('X4')">X4</button>
                 <button class="rotation-btn device-btn" data-value="X3" onclick="setDeviceTarget('X3')">X3</button>
@@ -1790,7 +1791,7 @@
           </div>
           <!-- Rotation Direction -->
           <div class="advanced-setting-row" id="rotationSettingRow">
-            <div class="setting-title">↻ Rotation Direction</div>
+            <div class="setting-title" data-ui>↻ Rotation Direction</div>
             <div class="setting-controls">
               <div class="rotation-buttons">
                 <button class="rotation-btn" id="rotationCCW" onclick="setHandedness('left')">
@@ -1804,7 +1805,7 @@
           </div>
           <!-- Overlap Settings -->
           <div class="advanced-setting-row" id="overlapSettingRow">
-            <div class="setting-title">📐 Min Overlap</div>
+            <div class="setting-title" data-ui>📐 Min Overlap</div>
             <div class="setting-controls">
               <div class="overlap-selector">
                 <button class="overlap-btn active" data-value="5" onclick="setOverlap(5)">5%</button>
@@ -1816,8 +1817,8 @@
           <!-- Conversion Log Export -->
           <div class="advanced-setting-row">
             <div class="setting-label">
-              <div class="setting-title">📥 Auto-download Log</div>
-              <div class="setting-desc">Export detailed log with statistics</div>
+              <div class="setting-title" data-ui>📥 Auto-download Log</div>
+              <div class="setting-desc" data-ui>Export detailed log with statistics</div>
             </div>
             <div class="setting-controls">
               <label class="toggle-switch">
@@ -1828,8 +1829,8 @@
           </div>
           <div class="advanced-setting-row">
             <div class="setting-label">
-              <div class="setting-title">Remember Settings</div>
-              <div class="setting-desc">Store these upload options in this browser</div>
+              <div class="setting-title" data-ui>Remember Settings</div>
+              <div class="setting-desc" data-ui>Store these upload options in this browser</div>
             </div>
             <div class="setting-controls">
               <label class="toggle-switch">
@@ -1843,54 +1844,54 @@
       <!-- Image Picker Section - in picker-columns for two-column layout -->
       <div class="image-picker-section" id="imagePickerSection" style="display:none;">
         <div class="image-picker-header">
-          <span class="image-picker-title">🖼️ Image Processing Options</span>
+          <span class="image-picker-title" data-ui>🖼️ Image Processing Options</span>
           <span class="image-picker-count" id="imagePickerCount">0 images</span>
         </div>
         <div class="state-legend">
           <div class="legend-item locked">
             <span>🔒</span>
-            <span>Cover</span>
+            <span data-ui>Cover</span>
           </div>
           <div class="legend-item locked">
             <span style="color:#1abc9c">✦</span>
-            <span>Separator</span>
+            <span data-ui>Separator</span>
           </div>
           <button class="legend-btn" style="--btn-color:var(--label-color)" onclick="applyStateToAll(0)">
             <div class="legend-color"></div>
-            <span>Normal</span>
+            <span data-ui>Normal</span>
           </button>
           <button class="legend-btn" style="--btn-color:#3498db" onclick="applyStateToAll(1)">
             <div class="legend-color"></div>
-            <span>H-Split</span>
+            <span data-ui>H-Split</span>
           </button>
           <button class="legend-btn" style="--btn-color:#e74c3c" onclick="applyStateToAll(2)">
             <div class="legend-color"></div>
-            <span>V-Split</span>
+            <span data-ui>V-Split</span>
           </button>
           <button class="legend-btn" style="--btn-color:#9b59b6" onclick="applyStateToAll(3)">
             <div class="legend-color"></div>
-            <span>Rotate</span>
+            <span data-ui>Rotate</span>
           </button>
         </div>
         <div class="image-grid" id="imageGrid"></div>
       </div>
       </div><!-- end picker-columns -->
       <!-- Sync compatibility warning - outside picker-columns -->
-      <div class="convert-warning" id="convertWarning" style="display:none;" role="alert" aria-live="polite">
+      <div class="convert-warning" id="convertWarning" style="display:none;" role="alert" aria-live="polite" data-ui>
         ⚠️ Converting will modify files and can break hash‑based sync. ⚠️<br>
         Please back up or disable sync before proceeding.
       </div>
       <!-- Optimize & Upload button - shown when picker is visible, replaces Upload -->
-      <button id="startConversionBtn" class="upload-btn optimize" style="display:none;" onclick="startConversionWithImageStates()">Optimize & Upload</button>
-      <button id="uploadBtn" class="upload-btn" onclick="uploadFile()" disabled>Upload</button>
-      <button class="delete-btn-cancel" onclick="handleCancelUploadModal()">Cancel</button>
+      <button id="startConversionBtn" class="upload-btn optimize" style="display:none;" onclick="startConversionWithImageStates()" data-ui>Optimize & Upload</button>
+      <button id="uploadBtn" class="upload-btn" onclick="uploadFile()" disabled data-ui>Upload</button>
+      <button class="delete-btn-cancel" onclick="handleCancelUploadModal()" data-ui>Cancel</button>
       <div id="progress-container">
         <div id="progress-bar"><div id="progress-fill"></div></div>
         <div id="progress-text"></div>
       </div>
       <div class="log-section" id="log-section">
         <div class="log-header">
-          <div class="log-title">📋 Conversion Log</div>
+          <div class="log-title" data-ui>📋 Conversion Log</div>
         </div>
         <div class="log-container" id="log-container"></div>
       </div>
@@ -1902,12 +1903,12 @@
 <div class="modal-overlay" id="folderModal">
   <div class="modal">
     <button class="modal-close" onclick="closeFolderModal()">&times;</button>
-    <h3>📁 New Folder</h3>
+    <h3 data-ui>📁 New Folder</h3>
     <div class="folder-form">
-      <p class="file-info">Create a new folder in <strong id="folderPathDisplay"></strong></p>
-      <input type="text" id="folderName" class="folder-input" placeholder="Folder name..." oninput="document.getElementById('createFolderBtn').disabled = !this.value.trim();">
-      <button class="folder-btn" id="createFolderBtn" onclick="createFolder()" disabled>Create Folder</button>
-      <button class="delete-btn-cancel" onclick="closeFolderModal()">Cancel</button>
+      <p class="file-info" data-ui>Create a new folder in <strong id="folderPathDisplay"></strong></p>
+      <input type="text" id="folderName" class="folder-input" placeholder="Folder name..." oninput="document.getElementById('createFolderBtn').disabled = !this.value.trim();" data-ui>
+      <button class="folder-btn" id="createFolderBtn" onclick="createFolder()" disabled data-ui>Create Folder</button>
+      <button class="delete-btn-cancel" onclick="closeFolderModal()" data-ui>Cancel</button>
     </div>
   </div>
 </div>
@@ -1916,13 +1917,13 @@
 <div class="modal-overlay" id="deleteModal">
   <div class="modal">
     <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
-    <h3>🗑️ Delete Item(s)</h3>
+    <h3 data-ui>🗑️ Delete Item(s)</h3>
     <div class="folder-form">
-      <p class="delete-warning">⚠️ This action cannot be undone!</p>
-      <p class="file-info">Are you sure you want to delete the following item(s)?</p>
+      <p class="delete-warning" data-ui>⚠️ This action cannot be undone!</p>
+      <p class="file-info" data-ui>Are you sure you want to delete the following item(s)?</p>
       <div id="deleteItemList" style="max-height:240px; overflow:auto; margin-bottom:10px;"></div>
-      <button class="delete-btn-confirm" onclick="confirmDelete()">Delete</button>
-      <button class="delete-btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+      <button class="delete-btn-confirm" onclick="confirmDelete()" data-ui>Delete</button>
+      <button class="delete-btn-cancel" onclick="closeDeleteModal()" data-ui>Cancel</button>
     </div>
   </div>
 </div>
@@ -1931,13 +1932,13 @@
 <div class="modal-overlay" id="renameModal">
   <div class="modal">
     <button class="modal-close" onclick="closeRenameModal()">&times;</button>
-    <h3>✏️ Rename File</h3>
+    <h3 data-ui>✏️ Rename File</h3>
     <div class="folder-form">
-      <p class="file-info">Renaming <strong id="renameItemName"></strong></p>
-      <input type="text" id="renameNewName" class="folder-input" placeholder="New file name...">
+      <p class="file-info" data-ui>Renaming <strong id="renameItemName"></strong></p>
+      <input type="text" id="renameNewName" class="folder-input" placeholder="New file name..." data-ui>
       <input type="hidden" id="renameItemPath">
-      <button class="rename-btn-confirm" onclick="confirmRename()">Rename</button>
-      <button class="delete-btn-cancel" onclick="closeRenameModal()">Cancel</button>
+      <button class="rename-btn-confirm" onclick="confirmRename()" data-ui>Rename</button>
+      <button class="delete-btn-cancel" onclick="closeRenameModal()" data-ui>Cancel</button>
     </div>
   </div>
 </div>
@@ -1946,14 +1947,14 @@
 <div class="modal-overlay" id="moveModal">
   <div class="modal">
     <button class="modal-close" onclick="closeMoveModal()">&times;</button>
-    <h3>📂 Move File</h3>
+    <h3 data-ui>📂 Move File</h3>
     <div class="folder-form">
-      <p class="file-info">Moving <strong id="moveItemName"></strong></p>
+      <p class="file-info" data-ui>Moving <strong id="moveItemName"></strong></p>
       <input type="text" id="moveDestPath" class="folder-input" list="moveFolderOptions" placeholder="/Destination/Folder">
       <datalist id="moveFolderOptions"></datalist>
       <input type="hidden" id="moveItemPath">
-      <button class="move-btn-confirm" onclick="confirmMove()">Move</button>
-      <button class="delete-btn-cancel" onclick="closeMoveModal()">Cancel</button>
+      <button class="move-btn-confirm" onclick="confirmMove()" data-ui>Move</button>
+      <button class="delete-btn-cancel" onclick="closeMoveModal()" data-ui>Cancel</button>
     </div>
   </div>
 </div>
@@ -1962,13 +1963,13 @@
 <div class="modal-overlay" id="imagePreviewModal">
   <div class="modal image-preview-mode">
     <button class="modal-close" onclick="closeImagePreview()">&times;</button>
-    <h3>🖼️ Preview</h3>
+    <h3 data-ui>🖼️ Preview</h3>
     <div class="folder-form">
       <p class="file-info"><strong id="imagePreviewName"></strong></p>
       <div class="image-preview-stage">
         <img id="imagePreviewImg" alt="">
       </div>
-      <a id="imagePreviewDownload" class="move-btn-confirm" rel="noopener noreferrer" target="_blank" href="#">Download</a>
+      <a id="imagePreviewDownload" class="move-btn-confirm" rel="noopener noreferrer" target="_blank" href="#" data-ui>Download</a>
     </div>
   </div>
 </div>
@@ -1989,13 +1990,13 @@
   window.addEventListener('online', () => {
     console.log('[Network] Online event fired');
     isNetworkOnline = true;
-    showNotification('Network connection restored', 'success');
+    showNotification(uiText("Network connection restored"), 'success');
   });
 
   window.addEventListener('offline', () => {
     console.log('[Network] Offline event fired');
     isNetworkOnline = false;
-    showNotification('Network connection lost', 'warning');
+    showNotification(uiText("Network connection lost"), 'warning');
   });
 
   // Initialize network status
@@ -2135,7 +2136,7 @@
     try {
       const response = await fetch('/api/files?path=' + encodeURIComponent(currentPath) + '&_=' + Date.now());
       if (!response.ok) {
-        throw new Error('Failed to load files: ' + response.status + ' ' + response.statusText);
+        throw new Error(uiText("Failed to load files: ") + response.status + ' ' + response.statusText);
       }
       files = await response.json();
     } catch (e) {
@@ -2186,7 +2187,7 @@
           fileTableContent += `<td><span class="file-icon">📁</span><a href="/files?path=${encodeURIComponent(folderPath)}" class="folder-link">${escapeHtml(file.name)}</a></td>`;
           fileTableContent += '<td><span class="folder-badge">FOLDER</span></td>';
           fileTableContent += '<td>-</td>';
-          fileTableContent += `<td class="actions-col"><div class="action-icon-group"><button class="delete-btn" data-action="delete" data-name="${escapeHtml(file.name)}" data-path="${escapeHtml(folderPath)}" data-folder="true" title="Delete folder">🗑️</button></div></td>`;
+          fileTableContent += `<td class="actions-col"><div class="action-icon-group"><button class="delete-btn" data-action="delete" data-name="${escapeHtml(file.name)}" data-path="${escapeHtml(folderPath)}" data-folder="true" title="${uiHtml("Delete folder")}">🗑️</button></div></td>`;
           fileTableContent += '</tr>';
         } else {
           let filePath = currentPath;
@@ -2207,9 +2208,9 @@
           fileTableContent += file.isEpub ? '<td><span class="epub-badge">EPUB</span></td>' : `<td>${escapeHtml(file.name.split('.').pop().toUpperCase())}</td>`;
           fileTableContent += `<td>${formatFileSize(file.size)}</td>`;
           fileTableContent += `<td class="actions-col"><div class="action-icon-group">`;
-          fileTableContent += `<button class="move-btn" data-action="move" data-name="${escapeHtml(file.name)}" data-path="${escapeHtml(filePath)}" title="Move file">📂</button>`;
-          fileTableContent += `<button class="rename-btn" data-action="rename" data-name="${escapeHtml(file.name)}" data-path="${escapeHtml(filePath)}" title="Rename file">✏️</button>`;
-          fileTableContent += `<button class="delete-btn" data-action="delete" data-name="${escapeHtml(file.name)}" data-path="${escapeHtml(filePath)}" data-folder="false" title="Delete file">🗑️</button>`;
+          fileTableContent += `<button class="move-btn" data-action="move" data-name="${escapeHtml(file.name)}" data-path="${escapeHtml(filePath)}" title="${uiHtml("Move file")}">📂</button>`;
+          fileTableContent += `<button class="rename-btn" data-action="rename" data-name="${escapeHtml(file.name)}" data-path="${escapeHtml(filePath)}" title="${uiHtml("Rename file")}">✏️</button>`;
+          fileTableContent += `<button class="delete-btn" data-action="delete" data-name="${escapeHtml(file.name)}" data-path="${escapeHtml(filePath)}" data-folder="false" title="${uiHtml("Delete file")}">🗑️</button>`;
           fileTableContent += `</div></td>`;
           fileTableContent += '</tr>';
         }
@@ -2288,7 +2289,7 @@
     progressFill.style.width = '0%';
     progressFill.style.backgroundColor = '#e74c3c';
     progressText.style.color = '#e74c3c';
-    progressText.textContent = 'Upload cancelled by User!';
+    progressText.textContent = uiText("Upload cancelled by User!");
     // Re-enable the action button (uploadBtn is always visible at this point;
     // its text is already "Upload" or "Optimize & Upload" depending on checkbox state)
     document.getElementById('uploadBtn').disabled = false;
@@ -2307,7 +2308,7 @@
     const uploadBtn = document.getElementById('uploadBtn');
     uploadBtn.disabled = true;
     uploadBtn.style.display = 'block';
-    uploadBtn.textContent = 'Upload';
+    uploadBtn.textContent = uiText("Upload");
     uploadBtn.classList.remove('optimize');
     document.getElementById('startConversionBtn').style.display = 'none';
     document.getElementById('progress-container').style.display = 'none';
@@ -2354,10 +2355,10 @@
     document.getElementById('convertInfo').style.display = checked ? 'block' : 'none';
     // Update button text and style
     if (checked) {
-      uploadBtn.textContent = 'Optimize & Upload';
+      uploadBtn.textContent = uiText("Optimize & Upload");
       uploadBtn.classList.add('optimize');
     } else {
-      uploadBtn.textContent = 'Upload';
+      uploadBtn.textContent = uiText("Upload");
       uploadBtn.classList.remove('optimize');
       // Clear image picker when unchecking
       clearImagePicker();
@@ -2396,7 +2397,7 @@
       const fileInput = document.getElementById('fileInput');
       const files = fileInput.files;
       if (files.length === 1 && files[0].name.toLowerCase().endsWith('.epub')) {
-        showImagePicker(files[0]).catch(err => console.error('Image picker error:', err));
+        showImagePicker(files[0]).catch(err => console.error(uiText("Image picker error:"), err));
       }
     } else {
       // When collapsing, hide the picker and startConversionBtn
@@ -2469,7 +2470,7 @@
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error('Preview image load failed'));
+      img.onerror = () => reject(new Error(uiText("Preview image load failed")));
       img.src = dataUrl;
     });
   }
@@ -2669,7 +2670,7 @@
         }
       }
     } catch (e) {
-      console.warn('Failed to parse reading order, using default:', e);
+      console.warn(uiText("Failed to parse reading order, using default:"), e);
     }
 
     // Fallback to alphabetical if parsing failed
@@ -2698,7 +2699,7 @@
         try {
           isSeparator = await isSeparatorImage(dataUrl, dims.width, dims.height, filename);
         } catch (e) {
-          console.warn('Separator check failed for', filename, e);
+          console.warn(uiText("Separator check failed for"), filename, e);
         }
       }
       
@@ -2710,7 +2711,7 @@
         try {
           autoCropPreview = await createAutoCropPreview(dataUrl, path, dims.width, dims.height);
         } catch (e) {
-          console.warn('Auto-crop preview failed for', path, e);
+          console.warn(uiText("Auto-crop preview failed for"), path, e);
         }
       }
       
@@ -2788,7 +2789,7 @@
       const isSymmetric = await checkHorizontalSymmetry(dataUrl, width, height, SYMMETRY_THRESHOLD);
       return isSymmetric;
     } catch (e) {
-      console.warn('Symmetry check failed:', e);
+      console.warn(uiText("Symmetry check failed:"), e);
       return false;
     }
   }
@@ -2853,7 +2854,7 @@
     // Check if JSZip is available
     if (typeof JSZip === 'undefined') {
       console.error('JSZip not loaded');
-      alert('JSZip library not available. Conversion will proceed without image picker.');
+      alert(uiText("JSZip library not available. Conversion will proceed without image picker."));
       startConversionWithImageStates();
       return;
     }
@@ -2910,8 +2911,8 @@
       document.getElementById('pickerColumns').classList.add('picker-active');
 
     } catch (error) {
-      console.error('Failed to extract images:', error);
-      alert('Failed to preview images: ' + error.message + '\n\nConversion will proceed normally.');
+      console.error(uiText("Failed to extract images:"), error);
+      alert(uiText("Failed to preview images: ") + error.message + '\n\nConversion will proceed normally.');
       // Fallback: start conversion directly
       startConversionWithImageStates();
     }
@@ -3209,7 +3210,7 @@
   function openDeleteSelectedModal() {
     const items = getSelectedItems();
     if (items.length === 0) {
-      alert('Please select at least one item to delete.');
+      alert(uiText("Please select at least one item to delete."));
       return;
     }
     openDeleteModalForItems(items);
@@ -3262,11 +3263,11 @@
         window.location.reload();
       } else {
         const text = await res.text();
-        alert('Failed to delete: ' + text);
+        alert(uiText("Failed to delete: ") + text);
         closeDeleteModal();
       }
     }).catch(() => {
-      alert('Failed to delete - network error');
+      alert(uiText("Failed to delete - network error"));
       closeDeleteModal();
     });
   }
@@ -3382,7 +3383,7 @@
       toggleConvertOptions();
     } else {
       convertOptions.style.display = 'none';
-      uploadBtn.textContent = 'Upload';
+      uploadBtn.textContent = uiText("Upload");
       uploadBtn.classList.remove('optimize');
       document.getElementById('convertInfo').style.display = 'none';
       document.getElementById('convertWarning').style.display = 'none';
@@ -3394,7 +3395,7 @@
       const advancedContent = document.getElementById('advancedSettingsContent');
       const convertEnabled = document.getElementById('convertBeforeUpload').checked;
       if (advancedContent.classList.contains('visible') && files.length === 1 && convertEnabled && files[0].name.toLowerCase().endsWith('.epub')) {
-        showImagePicker(files[0]).catch(err => console.error('Image picker error:', err));
+        showImagePicker(files[0]).catch(err => console.error(uiText("Image picker error:"), err));
       } else {
         // New selection no longer matches single-EPUB-with-advanced-expanded —
         // tear down any picker from a previous file so the grid and picker-mode
@@ -3525,7 +3526,7 @@ function restoreUploadSettingsFromStorage() {
     const saved = JSON.parse(stored || 'null');
     applyUploadSettings(saved?.rememberSettings ? saved : undefined);
   } catch (e) {
-    console.warn('Could not read remembered upload settings:', e);
+    console.warn(uiText("Could not read remembered upload settings:"), e);
     applyUploadSettings();
   }
 }
@@ -3542,7 +3543,7 @@ function updateUploadSettingsPersistence() {
     localStorage.setItem(UPLOAD_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
     localStorage.removeItem(LEGACY_UPLOAD_SETTINGS_STORAGE_KEY);
   } catch (e) {
-    console.warn('Could not save upload settings:', e);
+    console.warn(uiText("Could not save upload settings:"), e);
   }
 }
 
@@ -3581,7 +3582,7 @@ async function fetchVersion() {
       }
     }
   } catch (e) {
-    console.error('Failed to fetch version:', e);
+    console.error(uiText("Failed to fetch version:"), e);
   }
 }
 
@@ -3749,7 +3750,7 @@ function logSummary(originalSize, newSize, timeElapsed) {
       <table class="log-summary-table">
         <tr><td>Images found</td><td class="highlight">${totalImages}</td></tr>
         <tr><td>Images processed</td><td>${totalOutput}${conversionStats.splitParts > conversionStats.splits ? ` (+${conversionStats.splitParts - conversionStats.splits} from splits)` : ''}</td></tr>
-        <tr><td>EPUB repairs</td><td>${conversionStats.fixes > 0 ? conversionStats.fixes + ' fixes applied' : 'None needed'}</td></tr>
+        <tr><td>EPUB repairs</td><td>${conversionStats.fixes > 0 ? conversionStats.fixes + uiText(" fixes applied") : uiText("None needed")}</td></tr>
         ${conversionStats.errors > 0 ? `<tr><td>Errors</td><td style="color:#e74c3c">${conversionStats.errors}</td></tr>` : ''}
         <tr><td>Original size</td><td>${formatBytes(originalSize)}</td></tr>
         <tr><td>Optimized size</td><td>${formatBytes(newSize)}</td></tr>
@@ -4092,7 +4093,7 @@ async function maybeRenameEbookFile(file) {
       lastModified: file.lastModified
     });
   } catch (e) {
-    console.warn('Could not rename EPUB from metadata:', e);
+    console.warn(uiText("Could not rename EPUB from metadata:"), e);
     return file;
   }
 }
@@ -4475,7 +4476,7 @@ function fixSvgCover(content) {
       return { c: `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
-<head><meta content="text/html; charset=UTF-8" http-equiv="default-style"/><title>Cover</title></head>
+<head><meta content="text/html; charset=UTF-8" http-equiv="default-style"/><title>${uiHtml("Cover")}</title></head>
 <body><section epub:type="cover"><img style="max-width:100%;height:auto" alt="Cover" src="${m[1]}"/></section></body>
 </html>`, fixed: true, count: 1 };
     }
@@ -4517,7 +4518,7 @@ function fixSvgCover(content) {
       c: `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
-<head><meta content="text/html; charset=UTF-8" http-equiv="default-style"/><title>Cover</title></head>
+<head><meta content="text/html; charset=UTF-8" http-equiv="default-style"/><title>${uiHtml("Cover")}</title></head>
 <body><section epub:type="cover"><img style="max-width:100%;height:auto" alt="Cover" src="${imgHref}"/></section></body>
 </html>`,
       fixed: true,
@@ -4530,7 +4531,7 @@ function fixSvgCover(content) {
     return { c: `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
-<head><meta content="text/html; charset=UTF-8" http-equiv="default-style"/><title>Cover</title></head>
+<head><meta content="text/html; charset=UTF-8" http-equiv="default-style"/><title>${uiHtml("Cover")}</title></head>
 <body><section epub:type="cover"><img style="max-width:100%;height:auto" alt="Cover" src="${m[1]}"/></section></body>
 </html>`, fixed: true, count: 1 };
   }
@@ -4594,7 +4595,7 @@ function ensureCoverMeta(opfString) {
   try {
     const parser = new DOMParser();
     const doc = parser.parseFromString(opfString, 'application/xml');
-    if (doc.querySelector('parsererror')) throw new Error('Parse failed');
+    if (doc.querySelector('parsererror')) throw new Error(uiText("Parse failed"));
 
     // Find cover image id: properties="cover-image", or id/href containing "cover"
     let coverId = null;
@@ -4843,7 +4844,7 @@ async function processImage(data, imageState = 0, imagePath = '') {
     // Set up timeout to handle cases where image never loads
     const timeoutId = setTimeout(() => {
       URL.revokeObjectURL(url);
-      reject(new Error('Image load timeout'));
+      reject(new Error(uiText("Image load timeout")));
     }, IMAGE_LOAD_TIMEOUT_MS);
 
     img.onload = async () => {
@@ -5187,7 +5188,7 @@ async function processImage(data, imageState = 0, imagePath = '') {
     img.onerror = () => {
       clearTimeout(timeoutId);
       URL.revokeObjectURL(url);
-      reject(new Error('Image load failed'));
+      reject(new Error(uiText("Image load failed")));
     };
     img.src = url;
   });
@@ -5228,7 +5229,7 @@ async function convertEpubFile(file, progressCallback) {
 
   // First pass: process images
   for (let i = 0; i < entries.length; i++) {
-    if (operationCancelled) throw new Error('Cancelled by user');
+    if (operationCancelled) throw new Error(uiText("Cancelled by user"));
     const [path, fileObj] = entries[i];
     if (fileObj.dir || path === 'mimetype') continue;
     const low = path.toLowerCase();
@@ -5329,7 +5330,7 @@ async function convertEpubFile(file, progressCallback) {
 
   // Second pass: update XHTML using DOMParser
   for (const [xhtmlPath, content] of Object.entries(xhtmlFiles)) {
-    if (operationCancelled) throw new Error('Cancelled by user');
+    if (operationCancelled) throw new Error(uiText("Cancelled by user"));
     let t = content;
 
     const stripped = stripComments(t);
@@ -5482,7 +5483,7 @@ async function convertEpubFile(file, progressCallback) {
         }
       }
     } catch (e) {
-      console.warn('DOMParser error for', xhtmlPath, e.message);
+      console.warn(uiText("DOMParser error for"), xhtmlPath, e.message);
     }
 
     // Strip @font-face rules from inline <style> blocks — embedded font files
@@ -5517,13 +5518,13 @@ async function convertEpubFile(file, progressCallback) {
     }
     const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/')) : '';
     t = fixOPF(t, opfContent, opfDir, splitImages, fontPaths);
-    if (t !== opfContent) logFix('OPF', 'manifest updated');
+    if (t !== opfContent) logFix('OPF', uiText("manifest updated"));
     out.file(opfPath, t, { compression: 'DEFLATE', compressionOptions: { level: 8 }, createFolders: false });
   }
 
   // Copy remaining files
   for (const [path, fileObj] of entries) {
-    if (operationCancelled) throw new Error('Cancelled by user');
+    if (operationCancelled) throw new Error(uiText("Cancelled by user"));
     if (fileObj.dir || path === 'mimetype') continue;
     const low = path.toLowerCase();
     if (low.match(/\.(png|gif|webp|bmp|jpg|jpeg)$/) || low.match(/\.(xhtml|html|htm)$/) || low.endsWith('.opf')) continue;
@@ -5555,14 +5556,14 @@ async function convertEpubFile(file, progressCallback) {
       const enc = stripFontEncryptionEntries(t, fontPaths);
       if (enc.dropFile) {
         removedFontBytes += data.byteLength;
-        logFix('encryption.xml', 'removed (contained only font obfuscation entries)');
+        logFix('encryption.xml', uiText("removed (contained only font obfuscation entries)"));
         continue;
       }
       if (enc.modified) {
         const encoded = new TextEncoder().encode(enc.xml);
         removedFontBytes += Math.max(0, data.byteLength - encoded.length);
         data = encoded;
-        logFix('encryption.xml', 'font obfuscation entries removed');
+        logFix('encryption.xml', uiText("font obfuscation entries removed"));
       }
     } else if (low.endsWith('.ncx')) {
       let t = await safeReadText(fileObj);
@@ -5571,7 +5572,7 @@ async function convertEpubFile(file, progressCallback) {
       }
       const oldT = t;
       t = syncNCXIdentifier(t, mainIdentifier);
-      if (t !== oldT) logFix('NCX identifier', 'Synced with OPF');
+      if (t !== oldT) logFix('NCX identifier', uiText("Synced with OPF"));
       data = new TextEncoder().encode(t);
     }
     out.file(path, data, { compression: 'DEFLATE', compressionOptions: { level: 8 }, createFolders: false });
@@ -5589,7 +5590,7 @@ async function convertEpubFile(file, progressCallback) {
   const timeElapsed = (Date.now() - startTime) / 1000;
 
   // Log completion
-  log('Conversion complete!', 'success', 'DONE');
+  log(uiText("Conversion complete!"), 'success', 'DONE');
   logSummary(originalSize, newSize, timeElapsed);
 
   // Auto-export only if NOT in batch mode (batch mode exports at the end)
@@ -5652,7 +5653,7 @@ function uploadFileWebSocket(file, onProgress, onComplete, onError) {
             }
 
             if (ws.readyState !== WebSocket.OPEN) {
-              throw new Error('WebSocket closed during upload');
+              throw new Error(uiText("WebSocket closed during upload"));
             }
 
             ws.send(buffer);
@@ -5697,12 +5698,12 @@ function uploadFileWebSocket(file, onProgress, onComplete, onError) {
       console.error('[WS] Error:', event);
       currentUploadWs = null;
       if (!uploadStarted) {
-        reject(new Error('WebSocket connection failed'));
+        reject(new Error(uiText("WebSocket connection failed")));
       } else if (!sendingChunks) {
-        reject(new Error('WebSocket error during upload'));
+        reject(new Error(uiText("WebSocket error during upload")));
       } else {
         // Error during chunk sending - reject with appropriate message
-        reject(new Error('WebSocket error during file transfer'));
+        reject(new Error(uiText("WebSocket error during file transfer")));
       }
     };
 
@@ -5711,7 +5712,7 @@ function uploadFileWebSocket(file, onProgress, onComplete, onError) {
       // Reject for any close before upload was confirmed complete (covers both
       // mid-chunk-send closes and the "all chunks sent, waiting for DONE" window)
       if (!uploadComplete) {
-        reject(new Error('WebSocket closed during upload'));
+        reject(new Error(uiText("WebSocket closed during upload")));
       }
     };
   });
@@ -5739,7 +5740,7 @@ function uploadFileHTTP(file, onProgress, onComplete, onError) {
         if (onComplete) onComplete();
         resolve();
       } else {
-        const error = xhr.responseText || 'Upload failed';
+        const error = xhr.responseText || uiText("Upload failed");
         if (onError) onError(error);
         reject(new Error(error));
       }
@@ -5747,14 +5748,14 @@ function uploadFileHTTP(file, onProgress, onComplete, onError) {
 
     xhr.onerror = function() {
       currentUploadXhr = null;
-      const error = 'Network error';
+      const error = uiText("Network error");
       if (onError) onError(error);
       reject(new Error(error));
     };
 
     xhr.onabort = function() {
       currentUploadXhr = null;
-      reject(new Error('Upload aborted'));
+      reject(new Error(uiText("Upload aborted")));
     };
 
     xhr.send(formData);
@@ -5769,7 +5770,7 @@ async function uploadFile() {
   const convertEnabled = document.getElementById('convertBeforeUpload').checked;
 
   if (files.length === 0) {
-    alert('Please select at least one file!');
+    alert(uiText("Please select at least one file!"));
     return;
   }
 
@@ -5779,7 +5780,7 @@ async function uploadFile() {
     usedFileNames = await fetchExistingUploadNames();
   } catch (error) {
     isUploadInProgress = false;
-    alert('Failed to check existing files: ' + error.message);
+    alert(uiText("Failed to check existing files: ") + error.message);
     return;
   }
 
@@ -5816,7 +5817,7 @@ async function uploadFile() {
       // All files processed - show summary
       if (failedFiles.length === 0) {
         progressFill.style.backgroundColor = '#4caf50';
-        progressText.textContent = 'All uploads complete!';
+        progressText.textContent = uiText("All uploads complete!");
 
         // Finalize batch log if in batch mode
         if (useBatchLog) {
@@ -5931,7 +5932,7 @@ async function uploadFile() {
       failedFiles.push({ name: file.name, error: error, file: originalFile });
 
       // If network error, mark all remaining files as failed and show retry banner
-      if (error.includes('connection failed') || error.includes('Network error') ||
+      if (error.includes(uiText("connection failed")) || error.includes(uiText("Network error")) ||
           error.includes('timeout') || error.includes('disconnected')) {
         console.log(`[Network] Network error detected: ${error}`);
 
@@ -5940,7 +5941,7 @@ async function uploadFile() {
         remainingFiles.forEach(remainingFile => {
           failedFiles.push({
             name: remainingFile.name,
-            error: 'Network error - upload interrupted',
+            error: uiText("Network error - upload interrupted"),
             file: remainingFile
           });
         });
@@ -5988,10 +5989,10 @@ async function uploadFile() {
           convNewSize = convertedBlob.size;
         } catch (convError) {
           if (operationCancelled) { if (uploadGeneration === myGeneration) restoreAfterCancel(); return; }
-          console.error('Conversion error:', convError);
+          console.error(uiText("Conversion error:"), convError);
           // Log the error
           logError(`Conversion failed: ${convError.message}`);
-          log('Uploading original file instead...', 'warning', 'INFO');
+          log(uiText("Uploading original file instead..."), 'warning', 'INFO');
           conversionFailed = true;
 
           // In single file mode, export error log
@@ -6020,15 +6021,15 @@ async function uploadFile() {
       onComplete();
     } catch (error) {
       if (operationCancelled) { if (uploadGeneration === myGeneration) restoreAfterCancel(); return; }
-      console.error('Upload error:', error);
+      console.error(uiText("Upload error:"), error);
       // Log upload error if conversion succeeded but upload failed
       if (conversionSucceeded) {
         logError(`Upload failed: ${error.message}`);
       }
 
-      if (useWebSocket && error.message === 'WebSocket connection failed') {
+      if (useWebSocket && error.message === uiText("WebSocket connection failed")) {
         // Fall back to HTTP for all subsequent uploads
-        console.log('WebSocket failed, falling back to HTTP');
+        console.log(uiText("WebSocket failed, falling back to HTTP"));
         useWebSocket = false;
         // Retry this file with HTTP
         try {
@@ -6127,7 +6128,7 @@ function retryAllFailedUploads() {
     const folderName = document.getElementById('folderName').value.trim();
 
     if (!folderName) {
-      alert('Please enter a folder name!');
+      alert(uiText("Please enter a folder name!"));
       return;
     }
 
@@ -6149,12 +6150,12 @@ function retryAllFailedUploads() {
       if (xhr.status === 200) {
         window.location.reload();
       } else {
-        alert('Failed to create folder: ' + xhr.responseText);
+        alert(uiText("Failed to create folder: ") + xhr.responseText);
       }
     };
 
     xhr.onerror = function() {
-      alert('Failed to create folder - network error');
+      alert(uiText("Failed to create folder - network error"));
     };
 
     xhr.send(formData);
@@ -6182,11 +6183,11 @@ function retryAllFailedUploads() {
     const newName = document.getElementById('renameNewName').value.trim();
 
     if (!newName) {
-      alert('Please enter a new name.');
+      alert(uiText("Please enter a new name."));
       return;
     }
     if (newName.includes('/') || newName.includes('\\')) {
-      alert('File name cannot include slashes.');
+      alert(uiText("File name cannot include slashes."));
       return;
     }
 
@@ -6201,13 +6202,13 @@ function retryAllFailedUploads() {
       if (xhr.status === 200) {
         window.location.reload();
       } else {
-        alert('Failed to rename: ' + xhr.responseText);
+        alert(uiText("Failed to rename: ") + xhr.responseText);
       }
       closeRenameModal();
     };
 
     xhr.onerror = function() {
-      alert('Failed to rename - network error');
+      alert(uiText("Failed to rename - network error"));
       closeRenameModal();
     };
 
@@ -6296,7 +6297,7 @@ function retryAllFailedUploads() {
     const destPath = normalizePath(document.getElementById('moveDestPath').value);
 
     if (!destPath) {
-      alert('Please enter a destination folder.');
+      alert(uiText("Please enter a destination folder."));
       return;
     }
 
@@ -6311,13 +6312,13 @@ function retryAllFailedUploads() {
       if (xhr.status === 200) {
         window.location.reload();
       } else {
-        alert('Failed to move: ' + xhr.responseText);
+        alert(uiText("Failed to move: ") + xhr.responseText);
       }
       closeMoveModal();
     };
 
     xhr.onerror = function() {
-      alert('Failed to move - network error');
+      alert(uiText("Failed to move - network error"));
       closeMoveModal();
     };
 

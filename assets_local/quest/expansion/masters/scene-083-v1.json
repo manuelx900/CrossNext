@@ -1,0 +1,12 @@
+{
+  "id": "S083",
+  "master": "scene-083-v1.png",
+  "sha256": "e19252bf6e26ad60efcb6faaf0c3e7996046b52c23ada62d3bce488cfbb43fa2",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The star threshold. Chapter: The first threshold. Illustrate this already-authored event faithfully, without inventing another object or plot: Ada has kept the last account of Elia beyond the king's reach. She needs your restored routes and evidence to bring it out without losing its meaning to the shadows. Context only, do not try to draw all of it: The key opens the star threshold into an archive of imagined possibilities. These pages show paths stories might have taken, not populations awaiting rescue. Ada's voice answers your handbell from among the shelves.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

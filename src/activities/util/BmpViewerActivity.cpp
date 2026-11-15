@@ -167,7 +167,7 @@ void BmpViewerActivity::onEnter() {
 
   const auto pageWidth = renderer.getScreenWidth();
   const auto pageHeight = renderer.getScreenHeight();
-  Rect popupRect = GUI.drawPopup(renderer, tr(STR_LOADING_POPUP));
+  Rect popupRect = GUI.drawLoadingScreen(renderer, tr(STR_LOADING_POPUP));
   GUI.fillPopupProgress(renderer, popupRect, 20);  // Initial 20% progress
   if (FsHelpers::hasPngExtension(filePath) || FsHelpers::hasJpgExtension(filePath)) {
     renderer.clearScreen();
@@ -410,7 +410,7 @@ bool BmpViewerActivity::saveJpegSleepCover() {
 }
 
 void BmpViewerActivity::doSetSleepCover() {
-  GUI.drawPopup(renderer, tr(STR_LOADING_POPUP));
+  GUI.drawLoadingScreen(renderer, tr(STR_LOADING_POPUP));
 
   const bool jpeg = FsHelpers::hasJpgExtension(filePath);
   const bool transparentMode =

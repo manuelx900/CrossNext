@@ -1,0 +1,21 @@
+{
+  "id": "K129",
+  "key": "Medalla-garden",
+  "file": "K129.png",
+  "sample": {
+    "es": "Medalla del jardín",
+    "en": "Garden medal"
+  },
+  "requests": [
+    224
+  ],
+  "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: one sprouting branch and a small fountain.",
+  "transparent": true,
+  "kind": "keepsake",
+  "sha256": "369318015d62def8411e659c9519a3dead5ad0442e886e0a14c908ca75e47a51",
+  "tool": "built-in image_gen",
+  "source": "exec-1dc06201-c2db-47e2-957c-019fbc168c87.png",
+  "width": 1086,
+  "height": 1448,
+  "mode": "RGBA"
+}

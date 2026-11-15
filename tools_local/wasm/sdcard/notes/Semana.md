@@ -1,2 +1,0 @@
-- [ ] Planear lecturas
-- [ ] Visitar la biblioteca

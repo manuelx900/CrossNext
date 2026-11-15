@@ -1,0 +1,18 @@
+{
+  "id": "K044",
+  "key": "Barco",
+  "file": "K044.png",
+  "sample": {
+    "es": "Barco de madera",
+    "en": "Wooden ship"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Wooden ship.",
+  "requests": [
+    51
+  ],
+  "sha256": "bdfd0a969a90846687606c8fab304395f60a2063069962615bfeb6b123d4ef27",
+  "source": "exec-90aeee2a-baa1-4f6d-9fac-e53bf54467d5.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

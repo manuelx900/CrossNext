@@ -13,6 +13,36 @@ uint32_t utf8ComposePair(const uint32_t base, const uint32_t mark) {
   if (base >= 0xAC00 && base <= 0xD7A3 && (base - 0xAC00) % 28 == 0 && mark >= 0x11A8 && mark <= 0x11C2) {
     return base + mark - 0x11A7;
   }
+  if (mark == 0x3099 || mark == 0x309A) {
+    const uint32_t hira = base >= 0x30A1 && base <= 0x30F6 ? base - 0x60 : base;
+    if (hira >= 0x306F && hira <= 0x307B && (hira - 0x306F) % 3 == 0) return base + (mark == 0x3099 ? 1 : 2);
+    if (mark == 0x3099) {
+      if ((hira >= 0x304B && hira <= 0x3062 && (hira & 1)) || hira == 0x3064 || hira == 0x3066 || hira == 0x3068)
+        return base + 1;
+      if (hira == 0x3046) return base + 0x4E;
+      if (base >= 0x30EF && base <= 0x30F2) return base + 8;
+      if (base == 0x309D || base == 0x30FD) return base + 1;
+    }
+    return 0;
+  }
+  if (base == 0x627 && mark == 0x653) return 0x622;
+  if (base == 0x627 && mark == 0x655) return 0x625;
+  if (mark == 0x654) {
+    switch (base) {
+      case 0x627:
+        return 0x623;
+      case 0x648:
+        return 0x624;
+      case 0x64a:
+        return 0x626;
+      case 0x6d5:
+        return 0x6c0;
+      case 0x6c1:
+        return 0x6c2;
+      case 0x6d2:
+        return 0x6d3;
+    }
+  }
   if (!utf8IsCombiningMark(mark) || base > 0xFFFF || mark > 0xFFFF) return 0;
   int lo = 0;
   int hi = kUtf8ComposeTableSize - 1;
@@ -42,14 +72,18 @@ uint32_t utf8DecomposedBase(const uint32_t cp) {
 std::string utf8ComposeNfc(const std::string& in, bool (*onAbsorbed)(uint32_t, void*), void* context) {
   // Fast path: NFC composition can only change text that contains a combining
   // diacritical mark U+0300-036F (UTF-8 lead byte 0xCC or 0xCD) or conjoining
-  // Hangul jamo (lead byte 0xE1 for U+1000-1FFF). Plain ASCII and
+  // Hangul jamo (0xE1), kana voiced marks (0xE3), or Arabic composition marks.
+  // Plain ASCII and
   // already-precomposed (NFC) text -- the vast majority of words -- have none, so
   // return them untouched without walking codepoints or allocating. A 0xCD or
   // 0xE1 that is actually a non-composing codepoint (e.g. Georgian, Cherokee)
   // just falls through to the full pass below.
   bool maybeHasMarks = false;
-  for (const unsigned char c : in) {
-    if (c == 0xCC || c == 0xCD || c == 0xE1) {
+  for (size_t i = 0; i < in.size(); ++i) {
+    const auto c = static_cast<unsigned char>(in[i]);
+    const bool arabic = c == 0xd9 && i + 1 < in.size() && static_cast<unsigned char>(in[i + 1]) >= 0x93 &&
+                        static_cast<unsigned char>(in[i + 1]) <= 0x95;
+    if (c == 0xCC || c == 0xCD || c == 0xE1 || c == 0xE3 || arabic) {
       maybeHasMarks = true;
       break;
     }
@@ -182,21 +216,24 @@ uint32_t utf8NextCodepoint(const unsigned char** string) {
 }
 
 void utf8AppendCodepoint(uint32_t cp, std::string& out) {
-  if (cp < 0x80) {
-    out += static_cast<char>(cp);
-  } else if (cp < 0x800) {
-    out += static_cast<char>(0xC0 | (cp >> 6));
-    out += static_cast<char>(0x80 | (cp & 0x3F));
-  } else if (cp < 0x10000) {
-    out += static_cast<char>(0xE0 | (cp >> 12));
-    out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
-    out += static_cast<char>(0x80 | (cp & 0x3F));
-  } else {
-    out += static_cast<char>(0xF0 | (cp >> 18));
-    out += static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
-    out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
-    out += static_cast<char>(0x80 | (cp & 0x3F));
+  char bytes[4];
+  const char* end = utf8AppendCodepoint(bytes, cp);
+  out.append(bytes, static_cast<size_t>(end - bytes));
+}
+
+int utf8SafeReaderTokenPrefix(const char* buf, int len) {
+  const int complete = utf8SafeTruncateBuffer(buf, len);
+  const auto* start = reinterpret_cast<const uint8_t*>(buf);
+  const auto* cursor = start;
+  uint32_t previous = 0;
+  int clusterStart = 0;
+  while (cursor < start + complete) {
+    const int offset = int(cursor - start);
+    const uint32_t cp = utf8NextCodepoint(&cursor);
+    if (utf8ThaiBoundaryAllowed(previous, cp)) clusterStart = offset;
+    previous = cp;
   }
+  return utf8IsThai(previous) && clusterStart > 0 && len - clusterStart <= 32 ? clusterStart : complete;
 }
 
 int utf8SafeTruncateBuffer(const char* buf, int len) {

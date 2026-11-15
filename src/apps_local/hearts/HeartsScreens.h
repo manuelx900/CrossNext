@@ -85,7 +85,7 @@ struct BoardModel {
   const char* status = "";
   const char* subStatus = "";
   bool showConfirm = false;
-  const char* confirmLabel = tr(STR_UI_PASS_BD564D);
+  const char* confirmLabel = tr(STR_HEARTS_PASS_CARDS);
   bool confirmEnabled = false;
 };
 

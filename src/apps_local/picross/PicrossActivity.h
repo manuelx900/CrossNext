@@ -5,6 +5,7 @@
 #include "../../activities/Activity.h"
 #include "../ui/ToyboxScreen.h"
 #include "PicrossCore.h"
+#include "PicrossPaintState.h"
 #include "PicrossSave.h"
 #include "PicrossScreens.h"
 
@@ -34,6 +35,7 @@ class PicrossActivity final : public Activity {
   void syncPicker();
   void showPage(int page);
   void showTab(int tab);
+  void saveSizePreference(int tab);
   void routeBoardTap(int x, int y, int inputMode);
   void routeButton(int button);
   void setMode(int mode);
@@ -62,6 +64,7 @@ class PicrossActivity final : public Activity {
   int menuPage = 0;
   int menuTab = 0;
   int pendingSizeTab = 0;
+  int savedSizeTab = -1;
   int helpPage = 0;
   // Consumed by the next picker render: forget `menuPage` and `menuTab` and
   // open on the tab and page holding `selected`. Set whenever the picker
@@ -78,10 +81,12 @@ class PicrossActivity final : public Activity {
   int lastCleared = 0;
   int lastMistakes = 0;
   // Consumed by the next render(): the full blink instead of the fast refresh.
-  // Set on opening a puzzle, on a mistake (the blink is the buzzer on a
-  // soundless device and clears ghosting), on a win, and every so many marks.
+  // Periodic cleaning after actual grid changes, never a menu or empty tap.
   bool flashOnNextPaint = false;
+  static constexpr uint8_t DIRTY_GRID = 1, DIRTY_TOOLS = 2;
+  uint8_t dirtyBoardRegions = 0;
   int paintsSinceFlash = 0;
   int unsaved = 0;
+  picross::PaintState paintedFrame;
   toybox::Interactions interactions;
 };

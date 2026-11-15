@@ -8,6 +8,7 @@
 
 #include "HapticFeedback.h"
 #include "MappedInputManager.h"
+#include "apps_local/ui/NavigationIcons.h"
 #include "components/UIScale.h"
 #include "components/UITheme.h"
 #include "components/UIThemeTokens.h"
@@ -87,23 +88,23 @@ inline freeink::ui::BitmapRef listIconFor(const UIIcon icon, const int size = 24
   if (size >= 32) {
     switch (icon) {
       case UIIcon::Folder:
-        return freeink::ui::bitmapFromIcon(icon_folder_32);
+        return freeink::ui::bitmapFromIcon(navicons::Folder32);
       case UIIcon::Text:
-        return freeink::ui::bitmapFromIcon(icon_file_text_32);
+        return freeink::ui::bitmapFromIcon(navicons::Text32);
       case UIIcon::Image:
-        return freeink::ui::bitmapFromIcon(icon_image_32);
+        return freeink::ui::bitmapFromIcon(navicons::Image32);
       case UIIcon::Book:
-        return freeink::ui::bitmapFromIcon(icon_book_32);
+        return freeink::ui::bitmapFromIcon(navicons::Library32);
       case UIIcon::File:
-        return freeink::ui::bitmapFromIcon(icon_file_32);
+        return freeink::ui::bitmapFromIcon(navicons::File32);
       case UIIcon::Wifi:
-        return freeink::ui::bitmapFromIcon(icon_wifi_32);
+        return freeink::ui::bitmapFromIcon(navicons::Wifi32);
       case UIIcon::Library:
-        return freeink::ui::bitmapFromIcon(icon_library_32);
+        return freeink::ui::bitmapFromIcon(navicons::Library32);
       case UIIcon::Plugins:
         return freeink::ui::bitmapFromIcon(icon_blocks_32);
       case UIIcon::Hotspot:
-        return freeink::ui::bitmapFromIcon(icon_radio_tower_32);
+        return freeink::ui::bitmapFromIcon(navicons::Hotspot32);
       case UIIcon::Usb:
         return freeink::ui::bitmapFromIcon(icon_usb_32);
       case UIIcon::Bookmark:
@@ -116,23 +117,23 @@ inline freeink::ui::BitmapRef listIconFor(const UIIcon icon, const int size = 24
   }
   switch (icon) {
     case UIIcon::Folder:
-      return freeink::ui::bitmapFromIcon(icon_folder_24);
+      return freeink::ui::bitmapFromIcon(navicons::Folder24);
     case UIIcon::Text:
-      return freeink::ui::bitmapFromIcon(icon_file_text_24);
+      return freeink::ui::bitmapFromIcon(navicons::Text24);
     case UIIcon::Image:
-      return freeink::ui::bitmapFromIcon(icon_image_24);
+      return freeink::ui::bitmapFromIcon(navicons::Image24);
     case UIIcon::Book:
-      return freeink::ui::bitmapFromIcon(icon_book_24);
+      return freeink::ui::bitmapFromIcon(navicons::Library24);
     case UIIcon::File:
-      return freeink::ui::bitmapFromIcon(icon_file_24);
+      return freeink::ui::bitmapFromIcon(navicons::File24);
     case UIIcon::Wifi:
-      return freeink::ui::bitmapFromIcon(icon_wifi_24);
+      return freeink::ui::bitmapFromIcon(navicons::Wifi24);
     case UIIcon::Library:
-      return freeink::ui::bitmapFromIcon(icon_library_24);
+      return freeink::ui::bitmapFromIcon(navicons::Library24);
     case UIIcon::Plugins:
       return freeink::ui::bitmapFromIcon(icon_blocks_24);
     case UIIcon::Hotspot:
-      return freeink::ui::bitmapFromIcon(icon_radio_tower_24);
+      return freeink::ui::bitmapFromIcon(navicons::Hotspot24);
     case UIIcon::Usb:
       return freeink::ui::bitmapFromIcon(icon_usb_24);
     case UIIcon::Bookmark:

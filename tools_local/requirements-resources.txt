@@ -1,0 +1,2 @@
+# Desktop dictionary preparation only; never linked into the firmware.
+wordfreq==3.1.1

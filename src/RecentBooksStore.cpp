@@ -2,9 +2,15 @@
 
 #include <ContentVisibility.h>
 #include <HalStorage.h>
+#include <LibraryBuilder.h>
 #include <Logging.h>
 
 #include <algorithm>
+#include <atomic>
+
+namespace {
+std::atomic<uint32_t> presenceMutation{1};
+}
 
 void RecentBooksStore::toJson(JsonDocument& doc) const {
   JsonArray arr = doc["books"].to<JsonArray>();
@@ -40,12 +46,11 @@ bool RecentBooksStore::fromJson(JsonVariantConst doc) {
 void RecentBooksStore::addBook(const std::string& path, const std::string& title, const std::string& author,
                                const std::string& coverBmpPath) {
   if (content::hiddenContent(path)) return;
-  // Drop stale entries first so a new add can't evict a valid book in their stead.
-  pruneMissing();
-
   auto it =
       std::find_if(recentBooks.begin(), recentBooks.end(), [&](const RecentBook& book) { return book.path == path; });
   if (it != recentBooks.end()) {
+    if (it == recentBooks.begin() && it->title == title && it->author == author && it->coverBmpPath == coverBmpPath)
+      return;
     // Move the existing entry to the front instead of copying it. The reader calls this after its first
     // render, so fresh string buffers would land among reader allocations and outlive them, splitting the
     // largest free block once the reader exits.
@@ -55,6 +60,7 @@ void RecentBooksStore::addBook(const std::string& path, const std::string& title
     if (book.author != author) book.author = author;
     if (book.coverBmpPath != coverBmpPath) book.coverBmpPath = coverBmpPath;
   } else {
+    if (recentBooks.size() == MAX_RECENT_BOOKS) pruneMissing();
     if (recentBooks.size() == MAX_RECENT_BOOKS) recentBooks.pop_back();
     recentBooks.reserve(MAX_RECENT_BOOKS);
     recentBooks.insert(recentBooks.begin(), {path, title, author, coverBmpPath});
@@ -72,6 +78,7 @@ void RecentBooksStore::updateBook(const std::string& path, const std::string& ti
       std::find_if(recentBooks.begin(), recentBooks.end(), [&](const RecentBook& book) { return book.path == path; });
   if (it != recentBooks.end()) {
     RecentBook& book = *it;
+    if (book.title == title && book.author == author && book.coverBmpPath == coverBmpPath) return;
     book.title = title;
     book.author = author;
     book.coverBmpPath = coverBmpPath;
@@ -107,8 +114,21 @@ void RecentBooksStore::updatePath(const std::string& oldPath, const std::string&
 }
 
 bool RecentBooksStore::isMissing(const RecentBook& book) {
-  return content::hiddenContent(book.path) || !Storage.exists(book.path.c_str());
+  if (content::hiddenContent(book.path)) return true;
+  const auto revision = library::libraryContentRevision();
+  const auto pathHash = library::clixPathHash(book.path.data(), book.path.size());
+  const auto mutation = presenceMutation.load();
+  if (book.knownPresent && book.presenceRevision == revision && book.presenceMutation == mutation &&
+      book.presencePathHash == pathHash)
+    return false;
+  book.knownPresent = Storage.exists(book.path.c_str());
+  book.presenceRevision = revision;
+  book.presenceMutation = mutation;
+  book.presencePathHash = pathHash;
+  return !book.knownPresent;
 }
+
+void RecentBooksStore::invalidatePresence() { presenceMutation.fetch_add(1); }
 
 bool RecentBooksStore::pruneMissing() {
   const size_t before = recentBooks.size();

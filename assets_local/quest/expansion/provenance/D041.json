@@ -1,0 +1,12 @@
+{
+  "id": "D041",
+  "master": "decor-041-v1.png",
+  "sha256": "d444d5076e7f151b0f434eb6f0ac2c9cb1a5fffc050c16450b1a85077e6574ca",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original collectible decoration sprite for the e-ink fantasy reading app Aventura lectora. Reference fairy is STYLE ONLY. Friendly chibi storybook proportions, white and pale-gray flat fills, VERY THICK solid pure-BLACK outer contours (20-26px at1024px), strong black inner lines, simple broad shapes readable at112x144. Whole subject visible, centered with transparent padding. Genuine transparent background. No scenery, frame, UI, text, lettering, watermark, fine hatching or gray outlines. Do not include the player hero or PET. Subject: a flying friendly scarab with broad open wing cases, a simple sun disk and a small curved ribbon. An airborne or hanging ornament; no ground base.",
+  "reference": "assets_local/quest/redesign/masters/decoration-fairy-v1.png",
+  "transparent": true,
+  "width": 1312,
+  "height": 1199,
+  "mode": "RGBA"
+}

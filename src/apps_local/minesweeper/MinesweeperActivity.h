@@ -53,6 +53,7 @@ class MinesweeperActivity final : public Activity {
   minesweeper::Screen settingsReturn = minesweeper::Screen::Menu;
   int boardSize = 10;
   int pendingSize = 10;
+  int mineCount = 15, pendingMines = 15;
   bool historyReadOnly = false;
   uint8_t historyBytes[minehistory::kBytes]{};
 

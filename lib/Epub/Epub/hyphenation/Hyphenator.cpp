@@ -118,7 +118,9 @@ void appendSegmentPatternBreaks(const std::vector<CodepointInfo>& cps, const Lan
         if (idx == 0 || idx >= segmentSize) continue;
         const size_t cpIdx = segStart + idx;
         if (cpIdx < cps.size()) {
-          outBreaks.push_back({cps[cpIdx].byteOffset, true});
+          if (!utf8ThaiBoundaryAllowed(cps[cpIdx - 1].value, cps[cpIdx].value)) continue;
+          const bool thai = utf8IsThai(cps[cpIdx - 1].value) || utf8IsThai(cps[cpIdx].value);
+          outBreaks.push_back({cps[cpIdx].byteOffset, !thai});
         }
       }
     }
@@ -251,6 +253,7 @@ std::vector<Hyphenator::BreakInfo> Hyphenator::breakOffsets(const std::string& w
   if (includeFallback && indexes.empty()) {
     const size_t minPrefix = hyphenator ? hyphenator->minPrefix() : LiangWordConfig::kDefaultMinPrefix;
     const size_t minSuffix = hyphenator ? hyphenator->minSuffix() : LiangWordConfig::kDefaultMinSuffix;
+    indexes.reserve(cps.size());
     for (size_t idx = minPrefix; idx + minSuffix <= cps.size(); ++idx) {
       indexes.push_back(idx);
     }
@@ -263,13 +266,16 @@ std::vector<Hyphenator::BreakInfo> Hyphenator::breakOffsets(const std::string& w
   std::vector<Hyphenator::BreakInfo> breaks;
   breaks.reserve(indexes.size());
   for (const size_t idx : indexes) {
+    // Thai spacing vowels precede their base; dependent vowels/tones follow it.
+    // Emergency wrapping must keep those clusters intact in both EPUB engines.
+    if (idx > 0 && idx < cps.size() && !utf8ThaiBoundaryAllowed(cps[idx - 1].value, cps[idx].value)) continue;
     // CJK characters can break without inserting a visible hyphen.
     // Check the codepoint at the break position: if it's a CJK character,
     // no hyphen is needed since CJK scripts don't use hyphenation.
     bool needsHyphen = true;
-    if (idx < cps.size() && utf8IsCjkBreakable(cps[idx].value)) {
+    if (idx < cps.size() && (utf8IsCjkBreakable(cps[idx].value) || utf8IsThai(cps[idx].value))) {
       needsHyphen = false;
-    } else if (idx > 0 && utf8IsCjkBreakable(cps[idx - 1].value)) {
+    } else if (idx > 0 && (utf8IsCjkBreakable(cps[idx - 1].value) || utf8IsThai(cps[idx - 1].value))) {
       needsHyphen = false;
     }
     breaks.push_back({byteOffsetForIndex(cps, idx), needsHyphen});
@@ -279,3 +285,4 @@ std::vector<Hyphenator::BreakInfo> Hyphenator::breakOffsets(const std::string& w
 }
 
 void Hyphenator::setPreferredLanguage(const std::string& lang) { cachedHyphenator_ = hyphenatorForLanguage(lang); }
+uintptr_t Hyphenator::cacheIdentity() { return reinterpret_cast<uintptr_t>(cachedHyphenator_); }

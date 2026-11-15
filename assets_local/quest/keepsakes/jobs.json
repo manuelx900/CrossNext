@@ -1,0 +1,2231 @@
+{
+  "jobs": [
+    {
+      "id": "K000",
+      "key": "Marcapáginas",
+      "file": "K000.png",
+      "sample": {
+        "es": "Marcapáginas de haya",
+        "en": "Beech bookmark"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Beech bookmark.",
+      "requests": [
+        0,
+        261,
+        288
+      ]
+    },
+    {
+      "id": "K001",
+      "key": "Pluma",
+      "file": "K001.png",
+      "sample": {
+        "es": "Pluma de Liora",
+        "en": "Liora's quill"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Liora's quill.",
+      "requests": [
+        1,
+        67,
+        81,
+        114,
+        144,
+        166,
+        182,
+        210,
+        232,
+        242,
+        253,
+        286
+      ]
+    },
+    {
+      "id": "K002",
+      "key": "Cinta",
+      "file": "K002.png",
+      "sample": {
+        "es": "Cinta de la canción",
+        "en": "Song ribbon"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Song ribbon.",
+      "requests": [
+        2,
+        77,
+        117,
+        128,
+        165,
+        192,
+        207,
+        231,
+        252,
+        270,
+        287
+      ]
+    },
+    {
+      "id": "K003",
+      "key": "Sello-hoja",
+      "file": "K003.png",
+      "sample": {
+        "es": "Sello de la hoja",
+        "en": "Leaf seal"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Leaf seal.",
+      "requests": [
+        3
+      ]
+    },
+    {
+      "id": "K004",
+      "key": "Lápiz",
+      "file": "K004.png",
+      "sample": {
+        "es": "Lápiz del sendero",
+        "en": "Trail pencil"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Trail pencil.",
+      "requests": [
+        4,
+        29,
+        267
+      ]
+    },
+    {
+      "id": "K005",
+      "key": "Broche",
+      "file": "K005.png",
+      "sample": {
+        "es": "Broche del puente",
+        "en": "Bridge clasp"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Bridge clasp.",
+      "requests": [
+        5,
+        113,
+        175,
+        234
+      ]
+    },
+    {
+      "id": "K006",
+      "key": "Guijarro",
+      "file": "K006.png",
+      "sample": {
+        "es": "Guijarro del eco",
+        "en": "Echo pebble"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Echo pebble.",
+      "requests": [
+        6,
+        209
+      ]
+    },
+    {
+      "id": "K007",
+      "key": "Tablilla",
+      "file": "K007.png",
+      "sample": {
+        "es": "Tablilla del cruce",
+        "en": "Crossing tablet"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Crossing tablet.",
+      "requests": [
+        7,
+        50,
+        127,
+        212,
+        240
+      ]
+    },
+    {
+      "id": "K008",
+      "key": "Llave",
+      "file": "K008.png",
+      "sample": {
+        "es": "Llave de la casa",
+        "en": "House key"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: House key.",
+      "requests": [
+        8,
+        25,
+        58,
+        85,
+        105,
+        163,
+        184,
+        205,
+        254,
+        268
+      ]
+    },
+    {
+      "id": "K009",
+      "key": "Farol",
+      "file": "K009.png",
+      "sample": {
+        "es": "Farol de ventana",
+        "en": "Window lantern"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Window lantern.",
+      "requests": [
+        9,
+        64,
+        226,
+        283
+      ]
+    },
+    {
+      "id": "K010",
+      "key": "Cazo",
+      "file": "K010.png",
+      "sample": {
+        "es": "Cazo del pozo",
+        "en": "Well dipper"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Well dipper.",
+      "requests": [
+        10
+      ]
+    },
+    {
+      "id": "K011",
+      "key": "Cuaderno",
+      "file": "K011.png",
+      "sample": {
+        "es": "Cuaderno de los nombres",
+        "en": "Names notebook"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Names notebook.",
+      "requests": [
+        11,
+        42,
+        59,
+        84,
+        102,
+        150,
+        186,
+        204,
+        236,
+        266,
+        279
+      ]
+    },
+    {
+      "id": "K012",
+      "key": "Nudo",
+      "file": "K012.png",
+      "sample": {
+        "es": "Nudo del pozo",
+        "en": "Well knot"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Well knot.",
+      "requests": [
+        12,
+        52,
+        111,
+        129
+      ]
+    },
+    {
+      "id": "K013",
+      "key": "Asta",
+      "file": "K013.png",
+      "sample": {
+        "es": "Asta de madera",
+        "en": "Wooden antler"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Wooden antler.",
+      "requests": [
+        13
+      ]
+    },
+    {
+      "id": "K014",
+      "key": "Brújula",
+      "file": "K014.png",
+      "sample": {
+        "es": "Brújula del claro",
+        "en": "Clearing compass"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Clearing compass.",
+      "requests": [
+        14,
+        69
+      ]
+    },
+    {
+      "id": "K015",
+      "key": "Sobre",
+      "file": "K015.png",
+      "sample": {
+        "es": "Sobre de la aldea",
+        "en": "Village envelope"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Village envelope.",
+      "requests": [
+        15,
+        93,
+        158,
+        191,
+        218,
+        245,
+        272
+      ]
+    },
+    {
+      "id": "K016",
+      "key": "Tintero",
+      "file": "K016.png",
+      "sample": {
+        "es": "Tintero del correo",
+        "en": "Post inkpot"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Post inkpot.",
+      "requests": [
+        16,
+        194
+      ]
+    },
+    {
+      "id": "K017",
+      "key": "Cordel",
+      "file": "K017.png",
+      "sample": {
+        "es": "Cordel de las cartas",
+        "en": "Letter twine"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Letter twine.",
+      "requests": [
+        17,
+        131
+      ]
+    },
+    {
+      "id": "K018",
+      "key": "Hoja",
+      "file": "K018.png",
+      "sample": {
+        "es": "Hoja prensada del bosque",
+        "en": "Pressed forest leaf"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Pressed forest leaf.",
+      "requests": [
+        18,
+        136,
+        185,
+        201
+      ]
+    },
+    {
+      "id": "K019",
+      "key": "Pincel",
+      "file": "K019.png",
+      "sample": {
+        "es": "Pincel del bosque",
+        "en": "Forest brush"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Forest brush.",
+      "requests": [
+        19,
+        40
+      ]
+    },
+    {
+      "id": "K020",
+      "key": "Lazo",
+      "file": "K020.png",
+      "sample": {
+        "es": "Lazo de las hermanas",
+        "en": "Sisters' bow"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Sisters' bow.",
+      "requests": [
+        20,
+        70,
+        217,
+        241,
+        262
+      ]
+    },
+    {
+      "id": "K021",
+      "key": "Ficha",
+      "file": "K021.png",
+      "sample": {
+        "es": "Ficha de préstamo de Liora",
+        "en": "Liora's loan card"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Liora's loan card.",
+      "requests": [
+        21,
+        26,
+        75,
+        95,
+        121,
+        132,
+        157,
+        169,
+        176,
+        183,
+        215,
+        225,
+        237,
+        244,
+        255,
+        264,
+        277,
+        280,
+        291
+      ]
+    },
+    {
+      "id": "K022",
+      "key": "Atril",
+      "file": "K022.png",
+      "sample": {
+        "es": "Atril de la aldea",
+        "en": "Village bookstand"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Village bookstand.",
+      "requests": [
+        22
+      ]
+    },
+    {
+      "id": "K023",
+      "key": "Raíz",
+      "file": "K023.png",
+      "sample": {
+        "es": "Raíz tallada",
+        "en": "Carved root"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Carved root.",
+      "requests": [
+        23
+      ]
+    },
+    {
+      "id": "K024",
+      "key": "Medalla",
+      "file": "K024.png",
+      "sample": {
+        "es": "Medalla del bosque",
+        "en": "Forest medal"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Forest medal.",
+      "requests": [
+        24
+      ]
+    },
+    {
+      "id": "K025",
+      "key": "Placa",
+      "file": "K025.png",
+      "sample": {
+        "es": "Placa de la puerta",
+        "en": "Gate plaque"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Gate plaque.",
+      "requests": [
+        27,
+        109,
+        143,
+        206,
+        265,
+        293
+      ]
+    },
+    {
+      "id": "K026",
+      "key": "Marco",
+      "file": "K026.png",
+      "sample": {
+        "es": "Marco del mercado",
+        "en": "Market frame"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Market frame.",
+      "requests": [
+        28
+      ]
+    },
+    {
+      "id": "K027",
+      "key": "Silla",
+      "file": "K027.png",
+      "sample": {
+        "es": "Silla en miniatura",
+        "en": "Miniature chair"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Miniature chair.",
+      "requests": [
+        30
+      ]
+    },
+    {
+      "id": "K028",
+      "key": "Campanilla",
+      "file": "K028.png",
+      "sample": {
+        "es": "Campanilla de la plaza",
+        "en": "Square bell"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Square bell.",
+      "requests": [
+        31,
+        108
+      ]
+    },
+    {
+      "id": "K029",
+      "key": "Roseta",
+      "file": "K029.png",
+      "sample": {
+        "es": "Roseta de la plaza",
+        "en": "Square rosette"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Square rosette.",
+      "requests": [
+        32,
+        187
+      ]
+    },
+    {
+      "id": "K030",
+      "key": "Flecha",
+      "file": "K030.png",
+      "sample": {
+        "es": "Flecha de madera urbana",
+        "en": "Wooden street arrow"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Wooden street arrow.",
+      "requests": [
+        33
+      ]
+    },
+    {
+      "id": "K031",
+      "key": "Regla",
+      "file": "K031.png",
+      "sample": {
+        "es": "Regla del cartógrafo",
+        "en": "Cartographer's ruler"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Cartographer's ruler.",
+      "requests": [
+        34,
+        68,
+        82
+      ]
+    },
+    {
+      "id": "K032",
+      "key": "Separador",
+      "file": "K032.png",
+      "sample": {
+        "es": "Separador del archivo urbano",
+        "en": "City archive divider"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: City archive divider.",
+      "requests": [
+        35,
+        92,
+        211,
+        256,
+        269
+      ]
+    },
+    {
+      "id": "K033",
+      "key": "Sello",
+      "file": "K033.png",
+      "sample": {
+        "es": "Sello de préstamo real",
+        "en": "Royal loan stamp"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: a handmade wax library seal with its small antique wooden stamp handle, an open-book emblem.",
+      "requests": [
+        36,
+        76,
+        91,
+        134,
+        180,
+        227,
+        246,
+        294
+      ]
+    },
+    {
+      "id": "K034",
+      "key": "Carpeta",
+      "file": "K034.png",
+      "sample": {
+        "es": "Carpeta del archivo urbano",
+        "en": "City archive folder"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: City archive folder.",
+      "requests": [
+        37,
+        71,
+        197,
+        229,
+        259,
+        271,
+        289
+      ]
+    },
+    {
+      "id": "K035",
+      "key": "Carrete",
+      "file": "K035.png",
+      "sample": {
+        "es": "Carrete del alba",
+        "en": "Dawn spool"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Dawn spool.",
+      "requests": [
+        38
+      ]
+    },
+    {
+      "id": "K036",
+      "key": "Retal",
+      "file": "K036.png",
+      "sample": {
+        "es": "Retal del taller",
+        "en": "Workshop cloth scrap"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Workshop cloth scrap.",
+      "requests": [
+        39,
+        233
+      ]
+    },
+    {
+      "id": "K037",
+      "key": "Tesela",
+      "file": "K037.png",
+      "sample": {
+        "es": "Tesela de los nombres",
+        "en": "Names mosaic tile"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Names mosaic tile.",
+      "requests": [
+        41
+      ]
+    },
+    {
+      "id": "K038",
+      "key": "Badajo",
+      "file": "K038.png",
+      "sample": {
+        "es": "Badajo del campanero",
+        "en": "Bell keeper's clapper"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Bell keeper's clapper.",
+      "requests": [
+        43,
+        292
+      ]
+    },
+    {
+      "id": "K039",
+      "key": "Reloj",
+      "file": "K039.png",
+      "sample": {
+        "es": "Reloj de la plaza",
+        "en": "Square timepiece"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Square timepiece.",
+      "requests": [
+        44,
+        162
+      ]
+    },
+    {
+      "id": "K040",
+      "key": "Mapa",
+      "file": "K040.png",
+      "sample": {
+        "es": "Mapa urbano plegado",
+        "en": "Folded city map"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Folded city map.",
+      "requests": [
+        45,
+        122,
+        137,
+        190,
+        219,
+        251,
+        275
+      ]
+    },
+    {
+      "id": "K041",
+      "key": "Rueda",
+      "file": "K041.png",
+      "sample": {
+        "es": "Rueda de mensajero",
+        "en": "Messenger wheel"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Messenger wheel.",
+      "requests": [
+        46
+      ]
+    },
+    {
+      "id": "K042",
+      "key": "Sujetapapeles",
+      "file": "K042.png",
+      "sample": {
+        "es": "Sujetapapeles del mercado",
+        "en": "Market paper clip"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Market paper clip.",
+      "requests": [
+        47
+      ]
+    },
+    {
+      "id": "K043",
+      "key": "Campana",
+      "file": "K043.png",
+      "sample": {
+        "es": "Campana urbana de bronce",
+        "en": "Bronze city bell"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Bronze city bell.",
+      "requests": [
+        48,
+        141,
+        238,
+        290
+      ]
+    },
+    {
+      "id": "K044",
+      "key": "Barco",
+      "file": "K044.png",
+      "sample": {
+        "es": "Barco de madera",
+        "en": "Wooden ship"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Wooden ship.",
+      "requests": [
+        51
+      ]
+    },
+    {
+      "id": "K045",
+      "key": "Boya",
+      "file": "K045.png",
+      "sample": {
+        "es": "Boya en miniatura",
+        "en": "Miniature buoy"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Miniature buoy.",
+      "requests": [
+        53
+      ]
+    },
+    {
+      "id": "K046",
+      "key": "Silbato",
+      "file": "K046.png",
+      "sample": {
+        "es": "Silbato de la boya",
+        "en": "Buoy whistle"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Buoy whistle.",
+      "requests": [
+        54,
+        101
+      ]
+    },
+    {
+      "id": "K047",
+      "key": "Malla",
+      "file": "K047.png",
+      "sample": {
+        "es": "Malla del recuerdo",
+        "en": "Memory netting"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Memory netting.",
+      "requests": [
+        55
+      ]
+    },
+    {
+      "id": "K048",
+      "key": "Aguja-Needle",
+      "file": "K048.png",
+      "sample": {
+        "es": "Aguja de redes",
+        "en": "Netting needle"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Netting needle.",
+      "requests": [
+        56
+      ]
+    },
+    {
+      "id": "K049",
+      "key": "Estuche",
+      "file": "K049.png",
+      "sample": {
+        "es": "Estuche de marinero",
+        "en": "Sailor's case"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Sailor's case.",
+      "requests": [
+        57,
+        87,
+        297
+      ]
+    },
+    {
+      "id": "K050",
+      "key": "Concha",
+      "file": "K050.png",
+      "sample": {
+        "es": "Concha de la isla",
+        "en": "Island shell"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Island shell.",
+      "requests": [
+        60
+      ]
+    },
+    {
+      "id": "K051",
+      "key": "Carta",
+      "file": "K051.png",
+      "sample": {
+        "es": "Carta de la isla",
+        "en": "Island chart"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Island chart.",
+      "requests": [
+        61,
+        177
+      ]
+    },
+    {
+      "id": "K052",
+      "key": "Cristal",
+      "file": "K052-v2.png",
+      "sample": {
+        "es": "Cristal de marea",
+        "en": "Tide glass"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: one large solid irregular faceted tide crystal gemstone, three large clear facets with a single wave-shaped engraving, chunky irregular mineral silhouette. Absolutely no hourglass, no sand clock, no frame.",
+      "requests": [
+        62,
+        98,
+        123
+      ]
+    },
+    {
+      "id": "K053",
+      "key": "Mecha",
+      "file": "K053.png",
+      "sample": {
+        "es": "Mecha del faro",
+        "en": "Lighthouse wick"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Lighthouse wick.",
+      "requests": [
+        63
+      ]
+    },
+    {
+      "id": "K054",
+      "key": "Insignia",
+      "file": "K054.png",
+      "sample": {
+        "es": "Insignia del capitán",
+        "en": "Captain's badge"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Captain's badge.",
+      "requests": [
+        65,
+        248
+      ]
+    },
+    {
+      "id": "K055",
+      "key": "Hebilla",
+      "file": "K055.png",
+      "sample": {
+        "es": "Hebilla de cubierta",
+        "en": "Deck buckle"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Deck buckle.",
+      "requests": [
+        66,
+        106
+      ]
+    },
+    {
+      "id": "K056",
+      "key": "Pesa",
+      "file": "K056.png",
+      "sample": {
+        "es": "Pesa de sondaje",
+        "en": "Sounding weight"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Sounding weight.",
+      "requests": [
+        72
+      ]
+    },
+    {
+      "id": "K057",
+      "key": "Moneda",
+      "file": "K057.png",
+      "sample": {
+        "es": "Moneda del corsario",
+        "en": "Corsair coin"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Corsair coin.",
+      "requests": [
+        73
+      ]
+    },
+    {
+      "id": "K058",
+      "key": "Sujetapáginas",
+      "file": "K058.png",
+      "sample": {
+        "es": "Sujetapáginas de Iri",
+        "en": "Iri's page holder"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Iri's page holder.",
+      "requests": [
+        78
+      ]
+    },
+    {
+      "id": "K059",
+      "key": "Cuña",
+      "file": "K059.png",
+      "sample": {
+        "es": "Cuña de estantería",
+        "en": "Shelf wedge"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Shelf wedge.",
+      "requests": [
+        79
+      ]
+    },
+    {
+      "id": "K060",
+      "key": "Cronología",
+      "file": "K060.png",
+      "sample": {
+        "es": "Cronología plegada",
+        "en": "Folded chronology"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Folded chronology.",
+      "requests": [
+        80,
+        281
+      ]
+    },
+    {
+      "id": "K061",
+      "key": "Caracola",
+      "file": "K061.png",
+      "sample": {
+        "es": "Caracola de las voces",
+        "en": "Voices conch"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Voices conch.",
+      "requests": [
+        83
+      ]
+    },
+    {
+      "id": "K062",
+      "key": "Calco",
+      "file": "K062.png",
+      "sample": {
+        "es": "Calco de la llave",
+        "en": "Key tracing"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Key tracing.",
+      "requests": [
+        86,
+        103,
+        139,
+        235,
+        243,
+        258,
+        263,
+        276
+      ]
+    },
+    {
+      "id": "K063",
+      "key": "Funda",
+      "file": "K063.png",
+      "sample": {
+        "es": "Funda de página seca",
+        "en": "Dry page sleeve"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Dry page sleeve.",
+      "requests": [
+        88,
+        167,
+        260,
+        298
+      ]
+    },
+    {
+      "id": "K064",
+      "key": "Lupa",
+      "file": "K064.png",
+      "sample": {
+        "es": "Lupa de lectura de Iri",
+        "en": "Iri's reading lens"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Iri's reading lens.",
+      "requests": [
+        89,
+        216,
+        282
+      ]
+    },
+    {
+      "id": "K065",
+      "key": "Balanza",
+      "file": "K065.png",
+      "sample": {
+        "es": "Balanza de tinta",
+        "en": "Ink scales"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Ink scales.",
+      "requests": [
+        90,
+        133
+      ]
+    },
+    {
+      "id": "K066",
+      "key": "Tira",
+      "file": "K066-v2.png",
+      "sample": {
+        "es": "Tira de fechas",
+        "en": "Date strip"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: one curled paper calendar strip, a short broad ribbon of paper with four large blank calendar cells and curled ends, a tangible date-record keepsake. No wooden sticks, no fruit, no lettering or numbers.",
+      "requests": [
+        94
+      ]
+    },
+    {
+      "id": "K067",
+      "key": "Etiqueta",
+      "file": "K067.png",
+      "sample": {
+        "es": "Etiqueta de salvamento",
+        "en": "Salvage label"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Salvage label.",
+      "requests": [
+        96,
+        200,
+        228,
+        296
+      ]
+    },
+    {
+      "id": "K068",
+      "key": "Cordón",
+      "file": "K068.png",
+      "sample": {
+        "es": "Cordón del catálogo",
+        "en": "Catalogue cord"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Catalogue cord.",
+      "requests": [
+        97
+      ]
+    },
+    {
+      "id": "K069",
+      "key": "Piedra",
+      "file": "K069.png",
+      "sample": {
+        "es": "Piedra de Taren",
+        "en": "Taren's stone"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Taren's stone.",
+      "requests": [
+        100,
+        223
+      ]
+    },
+    {
+      "id": "K070",
+      "key": "Bolsa",
+      "file": "K070.png",
+      "sample": {
+        "es": "Bolsa de mojones",
+        "en": "Cairn pouch"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Cairn pouch.",
+      "requests": [
+        104
+      ]
+    },
+    {
+      "id": "K071",
+      "key": "Registro",
+      "file": "K071.png",
+      "sample": {
+        "es": "Registro del refugio",
+        "en": "Shelter register"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Shelter register.",
+      "requests": [
+        107
+      ]
+    },
+    {
+      "id": "K072",
+      "key": "Clavija",
+      "file": "K072.png",
+      "sample": {
+        "es": "Clavija del paso",
+        "en": "Pass peg"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Pass peg.",
+      "requests": [
+        110
+      ]
+    },
+    {
+      "id": "K073",
+      "key": "Croquis",
+      "file": "K073.png",
+      "sample": {
+        "es": "Croquis de la grieta",
+        "en": "Crevice sketch"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Crevice sketch.",
+      "requests": [
+        112,
+        202
+      ]
+    },
+    {
+      "id": "K074",
+      "key": "Ala",
+      "file": "K074.png",
+      "sample": {
+        "es": "Ala tallada",
+        "en": "Carved wing"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Carved wing.",
+      "requests": [
+        115
+      ]
+    },
+    {
+      "id": "K075",
+      "key": "Visor",
+      "file": "K075.png",
+      "sample": {
+        "es": "Visor de cumbre",
+        "en": "Summit viewer"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Summit viewer.",
+      "requests": [
+        116
+      ]
+    },
+    {
+      "id": "K076",
+      "key": "Bandera",
+      "file": "K076.png",
+      "sample": {
+        "es": "Bandera de la cima",
+        "en": "Summit flag"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Summit flag.",
+      "requests": [
+        118
+      ]
+    },
+    {
+      "id": "K077",
+      "key": "Taza",
+      "file": "K077.png",
+      "sample": {
+        "es": "Taza del montañero",
+        "en": "Mountaineer's cup"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Mountaineer's cup.",
+      "requests": [
+        119,
+        147
+      ]
+    },
+    {
+      "id": "K078",
+      "key": "Bastón",
+      "file": "K078.png",
+      "sample": {
+        "es": "Bastón del regreso",
+        "en": "Return staff"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Return staff.",
+      "requests": [
+        120
+      ]
+    },
+    {
+      "id": "K079",
+      "key": "Frasco",
+      "file": "K079.png",
+      "sample": {
+        "es": "Frasco de la primera duna",
+        "en": "First dune vial"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: First dune vial.",
+      "requests": [
+        125
+      ]
+    },
+    {
+      "id": "K080",
+      "key": "Aguja-Compass",
+      "file": "K080.png",
+      "sample": {
+        "es": "Aguja de las dunas",
+        "en": "Dune needle"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Dune needle.",
+      "requests": [
+        126
+      ]
+    },
+    {
+      "id": "K081",
+      "key": "Cuenco",
+      "file": "K081.png",
+      "sample": {
+        "es": "Cuenco de la caravana",
+        "en": "Caravan bowl"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Caravan bowl.",
+      "requests": [
+        130,
+        208
+      ]
+    },
+    {
+      "id": "K082",
+      "key": "Semilla",
+      "file": "K082.png",
+      "sample": {
+        "es": "Semilla del jardín enterrado",
+        "en": "Buried garden seed"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Buried garden seed.",
+      "requests": [
+        135
+      ]
+    },
+    {
+      "id": "K083",
+      "key": "Rosa",
+      "file": "K083.png",
+      "sample": {
+        "es": "Rosa de la brújula",
+        "en": "Compass rose"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Compass rose.",
+      "requests": [
+        138
+      ]
+    },
+    {
+      "id": "K084",
+      "key": "Velo",
+      "file": "K084.png",
+      "sample": {
+        "es": "Velo de la tormenta",
+        "en": "Storm veil"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Storm veil.",
+      "requests": [
+        140
+      ]
+    },
+    {
+      "id": "K085",
+      "key": "Estaca",
+      "file": "K085.png",
+      "sample": {
+        "es": "Estaca del campamento",
+        "en": "Camp stake"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Camp stake.",
+      "requests": [
+        142
+      ]
+    },
+    {
+      "id": "K086",
+      "key": "Flor",
+      "file": "K086.png",
+      "sample": {
+        "es": "Flor seca del desierto",
+        "en": "Dried desert flower"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Dried desert flower.",
+      "requests": [
+        145
+      ]
+    },
+    {
+      "id": "K087",
+      "key": "Cinturón",
+      "file": "K087.png",
+      "sample": {
+        "es": "Cinturón de rutas",
+        "en": "Route belt"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Route belt.",
+      "requests": [
+        146
+      ]
+    },
+    {
+      "id": "K088",
+      "key": "Pinza",
+      "file": "K088.png",
+      "sample": {
+        "es": "Pinza de piedra arenisca",
+        "en": "Sandstone claw"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Sandstone claw.",
+      "requests": [
+        148
+      ]
+    },
+    {
+      "id": "K089",
+      "key": "Calendario",
+      "file": "K089.png",
+      "sample": {
+        "es": "Calendario del taller",
+        "en": "Workshop calendar"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Workshop calendar.",
+      "requests": [
+        151,
+        172,
+        181,
+        257,
+        284
+      ]
+    },
+    {
+      "id": "K090",
+      "key": "Gota",
+      "file": "K090.png",
+      "sample": {
+        "es": "Gota de cristal",
+        "en": "Glass raindrop"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Glass raindrop.",
+      "requests": [
+        152
+      ]
+    },
+    {
+      "id": "K091",
+      "key": "Cuchara",
+      "file": "K091.png",
+      "sample": {
+        "es": "Cuchara de la mesa",
+        "en": "Table spoon"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Table spoon.",
+      "requests": [
+        153
+      ]
+    },
+    {
+      "id": "K092",
+      "key": "Servilleta",
+      "file": "K092.png",
+      "sample": {
+        "es": "Servilleta bordada del reloj",
+        "en": "Clock embroidered napkin"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Clock embroidered napkin.",
+      "requests": [
+        154
+      ]
+    },
+    {
+      "id": "K093",
+      "key": "Engranaje",
+      "file": "K093.png",
+      "sample": {
+        "es": "Engranaje de cobre",
+        "en": "Copper gear"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Copper gear.",
+      "requests": [
+        155
+      ]
+    },
+    {
+      "id": "K094",
+      "key": "Calibrador",
+      "file": "K094-v2.png",
+      "sample": {
+        "es": "Calibrador de Orin",
+        "en": "Orin's gauge"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: one antique craftsman's vernier caliper, very recognizable two opposing measuring jaws and a short rectangular sliding beam with five broad measurement ticks, large simple sturdy black contours. A tool used to measure dimensions. No round dial, no watch, no clock.",
+      "requests": [
+        156
+      ]
+    },
+    {
+      "id": "K095",
+      "key": "Pisapapeles",
+      "file": "K095.png",
+      "sample": {
+        "es": "Pisapapeles de latón",
+        "en": "Brass paperweight"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Brass paperweight.",
+      "requests": [
+        159
+      ]
+    },
+    {
+      "id": "K096",
+      "key": "Aguja-Clock",
+      "file": "K096.png",
+      "sample": {
+        "es": "Aguja del minuto",
+        "en": "Minute hand"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Minute hand.",
+      "requests": [
+        160
+      ]
+    },
+    {
+      "id": "K097",
+      "key": "Cuadrante",
+      "file": "K097.png",
+      "sample": {
+        "es": "Cuadrante pequeño",
+        "en": "Small dial"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Small dial.",
+      "requests": [
+        161
+      ]
+    },
+    {
+      "id": "K098",
+      "key": "Destornillador",
+      "file": "K098.png",
+      "sample": {
+        "es": "Destornillador del reloj",
+        "en": "Clock screwdriver"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Clock screwdriver.",
+      "requests": [
+        164
+      ]
+    },
+    {
+      "id": "K099",
+      "key": "Picaporte",
+      "file": "K099.png",
+      "sample": {
+        "es": "Picaporte de la tarde",
+        "en": "Afternoon door handle"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Afternoon door handle.",
+      "requests": [
+        168
+      ]
+    },
+    {
+      "id": "K100",
+      "key": "Espiral",
+      "file": "K100.png",
+      "sample": {
+        "es": "Espiral de la última vuelta",
+        "en": "Last cycle spring"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Last cycle spring.",
+      "requests": [
+        170
+      ]
+    },
+    {
+      "id": "K101",
+      "key": "Péndulo",
+      "file": "K101.png",
+      "sample": {
+        "es": "Péndulo del taller",
+        "en": "Workshop pendulum"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Workshop pendulum.",
+      "requests": [
+        171
+      ]
+    },
+    {
+      "id": "K102",
+      "key": "Tornillo",
+      "file": "K102.png",
+      "sample": {
+        "es": "Tornillo del autómata",
+        "en": "Automaton screw"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Automaton screw.",
+      "requests": [
+        173
+      ]
+    },
+    {
+      "id": "K103",
+      "key": "Espejo",
+      "file": "K103.png",
+      "sample": {
+        "es": "Espejo de bolsillo lunar",
+        "en": "Moon pocket mirror"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Moon pocket mirror.",
+      "requests": [
+        178
+      ]
+    },
+    {
+      "id": "K104",
+      "key": "Retrato",
+      "file": "K104.png",
+      "sample": {
+        "es": "Retrato de la corte",
+        "en": "Court portrait"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Court portrait.",
+      "requests": [
+        179
+      ]
+    },
+    {
+      "id": "K105",
+      "key": "Fragmento-Mirror",
+      "file": "K105.png",
+      "sample": {
+        "es": "Fragmento del espejo lunar",
+        "en": "Moon mirror fragment"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Moon mirror fragment.",
+      "requests": [
+        188
+      ]
+    },
+    {
+      "id": "K106",
+      "key": "Paño",
+      "file": "K106.png",
+      "sample": {
+        "es": "Paño del espejo",
+        "en": "Mirror cloth"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Mirror cloth.",
+      "requests": [
+        189
+      ]
+    },
+    {
+      "id": "K107",
+      "key": "Luna",
+      "file": "K107.png",
+      "sample": {
+        "es": "Luna de plata tallada",
+        "en": "Carved silver moon"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Carved silver moon.",
+      "requests": [
+        193
+      ]
+    },
+    {
+      "id": "K108",
+      "key": "Pergamino",
+      "file": "K108.png",
+      "sample": {
+        "es": "Pergamino del juramento",
+        "en": "Oath parchment"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Oath parchment.",
+      "requests": [
+        195,
+        230,
+        285
+      ]
+    },
+    {
+      "id": "K109",
+      "key": "Anillo",
+      "file": "K109.png",
+      "sample": {
+        "es": "Anillo del juramento",
+        "en": "Oath ring"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Oath ring.",
+      "requests": [
+        196
+      ]
+    },
+    {
+      "id": "K110",
+      "key": "Estrella",
+      "file": "K110.png",
+      "sample": {
+        "es": "Estrella del espectro lunar",
+        "en": "Moon spectre star"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Moon spectre star.",
+      "requests": [
+        198,
+        250
+      ]
+    },
+    {
+      "id": "K111",
+      "key": "Mano",
+      "file": "K111.png",
+      "sample": {
+        "es": "Mano de piedra pequeña",
+        "en": "Small stone hand"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Small stone hand.",
+      "requests": [
+        203
+      ]
+    },
+    {
+      "id": "K112",
+      "key": "Rama",
+      "file": "K112.png",
+      "sample": {
+        "es": "Rama del jardín vivo",
+        "en": "Living garden branch"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Living garden branch.",
+      "requests": [
+        213
+      ]
+    },
+    {
+      "id": "K113",
+      "key": "Semillero",
+      "file": "K113.png",
+      "sample": {
+        "es": "Semillero de Aster",
+        "en": "Aster's seed tray"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Aster's seed tray.",
+      "requests": [
+        214
+      ]
+    },
+    {
+      "id": "K114",
+      "key": "Sandalia",
+      "file": "K114.png",
+      "sample": {
+        "es": "Sandalia tallada",
+        "en": "Carved sandal"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Carved sandal.",
+      "requests": [
+        220
+      ]
+    },
+    {
+      "id": "K115",
+      "key": "Cesta",
+      "file": "K115.png",
+      "sample": {
+        "es": "Cesta del jardín compartido",
+        "en": "Shared garden basket"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Shared garden basket.",
+      "requests": [
+        221
+      ]
+    },
+    {
+      "id": "K116",
+      "key": "Cartel",
+      "file": "K116.png",
+      "sample": {
+        "es": "Cartel del jardín abierto",
+        "en": "Open garden sign"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Open garden sign.",
+      "requests": [
+        222
+      ]
+    },
+    {
+      "id": "K117",
+      "key": "Cierre",
+      "file": "K117.png",
+      "sample": {
+        "es": "Cierre del archivo nocturno",
+        "en": "Night archive clasp"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Night archive clasp.",
+      "requests": [
+        239
+      ]
+    },
+    {
+      "id": "K118",
+      "key": "Tablón",
+      "file": "K118.png",
+      "sample": {
+        "es": "Tablón del campamento",
+        "en": "Camp noticeboard"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Camp noticeboard.",
+      "requests": [
+        247
+      ]
+    },
+    {
+      "id": "K119",
+      "key": "Escama",
+      "file": "K119-v2.png",
+      "sample": {
+        "es": "Escama de piedra estelar",
+        "en": "Star stone scale"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: exactly one large dragon scale carved from star stone, rounded shield-like top and a pointed lower tip, a small five-point star carved into its surface. This is one detached creature scale or scute, not a weighing device. Absolutely no balance scales, no pans, no weights, no animal.",
+      "requests": [
+        273
+      ]
+    },
+    {
+      "id": "K120",
+      "key": "Corona",
+      "file": "K120.png",
+      "sample": {
+        "es": "Corona de madera",
+        "en": "Wooden crown"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Wooden crown.",
+      "requests": [
+        278
+      ]
+    },
+    {
+      "id": "K121",
+      "key": "Fragmento-Crown",
+      "file": "K121.png",
+      "sample": {
+        "es": "Fragmento de la corona rota",
+        "en": "Broken crown fragment"
+      },
+      "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Broken crown fragment.",
+      "requests": [
+        295
+      ]
+    },
+    {
+      "id": "K122",
+      "key": "Medalla-city",
+      "file": "K122.png",
+      "sample": {
+        "es": "Medalla de la ciudad",
+        "en": "City medal"
+      },
+      "requests": [
+        49
+      ],
+      "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: city gate with a small hanging bell.",
+      "transparent": true,
+      "kind": "keepsake"
+    },
+    {
+      "id": "K123",
+      "key": "Medalla-harbor",
+      "file": "K123.png",
+      "sample": {
+        "es": "Medalla del puerto",
+        "en": "Harbour medal"
+      },
+      "requests": [
+        74
+      ],
+      "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: lighthouse above a single wave.",
+      "transparent": true,
+      "kind": "keepsake"
+    },
+    {
+      "id": "K124",
+      "key": "Medalla-library",
+      "file": "K124.png",
+      "sample": {
+        "es": "Medalla del salvamento",
+        "en": "Salvage medal"
+      },
+      "requests": [
+        99
+      ],
+      "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: open book beneath a glass dome.",
+      "transparent": true,
+      "kind": "keepsake"
+    },
+    {
+      "id": "K125",
+      "key": "Medalla-mountain",
+      "file": "K125.png",
+      "sample": {
+        "es": "Medalla de las cumbres",
+        "en": "Summits medal"
+      },
+      "requests": [
+        124
+      ],
+      "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: two mountain peaks and a trail stone.",
+      "transparent": true,
+      "kind": "keepsake"
+    },
+    {
+      "id": "K126",
+      "key": "Medalla-desert",
+      "file": "K126.png",
+      "sample": {
+        "es": "Medalla de las dunas",
+        "en": "Dunes medal"
+      },
+      "requests": [
+        149
+      ],
+      "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: one dune arch and a small well.",
+      "transparent": true,
+      "kind": "keepsake"
+    },
+    {
+      "id": "K127",
+      "key": "Medalla-clock",
+      "file": "K127.png",
+      "sample": {
+        "es": "Medalla de las horas",
+        "en": "Hours medal"
+      },
+      "requests": [
+        174
+      ],
+      "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: clock face and one cogwheel.",
+      "transparent": true,
+      "kind": "keepsake"
+    },
+    {
+      "id": "K128",
+      "key": "Medalla-moon",
+      "file": "K128.png",
+      "sample": {
+        "es": "Medalla de las lunas",
+        "en": "Moons medal"
+      },
+      "requests": [
+        199
+      ],
+      "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: two crescent moons above a small palace roof.",
+      "transparent": true,
+      "kind": "keepsake"
+    },
+    {
+      "id": "K129",
+      "key": "Medalla-garden",
+      "file": "K129.png",
+      "sample": {
+        "es": "Medalla del jardín",
+        "en": "Garden medal"
+      },
+      "requests": [
+        224
+      ],
+      "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: one sprouting branch and a small fountain.",
+      "transparent": true,
+      "kind": "keepsake"
+    },
+    {
+      "id": "K130",
+      "key": "Medalla-alliance",
+      "file": "K130.png",
+      "sample": {
+        "es": "Medalla de los relatos",
+        "en": "Accounts medal"
+      },
+      "requests": [
+        249
+      ],
+      "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: two clasped hands beneath a plain banner.",
+      "transparent": true,
+      "kind": "keepsake"
+    },
+    {
+      "id": "K131",
+      "key": "Medalla-stars",
+      "file": "K131.png",
+      "sample": {
+        "es": "Medalla de las estrellas",
+        "en": "Stars medal"
+      },
+      "requests": [
+        274
+      ],
+      "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: star-shaped gateway and an open book.",
+      "transparent": true,
+      "kind": "keepsake"
+    },
+    {
+      "id": "K132",
+      "key": "Medalla-world",
+      "file": "K132.png",
+      "sample": {
+        "es": "Medalla de las doce regiones",
+        "en": "Twelve regions medal"
+      },
+      "requests": [
+        299
+      ],
+      "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: a ring of twelve bold dots around a broken crown.",
+      "transparent": true,
+      "kind": "keepsake"
+    },
+    {
+      "id": "coin",
+      "key": "coin",
+      "file": "coin-v2.png",
+      "requests": [],
+      "prompt": "Use case: illustration-story. Create one single inventory currency coin for a monochrome e-ink fantasy reading app. Exactly one round coin, front view, no stack, no perspective tilt. Very simple bold hand-inked silhouette. Pure black and white only. A thick circular black rim that is 7 percent of the coin diameter, white face, one simple open-book engraving in the center drawn with equally bold strokes. Only two large blank book pages and one central spine, no page lines. No stars, no sparkles, no lettering, no numbers, no text, no extra rings, no tiny details, no shadows, no ground, no surrounding props. True transparent background, complete centered coin with transparent padding. Designed to remain clear when reduced to 20 pixels. An illustrated crafted coin rather than a line drawing of stacked currency."
+    }
+  ],
+  "mapping": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    8,
+    21,
+    25,
+    26,
+    4,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    19,
+    37,
+    11,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    122,
+    7,
+    44,
+    12,
+    45,
+    46,
+    47,
+    48,
+    49,
+    8,
+    11,
+    50,
+    51,
+    52,
+    53,
+    9,
+    54,
+    55,
+    1,
+    31,
+    14,
+    20,
+    34,
+    56,
+    57,
+    123,
+    21,
+    33,
+    2,
+    58,
+    59,
+    60,
+    1,
+    31,
+    61,
+    11,
+    8,
+    62,
+    49,
+    63,
+    64,
+    65,
+    33,
+    32,
+    15,
+    66,
+    21,
+    67,
+    68,
+    52,
+    124,
+    69,
+    46,
+    11,
+    62,
+    70,
+    8,
+    55,
+    71,
+    28,
+    25,
+    72,
+    12,
+    73,
+    5,
+    1,
+    74,
+    75,
+    2,
+    76,
+    77,
+    78,
+    21,
+    40,
+    52,
+    125,
+    79,
+    80,
+    7,
+    2,
+    12,
+    81,
+    17,
+    21,
+    65,
+    33,
+    82,
+    18,
+    40,
+    83,
+    62,
+    84,
+    43,
+    85,
+    25,
+    1,
+    86,
+    87,
+    77,
+    88,
+    126,
+    11,
+    89,
+    90,
+    91,
+    92,
+    93,
+    94,
+    21,
+    15,
+    95,
+    96,
+    97,
+    39,
+    8,
+    98,
+    2,
+    1,
+    63,
+    99,
+    21,
+    100,
+    101,
+    89,
+    102,
+    127,
+    5,
+    21,
+    51,
+    103,
+    104,
+    33,
+    89,
+    1,
+    21,
+    8,
+    18,
+    11,
+    29,
+    105,
+    106,
+    40,
+    15,
+    2,
+    107,
+    16,
+    108,
+    109,
+    34,
+    110,
+    128,
+    67,
+    18,
+    73,
+    111,
+    11,
+    8,
+    25,
+    2,
+    81,
+    6,
+    1,
+    32,
+    7,
+    112,
+    113,
+    21,
+    64,
+    20,
+    15,
+    40,
+    114,
+    115,
+    116,
+    69,
+    129,
+    21,
+    9,
+    33,
+    67,
+    34,
+    108,
+    2,
+    1,
+    36,
+    5,
+    62,
+    11,
+    21,
+    43,
+    117,
+    7,
+    20,
+    1,
+    62,
+    21,
+    15,
+    33,
+    118,
+    54,
+    130,
+    110,
+    40,
+    2,
+    1,
+    8,
+    21,
+    32,
+    89,
+    62,
+    34,
+    63,
+    0,
+    20,
+    62,
+    21,
+    25,
+    11,
+    4,
+    8,
+    32,
+    2,
+    34,
+    15,
+    119,
+    131,
+    40,
+    62,
+    21,
+    120,
+    11,
+    21,
+    60,
+    64,
+    9,
+    89,
+    108,
+    1,
+    2,
+    0,
+    34,
+    43,
+    21,
+    38,
+    25,
+    33,
+    121,
+    67,
+    49,
+    63,
+    132
+  ]
+}

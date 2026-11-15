@@ -5,6 +5,7 @@
 #include <Logging.h>
 
 #include <algorithm>
+#include <cstring>
 
 struct ZipInflateCtx {
   HalFile* file = nullptr;
@@ -16,6 +17,14 @@ struct ZipInflateCtx {
 namespace {
 constexpr uint16_t ZIP_METHOD_STORED = 0;
 constexpr uint16_t ZIP_METHOD_DEFLATED = 8;
+constexpr size_t CENTRAL_HEADER_BYTES = 46;
+constexpr uint32_t CENTRAL_HEADER_SIGNATURE = 0x02014b50;
+
+uint16_t readLe16(const uint8_t* bytes) { return uint16_t(bytes[0]) | (uint16_t(bytes[1]) << 8); }
+
+uint32_t readLe32(const uint8_t* bytes) {
+  return uint32_t(bytes[0]) | (uint32_t(bytes[1]) << 8) | (uint32_t(bytes[2]) << 16) | (uint32_t(bytes[3]) << 24);
+}
 
 // RAII zip: opens the zip if not already open, closes on destruction only if
 // it performed the open.  Removes the wasOpen/close boilerplate from every method.
@@ -60,6 +69,65 @@ size_t zipFillCallback(void* vctx, const uint8_t** data) {
   return bytesRead;
 }
 }  // namespace
+
+bool ZipFile::catalogCurrent() const {
+  return catalog && catalogContent && catalogMedia && catalog->archive == filePath &&
+         catalogContent == Storage.resourceRevision() && catalogMedia == Storage.mediaRevision() &&
+         catalog->content == catalogContent && catalog->media == catalogMedia;
+}
+
+bool ZipFile::lookupCatalog(const char* name, FileStatSlim& result) {
+  if (!catalog) return false;
+  std::lock_guard<std::mutex> lock(catalog->mutex);
+  if (!catalogCurrent() || !catalog->entries) return false;
+  const auto* entries = reinterpret_cast<const Catalog::Entry*>(catalog->entries.get());
+  for (size_t i = 0; i < catalog->count; ++i) {
+    if (!strcmp(entries[i].name, name)) {
+      result = entries[i].stat;
+      return true;
+    }
+  }
+  return false;
+}
+
+void ZipFile::rememberCatalog(const char* name, const FileStatSlim& result) {
+  if (!catalog || strlen(name) >= 256) return;
+  std::lock_guard<std::mutex> lock(catalog->mutex);
+  if (!catalogCurrent()) return;
+  if (!catalog->attempted) {
+    catalog->attempted = true;
+    // About 34 KiB once per active book, not an unbounded directory map.
+    const auto heap = HalMemory::getPsramHeap();
+    if (heap.totalBytes && heap.freeBytes >= Catalog::CAPACITY * sizeof(Catalog::Entry) + 1024 * 1024)
+      catalog->entries = HalMemory::allocatePsram(Catalog::CAPACITY * sizeof(Catalog::Entry));
+    if (!catalog->entries) LOG_ERR("ZIP", "Catalog cache unavailable; scanning directory");
+  }
+  if (!catalog->entries) return;
+  auto* entries = reinterpret_cast<Catalog::Entry*>(catalog->entries.get());
+  size_t slot = catalog->count;
+  for (size_t i = 0; i < catalog->count; ++i)
+    if (!strcmp(entries[i].name, name)) {
+      slot = i;
+      break;
+    }
+  if (slot == catalog->count) {
+    if (catalog->count < Catalog::CAPACITY)
+      ++catalog->count;
+    else {
+      slot = catalog->next;
+      catalog->next = (slot + 1) % Catalog::CAPACITY;
+    }
+  }
+  strcpy(entries[slot].name, name);
+  entries[slot].stat = result;
+  catalog->cursor = lastCentralDirPos;
+}
+
+void ZipFile::rememberDetails() {
+  if (!catalog) return;
+  std::lock_guard<std::mutex> lock(catalog->mutex);
+  if (catalogCurrent()) catalog->details = zipDetails;
+}
 
 bool ZipFile::loadAllFileStatSlims() {
   const ScopedOpenClose zip{*this};
@@ -122,74 +190,70 @@ bool ZipFile::loadFileStatSlim(const char* filename, FileStatSlim* fileStat) {
     return false;
   }
 
+  if (lastLookupValid && strcmp(lastLookupName, filename) == 0) {
+    *fileStat = lastLookup;
+    return true;
+  }
+  lastLookupValid = false;
+  const size_t targetLength = strlen(filename);
+  if (targetLength >= sizeof(lastLookupName)) return false;
+
   const ScopedOpenClose zip{*this};
   if (!zip) return false;
 
   if (!loadZipDetails()) return false;
 
+  if (lookupCatalog(filename, *fileStat)) return true;
+
   // Phase 1: Try scanning from cursor position first
-  uint32_t startPos = lastCentralDirPosValid ? lastCentralDirPos : zipDetails.centralDirOffset;
+  const uint32_t startPos = lastCentralDirPosValid ? lastCentralDirPos : zipDetails.centralDirOffset;
+  uint32_t entryStart = startPos;
   bool wrapped = false;
-  bool found = false;
-
-  file.seek(startPos);
-
-  uint32_t sig;
-  char itemName[256];
+  if (!file.seek(entryStart)) return false;
+  uint8_t header[CENTRAL_HEADER_BYTES];
+  const size_t archiveBytes = file.size();
 
   while (true) {
-    uint32_t entryStart = file.position();
-
-    if (file.read(&sig, 4) != 4 || sig != 0x02014b50) {
+    if (wrapped && entryStart >= startPos) break;
+    if (file.read(header, sizeof(header)) != static_cast<int>(sizeof(header)) ||
+        readLe32(header) != CENTRAL_HEADER_SIGNATURE) {
       // End of central directory
       if (!wrapped && lastCentralDirPosValid && startPos != zipDetails.centralDirOffset) {
         // Wrap around to beginning
-        file.seek(zipDetails.centralDirOffset);
+        entryStart = zipDetails.centralDirOffset;
+        if (!file.seek(entryStart)) return false;
         wrapped = true;
         continue;
       }
       break;
     }
 
-    // If we've wrapped and reached our start position, stop
-    if (wrapped && entryStart >= startPos) {
-      break;
-    }
-
-    file.seekCur(6);
-    file.read(&fileStat->method, 2);
-    file.seekCur(8);
-    file.read(&fileStat->compressedSize, 4);
-    file.read(&fileStat->uncompressedSize, 4);
-    uint16_t nameLen, m, k;
-    file.read(&nameLen, 2);
-    file.read(&m, 2);
-    file.read(&k, 2);
-    file.seekCur(8);
-    file.read(&fileStat->localHeaderOffset, 4);
-
-    if (nameLen < 256) {
-      file.read(itemName, nameLen);
-      itemName[nameLen] = '\0';
-
-      if (strcmp(itemName, filename) == 0) {
-        // Found it! Update cursor to next entry
-        file.seekCur(m + k);
-        lastCentralDirPos = file.position();
+    const uint16_t nameLength = readLe16(header + 28);
+    const uint32_t entryBytes = CENTRAL_HEADER_BYTES + nameLength + readLe16(header + 30) + readLe16(header + 32);
+    if (entryStart > archiveBytes || entryBytes > archiveBytes - entryStart || entryBytes > UINT32_MAX - entryStart)
+      return false;
+    const uint32_t nextEntry = entryStart + entryBytes;
+    if (nameLength == targetLength) {
+      if (file.read(lastLookupName, nameLength) != static_cast<int>(nameLength)) return false;
+      lastLookupName[nameLength] = '\0';
+      if (memcmp(lastLookupName, filename, nameLength) == 0) {
+        fileStat->method = readLe16(header + 10);
+        fileStat->compressedSize = readLe32(header + 20);
+        fileStat->uncompressedSize = readLe32(header + 24);
+        fileStat->localHeaderOffset = readLe32(header + 42);
+        lastCentralDirPos = nextEntry;
         lastCentralDirPosValid = true;
-        found = true;
-        break;
+        lastLookup = *fileStat;
+        lastLookupValid = true;
+        rememberCatalog(filename, *fileStat);
+        return true;
       }
-    } else {
-      // Name too long, skip it
-      file.seekCur(nameLen);
     }
-
-    // Skip extra field + comment
-    file.seekCur(m + k);
+    entryStart = nextEntry;
+    if (!file.seek(entryStart)) return false;
   }
 
-  return found;
+  return false;
 }
 
 long ZipFile::getDataOffset(const FileStatSlim& fileStat) {
@@ -269,14 +333,42 @@ bool ZipFile::loadZipDetails() {
   zipDetails.totalEntries = *reinterpret_cast<uint16_t*>(&buffer[foundOffset + 10]);
   zipDetails.centralDirOffset = *reinterpret_cast<uint32_t*>(&buffer[foundOffset + 16]);
   zipDetails.isSet = true;
+  rememberDetails();
 
   free(buffer);
   return true;
 }
 
 bool ZipFile::open() {
+  const auto sourceContent = Storage.resourceRevision(), sourceMedia = Storage.mediaRevision();
   if (!Storage.openFileForRead("ZIP", filePath, file)) {
     return false;
+  }
+  if (catalog) {
+    std::lock_guard<std::mutex> lock(catalog->mutex);
+    catalogContent = sourceContent;
+    catalogMedia = sourceMedia;
+    if (sourceContent != Storage.resourceRevision() || sourceMedia != Storage.mediaRevision()) {
+      catalogContent = catalogMedia = 0;
+      zipDetails = {0, 0, false};
+      return true;
+    }
+    const size_t bytes = file.size();
+    if (catalog->archive != filePath) {
+      catalogContent = catalogMedia = 0;
+      return true;
+    }
+    if (catalog->content != catalogContent || catalog->media != catalogMedia || catalog->bytes != bytes) {
+      catalog->content = catalogContent;
+      catalog->media = catalogMedia;
+      catalog->bytes = bytes;
+      catalog->count = catalog->next = 0;
+      catalog->details = {0, 0, false};
+      catalog->cursor = 0;
+    }
+    zipDetails = catalog->details;
+    lastCentralDirPos = catalog->cursor;
+    lastCentralDirPosValid = lastCentralDirPos != 0;
   }
   return true;
 }
@@ -288,6 +380,7 @@ bool ZipFile::close() {
   }
   lastCentralDirPos = 0;
   lastCentralDirPosValid = false;
+  lastLookupValid = false;
   return true;
 }
 

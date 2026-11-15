@@ -1,0 +1,405 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": 0,
+      "en": "Forest clearing",
+      "es": "Claro del bosque",
+      "art": "quiet woodland clearing with two rounded trees framing a broad white path, pale hills and two bushes",
+      "level": 1,
+      "tier": 0
+    },
+    {
+      "id": 1,
+      "en": "Open meadow",
+      "es": "Pradera abierta",
+      "art": "simple low rolling meadow, grass clusters at far edges, clouds above distant hills",
+      "level": 3,
+      "tier": 0
+    },
+    {
+      "id": 2,
+      "en": "Country path",
+      "es": "Sendero del campo",
+      "art": "curving country path, simple split-rail fence at edges and distant farmhouse",
+      "level": 5,
+      "tier": 0
+    },
+    {
+      "id": 3,
+      "en": "Quiet riverbank",
+      "es": "Ribera tranquila",
+      "art": "gentle river behind a flat foreground bank, reeds at edges and distant stones",
+      "level": 7,
+      "tier": 0
+    },
+    {
+      "id": 4,
+      "en": "Birch grove",
+      "es": "Bosque de abedules",
+      "art": "slender birch trees at outer edges, sparse leaves and low distant shrubs",
+      "level": 9,
+      "tier": 0
+    },
+    {
+      "id": 5,
+      "en": "Dawn hill",
+      "es": "Colina del alba",
+      "art": "wide grassy hilltop, sunrise far behind distant hills, clouds and small edge flowers",
+      "level": 11,
+      "tier": 0
+    },
+    {
+      "id": 6,
+      "en": "Stone garden",
+      "es": "Jardín de piedras",
+      "art": "simple curved garden wall, two stones and neat plants at corners",
+      "level": 13,
+      "tier": 0
+    },
+    {
+      "id": 7,
+      "en": "Old bridge",
+      "es": "Puente antiguo",
+      "art": "small stone bridge crossing a stream in middle distance, open bank foreground",
+      "level": 15,
+      "tier": 0
+    },
+    {
+      "id": 8,
+      "en": "Traveler camp",
+      "es": "Campamento viajero",
+      "art": "tiny tent and extinguished campfire at far edges, distant pine woods and clear ground",
+      "level": 17,
+      "tier": 0
+    },
+    {
+      "id": 9,
+      "en": "Reader shelter",
+      "es": "Refugio del lector",
+      "art": "small cozy wooden shelter behind one side, log fence and quiet countryside",
+      "level": 19,
+      "tier": 0
+    },
+    {
+      "id": 10,
+      "en": "Village library",
+      "es": "Biblioteca de aldea",
+      "art": "welcoming rustic library interior, low side bookcases and a small arched window",
+      "level": 21,
+      "tier": 1
+    },
+    {
+      "id": 11,
+      "en": "Herbal courtyard",
+      "es": "Patio del herbolario",
+      "art": "herb pots on side benches, simple stone courtyard, leafy arch in background",
+      "level": 23,
+      "tier": 1
+    },
+    {
+      "id": 12,
+      "en": "Book market",
+      "es": "Mercado de libros",
+      "art": "two small book stalls at outer edges, festive plain fabric above and open plaza",
+      "level": 25,
+      "tier": 1
+    },
+    {
+      "id": 13,
+      "en": "Hillside observatory",
+      "es": "Observatorio de la colina",
+      "art": "small domed observatory behind right side, low telescope silhouette and distant hills",
+      "level": 27,
+      "tier": 1
+    },
+    {
+      "id": 14,
+      "en": "Monastery cloister",
+      "es": "Claustro del saber",
+      "art": "simple rounded stone arches, quiet side garden and pale courtyard paving",
+      "level": 29,
+      "tier": 1
+    },
+    {
+      "id": 15,
+      "en": "Moonlit garden",
+      "es": "Jardín de luna",
+      "art": "crescent moon in white sky, rounded hedges and pale flowers at edges, no dark sky",
+      "level": 31,
+      "tier": 1
+    },
+    {
+      "id": 16,
+      "en": "Seaside archive",
+      "es": "Archivo junto al mar",
+      "art": "arched library terrace overlooking pale sea, side book stacks and open floor",
+      "level": 33,
+      "tier": 1
+    },
+    {
+      "id": 17,
+      "en": "Scholar workshop",
+      "es": "Taller del sabio",
+      "art": "rounded shelves and writing desk at far edge, simple alcove behind, empty central floor",
+      "level": 35,
+      "tier": 1
+    },
+    {
+      "id": 18,
+      "en": "Forest sanctuary",
+      "es": "Santuario del bosque",
+      "art": "large ancient tree arch, broad roots framing edges, small hanging lantern at side",
+      "level": 37,
+      "tier": 1
+    },
+    {
+      "id": 19,
+      "en": "Royal reading room",
+      "es": "Sala de lectura real",
+      "art": "high arched window, elegant side bookcases, restrained carved pillars and empty tiled floor",
+      "level": 39,
+      "tier": 1
+    },
+    {
+      "id": 20,
+      "en": "Floating library",
+      "es": "Biblioteca flotante",
+      "art": "rounded library islands floating far behind foreground terrace, small connecting bridges",
+      "level": 41,
+      "tier": 2
+    },
+    {
+      "id": 21,
+      "en": "Crystal grove",
+      "es": "Arboleda de cristal",
+      "art": "large pale faceted crystals at side edges, simple glowing-looking white trees and clear ground",
+      "level": 43,
+      "tier": 2
+    },
+    {
+      "id": 22,
+      "en": "Cloud terrace",
+      "es": "Terraza de las nubes",
+      "art": "stone terrace above rounded clouds, low balustrade sides and distant airy towers",
+      "level": 45,
+      "tier": 2
+    },
+    {
+      "id": 23,
+      "en": "Clockwork archive",
+      "es": "Archivo mecánico",
+      "art": "broad rounded gears behind side bookcases, arched clock above, clean floor and empty center",
+      "level": 47,
+      "tier": 2
+    },
+    {
+      "id": 24,
+      "en": "Sunken temple",
+      "es": "Templo sumergido",
+      "art": "airy underwater temple with pale window arches, side coral silhouettes, no fish or dark water",
+      "level": 49,
+      "tier": 2
+    },
+    {
+      "id": 25,
+      "en": "Ember citadel",
+      "es": "Ciudadela de brasas",
+      "art": "pale volcanic fortress in distance, broad rounded rock edges and stylized white lava channels",
+      "level": 52,
+      "tier": 2
+    },
+    {
+      "id": 26,
+      "en": "Star conservatory",
+      "es": "Invernadero estelar",
+      "art": "elegant glass dome ribs at outer edges, broad leaf plants, tiny restrained star-shaped flowers",
+      "level": 54,
+      "tier": 2
+    },
+    {
+      "id": 27,
+      "en": "Rune gate",
+      "es": "Puerta de las runas",
+      "art": "massive rounded carved arch framing distant hills, four simple invented glyph shapes on pillars",
+      "level": 56,
+      "tier": 2
+    },
+    {
+      "id": 28,
+      "en": "Dragon library",
+      "es": "Biblioteca del dragón",
+      "art": "great dragon-shaped carved arch with no living dragon, heavy side shelves and clean stone floor",
+      "level": 58,
+      "tier": 2
+    },
+    {
+      "id": 29,
+      "en": "Phoenix court",
+      "es": "Patio del fénix",
+      "art": "symmetrical feather-shaped carved pillars at edges, warm-looking pale stone and distant rising sun",
+      "level": 60,
+      "tier": 2
+    },
+    {
+      "id": 30,
+      "en": "Astral harbor",
+      "es": "Puerto astral",
+      "art": "quiet floating stone dock, distant pale airships and two low elegant side moorings",
+      "level": 62,
+      "tier": 3
+    },
+    {
+      "id": 31,
+      "en": "Moon palace",
+      "es": "Palacio lunar",
+      "art": "crescent-shaped palace towers in distance, pale curved columns framing empty terrace",
+      "level": 64,
+      "tier": 3
+    },
+    {
+      "id": 32,
+      "en": "Sun palace",
+      "es": "Palacio solar",
+      "art": "rounded sun medallion over distant arch, radiating but restrained architectural details at side pillars",
+      "level": 66,
+      "tier": 3
+    },
+    {
+      "id": 33,
+      "en": "Titan hall",
+      "es": "Salón de los titanes",
+      "art": "colossal calm stone guardian statues at extreme edges, tall open hall and pale broad tiles",
+      "level": 68,
+      "tier": 3
+    },
+    {
+      "id": 34,
+      "en": "Chronicle cathedral",
+      "es": "Catedral de las crónicas",
+      "art": "soaring book-shaped vaulted arches, tall side shelves and broad empty central aisle",
+      "level": 70,
+      "tier": 3
+    },
+    {
+      "id": 35,
+      "en": "Worldtree terrace",
+      "es": "Terraza del árbol del mundo",
+      "art": "great rounded tree trunk arches around luminous white horizon, root railings at sides",
+      "level": 72,
+      "tier": 3
+    },
+    {
+      "id": 36,
+      "en": "Celestial observatory",
+      "es": "Observatorio celestial",
+      "art": "graceful armillary-ring architecture high above, pale clouds and side star charts without text",
+      "level": 74,
+      "tier": 3
+    },
+    {
+      "id": 37,
+      "en": "Spirit sanctuary",
+      "es": "Santuario espiritual",
+      "art": "soft organic stone arches, simple spirit-flame-shaped lanterns at edges, pure white central air",
+      "level": 76,
+      "tier": 3
+    },
+    {
+      "id": 38,
+      "en": "Crystal cosmos",
+      "es": "Cosmos de cristal",
+      "art": "wide crystal terrace with elegant side facets, distant pale orbital rings and empty center",
+      "level": 78,
+      "tier": 3
+    },
+    {
+      "id": 39,
+      "en": "Eternal archive",
+      "es": "Archivo eterno",
+      "art": "sweeping layered library balconies at far edges, huge rounded central window and clear landing",
+      "level": 80,
+      "tier": 3
+    },
+    {
+      "id": 40,
+      "en": "Creation garden",
+      "es": "Jardín de la creación",
+      "art": "mythic garden with giant sculpted leaves at outer edges, tiny distant world-spheres and open ground",
+      "level": 82,
+      "tier": 4
+    },
+    {
+      "id": 41,
+      "en": "Divine threshold",
+      "es": "Umbral divino",
+      "art": "majestic pale arched portal, feather-carved side columns, rounded clouds and empty foreground",
+      "level": 84,
+      "tier": 4
+    },
+    {
+      "id": 42,
+      "en": "Temple of worlds",
+      "es": "Templo de los mundos",
+      "art": "great temple terrace overlooking distant small floating worlds, broad ornate side arches",
+      "level": 86,
+      "tier": 4
+    },
+    {
+      "id": 43,
+      "en": "Cosmic sanctuary",
+      "es": "Santuario cósmico",
+      "art": "celestial sanctuary with great pale ring structures behind and fine carved side plinths",
+      "level": 88,
+      "tier": 4
+    },
+    {
+      "id": 44,
+      "en": "Empyrean court",
+      "es": "Patio empíreo",
+      "art": "elegant wing-shaped balustrades at edges, multiple distant palace tiers, empty central terrace",
+      "level": 90,
+      "tier": 4
+    },
+    {
+      "id": 45,
+      "en": "Palace of dawn",
+      "es": "Palacio del primer alba",
+      "art": "regal divine palace with sun-crescent architecture, pale sky and richly carved edge columns",
+      "level": 92,
+      "tier": 4
+    },
+    {
+      "id": 46,
+      "en": "Hall of gods",
+      "es": "Salón de los dioses",
+      "art": "immense divine hall with tall carved side pillars and empty raised recess far behind, no people or throne in foreground",
+      "level": 94,
+      "tier": 4
+    },
+    {
+      "id": 47,
+      "en": "Realm of infinity",
+      "es": "Reino del infinito",
+      "art": "grand terrace under faraway concentric cosmic arcs, small worlds at horizon, ornate low side railings",
+      "level": 96,
+      "tier": 4
+    },
+    {
+      "id": 48,
+      "en": "Garden of deities",
+      "es": "Jardín de las deidades",
+      "art": "exquisite mythic garden with white flowering trees and elegant celestial architecture at outer edges, open central path",
+      "level": 98,
+      "tier": 4
+    },
+    {
+      "id": 49,
+      "en": "Throne of stories",
+      "es": "Trono de las historias",
+      "art": "ultimate divine library palace, great distant empty throne recessed behind high arched doorway, layered feather-carved side pillars, pale cosmic sky and spacious foreground terrace",
+      "level": 100,
+      "tier": 4
+    }
+  ]
+}

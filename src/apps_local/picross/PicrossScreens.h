@@ -22,7 +22,6 @@ enum : fui::ActionId {
   ActionPick = 3,  // value is a puzzle index, or -1 to resolve through the picker
   ActionMode = 4,  // value is Mode: which input mode a tap selects
   ActionPage = 5,  // value is a page index the picker should jump to
-  ActionApplySize = 7,
   ActionHelpPage = 8,
   ActionTab = 6,  // value is a size-group index the picker should switch to
 };
@@ -46,7 +45,9 @@ constexpr int tapMode(int selected, bool held) { return held ? ModeMark : select
 // cells, read by the activity to turn a tap into a cell -- hit-testing sharing
 // the geometry that placed the pixels.
 struct Layout {
-  fui::Rect board = {};  // the NxN cell grid, excluding the clue gutters
+  fui::Rect board = {};    // the NxN cell grid, excluding the clue gutters
+  fui::Rect repaint = {};  // grid, clue gutters and mistake count
+  fui::Rect tools = {};
   int16_t cell = 0;
   int16_t size = 0;
 

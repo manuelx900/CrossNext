@@ -2,6 +2,7 @@
 #include <ArduinoJson.h>
 #include <PersistableStore.h>
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -10,6 +11,10 @@ struct RecentBook {
   std::string title;
   std::string author;
   std::string coverBmpPath;
+  mutable uint32_t presenceRevision = 0;
+  mutable uint32_t presenceMutation = 0;
+  mutable uint64_t presencePathHash = 0;
+  mutable bool knownPresent = false;
 
   bool operator==(const RecentBook& other) const { return path == other.path; }
 };
@@ -52,6 +57,8 @@ class RecentBooksStore : public PersistableStore<RecentBooksStore> {
 
   // True if the book's backing file is no longer present on the SD card.
   static bool isMissing(const RecentBook& book);
+  // Invalidate presence after source/cache removal without loading or saving recents.
+  static void invalidatePresence();
 
   // Remove entries whose backing file is no longer on the SD card.
   // Returns true if any entry was removed. Does not persist — caller decides.

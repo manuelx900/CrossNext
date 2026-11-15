@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CrossNext 2.0.0 · Screenshot studio</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/showcase/studio.css">
+<main>
+  <header class="chrome"><div><h1>CrossNext <span>2.0.0</span></h1><p>Screenshot studio</p></div>
+    <div class="actions"><button id="capture" disabled>Save PNG</button><button id="clean">Clean view</button><button id="reset">Reset demo</button></div></header>
+  <section class="controls chrome" aria-label="Simulator settings">
+    <label>Firmware language<select id="language" disabled></select></label>
+    <label>Appearance<select id="theme"><option value="0">Framed</option><option value="1">Carousel</option><option value="2">Carousel 2</option><option value="3" selected>Bookshelf</option></select></label>
+    <label>Open on startup<select id="start"><option value="">Home</option></select></label>
+    <details><summary>Pet &amp; Reading Quest scenarios</summary>
+      <div class="scenario-controls">
+        <label>Pet species<select id="species"><option value="0">Silva · Willow</option><option value="1">Nox · Luna</option><option value="2">Ember</option></select></label>
+        <label>Pet stage<select id="age"><option value="0">Egg</option><option value="1">Newborn</option><option value="2">Baby</option><option value="3" selected>Juvenile</option><option value="4">Adult</option></select></label>
+        <label>Quest progress<select id="progress"><option value="0">Early journey · Level 20</option><option value="1" selected>Explorer · Level 50</option><option value="2">Advanced · Level 80</option></select></label>
+        <label>Hero<select id="gender"><option value="0">Male · Milo</option><option value="1">Female · Luna</option></select></label>
+        <label>Quest screen<select id="panel"><option value="hero">Hero</option><option value="encounter">Encounter</option><option value="path">Path</option><option value="sagas">Sagas</option><option value="gear">Collection</option><option value="shop">Shop</option><option value="requests">Hunts</option><option value="missions">Missions</option><option value="atlas">Atlas</option></select></label>
+      </div>
+    </details>
+    <p class="note">Changing a selector restarts the demo and resets your interactions. Names, books and sample notes keep their original language; the firmware interface changes.</p>
+  </section>
+  <div id="device" aria-label="Interactive Xteink screen"></div>
+  <nav class="chrome" aria-label="Device controls"><button id="back" disabled>Back gesture</button><button id="up" disabled aria-label="Previous page">↑</button><button id="down" disabled aria-label="Next page">↓</button></nav>
+  <p id="status" class="chrome" role="status">Preparing demonstration data…</p>
+  <p id="inventory" class="note chrome"></p>
+  <p class="note chrome">Click, hold or swipe the screen. Save PNG exports the native screen without these controls. Clean view: press Escape to restore controls. All progress is synthetic.</p>
+</main>
+<button id="restore" hidden>Show controls</button>
+<script src="/assets/emulator.js"></script>
+<script src="/showcase/studio.js"></script>
+</html>

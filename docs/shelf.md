@@ -12,7 +12,7 @@ the fork exists at all.
 
 ```
 Home
-  Browse Files / Recent Books / File Transfer / Reading Stats / Games / Apps / Settings
+  Browse Files / Library / File Transfer / Reading Stats / Games / Apps / Settings
   Games >    chess, battleship, connections, solitaire
   Apps  >    flashcards, calendar, clock, quotes, counter, notes, ...
 ```
@@ -271,25 +271,29 @@ part that needs hardware, and it should be thin. See
 **3. Register it.** One row in `src/apps_local/Shelf.cpp`:
 
 ```cpp
+// Include the shared navigation family when registering these silhouettes.
+#include "ui/NavigationIcons.h"
+
 constexpr shelf::Item kApps[] = {
-    {"STUDY", &icon_study_32, &StudyActivity::create},
+    {"NOTES", &navicons::Note32, &NotesActivity::create},
 };
 ```
 
 That is the whole registration. No `ActivityManager` method, no `UIIcon` enum
 variant, no i18n key, no `AppId` bit.
 
-**Icons come from Lucide, not from `UIIcon`.** Add a line to
-`tools_local/toybox/icons.txt` and run `./tools_local/toybox/gen_toybox_icons.sh`:
+**Shelf navigation icons use the shared local SVG family, not `UIIcon`.**
+Add a coherent SVG to `assets_local/navigation-icons/`, run
+`python tools_local/navigation_art/generate.py`, and register the generated
+`navicons::<SvgStem>32` icon. The masks in `ui/NavigationIcons.h` are committed;
+a normal firmware checkout does not need to rasterize SVGs. See
+[navigation icons](navigation-icons.md) for provenance, sizing and regeneration.
 
-```
-study = graduation-cap
-```
+App interiors may still use the stock Lucide family: add an entry to
+`tools_local/toybox/icons.txt`, run `./tools_local/toybox/gen_toybox_icons.sh`,
+and explicitly include `ui/ToyboxIcons.h` where its symbols are used. That
+script owns ToyboxIcons only; it does not generate the supplied navigation art.
 
-That regenerates `src/apps_local/ui/ToyboxIcons.h`, which is committed because
-generating needs librsvg and a checkout should build without it. Upstream's
-palette is thirteen icons and growing it costs two upstream files per app;
-Lucide ships 1735 and costs a line in a manifest.
 
 A row with no icon does not compile -- `Shelf.cpp` static_asserts it, because a
 blank icon gutter is silent otherwise. Pick for silhouette rather than
@@ -425,12 +429,13 @@ afternoon otherwise.
   input by -90. Every bitmap in `src/components/icons/` is therefore stored
   rotated the other way so it comes out upright.
 
-So the two Home folder icons exist twice: upright in `ui/ToyboxIcons.h`, which
-is what `rotate_icons.py` reads, and pre-rotated in
-`src/components/icons/shelfIcons.h`, which is what the theme draws.
-`tools_local/toybox/gen_toybox_icons.sh` writes both; never hand-edit either.
-The upright pair is the rotation's source rather than something a screen draws:
-the folder header stopped carrying a mark when the chooser took that corner.
+The shared navigation generator writes both encodings from the local SVGs:
+upright masks in `ui/NavigationIcons.h` and generated aliases such as
+`src/components/icons/shelfIcons.h` for legacy callers. Run
+`python tools_local/navigation_art/generate.py`; never hand-edit the masks or
+aliases. `gen_toybox_icons.sh` is a separate stock-icon workflow and does not
+write those aliases. HomeScreen and Shelf consume the upright marks, while the
+legacy theme consumes the rotated variants.
 
 The joystick shipped lying on its side, then upside down, before this was
 understood. The direction was settled by rotating a freshly generated `folder`
@@ -440,13 +445,12 @@ by looking at the shape.
 
 ## Adding a third folder
 
-One row in `kFolders`, plus its icon in two places: a `UIIcon` value appended in
-`BaseTheme.h` with a case in `LyraTheme.cpp` (Home draws it and accepts nothing
-else), and a line in `tools_local/toybox/icons.txt` -- which is not for the
-folder's own header, which carries no icon any more, but for the pre-rotated
-copy `gen_toybox_icons.sh` writes into `src/components/icons/shelfIcons.h` for
-Home's row. Those are the only per-folder edits to upstream files this fork
-makes, which is affordable at two folders and would not be at ten.
+One row in `kFolders`, plus a `UIIcon` value appended in `BaseTheme.h`
+and a case in `LyraTheme.cpp` for the inherited Home menu. Add its local SVG
+and extend the legacy alias generation in `tools_local/navigation_art/generate.py`
+so the theme and upright SDK paths derive from the same silhouette. These are
+per-folder seams; adding an app inside a folder still needs only its registry
+row and asset. See [navigation icons](navigation-icons.md).
 
 Resist it until there is something that genuinely belongs in neither. Two
 folders is a structure; four is a filing system, and a filing system is what you

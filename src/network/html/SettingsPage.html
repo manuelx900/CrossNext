@@ -277,15 +277,16 @@
       }
     }
   </style>
+<!--#include file="shared/UiText.html.inc" -->
 </head>
 <body>
   <h1>CrossNext</h1>
 
   <div class="nav-links">
-    <a href="/">Home</a>
-    <a href="/files">File Manager</a>
-    <a href="/settings" class="active">Settings</a>
-    <a href="/fonts">Fonts</a>
+    <a href="/" data-ui>Home</a>
+    <a href="/files" data-ui>File Manager</a>
+    <a href="/settings" class="active" data-ui>Settings</a>
+    <a href="/fonts" data-ui>Fonts</a>
   </div>
 
   <div id="message" class="message"></div>
@@ -297,12 +298,12 @@
   </div>
 
   <div class="save-container" id="save-container" style="display:none;">
-    <button class="save-btn" id="saveBtn" onclick="saveSettings()">Save Settings</button>
+    <button class="save-btn" id="saveBtn" onclick="saveSettings()" data-ui>Save Settings</button>
   </div>
 
   <div id="wifi-container"></div>
   <div id="opds-container"></div>
-  <div id="plugin-container"></div>
+  <div class="card"><a href="/plugins" data-ui>Open Plugins</a></div>
 
   <div class="card">
     <p style="text-align: center; color: #95a5a6; margin: 0;">
@@ -369,7 +370,7 @@
       return '<input type="' + inputType + '" id="' + id + '" value="' + escapeHtml(val) + '"' +
         ' placeholder="' + (setting.hasPassword ? '(unchanged)' : '') + '"' +
         ' oninput="this.dataset.changed=\'true\';handleSettingChanged(\'' + setting.key + '\')">' +
-        (setting.hasPassword ? ' <button class="btn-small btn-delete" type="button" onclick="clearPassword(\'' + setting.key + '\')">Clear</button>' : '');
+        (setting.hasPassword ? ' <button class="btn-small btn-delete" type="button" onclick="clearPassword(\'' + setting.key + '\')">' + uiHtml("Clear") + '</button>' : '');
     }
 
     return '';
@@ -515,7 +516,7 @@
     try {
       const response = await fetch('/api/settings');
       if (!response.ok) {
-        throw new Error('Failed to load settings: ' + response.status);
+        throw new Error(uiText("Failed to load settings: ") + response.status);
       }
       allSettings = await response.json();
 
@@ -577,8 +578,8 @@
     });
 
     if (Object.keys(changes).length === 0) {
-      showMessage('No changes to save.', false);
-      btn.textContent = 'Save Settings';
+      showMessage(uiText("No changes to save."), false);
+      btn.textContent = uiText("Save Settings");
       return;
     }
 
@@ -591,7 +592,7 @@
 
       if (!response.ok) {
         const text = await response.text();
-        throw new Error(text || 'Save failed');
+        throw new Error(text || uiText("Save failed"));
       }
 
       // Update original values to new values
@@ -599,13 +600,13 @@
         originalValues[key] = changes[key];
       }
 
-      showMessage('Settings saved successfully!', false);
+      showMessage(uiText("Settings saved successfully!"), false);
     } catch (e) {
       console.error(e);
       showMessage('Error: ' + e.message, true);
     }
 
-    btn.textContent = 'Save Settings';
+    btn.textContent = uiText("Save Settings");
   }
 
   // --- Wi-Fi Network Management ---
@@ -659,11 +660,11 @@
   async function loadWifiNetworks() {
     try {
       const resp = await fetch('/api/wifi');
-      if (!resp.ok) throw new Error('Failed to load');
+      if (!resp.ok) throw new Error(uiText("Failed to load"));
       wifiNetworks = await resp.json();
       renderWifiSection();
     } catch (e) {
-      console.error('Wi-Fi load error:', e);
+      console.error(uiText("Wi-Fi load error:"), e);
     }
   }
 
@@ -680,7 +681,7 @@
     const id = idx === -1 ? 'new' : idx;
     const ssid = document.getElementById('wifi-ssid-' + id).value.trim();
     if (!ssid) {
-      showMessage('SSID is required.', true);
+      showMessage(uiText("SSID is required."), true);
       return;
     }
 
@@ -698,7 +699,7 @@
         body: JSON.stringify(data)
       });
       if (!resp.ok) throw new Error(await resp.text());
-      showMessage('Wi-Fi network saved!', false);
+      showMessage(uiText("Wi-Fi network saved!"), false);
       await loadWifiNetworks();
     } catch (e) {
       showMessage('Error: ' + e.message, true);
@@ -706,7 +707,7 @@
   }
 
   async function deleteWifiNetwork(idx) {
-    if (!confirm('Delete this Wi-Fi network?')) return;
+    if (!confirm(uiText("Delete this Wi-Fi network?"))) return;
     try {
       const resp = await fetch('/api/wifi/delete', {
         method: 'POST',
@@ -714,7 +715,7 @@
         body: JSON.stringify({index: idx})
       });
       if (!resp.ok) throw new Error(await resp.text());
-      showMessage('Wi-Fi network deleted', false);
+      showMessage(uiText("Wi-Fi network deleted"), false);
       await loadWifiNetworks();
     } catch (e) {
       showMessage('Error: ' + e.message, true);
@@ -775,11 +776,11 @@
   async function loadOpdsServers() {
     try {
       const resp = await fetch('/api/opds');
-      if (!resp.ok) throw new Error('Failed to load');
+      if (!resp.ok) throw new Error(uiText("Failed to load"));
       opdsServers = await resp.json();
       renderOpdsSection();
     } catch (e) {
-      console.error('OPDS load error:', e);
+      console.error(uiText("OPDS load error:"), e);
     }
   }
 
@@ -812,7 +813,7 @@
         body: JSON.stringify(data)
       });
       if (!resp.ok) throw new Error(await resp.text());
-      showMessage('OPDS server saved!', false);
+      showMessage(uiText("OPDS server saved!"), false);
       await loadOpdsServers();
     } catch (e) {
       showMessage('Error: ' + e.message, true);
@@ -820,7 +821,7 @@
   }
 
   async function deleteOpdsServer(idx) {
-    if (!confirm('Delete this OPDS server?')) return;
+    if (!confirm(uiText("Delete this OPDS server?"))) return;
     try {
       const resp = await fetch('/api/opds/delete', {
         method: 'POST',
@@ -828,7 +829,7 @@
         body: JSON.stringify({index: idx})
       });
       if (!resp.ok) throw new Error(await resp.text());
-      showMessage('OPDS server deleted', false);
+      showMessage(uiText("OPDS server deleted"), false);
       await loadOpdsServers();
     } catch (e) {
       showMessage('Error: ' + e.message, true);
@@ -844,7 +845,7 @@
     await loadSettings();
     await loadWifiNetworks();
     await loadOpdsServers();
-    await loadPlugins('settings');
+
   })();
 </script>
 </body>

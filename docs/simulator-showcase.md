@@ -21,8 +21,12 @@ editions as public domain in the USA. Their original EPUB notices are retained.
 The other five short original demonstration books and Alice remain available.
 `SHOWCASE-SOURCES.md` on the card repeats the source links.
 
-Normal simulator builds copy verified local assets; they do not download books
-or run a native compiler. To download missing book assets, run
+Normal simulator builds copy verified local book assets without downloading them.
+They also regenerate the promotional saves with production codecs: Windows uses
+the bundled Emscripten compiler, while other hosts need C++17 through `CXX` or
+`c++`. Prebuilt studio packages need no compiler. See the
+[screenshot studio](simulator-studio.md) for language selection and capture controls.
+To download missing book assets, run
 `python tools_local/wasm/fetch_showcase_books.py`. Existing EPUBs are retained; move a particular EPUB aside before deliberately replacing its edition. To rebuild the eight save
 fixtures, run `python tools_local/wasm/build_showcase_games.py` with a C++17
 compiler available, or pass `--compiler /path/to/zig c++`. Each generated save

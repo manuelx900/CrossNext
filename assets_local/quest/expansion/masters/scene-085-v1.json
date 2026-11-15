@@ -1,0 +1,12 @@
+{
+  "id": "S085",
+  "master": "scene-085-v1.png",
+  "sha256": "ad5140119c2a05f6cf7d11bdfaea01667585a28e739ec862646e939532ecfb09",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The star threshold. Chapter: The earlier archive. Illustrate this already-authored event faithfully, without inventing another object or plot: The archive predates the gods. It does not decide which stories deserve life; it preserves the chance for someone to tell them differently. Context only, do not try to draw all of it: Ada explains the archive she entered: it keeps unfinished possibilities so people can imagine another way forward. The gods later borrowed part of its protection to build Aren's refuge. The archive itself never demanded a single ending.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

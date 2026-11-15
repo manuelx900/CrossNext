@@ -66,14 +66,16 @@ void CatalogActivity::launchWifiSelection() {
   requestUpdate();
   startActivityForResult(std::move(wifi), [this](const ActivityResult& result) {
     if (result.isCancelled)
-      fail(StrId::STR_WIFI_CONN_FAILED);
+      wifiSelectionCancelled();
     else
       startBrowse();
   });
 }
 
+void CatalogActivity::wifiSelectionCancelled() { fail(StrId::STR_WIFI_CONN_FAILED); }
+
 void CatalogActivity::launchSearch() {
-  auto keyboard = makeUniqueNoThrow<KeyboardEntryActivity>(renderer, mappedInput, tr(STR_SEARCH));
+  auto keyboard = makeUniqueNoThrow<KeyboardEntryActivity>(renderer, mappedInput, tr(STR_SEARCH), searchPrefill());
   if (!keyboard) {
     LOG_ERR("CAT", "OOM: search keyboard");
     fail(StrId::STR_MEMORY_ERROR);

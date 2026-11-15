@@ -116,6 +116,14 @@ uint32_t utf8DecomposedBase(uint32_t cp);
 // Returns the new length (<= len). If the buffer ends mid-sequence, the
 // incomplete trailing bytes are excluded.
 int utf8SafeTruncateBuffer(const char* buf, int len);
+// Keep the final Thai cluster with an incomplete trailing codepoint when a
+// reader token reaches its byte cap. Carry is bounded to 32 bytes.
+int utf8SafeReaderTokenPrefix(const char* buf, int len);
+constexpr bool utf8IsThai(const uint32_t cp) { return cp >= 0x0e01 && cp <= 0x0e5b; }
+constexpr bool utf8ThaiBoundaryAllowed(const uint32_t left, const uint32_t right) {
+  return !((right >= 0x0e30 && right <= 0x0e3a) || right == 0x0e45 || (right >= 0x0e47 && right <= 0x0e4e) ||
+           (left >= 0x0e40 && left <= 0x0e44));
+}
 
 // Returns true for CJK characters that break without hyphenation. Covers CJK Unified Ideographs,
 // Hiragana, Katakana, Hangul, CJK punctuation, and fullwidth forms. Han and Kana have implicit
@@ -149,9 +157,50 @@ inline bool utf8IsHangul(const uint32_t cp) {
          || (cp >= 0xFFA0 && cp <= 0xFFDC);  // Halfwidth Hangul
 }
 
+// Writes cp as UTF-8 (1-4 bytes, no terminator) and returns the position after it.
+inline char* utf8AppendCodepoint(char* output, const uint32_t codepoint) {
+  if (codepoint < 0x80) {
+    *output++ = static_cast<char>(codepoint);
+  } else if (codepoint < 0x800) {
+    *output++ = static_cast<char>(0xC0 | (codepoint >> 6));
+    *output++ = static_cast<char>(0x80 | (codepoint & 0x3F));
+  } else if (codepoint < 0x10000) {
+    *output++ = static_cast<char>(0xE0 | (codepoint >> 12));
+    *output++ = static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
+    *output++ = static_cast<char>(0x80 | (codepoint & 0x3F));
+  } else {
+    *output++ = static_cast<char>(0xF0 | (codepoint >> 18));
+    *output++ = static_cast<char>(0x80 | ((codepoint >> 12) & 0x3F));
+    *output++ = static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
+    *output++ = static_cast<char>(0x80 | (codepoint & 0x3F));
+  }
+  return output;
+}
+
+// Uppercase partner of a lowercase Latin, Greek or Cyrillic letter; other codepoints are
+// returned unchanged. Used to synthesize small caps, so letters without a single-codepoint
+// uppercase form (e.g. U+00DF) stay as they are.
+inline uint32_t utf8SmallCapsUpper(const uint32_t cp) {
+  if (cp >= 'a' && cp <= 'z') return cp - 0x20;
+  if (cp < 0xE0) return cp;
+  if (cp <= 0xFE) return cp == 0xF7 ? cp : cp - 0x20;  // Latin-1 (skips the division sign)
+  if (cp == 0xFF) return 0x178;
+  if (cp <= 0x17F) {
+    // Latin Extended-A pairs: lowercase on odd codepoints, except the two odd-aligned runs.
+    const bool oddAligned = (cp >= 0x139 && cp <= 0x148) || (cp >= 0x179 && cp <= 0x17E);
+    if (cp == 0x131 || cp == 0x138 || cp == 0x149 || cp == 0x17F) return cp;
+    return (cp % 2 == (oddAligned ? 0u : 1u)) ? cp - 1 : cp;
+  }
+  if (cp >= 0x3B1 && cp <= 0x3C9) return cp == 0x3C2 ? 0x3A3 : cp - 0x20;  // Greek (final sigma -> Sigma)
+  if (cp >= 0x430 && cp <= 0x44F) return cp - 0x20;                        // Cyrillic
+  if (cp >= 0x450 && cp <= 0x45F) return cp - 0x50;
+  return cp;
+}
+
 // Returns true for Unicode combining diacritical marks that should not advance the cursor.
 inline bool utf8IsCombiningMark(const uint32_t cp) {
   return (cp >= 0x0300 && cp <= 0x036F)      // Combining Diacritical Marks
+         || cp == 0x3099 || cp == 0x309A     // Kana voicing marks
          || (cp >= 0x1DC0 && cp <= 0x1DFF)   // Combining Diacritical Marks Supplement
          || (cp >= 0x20D0 && cp <= 0x20FF)   // Combining Diacritical Marks for Symbols
          || (cp >= 0xFE20 && cp <= 0xFE2F);  // Combining Half Marks

@@ -79,6 +79,55 @@ int main() {
       check(book.generateThumbBmp(100));
       check(testStorage.files[book.getThumbBmpPath(100)] == bmp);
     }
+  // Landscape pages with a white frame must produce a filled portrait cover,
+  // including cached thumbnails. Source pixels remain untouched for reading.
+  for (bool gray : {false, true}) {
+    testStorage = {};
+    auto bytes = fixture(gray, 64);
+    xtc::XtcHeader header;
+    std::memcpy(&header, bytes.data(), sizeof(header));
+    xtc::PageTableEntry entry;
+    std::memcpy(&entry, bytes.data() + header.pageTableOffset, sizeof(entry));
+    auto* pixels = bytes.data() + entry.dataOffset + sizeof(xtc::XtgPageHeader);
+    constexpr unsigned w = 24, h = 16;
+    const unsigned payload = w * h / 8 * (gray ? 2 : 1);
+    std::memset(pixels, gray ? 0 : 255, payload);
+    check(xtc::coverBounds(pixels, w, h, gray ? 2 : 1, true).width == h);
+    for (unsigned y = 3; y < 13; ++y)
+      for (unsigned x = 4; x < 20; ++x) {
+        if (gray) {
+          const unsigned at = (w - 1 - x) * (h / 8) + y / 8;
+          pixels[at] |= 128 >> (y % 8);
+          pixels[at + w * h / 8] |= 128 >> (y % 8);
+        } else {
+          pixels[y * (w / 8) + x / 8] &= ~(128 >> (x % 8));
+        }
+      }
+    const auto bounds = xtc::coverBounds(pixels, w, h, gray ? 2 : 1, true);
+    check(bounds.x == 3 && bounds.y == 4 && bounds.width == 10 && bounds.height == 16);
+    const auto unrotated = xtc::coverBounds(pixels, w, h, gray ? 2 : 1, false);
+    check(unrotated.x == 0 && unrotated.y == 0 && unrotated.width == w && unrotated.height == h);
+    testStorage.files["/framed.xtc"] = bytes;
+    Xtc book("/framed.xtc", "/.crosspoint", true);
+    check(book.load());
+    check(book.generateCoverBmp());
+    check(book.generateThumbBmp(8));
+    for (const auto& path : {book.getCoverBmpPath(), book.getThumbBmpPath(8)}) {
+      const auto& bmp = testStorage.files[path];
+      auto get = [&](size_t at) {
+        uint32_t v = 0;
+        for (unsigned k = 0; k < 4; ++k) v |= uint32_t(bmp[at + k]) << (8 * k);
+        return v;
+      };
+      const unsigned width = get(18), height = -int32_t(get(22)), off = get(10);
+      const unsigned depth = bmp[28], row = ((width * depth + 31) / 32) * 4;
+      check(width > 0 && height > 0 && bmp.size() == off + row * height);
+      for (unsigned y = 0; y < height; ++y)
+        for (unsigned x = 0; x < width; ++x)
+          check(depth == 1 ? !(bmp[off + y * row + x / 8] & (128 >> (x % 8)))
+                           : ((bmp[off + y * row + x / 4] >> (6 - 2 * (x % 4))) & 3) == 0);
+    }
+  }
   std::printf("XTC/XTCH generated BMPs: %d checks, %d failures\n", checks, failures);
   return failures ? 1 : 0;
 }

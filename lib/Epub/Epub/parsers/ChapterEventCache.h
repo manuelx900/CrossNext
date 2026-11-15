@@ -22,6 +22,8 @@ class ChapterEventCache {
   };
 
   ~ChapterEventCache();
+  // One optional reader-session replay snapshot; writers and other parsers keep streaming.
+  static void retainReaderReplay(bool enabled);
   bool begin(const std::string& sourcePath, const std::string& cachePath, bool allowReplay);
   bool replaying() const { return mode == Mode::Replay; }
   bool hadReadError() const { return readError; }
@@ -45,6 +47,11 @@ class ChapterEventCache {
   Mode mode = Mode::Disabled;
   HalFile file;
   HalMemory::PsramBuffer buffer;
+  HalMemory::PsramBuffer replayBuffer;
+  size_t replayOffset = 0;
+  size_t replayLength = 0;
+  uint32_t replayModified = 0;
+  bool ownsReplay = false;
   std::array<const char*, MAX_ATTRIBUTES * 2 + 1> attributes{};
   std::string path;
   std::string temporaryPath;
@@ -62,6 +69,9 @@ class ChapterEventCache {
   bool sourceMatches() const;
   bool allocateBuffer();
   bool openReplay();
+  void prepareReplay(const uint8_t* header);
+  size_t replayPosition() const;
+  size_t readReplay(void* data, size_t length);
   void beginWrite();
   bool flushBlock();
   bool readBlock();

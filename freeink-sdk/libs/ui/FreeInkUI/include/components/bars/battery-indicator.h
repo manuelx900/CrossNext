@@ -42,7 +42,7 @@ enum class BatteryBarOrientation : uint8_t {
 };
 
 struct BatteryIndicatorProps {
-  uint8_t percent = 0; // 0..100
+  uint8_t percent = 0;  // 0..100
   bool charging = false;
   BatteryIndicatorStyle style = BatteryIndicatorStyle::Icon;
   BatteryBarTrack barTrack = BatteryBarTrack::None;
@@ -66,51 +66,63 @@ struct BatteryIndicatorProps {
   // Optional bolt/plug icon drawn over the glyph while charging. Without it,
   // charging is shown by a dithered fill instead of a solid one.
   BitmapRef chargingIcon{};
+  int16_t terminalWidth = 2;
+  // Optional icon renderer; labels and layout remain owned by the component.
+  void (*iconPainter)(DrawTarget&, Rect, const BatteryIndicatorProps&) = nullptr;
 };
 
-template <size_t MaxInteractions>
-void batteryIndicator(Frame<MaxInteractions>& frame, Rect rect,
-                      const BatteryIndicatorProps& props) {
+inline void paintBatteryIndicatorLabel(DrawTarget& target, Rect rect, Rect body, const BatteryIndicatorProps& props) {
+  if (props.label) {
+    TextStyle style = props.text;
+    style.align = TextAlign::Right;
+    // Center the label's visible ink on the glyph: plain line-box centering
+    // leaves the digits hanging low by the font's internal leading.
+    const int16_t lh = target.lineHeight(style.font);
+    const Rect ink = target.inkBounds(style.font, props.label, style);
+    const int16_t labelY = static_cast<int16_t>(body.y + (body.height - ink.height) / 2 - ink.y);
+    Rect labelRect{rect.x, labelY, static_cast<int16_t>(body.x - props.gap - rect.x), lh};
+    drawText(target, labelRect, props.label, style);
+  }
+}
+
+inline void paintBatteryIndicator(DrawTarget& target, Rect rect, const BatteryIndicatorProps& props) {
   const bool isBar = props.style == BatteryIndicatorStyle::Bar;
   const int16_t minGlyphH = isBar ? 1 : 6;
   const int16_t minGlyphW = isBar ? 1 : 8;
-  const int16_t glyphH =
-      props.glyphHeight < minGlyphH ? minGlyphH : props.glyphHeight;
-  const int16_t glyphW =
-      props.glyphWidth < minGlyphW ? minGlyphW : props.glyphWidth;
-  const int16_t nubW = props.style == BatteryIndicatorStyle::Icon ? 2 : 0;
+  const int16_t glyphH = props.glyphHeight < minGlyphH ? minGlyphH : props.glyphHeight;
+  const int16_t glyphW = props.glyphWidth < minGlyphW ? minGlyphW : props.glyphWidth;
+  const int16_t nubW = props.style == BatteryIndicatorStyle::Icon ? props.terminalWidth : 0;
   const int16_t nubH = static_cast<int16_t>(glyphH / 2);
   Rect body{static_cast<int16_t>(rect.right() - glyphW - nubW),
-            static_cast<int16_t>(rect.y + (rect.height - glyphH) / 2), glyphW,
-            glyphH};
+            static_cast<int16_t>(rect.y + (rect.height - glyphH) / 2), glyphW, glyphH};
+  if (!isBar && props.iconPainter) {
+    props.iconPainter(target, body, props);
+    paintBatteryIndicatorLabel(target, rect, body, props);
+    return;
+  }
   const Paint ink = Paint::solid(props.color);
 
   const uint8_t percent = props.percent > 100 ? 100 : props.percent;
-  Rect cavity = props.style == BatteryIndicatorStyle::Bar
-                    ? body
-                    : body.inset(Insets{2, 2, 2, 2});
+  Rect cavity = props.style == BatteryIndicatorStyle::Bar ? body : body.inset(Insets{2, 2, 2, 2});
   if (props.style == BatteryIndicatorStyle::Icon) {
-    frame.target().stroke(body, ink, 1);
-    frame.target().fill(Rect{body.right(),
-                             static_cast<int16_t>(body.y + (glyphH - nubH) / 2),
-                             nubW, nubH},
-                        ink);
+    target.stroke(body, ink, 1);
+    target.fill(Rect{body.right(), static_cast<int16_t>(body.y + (glyphH - nubH) / 2), nubW, nubH}, ink);
   }
   if (props.style == BatteryIndicatorStyle::Bar) {
     if (props.barTrack == BatteryBarTrack::Dither) {
-      frame.target().fill(body, Paint::dither(Color::LightGray), props.barRadius);
+      target.fill(body, Paint::dither(Color::LightGray), props.barRadius);
     } else if (props.barTrack == BatteryBarTrack::Outline) {
-      frame.target().stroke(body, ink, 1, props.barRadius);
+      target.stroke(body, ink, 1, props.barRadius);
       if (body.width > 2 && body.height > 2) {
         cavity = body.inset(Insets{1, 1, 1, 1});
       }
     } else if (props.barTrack == BatteryBarTrack::Hairline) {
       if (props.barOrientation == BatteryBarOrientation::Vertical) {
         const int16_t x = static_cast<int16_t>(body.x + body.width / 2);
-        frame.target().line(Point{x, body.y}, Point{x, static_cast<int16_t>(body.bottom() - 1)}, 1, ink);
+        target.line(Point{x, body.y}, Point{x, static_cast<int16_t>(body.bottom() - 1)}, 1, ink);
       } else {
         const int16_t y = static_cast<int16_t>(body.y + body.height / 2);
-        frame.target().line(Point{body.x, y}, Point{static_cast<int16_t>(body.right() - 1), y}, 1, ink);
+        target.line(Point{body.x, y}, Point{static_cast<int16_t>(body.right() - 1), y}, 1, ink);
       }
     }
 
@@ -118,14 +130,14 @@ void batteryIndicator(Frame<MaxInteractions>& frame, Rect rect,
     auto softenCaps = [&](Rect r) {
       if (props.barCaps != BatteryBarCaps::Pixel || r.width < 3 || r.height < 3) return;
       const Paint paper = Paint::solid(invertedColor(props.color));
-      frame.target().fill(Rect{r.x, r.y, 1, 1}, paper);
-      frame.target().fill(Rect{static_cast<int16_t>(r.right() - 1), r.y, 1, 1}, paper);
-      frame.target().fill(Rect{r.x, static_cast<int16_t>(r.bottom() - 1), 1, 1}, paper);
-      frame.target().fill(Rect{static_cast<int16_t>(r.right() - 1), static_cast<int16_t>(r.bottom() - 1), 1, 1}, paper);
+      target.fill(Rect{r.x, r.y, 1, 1}, paper);
+      target.fill(Rect{static_cast<int16_t>(r.right() - 1), r.y, 1, 1}, paper);
+      target.fill(Rect{r.x, static_cast<int16_t>(r.bottom() - 1), 1, 1}, paper);
+      target.fill(Rect{static_cast<int16_t>(r.right() - 1), static_cast<int16_t>(r.bottom() - 1), 1, 1}, paper);
     };
     auto fillRect = [&](Rect r) {
       if (r.width <= 0 || r.height <= 0) return;
-      frame.target().fill(r, fillPaint, props.barRadius);
+      target.fill(r, fillPaint, props.barRadius);
       softenCaps(r);
     };
 
@@ -180,29 +192,25 @@ void batteryIndicator(Frame<MaxInteractions>& frame, Rect rect,
       }
     }
   } else {
-    int16_t fillW = static_cast<int16_t>(
-        (static_cast<int32_t>(cavity.width) * percent) / 100);
+    int16_t fillW = static_cast<int16_t>((static_cast<int32_t>(cavity.width) * percent) / 100);
     // The charging bolt draws in the inverse color over the fill; guarantee
     // enough fill under it to stay visible at low charge (the bolt is
     // centered, so cover past the cavity midpoint plus the bolt half-width).
     if (props.charging && !props.chargingIcon) {
-      const int16_t boltHalf =
-          static_cast<int16_t>(((cavity.height - 2) / 2 > 2 ? (cavity.height - 2) / 2 : 2));
+      const int16_t boltHalf = static_cast<int16_t>(((cavity.height - 2) / 2 > 2 ? (cavity.height - 2) / 2 : 2));
       int16_t minFill = static_cast<int16_t>(cavity.width / 2 + boltHalf + 1);
       if (minFill > cavity.width) minFill = cavity.width;
       if (fillW < minFill) fillW = minFill;
     }
     if (fillW > 0) {
-      frame.target().fill(Rect{cavity.x, cavity.y, fillW, cavity.height}, ink);
+      target.fill(Rect{cavity.x, cavity.y, fillW, cavity.height}, ink);
     }
   }
   if (props.charging) {
     if (props.chargingIcon) {
-      frame.target().bitmap(
-          centeredRect(body,
-                       Size{static_cast<int16_t>(props.chargingIcon.width),
-                            static_cast<int16_t>(props.chargingIcon.height)}),
-          props.chargingIcon, BitmapMode::Center, ink);
+      target.bitmap(centeredRect(body, Size{static_cast<int16_t>(props.chargingIcon.width),
+                                            static_cast<int16_t>(props.chargingIcon.height)}),
+                    props.chargingIcon, BitmapMode::Center, ink);
     } else {
       // Hand-drawn 5x8 bolt mask: at glyph-cavity sizes (~8 px) rasterized
       // triangles degenerate into a blob, so the shape is pixel-authored.
@@ -223,23 +231,16 @@ void batteryIndicator(Frame<MaxInteractions>& frame, Rect rect,
       boltMask.width = 5;
       boltMask.height = 8;
       boltMask.format = BitmapFormat::BW1;  // set bit = ink
-      frame.target().bitmap(centeredRect(cavity, Size{5, 8}), boltMask,
-                            BitmapMode::Center,
-                            Paint::solid(invertedColor(props.color)));
+      target.bitmap(centeredRect(cavity, Size{5, 8}), boltMask, BitmapMode::Center,
+                    Paint::solid(invertedColor(props.color)));
     }
   }
-  if (props.label) {
-    TextStyle style = props.text;
-    style.align = TextAlign::Right;
-    // Center the label's visible ink on the glyph: plain line-box centering
-    // leaves the digits hanging low by the font's internal leading.
-    const int16_t lh = frame.target().lineHeight(style.font);
-    const Rect ink = frame.target().inkBounds(style.font, props.label, style);
-    const int16_t labelY =
-        static_cast<int16_t>(body.y + (body.height - ink.height) / 2 - ink.y);
-    Rect labelRect{rect.x, labelY, static_cast<int16_t>(body.x - props.gap - rect.x), lh};
-    drawText(frame.target(), labelRect, props.label, style);
-  }
+  paintBatteryIndicatorLabel(target, rect, body, props);
+}
+
+template <size_t MaxInteractions>
+void batteryIndicator(Frame<MaxInteractions>& frame, Rect rect, const BatteryIndicatorProps& props) {
+  paintBatteryIndicator(frame.target(), rect, props);
 }
 
 }  // namespace ui

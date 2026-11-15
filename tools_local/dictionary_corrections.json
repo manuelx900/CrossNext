@@ -1,0 +1,224 @@
+{
+  "description": "Independently authored corrections to specific faulty source entries. Contexts distinguish senses; this is not an exhaustive linguistic certification.",
+  "entries": {
+    "en-es": {
+      "lastly": [
+        {"pos": "adverb", "equivalents": ["por último", "finalmente"]}
+      ],
+      "actually": [
+        {"pos": "adverb", "equivalents": ["en realidad", "de hecho", "realmente"]}
+      ],
+      "billion": [
+        {"pos": "numeral", "equivalents": ["mil millones", "millardo"], "context": "Uso actual habitual: 1 000 000 000 (10^9)."},
+        {"pos": "numeral", "equivalents": ["billón"], "context": "Escala larga, uso histórico británico: 1 000 000 000 000 (10^12)."}
+      ],
+      "find": [
+        {"pos": "verb", "equivalents": ["encontrar", "hallar"], "context": "Encuentro o descubrimiento."},
+        {"pos": "verb", "equivalents": ["considerar", "parecer"], "context": "Valoración o impresión: I find it useful."},
+        {"pos": "noun", "equivalents": ["hallazgo"], "context": "Algo que se ha encontrado."}
+      ],
+      "found": [
+        {"pos": "verb", "equivalents": ["fundar", "crear", "establecer"], "context": "Crear una organización o institución."}
+      ],
+      "realize": [
+        {"pos": "verb", "equivalents": ["darse cuenta", "comprender"], "context": "Advertir o entender algo."},
+        {"pos": "verb", "equivalents": ["hacer realidad", "realizar"], "context": "Convertir una idea o un plan en realidad."},
+        {"pos": "verb", "equivalents": ["obtener", "materializar"], "context": "Finanzas: obtener un beneficio o convertir un activo en dinero."}
+      ],
+      "library": [
+        {"pos": "noun", "equivalents": ["biblioteca"], "context": "Colección de libros o institución que los conserva."},
+        {"pos": "noun", "equivalents": ["biblioteca"], "context": "Informática: conjunto de funciones o componentes reutilizables."}
+      ],
+      "often": [
+        {"pos": "adverb", "equivalents": ["a menudo", "con frecuencia"]}
+      ],
+      "however": [
+        {"pos": "adverb", "equivalents": ["sin embargo", "no obstante"], "context": "Introducir un contraste."},
+        {"pos": "adverb", "equivalents": ["por muy ... que", "por mucho ... que"], "context": "Expresar que el grado de algo no cambia el resultado."},
+        {"pos": "adverb", "equivalents": ["de cualquier manera que"], "context": "Cualquiera que sea la manera."}
+      ],
+      "because": [
+        {"pos": "conjunction", "equivalents": ["porque", "ya que", "puesto que"]}
+      ],
+      "maybe": [
+        {"pos": "adverb", "equivalents": ["quizá", "tal vez", "quizás"]}
+      ],
+      "perhaps": [
+        {"pos": "adverb", "equivalents": ["quizá", "tal vez", "quizás"]}
+      ],
+      "attend": [
+        {"pos": "verb", "equivalents": ["asistir", "acudir", "presenciar"], "context": "Estar presente en un lugar o evento."},
+        {"pos": "verb", "equivalents": ["atender", "prestar atención"], "context": "Escuchar o prestar atención."},
+        {"pos": "verb", "equivalents": ["atender", "cuidar"], "context": "Prestar asistencia a una persona."}
+      ],
+      "suddenly": [
+        {"pos": "adverb", "equivalents": ["de repente", "de pronto", "repentinamente", "súbitamente"]}
+      ],
+      "eventually": [
+        {"pos": "adverb", "equivalents": ["finalmente", "al final", "con el tiempo"]}
+      ],
+      "sensible": [
+        {"pos": "adjective", "equivalents": ["sensato", "razonable"], "context": "Que muestra buen juicio."},
+        {"pos": "adjective", "equivalents": ["práctico"], "context": "Útil y adecuado para una situación."},
+        {"pos": "adjective", "equivalents": ["perceptible"], "context": "Que puede percibirse."}
+      ],
+      "sensitive": [
+        {"pos": "adjective", "equivalents": ["sensible"], "context": "Que responde a estímulos o se emociona fácilmente."},
+        {"pos": "adjective", "equivalents": ["susceptible"], "context": "Que se ofende con facilidad."},
+        {"pos": "adjective", "equivalents": ["delicado", "confidencial"], "context": "Información o asuntos que requieren cuidado."}
+      ],
+      "sit": [
+        {"pos": "verb", "equivalents": ["estar sentado", "sentarse"], "context": "To be in, or move into, a seated position."},
+        {"pos": "verb", "equivalents": ["encajar", "asentarse"], "context": "To fit or rest in a particular position."}
+      ],
+      "be": [
+        {"pos": "verb", "equivalents": ["ser"], "context": "Identity, a characteristic or a general condition."},
+        {"pos": "verb", "equivalents": ["estar"], "context": "Location or a temporary state."},
+        {"pos": "verb", "equivalents": ["haber", "existir"], "context": "Existence, as in there is or there are."}
+      ]
+    },
+    "es-en": {
+      "actualmente": [
+        {"pos": "adverb", "equivalents": ["currently", "at present", "nowadays"]}
+      ],
+      "embarazada": [
+        {"pos": "adjective", "equivalents": ["pregnant"], "context": "Persona que espera un hijo."}
+      ],
+      "billón": [
+        {"pos": "numeral", "equivalents": ["trillion"], "context": "Español: 1 000 000 000 000 (10^12); inglés actual de escala corta."}
+      ],
+      "asistir": [
+        {"pos": "verb", "equivalents": ["attend"], "context": "Estar presente en un lugar o evento."},
+        {"pos": "verb", "equivalents": ["help", "assist"], "context": "Ayudar o prestar asistencia."}
+      ],
+      "sensible": [
+        {"pos": "adjective", "equivalents": ["sensitive"], "context": "Que percibe estímulos o se emociona fácilmente."},
+        {"pos": "adjective", "equivalents": ["noticeable", "perceptible"], "context": "Que puede notarse o percibirse."}
+      ],
+      "librería": [
+        {"pos": "noun", "equivalents": ["bookshop", "bookstore"], "context": "Tienda donde se venden libros."},
+        {"pos": "noun", "equivalents": ["bookcase"], "context": "Mueble destinado a colocar libros."}
+      ],
+      "bueno": [
+        {"pos": "adjective", "equivalents": ["good"], "context": "De calidad o resultado favorable."},
+        {"pos": "adjective", "equivalents": ["kind", "good-natured"], "context": "De carácter amable o bondadoso."},
+        {"pos": "interjection", "equivalents": ["okay", "fine"], "context": "Expresa aprobación o aceptación."}
+      ],
+      "entender": [
+        {"pos": "verb", "equivalents": ["understand", "comprehend"], "context": "Comprender el significado de algo."},
+        {"pos": "verb", "equivalents": ["infer", "understand"], "context": "Deducir o interpretar algo a partir de información."}
+      ],
+      "recordar": [
+        {"pos": "verb", "equivalents": ["remember", "recall"], "context": "Traer algo de nuevo a la memoria."},
+        {"pos": "verb", "equivalents": ["remind"], "context": "Hacer que alguien tenga algo presente."},
+        {"pos": "verb", "equivalents": ["resemble", "remind of"], "context": "Presentar semejanza con alguien o algo."}
+      ],
+      "suficiente": [
+        {"pos": "adjective", "equivalents": ["sufficient", "enough"]}
+      ],
+      "significar": [
+        {"pos": "verb", "equivalents": ["mean", "signify", "denote"]}
+      ],
+      "sentir": [
+        {"pos": "verb", "equivalents": ["feel"], "context": "Percibir una sensación física o una emoción."},
+        {"pos": "verb", "equivalents": ["hear"], "context": "Percibir un sonido."},
+        {"pos": "verb", "equivalents": ["regret", "be sorry"], "context": "Expresar pena o arrepentimiento."}
+      ],
+      "dejar": [
+        {"pos": "verb", "equivalents": ["leave"], "context": "Poner algo en un lugar o marcharse de un lugar."},
+        {"pos": "verb", "equivalents": ["let", "allow"], "context": "Dar permiso o no impedir una acción."},
+        {"pos": "verb", "equivalents": ["stop", "quit", "give up"], "context": "Abandonar una actividad o un hábito."}
+      ],
+      "hacer": [
+        {"pos": "verb", "equivalents": ["do"], "context": "Ejecutar una acción o una tarea."},
+        {"pos": "verb", "equivalents": ["make"], "context": "Crear, producir o preparar algo."}
+      ],
+      "correr": [
+        {"pos": "verb", "equivalents": ["run"], "context": "Moverse rápidamente a pie."},
+        {"pos": "verb", "equivalents": ["flow"], "context": "Moverse un líquido."},
+        {"pos": "verb", "equivalents": ["spread"], "context": "Extenderse un rumor o una noticia."},
+        {"pos": "verb", "equivalents": ["take on", "assume"], "context": "Correr con una responsabilidad o un gasto."},
+        {"pos": "verb", "equivalents": ["run", "pass"], "context": "Transcurrir el tiempo."}
+      ],
+      "jugar": [
+        {"pos": "verb", "equivalents": ["play"], "context": "Participar en un juego o practicar un deporte."},
+        {"pos": "verb", "equivalents": ["gamble", "bet"], "context": "Arriesgar dinero en un juego o una apuesta."},
+        {"pos": "verb", "equivalents": ["mock", "toy with"], "context": "Jugar con alguien: burlarse de esa persona o tratarla sin seriedad."}
+      ],
+      "saber": [
+        {"pos": "verb", "equivalents": ["know"], "context": "Tener conocimiento o información."},
+        {"pos": "verb", "equivalents": ["know how to", "can"], "context": "Tener la habilidad necesaria para hacer algo."},
+        {"pos": "verb", "equivalents": ["taste"], "context": "Tener un sabor: saber a algo."}
+      ],
+      "ir": [
+        {"pos": "verb", "equivalents": ["go"], "context": "Desplazarse de un lugar a otro."},
+        {"pos": "verb", "equivalents": ["be going to"], "context": "Ir a hacer algo: expresa una intención o una acción futura."}
+      ]
+    },
+    "en-fr": {
+      "lastly": [
+        {"pos": "adverb", "equivalents": ["enfin", "en dernier lieu", "pour finir"]}
+      ],
+      "billion": [
+        {"pos": "numeral", "equivalents": ["milliard"], "context": "Usage anglais courant : 1 000 000 000 (10^9)."},
+        {"pos": "numeral", "equivalents": ["billion"], "context": "Échelle longue, ancien usage britannique : 1 000 000 000 000 (10^12)."}
+      ]
+    },
+    "en-de": {
+      "lastly": [
+        {"pos": "adverb", "equivalents": ["zuletzt", "abschließend", "zum Schluss"]}
+      ],
+      "billion": [
+        {"pos": "numeral", "equivalents": ["Milliarde"], "context": "Heutiger englischer Gebrauch: 1 000 000 000 (10^9)."},
+        {"pos": "numeral", "equivalents": ["Billion"], "context": "Lange Skala, historischer britischer Gebrauch: 1 000 000 000 000 (10^12)."}
+      ]
+    },
+    "en-pt": {
+      "lastly": [
+        {"pos": "adverb", "equivalents": ["por último", "finalmente"]}
+      ],
+      "billion": [
+        {"pos": "numeral", "equivalents": ["bilhão (Brasil)", "mil milhões (Portugal)"], "context": "Inglês atual habitual: 1 000 000 000 (10^9)."},
+        {"pos": "numeral", "equivalents": ["bilião (Portugal)", "trilhão (Brasil)"], "context": "Escala longa, uso britânico histórico: 1 000 000 000 000 (10^12)."}
+      ]
+    },
+    "pt-en": {
+      "propina": [
+        {"pos": "noun", "equivalents": ["tuition fee", "course fee"], "context": "Portugal: pagamento por estudos ou matrícula."},
+        {"pos": "noun", "equivalents": ["bribe", "kickback"], "context": "Brasil: pagamento ilícito para obter um favor."}
+      ],
+      "eventualmente": [
+        {"pos": "adverb", "equivalents": ["possibly", "perhaps"], "context": "Uma possibilidade."},
+        {"pos": "adverb", "equivalents": ["occasionally", "from time to time"], "context": "Algo que acontece de vez em quando."}
+      ],
+      "sensível": [
+        {"pos": "adjective", "equivalents": ["sensitive"], "context": "Facilmente afetado por estímulos ou emoções."},
+        {"pos": "adjective", "equivalents": ["noticeable", "perceptible"], "context": "Que se pode notar ou perceber."},
+        {"pos": "adjective", "equivalents": ["tender", "sore"], "context": "Dolorido ou sensível ao toque."}
+      ],
+      "emprestar": [
+        {"pos": "verb", "equivalents": ["lend", "loan"], "context": "Ceder algo temporariamente, esperando a sua devolução."}
+      ]
+    },
+    "fr-en": {
+      "librairie": [
+        {"pos": "noun", "equivalents": ["bookshop", "bookstore"], "context": "Magasin qui vend des livres."},
+        {"pos": "noun", "equivalents": ["library"], "context": "Sens informatique: collection de fonctions ou composants."},
+        {"pos": "noun", "equivalents": ["library"], "context": "Sens ancien de bibliothèque."}
+      ],
+      "sensible": [
+        {"pos": "adjective", "equivalents": ["sensitive"], "context": "Facilement ému ou affecté par une sensation."},
+        {"pos": "adjective", "equivalents": ["noticeable", "perceptible"], "context": "Qui peut être perçu ou remarqué."}
+      ],
+      "éventuellement": [
+        {"pos": "adverb", "equivalents": ["possibly", "perhaps", "if necessary"]}
+      ]
+    },
+    "de-en": {
+      "eventuell": [
+        {"pos": "adverb", "equivalents": ["possibly", "perhaps", "maybe"], "context": "Unter bestimmten Umständen."},
+        {"pos": "adjective", "equivalents": ["possible"], "context": "Als mögliche Option in Betracht kommend."}
+      ]
+    }
+  }
+}

@@ -158,3 +158,7 @@ Finished/Recent arrows stay unhighlighted on touch devices. Non-touch devices
 retain their selection marker. Book detail dates share a line with their label.
 Pomodoro uses a shorter stage selector with a continuous selected fill and
 gives the recovered space to the timer card in Carousel 2 and Bookshelf.
+
+Loading messages overlay the current page without clearing or dimming its background. The existing content and header stay visible around the message until the caller draws the next view. Framed and Carousel Home badges use capitals when they fit on one line. A slightly smaller bound font is allowed only if its visible capital height is at least 90% of the original; otherwise the prior label style is retained. Badge and arrow geometry is unchanged.
+
+Dictionary and translation headers capitalize the first letter for display, including supported accented letters. The original headword remains unchanged for lookup, history and vocabulary storage. Header casing is preserved even when interface labels use capitals.

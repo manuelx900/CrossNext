@@ -3,8 +3,12 @@
 #include "PetScreens.h"
 
 namespace petui {
+inline unsigned catalogPageSize(const pet::Profile& p, bool wide) {
+  if (p.lifeStatus != pet::LifeStatus::Active) return wide ? 4 : 6;
+  return wide ? 2 : 3;
+}
 inline bool catalogMatches(const pet::Profile& p, unsigned item, CatalogFilter filter) {
-  if (item >= pet::OBJECT_COUNT) return false;
+  if (!pet::objectAvailable(item)) return false;
   switch (filter) {
     case CatalogFilter::Owned:
       return pet::owns(p, item);

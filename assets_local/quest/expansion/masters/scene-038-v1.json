@@ -1,0 +1,12 @@
+{
+  "id": "S038",
+  "master": "scene-038-v1.png",
+  "sha256": "405945ded6ab47c9adb406799831ad7329c4dcecded55a78efc3c72af88d8bbe",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The echo mountains. Chapter: Taren's name. Illustrate this already-authored event faithfully, without inventing another object or plot: Taren kept the real account and put the missing stretch back on his map. He could remember the argument alongside the journeys they had enjoyed together. Before leaving, he checked the old marker for the families who would use it next. Context only, do not try to draw all of it: The observatory's paths carry a familiar mark that Taren avoids discussing. They were made by his brother. Following Ada also means helping your guide face the personal account the mountain keeps turning against him.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

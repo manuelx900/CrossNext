@@ -21,12 +21,34 @@ void WordleActivity::onEnter() {
   toybox::ensureFonts(renderer);
   saveFailed = !store.load(state);
   state.language = I18N.getLanguage() == Language::ES ? 1 : 0;
+  localized =
+      I18N.getLanguage() != Language::EN && I18N.getLanguage() != Language::ES && I18N.getLanguage() != Language::OOK;
+  // An unfinished resident game also accepts guesses from its SD vocabulary.
+  if (!localized && I18N.getLanguage() != Language::OOK) {
+    if (state.active && !state.game.over()) {
+      native.open(state.gameLanguage ? Language::ES : Language::EN);
+    } else {
+      localized = native.open(I18N.getLanguage());
+      if (localized) native.inheritStatistics(state.record);
+    }
+  }
+  if (localized) {
+    if (!native.available()) native.open(I18N.getLanguage());
+    saveFailed = native.persistenceFailed();
+    if (native.active()) state.letters = native.letters();
+    if (!native.supports(state.letters))
+      for (unsigned n = 2; n <= 6; ++n)
+        if (native.supports(n)) {
+          state.letters = n;
+          break;
+        }
+  }
   if (state.seed == 1 && !state.active && !state.record.played) state.seed = esp_random();
   lastSave = millis();
   requestUpdate();
 }
 void WordleActivity::save() {
-  if (!dirty) return;
+  if (!dirty || localized) return;
   saveFailed = !store.save(state);
   if (!saveFailed) dirty = false;
   lastSave = millis();
@@ -34,9 +56,36 @@ void WordleActivity::save() {
 void WordleActivity::prepareForSleep() { save(); }
 void WordleActivity::onExit() {
   save();
+  keyboard.close();
+  native.close();
   Activity::onExit();
 }
 void WordleActivity::play(bool replace) {
+  if (localized) {
+    if (!native.available()) {
+      message = tr(STR_LANGUAGE_UNAVAILABLE);
+      requestUpdate();
+      return;
+    }
+    if (native.active() && !native.over() && native.letters() != state.letters && !replace)
+      view = View::ConfirmNew;
+    else {
+      if (!keyboard.available() && !keyboard.begin(I18N.getLanguage())) {
+        message = tr(STR_LANGUAGE_UNAVAILABLE);
+        requestUpdate();
+        return;
+      }
+      if ((replace || !native.active() || native.over()) && !native.start(state.letters, esp_random())) return;
+      keyboard.clear();
+      keyboard.wordGame(native.letters());
+      view = View::Game;
+      saveFailed = native.persistenceFailed();
+      message = saveFailed ? tr(STR_WORDLE_SAVE_FAILED) : nullptr;
+    }
+    ready = false;
+    requestUpdate();
+    return;
+  }
   if (state.active && !state.game.over() &&
       (state.game.letters() != state.letters || state.gameLanguage != state.language) && !replace)
     view = View::ConfirmNew;
@@ -44,6 +93,7 @@ void WordleActivity::play(bool replace) {
     if (replace || !state.active || state.game.over()) {
       localwordle::record(state, replace);
       localwordle::start(state);
+      if (I18N.getLanguage() != Language::OOK) native.open(state.gameLanguage ? Language::ES : Language::EN);
       dirty = true;
       save();
     }
@@ -56,8 +106,10 @@ void WordleActivity::play(bool replace) {
 void WordleActivity::submit() {
   const auto result = state.game.submit(
       [](void* context, const char* word) {
-        const auto& game = static_cast<WordleActivity*>(context)->state.game;
-        return localwordle::contains(game.letters(), word, static_cast<WordleActivity*>(context)->state.gameLanguage) ||
+        auto& activity = *static_cast<WordleActivity*>(context);
+        const auto& game = activity.state.game;
+        return localwordle::contains(game.letters(), word, activity.state.gameLanguage) ||
+               activity.native.acceptsBuiltin(game.letters(), word, activity.state.gameLanguage) ||
                !std::memcmp(word, game.answer(), game.letters());
       },
       this);
@@ -82,7 +134,34 @@ void WordleActivity::submit() {
   save();
 }
 void WordleActivity::loop() {
-  RenderLock lock(*this);
+  const bool typing = ready && localized && view == View::Game && !native.over();
+  if (typing) keyboard.capture(mappedInput);
+  RenderLock lock(typing ? RenderLock::Mode::Try : RenderLock::Mode::Blocking);
+  if (!lock.ownsLock()) return;
+  if (typing) {
+    const auto key = keyboard.poll(mappedInput, false);
+    if (key != EmbeddedKeyboard::Event::None) {
+      if (key == EmbeddedKeyboard::Event::Cancel) {
+        view = View::Menu;
+        keyboard.close();
+        ready = false;
+        requestUpdate();
+        return;
+      }
+      if (key == EmbeddedKeyboard::Event::Changed) {
+        message = nullptr;
+        requestUpdate();
+      }
+      if (key == EmbeddedKeyboard::Event::Submit) {
+        const bool accepted = native.submit(keyboard.text());
+        saveFailed = native.persistenceFailed();
+        message = !accepted ? tr(STR_WORDLE_UNKNOWN) : saveFailed ? tr(STR_WORDLE_SAVE_FAILED) : nullptr;
+        if (accepted) keyboard.clear();
+        requestUpdate();
+      }
+      return;
+    }
+  }
   if (mappedInput.wasReleased(MappedInputManager::Button::Back)) {
     save();
     if (view == View::Menu) {
@@ -90,6 +169,7 @@ void WordleActivity::loop() {
       return;
     }
     view = View::Menu;
+    keyboard.close();
     ready = false;
     requestUpdate();
     return;
@@ -103,7 +183,7 @@ void WordleActivity::loop() {
     tap.touchY = y;
     const auto event = sidebuttons::route(interactions, tap, mappedInput, *this,
                                           view != View::Game && view != View::HowTo && view != View::Lengths);
-    if (event.action == wordleui::ActionKeyboard && view == View::Game) {
+    if (event.action == wordleui::ActionKeyboard && view == View::Game && !localized) {
       const auto key = wordleui::keyAt(keys, x, y);
       if (key != wordleui::kEnter) message = nullptr;
       if (key == wordleui::kEnter)
@@ -123,7 +203,7 @@ void WordleActivity::loop() {
         view = View::Lengths;
       }
       ready = false;
-    } else if (event.action == wordleui::ActionLength && view == View::Lengths && event.value >= 4 &&
+    } else if (event.action == wordleui::ActionLength && view == View::Lengths && event.value >= (localized ? 2 : 4) &&
                event.value <= 6) {
       pendingLetters = event.value;
       ready = false;
@@ -161,24 +241,38 @@ void WordleActivity::render(RenderLock&&) {
     case View::Menu: {
       wordleui::MenuModel model;
       model.record = &state.record;
+      if (localized) {
+        model.localized = &native;
+        model.record = &native.statistics();
+      }
       model.letters = state.letters;
+      model.language = state.language;
       model.resume = state.gameLanguage == state.language && state.active && !state.game.over() &&
                      state.game.letters() == state.letters;
       model.state = saveFailed ? tr(STR_WORDLE_SAVE_FAILED) : "";
+      if (localized && !native.available()) model.state = tr(STR_LANGUAGE_UNAVAILABLE);
+      if (localized) model.resume = native.active() && !native.over() && native.letters() == state.letters;
       wordleui::buildMenu(screen, model, work);
       break;
     }
     case View::Game: {
+      if (localized) {
+        wordleui::buildNativeGame(screen, native, message, work, keyboard);
+        break;
+      }
       char label[20];
       std::snprintf(label, sizeof(label), tr(STR_WORDLE_LETTERS), state.game.letters());
-      keys = wordleui::buildGame(screen, {&state.game, label, message, true}, work);
+      keys = wordleui::buildGame(screen, {&state.game, label, message, true, state.gameLanguage}, work);
       break;
     }
     case View::HowTo:
-      wordleui::buildHowTo(screen);
+      wordleui::buildHowTo(screen, localized);
       break;
     case View::Lengths:
-      wordleui::buildLengths(screen, pendingLetters, work);
+      if (localized)
+        wordleui::buildNativeLengths(screen, native, pendingLetters, work);
+      else
+        wordleui::buildLengths(screen, pendingLetters, work);
       break;
     case View::ConfirmNew:
       wordleui::buildConfirm(screen, work);
@@ -187,4 +281,5 @@ void WordleActivity::render(RenderLock&&) {
   toybox::reportOverflow(interactions, "Wordle", &renderer);
   ready = true;
   renderer.displayBuffer(HalDisplay::FAST_REFRESH);
+  if (localized && view == View::Game) keyboard.didPaint();
 }

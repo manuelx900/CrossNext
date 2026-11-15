@@ -1,0 +1,17 @@
+{
+  "id": "S101",
+  "kind": "scene",
+  "master": "scene-101-v2.png",
+  "reference": "assets_local/quest/redesign/portraits/market-source.png",
+  "transparent": false,
+  "prompt": "Use case: illustration-story. ONE complete landscape 3:2 narrative illustration for the monochrome e-ink game Aventura lectora. Clean expressive chibi storybook art, thick smooth PURE BLACK contours, white and sparse flat light-gray fills. No color, gradients, crosshatching, collage, lettering, captions, UI or watermark. Large clear clues readable at480x320. Player hero and PET are OFF CAMERA. Depict only people actually physically present in the described event; a person mentioned in a letter or record does NOT appear alive beside its reader. The attached portraits are IDENTITY references, NOT additional cast: match face, age, hairstyle, clothing and distinctive accessories exactly for any named person present. Do not invent another person or clue. Fill the scene to its edges, keep all important faces and objects in frame. MERCHANT: the patched-coat man in the reference; other city residents may differ but never substitute him for a child or painter. Region: The city without memory. Chapter: The sealed archive. Draw exactly this already-known moment: You copied the threat before the ink covered it. It joined an order forbidding the return of memories that could unite people against the king. Ada had copied that order too, before renting a room near the seamstress's workshop. Context for setting and continuity only: The royal archive is the building where the kingdom kept orders, letters and public records. Its doors were chained after the war. Ada requested access, and her unanswered petition is still nailed beside the entrance. MANDATORY CAST AND SETTING: The merchant portrait is STYLE ONLY. The merchant is NOT present. Depict the chapter-specific witness or objects; do not substitute the merchant for a painter, seamstress, child or bell keeper. MANDATORY PHYSICAL SETTING: the royal archive with chained doors and the book of orders. Do not anthropomorphize books, pages or objects. No invented smiling ghosts. No person replaces a written record.",
+  "references": [
+    "assets_local/quest/redesign/portraits/market-source.png"
+  ],
+  "sha256": "01007dad2fefaa17e09cc09055d6735ce24e9e58c7d76f72edd8adb734d8a5e7",
+  "tool": "built-in image_gen",
+  "source": "exec-4da8907b-cc04-4190-b666-382cc921fe0d.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

@@ -48,6 +48,8 @@ std::string joinLibraryPath(std::string_view folder, std::string_view name);
 // numbers, and turns punctuation into a single space. Combining marks are
 // dropped. Apostrophes survive as ASCII '\'' so names and elisions keep their
 // shape.
+// Output reuses capacity and must not alias the input view.
+void foldInto(std::string_view text, std::string& out);
 std::string fold(std::string_view text);
 
 // First letter of an already-folded sort key, or 0 when the key starts with a

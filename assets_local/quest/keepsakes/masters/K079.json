@@ -1,0 +1,18 @@
+{
+  "id": "K079",
+  "key": "Frasco",
+  "file": "K079.png",
+  "sample": {
+    "es": "Frasco de la primera duna",
+    "en": "First dune vial"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: First dune vial.",
+  "requests": [
+    125
+  ],
+  "sha256": "e61b72119ab607c9f1f20cd1ec57703bb314aa2cf333dc059f3614d5b6579bcd",
+  "source": "exec-f7d92ebb-8be1-4c10-8c4c-fcaec9465f4a.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

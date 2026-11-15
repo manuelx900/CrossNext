@@ -153,4 +153,8 @@ if __name__ == '__main__':
     parser.add_argument('--output',type=Path,default=ROOT/'resources/apps/pet/habitat.bin')
     parser.add_argument('--metadata',type=Path,default=ROOT/'src/apps_local/pet/PetHabitatData.h')
     args=parser.parse_args()
-    build(args.output,args.metadata)
+    from gray_assets import available, build as build_gray
+    if available():
+        build_gray("habitat", args.output)
+    else:
+        build(args.output,args.metadata)

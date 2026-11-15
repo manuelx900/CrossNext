@@ -1,5 +1,6 @@
 #pragma once
 #include <HalStorage.h>
+#include <ReadBuffer.h>
 
 #include <algorithm>
 #include <cstring>
@@ -18,6 +19,8 @@ enum PageElementTag : uint8_t {
   TAG_PageLine = 1,
   TAG_PageImage = 2,
   TAG_PageHorizontalRule = 3,
+  TAG_PageDropCap = 4,
+  TAG_PageBorderBox = 5,
 };
 
 // represents something that has been added to a page
@@ -44,6 +47,7 @@ class PageLine final : public PageElement {
   bool serialize(Print& file) override;
   PageElementTag getTag() const override { return TAG_PageLine; }
   static std::unique_ptr<PageLine> deserialize(HalFile& file, PageReadBudget* budget = nullptr);
+  static std::unique_ptr<PageLine> deserialize(serialization::ReadBuffer& file, PageReadBudget* budget = nullptr);
 };
 
 // New PageImage class
@@ -57,7 +61,8 @@ class PageImage final : public PageElement {
   void renderPlaceholder(GfxRenderer& renderer, int xOffset, int yOffset) const;
   bool serialize(Print& file) override;
   PageElementTag getTag() const override { return TAG_PageImage; }
-  static std::unique_ptr<PageImage> deserialize(HalFile& file);
+  static std::unique_ptr<PageImage> deserialize(HalFile& file, PageReadBudget* budget = nullptr);
+  static std::unique_ptr<PageImage> deserialize(serialization::ReadBuffer& file, PageReadBudget* budget = nullptr);
   const ImageBlock& getImageBlock() const { return *imageBlock; }
 };
 
@@ -73,10 +78,59 @@ class PageHorizontalRule final : public PageElement {
   bool serialize(Print& file) override;
   PageElementTag getTag() const override { return TAG_PageHorizontalRule; }
   static std::unique_ptr<PageHorizontalRule> deserialize(HalFile& file);
+  static std::unique_ptr<PageHorizontalRule> deserialize(serialization::ReadBuffer& file);
+};
+
+// An initial letter spanning several lines, drawn scaled up from a font's glyph.
+// yPos is the baseline of the last spanned line.
+class PageDropCap final : public PageElement {
+ public:
+  static constexpr size_t MAX_TEXT_BYTES = 12;  // leading punctuation plus the letter
+
+ private:
+  int32_t fontId;
+  uint16_t scale256;
+  EpdFontFamily::Style style;
+  char text[MAX_TEXT_BYTES + 1] = {};
+
+ public:
+  PageDropCap(int32_t fontId, uint16_t scale256, EpdFontFamily::Style style, const char* utf8, int16_t xPos,
+              int16_t yPos);
+  const char* getText() const { return text; }
+  void render(GfxRenderer& renderer, int fontId, int xOffset, int yOffset) override;
+  bool serialize(Print& file) override;
+  PageElementTag getTag() const override { return TAG_PageDropCap; }
+  static std::unique_ptr<PageDropCap> deserialize(HalFile& file);
+  static std::unique_ptr<PageDropCap> deserialize(serialization::ReadBuffer& file);
+};
+
+// A CSS border and/or background shade around a block element's slice on this page.
+// Sides split off by a page break have zero width.
+class PageBorderBox final : public PageElement {
+  uint16_t width;
+  uint16_t height;
+  CssBorderSide sides[4];  // top, right, bottom, left
+  bool shaded;
+
+ public:
+  PageBorderBox(uint16_t width, uint16_t height, const CssBorderSide (&sides)[4], bool shaded, int16_t xPos,
+                int16_t yPos)
+      : PageElement(xPos, yPos),
+        width(width),
+        height(height),
+        sides{sides[0], sides[1], sides[2], sides[3]},
+        shaded(shaded) {}
+  void render(GfxRenderer& renderer, int fontId, int xOffset, int yOffset) override;
+  bool serialize(Print& file) override;
+  PageElementTag getTag() const override { return TAG_PageBorderBox; }
+  static std::unique_ptr<PageBorderBox> deserialize(HalFile& file);
+  static std::unique_ptr<PageBorderBox> deserialize(serialization::ReadBuffer& file);
+  void renderBackground(GfxRenderer& renderer, int xOffset, int yOffset) const;
 };
 
 class Page {
  public:
+  size_t retainedBytes() const;
   // the list of block index and line numbers on this page
   std::vector<std::unique_ptr<PageElement>> elements;
   std::vector<FootnoteEntry> footnotes;
@@ -125,7 +179,9 @@ class Page {
   void renderImages(GfxRenderer& renderer, int fontId, int xOffset, int yOffset) const;
   void renderWithImagePlaceholders(GfxRenderer& renderer, int fontId, int xOffset, int yOffset) const;
   bool serialize(Print& file) const;
-  static std::unique_ptr<Page> deserialize(HalFile& file, PageReadBudget* budget = nullptr);
+  static std::unique_ptr<Page> deserialize(HalFile& file, PageReadBudget* budget = nullptr, uint8_t* buffer = nullptr,
+                                           size_t capacity = 0, size_t maxBytes = SIZE_MAX);
+  static std::unique_ptr<Page> deserialize(serialization::ReadBuffer& file, PageReadBudget* budget = nullptr);
 
   // Check if page contains any images (used to force full refresh)
   bool hasImages() const {

@@ -29,9 +29,9 @@ constexpr const char* kLegacyFontRoot = "/study/fonts";
 SdCardFontFamilyInfo describe(const char* root, const char* family, const uint8_t pointSize) {
   SdCardFontFamilyInfo info;
   info.name = family;
-  char path[128];
-  std::snprintf(path, sizeof(path), "%s/%s/%s_%u.cpfont", root, family, family, pointSize);
-  info.files.push_back(SdCardFontFileInfo{path, pointSize, 0});
+  info.root = root;
+  info.files.reserve(1);
+  info.files.push_back(SdCardFontFileInfo{nullptr, pointSize, 0});
   return info;
 }
 

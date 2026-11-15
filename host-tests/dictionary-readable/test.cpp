@@ -7,10 +7,12 @@
 #include <utility>
 #include <vector>
 
+#include "../../src/apps_local/words/DefinitionText.h"
 #include "../../src/apps_local/words/DictionaryHtml.h"
 #include "../../src/util/DictZip.h"
 #include "../../src/util/Dictionary.h"
 #include "../../src/util/DictionaryRegistry.h"
+#include "../../src/util/WordEdges.h"
 
 namespace DictionaryRegistry {
 bool resolveBasePath(const char*, std::string& out) {
@@ -157,7 +159,45 @@ void wordBoundaries() {
     CHECK(body == "pass" && word == target);
   }
 }
+void irregularAndSpacingTests() {
+  testStorage = TestStorage{};
+  testStorage.directories.insert("/.crosspoint");
+  const std::string ifo = "sametypesequence=h\nlang_from=en\n";
+  testStorage.files["/test.ifo"] = {ifo.begin(), ifo.end()};
+  auto& index = testStorage.files["/test.idx"];
+  auto& data = testStorage.files["/test.dict"];
+  for (const auto& entry :
+       {std::pair{"rise", "<p>ascender</p>"}, {"rose", "<p>rosa</p>"}, {"shake", "<p>temblar</p>"}}) {
+    index.insert(index.end(), entry.first, entry.first + std::strlen(entry.first) + 1);
+    be32(index, data.size());
+    be32(index, std::strlen(entry.second));
+    data.insert(data.end(), entry.second, entry.second + std::strlen(entry.second));
+  }
+  Dictionary dictionary;
+  CHECK(dictionary.open("test") && dictionary.buildIndex());
+  std::string meaning, headword;
+  for (const char* word : {"shook", "Shook", "shaken", "“shook”).”"}) {
+    CHECK(dictionary.lookup(word, meaning, headword));
+    CHECK(meaning == "<p>temblar</p>" && headword == "shake");
+  }
+  CHECK(dictionary.lookup("risen", meaning, headword));
+  CHECK(meaning == "<p>ascender</p>" && headword == "rise");
+  CHECK(dictionary.lookup("rose", meaning, headword));
+  CHECK(meaning == "<p>rosa</p>" && headword == "rose");
+  const std::string otherLanguage = "sametypesequence=h\nlang_from=de\n";
+  testStorage.files["/test.ifo"] = {otherLanguage.begin(), otherLanguage.end()};
+  CHECK(dictionary.open("test") && dictionary.buildIndex());
+  CHECK(!dictionary.lookup("risen", meaning, headword));
+  const char* punctuated = "“Cataclysm”).”";
+  const auto span = wordedges::trim(punctuated);
+  CHECK(std::string(punctuated + span.first, span.end - span.first) == "Cataclysm");
+  char spaced[] = " \n\n Definición   de prueba.\n \n\tUn ejemplo.  \r\n";
+  wordsui::compactDefinition(spaced);
+  CHECK(std::string(spaced) == "Definición de prueba.\nUn ejemplo.");
+}
+
 int main() {
+  irregularAndSpacingTests();
   htmlTests();
   wordBoundaries();
   lookupTests(false, false);

@@ -1,0 +1,18 @@
+{
+  "id": "K026",
+  "key": "Marco",
+  "file": "K026.png",
+  "sample": {
+    "es": "Marco del mercado",
+    "en": "Market frame"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: a miniature carved wooden picture frame with a little cloth awning emblem at the top, a keepsake from a village market.",
+  "requests": [
+    28
+  ],
+  "sha256": "55eae53a274237a236eb32cd96bf9d47135642bc4cb3405599e313113c923f67",
+  "source": "exec-c435c19b-3767-4fed-87d6-cd8b5156bc84.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

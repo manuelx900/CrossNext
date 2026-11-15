@@ -1,0 +1,22 @@
+{
+  "id": "S107",
+  "kind": "scene",
+  "master": "scene-107-v2.png",
+  "reference": "assets_local/quest/redesign/portraits/taren-source.png",
+  "transparent": false,
+  "prompt": "Use case: illustration-story. ONE complete landscape 3:2 narrative illustration for the monochrome e-ink game Aventura lectora. Clean expressive chibi storybook art, thick smooth PURE BLACK contours, white and sparse flat light-gray fills. No color, gradients, crosshatching, collage, lettering, captions, UI or watermark. Large clear clues readable at480x320. Player hero and PET are OFF CAMERA. Depict only people actually physically present in the described event; a person mentioned in a letter or record does NOT appear alive beside its reader. The attached portraits are IDENTITY references, NOT additional cast: match face, age, hairstyle, clothing and distinctive accessories exactly for any named person present. Do not invent another person or clue. Fill the scene to its edges, keep all important faces and objects in frame. TAREN: the mountain guide in the reference, keep beard, hooded cloak and staff. Region: The echo mountains. Chapter: The way home. Draw exactly this already-known moment (Spanish is authoritative): Taren encontró un paso seguro y se quedó para acompañar a las familias. Tú continuarías hacia el campamento de Nadir, siguiendo las indicaciones del recibo de Ada. Context only: Varias familias querían regresar a las casas que habían abandonado por los ecos. Taren decidió acompañarlas, pero primero necesitaba comprobar que el paso seguiría siendo seguro. MANDATORY PHYSICAL SETTING: the longer mountain return path used by families of different walking abilities. Do not anthropomorphize books, pages or objects. No invented smiling ghosts. No person replaces a written record. EXHAUSTIVE VISIBLE CAST (do not add anyone else): Taren and traveling families, including an older person. The reference is STYLE ONLY for any person not explicitly in this cast.",
+  "references": [
+    "assets_local/quest/redesign/portraits/taren-source.png",
+    "assets_local/quest/redesign/portraits/iri-source.png",
+    "assets_local/quest/redesign/portraits/nadir-source.png"
+  ],
+  "chapter": 48,
+  "beat": "text",
+  "eventEs": "Taren encontró un paso seguro y se quedó para acompañar a las familias. Tú continuarías hacia el campamento de Nadir, siguiendo las indicaciones del recibo de Ada.",
+  "sha256": "6c42a1417072814fe5629c44fcadc04b3817001d5ee5381d7560f666c15252b8",
+  "tool": "built-in image_gen",
+  "source": "exec-59e37c68-9d9b-49f5-9358-884fb90fae86.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

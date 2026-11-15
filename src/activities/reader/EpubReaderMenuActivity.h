@@ -34,6 +34,7 @@ class EpubReaderMenuActivity final : public UiListActivity {
     SEARCH,
     BOOK_STATS,
     STYLE_SETTINGS,
+    BOOK_DICTIONARIES,
     FINISH_BOOK
   };
 

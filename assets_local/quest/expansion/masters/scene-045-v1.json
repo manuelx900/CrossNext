@@ -1,0 +1,12 @@
+{
+  "id": "S045",
+  "master": "scene-045-v1.png",
+  "sha256": "49ac48c61063c1a0f362293f5853a6f93d1632a940df1c3a94dca9acd3ab4933",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The desert of names. Chapter: The name merchant. Illustrate this already-authored event faithfully, without inventing another object or plot: A traveler recognized the memory being offered to him: he had heard its story from another family at the well. The merchant was selling other people's lives as replacements. When Nadir questioned him, he began wiping the names from his ledger. Context only, do not try to draw all of it: A trader near the buried town claims he can recover lost names. His price is another memory, taken permanently. Nadir asks you to inspect the stories trapped around the stall before anyone accepts.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

@@ -21,7 +21,8 @@ inline void paintChrome(fui::DrawTarget& target, const Layout& popup, int frame,
   target.fill(popup.body, background, radius);
 }
 inline Layout layout(const fui::DrawTarget& target, fui::Rect safe, const char* message, fui::TextStyle style,
-                     int marginX, int marginY, int frame, int preferredY) {
+                     int marginX, int marginY, int frame, int preferredY, int headerHeight = 0) {
+  safe = safe.inset(fui::Insets{int16_t(std::clamp(headerHeight - int(safe.y), 0, int(safe.height))), 0, 0, 0});
   safe = safe.inset(fui::Insets{int16_t(frame + 12), int16_t(frame + 12), int16_t(frame + 12), int16_t(frame + 12)});
   const int lineHeight = std::max(1, int(target.lineHeight(style.font)));
   const int contentWidth = std::max(1, int(safe.width) - 2 * marginX);

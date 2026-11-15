@@ -1,0 +1,12 @@
+{
+  "id": "D061",
+  "master": "decor-061-v1.png",
+  "sha256": "b10cc466ea847bb7b997b5eb7c2d4e4e661b8c56f826c7c336f442298516bc74",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original collectible decoration sprite for the e-ink fantasy reading app Aventura lectora. Reference fairy is STYLE ONLY. Friendly chibi storybook proportions, white and pale-gray flat fills, VERY THICK solid pure-BLACK outer contours (20-26px at1024px), strong black inner lines, simple broad shapes readable at112x144. Whole subject visible, centered with transparent padding. Genuine transparent background. No scenery, frame, UI, text, lettering, watermark, fine hatching or gray outlines. Do not include the player hero or PET. Subject: a flying white barn owl with a crescent scarf and two broad outstretched wings, serene face. An airborne or hanging ornament; no ground base.",
+  "reference": "assets_local/quest/redesign/masters/decoration-fairy-v1.png",
+  "transparent": true,
+  "width": 1312,
+  "height": 1199,
+  "mode": "RGBA"
+}

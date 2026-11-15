@@ -1,0 +1,12 @@
+{
+  "id": "E014",
+  "master": "enemy-014-v1.png",
+  "sha256": "2676421dfc0e88fb91e7f128d5a1aa277a9480444db771a36e7a71dbdbd18308",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE game enemy sprite STRIP for Aventura lectora, matching reference visual style. Exactly THREE complete full-body poses of the SAME creature side by side in three equal columns on ONE wide3:1 genuine transparent canvas. LEFT ready and menacing, MIDDLE visibly weakened with lower guarded posture, RIGHT defeated/collapsed non-graphically. Same anatomy, same scale and shared feet baseline in all three, clear transparent gutters, never overlap or crop. Pure thick BLACK contours, white and flat gray fills, strong simple shapes, serious threatening expression, no smiles, no gore, no text, UI, scenery, frames or watermark. Reference wolf is STYLE AND THREE-POSE LAYOUT ONLY, not species. New creature: a fierce moray eel made of dark ink ribbons around a cracked diving bell. Regional setting: The sunken library. Enemy role: Deep fang.",
+  "reference": "assets_local/quest/campaign/masters/shadow-wolf.png",
+  "transparent": true,
+  "width": 2172,
+  "height": 724,
+  "mode": "RGBA"
+}

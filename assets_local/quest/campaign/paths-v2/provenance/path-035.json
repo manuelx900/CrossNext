@@ -1,0 +1,17 @@
+{
+  "id": 35,
+  "saga": 3,
+  "step": 5,
+  "title": {
+    "en": "Saving the last books",
+    "es": "Salvar los últimos libros"
+  },
+  "enemy": "Deep fang",
+  "guardian": 18,
+  "master": "path-035.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The Library Beneath the Sea. Path episode: Saving the last books. Story action, which the scene must directly support: The water is rising. A monster guards the gate that could stop the flood.\nEnemy identity, MUST match this exact anatomy: a fierce moray eel made of dark ink ribbons around a cracked diving bell. View along a winding route, enemy emerging from the left and occupying a third of the scene. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-e34ccdee-6992-47c8-94f2-838f2ffe2361.png",
+  "sha256": "df0e7b50b3f263233b6988fc1b1a335149154f4de86e79b5c9b4dffe594873a8"
+}

@@ -9,6 +9,7 @@
 #include "PetOverview.h"
 #include "PetPalette.h"
 #include "PetPolishIcons.h"
+#include "PetSimpleScreens.h"
 
 namespace petui {
 const char* playBlockText(pet::PlayBlock reason) {
@@ -45,44 +46,9 @@ const char* modeName(pet::Mode value) {
   return I18N.get(keys[unsigned(value)]);
 }
 const char* objectName(unsigned value) {
-  return value < pet::OBJECT_COUNT ? I18N.get(OBJECT_ART[value].name) : tr(STR_PET_EMPTY_SLOT);
+  return pet::objectAvailable(value) ? I18N.get(OBJECT_ART[value].name) : tr(STR_PET_EMPTY_SLOT);
 }
 namespace {
-bool hasTabs(pet::View view) {
-  switch (view) {
-    case pet::View::Dashboard:
-    case pet::View::Care:
-    case pet::View::Home:
-    case pet::View::Album:
-    case pet::View::Projects:
-    case pet::View::Games:
-    case pet::View::Play:
-    case pet::View::Lives:
-    case pet::View::Health:
-    case pet::View::LifeDetail:
-      return true;
-    case pet::View::Affection:
-    case pet::View::Memory:
-    case pet::View::Memories:
-    case pet::View::ReadingInfo:
-    case pet::View::Collection:
-    case pet::View::Death:
-    case pet::View::Name:
-    case pet::View::New:
-    case pet::View::Info:
-    case pet::View::Rules:
-    case pet::View::Settings:
-    case pet::View::SettingsConfirm:
-    case pet::View::Reward:
-    case pet::View::Evolution:
-    case pet::View::Notice:
-    case pet::View::Retire:
-    case pet::View::ProjectPreview:
-    case pet::View::HealthHelp:
-      return false;
-  }
-  return false;
-}
 void tabs(toybox::Screen& s, Work& w, const Model& m) {
   static constexpr StrId main[] = {StrId::STR_PET_APP, StrId::STR_PET_CARE, StrId::STR_PET_HOME, StrId::STR_PET_ALBUM};
   static constexpr StrId first[] = {StrId::STR_PET_NEW, StrId::STR_PET_INFO, StrId::STR_PET_RULES};
@@ -108,6 +74,8 @@ void tabs(toybox::Screen& s, Work& w, const Model& m) {
   w.tabBar.contentInset = {};
   w.tabBar.minTouchSize = 0;
   const auto band = s.takeTop(46, GAP);
+  for (int i = 0; i < count; ++i)
+    fittext::fit(s.target(), rect(0, 0, band.width / count - 12, band.height - 4), w.tabs[i].label, w.tabBar.text, 2);
   if (chrome::lightHeader)
     lightui::tabs(s.frame(), band, w.tabBar);
   else {
@@ -117,6 +85,10 @@ void tabs(toybox::Screen& s, Work& w, const Model& m) {
 }
 }  // namespace
 void dashboard(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, Palette* palette) {
+  if (m.profile->lifeStatus == pet::LifeStatus::Active) {
+    simple::dashboard(s, m, w, r);
+    return;
+  }
   const auto& p = *m.profile;
   const bool wide = r.width > r.height;
   const bool ended = p.lifeStatus != pet::LifeStatus::Active;
@@ -149,7 +121,7 @@ void dashboard(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, Palette*
     std::snprintf(w.secondary, sizeof(w.secondary), tr(STR_PET_LIFE_SUMMARY), w.label, unsigned(p.sharedDays));
     prose(s, rect(metrics.x + 12, metrics.y + 34, metrics.width - 24, metrics.height - 40), w.secondary, 2);
   } else {
-    metric(s, w, cell(metrics, 0, 4), tr(STR_PET_SACIETY), p.saciety, icon_cat_food_32, locked);
+    metric(s, w, cell(metrics, 0, 4), tr(STR_PET_FULLNESS), p.saciety, icon_cat_food_32, locked);
     metric(s, w, cell(metrics, 1, 4), tr(STR_PET_JOY), p.joy, icon_hearts_32, locked);
     metric(s, w, cell(metrics, 2, 4), tr(STR_PET_ENERGY), p.energy, extra_power_64, locked);
     metric(s, w, cell(metrics, 3, 4), tr(STR_PET_HYGIENE), p.hygiene, SOAP_ICON, locked);
@@ -159,12 +131,8 @@ void dashboard(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, Palette*
     collection(s, m, w, goal);
   else if (ended)
     project(s, m, w, goal);
-  else {
-    constexpr int share = 55;
-    const int projectW = (goal.width - GAP) * share / 100;
-    objective(s, m, w, rect(goal.x, goal.y, projectW, goal.height));
-    daily(s, m, w, rect(goal.x + projectW + GAP, goal.y, goal.width - projectW - GAP, goal.height));
-  }
+  else
+    objective(s, m, w, goal);
   int footerY = goal.bottom() + GAP;
   if (ended) {
     const auto actions = rect(r.x, footerY, r.width, actionsH);
@@ -176,41 +144,11 @@ void dashboard(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, Palette*
     button(s, w, rect(r.x, footerY, r.width, footerH), tr(STR_PET_CONTINUE_READING), Read, 0, true,
            &extra_reading_book_64, !m.loading);
 }
-namespace {
-struct CarePanel {
-  fui::Rect copy;
-  bool inverse;
-};
-CarePanel carePanel(toybox::Screen& s, Work& w, fui::Rect box, const char* title, fui::ActionId action,
-                    const freeink::Icon& mark, bool enabled, int value = 0) {
-  const bool inverse = button(s, w, box, "", action, value, false, nullptr, enabled);
-  const int markWidth = box.width < 300 ? 62 : 78;
-  const int side = std::min(int(box.height) - 14, markWidth - 10), divider = box.x + markWidth;
-  icon(s, rect(box.x + (markWidth - side) / 2, box.y + (box.height - side) / 2, side, side), mark, inverse);
-  s.target().line({int16_t(divider), int16_t(box.y + 7)}, {int16_t(divider), int16_t(box.bottom() - 7)}, 1,
-                  inverse ? paper : ink);
-  chevron(s, rect(box.right() - 22, box.y + (box.height - 18) / 2, 10, 18), inverse);
-  if (box.width >= 400) {
-    const int detail = divider + 156;
-    text(s, rect(divider + 10, box.y + 8, 136, box.height - 16), title, 0, inverse);
-    return {rect(detail + 12, box.y + 7, box.right() - detail - 46, box.height - 14), inverse};
-  }
-  text(s, rect(divider + 10, box.y + 3, box.width - markWidth - 42, 25), title, 0, inverse);
-  return {rect(divider + 10, box.y + 29, box.width - markWidth - 42, box.height - 34), inverse};
-}
-void careBenefit(toybox::Screen& s, fui::Rect box, const char* label, const freeink::Icon* mark, bool inverse) {
-  if (mark) {
-    icon(s, rect(box.x + 4, box.y + (box.height - 18) / 2, 18, 18), *mark, inverse);
-    box.x += 26;
-    box.width -= 29;
-  } else {
-    box.x += 2;
-    box.width -= 4;
-  }
-  prose(s, box, label, 1, fui::TextAlign::Left, inverse);
-}
-}  // namespace
 void care(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
+  if (m.profile->lifeStatus == pet::LifeStatus::Active) {
+    simple::care(s, m, w, r);
+    return;
+  }
   const auto& p = *m.profile;
   const bool wide = r.width > r.height;
   if (p.lifeStatus != pet::LifeStatus::Active) {
@@ -242,147 +180,24 @@ void care(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
     button(s, w, cell(actions, 1, 2), tr(STR_PET_BACK_PET), ChangeTab, 0, true);
     return;
   }
-  const bool hatched = pet::canCare(p), canWrite = hatched && m.writable;
-  const int leftW = wide ? r.width * 34 / 100 : r.width;
-  const auto stock = rect(r.x, r.y, leftW, wide ? 76 : 54);
-  frame(s, stock);
-  for (int i = 0; i < 2; ++i) {
-    const auto entry = wide ? rect(stock.x + 8, stock.y + 6 + i * 34, stock.width - 16, 30)
-                            : cell(rect(stock.x + 8, stock.y + 10, stock.width - 16, 34), i, 2, 8);
-    icon(s, rect(entry.x, entry.y + 1, 28, 28), i ? careicons::REMEDY : careicons::FOOD);
-    std::snprintf(w.label, sizeof(w.label), i ? tr(STR_PET_MEDICINE_STOCK) : tr(STR_PET_FOOD_STOCK),
-                  static_cast<unsigned long long>(i ? pet::medicine(p) : pet::food(p)));
-    const auto copy = rect(entry.x + 34, entry.y, entry.width - 36, entry.height);
-    pixelui::copyCaps(w.secondary, sizeof(w.secondary), w.label);
-    const int font = s.target().measureText(0, w.secondary, {}).width <= copy.width ? 0 : 3;
-    text(s, copy, w.secondary, font);
-  }
-  const int metricH = wide ? (int(r.height) - stock.height - GAP * 4) / 4 : 76;
-  auto metrics = rect(r.x, stock.bottom() + GAP, leftW, wide ? metricH * 4 + GAP * 3 : metricH);
-  auto area = wide ? rect(stock.right() + 16, r.y, r.right() - stock.right() - 16, r.height)
-                   : rect(r.x, metrics.bottom() + 12, r.width, r.bottom() - metrics.bottom() - 12);
-  const int hygieneW = (area.width - GAP * 2) / 3;
-  const auto hygiene = wide ? rect(metrics.x, metrics.y + (metricH + GAP) * 3, metrics.width, metricH)
-                            : rect(area.x, area.y, hygieneW, metricH);
-  const auto note = wide ? rect(area.x, area.y, area.width, std::max(60, metricH))
-                         : rect(hygiene.right() + GAP, area.y, area.right() - hygiene.right() - GAP, metricH);
-  const int top = note.bottom() + GAP;
-  const auto actions = rect(area.x, top, area.width, r.bottom() - top);
-  const int height = (actions.height - GAP * (wide ? 2 : 4)) / (wide ? 3 : 5);
-  const auto healthBox = rect(actions.x, actions.y, actions.width, height);
-  const auto first = rect(actions.x, healthBox.bottom() + GAP, actions.width, height);
-  if (wide) {
-    metricLine(s, w, rect(metrics.x, metrics.y, metrics.width, metricH), tr(STR_PET_SACIETY), p.saciety,
-               careicons::SACIETY);
-    metricLine(s, w, rect(metrics.x, metrics.y + metricH + GAP, metrics.width, metricH), tr(STR_PET_JOY), p.joy,
-               careicons::JOY);
-    metricLine(s, w, rect(metrics.x, metrics.y + (metricH + GAP) * 2, metrics.width, metricH), tr(STR_PET_ENERGY),
-               p.energy, careicons::ENERGY);
-    metricLine(s, w, hygiene, tr(STR_PET_HYGIENE), p.hygiene, careicons::HYGIENE);
-  } else {
-    metric(s, w, cell(metrics, 0, 3), tr(STR_PET_SACIETY), p.saciety, careicons::SACIETY);
-    metric(s, w, cell(metrics, 1, 3), tr(STR_PET_JOY), p.joy, careicons::JOY);
-    metric(s, w, cell(metrics, 2, 3), tr(STR_PET_ENERGY), p.energy, careicons::ENERGY);
-  }
-  if (!wide) metric(s, w, hygiene, tr(STR_PET_HYGIENE), p.hygiene, careicons::HYGIENE);
-  const bool treatment = p.illness != pet::Illness::Healthy;
-  const auto noteAction = treatment || advisedCare(p, m.today) == OpenHealth ? OpenHealth : fui::NO_ACTION;
-  const bool noteInverse = button(s, w, note, "", noteAction, 0, false, nullptr, noteAction != fui::NO_ACTION);
-  const int markWidth = 40;
-  s.target().fill(rect(note.x, note.y, markWidth, note.height), noteInverse ? paper : ink);
-  icon(s, rect(note.x + (markWidth - 28) / 2, note.y + (note.height - 28) / 2, 28, 28), READING_INFO_ICON,
-       !noteInverse);
-  if (p.resting) {
-    const auto remaining = restRemaining(m);
-    if (remaining > 0) {
-      remainingDuration(w.label, sizeof(w.label), uint64_t(remaining));
-      std::snprintf(w.secondary, sizeof(w.secondary), tr(STR_PET_REST_ENDS), w.label);
-    } else if (!remaining) {
-      std::snprintf(w.secondary, sizeof(w.secondary), "%s", tr(STR_PET_REST_COMPLETE));
-    } else {
-      std::snprintf(w.secondary, sizeof(w.secondary), "%s", tr(STR_PET_REST_TIME_UNKNOWN));
-    }
-    if (p.illness != pet::Illness::Healthy)
-      std::snprintf(w.label, sizeof(w.label), tr(STR_PET_REST_STATUS), tr(STR_PET_NEEDS_REMEDY), w.secondary);
-    else
-      std::snprintf(w.label, sizeof(w.label), "%s", w.secondary);
-  }
-  prose(s, rect(note.x + markWidth + 12, note.y + 6, note.width - markWidth - 42, note.height - 12),
-        p.resting ? w.label : careAdvice(p), 3, fui::TextAlign::Left, noteInverse);
-  if (noteAction != fui::NO_ACTION)
-    chevron(s, rect(note.right() - 19, note.y + (note.height - 16) / 2, 7, 16), noteInverse);
-  const auto health = carePanel(s, w, healthBox, tr(STR_PET_HEALTH_SHORT), OpenHealth, careicons::HEALTH, true);
-  static constexpr StrId conditions[] = {StrId::STR_PET_HEALTHY, StrId::STR_PET_COLD, StrId::STR_PET_MALAISE};
-  prose(s, health.copy, I18N.get(conditions[unsigned(p.illness)]), 1, fui::TextAlign::Left, health.inverse);
-  const auto feed = carePanel(s, w, wide ? cell(first, 0, 2) : first, tr(STR_PET_FEED), Feed, careicons::FEED,
-                              canWrite && pet::food(p) && p.saciety < 100, p.foodChoice);
-  std::snprintf(w.label, sizeof(w.label), wide ? tr(STR_PET_FEED_CHANGE_SHORT) : tr(STR_PET_FEED_CHANGE),
-                unsigned(p.saciety), std::min(100u, unsigned(p.saciety) + 25));
-  if (p.saciety == 100) std::snprintf(w.label, sizeof(w.label), "%s", tr(STR_PET_ALREADY_FULL));
-  const bool noFood = p.saciety < 100 && !pet::food(p);
-  const int benefitH = wide ? (height - 34) / 2 : feed.copy.height / 2;
-  const auto feedText = rect(feed.copy.x, feed.copy.y, feed.copy.width, noFood ? feed.copy.height : benefitH);
-  prose(s, feedText, noFood ? tr(STR_PET_CARE_ADVICE_FOOD) : w.label, 2, fui::TextAlign::Left, feed.inverse);
-  if (!noFood)
-    careBenefit(s, rect(feed.copy.x, feed.copy.bottom() - benefitH, feed.copy.width, benefitH),
-                p.saciety == 100 ? tr(STR_PET_FOOD_NO_COST) : tr(STR_PET_FOOD_COST), nullptr, feed.inverse);
-  const auto stroke = carePanel(
-      s, w, wide ? cell(first, 1, 2) : rect(first.x, first.bottom() + GAP, first.width, height), tr(STR_PET_STROKE),
-      Stroke, careicons::AFFECTION, hatched && (m.writable || m.today <= 0 || m.today <= p.lastPetDay));
-  if (m.writable && m.today > 0 && m.today > p.lastPetDay && p.joy < 100)
-    std::snprintf(w.secondary, sizeof(w.secondary), tr(STR_PET_GAME_GAIN_VALUE),
-                  std::min(pet::moodGain(p), 100u - p.joy));
-  else
-    std::snprintf(w.secondary, sizeof(w.secondary), "%s", tr(STR_PET_CARE_VISIT_ONLY));
-  prose(s, stroke.copy, w.secondary, 2, fui::TextAlign::Left, stroke.inverse);
-  const auto last = rect(first.x, first.bottom() + (wide ? GAP : height + GAP * 2), first.width, height);
-  const auto rest = carePanel(s, w, wide ? cell(last, 0, 2) : last, p.resting ? tr(STR_PET_WAKE) : tr(STR_PET_REST),
-                              Rest, careicons::REST, canWrite);
-  if (p.resting) {
-    prose(s, rest.copy, tr(STR_PET_CARE_WAKE_EFFECT), 2, fui::TextAlign::Left, rest.inverse);
-  } else {
-    careBenefit(s, rect(rest.copy.x, rest.copy.y, rest.copy.width, benefitH),
-                wide ? tr(STR_PET_REST_BENEFIT_SHORT) : tr(STR_PET_REST_BENEFIT), nullptr, rest.inverse);
-    careBenefit(s, rect(rest.copy.x, rest.copy.bottom() - benefitH, rest.copy.width, benefitH),
-                tr(STR_PET_CARE_REST_EFFECT), nullptr, rest.inverse);
-  }
-  const auto games = carePanel(s, w, wide ? cell(last, 1, 2) : rect(last.x, last.bottom() + GAP, last.width, height),
-                               tr(STR_PET_GAMES_SHORT), OpenGames, careicons::GAMES, hatched);
-  switch (gameOffer(m)) {
-    case GameOffer::Blocked:
-      std::snprintf(w.secondary, sizeof(w.secondary), "%s", gameCareBlock(p));
-      break;
-    case GameOffer::Reward: {
-      const unsigned low = std::min(pet::gameMoodGain(p, pet::Game::Pairs), 100u - p.joy);
-      const unsigned high = std::min(pet::gameMoodGain(p, pet::Game::Puzzle), 100u - p.joy);
-      if (low == high)
-        std::snprintf(w.secondary, sizeof(w.secondary), tr(STR_PET_GAME_GAIN_VALUE), low);
-      else
-        std::snprintf(w.secondary, sizeof(w.secondary), tr(STR_PET_GAME_GAIN_RANGE), low, high);
-      careBenefit(s, rect(games.copy.x, games.copy.y, games.copy.width, benefitH), w.secondary, nullptr, games.inverse);
-      careBenefit(s, rect(games.copy.x, games.copy.bottom() - benefitH, games.copy.width, benefitH),
-                  tr(STR_PET_GAME_COST), nullptr, games.inverse);
-      return;
-    }
-    case GameOffer::Practice:
-      std::snprintf(w.secondary, sizeof(w.secondary), "%s", tr(STR_PET_CARE_GAME_PRACTICE));
-      break;
-  }
-  prose(s, games.copy, w.secondary, 3, fui::TextAlign::Left, games.inverse);
 }
+
 void home(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, Palette* palette) {
-  const auto& p = *m.profile;
   const bool wide = r.width > r.height;
   if (wide) {
     const int left = r.width * 44 / 100;
-    room(s, m, w, rect(r.x, r.y, left, r.height), palette);
+    widget::room(s, m, w, rect(r.x, r.y, left, r.height), palette);
     r = rect(r.x + left + GAP, r.y, r.width - left - GAP, r.height);
   } else {
     const int height = r.height - HOME_SLOTS_H - HOME_PROJECT_H - 54 - GAP * 3;
-    room(s, m, w, rect(r.x, r.y, r.width, height), palette);
+    widget::room(s, m, w, rect(r.x, r.y, r.width, height), palette);
     r.y += height + GAP;
     r.height -= height + GAP;
   }
+  homeControls(s, m, w, r, wide);
+}
+void homeControls(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, bool wide) {
+  const auto& p = *m.profile;
   const bool unlocked = pet::homeUnlocked(p);
   const auto slots = rect(r.x, r.y, r.width, wide ? 78 : HOME_SLOTS_H);
   static constexpr StrId names[] = {StrId::STR_PET_REST_SLOT, StrId::STR_PET_DECOR_SLOT, StrId::STR_PET_GAME_SLOT,
@@ -411,7 +226,7 @@ void home(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, Palette* pale
     text(s, rect(box.x + 3, box.bottom() - 26, box.width - 6, 22), I18N.get(names[i]), 3, inverse,
          fui::TextAlign::Center);
   }
-  const auto goal = rect(r.x, slots.bottom() + GAP, r.width, wide ? r.bottom() - slots.bottom() - 70 : HOME_PROJECT_H);
+  const auto goal = rect(r.x, slots.bottom() + GAP, r.width, r.bottom() - slots.bottom() - 70);
   if (unlocked && pet::collectionComplete(p) && decorated)
     collection(s, m, w, goal);
   else if (unlocked)
@@ -426,34 +241,66 @@ void home(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, Palette* pale
          pet::collectionComplete(p) ? int(pet::objectSlot(p.project)) : 4, true,
          unlocked ? &extra_dashboard_add_64 : &extra_lock_32, unlocked);
 }
-void build(toybox::Screen& s, const Model& m, Work& w, Palette* palette) {
+void build(toybox::Screen& s, const Model& m, Work& w, Palette* palette, bool lightHeader, bool uppercaseHeader) {
   pixelui::begin(s);
-  pixelui::Header header;
-  header.title = !m.resourcesReady                                                       ? tr(STR_PET_APP)
-                 : m.view == pet::View::Settings || m.view == pet::View::SettingsConfirm ? tr(STR_PET_SETTINGS)
-                 : m.view == pet::View::ProjectPreview                                   ? tr(STR_PET_PREVIEW)
-                 : m.view == pet::View::Reward                                           ? tr(STR_PET_REWARD)
-                 : m.view == pet::View::Evolution                                        ? tr(STR_PET_EVOLUTION)
-                                                                                         : tr(STR_PET_APP);
-  header.back = true;
-  if (m.resourcesReady && (m.view == pet::View::Dashboard || m.view == pet::View::Care || m.view == pet::View::Home ||
-                           m.view == pet::View::Album || m.view == pet::View::Affection || m.view == pet::View::Games ||
-                           m.view == pet::View::Play)) {
-    header.mark = fui::bitmapFromIcon(icon_go_settings_32);
-    header.markAction = OpenSettings;
-    header.secondaryMark = fui::bitmapFromIcon(READING_INFO_ICON);
-    header.secondaryMarkAction = OpenReadingInfo;
-    header.actionInputMask = fui::InputDefault;
-    header.compactPercent = true;
+  chrome::headerHeight = 0;
+  if (m.resourcesReady && !m.loading && m.profile && m.profile->lifeStatus == pet::LifeStatus::Active &&
+      (m.view == pet::View::Dashboard || m.view == pet::View::Home || m.view == pet::View::Care ||
+       m.view == pet::View::Games || m.view == pet::View::Projects || m.view == pet::View::ProjectPreview ||
+       m.view == pet::View::Evolution || m.view == pet::View::Reward || m.view == pet::View::Health)) {
+    switch (m.view) {
+      case pet::View::Care:
+        simple::care(s, m, w, simple::body(s));
+        break;
+      case pet::View::Games:
+        simple::games(s, m, w, simple::body(s));
+        break;
+      case pet::View::Home:
+        simple::decorate(s, m, w, simple::body(s));
+        break;
+      case pet::View::Projects:
+      case pet::View::ProjectPreview:
+        simple::catalog(s, m, w, simple::body(s));
+        break;
+      case pet::View::Dashboard:
+      case pet::View::Evolution:
+      case pet::View::Reward:
+        simple::dashboard(s, m, w, simple::body(s));
+        break;
+      case pet::View::Health:
+        simple::health(s, m, w, simple::body(s));
+        break;
+      default:
+        return;  // The guard admits only room views.
+    }
+    if (m.view != pet::View::Dashboard && m.view != pet::View::Evolution && m.view != pet::View::Reward)
+      simple::closeDrawer(s, w);
+    PaletteScope header(palette, !lightHeader);
+    simple::navigation(s, m, w, nullptr, true, uppercaseHeader);
+    return;
   }
-  pixelui::header(s, header);
+  const char* title = !m.resourcesReady                                                       ? tr(STR_PET_APP)
+                      : m.view == pet::View::Album                                            ? tr(STR_PET_ALBUM)
+                      : m.view == pet::View::Settings || m.view == pet::View::SettingsConfirm ? tr(STR_PET_SETTINGS)
+                      : m.view == pet::View::ProjectPreview                                   ? tr(STR_PET_PREVIEW)
+                      : m.view == pet::View::Reward                                           ? tr(STR_PET_REWARD)
+                      : m.view == pet::View::Evolution                                        ? tr(STR_PET_EVOLUTION)
+                                                                                              : tr(STR_PET_APP);
+  const bool actions =
+      m.resourcesReady && (m.view == pet::View::Dashboard || m.view == pet::View::Care || m.view == pet::View::Home ||
+                           m.view == pet::View::Album || m.view == pet::View::Affection || m.view == pet::View::Games ||
+                           m.view == pet::View::Play);
+  {
+    PaletteScope header(palette, !lightHeader);
+    simple::navigation(s, m, w, title, actions, uppercaseHeader);
+  }
   if (!m.resourcesReady) {
     requiredresources::build(s, "/apps/pet/", Back, w.button);
     return;
   }
-  if (hasTabs(m.view) || m.view == pet::View::New || m.view == pet::View::Info || m.view == pet::View::Rules)
-    tabs(s, w, m);
-  auto body = s.body();
+  if (m.view == pet::View::New || m.view == pet::View::Info || m.view == pet::View::Rules) tabs(s, w, m);
+  auto body = simple::contentBody(s);
+  if (m.view == pet::View::New || m.view == pet::View::Info || m.view == pet::View::Rules) body = s.body();
   if (m.loading) {
     info(s, rect(body.x, body.y + body.height / 3, body.width, 88), tr(STR_PET_LOADING));
     return;
@@ -523,10 +370,20 @@ void build(toybox::Screen& s, const Model& m, Work& w, Palette* palette) {
 }
 void render(fui::DrawTarget& target, const fui::DeviceContext& device, const fui::InputSnapshot& input,
             toybox::Interactions& interactions, toybox::HeaderStatus status, const Model& m, Work& w) {
+  struct ControlStyle {
+    bool lightHeader = chrome::lightHeader;
+    ControlStyle() { chrome::lightHeader = true; }
+    ~ControlStyle() { chrome::lightHeader = lightHeader; }
+  } controls;
+  struct NaturalLabels {
+    bool previous = pixelui::uppercaseLabels;
+    NaturalLabels() { pixelui::uppercaseLabels = false; }
+    ~NaturalLabels() { pixelui::uppercaseLabels = previous; }
+  } naturalLabels;
   Palette palette(target, false);
   palette.fill(device.screen(), paper);
   toybox::Frame frame(palette, device, input, interactions, nullptr, status);
   toybox::Screen screen(frame);
-  build(screen, m, w, &palette);
+  build(screen, m, w, &palette, controls.lightHeader, naturalLabels.previous);
 }
 }  // namespace petui

@@ -21,6 +21,7 @@
 
 class TriviaActivity final : public Activity {
  public:
+  bool allowsRemoteControl() const override { return false; }
   TriviaActivity(GfxRenderer& renderer, MappedInputManager& mappedInput) : Activity("Trivia", renderer, mappedInput) {}
   ~TriviaActivity() override = default;
 

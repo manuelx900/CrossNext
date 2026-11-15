@@ -131,6 +131,7 @@ constexpr int32_t FP_MASK = FP_ONE - 1;
 int jpegDrawCallback(JPEGDRAW* pDraw) {
   JpegContext* ctx = reinterpret_cast<JpegContext*>(pDraw->pUser);
   if (!ctx || !ctx->config || !ctx->renderer) return 0;
+  if (!ctx->config->shouldContinue()) return 0;
 
   ImageToFramebufferDecoder::yieldDuringDecode(ctx->lastYieldMs);
 
@@ -215,7 +216,7 @@ int jpegDrawCallback(JPEGDRAW* pDraw) {
           dithered = gray / 85;
           if (dithered > 3) dithered = 3;
         }
-        pw.writePixel(outX, dithered);
+        if (!ctx->config->cacheOnly) pw.writePixel(outX, dithered);
         if (caching) cw.writePixel(outX, dithered);
       }
     }
@@ -274,7 +275,7 @@ int jpegDrawCallback(JPEGDRAW* pDraw) {
           dithered = gray / 85;
           if (dithered > 3) dithered = 3;
         }
-        pw.writePixel(outX, dithered);
+        if (!ctx->config->cacheOnly) pw.writePixel(outX, dithered);
         if (caching) cw.writePixel(outX, dithered);
       }
 
@@ -297,7 +298,7 @@ int jpegDrawCallback(JPEGDRAW* pDraw) {
           dithered = gray / 85;
           if (dithered > 3) dithered = 3;
         }
-        pw.writePixel(outX, dithered);
+        if (!ctx->config->cacheOnly) pw.writePixel(outX, dithered);
         if (caching) cw.writePixel(outX, dithered);
       }
 
@@ -323,7 +324,7 @@ int jpegDrawCallback(JPEGDRAW* pDraw) {
           dithered = gray / 85;
           if (dithered > 3) dithered = 3;
         }
-        pw.writePixel(outX, dithered);
+        if (!ctx->config->cacheOnly) pw.writePixel(outX, dithered);
         if (caching) cw.writePixel(outX, dithered);
       }
     }
@@ -356,7 +357,7 @@ int jpegDrawCallback(JPEGDRAW* pDraw) {
         dithered = gray / 85;
         if (dithered > 3) dithered = 3;
       }
-      pw.writePixel(outX, dithered);
+      if (!ctx->config->cacheOnly) pw.writePixel(outX, dithered);
       if (caching) cw.writePixel(outX, dithered);
     }
   }
@@ -521,6 +522,10 @@ bool JpegToFramebufferConverter::decodeToFramebuffer(const std::string& imagePat
   rc = jpeg->decode(0, 0, jpegScaleOption);
   unsigned long decodeTime = millis() - decodeStart;
 
+  if (!config.shouldContinue()) {
+    if (ctx.caching) ctx.cache.abort();
+    return false;
+  }
   if (rc != 1) {
     LOG_ERR("JPG", "Decode failed (rc=%d, lastError=%d)", rc, jpeg->getLastError());
     if (ctx.caching) ctx.cache.abort();

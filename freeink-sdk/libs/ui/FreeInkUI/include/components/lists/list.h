@@ -1,8 +1,9 @@
 #pragma once
-
+#include <algorithm>
 #include <atomic>
 
 #include "../../FreeInkUICore.h"
+#include "list-layout-cache.h"
 #if __has_include(<BoardConfig.h>)
 #include <BoardConfig.h>
 #endif
@@ -191,6 +192,8 @@ struct ListProps {
   int16_t rowPaddingY = -1;
   // Draw toggle rows as outlined boxes with an inset fill when checked.
   bool toggleCheckbox = false;
+  ListLayoutCache* layoutCache = nullptr;
+  uint64_t layoutContext = 0;
 };
 
 // Stateful companion to the immediate-mode list helpers in FreeInkUICore.h:
@@ -349,7 +352,7 @@ struct ListNav {
   void follow(const int count) {
     layoutSelected_ = selected.load();
     followPending = true;  // confirmed (or corrected) by onListRendered()
-    const uint16_t rows = visibleRows > 0 ? static_cast<uint16_t>(visibleRows) : 1;
+    const uint16_t rows = static_cast<uint16_t>(std::max(1, pageRowsFor(count)));
     top = listTopIndexFor(static_cast<int16_t>(layoutSelected_), static_cast<uint16_t>(top < 0 ? 0 : top), rows,
                           static_cast<uint16_t>(count < 0 ? 0 : count));
   }
@@ -377,7 +380,8 @@ struct ListNav {
       if (layoutSelected_ < 0) {
         top = 0;
       } else {
-        top = listTopIndexFor(static_cast<int16_t>(layoutSelected_), static_cast<uint16_t>(top < 0 ? 0 : top), rows,
+        const auto measured = static_cast<uint16_t>(std::max(1, pageRowsFor(count)));
+        top = listTopIndexFor(static_cast<int16_t>(layoutSelected_), static_cast<uint16_t>(top < 0 ? 0 : top), measured,
                               static_cast<uint16_t>(count < 0 ? 0 : count));
       }
     }
@@ -413,17 +417,6 @@ inline void drawListScrollIndicator(DrawTarget& target, const Rect rect, const u
   target.fill(Rect{track.x, thumbY, track.width, thumbH}, Paint::solid(Color::Black));
 }
 
-// Geometry shared by full rows and previews. Widths are resolved before
-// wrapping, including both the trailing slot and optional balanced wrap cap.
-struct ListRowLayout {
-  int16_t height = 0;
-  int16_t labelWidth = 0;
-  int16_t labelHeight = 0;
-  int16_t subtitleHeight = 0;
-  int16_t valueWidth = 0;
-  uint8_t labelLines = 1;
-};
-
 inline TextStyle listLabelTextStyle(const ListProps& props, const ListItem& item) {
   TextStyle style = props.labelText;
   style.bold = style.bold || item.labelBold;
@@ -445,6 +438,8 @@ inline ListRowLayout measureListRow(const DrawTarget& target, AssetResolver* ass
     result.valueWidth = props.toggleWidth < 18 ? 18 : props.toggleWidth;
   } else if (item.value) {
     result.valueWidth = target.measureText(props.valueText.font, item.value, props.valueText).width;
+    if (props.valueText.maxLines > 1)
+      result.valueWidth = std::min<int16_t>(result.valueWidth, std::max<int16_t>(1, contentWidth * 2 / 5));
   }
   if (item.toggle || item.value)
     result.labelWidth = static_cast<int16_t>(result.labelWidth - result.valueWidth - props.valueInset - props.textGap);
@@ -455,8 +450,8 @@ inline ListRowLayout measureListRow(const DrawTarget& target, AssetResolver* ass
   }
   if (result.labelWidth < 0) result.labelWidth = 0;
   if (item.label && labelStyle.maxLines > 1 && labelLh > 0 && result.labelWidth > 0) {
-    const int16_t lines = static_cast<int16_t>(
-        measureWrappedText(target, item.label, labelStyle, result.labelWidth).height / labelLh);
+    const int16_t lines =
+        static_cast<int16_t>(measureWrappedText(target, item.label, labelStyle, result.labelWidth).height / labelLh);
     if (lines > 1) result.labelLines = static_cast<uint8_t>(lines);
   }
   const int16_t subLh = item.subtitle ? target.lineHeight(props.subtitleText.font) : 0;
@@ -466,7 +461,9 @@ inline ListRowLayout measureListRow(const DrawTarget& target, AssetResolver* ass
                                 : subLh;
   }
   const int16_t valueHeight = item.toggle ? (props.toggleHeight < 12 ? 12 : props.toggleHeight)
-                                          : (item.value ? target.lineHeight(props.valueText.font) : 0);
+                              : item.value && props.valueText.maxLines > 1
+                                  ? measureWrappedText(target, item.value, props.valueText, result.valueWidth).height
+                                  : (item.value ? target.lineHeight(props.valueText.font) : 0);
   const int16_t labelHeight = static_cast<int16_t>(labelLh * result.labelLines);
   result.labelHeight = labelHeight > valueHeight ? labelHeight : valueHeight;
   int16_t needed = rowH;
@@ -483,6 +480,55 @@ inline ListRowLayout measureListRow(const DrawTarget& target, AssetResolver* ass
   const int16_t textHeight = static_cast<int16_t>(result.labelHeight + result.subtitleHeight);
   const int16_t contentHeight = iconSize > textHeight ? iconSize : textHeight;
   if (result.height < contentHeight) result.height = contentHeight;
+  return result;
+}
+
+inline ListRowLayout cachedListRow(const DrawTarget& target, AssetResolver* assets, int16_t width,
+                                   const ListProps& props, const ListItem& item) {
+  const auto labelStyle = listLabelTextStyle(props, item);
+  if (!props.layoutCache || (labelStyle.maxLines <= 1 && (!item.subtitle || props.subtitleText.maxLines <= 1)))
+    return measureListRow(target, assets, width, props, item);
+  ListLayoutCache::Key key;
+  const auto addText = [&](const char* text, TextStyle style) {
+    if (!text) {
+      key.add(0);
+      return true;
+    }
+    const auto font = target.textMetricsKey(style.font, text, style);
+    if (!font) return false;
+    key.add(font);
+    key.add(target.lineHeight(style.font));
+    key.add(style.font);
+    key.add(style.maxLines);
+    key.add(style.bold);
+    key.add(style.italic);
+    key.add(uint8_t(style.rotation));
+    key.text(text);
+    return true;
+  };
+  if (!addText(item.label ? item.label : "", labelStyle) || !addText(item.subtitle, props.subtitleText) ||
+      (!item.toggle && !addText(item.value, props.valueText)))
+    return measureListRow(target, assets, width, props, item);
+  const BitmapRef icon = item.icon ? item.icon : resolveBitmap(assets, item.iconAsset);
+  key.add(props.layoutContext);
+  key.add(width);
+  key.add(props.rowHeight);
+  key.add(props.rowPaddingY);
+  key.add(props.sidePadding);
+  key.add(props.textGap);
+  key.add(props.iconSize);
+  key.add(props.valueInset);
+  key.add(props.balanceWrappedLabelWithValue);
+  key.add(item.toggle);
+  key.add(props.toggleWidth);
+  key.add(props.toggleHeight);
+  key.add(bool(icon));
+  key.add(icon ? icon.width : 0);
+  ListRowLayout result;
+  if (!props.layoutCache->find(key, result)) {
+    result = measureListRow(target, assets, width, props, item);
+    props.layoutCache->store(key, result);
+  }
   return result;
 }
 
@@ -583,7 +629,7 @@ void list(Frame<MaxInteractions>& frame, Rect rect, const ListProps& props) {
       cursorY = static_cast<int16_t>(cursorY + headerH + rowGap);
       continue;
     }
-    const ListRowLayout layout = measureListRow(frame.target(), frame.assets(), rowArea.width, props, item);
+    const ListRowLayout layout = cachedListRow(frame.target(), frame.assets(), rowArea.width, props, item);
     const int16_t itemH = layout.height;
     const int16_t subH = layout.subtitleHeight;
     const bool hasSectionHeading = item.sectionHeading != nullptr && item.sectionHeading[0] != '\0';
@@ -798,8 +844,10 @@ void list(Frame<MaxInteractions>& frame, Rect rect, const ListProps& props) {
     if (props.rtl && !props.centerSingleLine) labelStyle.align = TextAlign::Right;
     if (item.subtitle) {
       frame.target().text(Rect{labelX, band.y, availW, band.height}, item.label, labelStyle);
+      TextStyle subtitleStyle = textStyleWithForeground(props.subtitleText, style.foreground);
+      if (props.rtl) subtitleStyle.align = TextAlign::Right;
       frame.target().text(Rect{content.x, static_cast<int16_t>(band.y + band.height), content.width, subH},
-                          item.subtitle, textStyleWithForeground(props.subtitleText, style.foreground));
+                          item.subtitle, subtitleStyle);
     } else {
       if (props.centerSingleLine) labelStyle.align = TextAlign::Center;
       frame.target().text(Rect{labelX, band.y, availW, band.height}, item.label, labelStyle);

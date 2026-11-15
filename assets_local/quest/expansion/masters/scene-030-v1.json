@@ -1,0 +1,12 @@
+{
+  "id": "S030",
+  "master": "scene-030-v1.png",
+  "sha256": "2d4dc6fb9708f547e2513577af2269fb45cea2bd3a140f2e0c39930dd08bff1e",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The sunken library. Chapter: The dry page. Illustrate this already-authored event faithfully, without inventing another object or plot: One page remains dry among the flooded books. It says no memory can stay imprisoned forever while someone is willing to tell it again. Context only, do not try to draw all of it: Inside the cabinet, one page escaped the water and the king's censorship. Ada marked it as a practical example: an account that reached its owner after everyone believed it lost.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

@@ -71,7 +71,7 @@ import concurrent.futures
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 OUT = REPO / "site" / "emulator"
-OBJ = REPO / ".pio" / "build" / "wasm"
+OBJ = pathlib.Path(os.environ.get("CROSSPLAY_WASM_BUILD_DIR", str(REPO / ".pio" / "build" / "wasm"))).resolve()
 STUBS = REPO / "tools_local" / "wasm" / "stubs"
 SRC = REPO / "tools_local" / "wasm" / "src"
 SDROOT = REPO / "tools_local" / "wasm" / "sdcard"
@@ -187,6 +187,9 @@ def translate(args, obj_path, is_c):
     """Rewrite one g++/gcc command line for em++/emcc."""
     out = ["emcc" if is_c else "em++"]
     out.append(f"-I{STUBS}")
+    if any(pathlib.Path(a).name == "AnimatedGIF.cpp" for a in args):
+        # Select the codec's host path; its Arduino animation clock is unused.
+        out.append("-D__LINUX__")
     skip_next = False
     for i, a in enumerate(args[1:], start=1):
         if skip_next:
@@ -360,6 +363,7 @@ def main():
     resource_card = prepare()
     exported = [
         "_main",
+        "_crossplay_start",
         "_malloc",
         "_free",
         "_crossplay_frame_ptr",
@@ -367,6 +371,9 @@ def main():
         "_crossplay_frame_height",
         "_crossplay_frame_rotation",
         "_crossplay_consume_dirty",
+        "_crossplay_consume_restart",
+        "_crossplay_quest_reading",
+        "_crossplay_quest_reading_status",
         "_crossplay_touch",
         "_crossplay_key",
         "_crossplay_link_bind",
@@ -412,9 +419,7 @@ def main():
         # frame takes 1ms either way.
         "-Oz",
         f"--preload-file={resource_card}@/fs_",
-        "--exclude-file=*/WALLPAPER/*",
-        "--exclude-file=*/sleep/*",
-        "--exclude-file=*/wallpapers/*",
+        "--exclude-file=*/wordle/*",
     ]
     print("linking ...")
     # Hundreds of object paths exceed Windows' command-line length limit.

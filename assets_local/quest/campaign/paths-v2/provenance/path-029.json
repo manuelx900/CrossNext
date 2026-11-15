@@ -1,0 +1,17 @@
+{
+  "id": 29,
+  "saga": 2,
+  "step": 9,
+  "title": {
+    "en": "The Captain of the Mist",
+    "es": "El capitán de la niebla"
+  },
+  "enemy": "Fog corsair",
+  "guardian": 17,
+  "master": "path-029.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The Harbor of Mist. Path episode: The Captain of the Mist. Story action, which the scene must directly support: The Captain of the Mist appears at the lighthouse. He wants to put out the light and bring the mist back.\nEnemy identity, MUST match this exact anatomy: a drowned corsair monster in a dark ragged sailor coat, barnacle-crusted armor, skull-like sea beast face and broad cutlass. Dramatic medium-wide boss composition, full-body enemy dominating the center, final barrier clearly behind it. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-489b9f4b-4ebb-4b5e-adc4-4092e1d408cb.png",
+  "sha256": "e7d5bd104e91d418a34585591dbd26ae7b80e6efb3b0aefaf54bff3e2b9ffca7"
+}

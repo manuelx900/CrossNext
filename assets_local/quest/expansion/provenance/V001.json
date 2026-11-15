@@ -1,0 +1,12 @@
+{
+  "id": "V001",
+  "master": "victory-1-v1.png",
+  "sha256": "3fb659115192975e687b2cb87a4023df8573015ac40531592bf825fac5f5f773",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE UNIQUE victory narrative illustration for Aventura lectora, landscape3:2 filled composition, thick solid BLACK contours and clean white/flat-gray chibi fantasy storybook style. Preserve the identity of the female hero with shoulder-length dark hair from the reference hero sheet, wearing the original simple light lace-up shirt, belt and dark boots. A new triumphant pose: standing on the village library steps, lifting a fully restored open map atlas above one shoulder, smiling with relief. Liora (round glasses and long dark braid) and her sister Ada (short dark braid, travelling cloak with a leaf clasp) stand beside the hero; several distinct villagers cheer in the background, and the restored forest library/tree fills the upper background. This is the aftermath of the final victory, a warm clear celebration of recovered memories. No PET or enemy. Do not reuse the idle avatar composition, no empty generic clearing. Large clear faces and book silhouette readable at480x320. No letters, captions, UI, banners with writing, watermark or panel frame.",
+  "reference": "assets_local/quest/redesign/masters/heroes-approved.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

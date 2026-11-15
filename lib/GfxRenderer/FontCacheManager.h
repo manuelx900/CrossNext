@@ -37,12 +37,12 @@ class FontCacheManager {
   FontDecompressor* getDecompressor() const { return fontDecompressor_; }
 
   // RAII scope for two-pass prewarm pattern
-  enum class ScopeCache : uint8_t { Transient, Reader };
+  enum class ScopeCache : uint8_t { Transient, Reader, Reset };
   class PrewarmScope {
    public:
     explicit PrewarmScope(FontCacheManager& manager, ScopeCache cache = ScopeCache::Transient);
     ~PrewarmScope();
-    void endScanAndPrewarm();
+    void endScanAndPrewarm(bool (*continueWork)(void*) = nullptr, void* workContext = nullptr);
     PrewarmScope(PrewarmScope&& other) noexcept;
     PrewarmScope& operator=(PrewarmScope&&) = delete;
     PrewarmScope(const PrewarmScope&) = delete;
@@ -53,7 +53,7 @@ class FontCacheManager {
     ScopeCache cache_;
     bool active_ = true;
   };
-  // Reader scopes retain bounded vector glyph/kerning caches between pages.
+  // Reader scopes retain bounded SD/vector glyph and kerning caches between pages.
   PrewarmScope createPrewarmScope(ScopeCache cache = ScopeCache::Transient);
 
  private:

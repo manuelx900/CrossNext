@@ -25,6 +25,7 @@ Usage:
 from __future__ import annotations
 
 import struct
+import hashlib
 import sys
 import os
 import re
@@ -32,7 +33,7 @@ import math
 import argparse
 from collections import namedtuple
 
-from cpfont_version import CPFONT_VERSION
+from cpfont_version import CPFONT_VERSION, CPFONT_EXTENDED_LIGATURE_VERSION
 
 # --- Unicode interval presets ---
 
@@ -297,7 +298,7 @@ def _extract_pairpos_subtable(subtable, glyph_to_cp, raw_kern):
                         raw_kern[key] = raw_kern.get(key, 0) + xa
 
 
-def extract_kerning_fonttools(font_path, codepoints, ppem):
+def extract_kerning_fonttools(font_path, codepoints, ppem, pnum_subs=None):
     """Extract kerning pairs from a font file using fonttools.
 
     Returns dict of {(leftCp, rightCp): pixel_adjust} for the given
@@ -315,6 +316,8 @@ def extract_kerning_fonttools(font_path, codepoints, ppem):
     glyph_to_cps = {}
     for cp in codepoints:
         gname = cmap.get(cp)
+        if gname and pnum_subs:
+            gname = pnum_subs.get(gname, gname)
         if gname:
             glyph_to_cps.setdefault(gname, []).append(cp)
     # Flat dict for membership checks and subtable extraction (uses keys only)
@@ -568,8 +571,39 @@ def extract_ligatures_fonttools(font_path, codepoints):
     return pairs
 
 
+def extract_pnum_subs(font_path):
+    """Extract pnum (proportional figures) GSUB substitutions.
+
+    Parses the font's GSUB table for the 'pnum' feature, which replaces
+    tabular-width figure glyphs with proportional-width alternates.
+    Returns {original_glyph_name: substitute_glyph_name} or empty dict.
+    """
+    from fontTools.ttLib import TTFont
+    font = TTFont(font_path)
+    subs = {}
+    if 'GSUB' not in font:
+        font.close()
+        return subs
+    gsub = font['GSUB'].table
+    pnum_indices = set()
+    if gsub.FeatureList:
+        for fr in gsub.FeatureList.FeatureRecord:
+            if fr.FeatureTag == 'pnum':
+                pnum_indices.update(fr.Feature.LookupListIndex)
+    for li in pnum_indices:
+        lookup = gsub.LookupList.Lookup[li]
+        for st in lookup.SubTable:
+            actual = st
+            if lookup.LookupType == 7 and hasattr(st, 'ExtSubTable'):
+                actual = st.ExtSubTable
+            if hasattr(actual, 'mapping'):
+                subs.update(actual.mapping)
+    font.close()
+    return subs
+
+
 def rasterize_font_style(fontfile, size, intervals, style_id=0, force_autohint=False,
-                         fallback_fontfile=None):
+                         fallback_fontfile=None, proportional_numerals=False):
     """Rasterize all glyphs for one font style. Returns StyleRasterData."""
     import freetype
 
@@ -583,6 +617,14 @@ def rasterize_font_style(fontfile, size, intervals, style_id=0, force_autohint=F
     # Invalid_Size_Handle on some fonts.
     face.set_char_size(size << 6, size << 6, 150, 150)
     ligature_glyph_indices = extract_ligature_glyph_indices_fonttools(fontfile)
+    pnum_subs = extract_pnum_subs(fontfile) if proportional_numerals else {}
+    pnum_indices = {}
+    if pnum_subs:
+        from fontTools.ttLib import TTFont
+        with TTFont(fontfile) as source:
+            order = {name: i for i, name in enumerate(source.getGlyphOrder())}
+            pnum_indices = {cp: order[pnum_subs[name]] for cp, name in source.getBestCmap().items()
+                            if name in pnum_subs and pnum_subs[name] in order}
     fallback_face = None
     if fallback_fontfile:
         fallback_face = freetype.Face(fallback_fontfile)
@@ -593,7 +635,7 @@ def rasterize_font_style(fontfile, size, intervals, style_id=0, force_autohint=F
         load_flags |= freetype.FT_LOAD_FORCE_AUTOHINT
 
     def load_glyph(code_point):
-        glyph_index = face.get_char_index(code_point)
+        glyph_index = pnum_indices.get(code_point, face.get_char_index(code_point))
         if glyph_index == 0:
             glyph_index = ligature_glyph_indices.get(code_point, 0)
         if glyph_index > 0:
@@ -729,7 +771,7 @@ def rasterize_font_style(fontfile, size, intervals, style_id=0, force_autohint=F
     ppem = size * 150.0 / 72.0
     all_cps = set(g.code_point for g, _ in all_glyphs)
 
-    kern_map = extract_kerning_fonttools(fontfile, all_cps, ppem)
+    kern_map = extract_kerning_fonttools(fontfile, all_cps, ppem, pnum_subs)
     # SMP codepoints (> U+FFFF) cannot be stored in the uint16 kern codepoint
     # field; drop them before class derivation to avoid a downstream
     # struct.error when packing the binary kern tables.
@@ -749,10 +791,8 @@ def rasterize_font_style(fontfile, size, intervals, style_id=0, force_autohint=F
     # extract_ligatures_fonttools (see the codepoints_set filter), so every
     # entry returned here is already 16-bit safe.
     ligature_pairs = extract_ligatures_fonttools(fontfile, all_cps)
-    if len(ligature_pairs) > 255:
-        print(f"  [{style_label}] WARNING: {len(ligature_pairs)} ligature pairs exceeds uint8_t max (255), truncating",
-              file=sys.stderr)
-        ligature_pairs = ligature_pairs[:255]
+    if len(ligature_pairs) > 4096:
+        raise ValueError(f"{style_label}: {len(ligature_pairs)} ligature pairs exceeds the firmware limit (4096)")
     print(f"  [{style_label}] Ligatures: {len(ligature_pairs)} pairs", file=sys.stderr)
 
     return StyleRasterData(
@@ -828,8 +868,8 @@ def style_sections_total_size(sections):
 # --- File writers ---
 
 def generate_cpfont_multistyle(style_fonts, size, intervals, output_path,
-                               force_autohint=False, fallback_style_fonts=None):
-    """Generate a multi-style v4 .cpfont file.
+                               force_autohint=False, fallback_style_fonts=None, proportional_numerals=False):
+    """Generate a multi-style .cpfont (v5 when ligatures exceed the v4 count).
 
     style_fonts: dict of {style_id: fontfile_path} e.g. {0: "Regular.ttf", 2: "Italic.ttf"}
     fallback_style_fonts: optional dict of {style_id: fallback_fontfile_path}
@@ -850,7 +890,7 @@ def generate_cpfont_multistyle(style_fonts, size, intervals, output_path,
         raster_data[style_id] = rasterize_font_style(
             fontfile, size, intervals, style_id=style_id,
             force_autohint=force_autohint,
-            fallback_fontfile=fallback_fontfile)
+            fallback_fontfile=fallback_fontfile, proportional_numerals=proportional_numerals)
 
     # Pack binary sections for each style
     packed_sections = {}  # style_id -> tuple of section bytearrays
@@ -867,15 +907,22 @@ def generate_cpfont_multistyle(style_fonts, size, intervals, output_path,
         current_offset += style_sections_total_size(packed_sections[style_id])
 
     # Build global header
-    # V4 header: magic(8) + version(2) + flags(2) + styleCount(1) + reserved(19) = 32
-    header = struct.pack("<8sHHB19s", MAGIC, CPFONT_VERSION, flags, style_count, bytes(19))
+    # Shared header: magic(8) + version(2) + flags(2) + styleCount(1) + fingerprint(19).
+    # The header fingerprint changes even when only glyph metrics change.
+    digest = hashlib.sha256()
+    for style_id in sorted(packed_sections):
+        for section in packed_sections[style_id]:
+            digest.update(section)
+    version = (CPFONT_EXTENDED_LIGATURE_VERSION if any(len(sd.ligature_pairs) > 255 for sd in raster_data.values())
+               else CPFONT_VERSION)
+    header = struct.pack("<8sHHB19s", MAGIC, version, flags, style_count, digest.digest()[:19])
     assert len(header) == HEADER_SIZE
 
     # Build style TOC entries
     # Each entry: styleId(1) + pad(3) + intervalCount(4) + glyphCount(4) +
     #   advanceY(1) + ascender(2) + descender(2) + kernL(2) + kernR(2) +
-    #   kernLCls(1) + kernRCls(1) + ligCount(1) + dataOffset(4) + reserved(4) = 32
-    STYLE_TOC_FORMAT = "<B3xIIBhhHHBBBI4x"
+    #   kernLCls(1) + kernRCls(1) + v4LigCount(1) + dataOffset(4) + v5LigCount(2) + reserved(2) = 32
+    STYLE_TOC_FORMAT = "<B3xIIBhhHHBBBIH2x"
     assert struct.calcsize(STYLE_TOC_FORMAT) == STYLE_TOC_ENTRY_SIZE
 
     toc_data = bytearray()
@@ -893,8 +940,9 @@ def generate_cpfont_multistyle(style_fonts, size, intervals, output_path,
                                 sd.advanceY, sd.ascender, sd.descender,
                                 len(sd.kern_left_classes), len(sd.kern_right_classes),
                                 sd.kern_left_class_count, sd.kern_right_class_count,
-                                len(sd.ligature_pairs),
-                                style_offsets[style_id])
+                                len(sd.ligature_pairs) if version == CPFONT_VERSION else 0,
+                                style_offsets[style_id],
+                                len(sd.ligature_pairs) if version == CPFONT_EXTENDED_LIGATURE_VERSION else 0)
 
     # Write output
     os.makedirs(os.path.dirname(output_path) if os.path.dirname(output_path) else ".", exist_ok=True)
@@ -908,7 +956,7 @@ def generate_cpfont_multistyle(style_fonts, size, intervals, output_path,
         total_file_size = f.tell()
 
     # Print summary
-    print(f"  Output: {output_path} (v4, {style_count} styles)", file=sys.stderr)
+    print(f"  Output: {output_path} (v{version}, {style_count} styles)", file=sys.stderr)
     print(f"    Header+TOC: {HEADER_SIZE + len(toc_data)} bytes", file=sys.stderr)
     for style_id in sorted(raster_data.keys()):
         sd = raster_data[style_id]
@@ -943,6 +991,7 @@ def main():
                         help="Font style for single-style mode (default: regular).")
     parser.add_argument("--name", dest="name",
                         help="Font family name for output filenames (default: derived from font filename).")
+    parser.add_argument("--pnum", action="store_true", help="Use proportional numeral glyphs.")
     parser.add_argument("--force-autohint", dest="force_autohint", action="store_true",
                         help="Force FreeType auto-hinter instead of native font hinting.")
     parser.add_argument("-o", "--output", dest="output",
@@ -1068,7 +1117,7 @@ def main():
         total_size += generate_cpfont_multistyle(
             style_fonts, sz, intervals, output_path,
             force_autohint=args.force_autohint,
-            fallback_style_fonts=fallback_style_fonts)
+            fallback_style_fonts=fallback_style_fonts, proportional_numerals=args.pnum)
     print(f"\nTotal: {len(sizes)} files, {total_size / 1024 / 1024:.2f} MB", file=sys.stderr)
 
 

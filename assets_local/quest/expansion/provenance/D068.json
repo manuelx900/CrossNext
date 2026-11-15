@@ -1,0 +1,12 @@
+{
+  "id": "D068",
+  "master": "decor-068-v1.png",
+  "sha256": "9e13ca5a63368d3cf625303094e84c705b46e79cb4a4a049b3f538440a953cce",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original collectible decoration sprite for the e-ink fantasy reading app Aventura lectora. Reference fairy is STYLE ONLY. Friendly chibi storybook proportions, white and pale-gray flat fills, VERY THICK solid pure-BLACK outer contours (20-26px at1024px), strong black inner lines, simple broad shapes readable at112x144. Whole subject visible, centered with transparent padding. Genuine transparent background. No scenery, frame, UI, text, lettering, watermark, fine hatching or gray outlines. Do not include the player hero or PET. Subject: a cheerful round frog sitting on a broad lily pad beside one large flower and a smooth pebble. A grounded ornament with a small clear base.",
+  "reference": "assets_local/quest/redesign/masters/decoration-fairy-v1.png",
+  "transparent": true,
+  "width": 1312,
+  "height": 1199,
+  "mode": "RGBA"
+}

@@ -6,6 +6,7 @@
 #include <Xtc.h>
 
 #include "ClippingStore.h"
+#include "RecentBooksStore.h"
 #include "apps_local/home/CoverSceneCache.h"
 
 bool isBookCacheDirectoryName(const char* name) {
@@ -23,6 +24,7 @@ bool isBookCacheDirectoryName(const char* name) {
 }
 
 void clearBookCache(const std::string& path) {
+  RecentBooksStore::invalidatePresence();
   homecover::invalidateScenes();
   if (FsHelpers::hasReflowableBookExtension(path)) {
     Epub(path, "/.crosspoint").clearCache();

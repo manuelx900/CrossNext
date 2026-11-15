@@ -1,3 +1,4 @@
+#include "StatusBattery.h"
 #pragma once
 #include "../cards/CardArt.h"
 #include "../cards/CardsLabels.h"
@@ -14,14 +15,11 @@ inline fui::Rect begin(toybox::Screen& s, const char* title, int actionReserve =
   const auto back = fui::makeRect(safe.x + 6, safe.y + 6, 44, 44);
   backui::paint(s.target(), back);
   backui::publish(s.device().hasTouch, back);
-  const auto battery = fui::makeRect(safe.right() - 39, safe.y + 20, 28, 17);
-  s.target().stroke(battery, dashboard::paper, 2);
-  s.target().fill(fui::makeRect(battery.right(), battery.y + 4, 4, 9), dashboard::paper);
+  const auto battery = fui::makeRect(safe.right() - 40, safe.y + 19, statusbattery::width, statusbattery::height);
   const auto status = s.headerStatus();
   int right = battery.x - 10;
   if (status.percent >= 0) {
-    s.target().fill(fui::makeRect(battery.x + 4, battery.y + 4, 20 * std::clamp(status.percent, 0, 100) / 100, 9),
-                    dashboard::paper);
+    statusbattery::draw(s.target(), battery, status.percent, status.charging, fui::Color::White);
     if (status.showPercent) {
       char label[8];
       std::snprintf(label, sizeof(label), "%d%%", status.percent);

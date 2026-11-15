@@ -124,6 +124,12 @@ Upon turning the device on for the first time, you will be placed on the **[Home
 
 The Home screen is the main entry point to the firmware. From here you can navigate to **[Reading Mode](#4-reading-mode)** with the most recently read book, **[Browse Files](#33-browse-files-screen)**, the **[Library](#34-library-screen)**, **[File Transfer](#35-file-transfer-screen)**, **[Settings](#36-settings)**, or the two CrossNext adds: **Games** and **Apps**.
 
+Home draws its menu before preparing book artwork. “Loading covers” stays visible while the shelf is prepared; the artwork keeps its original quality. E-ink refresh and a deep-sleep reboot still take time. Carousel 2 starts without a highlighted shortcut; the first navigation press reveals the cursor, and each new press moves one shortcut.
+
+Swipe right from the Library's Recent, Collections or Filter root to return Home. Inside a collection, swiping right from its first book page returns to the collection list. In the cover grid, later pages move to the previous page.
+
+In Settings → Text settings → More, **Use as default** keeps a checkbox. When enabled, all books share the same text settings; when disabled, each book saves its own, and books without saved settings start with the settings chosen here. Tap the exclamation icon beside the checkbox for this explanation. Toggling the checkbox does not open a dialog.
+
 ### 3.1.1 Games and Apps (CrossNext)
 
 **Games** and **Apps** on the Home screen open the shelf, which pages
@@ -394,6 +400,13 @@ reviewing the word again preserves its learning history. See the
 **Library** contains Clear Reading Cache, Use book metadata, Rebuild library
 index and the finished-book/file options. Rebuilding scans the SD card while
 preserving arrival history.
+
+Under **Maintenance**, **Prepare books** lets you choose EPUB/XTC/XTCH, reading
+fonts and one or all available text sizes. It prepares covers for every theme.
+Large selections can take many hours; keep power connected. Saved reading
+preferences stay unchanged. **Prepare full book on opening** is directly below
+this action. See [Book preparation](docs/book-preparation.md) for cache and
+engine compatibility.
 
 **Connectivity** contains Wi-Fi Networks, CrossPoint Sync and OPDS Servers.
 Smart sync is the default for new configurations; existing credentials retain
@@ -730,6 +743,11 @@ The UI includes Arabic and Hebrew (menus use built-in fonts with presentation-fo
 
 ## 5. Reader Menu
 
+On X4 Pro, the quick-settings **Lock screen** shortcut disables touch without
+putting the reader to sleep. Hold the capacitive Home key below the screen to
+unlock touch, even if that key's long-press action was remapped. **Sleep** remains
+a separate shortcut.
+
 Press **Confirm** while reading to open the Reader Menu. From here you can access reading utilities and navigation options without leaving the book.
 
 Available options include:
@@ -740,7 +758,7 @@ Available options include:
 - **Create Clipping** – Select a range of text on the current page and save it as a highlighted clipping.
 - **View Clippings** – Open this book's saved clippings *(shown after the first clipping is saved)*.
 - **Reading Orientation** – Cycle through screen orientations without leaving the reader.
-- **Auto Turn (Pages Per Minute)** – Cycle through automatic page turn speed options for hands-free reading.
+- **Auto Turn (Pages Per Minute)** – Choose an automatic page turn speed for hands-free EPUB reading. In the bottom reader panel, open **More** and go to its second page. Select **Off** to stop automatic turning.
 - **Go to %** – Jump to a specific position in the book by percentage.
 - **Take screenshot** – Save a screenshot of the current page to the `screenshots/` folder.
 - **Show page as QR** – Display a QR code encoding the current reading position.

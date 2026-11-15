@@ -14,7 +14,7 @@ inline const char* sectionName(menufont::Section section) {
   static_assert(sizeof(labels) / sizeof(labels[0]) == menufont::kSectionCount);
   return I18N.get(labels[int(section)]);
 }
-inline constexpr StrId choiceIds[] = {StrId::STR_MENU_FONT_INHERIT, StrId::STR_MENU_FONT_NOTO_SANS,
+inline constexpr StrId choiceIds[] = {StrId::STR_MENU_FONT_INHERIT, StrId::STR_MENU_FONT_PIXEL,
                                       StrId::STR_MENU_FONT_CLASSIC, StrId::STR_MENU_FONT_NOTO_SANS,
                                       StrId::STR_MENU_FONT_NOTO_SERIF};
 static_assert(sizeof(choiceIds) / sizeof(choiceIds[0]) == int(menufont::Override::Count));

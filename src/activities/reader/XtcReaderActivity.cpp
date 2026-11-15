@@ -15,18 +15,21 @@
 #include "ReaderUtils.h"
 #include "XtcPageView.h"
 #include "XtcReaderChapterSelectionActivity.h"
+#include "apps_local/bookprep/OpenedBookPreparationActivity.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
+#include "util/BookProgress.h"
 
 void XtcReaderActivity::openTextSettings() {
   if (!xtc || isAtEndOfBook() || pageSettings) return;
   RenderLock lock;
+  readingPace.pause();
   pageSettings = makeUniqueNoThrow<ReaderToolbarUi>(renderer);
   if (!pageSettings) {
     LOG_ERR("XTR", "OOM: page sheet");
     return;
   }
-  settingsTab = xtc->getBitDepth() == 1 ? 1 : 3;
+  settingsTab = xtc->getBitDepth() == 1 && !SETTINGS.readerBars.customized ? 1 : 3;
   pageSettings->begin();
   renderPageSettings();
   renderer.displayBuffer(HalDisplay::FAST_REFRESH);
@@ -42,7 +45,7 @@ void XtcReaderActivity::renderPageSettings() {
   model.textSheet = true;
   auto& text = model.text;
   text.fixed = true;
-  text.statusAvailable = xtc && xtc->getBitDepth() == 1;
+  text.statusAvailable = xtc && xtc->getBitDepth() == 1 && !SETTINGS.readerBars.customized;
   text.tab = settingsTab;
   text.contentsAvailable = !xtc->getChapters().empty();
   text.listContext = this;
@@ -74,7 +77,7 @@ void XtcReaderActivity::renderPageSettings() {
 }
 
 bool XtcReaderActivity::loadBook() {
-  auto loadedXtc = makeUniqueNoThrow<Xtc>(bookPath, "/.crosspoint");
+  auto loadedXtc = makeUniqueNoThrow<Xtc>(bookPath, "/.crosspoint", SETTINGS.xtcCoverRotation != 0);
   if (!loadedXtc) {
     LOG_ERR("XTR", "Failed to allocate XTC object");
     return false;
@@ -86,6 +89,10 @@ bool XtcReaderActivity::loadBook() {
   xtc = std::move(loadedXtc);
   xtc->setupCacheDir();
   loadProgress();
+  if (SETTINGS.prepareBookOnOpen) {
+    if (auto preparation = bookprep::onOpen(renderer, mappedInput, xtc))
+      startActivityForResult(std::move(preparation), [this](const ActivityResult&) { requestUpdate(); });
+  }
   return true;
 }
 
@@ -305,6 +312,44 @@ void XtcReaderActivity::renderStatusBarOverlay(GfxRenderer& renderer, const Stat
   GUI.drawStatusBar(renderer, progress, pageInfo.currentPage, pageInfo.pageCount, pageInfo.title, paddingBottom);
 }
 
+void XtcReaderActivity::renderConfiguredBars() {
+  if (SETTINGS.xtcStatusBarMode == CrossPointSettings::XTC_STATUS_BAR_HIDE) return;
+  const auto& bars = SETTINGS.readerBars;
+  if (!bars.top.hasText() && !bars.bottom.hasText() && !bars.top.progressHeight() && !bars.bottom.progressHeight())
+    return;
+  readerbars::Data data;
+  const bool needsTitle = SETTINGS.readerBars.top.contains(readerbars::Item::Book) ||
+                          SETTINGS.readerBars.bottom.contains(readerbars::Item::Book);
+  if (needsTitle && !barBookTitleLoaded) {
+    readerbars::copyLabel(barBookTitle, xtc->getTitle().c_str());
+    barBookTitleLoaded = true;
+  }
+  data.book = barBookTitle;
+  data.page = static_cast<int>(currentPage) + 1;
+  data.pages = static_cast<int>(xtc->getPageCount());
+  data.percent = data.pages > 0 ? data.page * 100.0f / data.pages : 0;
+  uint32_t chapterEnd = 0;
+  if (xtc->hasChapters()) {
+    const auto& chapters = xtc->getChapters();
+    const auto chapter = std::find_if(chapters.begin(), chapters.end(), [this](const xtc::ChapterInfo& item) {
+      return currentPage >= item.startPage && currentPage <= item.endPage;
+    });
+    if (chapter != chapters.end()) {
+      data.chapter = chapter->name.c_str();
+      data.page = currentPage - chapter->startPage + 1;
+      data.pages = chapter->endPage - chapter->startPage + 1;
+      chapterEnd =
+          static_cast<uint32_t>(uint64_t(chapter->endPage + 1) * readerbars::Pace::UNITS / xtc->getPageCount());
+    }
+  }
+  if (SETTINGS.readerBars.needsPace() && xtc->getPageCount()) {
+    pacePosition = static_cast<uint32_t>(uint64_t(currentPage) * readerbars::Pace::UNITS / xtc->getPageCount());
+    data.timeBook = readingPace.remaining(pacePosition);
+    if (chapterEnd) data.timeChapter = readingPace.remaining(pacePosition, chapterEnd);
+  }
+  drawConfiguredBars(data);
+}
+
 void XtcReaderActivity::renderPage() {
   const uint16_t pageWidth = xtc->getPageWidth();
   const uint16_t pageHeight = xtc->getPageHeight();
@@ -340,7 +385,11 @@ void XtcReaderActivity::renderPage() {
 
   int top, right, bottom, left;
   renderer.getOrientedViewableTRBL(&top, &right, &bottom, &left);
-  if (bitDepth == 1) {
+  if (bitDepth == 1 && SETTINGS.readerBars.customized &&
+      SETTINGS.xtcStatusBarMode != CrossPointSettings::XTC_STATUS_BAR_HIDE) {
+    top += UITheme::getReaderTopBarHeight();
+    bottom += UITheme::getStatusBarHeight();
+  } else if (bitDepth == 1 && !SETTINGS.readerBars.customized) {
     const int statusHeight = UITheme::getInstance().getStatusBarHeight();
     if (statusHeight > 0) {
       const auto placement = SETTINGS.statusBarSpec().xtcMode;
@@ -430,7 +479,9 @@ void XtcReaderActivity::renderPage() {
     }
   }
 
-  if (SETTINGS.statusBarSpec().xtcMode == CrossPointSettings::XTC_STATUS_BAR_MODE::XTC_STATUS_BAR_TOP) {
+  if (SETTINGS.readerBars.customized) {
+    renderConfiguredBars();
+  } else if (SETTINGS.statusBarSpec().xtcMode == CrossPointSettings::XTC_STATUS_BAR_MODE::XTC_STATUS_BAR_TOP) {
     renderStatusBarOverlay(renderer, StatusBarOverlayPosition::Top);
   } else {
     renderStatusBarOverlay(renderer, StatusBarOverlayPosition::Bottom);
@@ -481,6 +532,7 @@ bool XtcReaderActivity::saveFinishedPosition() {
   uint8_t data[4];
   for (int n = 0; n < 4; ++n) data[n] = static_cast<uint8_t>(page >> (8 * n));
   if (!ProgressFile::writeAtomic(xtc->getCachePath(), data, sizeof(data))) return false;
+  publishBookProgress(bookPath, 100);
   currentPage = lastSavedPage = page;
   pageSettings.reset();
   return true;
@@ -503,8 +555,10 @@ void XtcReaderActivity::saveProgress() const {
   data[3] = (currentPage >> 24) & 0xFF;
   if (!ProgressFile::writeAtomic(xtc->getCachePath(), data, sizeof(data))) {
     LOG_ERR("XTC", "Failed to save progress: page %lu", currentPage);
-  } else
+  } else {
     lastSavedPage = currentPage;
+    publishBookProgress(bookPath, std::clamp<int>(xtc->calculateProgress(currentPage), 0, 100));
+  }
 }
 
 void XtcReaderActivity::loadProgress() {

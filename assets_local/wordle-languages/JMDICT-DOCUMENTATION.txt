@@ -1,0 +1,181 @@
+Source: https://www.edrdg.org/wiki/JMdict-EDICT_Dictionary_Project.html
+Downloaded HTML SHA256: 873d4730db9b07f5f2554628f30969147e5054ad1f3bc1d528418d1b4961b791
+
+JMdict-EDICT Dictionary Project - EDRDG Wiki
+JMdict-EDICT Dictionary Project
+From EDRDG Wiki
+Jump to navigation
+Jump to search
+Contents
+1 JMdict/EDICT JAPANESE/ENGLISH DICTIONARY PROJECT
+1.1 INTRODUCTION
+1.2 CURRENT VERSION & DOWNLOAD
+1.3 PROJECT FORUM
+1.4 NEXT GENERATION
+1.5 DATABASE and UPDATING
+1.6 FORMAT
+1.7 PROJECT HISTORY
+1.8 COPYRIGHT
+1.9 LEXICOGRAPHICAL DETAILS
+1.9.1 Inflections, etc.
+1.9.2 Part of Speech Marking
+1.9.3 Field of Application
+1.9.4 Miscellaneous Markings
+1.9.5 Word Priority Marking
+1.9.6 Okurigana Variants
+1.9.7 Spellings
+1.9.8 Loanwords and Regional Words
+1.10 OTHER LANGUAGES
+1.11 ROMAJI VERSIONS?
+1.12 RELATED PROJECTS
+1.13 SERVERS & PACKAGES
+1.14 ACKNOWLEDGEMENTS
+1.15 PUBLICATIONS
+JMdict/EDICT JAPANESE/ENGLISH DICTIONARY PROJECT
+INTRODUCTION
+This page is rather out-of-date. I hope to update it later in 2024. Jim
+The JMdict/EDICT project has as its goal the production of a comprehensive freely-available Japanese/English Dictionary database in machine-readable form which can be used by a variety of applications and servers.
+The project began in 1991 with the expansion of the EDICT simple Japanese-English dictionary file. (See below under History)
+At present the project has the following dictionary files available:
+the full Japanese-Multilingual Dictionary (JMdict) file which is distributed in XML format. The JMdict file is aimed at being a multilingual lexical database with Japanese as the pivot language and also includes translations of words and phrases in a number of languages other than English. It has been designed to support the requirements of Japanese lexicography, including multiple surface forms, orthographical variants, okurigana variants, multile readings, etc.
+the EDICT2 file, which is in a relatively simple one-line-per-entry text format based on the original EDICT format, and which contains almost all the information in the JMdict edition;
+the EDICT file, which follows the original format of one kanji form and reading per entry, and  contains a reduced amount of information. It is provided to maintain support for software which uses the original EDICT file format;
+the EDICT_SUB file, which contains about 20% of the most common entries in the EDICT file.
+The dictionary data is maintained in an online database under the oversight of an editorial board, and the JMdict and EDICT versions are generated and released daily.
+The dictionary files are copyright, and distributed in accordance with the Licence Statement, which can found at the WWW site of the Electronic Dictionary Research and Development Group (http://www.edrdg.org/) who are the owners of the copyright.
+An earlier version of this page can be found here. (http://www.edrdg.org/jmdict/edict_doc_depr.html) Note that it contains many out-of-date links.
+CURRENT VERSION & DOWNLOAD
+The project's master database is continuously being updated and new versions of the files are generated daily. The date of generation is included in the header of the files.
+The files are currently distributed via the EDRDG ftp server (http://ftp.edrdg.org/pub/Nihongo/00INDEX.html), (formerly at Monash University) which also provides an rsync service. The main files available are:
+JMdict.gz  (http://ftp.edrdg.org/pub/Nihongo/JMdict.gz) - the full JMdict file, including English, German, French, Russian, Spanish, Hungarian, Slovenian and Dutch glosses;
+JMdict_e.gz  (http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz) - the JMdict file with only English glosses;
+JMdict_b.gz  (http://ftp.edrdg.org/pub/Nihongo/JMdict_b.gz) - the JMdict file with only English glosses and excluding the approx. 7,000 names included from JMnedict;
+JMdict_e_examp.gz  (http://ftp.edrdg.org/pub/Nihongo/JMdict_e_examp.gz) - the above JMdict file with example sentence pairs from the Tanaka_Corpus;
+edict.gz  (http://ftp.edrdg.org/pub/Nihongo/edict.gz) - the "traditional" EDICT file. (Only to be used in legacy apps, etc.)
+edict2.gz  (http://ftp.edrdg.org/pub/Nihongo/edict2.gz) - the extended EDICT2 file.
+PROJECT FORUM
+The are several forums where this project is actively discussed.
+The original forum was the  sci.lang.japan Usenet newsgroup.  (http://groups.google.com/group/sci.lang.japan) More recently a mailing list  (https://groups.google.com/g/edict-jmdict) specifically for project discussion has begun. (Go to the "About" link on that page to initiate joining the discussion.)
+NEXT GENERATION
+A major revision of the JMdict structure is planned as a way of dealing with a number of issues which have emerged during the life of the project.
+DATABASE and UPDATING
+The dictionary data is all held in a PostgreSQL database and maintained using the JMdictDB online system (http://www.edrdg.org/wiki/index.php/JMdictDB_Project). The JMdict version is generated directly from the database. From this the EDICT/EDICT2 versions are generated using utility software. You can explore the database and propose edits and new entries via its Search Form (http://www.edrdg.org/jmdictdb/cgi-bin/srchform.py?svc=jmdict&sid=).
+The EDRDG Wiki (http://www.edrdg.org/wiki/index.php/Main_Page#The_JMdict.2FEDICT_Project) has a wealth of information about the dictionary database, including suggestions about getting started,  (http://www.edrdg.org/wiki/index.php/JMdict:_Getting_Started) the detailed editorial policy and guidelines (http://www.edrdg.org/wiki/index.php/Editorial_policy), etc. etc.
+FORMAT
+The basic format of the entries in the dictionary files can be seen in detail by examining the DTD (http://www.edrdg.org/jmdict/jmdict_dtd_h.html) (Document Type Declaration) of the XML-format JMdict file. The DTD is heavily annotated with content and structural information.(download) (http://www.edrdg.org/jmdict/dtd-jmdict.xml)
+In summary, each dictionary entry is independent, although there may be cross-reference fields pointing to other entries. Each entry consists of
+kanji elements, i.e. headwords containing at least one kanji character, plus associated tags indicating some status or characteristic of the headword. Where there are multiple headwords, they have been ordered according to frequency of usage, as far as this can be determined;
+reading elements, containing either the reading in kana of the headword, or the headword itself in the case of headwords only in kana. The elements also include tags indicating some status or characteristics. As with the kanji headwords, where there are multiple readings they have been ordered according to frequency of usage, as far as this can be determined;
+general coded information relating to the entry as a whole, such as original language, date-of-creation, etc.
+sense elements, containing the translational equivalents or glosses of the headword(s). As Japanese is not highly polysemous, there is often only one sense. Associated with the sense elements is other coded data indicating the part-of-speech, field of application, miscellaneous information, etc. As with headwords and readings, the glosses are ordered with the most common appearing first.
+The format and coding of the distributed files is as follows:
+the JMdict file contains the complete dictionary information in XML format as per the DTD. This file is in Unicode/ISO-10646 coding using UTF-8 encapsulation. (Sample Entry) (http://www.edrdg.org/jmdict/jmdict_sample.html)
+the EDICT file is in the original relatively simple format based on the text data file of the SKK input-method. Each entry is in the form:
+KANJI [KANA] /(general information) gloss/gloss/.../
+or
+KANA /(general information) gloss/gloss/.../
+The sample entry (linked above) appears as follows in the EDICT format:
+収集 [しゅうしゅう] /(n,vs) gathering up/collection/accumulation/
+(in addition to equivalent entries with the 蒐集, 拾集 and 収輯 kanji compounds.)
+Where there are multiple senses, these are indicated by (1), (2), etc. before the first gloss in each sense. As this format only allows a single kanji headword and reading, entries are generated for each possible headword/reading combination. As the format restricts Japanese characters to the kanji and kana fields, any cross-reference data and other informational fields are omitted.
+The EDICT file is distributed in JIS X 0208 coding in EUC-JP encapsulation. (Please note that this original format is only now provided for legacy systems and apps. New systems must use the EDICT2 edition described below);
+the EDICT2 file is in an expanded form of the original EDICT format. The main differences are the inclusion of multiple kanji headwords and readings, and the inclusion of cross-reference and other information fields, e.g.:
+KANJI-1;KANJI-2 [KANA-1;KANA-2] /(general information) (see xxxx) gloss/gloss/.../
+The sample entry (linked above) appears as follows in the EDICT2 format:
+収集(P);蒐集;拾集;収輯 [しゅうしゅう] /(n,vs) gathering up/collection/accumulation/(P)/
+In addition, the EDICT2 has as its last field the sequence number of the entry. This matches the "ent_seq" entity value in the XML edition. The field has the format: EntLnnnnnnnnX. The EntL is a unique string to help identify the field. The "X", if present, indicates that an audio clip of the entry reading is available from the JapanesePod101.com site.
+The EDICT2 file is distributed in JIS X 0208 and JIS X 0212 codings in EUC-JP encapsulation;
+the EDICT_SUB file is in the same format as the EDICT file.
+None of the files have the entries in any particular order.
+PROJECT HISTORY
+The project was begun in 1991 by Jim Breen (http://nihongo.monash.edu/) when an early DOS-based Japanese word-processor (MOKE - Mark's Own Kanji Editor) was released, containing an initial small version of the EDICT file. This was progressively expanded and edited over the following years. In 1999 the EDICT file, which by this time contained about 60,000 entries, was converted into an expanded format and the first XML-format JMdict file released. From that point both JMdict and the EDICT2/EDICT versions have been generated from the same source data.
+The EDICT2 format was created in 2003, primarily for use with the WWWJDIC (http://nihongo.monash.edu/cgi-bin/wwwjdic.cgi?1C) dictionary server, however it is now also used by other servers and applications.
+The growth in entries in the file is largely due to the efforts of the many people who have contributed entries to it over the years and who have participated in the editorial role. The increase in entry numbers has slowed as the file has achieved coverage of a large proportion of the Japanese lexicon. Much of the editorial work in recent years has concentrated on amendments and expansion to existing entries.
+A more expanded explanation of the early developments in the EDICT file can be found in the original documentation (http://www.edrdg.org/jmdict/edict_doc_old.html).
+COPYRIGHT
+Dictionary copyright is a difficult point, because clearly the first lexicographer who published "inu means dog" could not claim a copyright violation over all subsequent Japanese dictionaries. While it is usual to consult other dictionaries for "accurate lexicographic information", as Nelson put it, wholesale copying is, of course, not permissible, and contributors have been advised to avoid direct copying from other sources. What makes each dictionary unique (and copyright-able) is the particular selection of words, the phrasing of the meanings, the presentation of the contents (a very important point in the case of this project), and the means of publication.
+The files of the project are copyright, and distributed in accordance with the Licence Statement, which can found at the WWW site of the Electronic Dictionary Research and Development Group  (http://www.edrdg.org/) who are the current owners of the copyright. As explained in the licence, the files are available for use for most purposes provided acknowledgement and distribution of the documentation is made.
+LEXICOGRAPHICAL DETAILS
+Inflections, etc.
+In general no inflections of verbs or adjectives have been included, except in idiomatic expressions. Adverbs formed from adjectives (e.g., -ku or -ni) are generally not included. Verbs are, of course, in the plain or "dictionary" form.
+Composed forms, such as adverbs taking the "to" particle, keiyoudoushi adjectives, etc. are only included in their root from, however the part-of-speech (POS) marker is used to indicate their status.
+Nouns which can form a verb with the auxiliary verb "suru" only appear in their noun form, but have a POS marker: "vs", to indicate the existence of a verbal form. In general the gloss only relates to the noun itself, but entries are being progressively expanded to include the verbal glosses as well.
+Part of Speech Marking
+The dictionary includes one or more Part of Speech (POS) markings on almost every entry. Examples include: "adj-i" (adjective - 形容詞), "n" (noun - 名詞), "prt" (particle - 助詞), etc. (Full POS list) (http://www.edrdg.org/jmdictdb/cgi-bin/edhelp.py?svc=jmdict&sid=#kw_pos)
+Field of Application
+A number of entries are marked with a specific field of application, e.g. "chem" (chemistry), "math" (mathematics), etc. (Full field list) (http://www.edrdg.org/jmdictdb/cgi-bin/edhelp.py?svc=jmdict&sid=#kw_fld)
+Miscellaneous Markings
+A number of miscellaneous tags are included in entries to provide additional information is a standardized form, e.g. "col" (colloquialism), "sl" (slang), "uk" (term usually in kana), etc. (Full list)  (http://www.edrdg.org/jmdictdb/cgi-bin/edhelp.py?svc=jmdict&sid=#kw_misc)
+Word Priority Marking
+The ke_pri and equivalent re_pri fields in the JMdict file are provided to record information about the relative commonness or priority of the entry, and consist of codes indicating the word appears in various references which can be taken as an indication of the frequency with which the word is used. This field is intended for use either by applications which want to concentrate on entries of a particular priority, or to generate subset files. The current values in this field are:
+news1/2: appears in the "wordfreq" file compiled by Alexandre Girardi from the Mainichi Shimbun. (See the ftp archive for a copy.) Words in the first 12,000 in that file are marked "news1" and words in the second 12,000 are marked "news2".
+ichi1/2: appears in the "Ichimango goi bunruishuu", Senmon Kyouiku Publishing, Tokyo, 1998. (The entries marked "ichi2" were demoted from ichi1 because they were observed to have low frequencies in the WWW and newspapers.)
+spec1 and spec2: a small number of words use this marker when they are detected as being common, but are not included in other lists.
+gai1/2: common loanwords, also based on the wordfreq file.
+nfxx: this is an indicator of frequency-of-use ranking in the wordfreq file. "xx" is the number of the set of 500 words in which the entry can be found, with "01" assigned to the first 500, "02" to the second, and so on. Entries with news1, ichi1, spec1/2 and gai1 values are marked with a "(P)" in the EDICT and EDICT2 files.While the priority markings accurately reflect the status of entries with regard to the various sources, they must be seen as only providing a crude indication of how common a word or expression actually is in Japanese. The "(P)" markings in the EDICT and EDICT2 files appear to identify a useful subset of "common" words, but there are clearly some marked entries which are not very common, and there are clearly unmarked entries which are in common use, particularly in the spoken language.
+Okurigana Variants
+Okurigana variants in headwords are handled by including each variant form as a headword. This is to enable software to match with variant forms.
+Spellings
+As far as possible variants of English translation and spelling are included. Where appropriate different translations are included for national variants (e.g. autumn/fall, tap/faucet, etc.). Common spelling variations such as -our/-or and -ize/-ise are handled either by repeating the gloss in both spellings or appending spelling variants in parentheses. No attempt is made to tag English spellings according to country of usage.
+Loanwords and Regional Words
+For loanwords (gairaigo) which have not been derived from English words, the source language and the word in that language are included. Languages have been coded in the three-letter codes from the ISO 639-2:1998 "Codes for the representation of names of languages" standard, e.g. "(fre: avec)" in the EDICT/EDICT2 files and <lsource xml:lang="fre">avec</lsource> in the JMdict file. (Full list  (http://www.edrdg.org/jmdictdb/cgi-bin/edhelp.py?svc=jmdict&sid=#kw_lang) of language tags)In the case of gairaigo which have a meaning which is not apparent from the original (usually English) words, the words in the source language are included as: "lang: original words", e.g.
+コンクール /(n) competition (fre: concours)/contest/
+In some cases the entries are pseudo-loanwords that have been constructed in Japan from foreign (usually English) words or word fragments (e.g. 和製英語  - waseieigo). These are tagged with "wasei" in EDICT/EDICT2 entries, e.g.
+アゲンストウィンド /(n) head wind (wasei: against wind)/adverse wind/
+and in JMdict with the "ls_wasei" attribute e.g. <lsource ls_wasei="y">against wind</lsource>A number of tags are used to indicate that a word or phrase is associated with a particular regional language variant within Japan, e.g. "ksb" (Kansai-ben). (Full list)  (http://www.edrdg.org/jmdictdb/cgi-bin/edhelp.py?svc=jmdict&sid=#kw_dial)
+OTHER LANGUAGES
+The JMdict file has the capacity to record glosses for Japanese headwords in many languages. JMdict is currently distributed in two versions: a basic version in which there are only English glosses, and a full version in which there are glosses included in German (133,000 entries), Russian (80,000), Hungarian (51,000), Spanish (39,000), Dutch (29,000), Swedish (16,000), French (15,000) and Slovenian (9,000). Details of the dictionary files used for the non-English glosses in JMdict can be found in the WWWJDIC documentation (http://www.edrdg.org/wwwjdic/wwwjdicinf.html#dicfilf_tag).
+As part of the daily build of the full JMdict file, the Japanese headwords are matched against the dictionary files for the other languages, and glosses are included where there is a match. The non-English glosses are added as separate sets of senses, and as far as possible are broken into individual senses using tags within those files (typically (1) .... (2) ....., etc.) At present there is no attempt to align senses between the languages as there is no consistency between the dictionaries as to the sense splitting. (There is some more information on the background to the current sense breakup.)
+ROMAJI VERSIONS?
+None of the files in the JMdict/EDICT project use ローマ字 (romanized Japanese), except for proper names such as "Suzuki", "Fuji", etc. or in cases such as "ikebana" where the the romanized Japanese has been adopted as an English term.See the Editorial Policy for more information on this.
+RELATED PROJECTS
+A number of other Japanese dictionary projects are closely related to this one. Among them are:
+the ENAMDICT/JMnedict (http://www.edrdg.org/enamdict/enamdict_doc.html) Japanese Proper Names Dictionary project, which currently has nearly 740,000 named entities. The files are available in EDICT or XML formats.
+the  KANJIDIC project, which maintains and distributes databases of information about kanji.
+the COMPDIC (http://www.edrdg.org/jmdict/compdic_doc.html) file in EDICT format of computing and telecomms terminology. In 2008 the COMPDIC material was included in the main EDICT/JMdict database with tagging indication the entries relate to ICT. A separate "COMPDIC" file is extracted for distribution.
+the RADKFILE/KRADFILE (http://www.edrdg.org/krad/kradinf.html) file of visual elements in kanji, which can be used for finding kanji in dictionaries.
+SERVERS & PACKAGES
+A large number of WWW servers and software packages use the JMdict/EDICT files.
+ACKNOWLEDGEMENTS
+Since 1991 a large number of people have contributed to this project; far too many to list here. All their contributions have been most welcome, indeed without the assistance of speakers and students of Japanese this project would not have achieved as much.
+The EDICT/JMdict has been granted approval to use material from the Japanese WordNet (http://compling.hss.ntu.edu.sg/wnja/index.en.html). This approval is most welcome.
+PUBLICATIONS
+Some publications by Jim Breen about the EDICT/JMdict project. A more complete and up-to-date list can be found in Jim's publications page (http://www.edrdg.org/~jwb/papers.html).
+paper about JMdict presented at the COLING Multilingual Linguistic Resources Workshop in Geneva in August 2004. (html) (http://www.edrdg.org/~jwb/paperdir/jmdictart.html) (pdf) (http://www.edrdg.org/~jwb/paperdir/jmdictart.pdf)
+(This paper should be referenced when citing the dictionary in a publication.)
+an earlier JMdict paper (http://www.edrdg.org/~jwb/paperdir/ws2002_paper.html) about some of the practical issues, presented at the Papillon Project workshop in Tokyo in July 2002.
+a paper presented to the Papillon Project workshop in 2003 in Sapporo on the linking of examples sentences in the Tanaka corpus to EDICT entries in WWWJDIC (http://www.edrdg.org/~jwb/paperdir/dicexamples.html).
+a 1999 workshop paper about WWWJDIC; (updated 2003 version) (http://www.edrdg.org/~jwb/paperdir/wwwjdic_article2.html) (1999 version) (http://nihongo.monash.edu/wwwjdic_article/wwwjdic_article.html).
+an overview paper about EDICT presented at the JSAA conference in 1995; (html) (http://www.edrdg.org/~jwb/paperdir/hpaper.html)
+An early technical report from 1993; (pdf) (http://www.edrdg.org/~jwb/paperdir/ejdic_report1.pdf)
+Retrieved from "https://www.edrdg.org/wiki/index.php?title=JMdict-EDICT_Dictionary_Project&oldid=974 (https://www.edrdg.org/wiki/index.php?title=JMdict-EDICT_Dictionary_Project&oldid=974)"
+Navigation menu
+Personal tools
+Log in
+Namespaces
+Page
+Discussion
+English
+Views
+Read
+View source
+View history
+More
+Search
+Navigation
+Main page
+Recent changes
+Random page
+Help about MediaWiki (https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents)
+Tools
+What links here
+Related changes
+Special pages
+Printable version
+Permanent link
+Page information
+This page was last edited on 23 May 2024, at 11:49.
+Privacy policy
+About EDRDG Wiki
+Disclaimers
+(https://www.mediawiki.org/)

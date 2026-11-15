@@ -1,0 +1,18 @@
+{
+  "id": "K022",
+  "key": "Atril",
+  "file": "K022.png",
+  "sample": {
+    "es": "Atril de la aldea",
+    "en": "Village bookstand"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Village bookstand.",
+  "requests": [
+    22
+  ],
+  "sha256": "ffc0214da393cdc20540010c78230fad924f46fa5e0c27a3bdaa22c148c91f8f",
+  "source": "exec-f6d9aa1c-c59e-4c88-93b4-e6ede1e92af1.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

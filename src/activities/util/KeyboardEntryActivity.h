@@ -8,6 +8,9 @@
 #include <string>
 #include <utility>
 
+#include "../../apps_local/ui/KeyboardAlternates.h"
+#include "LanguageKeyboard.h"
+#include "PinyinInput.h"
 #include "activities/Activity.h"
 #include "util/ButtonNavigator.h"
 
@@ -29,6 +32,7 @@ class KeyboardEntryActivity : public Activity {
         inputType(inputType) {}
 
   void onEnter() override;
+  void setCenteredText(bool centered) { centerInputText = centered; }
   void onExit() override;
   void loop() override;
   void render(RenderLock&&) override;
@@ -44,25 +48,29 @@ class KeyboardEntryActivity : public Activity {
   ButtonNavigator buttonNavigator;
 
   // Keyboard layers. The letter/symbol layers come from the SDK's builtin
-  // layouts (with the always-visible number row); the URL layers are
+  // layouts (with separate number and symbol pages); the URL layers are
   // app-defined tables in the .cpp.
   freeink::ui::KeyboardLayoutId layoutId = freeink::ui::KeyboardLayoutId::QwertyEn;
+  Language layoutLanguage = Language::EN;
+  uint64_t cardLayouts = 0;
   // Asks the SDK for a layout variant with the language key. Only the Latin
   // layouts honour it; the Cyrillic, Hebrew and Arabic tables carry the key
   // either way.
   // Resolved once in onEnter(): the set cannot change while a keyboard is on
   // screen, and currentLayout() runs on every loop pass.
   bool showLangKey = false;
+  bool centerInputText = false;
+  LanguageKeyboard languageKeyboard;
+  bool useLanguageKeyboard = false;
+  PinyinInput pinyin;
   bool shifted = false;
   bool symbols = false;
   bool urlPanel = false;  // URL snippet panel replaces the letter layer
 
   // Key hit rects registered by the keyboard component during render(); loop()
-  // routes touch snapshots against them. The 5-row EN layout registers 41 keys,
-  // Cyrillic's wider rows (12/11/11 against 10/9/9) exactly 48, so 56 restores
-  // the headroom. Two generations of 16-byte entries: 256 bytes for the eight
-  // extra slots, no heap.
-  freeink::ui::InteractionBuffer<56> interactions;
+  // routes touch snapshots against them. Eighty bounded entries cover the
+  // six-row Kana/Thai layouts and the Chinese candidate band without growth.
+  freeink::ui::InteractionBuffer<80> interactions;
 
   // GPIO selection over the current layout grid (row/col in layout terms;
   // the bottom action row is just the last row).
@@ -87,6 +95,7 @@ class KeyboardEntryActivity : public Activity {
   // Tap/hold routing (threshold long-press, release swallow, slide re-arm)
   // lives in the SDK; loop() feeds it the level-triggered touch state.
   freeink::ui::TouchHoldRouter touchRouter;
+  keyboardview::Alternates alternates;
 
   // loop() runs on the main task while render() rebuilds the interaction
   // table on the render task; render() opts `interactions` into the SDK's
@@ -151,6 +160,7 @@ class KeyboardEntryActivity : public Activity {
   bool clearAllOrAltOnSelected();
 
   void insertUtf8(const char* out);
+  bool commitPinyin(unsigned choice = 0);
   bool backspaceUtf8();
   static size_t utf8Prev(const std::string& s, size_t pos);
   static size_t utf8Next(const std::string& s, size_t pos);

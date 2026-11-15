@@ -1,0 +1,12 @@
+{
+  "id": "S094",
+  "master": "scene-094-v1.png",
+  "sha256": "54930427b420ad598e148caeab789326a8324a821920148f2e274230ca89275e",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The last page. Chapter: The unending night. Illustrate this already-authored event faithfully, without inventing another object or plot: The seal of Memory preserves what actually happened. The palace alters those accounts to make the king appear to be everyone's only protection and justify their obedience. Context only, do not try to draw all of it: The next room repeats the night of the fire. Aren presents that tragedy as proof that only he can protect the population. You compare his version with the witnesses' recovered accounts.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

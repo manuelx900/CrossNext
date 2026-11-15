@@ -8,6 +8,7 @@
 
 #include "TextSettingsPreview.h"
 #include "activities/UiTabListActivity.h"
+#include "apps_local/readertext/ReaderTextSheet.h"
 #include "components/OptionPopup.h"
 #include "components/themes/BaseTheme.h"
 
@@ -27,6 +28,12 @@ class TextSettingsActivity final : public UiTabListActivity {
   void render(RenderLock&&) override;
 
  private:
+  readertext::Work sheetWork_;
+  readertext::SheetView sheetView_ = readertext::SheetView::Controls;
+  int sheetFontPage_ = 0, sheetLayoutPage_ = 0;
+  void buildSheet(UiScreen& screen);
+  void sheetControl(int control);
+  int previewBottom() const;
   // Row indices per tab. enum class (not plain enum) so a LayoutRow can't be
   // silently confused with a StyleRow of equal value.
   enum class LayoutRow {

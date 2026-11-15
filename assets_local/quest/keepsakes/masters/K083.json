@@ -1,0 +1,18 @@
+{
+  "id": "K083",
+  "key": "Rosa",
+  "file": "K083.png",
+  "sample": {
+    "es": "Rosa de la brújula",
+    "en": "Compass rose"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: a carved eight-point compass rose medallion, a travel instrument ornament, no flower and no letters.",
+  "requests": [
+    138
+  ],
+  "sha256": "221b5d5f3c85473b4fcde4877eb9a5ea40b6789870976c3fc5a89c335ccaf276",
+  "source": "exec-68abb497-5c00-4e16-9650-73ad9abbe0d0.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

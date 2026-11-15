@@ -1,4 +1,5 @@
 #include "PetCelebration.h"
+#include "PetDecorationInk.h"
 
 namespace petui {
 using namespace widget;
@@ -96,7 +97,8 @@ void picture(toybox::Screen& s, const Model& m, fui::Rect r) {
   if (!drawn) art(s, m, image, id, speciesIcon(p.species), false);
   const int handW = compact ? 88 : 110, handH = compact ? 55 : 69;
   const auto hand = rect(r.x + r.width / 2 - handW * 35 / 100, r.y + 1, handW, handH);
-  if (!m.art.draw || !m.art.draw(m.art.context, s.target(), hand, PETTING_HAND_ART, false)) pettingHand(s, hand);
+  DecorationInk handInk(s.target());
+  if (!m.art.draw || !m.art.draw(m.art.context, handInk, hand, PETTING_HAND_ART, false)) pettingHand(s, hand);
   icon(s, rect(r.x + r.width / 4 - 8, r.y + 15, 26, 26), icon_hearts_32);
   icon(s, rect(r.x + r.width * 3 / 4 - 9, r.y + 2, 32, 32), icon_hearts_32);
 }

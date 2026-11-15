@@ -1,0 +1,6 @@
+{
+  "generator": "imagegen built-in",
+  "prompt": "Create ONE production UI illustration for a monochrome e-ink reading adventure RPG, square composition, centered with generous clear margin. It marks that every item in a shop category has already been collected. Draw a charming open treasure chest with a single round checkmark medallion on its front and two small celebratory sparkles. Bold confident rounded black outlines, pure black and white only, clean readable silhouettes at 96 to 140 pixels, friendly hand-drawn game icon consistent with outlined fantasy inventory icons. White interior fills, transparent background outside the silhouette. Flat front three-quarter view. No text, no lettering, no numbers, no gradients, no gray shading, no hatching, no shadows, no border frame, no pixel art. The chest and checkmark must remain unmistakable at small size. This is a new standalone icon, not a screen mockup.",
+  "sourceFile": "exec-16c84fdd-fb8b-4891-a2af-cd857c1500c8.png",
+  "integration": "128x128 resident constexpr Mask1; existing monochrome UI renderer; no runtime PNG decode"
+}

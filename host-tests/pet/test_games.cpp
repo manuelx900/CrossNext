@@ -137,8 +137,24 @@ int main() {
       game.advance();
       game.select(3);
       assert(game.step == 0);
-      game.select((game.sequence[0] + 1) % 3);
-      assert(game.showing() && game.step == 0 && game.mistakes == round + 1);
+      const unsigned attemptLength = game.sequenceLength();
+      const auto expected = game;
+      for (unsigned i = 0; i < attemptLength; ++i) {
+        const unsigned choice = (game.sequence[i] + (i == round ? 1 : 0)) % 3;
+        game.select(choice);
+        assert(game.sequenceInput[i] == choice && game.step == i + 1 && game.rounds == round);
+        assert(!std::memcmp(expected.sequence, game.sequence, sizeof(game.sequence)));
+        if (i + 1 < attemptLength) assert(game.phase == pet::GamePhase::Playing && game.mistakes == round);
+      }
+      assert(game.phase == pet::GamePhase::RoundFailed && game.mistakes == round + 1);
+      const auto failed = game;
+      game.select(0);
+      assert(game.phase == failed.phase && game.step == failed.step && game.rounds == failed.rounds &&
+             game.mistakes == failed.mistakes && !std::memcmp(game.sequenceInput, failed.sequenceInput, 7));
+      game.advance();
+      assert(game.showing() && game.step == 0 && game.rounds == round);
+      for (auto input : game.sequenceInput) assert(input == 0);
+      assert(!std::memcmp(expected.sequence, game.sequence, sizeof(game.sequence)));
       game.advance();
       const unsigned length = game.sequenceLength();
       for (unsigned i = 0; i < length; ++i) game.select(game.sequence[i]);
@@ -148,6 +164,17 @@ int main() {
         game.advance();
       } else
         assert(game.finished());
+    }
+    for (unsigned position = 0; position < 7; ++position) {
+      game.begin(pet::Game::Sequence, seed);
+      game.rounds = 2;
+      game.mistakes = UINT16_MAX;
+      game.advance();
+      for (unsigned i = 0; i < 7; ++i) {
+        game.select((game.sequence[i] + (i == position ? 1 : 0)) % 3);
+        if (i < 6) assert(game.phase == pet::GamePhase::Playing && game.mistakes == UINT16_MAX);
+      }
+      assert(game.phase == pet::GamePhase::RoundFailed && game.rounds == 2 && game.mistakes == UINT16_MAX);
     }
     game.begin(pet::Game::Pairs, seed);
     unsigned counts[3]{};

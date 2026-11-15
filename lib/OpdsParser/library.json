@@ -1,0 +1,10 @@
+{
+  "name": "OpdsStream",
+  "version": "1.0.0",
+  "description": "Arduino Stream adapter for the SDK OPDS feed parser",
+  "build": {
+    "srcDir": ".",
+    "includeDir": ".",
+    "srcFilter": ["+<OpdsStream.cpp>"]
+  }
+}

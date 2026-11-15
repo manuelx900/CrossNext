@@ -169,6 +169,7 @@ void UiListActivity::drawFooter() {
 }
 
 void UiListActivity::render(RenderLock&&) {
+  const auto started = millis();
   renderer.clearScreen();
   drawChrome();
   renderUi();
@@ -177,11 +178,15 @@ void UiListActivity::render(RenderLock&&) {
   // (ListNav::onListRendered); when the selection landed past the drawn rows
   // the nav advanced the viewport and asked for another build. Bounded: top
   // strictly advances toward the selection each pass.
-  for (int pass = 0; activeNav().consumeRebuildNeeded() && pass < 8; ++pass) {
+  int rebuilds = 0;
+  for (; activeNav().consumeRebuildNeeded() && rebuilds < 8; ++rebuilds) {
     renderer.clearScreen();
     drawChrome();
     renderUi();
   }
+  if (rebuilds) LOG_DBG("LIST", "%s layout correction passes=%d", name.c_str(), rebuilds);
   drawFooter();
+  const auto prepared = millis();
   renderer.displayBuffer();
+  LOG_DBG("LIST", "%s prepare=%lu ms display=%lu ms", name.c_str(), prepared - started, millis() - prepared);
 }

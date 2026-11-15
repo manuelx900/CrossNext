@@ -1,0 +1,17 @@
+{
+  "id": 15,
+  "saga": 1,
+  "step": 5,
+  "title": {
+    "en": "An important clue",
+    "es": "Una pista importante"
+  },
+  "enemy": "Nameless watcher",
+  "guardian": 6,
+  "master": "path-015.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The City Without Books. Path episode: An important clue. Story action, which the scene must directly support: You find a locked room where the library kept its maps. A guardian watches the door.\nEnemy identity, MUST match this exact anatomy: a squat animated copper coin stack with armored arms and a stern mask face. View along a winding route, enemy emerging from the left and occupying a third of the scene. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-c5897602-ef62-445e-ba00-9f65f91c3208.png",
+  "sha256": "9f99adf0079ec1778386a12fbe2936c68653e839b82953225f22dba674322bb6"
+}

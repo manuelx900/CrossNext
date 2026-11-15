@@ -1,0 +1,12 @@
+{
+  "id": "S055",
+  "master": "scene-055-v1.png",
+  "sha256": "4fd350b7a6a0eb4701e91e0088110148689ae78c6b59178b655a7f25726b442b",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The ash clock. Chapter: The open workshop. Illustrate this already-authored event faithfully, without inventing another object or plot: Orin opens his workshop to the neighbors. Each adds a different memory, and the gears stop repeating precisely the same turn. Context only, do not try to draw all of it: Orin opens his workshop to the neighbors whose accounts helped him. Ada's experiment showed that a real change can survive the loop. Now the city must make one together rather than wait for the clockmaker alone.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

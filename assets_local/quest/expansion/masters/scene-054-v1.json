@@ -1,0 +1,12 @@
+{
+  "id": "S054",
+  "master": "scene-054-v1.png",
+  "sha256": "2a887954c64968dffc5c5cef134f59a87e21d8ca644613d63f85c645bbde0866",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The ash clock. Chapter: The lost minute. Illustrate this already-authored event faithfully, without inventing another object or plot: Orin remembered closing the gate himself. He asked you to stop before the account showed why his family had been outside. You stayed beside him while he chose to hear the neighbors' whole account instead of accepting another repetition. Context only, do not try to draw all of it: Ada's letter points Orin back to a missing minute around his family's departure. He fears finding proof that they abandoned him. The guardian uses that fear to keep him from reading his own account.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

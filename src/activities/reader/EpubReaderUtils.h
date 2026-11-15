@@ -4,10 +4,12 @@
 #include <Epub/PageLink.h>
 #include <Logging.h>
 
+#include <algorithm>
 #include <optional>
 #include <vector>
 
 #include "ProgressFile.h"
+#include "util/BookProgress.h"
 
 namespace EpubReaderUtils {
 
@@ -36,6 +38,15 @@ inline bool saveProgress(const Epub& epub, int spineIndex, int pageNumber, int p
   }
   if (!ProgressFile::writeAtomic(epub.getCachePath(), data, dataSize)) {
     return false;
+  }
+  if (epub.getSpineItemsCount() > 0 && spineIndex <= epub.getSpineItemsCount() && epub.getBookSize() > 0) {
+    const float fraction =
+        pageCount > 0 && pageNumber != UINT16_MAX ? std::clamp(float(pageNumber) / pageCount, 0.0f, 1.0f) : 0.0f;
+    const int percent =
+        spineIndex == epub.getSpineItemsCount()
+            ? 100
+            : std::clamp(static_cast<int>(epub.calculateProgress(spineIndex, fraction) * 100 + 0.5f), 0, 100);
+    publishBookProgress(epub.getPath(), percent);
   }
   LOG_DBG("ERS", "Progress saved: spine=%d offset=%u page=%d", spineIndex, visibleTextOffset.value_or(0), pageNumber);
   return true;

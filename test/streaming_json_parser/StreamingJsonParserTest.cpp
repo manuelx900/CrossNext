@@ -556,3 +556,12 @@ TEST(StreamingJsonParser, NullCallbacksNoCrash) {
   parser.feed(json, strlen(json));
   EXPECT_FALSE(parser.hasError());
 }
+
+TEST(StreamingJsonParser, RejectsMismatchedAndUnopenedContainers) {
+  for (const char* json : {"{]", "[}", "}", "]", "{\"a\":[1}}"}) {
+    JsonCallbacks callbacks{};
+    StreamingJsonParser parser(callbacks);
+    parser.feed(json, strlen(json));
+    EXPECT_TRUE(parser.hasError()) << json;
+  }
+}

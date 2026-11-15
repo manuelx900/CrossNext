@@ -1,0 +1,18 @@
+{
+  "id": "K121",
+  "key": "Fragmento-Crown",
+  "file": "K121.png",
+  "sample": {
+    "es": "Fragmento de la corona rota",
+    "en": "Broken crown fragment"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Broken crown fragment.",
+  "requests": [
+    295
+  ],
+  "sha256": "a9655d47c8a36a7a7626acd68d613511829ef85f1d7792aed20c8e844c6f3454",
+  "source": "exec-7bd1c9b1-a6a6-4767-8fb7-dc87de31a5a7.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

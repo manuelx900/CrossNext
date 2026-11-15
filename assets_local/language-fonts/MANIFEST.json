@@ -1,0 +1,264 @@
+{
+  "license": "OFL-1.1",
+  "modified": true,
+  "modifications": "UI subsets merged; Thai catalogue clusters pre-shaped as chained ligatures; rasterized at 150 DPI into CPFONT v5 (extended ligature count).",
+  "thaiClusters": 3337,
+  "shaper": "HarfBuzz 15.0.0",
+  "japaneseSource": {
+    "url": "https://raw.githubusercontent.com/google/fonts/66a36c8c94b1a5d992ee4e7f392fccfe4945767c/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf",
+    "sha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f"
+  },
+  "sources": [
+    {
+      "variant": "default",
+      "style": "Regular",
+      "source": "NotoSans/NotoSans-Regular.ttf",
+      "sha256": "fe8c022f48d8dd29f17b744d16f9346f4357e16f7d4f7be58b000ae7c291b614"
+    },
+    {
+      "variant": "default",
+      "style": "Regular",
+      "source": "NotoSansArabic/NotoSansArabic-Regular.ttf",
+      "sha256": "252629ca0e87b6233851249b8cbf7b43445211a8caf199f1b306a19202251508"
+    },
+    {
+      "variant": "default",
+      "style": "Regular",
+      "source": "NotoSansHebrew/NotoSansHebrew-Regular.ttf",
+      "sha256": "671951828bd5c95db818e5bb12dcea2d0c0dda00311888522be061ee6835125e"
+    },
+    {
+      "variant": "default",
+      "style": "Regular",
+      "source": "NotoSansThai/NotoSansThai.ttf",
+      "sha256": "5a1c559bb539583c8a1fd99d1c5b9491e5e14478c9cd2bd0970d5c3096cc9ef8"
+    },
+    {
+      "variant": "default",
+      "style": "Regular",
+      "source": "NotoSansJP/NotoSansJP.ttf",
+      "sha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f"
+    },
+    {
+      "variant": "default",
+      "style": "Regular",
+      "source": "NotoSansSC/NotoSansSC.ttf",
+      "sha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da"
+    },
+    {
+      "variant": "default",
+      "style": "Bold",
+      "source": "NotoSans/NotoSans-Bold.ttf",
+      "sha256": "13a813c49624ae3ba3c5c6e72c5ebffc4b9e1e6ea32f421c04069b037c6ad431"
+    },
+    {
+      "variant": "default",
+      "style": "Bold",
+      "source": "NotoSansArabic/NotoSansArabic-Bold.ttf",
+      "sha256": "a86a704ff8b315082f4859b04c2f8f746f4cefb14553ef10505f143e0d4829d3"
+    },
+    {
+      "variant": "default",
+      "style": "Bold",
+      "source": "NotoSansHebrew/NotoSansHebrew-Bold.ttf",
+      "sha256": "96f88305d31a8432f0fe6648c853cb9ef77db8e52ada8948ed0c577037d45423"
+    },
+    {
+      "variant": "default",
+      "style": "Bold",
+      "source": "NotoSansThai/NotoSansThai.ttf",
+      "sha256": "5a1c559bb539583c8a1fd99d1c5b9491e5e14478c9cd2bd0970d5c3096cc9ef8"
+    },
+    {
+      "variant": "default",
+      "style": "Bold",
+      "source": "NotoSansJP/NotoSansJP.ttf",
+      "sha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f"
+    },
+    {
+      "variant": "default",
+      "style": "Bold",
+      "source": "NotoSansSC/NotoSansSC.ttf",
+      "sha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da"
+    },
+    {
+      "variant": "_SC",
+      "style": "Regular",
+      "source": "NotoSans/NotoSans-Regular.ttf",
+      "sha256": "fe8c022f48d8dd29f17b744d16f9346f4357e16f7d4f7be58b000ae7c291b614"
+    },
+    {
+      "variant": "_SC",
+      "style": "Regular",
+      "source": "NotoSansArabic/NotoSansArabic-Regular.ttf",
+      "sha256": "252629ca0e87b6233851249b8cbf7b43445211a8caf199f1b306a19202251508"
+    },
+    {
+      "variant": "_SC",
+      "style": "Regular",
+      "source": "NotoSansHebrew/NotoSansHebrew-Regular.ttf",
+      "sha256": "671951828bd5c95db818e5bb12dcea2d0c0dda00311888522be061ee6835125e"
+    },
+    {
+      "variant": "_SC",
+      "style": "Regular",
+      "source": "NotoSansThai/NotoSansThai.ttf",
+      "sha256": "5a1c559bb539583c8a1fd99d1c5b9491e5e14478c9cd2bd0970d5c3096cc9ef8"
+    },
+    {
+      "variant": "_SC",
+      "style": "Regular",
+      "source": "NotoSansSC/NotoSansSC.ttf",
+      "sha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da"
+    },
+    {
+      "variant": "_SC",
+      "style": "Bold",
+      "source": "NotoSans/NotoSans-Bold.ttf",
+      "sha256": "13a813c49624ae3ba3c5c6e72c5ebffc4b9e1e6ea32f421c04069b037c6ad431"
+    },
+    {
+      "variant": "_SC",
+      "style": "Bold",
+      "source": "NotoSansArabic/NotoSansArabic-Bold.ttf",
+      "sha256": "a86a704ff8b315082f4859b04c2f8f746f4cefb14553ef10505f143e0d4829d3"
+    },
+    {
+      "variant": "_SC",
+      "style": "Bold",
+      "source": "NotoSansHebrew/NotoSansHebrew-Bold.ttf",
+      "sha256": "96f88305d31a8432f0fe6648c853cb9ef77db8e52ada8948ed0c577037d45423"
+    },
+    {
+      "variant": "_SC",
+      "style": "Bold",
+      "source": "NotoSansThai/NotoSansThai.ttf",
+      "sha256": "5a1c559bb539583c8a1fd99d1c5b9491e5e14478c9cd2bd0970d5c3096cc9ef8"
+    },
+    {
+      "variant": "_SC",
+      "style": "Bold",
+      "source": "NotoSansSC/NotoSansSC.ttf",
+      "sha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da"
+    },
+    {
+      "variant": "_TC",
+      "style": "Regular",
+      "source": "NotoSans/NotoSans-Regular.ttf",
+      "sha256": "fe8c022f48d8dd29f17b744d16f9346f4357e16f7d4f7be58b000ae7c291b614"
+    },
+    {
+      "variant": "_TC",
+      "style": "Regular",
+      "source": "NotoSansArabic/NotoSansArabic-Regular.ttf",
+      "sha256": "252629ca0e87b6233851249b8cbf7b43445211a8caf199f1b306a19202251508"
+    },
+    {
+      "variant": "_TC",
+      "style": "Regular",
+      "source": "NotoSansHebrew/NotoSansHebrew-Regular.ttf",
+      "sha256": "671951828bd5c95db818e5bb12dcea2d0c0dda00311888522be061ee6835125e"
+    },
+    {
+      "variant": "_TC",
+      "style": "Regular",
+      "source": "NotoSansThai/NotoSansThai.ttf",
+      "sha256": "5a1c559bb539583c8a1fd99d1c5b9491e5e14478c9cd2bd0970d5c3096cc9ef8"
+    },
+    {
+      "variant": "_TC",
+      "style": "Regular",
+      "source": "NotoSansTC/NotoSansTC.ttf",
+      "sha256": "864727d210d54f2537bbe23b3a839436c3992af72de9322af5270897246bd44f"
+    },
+    {
+      "variant": "_TC",
+      "style": "Regular",
+      "source": "NotoSansSC/NotoSansSC.ttf",
+      "sha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da"
+    },
+    {
+      "variant": "_TC",
+      "style": "Bold",
+      "source": "NotoSans/NotoSans-Bold.ttf",
+      "sha256": "13a813c49624ae3ba3c5c6e72c5ebffc4b9e1e6ea32f421c04069b037c6ad431"
+    },
+    {
+      "variant": "_TC",
+      "style": "Bold",
+      "source": "NotoSansArabic/NotoSansArabic-Bold.ttf",
+      "sha256": "a86a704ff8b315082f4859b04c2f8f746f4cefb14553ef10505f143e0d4829d3"
+    },
+    {
+      "variant": "_TC",
+      "style": "Bold",
+      "source": "NotoSansHebrew/NotoSansHebrew-Bold.ttf",
+      "sha256": "96f88305d31a8432f0fe6648c853cb9ef77db8e52ada8948ed0c577037d45423"
+    },
+    {
+      "variant": "_TC",
+      "style": "Bold",
+      "source": "NotoSansThai/NotoSansThai.ttf",
+      "sha256": "5a1c559bb539583c8a1fd99d1c5b9491e5e14478c9cd2bd0970d5c3096cc9ef8"
+    },
+    {
+      "variant": "_TC",
+      "style": "Bold",
+      "source": "NotoSansTC/NotoSansTC.ttf",
+      "sha256": "864727d210d54f2537bbe23b3a839436c3992af72de9322af5270897246bd44f"
+    },
+    {
+      "variant": "_TC",
+      "style": "Bold",
+      "source": "NotoSansSC/NotoSansSC.ttf",
+      "sha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da"
+    }
+  ],
+  "files": [
+    {
+      "file": "Interface_10.cpfont",
+      "bytes": 2217505,
+      "sha256": "7ee9556cb4e2af6fab98b943f53a99db8167bdc20fa6b6345ac24b81f95f36f6"
+    },
+    {
+      "file": "Interface_12.cpfont",
+      "bytes": 2965287,
+      "sha256": "bfa92aeccabb791e1784987a52e30be1d0a16f089420d0a36b350e67f576c348"
+    },
+    {
+      "file": "Interface_8.cpfont",
+      "bytes": 1633362,
+      "sha256": "ed3d487f88c08864312288eedc49c3db4b44da941a5b577cf8273ca5ad3807db"
+    },
+    {
+      "file": "Interface_SC_10.cpfont",
+      "bytes": 2215579,
+      "sha256": "78edfdcd72787f77ea21cd732ec1d98313192d10509c6e5917faff0d58ddb43d"
+    },
+    {
+      "file": "Interface_SC_12.cpfont",
+      "bytes": 2962607,
+      "sha256": "70324be67b2741a3de4dbfb46a13196edc0b6c3b6bb6a6db6b9f13b47478a198"
+    },
+    {
+      "file": "Interface_SC_8.cpfont",
+      "bytes": 1634204,
+      "sha256": "372485da5a96eb7b943a2eba1923844d79b169944814020b017ed3d232c67b67"
+    },
+    {
+      "file": "Interface_TC_10.cpfont",
+      "bytes": 2215458,
+      "sha256": "9b9ac16cc96c95572f0aaaef74397b8c2244c09b32d7cd05943eedf2f43adb58"
+    },
+    {
+      "file": "Interface_TC_12.cpfont",
+      "bytes": 2963290,
+      "sha256": "2437888b762ccecf11a4eae687b9d2b4e5d3c0a093fab3a87cd1a6e29cea2dbd"
+    },
+    {
+      "file": "Interface_TC_8.cpfont",
+      "bytes": 1633865,
+      "sha256": "b9129265c04a1e9f6a64f2b36b4fb07808e147bd20fa2ab7721bd9f8b4c7d9d9"
+    }
+  ]
+}

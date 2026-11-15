@@ -1,9 +1,11 @@
 #pragma once
 
 #include "../reading/ReadingStatsCore.h"
+#include "PetActionSurface.h"
 #include "PetAlbum.h"
 #include "PetReadingStatus.h"
 #include "PetReferenceIcons.h"
+#include "PetRoomBackground.h"
 
 namespace petui {
 namespace albumwidget {
@@ -13,24 +15,15 @@ inline void caption(toybox::Screen& s, fui::Rect r, const char* value, int lines
   fui::TextStyle style;
   style.font = font;
   style.bold = emphasis;
-  style.maxLines = std::max(1, std::min(lines, int(r.height) / std::max(1, int(s.target().lineHeight(font)))));
   style.align = fui::TextAlign::Center;
   style.color = inverse ? fui::Color::White : fui::Color::Black;
-  if (font != 4) {
-    char label[64];
-    std::snprintf(label, sizeof(label), "%s", value);
-    pixelui::fitLabel(s.target(), label, r.width, style);
-  }
-  int height = 0;
-  fui::layoutText(s.target(), r, value, style,
-                  [&](const char*, fui::Rect line) { height = std::max(height, int(line.bottom() - r.y)); });
-  r.y += std::max(0, (int(r.height) - height) / 2);
-  r.height = height;
-  s.target().text(r, value, style);
+  const int capacity = int(r.height) / std::max(1, int(s.target().lineHeight(3)));
+  fittext::draw(s.target(), r, value, style, std::max(lines, capacity));
 }
-inline void vignette(toybox::Screen& s, const Model& m, fui::Rect r, unsigned id, bool fullWidth = false) {
+inline void vignette(toybox::Screen& s, const Model& m, fui::Rect r, unsigned id, bool fullWidth = false,
+                     uint8_t radius = CONTROL_RADIUS) {
   s.target().fill(r, paper);
-  frame(s, r);
+  s.target().stroke(r, ink, BORDER, radius);
   const auto inner = fullWidth ? r.inset({3, 3, 3, 3}) : r.inset({5, 5, 5, 5});
   const int width = std::min(int(inner.width), int(inner.height) * 2);
   const auto area =
@@ -38,54 +31,73 @@ inline void vignette(toybox::Screen& s, const Model& m, fui::Rect r, unsigned id
                 : rect(inner.x + (inner.width - width) / 2, inner.y + (inner.height - width / 2) / 2, width, width / 2);
   const bool captured = memoryCaptured(*m.profile, id);
   const uint32_t snapshot = captured ? m.profile->moments[id] : 0;
-  if (m.habitat.draw) {
-    auto& target = s.target();
-    const auto previous = target.clipRect();
-    const int left = std::max(int(inner.x), int(previous.x)), top = std::max(int(inner.y), int(previous.y));
-    const int right = std::min(int(inner.right()), int(previous.right())),
-              bottom = std::min(int(inner.bottom()), int(previous.bottom()));
-    const bool clipped =
-        fullWidth && right > left && bottom > top && target.setClipRect(rect(left, top, right - left, bottom - top));
-    const int side = clipped ? area.width / 2 : width / 2;
-    const int x = clipped ? area.x : inner.x + (inner.width - width) / 2;
-    const int y = clipped ? area.bottom() - side : inner.y + (inner.height - side) / 2;
-    m.habitat.draw(m.habitat.context, target, rect(x, y, side, side), 0, false);
-    m.habitat.draw(m.habitat.context, target, rect(x + side, y, side, side), 1, false);
-    if (clipped) target.setClipRect(previous);
+  auto& target = s.target();
+  const auto previous = target.clipRect();
+  const int left = std::max(int(inner.x), int(previous.x)), top = std::max(int(inner.y), int(previous.y));
+  const int right = std::min(int(inner.right()), int(previous.right()));
+  const int bottom = std::min(int(inner.bottom()), int(previous.bottom()));
+  if (right <= left || bottom <= top || !target.setClipRect(rect(left, top, right - left, bottom - top))) return;
+  struct RestoreClip {
+    fui::DrawTarget& target;
+    fui::Rect previous;
+    ~RestoreClip() { target.setClipRect(previous); }
+  } restore{target, previous};
+  const bool background = roombackground::memory(target, m, inner, area.y + area.width * 135 / 432);
+  if (!background) target.fill(inner, paper);
+  if (!background && m.habitat.draw) {
+    const int side = area.width / 2;
+    const int y = fullWidth ? area.bottom() - side : inner.y + (inner.height - side) / 2;
+    m.habitat.draw(m.habitat.context, target, rect(area.x, y, side, side), 0, false);
+    m.habitat.draw(m.habitat.context, target, rect(area.x + side, y, side, side), 1, false);
   }
-  if (captured)
-    for (unsigned slot = 0; slot < pet::SLOT_COUNT; ++slot) {
-      const unsigned item = pet::momentObject(snapshot, slot);
-      if (item < pet::OBJECT_COUNT) {
-        const auto box = habitatlayout::scale(area, habitatlayout::item(item));
-        if (!habitatPair(m, s.target(), box, 2 + item * 2)) object(s, m, box, item);
-      }
-    }
-  const auto age = memoryStage(*m.profile, id);
-  const unsigned species = unsigned(m.profile->species), pose = captured ? unsigned(pet::momentPose(snapshot)) : 0;
-  const unsigned scene = age == pet::Stage::Egg ? species
-                                                : 3 + species * 12 + (unsigned(age) - 1) * 3 +
-                                                      (pose == 4   ? 2
-                                                       : pose == 5 ? 1
-                                                                   : 0);
-  const auto picture = habitatlayout::scale(area, habitatlayout::memoryPet(age, scene));
-  const unsigned mask = age == pet::Stage::Egg ? petsleep::eggIndex(species, 0)
-                        : pose == 5
-                            ? ((species * 4 + unsigned(age) - 1) * petsleep::FRAMES) * 2
-                            : petsleep::bodyIndex(m.profile->species, age, petsleep::Pose(std::min(pose, 4u)), 0);
-  if (m.sleepArt.draw && m.sleepArt.draw(m.sleepArt.context, s.target(), picture, mask, true) &&
-      m.sleepArt.draw(m.sleepArt.context, s.target(), picture, mask + 1, false))
-    return;
-  if (habitatPair(m, s.target(), picture, 482 + scene * 2)) return;
-  s.target().fill(picture, paper);
-  const unsigned graphic =
-      age == pet::Stage::Egg ? species : 3 + species * 16 + (unsigned(age) - 1) * 4 + std::min(pose, 3u);
-  art(s, m, picture, graphic, speciesIcon(m.profile->species), false);
+  const unsigned environment = captured ? pet::momentObject(snapshot, 3) : 255;
+  const bool shareWall = captured && habitatlayout::sharedWall(pet::momentObject(snapshot, 1), environment);
+  const bool groundEnvironment = pet::objectAvailable(environment) &&
+                                 habitatlayout::anchor(environment) == habitatlayout::Anchor::FloorEnvironment;
+  const auto drawItem = [&](unsigned slot) {
+    if (!captured) return;
+    const unsigned item = pet::momentObject(snapshot, slot);
+    if (!pet::objectAvailable(item) || pet::objectSlot(item) != slot) return;
+    const auto box = habitatlayout::placedItem(area, item, -1, shareWall);
+    if (!habitatPair(m, target, box, 2 + item * 2)) object(s, m, box, item);
+  };
+  drawItem(1);
+  if (!groundEnvironment) drawItem(3);
+  drawItem(0);
+  const auto drawPet = [&] {
+    const auto age = memoryStage(*m.profile, id);
+    const unsigned species = unsigned(m.profile->species), pose = captured ? unsigned(pet::momentPose(snapshot)) : 0;
+    const unsigned scene = age == pet::Stage::Egg ? species
+                                                  : 3 + species * 12 + (unsigned(age) - 1) * 3 +
+                                                        (pose == 4   ? 2
+                                                         : pose == 5 ? 1
+                                                                     : 0);
+    const auto picture = habitatlayout::scale(area, habitatlayout::memoryPet(age, scene));
+    const unsigned mask = age == pet::Stage::Egg ? petsleep::eggIndex(species, 0)
+                          : pose == 5
+                              ? ((species * 4 + unsigned(age) - 1) * petsleep::FRAMES) * 2
+                              : petsleep::bodyIndex(m.profile->species, age, petsleep::Pose(std::min(pose, 4u)), 0);
+    if (m.sleepArt.draw && m.sleepArt.draw(m.sleepArt.context, s.target(), picture, mask, true) &&
+        m.sleepArt.draw(m.sleepArt.context, s.target(), picture, mask + 1, false))
+      return;
+    if (habitatPair(m, s.target(), picture, 482 + scene * 2)) return;
+    s.target().fill(picture, paper);
+    const unsigned graphic =
+        age == pet::Stage::Egg ? species : 3 + species * 16 + (unsigned(age) - 1) * 4 + std::min(pose, 3u);
+    art(s, m, picture, graphic, speciesIcon(m.profile->species), false);
+  };
+  drawPet();
+  if (groundEnvironment) drawItem(3);
+  drawItem(2);
+}
+inline int memoryDay(const pet::Profile& p, unsigned id) {
+  const int day = id < pet::MOMENT_COUNT && p.momentDays[id] ? p.momentDays[id] : id == 2 ? p.bornDay : 0;
+  return day > 0 && day <= readingstats::dayIndex({2199, 12, 31}) ? day : 0;
 }
 inline void memoryDate(char* out, size_t bytes, const pet::Profile& p, unsigned id, dateformat::Order order,
                        bool compact = false) {
-  const int day = id < pet::MOMENT_COUNT && p.momentDays[id] ? p.momentDays[id] : id == 2 ? p.bornDay : 0;
-  if (day > 0 && day <= readingstats::dayIndex({2199, 12, 31})) {
+  const int day = memoryDay(p, id);
+  if (day) {
     const auto date = readingstats::dateFromDay(day);
     dateformat::format(out, bytes, unsigned(date.day), unsigned(date.month), unsigned(date.year), order, compact);
   } else
@@ -166,13 +178,14 @@ inline void memoryCard(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, 
   else
     std::snprintf(w.label, sizeof(w.label), "%s",
                   memoryUnrecorded(*m.profile, id) ? tr(STR_PET_MEMORY_UNRECORDED) : tr(STR_PET_MEMORY_UPCOMING));
-  text(s, rect(r.x + 7, r.y + 4, r.width - 14, 22), w.label, 3, inverse, fui::TextAlign::Center);
-  const int imageHeight = std::max(28, std::min((int(r.width) - 12) / 2 + 10, int(r.height) - 124));
-  const auto image = rect(r.x + 6, r.y + 29, r.width - 12, imageHeight);
+  const int headingH = s.target().measureText(3, w.label, {}).width > r.width - 14 ? 2 * s.target().lineHeight(3) : 22;
+  text(s, rect(r.x + 7, r.y + 4, r.width - 14, headingH), w.label, 3, inverse, fui::TextAlign::Center);
+  const int imageHeight = std::max(28, std::min((int(r.width) - 12) / 2 + 10, int(r.height) - 124) - (headingH - 22));
+  const auto image = rect(r.x + 6, r.y + headingH + 7, r.width - 12, imageHeight);
   if (owned)
-    vignette(s, m, image, id);
+    vignette(s, m, image, id, false, CONTROL_RADIUS - 6);
   else {
-    frame(s, image);
+    s.target().stroke(image, ink, BORDER, CONTROL_RADIUS - 6);
     icon(s, rect(image.x + (image.width - 32) / 2, image.y + (image.height - 32) / 2, 32, 32),
          memoryUnrecorded(*m.profile, id) ? extra_information_32 : extra_lock_32);
   }
@@ -213,7 +226,7 @@ inline void sectionHead(toybox::Screen& s, Work& w, fui::Rect r, const char* tit
   chevron(s, rect(r.right() - 25, r.y + 17, 8, 14), inverse);
 }
 inline void stages(toybox::Screen& s, const Model& m, fui::Rect r) {
-  frame(s, r);
+  actionsurface::panel(s, r);
   text(s, rect(r.x + 10, r.y + 10, r.width - 20, 28), tr(STR_PET_LIFE_STAGES), 0);
   const auto row = rect(r.x + 8, r.y + 42, r.width - 16, r.height - 50);
   const unsigned current = unsigned(pet::stage(m.profile->readingSeconds));

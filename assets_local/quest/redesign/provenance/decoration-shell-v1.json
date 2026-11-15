@@ -1,0 +1,8 @@
+{
+  "id": "shell",
+  "path": "exec-5839b5b2-d6dc-446f-8386-2789ae222e53.png",
+  "prompt": "Production decoration sprite for Aventura lectora, ONE isolated object. Match the reference pets: thick clean pure black rounded outlines, white and soft flat gray shading, cute storybook cartoon, simple readable silhouette for 80x112 pixels, no fine texture. Full object centered with transparent margin, truly transparent RGBA background. No aura, no glow, no scenery, no letters, no frame, no other subjects. Subject: A large spiral sea shell resting on a small stone, a tiny pearl nestled in its opening",
+  "tool": "built-in image_gen",
+  "sha256": "29468b2a69e23fa2deee10da963a5f531fc922a53977e1498238474f8f5ff625",
+  "name": "decoration-shell-v1"
+}

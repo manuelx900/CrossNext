@@ -2,6 +2,7 @@
 #include <string>
 
 #include "activities/Activity.h"
+#include "apps_local/reading/ReadingGoal.h"
 
 class Bitmap;
 class HalFile;
@@ -28,6 +29,9 @@ class SleepActivity final : public Activity {
   void renderLastScreenSleepScreen() const;
   void renderTransparentCustomSleepScreen() const;
   void renderBlankSleepScreen() const;
+  void prepareGoalOverlay();
+  void drawGoalOverlay() const;
+  readinggoal::WallpaperData goalOverlay;
 
   bool fromTimeout = false;
 };

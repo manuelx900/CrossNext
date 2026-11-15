@@ -1,0 +1,13 @@
+{
+  "name": "campaign-prologue",
+  "type": "exclusive-campaign-prologue",
+  "generatedWith": "Built-in image_gen",
+  "date": "2026-11-06",
+  "source": "exec-2acc48fc-3d82-4e0d-9959-0e51aae4293c.png",
+  "sha256": "a04a0aa4ae3abafddbd553a3a480e69ae481f4d6d36a380a24c7861d239bcf57",
+  "references": [
+    "heroes-approved.png",
+    "companions-approved.png",
+    "background-00.png"
+  ]
+}

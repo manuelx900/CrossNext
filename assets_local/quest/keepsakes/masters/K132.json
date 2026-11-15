@@ -1,0 +1,21 @@
+{
+  "id": "K132",
+  "key": "Medalla-world",
+  "file": "K132.png",
+  "sample": {
+    "es": "Medalla de las doce regiones",
+    "en": "Twelve regions medal"
+  },
+  "requests": [
+    299
+  ],
+  "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: a ring of twelve bold dots around a broken crown.",
+  "transparent": true,
+  "kind": "keepsake",
+  "sha256": "0f92530ae8b14f6cf4705ccc7f687e472a563df13ec5b53da4fd85c768283b5e",
+  "tool": "built-in image_gen",
+  "source": "exec-7a11b215-5b01-4b03-8e9a-dcfc985bd133.png",
+  "width": 1162,
+  "height": 1354,
+  "mode": "RGBA"
+}

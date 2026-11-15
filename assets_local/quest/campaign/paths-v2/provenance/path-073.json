@@ -1,0 +1,17 @@
+{
+  "id": 73,
+  "saga": 7,
+  "step": 3,
+  "title": {
+    "en": "The first clue",
+    "es": "La primera pista"
+  },
+  "enemy": "Hall prowler",
+  "guardian": 45,
+  "master": "path-073.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The Palace of the Moon. Path episode: The first clue. Story action, which the scene must directly support: The book mentions a garden where the key may be hidden. A guardian blocks the hall to the palace exit.\nEnemy identity, MUST match this exact anatomy: a floating masked moon jelly specter with four broad ribbon tentacles. Three-quarter view toward a doorway or passage, creature guarding it, clear layers of foreground, landmark and distance. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-d0d0b7a8-ea59-4f7b-b9c4-aa562fd7d55f.png",
+  "sha256": "e17da58120d7f726f2b6785f837415a5a301778e74cb4cd4f9d13303c2982df7"
+}

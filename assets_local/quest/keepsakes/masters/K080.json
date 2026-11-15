@@ -1,0 +1,18 @@
+{
+  "id": "K080",
+  "key": "Aguja-Compass",
+  "file": "K080.png",
+  "sample": {
+    "es": "Aguja de las dunas",
+    "en": "Dune needle"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: a small round desert travel compass with an obvious dark north-pointing needle and a stout protective casing, no letters.",
+  "requests": [
+    126
+  ],
+  "sha256": "0b7ba71dd209f5fd156a4485ae88274f6a78e8ecf1b53edd6a203c64bae8b2ee",
+  "source": "exec-fb9cf46e-ce0c-4af0-9398-bf74d3aa2d1f.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

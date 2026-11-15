@@ -1,0 +1,366 @@
+{
+  "fr": {
+    "rows": [
+      "azertyuiop",
+      "qsdfghjklm",
+      "wxcvbn"
+    ],
+    "shift": [
+      "AZERTYUIOP",
+      "QSDFGHJKLM",
+      "WXCVBN"
+    ]
+  },
+  "az": {
+    "rows": [
+      "qüertyuiopöğ",
+      "asdfghjklıə",
+      "zxcvbnmçş"
+    ],
+    "shift": [
+      "QÜERTYUİOPÖĞ",
+      "ASDFGHJKLIƏ",
+      "ZXCVBNMÇŞ"
+    ]
+  },
+  "bs": {
+    "rows": [
+      "qwertzuiop",
+      "asdfghjkl",
+      "yxcvbnm"
+    ],
+    "shift": [
+      "QWERTZUIOP",
+      "ASDFGHJKL",
+      "YXCVBNM"
+    ]
+  },
+  "ca": {
+    "rows": [
+      "qwertyuiop",
+      "asdfghjklç",
+      "zxcvbnm"
+    ],
+    "shift": [
+      "QWERTYUIOP",
+      "ASDFGHJKLÇ",
+      "ZXCVBNM"
+    ]
+  },
+  "ca-valencia": {
+    "rows": [
+      "qwertyuiop",
+      "asdfghjklç",
+      "zxcvbnm"
+    ],
+    "shift": [
+      "QWERTYUIOP",
+      "ASDFGHJKLÇ",
+      "ZXCVBNM"
+    ]
+  },
+  "cs": {
+    "rows": [
+      "qwertzuiop",
+      "asdfghjkl",
+      "yxcvbnm"
+    ],
+    "shift": [
+      "QWERTZUIOP",
+      "ASDFGHJKL",
+      "YXCVBNM"
+    ]
+  },
+  "da": {
+    "rows": [
+      "qwertyuiopå",
+      "asdfghjklæø",
+      "zxcvbnm"
+    ],
+    "shift": [
+      "QWERTYUIOPÅ",
+      "ASDFGHJKLÆØ",
+      "ZXCVBNM"
+    ]
+  },
+  "nl": {
+    "rows": [
+      "qwertyuiop",
+      "asdfghjkl",
+      "zxcvbnm"
+    ],
+    "shift": [
+      "QWERTYUIOP",
+      "ASDFGHJKL",
+      "ZXCVBNM"
+    ]
+  },
+  "fi": {
+    "rows": [
+      "qwertyuiopå",
+      "asdfghjklöä",
+      "zxcvbnm"
+    ],
+    "shift": [
+      "QWERTYUIOPÅ",
+      "ASDFGHJKLÖÄ",
+      "ZXCVBNM"
+    ]
+  },
+  "hu": {
+    "rows": [
+      "qwertzuiop",
+      "asdfghjkl",
+      "yxcvbnm"
+    ],
+    "shift": [
+      "QWERTZUIOP",
+      "ASDFGHJKL",
+      "YXCVBNM"
+    ]
+  },
+  "id": {
+    "rows": [
+      "qwertyuiop",
+      "asdfghjkl",
+      "zxcvbnm"
+    ],
+    "shift": [
+      "QWERTYUIOP",
+      "ASDFGHJKL",
+      "ZXCVBNM"
+    ]
+  },
+  "it": {
+    "rows": [
+      "qwertyuiop",
+      "asdfghjkl",
+      "zxcvbnm"
+    ],
+    "shift": [
+      "QWERTYUIOP",
+      "ASDFGHJKL",
+      "ZXCVBNM"
+    ]
+  },
+  "lt": {
+    "rows": [
+      "qwertyuiop",
+      "asdfghjkl",
+      "zxcvbnm"
+    ],
+    "shift": [
+      "QWERTYUIOP",
+      "ASDFGHJKL",
+      "ZXCVBNM"
+    ]
+  },
+  "nb": {
+    "rows": [
+      "qwertyuiopå",
+      "asdfghjkløæ",
+      "zxcvbnm"
+    ],
+    "shift": [
+      "QWERTYUIOPÅ",
+      "ASDFGHJKLØÆ",
+      "ZXCVBNM"
+    ]
+  },
+  "pl": {
+    "rows": [
+      "qwertyuiop",
+      "asdfghjkl",
+      "zxcvbnm"
+    ],
+    "shift": [
+      "QWERTYUIOP",
+      "ASDFGHJKL",
+      "ZXCVBNM"
+    ]
+  },
+  "pt-BR": {
+    "rows": [
+      "qwertyuiop",
+      "asdfghjkl",
+      "zxcvbnm"
+    ],
+    "shift": [
+      "QWERTYUIOP",
+      "ASDFGHJKL",
+      "ZXCVBNM"
+    ]
+  },
+  "pt-PT": {
+    "rows": [
+      "qwertyuiop",
+      "asdfghjkl",
+      "zxcvbnm"
+    ],
+    "shift": [
+      "QWERTYUIOP",
+      "ASDFGHJKL",
+      "ZXCVBNM"
+    ]
+  },
+  "ro": {
+    "rows": [
+      "qwertyuiop",
+      "asdfghjkl",
+      "zxcvbnm"
+    ],
+    "shift": [
+      "QWERTYUIOP",
+      "ASDFGHJKL",
+      "ZXCVBNM"
+    ]
+  },
+  "sk": {
+    "rows": [
+      "qwertzuiop",
+      "asdfghjkl",
+      "yxcvbnm"
+    ],
+    "shift": [
+      "QWERTZUIOP",
+      "ASDFGHJKL",
+      "YXCVBNM"
+    ]
+  },
+  "sl": {
+    "rows": [
+      "qwertzuiop",
+      "asdfghjkl",
+      "yxcvbnm"
+    ],
+    "shift": [
+      "QWERTZUIOP",
+      "ASDFGHJKL",
+      "YXCVBNM"
+    ]
+  },
+  "sv": {
+    "rows": [
+      "qwertyuiopå",
+      "asdfghjklöä",
+      "zxcvbnm"
+    ],
+    "shift": [
+      "QWERTYUIOPÅ",
+      "ASDFGHJKLÖÄ",
+      "ZXCVBNM"
+    ]
+  },
+  "tr": {
+    "rows": [
+      "qwertyuıopğü",
+      "asdfghjklşi",
+      "zxcvbnmöç"
+    ],
+    "shift": [
+      "QWERTYUIOPĞÜ",
+      "ASDFGHJKLŞİ",
+      "ZXCVBNMÖÇ"
+    ]
+  },
+  "vi": {
+    "rows": [
+      "qwertyuiop",
+      "asdfghjkl",
+      "zxcvbnm"
+    ],
+    "shift": [
+      "QWERTYUIOP",
+      "ASDFGHJKL",
+      "ZXCVBNM"
+    ]
+  },
+  "bg": {
+    "rows": [
+      "явертъуиопч",
+      "асдфгхйклшщ",
+      "зьцжбнмю"
+    ],
+    "shift": [
+      "ЯВЕРТЪУИОПЧ",
+      "АСДФГХЙКЛШЩ",
+      "ЗЬЦЖБНМЮ"
+    ]
+  },
+  "be": {
+    "rows": [
+      "йцукенгшўзх'",
+      "фывапролджэ",
+      "ячсмітьбю"
+    ],
+    "shift": [
+      "ЙЦУКЕНГШЎЗХ'",
+      "ФЫВАПРОЛДЖЭ",
+      "ЯЧСМІТЬБЮ"
+    ]
+  },
+  "fa": {
+    "rows": [
+      "ضصثقفغعهخحجچ",
+      "شسیبلاتنمکگ",
+      "ظطزرذدپوژ"
+    ],
+    "shift": [
+      "ضصثقفغعۀخحجچ",
+      "شسيبلآتنمكگ",
+      "ظطزرذدپؤژ"
+    ]
+  },
+  "th": {
+    "rows": [
+      "ๅ/-ภถุึคตจขช",
+      "ๆไำพะัีรนยบล",
+      "ฟหกดเ้่าสวงฃ",
+      "ผปแอิืทมใฝ"
+    ],
+    "shift": [
+      "+๑๒๓๔ู฿๕๖๗๘๙",
+      "๐\"ฎฑธํ๊ณฯญฐ,",
+      "ฤฆฏโฌ็๋ษศซ.ฅ",
+      "()ฉฮฺ์?ฒฬฦ"
+    ]
+  },
+  "ja": {
+    "rows": [
+      "あかさ",
+      "たなは",
+      "まやら",
+      "゙わん"
+    ],
+    "shift": [
+      "アカサ",
+      "タナハ",
+      "マヤラ",
+      "゙ワン"
+    ]
+  },
+  "zh-CN": {
+    "rows": [
+      "qwertyuiop",
+      "asdfghjkl",
+      "zxcvbnm"
+    ],
+    "shift": [
+      "QWERTYUIOP",
+      "ASDFGHJKL",
+      "ZXCVBNM"
+    ]
+  },
+  "zh-TW": {
+    "rows": [
+      "qwertyuiop",
+      "asdfghjkl",
+      "zxcvbnm"
+    ],
+    "shift": [
+      "QWERTYUIOP",
+      "ASDFGHJKL",
+      "ZXCVBNM"
+    ]
+  }
+}

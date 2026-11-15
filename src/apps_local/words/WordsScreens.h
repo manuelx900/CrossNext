@@ -59,6 +59,7 @@ struct Model {
   int waitMinutes = 0;
   bool keyboardFocus = false;
   bool error = false;
+  uint8_t alignment = 0;
 };
 inline void setListCapacity(Model& model, int capacity) {
   if (model.capacity == capacity) return;

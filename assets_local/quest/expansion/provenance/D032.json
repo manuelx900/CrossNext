@@ -1,0 +1,12 @@
+{
+  "id": "D032",
+  "master": "decor-032-v1.png",
+  "sha256": "84453441894451367bc4139cb7c6cff1dfeb4276cdc2d5f0948bd8fbc534cb25",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original collectible decoration sprite for the e-ink fantasy reading app Aventura lectora. Reference fairy is STYLE ONLY. Friendly chibi storybook proportions, white and pale-gray flat fills, VERY THICK solid pure-BLACK outer contours (20-26px at1024px), strong black inner lines, simple broad shapes readable at112x144. Whole subject visible, centered with transparent padding. Genuine transparent background. No scenery, frame, UI, text, lettering, watermark, fine hatching or gray outlines. Do not include the player hero or PET. Subject: a friendly little mountain goat with curled horns sitting on a low crag beside an alpine flower. A grounded ornament with a small clear base.",
+  "reference": "assets_local/quest/redesign/masters/decoration-fairy-v1.png",
+  "transparent": true,
+  "width": 1312,
+  "height": 1199,
+  "mode": "RGBA"
+}

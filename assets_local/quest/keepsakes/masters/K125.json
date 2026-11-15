@@ -1,0 +1,21 @@
+{
+  "id": "K125",
+  "key": "Medalla-mountain",
+  "file": "K125.png",
+  "sample": {
+    "es": "Medalla de las cumbres",
+    "en": "Summits medal"
+  },
+  "requests": [
+    124
+  ],
+  "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: two mountain peaks and a trail stone.",
+  "transparent": true,
+  "kind": "keepsake",
+  "sha256": "6adf8b3d8f83b0be6c98b191ea5629a3427a2ad4cdb0b900978c4c749a4bda32",
+  "tool": "built-in image_gen",
+  "source": "exec-f269d22b-3ac2-4f12-8387-ffeae6097b8f.png",
+  "width": 1111,
+  "height": 1415,
+  "mode": "RGBA"
+}

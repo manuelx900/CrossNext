@@ -22,6 +22,7 @@ class HalFile;
 
 class XkcdActivity final : public Activity {
  public:
+  bool allowsRemoteControl() const override { return false; }
   XkcdActivity(GfxRenderer& renderer, MappedInputManager& mappedInput) : Activity("Xkcd", renderer, mappedInput) {}
   ~XkcdActivity() override;
 

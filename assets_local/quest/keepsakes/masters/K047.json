@@ -1,0 +1,18 @@
+{
+  "id": "K047",
+  "key": "Malla",
+  "file": "K047.png",
+  "sample": {
+    "es": "Malla del recuerdo",
+    "en": "Memory netting"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Memory netting.",
+  "requests": [
+    55
+  ],
+  "sha256": "136c9c2f44fab4c38f10466f64e800809c861340838e4a064c9cb90c5f95c609",
+  "source": "exec-3ba9a468-8267-429f-8fd1-e7a9792d90f7.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

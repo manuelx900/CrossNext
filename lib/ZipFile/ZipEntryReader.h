@@ -2,12 +2,14 @@
 #include <HalStorage.h>
 #include <InflateStream.h>
 
+#include "ZipFile.h"
+
 // A single entry whose file and inflater survive between bounded reads.
 class ZipEntryReader {
  public:
   using Status = InflateStream::Status;
   ~ZipEntryReader() { close(); }
-  bool open(const std::string& archive, const char* entry);
+  bool open(const std::string& archive, const char* entry, ZipFile::Catalog* catalog = nullptr);
   Status read(uint8_t* output, size_t capacity, size_t& produced);
   void close();
   explicit operator bool() const { return file.isOpen(); }

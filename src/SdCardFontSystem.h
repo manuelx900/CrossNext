@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Epub/blocks/TextBlock.h>
 #include <HalStorage.h>  // HalFile (kept open for streamed TTFs)
 #include <SdCardFontManager.h>
 #include <SdCardFontRegistry.h>
@@ -14,6 +15,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+#include "components/LanguageUiFonts.h"
 
 class GfxRenderer;
 class TtfEpdFont;
@@ -37,6 +40,11 @@ class SdCardFontSystem {
   /// Also re-discovers if the registry has been marked dirty (e.g. by web upload).
   void ensureLoaded(GfxRenderer& renderer);
 
+  // Caller holds RenderLock. Load one preparation face without changing or
+  // saving reader settings. pointSize is snapped to the installed family.
+  // Returns 0 on failure; ensureLoaded() restores the reader's selected face.
+  int loadForPreparation(GfxRenderer& renderer, const char* familyName, uint8_t& pointSize);
+
   /// Resolve an SD card font ID from family name + reader point size.
   /// Returns 0 if not found. Used by CrossPointSettings::getReaderFontId().
   int resolveFontId(const char* familyName, uint8_t pointSize) const;
@@ -57,10 +65,19 @@ class SdCardFontSystem {
   void refreshIfDirty() {
     if (registryDirty_.exchange(false, std::memory_order_acquire)) {
       registry_.discover();
+      registryReloadPending_.store(true, std::memory_order_release);
     }
   }
 
  private:
+  // Four bounded content sizes share the SD loader with stable app font IDs.
+  // Bitmaps stay on the card; page glyph caches use the existing PSRAM arenas.
+  void loadReaderDefaults(GfxRenderer& renderer);
+  bool refreshRegistry(GfxRenderer& renderer);
+  SdCardFontManager readerDefaults_;
+  LanguageUiFonts languageUiFonts_;
+  bool readerDefaultsReady_ = false;
+  std::atomic<bool> registryReloadPending_{false};
   // Load the active SD family at the built-in UI point sizes and register each
   // as a size-matched script fallback for the corresponding UI font, so book
   // titles/list rows in scripts the built-ins lack (CJK, Greek, Cyrillic, ...)
@@ -74,7 +91,8 @@ class SdCardFontSystem {
   // Load/refresh the selected TTF family at the current reader size, register
   // it with the renderer, and track it so ensureSdCardFontReady() rebuilds its
   // glyph set per page. registryWasDirty forces a reload even if unchanged.
-  void loadTtfFamily(const SdCardFontFamilyInfo& family, GfxRenderer& renderer, bool registryWasDirty);
+  void loadTtfFamily(const SdCardFontFamilyInfo& family, GfxRenderer& renderer, bool registryWasDirty,
+                     uint8_t requestedPointSize = 0, bool temporary = false);
   // Unregister + free the active TTF font (and its UI-size fallbacks), if any.
   void unloadTtf(GfxRenderer& renderer);
   // Register the loaded TTF at each built-in UI size as a script fallback, so UI
@@ -91,6 +109,25 @@ class SdCardFontSystem {
   // ReadFn for streamed sources: serves the PSRAM prefix cache first, SD after.
   static unsigned long prefixRead(void* ctx, unsigned long offset, unsigned char* buffer, unsigned long count);
 #endif  // CROSSPOINT_VECTOR_FONTS
+
+  // --- Sized variants of the reader font (CSS font-size, headings, drop caps) ---
+  // Served to the renderer through FontVariantProvider. Variant ids derive from the
+  // reader font id and point size, so ids cached in section files can be reloaded after
+  // eviction or a reboot. Least recently used variants are evicted at the caps below.
+  int resolveVariant(int fontId, float scale);
+  bool loadVariant(int fontId);
+  bool loadCpfontVariant(const SdCardFontFamilyInfo& family, uint8_t pointSize, int fontId);
+  void unloadCpfonts(GfxRenderer& renderer);
+  static int variantFontId(int readerFontId, uint8_t pointSize);
+
+  struct CpfontVariant {
+    int fontId;
+    uint32_t lastUse;
+  };
+  static constexpr size_t MAX_CPFONT_VARIANTS = TextBlock::MAX_WORD_FONTS + 2;  // Inline, block, and drop-cap fonts.
+  std::vector<CpfontVariant> cpfontVariants_;
+  uint32_t variantClock_ = 0;
+  GfxRenderer* renderer_ = nullptr;
 
   SdCardFontRegistry registry_;
   SdCardFontManager manager_;
@@ -112,6 +149,11 @@ class SdCardFontSystem {
 
   // Active TTF font (at most one reader-size vector family loaded at a time).
   std::unique_ptr<TtfEpdFont> ttf_;
+  // One previous reader size, sharing sources and registered for heap-pressure eviction.
+  std::unique_ptr<TtfEpdFont> previousTtf_;
+  int previousTtfFontId_ = 0;
+  uint8_t previousTtfPointSize_ = 0;
+  void clearPreviousTtf(GfxRenderer& renderer);
   // Up to 4 style sources: 0=regular (required), 1=bold, 2=italic, 3=bold-italic.
   TtfSource ttfSources_[4];
   std::string ttfFamily_;     // loaded vector family name ("" = none)
@@ -120,6 +162,17 @@ class SdCardFontSystem {
   // UI-size TTF fallbacks (share ttfSources_); parallel to their renderer font ids.
   std::vector<std::unique_ptr<TtfEpdFont>> ttfUi_;
   std::vector<int> ttfUiIds_;
+
+  // Reader-font faces at other sizes (share ttfSources_).
+  struct TtfVariant {
+    int fontId;
+    uint32_t lastUse;
+    std::unique_ptr<TtfEpdFont> font;
+  };
+  static constexpr size_t MAX_TTF_VARIANTS = TextBlock::MAX_WORD_FONTS + 2;
+  std::vector<TtfVariant> ttfVariants_;
+  bool loadTtfVariant(uint8_t pointSize, int fontId);
+  void clearTtfVariants(GfxRenderer& renderer);
 #endif  // CROSSPOINT_VECTOR_FONTS
 };
 

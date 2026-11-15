@@ -1,0 +1,17 @@
+{
+  "id": "S023",
+  "kind": "scene",
+  "master": "scene-023-v3.png",
+  "reference": "assets_local/quest/redesign/portraits/mara-source.png",
+  "transparent": false,
+  "prompt": "Use case: illustration-story. ONE complete landscape 3:2 narrative illustration for the monochrome e-ink game Aventura lectora. Clean expressive chibi storybook art, thick smooth PURE BLACK contours, white and sparse flat light-gray fills. No color, gradients, crosshatching, collage, lettering, captions, UI or watermark. Large clear clues readable at480x320. Player hero and PET are OFF CAMERA. Depict only people actually physically present in the described event; a person mentioned in a letter or record does NOT appear alive beside its reader. The attached portraits are IDENTITY references, NOT additional cast: match face, age, hairstyle, clothing and distinctive accessories exactly for any named person present. Do not invent another person or clue. Fill the scene to its edges, keep all important faces and objects in frame. MARA: the lighthouse keeper in the reference, keep her age, hair, cape and face. Region: The fog harbor. Chapter: The motionless tide. Draw exactly this already-known moment: The tide will move when the stolen crossing is released. Then you can reach the chest without sacrificing the ship or the accounts still inside it. Context for setting and continuity only: The captain points to the royal ship grounded beside the channel. A chest of Aren's private possessions remains in its hold, beyond a tide that the shadows keep motionless. MANDATORY PHYSICAL SETTING: the edge of the motionless tide and the royal ship's chest. Do not anthropomorphize books, pages or objects. No invented smiling ghosts. No person replaces a written record. EXHAUSTIVE VISIBLE CAST (do not add anyone else): no people, Elia appears ONLY in the recovered portrait. The reference is STYLE ONLY for any person not explicitly in this cast. EXACT SHOT: NO LIVE PEOPLE AT ALL, no Mara or captain. The royal chest is OPEN on wet rocks beside the newly moving tide. INSIDE lies the recovered framed PORTRAIT OF CHILD ELIA HOLDING THE SAME ATLAS, a large book of maps. The portrait is an object, not a living child. Make the open chest, portrait and atlas the clear foreground focus; a royal ship and moving water behind. NO closed chest and NO pointing sailor.",
+  "references": [
+    "assets_local/quest/redesign/portraits/mara-source.png"
+  ],
+  "sha256": "b994ed99a910eceb83b8292e397e9624c4e2389f5cc3bafc7639cf4a3b2d94d6",
+  "tool": "built-in image_gen",
+  "source": "exec-2a9761ad-6f1f-44f5-aaca-57994f60003a.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

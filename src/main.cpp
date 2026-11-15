@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <BlePageTurner.h>
 #include <BoardConfig.h>
 #include <Epub.h>
 #include <FontCacheManager.h>
@@ -20,11 +21,16 @@
 #include <VectorFontSupport.h>
 #include <WiFi.h>
 #include <XteinkDetect.h>
-#include <builtinFonts/all.h>
+#include <builtinFonts/notosans_8_regular.h>
+#include <builtinFonts/ubuntu_10_bold.h>
+#include <builtinFonts/ubuntu_10_regular.h>
+#include <builtinFonts/ubuntu_12_bold.h>
+#include <builtinFonts/ubuntu_12_regular.h>
 #include <driver/gpio.h>
 #include <esp_sntp.h>
 #include <soc/soc_caps.h>
 
+#include <algorithm>
 #include <cstring>
 
 #include "CrossPointSettings.h"
@@ -121,34 +127,6 @@ constexpr unsigned long X4PRO_POWER_CLICK_MAX_HOLD_MS = 300;
 static bool wakePowerReleasePending = false;
 
 // Fonts
-EpdFont notoserif14RegularFont(&notoserif_14_regular);
-EpdFont notoserif14BoldFont(&notoserif_14_bold);
-EpdFont notoserif14ItalicFont(&notoserif_14_italic);
-EpdFont notoserif14BoldItalicFont(&notoserif_14_bolditalic);
-EpdFontFamily notoserif14FontFamily(&notoserif14RegularFont, &notoserif14BoldFont, &notoserif14ItalicFont,
-                                    &notoserif14BoldItalicFont);
-#ifndef OMIT_FONTS
-EpdFont notoserif12RegularFont(&notoserif_12_regular);
-EpdFont notoserif12BoldFont(&notoserif_12_bold);
-EpdFont notoserif12ItalicFont(&notoserif_12_italic);
-EpdFont notoserif12BoldItalicFont(&notoserif_12_bolditalic);
-EpdFontFamily notoserif12FontFamily(&notoserif12RegularFont, &notoserif12BoldFont, &notoserif12ItalicFont,
-                                    &notoserif12BoldItalicFont);
-EpdFont notoserif16RegularFont(&notoserif_16_regular);
-EpdFont notoserif16BoldFont(&notoserif_16_bold);
-EpdFont notoserif16ItalicFont(&notoserif_16_italic);
-EpdFont notoserif16BoldItalicFont(&notoserif_16_bolditalic);
-EpdFontFamily notoserif16FontFamily(&notoserif16RegularFont, &notoserif16BoldFont, &notoserif16ItalicFont,
-                                    &notoserif16BoldItalicFont);
-EpdFont notoserif18RegularFont(&notoserif_18_regular);
-EpdFont notoserif18BoldFont(&notoserif_18_bold);
-EpdFont notoserif18ItalicFont(&notoserif_18_italic);
-EpdFont notoserif18BoldItalicFont(&notoserif_18_bolditalic);
-EpdFontFamily notoserif18FontFamily(&notoserif18RegularFont, &notoserif18BoldFont, &notoserif18ItalicFont,
-                                    &notoserif18BoldItalicFont);
-
-#endif  // OMIT_FONTS
-
 EpdFont smallFont(&notosans_8_regular);
 EpdFontFamily smallFontFamily(&smallFont);
 
@@ -244,7 +222,7 @@ static void silentRestartTo(const uint32_t target, const char* targetName) {
   // through to the new activity. On Home, Select on the default
   // selectorIndex=0 opens the most-recent book, looking like a trampoline back
   // to the reader they just exited.
-  GUI.drawPopup(renderer, tr(STR_LOADING_POPUP));
+  GUI.drawLoadingScreen(renderer, tr(STR_LOADING_POPUP));
   delay(50);
   ESP.restart();
 }
@@ -254,6 +232,19 @@ void silentRestart() { silentRestartTo(SILENT_REBOOT_TARGET_HOME, "home"); }
 void silentRestartToReader() { silentRestartTo(SILENT_REBOOT_TARGET_READER, "reader"); }
 
 void silentRestartToSettings() { silentRestartTo(SILENT_REBOOT_TARGET_SETTINGS, "settings"); }
+
+void restartToSettingsAfterLanguageChange() {
+  if (deepSleepInProgress) return;
+  armSilentReboot(SILENT_REBOOT_TARGET_SETTINGS);
+  GUI.drawLoadingScreen(renderer, tr(STR_LOADING_POPUP));
+  delay(50);
+#ifdef __EMSCRIPTEN__
+  extern void requestBrowserRestart();
+  requestBrowserRestart();
+#else
+  ESP.restart();
+#endif
+}
 
 void silentRestartToJoinNetwork() {
   if (deepSleepInProgress) return;
@@ -265,7 +256,7 @@ void silentRestartToJoinNetwork() {
 #endif
   armSilentReboot(SILENT_REBOOT_TARGET_JOIN_NETWORK);
   LOG_DBG("MAIN", "Silent restart (target=join-network)");
-  GUI.drawPopup(renderer, tr(STR_LOADING_POPUP));
+  GUI.drawLoadingScreen(renderer, tr(STR_LOADING_POPUP));
   delay(50);
   ESP.restart();
 }
@@ -274,7 +265,7 @@ void restartToHomeAfterStorageHandoff() {
   if (deepSleepInProgress) return;  // sleeping supersedes the storage handoff reboot
   armSilentReboot(SILENT_REBOOT_TARGET_HOME);
   LOG_DBG("MAIN", "Restart after storage handoff (target=home)");
-  GUI.drawPopup(renderer, tr(STR_LOADING_POPUP));
+  GUI.drawLoadingScreen(renderer, tr(STR_LOADING_POPUP));
   delay(50);
   handoffUsbOtgToSerialJtag();
   ESP.restart();
@@ -284,7 +275,7 @@ void restartToAppAfterStorageHandoff() {
   if (deepSleepInProgress) return;  // sleeping supersedes the storage handoff reboot
   armSilentReboot(SILENT_REBOOT_TARGET_APP);
   LOG_DBG("MAIN", "Restart after storage handoff (target=app)");
-  GUI.drawPopup(renderer, tr(STR_LOADING_POPUP));
+  GUI.drawLoadingScreen(renderer, tr(STR_LOADING_POPUP));
   delay(50);
   handoffUsbOtgToSerialJtag();
   ESP.restart();
@@ -315,6 +306,41 @@ void toggleWarmFrontlight() {
   SETTINGS.saveToFile();
 }
 
+namespace {
+bool edgeLightDirty = false;
+uint32_t edgeLightChangedAt = 0;
+void saveEdgeLight(bool force = false) {
+  if (edgeLightDirty && (force || millis() - edgeLightChangedAt >= 1500)) {
+    edgeLightDirty = !SETTINGS.saveToFile();
+    edgeLightChangedAt = millis();
+  }
+}
+void applyEdgeLight(edgelight::Event event) {
+  if (event.action == edgelight::Action::None || !Frontlight.present()) return;
+  const bool brightness = event.action == edgelight::Action::Brightness;
+  if (!brightness && !Frontlight.hasColorTemperature()) return;
+  const int previous = brightness ? (Frontlight.isOn() ? Frontlight.brightness() : 0) : Frontlight.warmth();
+  const int next = std::clamp(previous + event.step, 0, 100);
+  if (previous == next) return;
+  if (brightness) {
+    if (next) Frontlight.setBrightness(next);
+    Frontlight.setOn(next > 0);
+  } else {
+    Frontlight.setWarmth(next);
+    if (next) {
+      SETTINGS.frontlightWarmthMemory = next;
+      if (!Frontlight.brightness()) Frontlight.setBrightness(5);
+      Frontlight.setOn(true);
+    }
+  }
+  SETTINGS.frontlightBrightness = Frontlight.brightness();
+  SETTINGS.frontlightWarmth = Frontlight.warmth();
+  SETTINGS.frontlightOn = Frontlight.isOn();
+  edgeLightDirty = true;
+  edgeLightChangedAt = millis();
+}
+}  // namespace
+
 bool handleX4ProFrontlightDoubleClick() {
   if (!BoardConfig::isX4Pro() || !SETTINGS.doubleClickPwrLight || !gpio.wasReleased(HalGPIO::BTN_POWER)) {
     return false;
@@ -336,6 +362,116 @@ bool handleX4ProFrontlightDoubleClick() {
   return true;
 }
 
+static bool openShelfShortcut(const char* title) {
+  if (!title || !*title) return false;
+  for (int folder = 0; folder < shelf::folderCount(); ++folder) {
+    const auto& choices = shelf::folders()[folder];
+    for (int item = 0; item < choices.count; ++item) {
+      if (std::strcmp(choices.items[item].title, title) == 0)
+        return shelf::openItem(folder, item, renderer, mappedInputManager, shelf::LaunchOrigin::Home);
+    }
+  }
+  return false;
+}
+
+namespace pageturner {
+std::atomic<bool> holdsCpu{false};
+
+bleturner::Heap heap() {
+  const auto h = HalMemory::getInternalHeap();
+  return {h.freeBytes, h.largestBlockBytes};
+}
+
+// Runs on the radio's start task. Only TRIES the render lock: the render task can hold it through a
+// chapter build that is waiting for this very radio.
+bool releaseCaches() {
+  RenderLock lock(RenderLock::Mode::Try);
+  if (!lock.ownsLock()) return false;
+  fontCacheManager.releaseSdFontCaches();
+  return true;
+}
+
+bool dispatch(const bleturner::Action action) {
+  switch (action) {
+    case bleturner::Action::NextPage:
+      return activityManager.remoteTurn(true, false);
+    case bleturner::Action::PrevPage:
+      return activityManager.remoteTurn(false, false);
+    case bleturner::Action::NextChapter:
+      return activityManager.remoteTurn(true, true);
+    case bleturner::Action::PrevChapter:
+      return activityManager.remoteTurn(false, true);
+    case bleturner::Action::Confirm:
+      return activityManager.remoteClick(RemoteButton::Confirm);
+    case bleturner::Action::Back:
+      return activityManager.remoteClick(RemoteButton::Back);
+    case bleturner::Action::SideLeft:
+      return activityManager.remoteClick(RemoteButton::SideLeft);
+    case bleturner::Action::SideRight:
+      return activityManager.remoteClick(RemoteButton::SideRight);
+    case bleturner::Action::Power:
+      return activityManager.remoteClick(RemoteButton::Power);
+    case bleturner::Action::Shortcut1:
+    case bleturner::Action::Shortcut2: {
+      if (!activityManager.isRemoteControlShown() || RenderLock::peek()) return false;
+      const auto peer = bleturner::linked();
+      const auto* table = bleturner::tableFor(SETTINGS.ble.remotes, SETTINGS.ble.remoteCount, peer.addr, peer.name);
+      if (!table) return false;
+      const auto& shortcut = table->shortcuts[action == bleturner::Action::Shortcut1 ? 0 : 1];
+      const auto target = static_cast<SideButtonAction>(shortcut.action);
+      if (!mappedInputManager.injectRemoteAction(target)) return false;
+      if (target == SideButtonAction::OpenShortcut) {
+        mappedInputManager.resetHomeButtonInput();
+        return openShelfShortcut(shortcut.title);
+      }
+      return true;
+    }
+    case bleturner::Action::ReaderMenu:
+      return activityManager.remoteShortcut(true);
+    case bleturner::Action::SaveQuote:
+      return activityManager.remoteShortcut(false);
+    case bleturner::Action::None:
+      return false;
+  }
+  return false;
+}
+
+bool deliver(const bleturner::Action action) {
+  if (mappedInputManager.hasRemoteClick()) return false;
+  const bool acted = dispatch(action);
+  if (acted) mappedInputManager.claimRemoteFrame();
+  return acted;
+}
+
+bool yieldForRadio() {
+  return activityManager.remoteRadioReady();
+}  // defer the radio while a chapter parser owns the heap
+bool radioReserved() { return WiFi.getMode() != WIFI_MODE_NULL || devmode::inhibitsSleep(); }
+void restartIntoBook() { silentRestartToReader(); }
+
+// The radio needs a steady clock while it is up or changing state.
+void holdFullSpeed(const bool hold) {
+  holdsCpu.store(hold);
+  if (hold) powerManager.setPowerSaving(false);
+}
+
+void log(const bool error, const char* format, va_list args) {
+#ifdef ENABLE_SERIAL_LOG
+  if (!error && LOG_LEVEL < 1) return;
+  char line[160];
+  vsnprintf(line, sizeof(line), format, args);
+  logPrintf(error ? "ERR" : "INF", "BLE", "%s", line);
+#else
+  (void)error;
+  (void)format;
+  (void)args;
+#endif
+}
+
+const bleturner::Host host{heap,          releaseCaches, deliver, yieldForRadio, radioReserved, restartIntoBook,
+                           holdFullSpeed, log,           nullptr};
+}  // namespace pageturner
+
 constexpr char SLEEP_FRAME_FILE[] = "/.crosspoint/sleep_frame.bin";
 
 static void saveSleepFrameBuffer() {
@@ -345,13 +481,14 @@ static void saveSleepFrameBuffer() {
   file.close();
 }
 
-static bool loadSleepFrameBuffer() {
+static bool loadSleepFrameBuffer(bool restorePixels) {
   HalFile file;
   if (!Storage.openFileForRead("SLP", SLEEP_FRAME_FILE, file)) return false;
   const size_t bufferSize = display.getBufferSize();
-  const size_t bytesRead = file.read(display.getFrameBuffer(), bufferSize);
+  const bool valid =
+      file.size() == bufferSize && (!restorePixels || file.read(display.getFrameBuffer(), bufferSize) == bufferSize);
   file.close();
-  if (bytesRead != bufferSize) {
+  if (!valid) {
     Storage.remove(SLEEP_FRAME_FILE);
     return false;
   }
@@ -417,6 +554,7 @@ static void deliverSleepPluginEvents() {
   const auto cred = WIFI_STORE.findCredential(WIFI_STORE.getLastConnectedSsid());
   if (!cred) return;
 
+  // Quick Resume and transparent sleep retain the outgoing framebuffer.
   GUI.drawPopup(renderer, tr(STR_LOADING_POPUP));
   WiFi.mode(WIFI_STA);
   WiFi.begin(cred->ssid.c_str(), cred->password.c_str());
@@ -437,15 +575,19 @@ static void deliverSleepPluginEvents() {
 // repaints the sleep screen and re-arms, and touches no state that belongs
 // to the user's own sleep. See the block at the top.
 void enterDeepSleep(bool fromTimeout = false, bool unattended = false) {
+  saveEdgeLight(true);
   HalPowerManager::Lock powerLock;  // Ensure we are at normal CPU frequency for sleep preparation
 
   // Sleep may end in a power-off (battery death, latch); persist the clock
   // floor now so a later cold boot resumes from it.
   trustedtime::note();
 
+  const bool bluetoothStopped = bleturner::beforeSleep(2000);
+  if (!bluetoothStopped) LOG_ERR("BLE", "Radio stop timed out before sleep");
+
   // Plugin events belong to a person's sleep. An unattended one has no
   // activity to prepare and nobody reading, and no network work is required.
-  if (!unattended) deliverSleepPluginEvents();
+  if (!unattended && bluetoothStopped) deliverSleepPluginEvents();
 
   // An unattended sleep captures NOTHING. It is the tail of a boot nobody
   // asked for, running with no activity ever created, so every question below
@@ -527,13 +669,6 @@ void setupDisplayAndFonts(bool seamless = false) {
   }
   fontCacheManager.setFontDecompressor(&fontDecompressor);
   renderer.setFontCacheManager(&fontCacheManager);
-  renderer.insertFont(NOTOSERIF_14_FONT_ID, notoserif14FontFamily);
-#ifndef OMIT_FONTS
-  renderer.insertFont(NOTOSERIF_12_FONT_ID, notoserif12FontFamily);
-  renderer.insertFont(NOTOSERIF_16_FONT_ID, notoserif16FontFamily);
-  renderer.insertFont(NOTOSERIF_18_FONT_ID, notoserif18FontFamily);
-
-#endif  // OMIT_FONTS
   renderer.insertFont(UI_10_FONT_ID, ui10FontFamily);
   renderer.insertFont(UI_12_FONT_ID, ui12FontFamily);
   renderer.insertFont(SMALL_FONT_ID, smallFontFamily);
@@ -673,6 +808,7 @@ void setup() {
     SETTINGS.readerMenuStyle = CrossPointSettings::READER_MENU_TOOLBAR;
   }
   SETTINGS.loadFromFile();
+  bleturner::begin(pageturner::host, SETTINGS.ble);
   // After checkPanic() so the panic record is still there to read, and after
   // the settings so the toggle is known; reads one card file, never the radio.
   // Upstream moved SETTINGS.loadFromFile()
@@ -683,6 +819,7 @@ void setup() {
   // UTC-offset setting on first boot after the update).
   timezones::applyToClock();
   I18N.setLanguage(static_cast<Language>(SETTINGS.language));
+  if (SETTINGS.languagePack[0]) I18N.loadLanguagePack(SETTINGS.languagePack);
   if (dictionarydefaults::apply(SETTINGS)) SETTINGS.saveToFile();
   UITheme::getInstance().reload();
   ButtonNavigator::setMappedInputManager(mappedInputManager);
@@ -843,7 +980,7 @@ void setup() {
       // us in a splashless-with-no-frame loop on the next boot.
       APP_STATE.showBootScreen = true;
       APP_STATE.saveToFile();
-      if (Storage.exists(SLEEP_FRAME_FILE) && loadSleepFrameBuffer()) {
+      if (loadSleepFrameBuffer(gpio.deviceIsX3())) {
         if (gpio.deviceIsX3()) {
           // begin() clears the X3 controller RAM, so restore the saved frame as
           // the baseline for the first reader paint without refreshing the panel.
@@ -986,7 +1123,25 @@ void loop() {
 #endif
 
   gpio.setSharedConfirmPowerShortPressEmitsPower(SETTINGS.shortPwrBtn == CrossPointSettings::SHORT_PWRBTN::SLEEP);
+  mappedInputManager.setReaderTextContext(activityManager.readerTextInputActive());
   mappedInputManager.update();
+
+  // Bluetooth page turner, before the USB drive's early return: a card handed to USB stops the radio
+  // before anything else.
+  bleturner::Scene scene{};
+  // Home counts only for builds whose radio may start there (the S3 profile, RadioPolicy.h).
+  const bool homeShown = activityManager.isForegroundHomeShown();
+  const bool remoteContext = activityManager.isRemoteReaderContext();
+  scene.where = remoteContext                              ? bleturner::Where::Reader
+                : homeShown                                ? bleturner::Where::Home
+                : activityManager.isRemoteControlContext() ? bleturner::Where::Interface
+                                                           : bleturner::Where::Elsewhere;
+  scene.visit = activityManager.visit();
+  scene.pageShown = activityManager.isRemoteControlShown();
+  scene.storageBusy = activityManager.requiresExclusiveStorageLoop();
+  scene.localKey = gpio.wasAnyPressed() || gpio.wasAnyReleased() || gpio.wasTouchActivity();
+  scene.wifiOn = WiFi.getMode() != WIFI_MODE_NULL;
+  const bool remoteActed = bleturner::tick(scene);
 
   if (activityManager.requiresExclusiveStorageLoop()) {
     // USB Drive handed the raw SD card to the host. Do not run screenshots,
@@ -1038,7 +1193,8 @@ void loop() {
     lastMemPrint = millis();
   }
 
-  devmode::update();
+  // A background Wi-Fi join waits until BLE has returned its controller memory.
+  if (!devmode::inhibitsSleep() || bleturner::stopNow(0)) devmode::update();
 
 #if CROSSPOINT_DEV_SERIAL_BRIDGE
   // Dev builds route all serial commands (screenshot included) through the
@@ -1085,13 +1241,15 @@ void loop() {
 
   // Check for any user activity (button press or release) or active background work
   static unsigned long lastActivityTime = millis();
+  applyEdgeLight(mappedInputManager.edgeLightEvent());
+  saveEdgeLight();
   // devmode::holdsRadio() counts as activity. Deep sleep on this chip is a full
   // reset, so a sleeping device does not merely idle -- it leaves the network
   // and cannot be woken from it. A development device that disappears after the
   // sleep timeout is not one, and the cost is confined to devices whose owner
   // deliberately switched Developer Mode on.
   if (gpio.wasAnyPressed() || gpio.wasAnyReleased() || gpio.wasTouchActivity() ||
-      mappedInputManager.homeButtonAction() != HomeButtonAction::Ignore || halTiltSensor.hadActivity() ||
+      mappedInputManager.homeButtonAction() != HomeButtonAction::Ignore || halTiltSensor.hadActivity() || remoteActed ||
       activityManager.preventAutoSleep()) {
     lastActivityTime = millis();         // Reset inactivity timer
     powerManager.setPowerSaving(false);  // Restore normal CPU frequency on user activity
@@ -1134,6 +1292,7 @@ void loop() {
     const auto powerAction = powermenu::take();
     if (powerAction != powermenu::Action::None) {
       if (powerAction == powermenu::Action::Restart) {
+        saveEdgeLight(true);
         activityManager.prepareForSleep();
         trustedtime::note();
         activityManager.prepareForRestart();
@@ -1147,19 +1306,37 @@ void loop() {
       return;
     }
     static powermenu::ButtonPolicy powerButton;
-    switch (powerButton.update(gpio.isPressed(HalGPIO::BTN_POWER), gpio.wasReleased(HalGPIO::BTN_POWER),
-                               gpio.getPowerButtonHeldTime(), millis() >= allowSleepAt)) {
-      case powermenu::ButtonAction::Sleep:
+    const auto physicalPress =
+        powerButton.update(gpio.isPressed(HalGPIO::BTN_POWER), gpio.wasReleased(HalGPIO::BTN_POWER),
+                           gpio.getPowerButtonHeldTime(), millis() >= allowSleepAt);
+    const auto press = mappedInputManager.remotePowerClick() && millis() >= allowSleepAt
+                           ? powermenu::ButtonAction::ShortPress
+                           : physicalPress;
+    switch (powermenu::configuredAction(press, SETTINGS.touchPowerShortAction, SETTINGS.touchPowerLongAction)) {
+      case powermenu::PressAction::Sleep:
         enterDeepSleep();
         return;
-      case powermenu::ButtonAction::Menu:
+      case powermenu::PressAction::Menu:
         if (std::strcmp(activityManager.currentActivityName(), "PowerMenu") == 0) break;
         if (auto menu = makeUniqueNoThrow<PowerMenuActivity>(renderer, mappedInputManager))
           activityManager.pushActivity(std::move(menu));
         else
           LOG_ERR("POWER", "OOM: power menu");
         break;
-      case powermenu::ButtonAction::None:
+      case powermenu::PressAction::ToggleLight:
+        toggleFrontlight();
+        break;
+      case powermenu::PressAction::Warmth:
+        toggleWarmFrontlight();
+        break;
+      case powermenu::PressAction::Refresh:
+        mappedInputManager.setGlobalHomeAction(HomeButtonAction::Refresh);
+        break;
+      case powermenu::PressAction::Home:
+        mappedInputManager.setGlobalHomeAction(HomeButtonAction::Home);
+        break;
+      case powermenu::PressAction::Ignore:
+      case powermenu::PressAction::Count:
         break;
     }
   }
@@ -1267,16 +1444,7 @@ void loop() {
                                   ? side_button::shortcutTarget(mappedInputManager.sideButtonKey())
                                   : nullptr;
   if (shortcutTitle) {
-    bool opened = false;
-    for (int folder = 0; folder < shelf::folderCount() && !opened; ++folder) {
-      const auto& choices = shelf::folders()[folder];
-      for (int item = 0; item < choices.count; ++item) {
-        if (std::strcmp(choices.items[item].title, shortcutTitle) == 0) {
-          opened = shelf::openItem(folder, item, renderer, mappedInputManager, shelf::LaunchOrigin::Home);
-          break;
-        }
-      }
-    }
+    openShelfShortcut(shortcutTitle);
   }
   if (mappedInputManager.homeButtonAction() == HomeButtonAction::ToggleTouchscreen && gpio.hasHomeKey()) {
     SETTINGS.touchScreenLocked = SETTINGS.touchScreenLocked ? 0 : 1;
@@ -1347,6 +1515,7 @@ void loop() {
   std::optional<uint32_t> activityDelay;
   const uint32_t now = millis();
   loopdeadline::Deadline next(now);
+  if (edgeLightDirty) next.after(edgeLightChangedAt, 1500);
   {
     RenderLock lock(RenderLock::Mode::Try);
     if (!lock.ownsLock()) {
@@ -1371,7 +1540,11 @@ void loop() {
 
   const uint32_t idleElapsed = now - uint32_t(lastActivityTime);
   const uint32_t powerSavingAt = activityDelay ? HalPowerManager::IDLE_POWER_SAVING_MS : loopdeadline::LEGACY_IDLE_MS;
-  powerManager.setPowerSaving(idleElapsed >= powerSavingAt);
+  powerManager.setPowerSaving(idleElapsed >= powerSavingAt && !pageturner::holdsCpu.load());
+  if (bleturner::holdsHeap())
+    next.limit(20);
+  else if (SETTINGS.ble.enabled && remoteContext)
+    next.limit(250);
   if (activityDelay) {
     next.limit(*activityDelay);
   } else {

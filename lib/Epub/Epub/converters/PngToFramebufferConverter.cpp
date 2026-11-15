@@ -215,6 +215,7 @@ void convertLineToGray(const uint8_t* pPixels, uint8_t* grayLine, int width, int
 int pngDrawCallback(PNGDRAW* pDraw) {
   PngContext* ctx = reinterpret_cast<PngContext*>(pDraw->pUser);
   if (!ctx || !ctx->config || !ctx->renderer || !ctx->grayLineBuffer) return 0;
+  if (!ctx->config->shouldContinue()) return 0;
 
   ImageToFramebufferDecoder::yieldDuringDecode(ctx->lastYieldMs);
 
@@ -293,7 +294,7 @@ int pngDrawCallback(PNGDRAW* pDraw) {
           } else {
             ditheredGray = gray >> 6;
           }
-          pw.writePixel(outX, ditheredGray, ctx->alphaLineBuffer != nullptr);
+          if (!ctx->config->cacheOnly) pw.writePixel(outX, ditheredGray, ctx->alphaLineBuffer != nullptr);
           if (caching) cw.writePixel(outX, ditheredGray);
         }
       }
@@ -468,6 +469,10 @@ bool PngToFramebufferConverter::decodeToFramebuffer(const std::string& imagePath
   ctx.grayLineBuffer = nullptr;
   ctx.alphaLineBuffer = nullptr;
 
+  if (!config.shouldContinue()) {
+    if (ctx.caching) ctx.cache.abort();
+    return false;
+  }
   if (rc != PNG_SUCCESS) {
     LOG_ERR("PNG", "Decode failed: %d", rc);
     if (ctx.caching) ctx.cache.abort();

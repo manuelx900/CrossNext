@@ -64,15 +64,16 @@ li .drop{flex:0 0 auto;font-family:var(--mono);font-size:.8rem;letter-spacing:.1
 .foot{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
   color:var(--muted);margin:1.4rem 0 0}
 </style>
+<!--#include file="shared/UiText.html.inc" -->
 </head>
 <body>
-<div class="band"><span id="name">Notes</span><span class="band-note" id="state">Loading</span></div>
+<div class="band"><span id="name">Notes</span><span class="band-note" id="state" data-ui>Loading</span></div>
 <div class="band-rule"></div>
 <main>
-<p class="eyebrow" id="eyebrow">One line per thing</p>
+<p class="eyebrow" id="eyebrow" data-ui>One line per thing</p>
 <ul id="rows"></ul>
-<button class="btn" id="save" disabled>Save to the reader</button>
-<p class="foot" id="foot">Served by the reader itself. Nothing leaves your network.</p>
+<button class="btn" id="save" disabled data-ui>Save to the reader</button>
+<p class="foot" id="foot" data-ui>Served by the reader itself. Nothing leaves your network.</p>
 </main>
 <script>
 // Wrapped, and nothing here is called `name`: a top-level `var name` assigns to
@@ -111,15 +112,15 @@ function addRow(item, isNew) {
   var box = document.createElement('input');
   box.type = 'checkbox';
   box.checked = !!item.done;
-  box.setAttribute('aria-label', 'Done');
+  box.setAttribute('aria-label', uiText("Done"));
 
   // A box that GROWS with what it holds. It was a one-line field, which showed
   // a long item as its first thirty characters and a paragraph as one sliver.
   var text = document.createElement('textarea');
   text.rows = 1;
   text.value = item.text || '';
-  text.placeholder = isNew ? (isNote ? 'Add a paragraph' : 'Add a line') : '';
-  text.setAttribute('aria-label', 'What it says');
+  text.placeholder = isNew ? (isNote ? uiText("Add a paragraph") : uiText("Add a line")) : '';
+  text.setAttribute('aria-label', uiText("What it says"));
   function fit() {
     text.style.height = 'auto';
     text.style.height = text.scrollHeight + 'px';
@@ -129,7 +130,7 @@ function addRow(item, isNew) {
   drop.type = 'button';
   drop.className = 'drop';
   drop.textContent = 'X';
-  drop.setAttribute('aria-label', 'Remove this line');
+  drop.setAttribute('aria-label', uiText("Remove this line"));
 
   function mark() { li.className = (box.checked ? 'done' : '') + (li.classList.contains('new') ? ' new' : ''); }
   box.addEventListener('change', mark);
@@ -198,9 +199,9 @@ window.addEventListener('resize', function () {
 function load() {
   fetch('/n/text', { cache: 'no-store' }).then(function (r) {
     if (!r.ok) throw new Error(r.status);
-    nameEl.textContent = decodeURIComponent(r.headers.get('X-Note-Name') || 'Notes');
+    nameEl.textContent = decodeURIComponent(r.headers.get('X-Note-Name') || uiText('Notes'));
     isNote = r.headers.get('X-Note-Kind') === 'note';
-    eyebrowEl.textContent = isNote ? 'One paragraph per box' : 'One line per thing';
+    eyebrowEl.textContent = isNote ? uiText("One paragraph per box") : uiText("One line per thing");
     return r.text();
   }).then(function (body) {
     // Only when nothing has been typed yet. Reloading over what somebody is
@@ -216,16 +217,16 @@ function load() {
     addRow({ done: false, text: '' }, true);
     loaded = serialise();
     saveEl.disabled = false;
-    say('Ready');
+    say(uiText("Ready"));
   }).catch(function () {
-    say('No answer');
-    footEl.textContent = 'The reader is not answering. Check it is still on this screen.';
+    say(uiText("No answer"));
+    footEl.textContent = uiText("The reader is not answering. Check it is still on this screen.");
   });
 }
 
 saveEl.addEventListener('click', function () {
   saveEl.disabled = true;
-  say('Saving');
+  say(uiText("Saving"));
   var body = serialise();
   fetch('/n/text', {
     method: 'PUT',
@@ -235,7 +236,7 @@ saveEl.addEventListener('click', function () {
     if (!r.ok) return r.text().then(function (m) { throw new Error(m || r.status); });
     loaded = body;
     saveEl.disabled = false;
-    say('Saved');
+    say(uiText("Saved"));
   }).catch(function (e) {
     saveEl.disabled = false;
     say(String(e.message || e).slice(0, 40));

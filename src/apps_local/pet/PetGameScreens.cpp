@@ -1,6 +1,7 @@
 #include <cstdlib>
 
 #include "PetPolishIcons.h"
+#include "PetSimpleScreens.h"
 #include "PetWidgets.h"
 
 namespace petui {
@@ -40,28 +41,18 @@ const char* sequenceHint(pet::GamePhase phase) {
       return tr(STR_PET_GAME_ROUND_WIN);
     case pet::GamePhase::Finished:
       return tr(STR_PET_GAME_COMPLETE);
+    case pet::GamePhase::RoundFailed:
+      return tr(STR_PET_SEQUENCE_MISMATCH);
   }
   return "";
 }
 void symbol(toybox::Screen& s, fui::Rect r, unsigned value) {
-  static constexpr const freeink::Icon* icons[] = {&icon_cat_nature_32, &extra_moon_64, &extra_reading_flame_64};
-  icon(s, r, *icons[value % 3]);
+  static constexpr symbols::Kind marks[] = {symbols::Kind::Health, symbols::Kind::Rest, symbols::Kind::Energy};
+  symbols::draw(s, r, marks[value % 3]);
 }
-void card(toybox::Screen& s, fui::Rect r, bool focus, bool hidden) {
-  s.target().fill(r, paper);
-  s.target().fill(rect(r.x + 4, r.y + 5, r.width - 4, r.height - 5), ink, 7);
-  const auto front = rect(r.x, r.y, r.width - 5, r.height - 6);
-  s.target().fill(front, paper, 7);
-  s.target().stroke(front, ink, focus ? 4 : 3, 7);
-  s.target().stroke(front.inset({8, 8, 8, 8}), ink, 1, 3);
-  if (!hidden) return;
-  const int length = std::min(9, int(r.width) / 9);
-  for (int right : {0, 1})
-    for (int bottom : {0, 1}) {
-      const int x = right ? r.right() - 19 : r.x + 16, y = bottom ? r.bottom() - 22 : r.y + 16;
-      s.target().fill(rect(right ? x - length : x, y, length + 3, 3), ink);
-      s.target().fill(rect(x, bottom ? y - length : y, 3, length + 3), ink);
-    }
+void card(toybox::Screen& s, fui::Rect r, bool focus, bool) {
+  actionsurface::panel(s, r);
+  if (focus) s.target().stroke(r, ink, 3, actionsurface::RADIUS);
 }
 void cardMotif(toybox::Screen& s, fui::Rect r, pet::Game kind, bool inverse = false) {
   if (kind == pet::Game::Puzzle) {
@@ -136,12 +127,13 @@ void statistic(toybox::Screen& s, fui::Rect r, const char* label, const char* va
 }
 void stats(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, bool compact) {
   const auto& g = *m.game;
-  frame(s, r);
   const bool pairs = g.kind == pet::Game::Pairs;
   const int half = compact ? r.height / 2 : r.width / 2;
-  const auto first = compact ? rect(r.x, r.y, r.width, half) : rect(r.x, r.y, half, r.height);
-  const auto second =
-      compact ? rect(r.x, r.y + half, r.width, r.height - half) : rect(r.x + half, r.y, r.width - half, r.height);
+  const auto first = compact ? rect(r.x, r.y, r.width, half - 6) : rect(r.x, r.y, half - 6, r.height);
+  const auto second = compact ? rect(r.x, r.y + half + 6, r.width, r.height - half - 6)
+                              : rect(r.x + half + 6, r.y, r.width - half - 6, r.height);
+  actionsurface::panel(s, first);
+  actionsurface::panel(s, second);
   unsigned found = 0;
   for (unsigned bit = 0; bit < 6; ++bit) found += (g.matched >> bit) & 1;
   const unsigned round = g.phase == pet::GamePhase::RoundComplete ? g.rounds : std::min(3u, unsigned(g.rounds) + 1);
@@ -166,13 +158,9 @@ void stats(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, bool compact
   std::snprintf(w.label, sizeof(w.label), "%u", value);
   statistic(s, second, label, w.label, g.kind == pet::Game::Sequence ? extra_power_64 : extra_cards_64, compact, pairs,
             g.kind == pet::Game::Sequence);
-  if (compact)
-    s.target().line({int16_t(r.x + 8), int16_t(r.y + half)}, {int16_t(r.right() - 8), int16_t(r.y + half)}, 1, ink);
-  else
-    s.target().line({int16_t(r.x + half), int16_t(r.y + 14)}, {int16_t(r.x + half), int16_t(r.bottom() - 14)}, 2, ink);
 }
 void hint(toybox::Screen& s, fui::Rect r, const char* copy) {
-  frame(s, r);
+  actionsurface::panel(s, r);
   icon(s, rect(r.x + 12, r.y + (r.height - 30) / 2, 30, 30), extra_light_on_64);
   s.target().line({int16_t(r.x + 54), int16_t(r.y + 9)}, {int16_t(r.x + 54), int16_t(r.bottom() - 9)}, 2, ink);
   prose(s, rect(r.x + 68, r.y + 7, r.width - 78, r.height - 14), copy, 2, fui::TextAlign::Center);
@@ -197,21 +185,31 @@ void energyMotif(toybox::Screen& s, fui::Rect r, bool inverse) {
 void pairBoard(toybox::Screen& s, const Model& m, Work& w, fui::Rect area) {
   const auto& g = *m.game;
   const int cols = 3, rows = 2;
-  const int gap = 14,
+  const int gap = UI_GAP,
             side = std::min((int(area.width) - gap * (cols - 1)) / cols, (int(area.height) - gap * (rows - 1)) / rows);
   const int x = area.x + (area.width - side * cols - gap * (cols - 1)) / 2;
+  const int top = area.y + (area.height - side * rows - gap * (rows - 1)) / 2;
   for (int i = 0; i < 6; ++i) {
-    const auto r = rect(x + (i % cols) * (side + gap), area.y + (i / cols) * (side + gap), side, side);
+    const auto r = rect(x + (i % cols) * (side + gap), top + (i / cols) * (side + gap), side, side);
     const bool matched = g.matched & (1u << i), visible = matched || g.picked == i || g.second == i;
     const bool focus = button(s, w, r, "", GamePick, i, false, nullptr, !g.finished() && !matched && g.second == 255);
     card(s, r, focus, !visible);
-    const int size = std::min(66, side - 46);
+    const int size = std::min(64, side - 24);
     const auto center = rect(r.x + (r.width - size) / 2 - 2, r.y + (r.height - size) / 2 - 2, size, size);
     if (visible)
       symbol(s, center, g.cards[i]);
     else
-      text(s, center, "?", 2, false, fui::TextAlign::Center);
-    if (matched) icon(s, rect(r.right() - 31, r.bottom() - 34, 16, 16), extra_check_32);
+      text(s, center, "?", 5, false, fui::TextAlign::Center);
+    if (matched) {
+      const int size = std::min(36, side / 3);
+      const auto badge = rect(r.right() - size - 8, r.bottom() - size - 8, size, size);
+      s.target().fill(badge, ink, uint8_t(size / 2));
+      const fui::Point start{int16_t(badge.x + size / 4), int16_t(badge.y + size / 2)},
+          bend{int16_t(badge.x + size * 5 / 12), int16_t(badge.y + size * 2 / 3)},
+          end{int16_t(badge.x + size * 3 / 4), int16_t(badge.y + size / 3)};
+      s.target().line(start, bend, std::max(3, size / 8), paper);
+      s.target().line(bend, end, std::max(3, size / 8), paper);
+    }
   }
 }
 void sequenceBoard(toybox::Screen& s, const Model& m, Work& w, fui::Rect area) {
@@ -225,22 +223,23 @@ void sequenceBoard(toybox::Screen& s, const Model& m, Work& w, fui::Rect area) {
     const bool known = g.showing() || complete || i < g.step;
     card(s, r, false, !known);
     if (known)
-      symbol(s, r.inset({15, 15, 20, 18}), g.sequence[i]);
+      symbol(s, r.inset({15, 15, 20, 18}), g.showing() || complete ? g.sequence[i] : g.sequenceInput[i]);
     else
       text(s, r.inset({12, 10, 16, 10}), "?", 1, false, fui::TextAlign::Center);
   }
-  if (g.showing() || complete) {
-    const auto note = rect(area.x + area.width / 10, series.bottom() + 24, area.width * 8 / 10, 56);
+  if (g.showing() || complete || g.phase == pet::GamePhase::RoundFailed) {
+    const auto note = rect(area.x + area.width / 10, series.bottom() + 24, area.width * 8 / 10, 66);
     hint(s, note,
-         g.finished() ? tr(STR_PET_GAME_COMPLETE)
-         : complete   ? tr(STR_PET_GAME_ROUND_WIN)
-                      : tr(STR_PET_GAME_OBSERVE));
+         g.phase == pet::GamePhase::RoundFailed ? tr(STR_PET_SEQUENCE_RETRY_HINT)
+         : g.finished()                         ? tr(STR_PET_GAME_COMPLETE)
+         : complete                             ? tr(STR_PET_GAME_ROUND_WIN)
+                                                : tr(STR_PET_GAME_OBSERVE));
     return;
   }
   const int top = series.bottom() + 24;
   const auto choices = rect(area.x, top, area.width, std::min(108, int(area.bottom()) - top));
   for (int i = 0; i < 3; ++i) {
-    const auto r = cell(choices, i, 3, 14);
+    const auto r = cell(choices, i, 3, UI_GAP);
     const bool focus = button(s, w, r, "", GamePick, i);
     card(s, r, focus, false);
     symbol(s, r.inset({20, 20, 24, 24}), unsigned(i));
@@ -250,7 +249,7 @@ void puzzleBoard(toybox::Screen& s, const Model& m, Work& w, fui::Rect area, boo
   const auto& g = *m.game;
   w.puzzleLayout = petinput::puzzleLayout(area, wide);
   const auto& layout = w.puzzleLayout;
-  s.target().stroke(layout.frame, ink, 4, 6);
+  actionsurface::panel(s, layout.frame);
   unsigned blank = 0;
   while (blank < 9 && g.puzzle[blank]) ++blank;
   for (int i = 0; i < 9; ++i) {
@@ -261,11 +260,8 @@ void puzzleBoard(toybox::Screen& s, const Model& m, Work& w, fui::Rect area, boo
     }
     const bool adjacent = blank < 9 && std::abs(i / 3 - int(blank / 3)) + std::abs(i % 3 - int(blank % 3)) == 1;
     const bool focus = button(s, w, r, "", GamePick, i, false, nullptr, g.phase == pet::GamePhase::Playing && adjacent);
-    s.target().fill(r, paper);
-    s.target().fill(rect(r.x + 3, r.y + 3, r.width - 3, r.height - 3), ink, 4);
-    const auto face = rect(r.x, r.y, r.width - 3, r.height - 3);
-    s.target().fill(face, paper, 4);
-    s.target().stroke(face, ink, focus ? 4 : 3, 4);
+    card(s, r, focus, false);
+    const auto face = r;
     std::snprintf(w.label, sizeof(w.label), "%u", unsigned(g.puzzle[i]));
     text(s, face.inset({4, 4, 4, 4}), w.label, 2, false, fui::TextAlign::Center);
   }
@@ -315,18 +311,9 @@ void games(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   giftMotif(s, rect(offerBox.x + 13, offerBox.y + (offerBox.height - markSide) / 2, markSide, markSide));
   s.target().line({int16_t(copyX - 12), int16_t(offerBox.y + 10)},
                   {int16_t(copyX - 12), int16_t(offerBox.bottom() - 10)}, 1, ink);
-  text(s, rect(copyX, offerBox.y + 6, (offerBox.right() - copyX) * 42 / 100, 23), offerLabel, 3);
-  if (m.clockKnown && m.today > 0 && m.today >= m.profile->gameDay && m.writable && !m.historyChanged)
-    std::snprintf(w.label, sizeof(w.label), tr(STR_PET_GAME_PRIZES_USED),
-                  m.today == m.profile->gameDay ? std::min(3u, unsigned(m.profile->gamesToday)) : 0u);
-  else
-    std::snprintf(w.label, sizeof(w.label), "%s", tr(STR_PET_GAME_PRIZES_UNKNOWN));
-  text(s,
-       rect(copyX + (offerBox.right() - copyX) * 42 / 100, offerBox.y + 6, (offerBox.right() - copyX) * 58 / 100 - 8,
-            23),
-       w.label, 3, false, fui::TextAlign::Right);
+  text(s, rect(copyX, offerBox.y + 6, offerBox.right() - copyX - 8, 23), offerLabel, 3);
   prose(s, rect(copyX, offerBox.y + 31, offerBox.right() - copyX - 8, offerBox.height - 35),
-        blocked != pet::PlayBlock::None ? playBlockText(blocked)
+        blocked != pet::PlayBlock::None ? gameCareBlock(*m.profile)
         : m.profile->joy < 40           ? tr(STR_PET_LOW_MOOD_HELP)
                                         : tr(STR_PET_GAME_RULES_BRIEF),
         wide ? 1 : 2);
@@ -406,32 +393,173 @@ void games(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   text(s, rect(footer.x + 82, footer.y + 4, footer.width - 94, footer.height - 8),
        enabled ? tr(STR_PET_START_GAME) : tr(STR_PET_GAME_CARE_FIRST), 0, inverse, fui::TextAlign::Center);
 }
+namespace {
+void gamePreview(toybox::Screen& s, fui::Rect r, pet::Game kind) {
+  const auto paper = fui::Paint::solid(fui::Color::White), ink = fui::Paint::solid(fui::Color::Black);
+  const auto muted = fui::Paint::dither(fui::Color::LightGray);
+  switch (kind) {
+    case pet::Game::Pairs: {
+      const int width = (r.width - 12) / 3, height = (r.height - 8) / 2;
+      for (unsigned i = 0; i < 6; ++i) {
+        const auto box = rect(r.x + int(i % 3) * (width + 6), r.y + int(i / 3) * (height + 8), width, height);
+        s.target().fill(rect(box.x, box.y + 2, box.width, box.height), ink, 6);
+        s.target().fill(box, i == 2 || i == 4 ? muted : paper, 6);
+        s.target().stroke(box, ink, 2, 6);
+        if (box.height < 26 || box.width < 26) {
+          s.target().fill(rect(box.x + box.width / 2 - 1, box.y + box.height / 2 - 2, 2, 4), ink);
+        } else if (i == 2 || i == 4)
+          simple::copy(s, box.inset({4, 4, 4, 4}), "?", true, fui::TextAlign::Center, false, 1, 0);
+        else {
+          const int size = std::min(int(box.width) - 10, int(box.height) - 10);
+          symbols::draw(s, rect(box.x + (box.width - size) / 2, box.y + (box.height - size) / 2, size, size),
+                        i % 3 == 0 ? symbols::Kind::Health : symbols::Kind::Rest);
+        }
+      }
+      break;
+    }
+    case pet::Game::Sequence: {
+      const int numberH = r.height >= 100 ? 26 : 0, gap = r.height >= 100 ? 10 : 4;
+      const int side = std::min((int(r.width) - gap * 2) / 3, (int(r.height) - numberH - gap) / 2);
+      const int16_t inset = int16_t(std::max(1, std::min(5, side / 6)));
+      const int left = r.x + (r.width - side * 3 - gap * 2) / 2;
+      for (unsigned i = 0; i < 3; ++i) {
+        const auto box = rect(left + int(i) * (side + gap), r.y + numberH, side, side);
+        s.target().fill(box, paper, 6);
+        s.target().stroke(box, ink, 2, 6);
+        symbol(s, box.inset({inset, inset, inset, inset}), i);
+        static constexpr const char* numbers[] = {"1", "2", "3"};
+        if (numberH)
+          simple::copy(s, rect(box.x, r.y, side, 26), numbers[i], false, fui::TextAlign::Center, false, 1, 3);
+        const auto choice = rect(box.x, box.bottom() + gap, side, side);
+        s.target().fill(choice, i == 1 ? muted : paper, 6);
+        s.target().stroke(choice, ink, 2, 6);
+        symbol(s, choice.inset({inset, inset, inset, inset}), (i + 1) % 3);
+      }
+      break;
+    }
+    case pet::Game::Puzzle: {
+      const int side = std::min(r.width, r.height), tile = (side - 8) / 3;
+      const int left = r.x + (r.width - side) / 2, top = r.y + (r.height - side) / 2;
+      static constexpr const char* numbers[] = {"1", "2", "3", "4", "5", "6", "7", "8"};
+      for (unsigned i = 0; i < 9; ++i) {
+        const auto box = rect(left + int(i % 3) * (tile + 4), top + int(i / 3) * (tile + 4), tile, tile);
+        if (i == 8) {
+          dashedFrame(s, box, fui::Paint::dither(fui::Color::DarkGray), 1);
+          continue;
+        }
+        s.target().fill(box, muted, 5);
+        s.target().stroke(box, ink, 2, 5);
+        if (tile >= 26) simple::copy(s, box, numbers[i], true, fui::TextAlign::Center, false, 1, tile > 30 ? 0 : 3);
+      }
+      break;
+    }
+  }
+}
+const char* gameDescription(pet::Game kind) {
+  switch (kind) {
+    case pet::Game::Pairs:
+      return tr(STR_PET_PAIRS_DESC);
+    case pet::Game::Sequence:
+      return tr(STR_PET_SEQUENCE_DESC);
+    case pet::Game::Puzzle:
+      return tr(STR_PET_PUZZLE_DESC);
+  }
+  return "";
+}
+void gameBenefits(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, bool compact) {
+  const auto offer = gameOffer(m);
+  const int height = compact ? 54 : 66;
+  if (offer == GameOffer::Reward) {
+    for (int n = 0; n < 2; ++n) {
+      const auto box = cell(rect(r.x, r.y, r.width, height), n, 2, 8);
+      actionsurface::panel(s, box);
+      const int side = compact ? 20 : 24;
+      symbols::draw(s, rect(box.x + 7, box.y + 6, side, side), n ? symbols::Kind::Energy : symbols::Kind::Health);
+      const int gain = int(std::min(pet::gameMoodGain(*m.profile, m.selectedGame), 100u - m.profile->joy));
+      std::snprintf(w.label, sizeof(w.label), "%+d", n ? -20 : gain);
+      simple::copy(s, rect(box.x + side + 12, box.y + 3, box.width - side - 18, compact ? 28 : 30), w.label, true,
+                   fui::TextAlign::Center, false, 1, compact ? 3 : 0);
+      simple::copy(s, rect(box.x + 4, box.bottom() - 26, box.width - 8, 22), n ? tr(STR_PET_ENERGY) : tr(STR_PET_JOY),
+                   false, fui::TextAlign::Center, false, 1, 3);
+    }
+  } else {
+    actionsurface::panel(s, rect(r.x, r.y, r.width, height));
+    simple::copy(s,
+                 rect(r.x + 8, offer == GameOffer::Blocked ? r.y : r.y + 4, r.width - 16,
+                      offer == GameOffer::Blocked ? height
+                      : compact                   ? 26
+                                                  : 28),
+                 offer == GameOffer::Blocked ? gameCareBlock(*m.profile) : tr(STR_PET_GAME_PRACTICE), true,
+                 fui::TextAlign::Center, false, 1, 3);
+    if (!compact && offer == GameOffer::Practice)
+      simple::copy(s, rect(r.x + 8, r.y + 34, r.width - 16, 24), tr(STR_PET_GAME_NO_COST), false,
+                   fui::TextAlign::Center, false, 1, 3);
+  }
+}
+}  // namespace
+void gamesPanel(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
+  const bool wide = s.device().width > s.device().height;
+  const auto offer = gameOffer(m);
+  const int footerH = wide ? COMPACT_HEIGHT : CONTROL_HEIGHT;
+  const int sidebar = wide ? std::min(228, int(r.width) * 30 / 100) : 0;
+  const int detailLeft = sidebar + 16;
+  const auto footer =
+      rect(wide ? r.x + detailLeft : r.x, r.bottom() - footerH, wide ? r.width - detailLeft : r.width, footerH);
+  static constexpr StrId difficulties[] = {StrId::STR_PET_GAME_EASY, StrId::STR_PET_GAME_MEDIUM,
+                                           StrId::STR_PET_GAME_HARD};
+  const auto tabs = wide ? rect(r.x, r.y, sidebar, r.height) : rect(r.x, r.y, r.width, 80);
+  const int tabHeight = (int(tabs.height) - 12) / 3;
+  for (int i = 0; i < 3; ++i) {
+    const auto box = wide ? rect(tabs.x, tabs.y + i * (tabHeight + 6), tabs.width, tabHeight) : cell(tabs, i, 3, 8);
+    const bool inverse = actionsurface::button(s, w, box, SelectGame, i, int(m.selectedGame) == i);
+    simple::copy(s, rect(box.x + 4, box.y + 2, box.width - 8, wide ? box.height - 24 : 46), gameName(pet::Game(i)),
+                 true, fui::TextAlign::Center, inverse);
+    simple::copy(s, rect(box.x + 4, box.bottom() - (wide ? 19 : 24), box.width - 8, wide ? 17 : 21),
+                 I18N.get(difficulties[i]), false, fui::TextAlign::Center, inverse, 1, 3);
+  }
+  const auto card = wide ? rect(r.x + detailLeft, r.y, r.width - detailLeft, r.height - footerH - UI_GAP)
+                         : rect(r.x, tabs.bottom() + 16, r.width, footer.y - tabs.bottom() - 32);
+  actionsurface::panel(s, card);
+  const int artWidth = card.width * (wide ? 24 : 43) / 100;
+  gamePreview(s, rect(card.x + 12, card.y + 12, artWidth - 24, card.height - 24), m.selectedGame);
+  const auto detail = rect(card.x + artWidth + 8, card.y + 8, card.width - artWidth - 20, card.height - 16);
+  const int descriptionH = wide ? 46 : 72;
+  simple::copy(s, rect(detail.x, detail.y, detail.width, descriptionH), gameDescription(m.selectedGame), false,
+               fui::TextAlign::Left, false, 3, wide ? 3 : 4);
+  gameBenefits(s, m, w, rect(detail.x, detail.y + descriptionH + 4, detail.width, detail.height - descriptionH - 4),
+               wide);
+  inlinecatalog::control(s, w, footer,
+                         offer == GameOffer::Blocked ? tr(STR_PET_GAME_CARE_FIRST) : tr(STR_PET_START_GAME), BeginGame,
+                         0, true, offer != GameOffer::Blocked);
+}
 void play(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   const auto& g = *m.game;
   const bool wide = r.width > r.height;
-  const int titleH = 108, statsH = 86;
   const int left = wide ? std::min(248, int(r.width) * 34 / 100) : r.width;
-  const auto title = rect(r.x + 5, r.y + 5, left - (wide ? 10 : 102), 54);
-  pixelui::copyCaps(w.label, sizeof(w.label), gameName(g.kind));
-  const int titleFont = s.target().measureText(2, w.label, {}).width <= title.width   ? 2
-                        : s.target().measureText(1, w.label, {}).width <= title.width ? 1
-                                                                                      : 0;
-  text(s, title, w.label, titleFont);
-  if (!wide) {
-    const auto mark = rect(r.right() - 88, r.y + 10, 78, 78);
-    cardMotif(s, mark, g.kind);
-  }
+  const auto footer = rect(r.x, r.bottom() - CONTROL_HEIGHT, r.width, CONTROL_HEIGHT);
+  const bool collect = g.finished() && gameOffer(m) == GameOffer::Reward;
+  const int receiptHint = collect ? 34 : 0;
   const char* description = g.kind == pet::Game::Pairs    ? tr(STR_PET_PAIRS_DESC)
                             : g.kind == pet::Game::Puzzle ? tr(STR_PET_PUZZLE_DESC)
                                                           : sequenceHint(g.phase);
-  prose(s, rect(r.x + 5, r.y + 62, left - 10, wide ? 40 : 36), description, 2);
-  const auto counters = rect(r.x, r.y + titleH, left, wide ? 86 : statsH);
-  stats(s, m, w, counters, wide);
-  const auto footer = rect(r.x, r.bottom() - 54, r.width, 54);
-  const bool collect = g.finished() && gameOffer(m) == GameOffer::Reward;
-  const int receiptHint = collect ? 34 : 0;
-  const auto board = wide ? rect(r.x + left + 18, r.y + 3, r.width - left - 18, r.height - 70)
-                          : rect(r.x, counters.bottom() + 22, r.width, footer.y - counters.bottom() - 32 - receiptHint);
+  fui::Rect heading = rect(r.x, r.y, left, wide ? 80 : 96);
+  fui::Rect counters = rect(r.x, heading.bottom() + UI_GAP, left, wide ? 78 : 76);
+  fui::Rect board =
+      wide ? rect(r.x + left + UI_GAP, r.y, r.width - left - UI_GAP, footer.y - r.y - UI_GAP)
+           : rect(r.x, counters.bottom() + UI_GAP, r.width, footer.y - counters.bottom() - 2 * UI_GAP - receiptHint);
+  const bool sideStats = wide;
+  actionsurface::panel(s, heading);
+  const int mark = wide ? 0 : 42;
+  if (mark) symbols::draw(s, rect(heading.x + 14, heading.y + 18, mark, mark), symbols::Kind::Play);
+  simple::copy(s,
+               rect(heading.x + (mark ? mark + 24 : 12), heading.y + (wide ? 2 : 8),
+                    heading.width - (mark ? mark + 36 : 24), wide ? 24 : 30),
+               gameName(g.kind), true);
+  prose(s,
+        rect(heading.x + (mark ? mark + 24 : 12), heading.y + (wide ? 30 : 40), heading.width - (mark ? mark + 36 : 24),
+             heading.height - (wide ? 34 : 46)),
+        description, 4);
+  stats(s, m, w, counters, sideStats);
   switch (g.kind) {
     case pet::Game::Pairs:
       pairBoard(s, m, w, board);
@@ -447,27 +575,32 @@ void play(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
               tr(STR_PET_PUZZLE_HELP), 4);
       break;
   }
-  button(s, w, rect(footer.x, footer.y, 92, footer.height), tr(STR_PET_GAME_MENU), Back);
+  inlinecatalog::control(s, w, rect(footer.x, footer.y, 92, footer.height), tr(STR_PET_GAME_MENU), Back);
   if (collect)
-    prose(s, rect(r.x, footer.y - (wide ? 50 : 30), wide ? left : r.width, wide ? 44 : 24), tr(STR_PET_GAME_CLAIM_HINT),
+    prose(s, rect(r.x, footer.y - (wide ? 52 : 30), wide ? left : r.width, wide ? 48 : 24), tr(STR_PET_GAME_CLAIM_HINT),
           wide ? 2 : 1);
-  const auto primary = rect(footer.x + 100, footer.y, footer.width - 100, footer.height);
+  const auto primary = rect(footer.x + 92 + UI_GAP, footer.y, footer.width - 92 - UI_GAP, footer.height);
   switch (g.phase) {
     case pet::GamePhase::Finished:
-      button(s, w, primary, collect ? tr(STR_PET_GAME_COLLECT) : tr(STR_PET_GAME_VIEW_RESULT), GameDone, 0, true);
+      inlinecatalog::control(s, w, primary, collect ? tr(STR_PET_GAME_COLLECT) : tr(STR_PET_GAME_VIEW_RESULT), GameDone,
+                             0, true);
       break;
     case pet::GamePhase::RoundComplete:
-      button(s, w, primary, tr(STR_PET_GAME_NEXT_ROUND), GameNext, 0, true);
+      inlinecatalog::control(s, w, primary, tr(STR_PET_GAME_NEXT_ROUND), GameNext, 0, true);
       break;
     case pet::GamePhase::Memorize:
-      button(s, w, primary, tr(STR_PET_READY), GameNext, 0, true);
+      inlinecatalog::control(s, w, primary, tr(STR_PET_READY), GameNext, 0, true);
+      break;
+    case pet::GamePhase::RoundFailed:
+      inlinecatalog::control(s, w, primary, tr(STR_PET_SEQUENCE_RETRY), GameNext, 0, true);
       break;
     case pet::GamePhase::Playing:
       if (g.kind == pet::Game::Puzzle)
-        button(s, w, primary, tr(STR_PET_GAME_RESTART), GameReset, 0, true);
+        inlinecatalog::control(s, w, primary, tr(STR_PET_GAME_RESTART), GameReset, 0, true);
       else
-        button(s, w, primary, tr(STR_PET_CONTINUE), GameNext, 0, true, nullptr,
-               g.kind == pet::Game::Pairs && g.second != 255);
+        inlinecatalog::control(s, w, primary,
+                               g.kind == pet::Game::Sequence ? tr(STR_PET_SEQUENCE_FILL) : tr(STR_PET_CONTINUE),
+                               GameNext, 0, true, g.kind == pet::Game::Pairs && g.second != 255);
       break;
   }
 }

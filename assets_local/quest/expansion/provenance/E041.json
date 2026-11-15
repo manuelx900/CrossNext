@@ -1,0 +1,12 @@
+{
+  "id": "E041",
+  "master": "enemy-041-v1.png",
+  "sha256": "4aafa891173380c45249959d735c14172c4eb039a09e2ea6356f89f4b3d8e13b",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE game enemy sprite STRIP for Aventura lectora, matching reference visual style. Exactly THREE complete full-body poses of the SAME creature side by side in three equal columns on ONE wide3:1 genuine transparent canvas. LEFT ready and menacing, MIDDLE visibly weakened with lower guarded posture, RIGHT defeated/collapsed non-graphically. Same anatomy, same scale and shared feet baseline in all three, clear transparent gutters, never overlap or crop. Pure thick BLACK contours, white and flat gray fills, strong simple shapes, serious threatening expression, no smiles, no gore, no text, UI, scenery, frames or watermark. Reference wolf is STYLE AND THREE-POSE LAYOUT ONLY, not species. New creature: a vine-wrapped lion golem with a heavy petal mane and stone paws. Regional setting: The garden of gods. Enemy role: Fountain guardian.",
+  "reference": "assets_local/quest/campaign/masters/shadow-wolf.png",
+  "transparent": true,
+  "width": 2172,
+  "height": 724,
+  "mode": "RGBA"
+}

@@ -142,6 +142,16 @@ class HalStorage {
     return true;
   }
   bool remove(const char* p) { return testStorage.available && testStorage.files.erase(p); }
+  bool rmdir(const char* path) {
+    if (!testStorage.available || !testStorage.directories.count(path)) return false;
+    const std::string prefix = std::string(path) + "/";
+    for (const auto& item : testStorage.files)
+      if (item.first.rfind(prefix, 0) == 0) return false;
+    for (const auto& item : testStorage.directories)
+      if (item != path && item.rfind(prefix, 0) == 0) return false;
+    return testStorage.directories.erase(path);
+  }
+
   bool openFileForRead(const char* module, const std::string& p, HalFile& f) {
     return openFileForRead(module, p.c_str(), f);
   }

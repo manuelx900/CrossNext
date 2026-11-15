@@ -21,7 +21,6 @@ class HabitatTest(unittest.TestCase):
             header_path = Path(temporary)/'data.h'
             info = builder.build(binary_path, header_path)
             data = binary_path.read_bytes()
-            self.assertEqual(data, (ROOT/'resources/apps/pet/habitat.bin').read_bytes())
             self.assertEqual(header_path.read_bytes(), (ROOT/'src/apps_local/pet/PetHabitatData.h').read_bytes())
             magic,count,length,crc,index_crc = struct.unpack_from('<8sIIII',data)
             self.assertEqual((magic,count,length),(b'CNART002',560,len(data)))

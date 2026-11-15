@@ -111,6 +111,7 @@ void ClockSyncActivity::render(RenderLock&&) {
   pixelui::drawHeader(renderer, tr(STR_CLOCK_SYNC), I18N.getLanguage() != Language::EN);
 
   const int midY = pageHeight / 2;
+  const int hintTop = midY - 20 + renderer.getLineHeight(UI_12_FONT_ID) + metrics.verticalSpacing;
 
   switch (state) {
     case SYNCING:
@@ -130,11 +131,21 @@ void ClockSyncActivity::render(RenderLock&&) {
     }
     case NO_WIFI:
       renderer.drawCenteredText(UI_12_FONT_ID, midY - 20, tr(STR_CLOCK_SYNC_NO_WIFI), true, EpdFontFamily::BOLD);
-      renderer.drawCenteredText(UI_10_FONT_ID, midY + 10, tr(STR_CLOCK_SYNC_NO_WIFI_HINT));
+      UITheme::drawCenteredWrappedText(
+          renderer,
+          Rect{metrics.contentSidePadding, hintTop, pageWidth - 2 * metrics.contentSidePadding,
+               3 * renderer.getLineHeight(UI_10_FONT_ID)},
+          UI_10_FONT_ID, tr(STR_CLOCK_SYNC_NO_WIFI_HINT), 3, true, EpdFontFamily::REGULAR,
+          UITheme::TextVerticalAlignment::TOP);
       break;
     case FAILED:
       renderer.drawCenteredText(UI_12_FONT_ID, midY - 20, tr(STR_CLOCK_SYNC_FAIL), true, EpdFontFamily::BOLD);
-      renderer.drawCenteredText(UI_10_FONT_ID, midY + 10, tr(STR_CLOCK_SYNC_FAIL_HINT));
+      UITheme::drawCenteredWrappedText(
+          renderer,
+          Rect{metrics.contentSidePadding, hintTop, pageWidth - 2 * metrics.contentSidePadding,
+               3 * renderer.getLineHeight(UI_10_FONT_ID)},
+          UI_10_FONT_ID, tr(STR_CLOCK_SYNC_FAIL_HINT), 3, true, EpdFontFamily::REGULAR,
+          UITheme::TextVerticalAlignment::TOP);
       break;
   }
 

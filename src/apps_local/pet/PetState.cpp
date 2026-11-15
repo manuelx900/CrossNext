@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstring>
 
+#include "../ui/UnicodeName.h"
 #include "PetNeeds.h"
 
 namespace pet {
@@ -33,13 +34,30 @@ uint32_t random(uint32_t& seed) {
   return seed;
 }
 bool unlockProject(Profile& p) {
-  if (!homeUnlocked(p) || p.project >= OBJECT_COUNT || owns(p, p.project) ||
+  if (!homeUnlocked(p) || !objectAvailable(p.project) || owns(p, p.project) ||
       projectProgressSeconds(p) < projectRequiredSeconds(ownedCount(p)))
     return false;
   own(p, p.project);
   p.equipped[objectSlot(p.project)] = p.project;
   p.memories |= 2;
   return true;
+}
+bool storedOwns(const Profile& p, unsigned item) {
+  if (item >= OBJECT_COUNT) return false;
+  return item < 16 ? (p.owned & (1u << item)) != 0 : (p.ownedExtra[(item - 16) / 8] & (1u << ((item - 16) % 8))) != 0;
+}
+void normalizeCatalog(Profile& p) {
+  for (auto& item : p.equipped)
+    if (!objectAvailable(item)) item = 255;
+  if (objectAvailable(p.project)) return;
+  const unsigned slot = objectSlot(p.project);
+  for (unsigned pass = 0; pass < 2; ++pass)
+    for (unsigned item = 0; item < OBJECT_COUNT; ++item)
+      if (objectAvailable(item) && !storedOwns(p, item) && (pass || objectSlot(item) == slot)) {
+        p.project = uint8_t(item);
+        return;
+      }
+  p.project = 0;
 }
 }  // namespace
 Stage stage(uint64_t seconds) {
@@ -49,12 +67,9 @@ Stage stage(uint64_t seconds) {
 }
 uint64_t stageStart(Stage value) { return STAGES[unsigned(value)]; }
 uint64_t nextStageSeconds(Stage value) { return value == Stage::Adult ? STAGES[4] : STAGES[unsigned(value) + 1]; }
-bool owns(const Profile& p, unsigned item) {
-  if (item >= OBJECT_COUNT) return false;
-  return item < 16 ? (p.owned & (1u << item)) != 0 : (p.ownedExtra[(item - 16) / 8] & (1u << ((item - 16) % 8))) != 0;
-}
+bool owns(const Profile& p, unsigned item) { return objectAvailable(item) && storedOwns(p, item); }
 void own(Profile& p, unsigned item) {
-  if (item >= OBJECT_COUNT) return;
+  if (!objectAvailable(item)) return;
   if (item < 16)
     p.owned |= uint16_t(1u << item);
   else
@@ -81,7 +96,7 @@ uint64_t projectProgressSeconds(const Profile& p) {
   return reading > p.projectStartedSeconds ? reading - p.projectStartedSeconds : 0;
 }
 uint64_t projectRemaining(const Profile& p) {
-  if (owns(p, p.project)) return 0;
+  if (!objectAvailable(p.project) || owns(p, p.project)) return 0;
   const auto target = projectRequiredSeconds(ownedCount(p)), progress = projectProgressSeconds(p);
   return target > progress ? target - progress : 0;
 }
@@ -103,7 +118,6 @@ bool addReading(Profile& p, uint64_t total) {
   const auto intervals = p.readingSeconds / 300 - previous / 300;
   p.joy = uint8_t(std::min(100u, unsigned(p.joy) + unsigned(std::min<uint64_t>(10, intervals)) * 10));
   if (stage(p.readingSeconds) != before) p.memories |= 1;
-  unlockProject(p);
   return true;
 }
 bool reconcileReading(Profile& p, uint64_t totalSeconds, int64_t latestReadingAt, int64_t now) {
@@ -121,12 +135,12 @@ bool reconcileReading(Profile& p, uint64_t totalSeconds, int64_t latestReadingAt
   }
   return changed || read;
 }
-bool collectionComplete(const Profile& p) { return p.created && ownedCount(p) == OBJECT_COUNT; }
+bool collectionComplete(const Profile& p) { return p.created && ownedCount(p) == CATALOG_COUNT; }
 bool homeUnlocked(const Profile& p) {
   return p.created && (p.lifeStatus != LifeStatus::Active || stage(p.readingSeconds) != Stage::Egg);
 }
 bool chooseProject(Profile& p, unsigned item) {
-  if (item >= OBJECT_COUNT) return false;
+  if (!objectAvailable(item)) return false;
   if (owns(p, item)) return equip(p, item);
   const bool changed = p.project != item;
   if (changed) p.projectStartedSeconds = projectReading(p);
@@ -144,14 +158,14 @@ bool unequip(Profile& p, unsigned item) {
   return true;
 }
 bool feed(Profile& p) {
-  if (!canCare(p) || !food(p) || p.saciety == 100 || p.spentFood == UINT32_MAX) return false;
+  if (!canCare(p) || p.resting || !food(p) || p.saciety == 100 || p.spentFood == UINT32_MAX) return false;
   ++p.spentFood;
   p.saciety = uint8_t(std::min(100u, unsigned(p.saciety) + 25));
   p.memories |= 4;
   return true;
 }
 bool petOnce(Profile& p, int day) {
-  if (!canCare(p) || day <= 0 || day <= p.lastPetDay) return false;
+  if (!canCare(p) || p.resting || day <= 0 || day <= p.lastPetDay) return false;
   p.lastPetDay = day;
   p.joy = uint8_t(std::min(100u, unsigned(p.joy) + moodGain(p)));
   p.memories |= 8;
@@ -217,14 +231,17 @@ bool canCare(const Profile& p) {
   return p.created && p.lifeStatus == LifeStatus::Active && stage(p.readingSeconds) != Stage::Egg;
 }
 bool clean(Profile& p) {
-  if (!canCare(p) || p.hygiene == 100) return false;
+  if (!canCare(p) || p.resting || p.hygiene == 100) return false;
+  p.resting = false;
+  p.restAt = 0;
   p.hygiene = 100;
   p.joy = uint8_t(std::min(100u, unsigned(p.joy) + 5));
   p.memories |= 16;
   return true;
 }
 bool cure(Profile& p) {
-  if (!canCare(p) || p.illness == Illness::Healthy || !medicine(p) || p.spentMedicine == UINT32_MAX) return false;
+  if (!canCare(p) || p.resting || p.illness == Illness::Healthy || !medicine(p) || p.spentMedicine == UINT32_MAX)
+    return false;
   ++p.spentMedicine;
   if (p.treatments < UINT32_MAX) ++p.treatments;
   p.illness = Illness::Healthy;
@@ -235,7 +252,8 @@ bool cure(Profile& p) {
 unsigned momentObject(uint32_t snapshot, unsigned slot) {
   if (slot >= SLOT_COUNT) return 255;
   const unsigned index = (snapshot >> (slot * 6)) & 63;
-  return index < OBJECTS_PER_SLOT ? objectAt(slot, index) : 255;
+  const unsigned item = index < OBJECTS_PER_SLOT ? objectAt(slot, index) : 255;
+  return objectAvailable(item) ? item : 255;
 }
 Stage momentStage(uint32_t snapshot) { return Stage((snapshot >> 24) & 7); }
 MomentPose momentPose(uint32_t snapshot) { return MomentPose((snapshot >> 27) & 7); }
@@ -273,7 +291,7 @@ void captureMoments(Profile& p, const Profile& previous, int day) {
     uint32_t snapshot = (unsigned(age) << 24) | (unsigned(pose) << 27);
     for (unsigned slot = 0; slot < SLOT_COUNT; ++slot) {
       const unsigned item = p.equipped[slot];
-      const unsigned index = item >= OBJECT_COUNT ? 63 : item < 12 ? item % 3 : 3 + (item - 12) % 57;
+      const unsigned index = !objectAvailable(item) ? 63 : item < 12 ? item % 3 : 3 + (item - 12) % 57;
       snapshot |= index << (slot * 6);
     }
     p.moments[id] = snapshot;
@@ -343,23 +361,7 @@ unsigned nameLength(const char* text) {
   return count;
 }
 bool validName(const char* text, bool emptyAllowed) {
-  unsigned i = 0, count = 0;
-  bool space = true;
-  while (i < NAME_BYTES && text[i]) {
-    const auto c = uint8_t(text[i++]);
-    if (++count > NAME_LIMIT) return false;
-    if (c == ' ') {
-      if (space) return false;
-      space = true;
-    } else if (c >= 'A' && c <= 'Z') {
-      space = false;
-    } else if (c == 0xc3 && i < NAME_BYTES && uint8_t(text[i]) == 0x91) {
-      ++i;
-      space = false;
-    } else
-      return false;
-  }
-  return i < NAME_BYTES && (count ? !space : emptyAllowed);
+  return unicode_name::valid(text, NAME_BYTES, NAME_LIMIT, emptyAllowed);
 }
 bool typeName(char* text, char key) {
   if (nameLength(text) >= NAME_LIMIT) return false;
@@ -403,6 +405,8 @@ uint32_t checksum(const uint8_t* data, size_t length) {
 void encode(const Profile& p, uint8_t* out) {
   std::memset(out, 0, STATE_BYTES);
   std::memcpy(out, "PET7", 4);
+  if (p.foodChoice >= 6) out[3] = '8';
+  if (unicode_name::requiresNewFormat(p.name)) out[3] = '9';
   put(out + PROVISIONS_OFFSET, p.earnedFood, 8);
   put(out + PROVISIONS_OFFSET + 8, p.earnedMedicine, 8);
   put(out + PROVISIONS_OFFSET + 16, p.noticedFood, 8);
@@ -425,7 +429,7 @@ void encode(const Profile& p, uint8_t* out) {
   put(out + 58, p.streak, 2);
   out[60] = uint8_t(p.species);
   out[61] = uint8_t(p.mode);
-  out[62] = p.goalIndex;
+  out[62] = 0;  // Reserved legacy daily-goal preference.
   out[63] = p.saciety;
   out[64] = p.joy;
   out[65] = p.energy;
@@ -464,7 +468,8 @@ void encode(const Profile& p, uint8_t* out) {
   put(out + STATE_BYTES - 4, checksum(out, STATE_BYTES - 4), 4);
 }
 bool decode(const uint8_t* in, Profile& p, size_t bytes) {
-  const bool provisions = bytes == STATE_BYTES && !std::memcmp(in, "PET7", 4);
+  const bool extraFood = bytes == STATE_BYTES && (!std::memcmp(in, "PET8", 4) || !std::memcmp(in, "PET9", 4));
+  const bool provisions = extraFood || (bytes == STATE_BYTES && !std::memcmp(in, "PET7", 4));
   const bool detailed = provisions || (bytes == STATE_BYTES && !std::memcmp(in, "PET6", 4));
   if (!detailed && bytes != LEGACY_STATE_BYTES) return false;
   const bool legacy = !std::memcmp(in, "PET1", 4);
@@ -472,8 +477,8 @@ bool decode(const uint8_t* in, Profile& p, size_t bytes) {
   const bool expanded = current || !std::memcmp(in, "PET4", 4);
   const bool named = expanded || !std::memcmp(in, "PET3", 4);
   if ((!legacy && !named && std::memcmp(in, "PET2", 4)) || get(in + bytes - 4, 4) != checksum(in, bytes - 4) ||
-      in[60] > 2 || in[61] > 3 || in[62] > 3 || in[63] > 100 || in[64] > 100 || in[65] > 100 ||
-      in[66] >= OBJECT_COUNT || in[71] > 3 || in[72] > 2 || in[73] > 4 || in[74] > 1 || in[75] > 1 ||
+      in[60] > 2 || in[61] > 3 || in[63] > 100 || in[64] > 100 || in[65] > 100 || in[66] >= OBJECT_COUNT ||
+      in[71] > 3 || in[72] >= (extraFood ? FOOD_CHOICE_COUNT : 6) || in[73] > 4 || in[74] > 1 || in[75] > 1 ||
       (expanded && (in[DEATH_NOTICE_OFFSET] > 1 || in[MOMENTS_VERSION_OFFSET] > (detailed ? 2 : 1))) ||
       (!expanded && (get(in + 52, 2) > 4095 || in[66] >= 12)))
     return false;
@@ -500,14 +505,13 @@ bool decode(const uint8_t* in, Profile& p, size_t bytes) {
   if (expanded) std::memcpy(p.ownedExtra, in + OWNED_OFFSET, EXTRA_OWNED_BYTES);
   for (unsigned i = 0; i < SLOT_COUNT; ++i) {
     const unsigned item = in[67 + i];
-    if (item != 255 && ((!expanded && item >= 12) || !owns(p, item) || objectSlot(item) != i)) return false;
+    if (item != 255 && ((!expanded && item >= 12) || !storedOwns(p, item) || objectSlot(item) != i)) return false;
   }
   p.memories = uint16_t(get(in + 54, 2));
   p.sharedDays = uint16_t(get(in + 56, 2));
   p.streak = uint16_t(get(in + 58, 2));
   p.species = Species(in[60]);
   p.mode = Mode(in[61]);
-  p.goalIndex = in[62];
   p.saciety = in[63];
   p.joy = in[64];
   p.energy = in[65];
@@ -580,15 +584,20 @@ bool decode(const uint8_t* in, Profile& p, size_t bytes) {
     p.projectStartedSeconds = get(in + PROJECT_STARTED_OFFSET, 8);
     if (p.projectStartedSeconds > projectReading(p)) return false;
   } else {
-    const auto owned = ownedCount(p);
+    unsigned owned = 0;
+    for (unsigned id = 0; id < OBJECT_COUNT; ++id) owned += storedOwns(p, id);
     const auto reading = projectReading(p), previous = owned ? projectThreshold(owned - 1) : 0;
     const auto progress = reading > previous ? std::min(reading - previous, projectRequiredSeconds(owned)) : 0;
     p.projectStartedSeconds = reading - progress;
   }
-  return (!p.deathAcknowledged || p.lifeStatus == LifeStatus::Lost) && p.noticedSeconds <= p.readingSeconds &&
-         p.spentFood <= p.earnedFood && p.spentMedicine <= 1 + p.earnedMedicine + p.bonusMedicine &&
-         p.earnedFood <= UINT64_MAX / 300 && p.earnedMedicine <= UINT64_MAX / 900 && p.noticedFood <= p.earnedFood &&
-         p.noticedMedicine <= p.earnedMedicine;
+  const bool valid = (!p.deathAcknowledged || p.lifeStatus == LifeStatus::Lost) &&
+                     p.noticedSeconds <= p.readingSeconds && p.spentFood <= p.earnedFood &&
+                     p.spentMedicine <= 1 + p.earnedMedicine + p.bonusMedicine && p.earnedFood <= UINT64_MAX / 300 &&
+                     p.earnedMedicine <= UINT64_MAX / 900 && p.noticedFood <= p.earnedFood &&
+                     p.noticedMedicine <= p.earnedMedicine;
+  if (!valid) return false;
+  normalizeCatalog(p);
+  return true;
 }
 void GameState::begin(Game game, uint32_t seed) {
   *this = {};
@@ -627,12 +636,13 @@ void GameState::select(unsigned value) {
       }
       break;
     case Game::Sequence:
-      if (value >= 3) return;
-      if (value != sequence[step]) {
+      if (value >= 3 || step >= sequenceLength()) return;
+      sequenceInput[step++] = uint8_t(value);
+      if (step != sequenceLength()) return;
+      if (!std::equal(sequenceInput, sequenceInput + sequenceLength(), sequence)) {
         if (mistakes < UINT16_MAX) ++mistakes;
-        step = 0;
-        phase = GamePhase::Memorize;
-      } else if (++step == sequenceLength()) {
+        phase = GamePhase::RoundFailed;
+      } else {
         ++rounds;
         phase = rounds == 3 ? GamePhase::Finished : GamePhase::RoundComplete;
       }
@@ -660,8 +670,9 @@ void GameState::advance() {
     case Game::Sequence:
       if (phase == GamePhase::Memorize)
         phase = GamePhase::Playing;
-      else if (phase == GamePhase::RoundComplete) {
+      else if (phase == GamePhase::RoundComplete || phase == GamePhase::RoundFailed) {
         step = 0;
+        std::fill_n(sequenceInput, 7, uint8_t(0));
         phase = GamePhase::Memorize;
       }
       break;

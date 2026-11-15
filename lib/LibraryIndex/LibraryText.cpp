@@ -166,8 +166,8 @@ bool isSingleCodepoint(const std::string_view text) {
 
 }  // namespace
 
-std::string fold(const std::string_view text) {
-  std::string out;
+void foldInto(const std::string_view text, std::string& out) {
+  out.clear();
   out.reserve(text.size());
 
   const auto* cursor = reinterpret_cast<const unsigned char*>(text.data());
@@ -218,7 +218,11 @@ std::string fold(const std::string_view text) {
     // words. Deferring the space keeps runs collapsed and drops trailing ones.
     if (!out.empty()) pendingSpace = true;
   }
+}
 
+std::string fold(const std::string_view text) {
+  std::string out;
+  foldInto(text, out);
   return out;
 }
 

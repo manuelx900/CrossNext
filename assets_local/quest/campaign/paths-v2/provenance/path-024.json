@@ -1,0 +1,17 @@
+{
+  "id": 24,
+  "saga": 2,
+  "step": 4,
+  "title": {
+    "en": "The lighthouse island",
+    "es": "La isla del faro"
+  },
+  "enemy": "Shadowless captain",
+  "guardian": 16,
+  "master": "path-024.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The Harbor of Mist. Path episode: The lighthouse island. Story action, which the scene must directly support: Monsters guard the entrance. You need to light the lighthouse to see through the mist.\nEnemy identity, MUST match this exact anatomy: a fierce wingless lantern anglerfish with big segmented fins. Eye-level approach across foreground stones, enemy full-body in the center-right, destination visible behind. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-c951d09a-5653-4e2f-9000-72ddaa58a813.png",
+  "sha256": "2fd7813d04ad74daa732e18149d1058efdbf5cae6725abff333cf5c3b05a2e7b"
+}

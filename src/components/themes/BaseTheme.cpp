@@ -13,10 +13,12 @@
 #include <cstdint>
 #include <string>
 
+#include "../../apps_local/home/CoverBitmapPainter.h"
 #include "I18n.h"
 #include "RecentBooksStore.h"
 #include "apps_local/ui/PixelMenuTheme.h"
 #include "apps_local/ui/PixelText.h"
+#include "apps_local/ui/StatusBattery.h"
 #include "clippings/SelectionGeometry.h"
 #include "components/HeaderBackTapTarget.h"
 #include "components/PopupLayout.h"
@@ -125,9 +127,13 @@ void BaseTheme::drawBatteryLeft(const GfxRenderer& renderer, Rect rect, const bo
     renderer.drawText(SMALL_FONT_ID, rect.x + batteryPercentSpacing + rect.width, rect.y, percentageText.c_str());
   }
 
-  const Rect iconRect{rect.x, y, rect.width, rect.height};
-  drawBatteryOutline(renderer, rect.x, y, rect.width, rect.height);
-  fillBatteryIcon(renderer, iconRect, percentage);
+  freeink::ui::GfxRendererTarget target(renderer);
+  static_assert(sizeof(target) < 256);
+  freeink::ui::BatteryIndicatorProps props;
+  props.percent = static_cast<uint8_t>(std::min<uint16_t>(100, percentage));
+  props.charging = gpio.isUsbConnected();
+  props.terminalWidth = std::max(1, rect.width * statusbattery::terminal / statusbattery::width);
+  statusbattery::paintIcon(target, freeink::ui::makeRect(rect.x, y, rect.width, rect.height), props);
 }
 
 void BaseTheme::drawCoverPlaceholder(const GfxRenderer& renderer, Rect rect) {
@@ -145,18 +151,8 @@ void BaseTheme::drawCoverPlaceholder(const GfxRenderer& renderer, Rect rect) {
 }
 
 bool BaseTheme::drawCoverThumbFill(const GfxRenderer& renderer, const Bitmap& bitmap, Rect slot, const int xOffset) {
-  if (slot.width <= 0 || slot.height <= 0) return false;
-  // xOffset nudges the centered art sideways; the clip stays on the slot.
-  const int x = slot.x + (slot.width - bitmap.getWidth()) / 2 + xOffset;
-  const int y = slot.y + (slot.height - bitmap.getHeight()) / 2;
-  const auto clip = renderer.getClipRect();
-  const int left = std::max(slot.x, clip[0]);
-  const int top = std::max(slot.y, clip[1]);
-  renderer.setClipRect(left, top, std::max(0, std::min(slot.x + slot.width, clip[0] + clip[2]) - left),
-                       std::max(0, std::min(slot.y + slot.height, clip[1] + clip[3]) - top));
-  const bool drawn = renderer.drawBitmap(bitmap, x, y, bitmap.getWidth(), bitmap.getHeight());
-  renderer.setClipRect(clip[0], clip[1], clip[2], clip[3]);
-  return drawn;
+  return homecover::paintBitmap(renderer, bitmap, freeink::ui::makeRect(slot.x, slot.y, slot.width, slot.height), true,
+                                xOffset);
 }
 
 void BaseTheme::drawProgressBar(const GfxRenderer& renderer, Rect rect, const size_t current, const size_t total) {
@@ -343,8 +339,7 @@ void BaseTheme::applyHeaderStatus(const GfxRenderer& renderer, freeink::ui::Head
     snprintf(percentText, sizeof(percentText), "%u%%", static_cast<unsigned>(percentage));
     status.battery.label = percentText;
   }
-  status.battery.glyphWidth = static_cast<int16_t>(metrics.batteryWidth);
-  status.battery.glyphHeight = static_cast<int16_t>(metrics.batteryHeight);
+  statusbattery::configure(status.battery);
   status.battery.gap = batteryPercentSpacing;
   status.batteryLeft = metrics.headerBatterySide == 1;
   status.edgeInset = static_cast<int16_t>(headerStatusInset());
@@ -789,6 +784,10 @@ void BaseTheme::drawButtonMenu(GfxRenderer& renderer, Rect rect, int buttonCount
   }
 }
 
+Rect BaseTheme::drawLoadingScreen(const GfxRenderer& renderer, const char* message) const {
+  return drawPopup(renderer, message);
+}
+
 Rect BaseTheme::drawPopup(const GfxRenderer& renderer, const char* message) const {
   const auto& metrics = UITheme::getInstance().getMetrics();
   const int marginX = metrics.popupMarginX;
@@ -803,8 +802,9 @@ Rect BaseTheme::drawPopup(const GfxRenderer& renderer, const char* message) cons
   style.bold = !chrome::lightHeader && metrics.popupTextBold;
   style.color =
       chrome::lightHeader || metrics.popupTextInverted ? freeink::ui::Color::Black : freeink::ui::Color::White;
-  const auto popup = popupui::layout(target, target.deviceContext().safeRect(), message, style, marginX, marginY,
-                                     frameThickness, renderer.getScreenHeight() * metrics.popupTopOffsetRatio);
+  const auto popup =
+      popupui::layout(target, target.deviceContext().safeRect(), message, style, marginX, marginY, frameThickness,
+                      renderer.getScreenHeight() * metrics.popupTopOffsetRatio, chrome::headerHeight);
   const auto& box = popup.body;
   const int x = box.x, y = box.y, w = box.width, h = box.height;
 

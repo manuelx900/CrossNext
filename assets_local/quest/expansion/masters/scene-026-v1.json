@@ -1,0 +1,12 @@
+{
+  "id": "S026",
+  "master": "scene-026-v1.png",
+  "sha256": "6c04224b66e60f36c11986906293719ad35cfc9950e2e95ce2e68383cdc85b4e",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The sunken library. Chapter: The leaning shelves. Illustrate this already-authored event faithfully, without inventing another object or plot: Ada left a comparison between a restored story and one still imprisoned. Recover the final page to learn what weakens the shadows' source. Context only, do not try to draw all of it: Iri shows you shelves of unfinished accounts. Aren's agents collected them before their owners could complete them. Ada studied those gaps to understand why the stolen memories keep producing shadows.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

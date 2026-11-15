@@ -1,0 +1,12 @@
+{
+  "id": "E022",
+  "master": "enemy-022-v1.png",
+  "sha256": "50cd7d1b8bb498e71dbff4645af11fede965fe452be9009ffea7f633cbb18c1c",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE game enemy sprite STRIP for Aventura lectora, matching reference visual style. Exactly THREE complete full-body poses of the SAME creature side by side in three equal columns on ONE wide3:1 genuine transparent canvas. LEFT ready and menacing, MIDDLE visibly weakened with lower guarded posture, RIGHT defeated/collapsed non-graphically. Same anatomy, same scale and shared feet baseline in all three, clear transparent gutters, never overlap or crop. Pure thick BLACK contours, white and flat gray fills, strong simple shapes, serious threatening expression, no smiles, no gore, no text, UI, scenery, frames or watermark. Reference wolf is STYLE AND THREE-POSE LAYOUT ONLY, not species. New creature: a wingless mountain wyvern with thick basalt scales and a heavy tail. Regional setting: The echo mountains. Enemy role: Summit watcher.",
+  "reference": "assets_local/quest/campaign/masters/shadow-wolf.png",
+  "transparent": true,
+  "width": 2172,
+  "height": 724,
+  "mode": "RGBA"
+}

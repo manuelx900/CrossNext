@@ -1,0 +1,18 @@
+{
+  "id": "K084",
+  "key": "Velo",
+  "file": "K084.png",
+  "sample": {
+    "es": "Velo de la tormenta",
+    "en": "Storm veil"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Storm veil.",
+  "requests": [
+    140
+  ],
+  "sha256": "3a2c95d6846210f2ccc1074ed048bcff0302df0d374e81ad270df435f24c767c",
+  "source": "exec-dee66a24-4a94-4d3f-a50d-2e0cbc2e5d85.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

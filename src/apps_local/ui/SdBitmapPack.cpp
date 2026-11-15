@@ -31,6 +31,7 @@ uint32_t crc32(uint32_t crc, const uint8_t* data, size_t size) {
 void Pack::close() {
   valid = false;
   count = fileBytes = 0;
+  grayPixels = false;
   cache.reset();
   pixelCapacity = pixelUsed = cachedCount = 0;
   std::memset(verified, 0, sizeof(verified));
@@ -47,7 +48,8 @@ bool Pack::open(const char* path, uint32_t expectedCount, size_t pixelCacheBytes
   if (!Storage.openFileForRead("SDART", path, file)) return fail("Resource pack missing");
   uint8_t header[HEADER_BYTES];
   if (!read(header, sizeof(header))) return false;
-  perImageChecksums = std::memcmp(header, "CNART002", 8) == 0;
+  grayPixels = std::memcmp(header, "CNART003", 8) == 0;
+  perImageChecksums = grayPixels || std::memcmp(header, "CNART002", 8) == 0;
   recordBytes = perImageChecksums ? 16 : RECORD_BYTES;
   if ((!perImageChecksums && std::memcmp(header, "CNART001", 8)) || le32(header + 8) != expectedCount ||
       !expectedCount || expectedCount > 4096 || (!perImageChecksums && le32(header + 20) != 0))
@@ -59,9 +61,9 @@ bool Pack::open(const char* path, uint32_t expectedCount, size_t pixelCacheBytes
   const uint32_t expectedCrc = le32(header + (perImageChecksums ? 20 : 16));
   const uint32_t indexBytes = count * recordBytes;
   // The activity reuses one PSRAM allocation for the index and read-ahead.
-  // Base cache is bounded to 69,632 bytes; optional retained sprites add at most 64 KiB.
+  // Base cache is bounded to 69,632 bytes; optional retained sprites add at most 160 KiB.
   if (HalMemory::getPsramHeap().totalBytes > 0) {
-    pixelCapacity = std::min<size_t>(pixelCacheBytes, 64 * 1024);
+    pixelCapacity = std::min(pixelCacheBytes, MAX_PIXEL_CACHE_BYTES);
     cache = HalMemory::allocatePsram(indexBytes + READ_AHEAD_BYTES + pixelCapacity);
     if (!cache && pixelCapacity) {
       LOG_ERR("SDART", "OOM: %u-byte sprite cache; using read-ahead only", unsigned(pixelCapacity));
@@ -127,10 +129,11 @@ Image Pack::decodeRecord(const uint8_t* record) {
   result.offset = le32(record);
   result.width = le16(record + 4);
   result.height = le16(record + 6);
+  result.format = grayPixels ? freeink::ui::BitmapFormat::Gray2 : freeink::ui::BitmapFormat::BW1;
   result.bytes = le32(record + 8);
   result.checksum = perImageChecksums ? le32(record + 12) : 0;
   if (!result.width || result.width > MAX_WIDTH || !result.height || result.height > MAX_HEIGHT ||
-      result.bytes != uint32_t((result.width + 7) / 8) * result.height ||
+      result.bytes != uint32_t((result.width * (grayPixels ? 2 : 1) + 7) / 8) * result.height ||
       result.offset < HEADER_BYTES + count * recordBytes || result.offset > fileBytes ||
       result.bytes > fileBytes - result.offset) {
     fail("Invalid resource dimensions or offset");
@@ -138,15 +141,20 @@ Image Pack::decodeRecord(const uint8_t* record) {
   }
   return result;
 }
-bool Pack::verify(uint32_t index, const Image& image) {
+bool Pack::verify(uint32_t index, const Image& image, const uint8_t* retained) {
   if (!perImageChecksums || (verified[index >> 3] & (1u << (index & 7)))) return true;
-  if (!file.seek(image.offset)) return fail("Cannot seek resource checksum");
-  uint32_t remaining = image.bytes, crc = 0;
-  while (remaining) {
-    const auto bytes = std::min<size_t>(remaining, readBufferBytes());
-    if (!read(readBuffer(), bytes)) return false;
-    crc = crc32(crc, readBuffer(), bytes);
-    remaining -= bytes;
+  uint32_t crc = 0;
+  if (retained) {
+    crc = crc32(0, retained, image.bytes);
+  } else {
+    if (!file.seek(image.offset)) return fail("Cannot seek resource checksum");
+    uint32_t remaining = image.bytes;
+    while (remaining) {
+      const auto bytes = std::min<size_t>(remaining, readBufferBytes());
+      if (!read(readBuffer(), bytes)) return false;
+      crc = crc32(crc, readBuffer(), bytes);
+      remaining -= bytes;
+    }
   }
   if (crc != image.checksum) return fail("Resource image checksum mismatch");
   verified[index >> 3] |= uint8_t(1u << (index & 7));
@@ -155,11 +163,24 @@ bool Pack::verify(uint32_t index, const Image& image) {
 const uint8_t* Pack::pixels(uint32_t index, const Image& image) {
   if (!cache || image.bytes > pixelCapacity) return nullptr;
   auto* const data = cache.get() + count * recordBytes + READ_AHEAD_BYTES;
-  for (unsigned i = 0; i < cachedCount; ++i)
-    if (cachedImages[i].index == index) return data + cachedImages[i].offset;
-  if (cachedCount == sizeof(cachedImages) / sizeof(cachedImages[0]) || image.bytes > pixelCapacity - pixelUsed) {
-    pixelUsed = 0;
-    cachedCount = 0;
+  for (unsigned i = 0; i < cachedCount; ++i) {
+    if (cachedImages[i].index != index) continue;
+    const auto hit = cachedImages[i];
+    for (unsigned n = i; n + 1 < cachedCount; ++n) cachedImages[n] = cachedImages[n + 1];
+    cachedImages[cachedCount - 1] = hit;
+    return data + hit.offset;
+  }
+  while (cachedCount == sizeof(cachedImages) / sizeof(cachedImages[0]) || image.bytes > pixelCapacity - pixelUsed) {
+    const auto oldest = cachedImages[0];
+    const size_t tail = oldest.offset + oldest.bytes;
+    std::memmove(data + oldest.offset, data + tail, pixelUsed - tail);
+    pixelUsed -= oldest.bytes;
+    for (unsigned n = 1; n < cachedCount; ++n) {
+      auto entry = cachedImages[n];
+      if (entry.offset > oldest.offset) entry.offset -= oldest.bytes;
+      cachedImages[n - 1] = entry;
+    }
+    --cachedCount;
   }
   if (!file.seek(image.offset)) {
     fail("Cannot seek cached resource pixels");
@@ -167,7 +188,7 @@ const uint8_t* Pack::pixels(uint32_t index, const Image& image) {
   }
   auto* const result = data + pixelUsed;
   if (!read(result, image.bytes)) return nullptr;
-  cachedImages[cachedCount++] = {index, uint32_t(pixelUsed)};
+  cachedImages[cachedCount++] = {index, uint32_t(pixelUsed), image.bytes};
   pixelUsed += image.bytes;
   return result;
 }
@@ -176,23 +197,30 @@ void Pack::draw(freeink::ui::DrawTarget& target, freeink::ui::Rect area, uint32_
   namespace fui = freeink::ui;
   if (!valid || area.empty()) return;
   const auto entry = image(index);
-  if (!valid || !verify(index, entry)) return;
-  const auto* const retained = pixels(index, entry);
   if (!valid) return;
-  if (!retained && !file.seek(entry.offset)) {
-    fail("Cannot seek resource pixels");
-    return;
-  }
   auto rect = area;
   if (mode == fui::BitmapMode::Contain) {
     const int width = std::min(int(area.width), int(area.height) * entry.width / entry.height);
     const int height = width * entry.height / entry.width;
     rect = fui::makeRect(area.x + (area.width - width) / 2, area.y + (area.height - height) / 2, width, height);
   }
+  if (rect.empty()) return;
+  const auto clip = target.clipRect();
+  const int leftClip = std::max(int(rect.x), int(clip.x)), rightClip = std::min(int(rect.right()), int(clip.right()));
+  const int topClip = std::max(int(rect.y), int(clip.y)), bottomClip = std::min(int(rect.bottom()), int(clip.bottom()));
+  if (rightClip <= leftClip || bottomClip <= topClip) return;
+  const auto* const retained = pixels(index, entry);
+  if (!valid || !verify(index, entry, retained)) return;
+  if (!retained && !file.seek(entry.offset)) {
+    fail("Cannot seek resource pixels");
+    return;
+  }
+  const int firstX = (leftClip - rect.x) * entry.width / rect.width;
+  const int lastX = std::min(int(entry.width), ((rightClip - rect.x) * entry.width + rect.width - 1) / rect.width);
   size_t cursor = 0, available = 0;
   auto* const io = readBuffer();
   uint32_t remaining = entry.bytes;
-  const int stride = (entry.width + 7) / 8;
+  const int stride = (entry.width * (grayPixels ? 2 : 1) + 7) / 8;
   for (int y = 0; y < entry.height; ++y) {
     for (int b = 0; !retained && b < stride; ++b) {
       if (cursor == available) {
@@ -205,16 +233,32 @@ void Pack::draw(freeink::ui::DrawTarget& target, freeink::ui::Rect area, uint32_
     }
     const int top = rect.y + y * rect.height / entry.height;
     const int bottom = rect.y + (y + 1) * rect.height / entry.height;
-    if (bottom <= top) continue;
+    if (bottom <= top || bottom <= topClip || top >= bottomClip) continue;
     const auto* const source = retained ? retained + y * stride : row;
-    if (color == fui::Color::Black || color == fui::Color::White) {
-      for (int x = 0; x < entry.width;) {
+    if (grayPixels) {
+      static constexpr fui::Color shades[] = {fui::Color::White, fui::Color::LightGray, fui::Color::DarkGray,
+                                              fui::Color::Black};
+      for (int x = firstX; x < lastX;) {
+        const unsigned strength = (source[x / 4] >> (6 - 2 * (x % 4))) & 3;
+        const int start = x++;
+        while (x < lastX && ((source[x / 4] >> (6 - 2 * (x % 4))) & 3) == strength) ++x;
+        if (!strength) continue;
+        const int left = (start * rect.width + entry.width - 1) / entry.width;
+        const int right = (x * rect.width + entry.width - 1) / entry.width;
+        const auto shade = color == fui::Color::Black   ? shades[strength]
+                           : color == fui::Color::White ? shades[3 - strength]
+                                                        : color;
+        if (right > left)
+          target.fill(fui::makeRect(rect.x + left, top, right - left, bottom - top), fui::Paint::dither(shade));
+      }
+    } else if (color == fui::Color::Black || color == fui::Color::White) {
+      for (int x = firstX; x < lastX;) {
         if (!(source[x / 8] & (0x80u >> (x % 8)))) {
           ++x;
           continue;
         }
         const int start = x++;
-        while (x < entry.width && (source[x / 8] & (0x80u >> (x % 8)))) ++x;
+        while (x < lastX && (source[x / 8] & (0x80u >> (x % 8)))) ++x;
         // Ceil boundaries preserve bitmap Stretch's floor-based source sampling.
         const int left = (start * rect.width + entry.width - 1) / entry.width;
         const int right = (x * rect.width + entry.width - 1) / entry.width;

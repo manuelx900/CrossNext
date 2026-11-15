@@ -1,0 +1,12 @@
+{
+  "id": "S056",
+  "master": "scene-056-v1.png",
+  "sha256": "68bead8946efcb7482a1627a2998d46b147651a634c68c321c9bed1954767bad",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The ash clock. Chapter: Elia's hour. Illustrate this already-authored event faithfully, without inventing another object or plot: The fragments show an hour from Elia's childhood. Aren used it to test whether the clock could trap a day. Once it worked, he extended the mechanism to the whole city. Context only, do not try to draw all of it: The neighbors' records reveal that Aren ordered a private memory installed in the clock. Orin did not know what it contained. That hidden account may explain why the whole city was made to repeat a day.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../activities/Activity.h"
+#include "CrossInkStatsImport.h"
 #include "ReadingProgressSync.h"
 #include "ReadingStatsCloudClient.h"
 #include "ReadingStatsScreens.h"
@@ -8,8 +9,8 @@
 
 class ReadingStatsSyncActivity final : public Activity {
  public:
-  ReadingStatsSyncActivity(GfxRenderer& renderer, MappedInputManager& input)
-      : Activity("ReadingStatsImport", renderer, input), client(&cancelRequest, this) {}
+  ReadingStatsSyncActivity(GfxRenderer& renderer, MappedInputManager& input, bool fromCrossInk = false)
+      : Activity("ReadingStatsImport", renderer, input), client(&cancelRequest, this), fromCrossInk(fromCrossInk) {}
   void onEnter() override;
   void onExit() override;
   void loop() override;
@@ -18,6 +19,9 @@ class ReadingStatsSyncActivity final : public Activity {
 
  private:
   readingstats::cloud::Client client;
+  bool fromCrossInk = false;
+  std::unique_ptr<readingstats::crossink::Importer> crossink;
+  char importCounts[128]{};
   std::unique_ptr<readingstats::cloud::Importer> importer;
   std::unique_ptr<readingstats::cloud::Uploader> uploader;
   std::unique_ptr<readingstats::cloud::ProgressSync> progress;
@@ -27,6 +31,7 @@ class ReadingStatsSyncActivity final : public Activity {
   readingui::Work work;
   toybox::Interactions interactions;
   uint32_t books = 0;
+  uint32_t lastProgressMs = 0;
   bool ownsWifi = false, waitingWifi = false, cancelFlag = false, ready = false;
   static bool cancelRequest(void* context);
   void start();

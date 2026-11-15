@@ -2,6 +2,7 @@
 
 #include <FsHelpers.h>
 #include <HalStorage.h>
+#include <LibraryBuilder.h>
 #include <Logging.h>
 
 #include "ClippingStore.h"
@@ -404,6 +405,7 @@ void WebDAVHandler::handlePut(WebServer& s) {
   }
 
   clearBookCache(path.c_str());
+  library::markLibraryIndexDirty();
   s.send(_putExisted ? 204 : 201);
   LOG_DBG("DAV", "PUT complete: %s", path.c_str());
 }
@@ -452,6 +454,7 @@ void WebDAVHandler::handleDelete(WebServer& s) {
     }
   } else {
     file.close();
+    library::markLibraryIndexDirty();
     if (removeBookFile(path.c_str())) {
       s.send(204);
     } else {
@@ -566,6 +569,7 @@ void WebDAVHandler::handleMove(WebServer& s) {
   const bool success = ClippingStore::moveBook(srcPath.c_str(), dstPath.c_str());
 
   if (success) {
+    library::markLibraryIndexDirty();
     s.send(dstExists ? 204 : 201);
   } else {
     s.send(500, "text/plain", "Move failed");
@@ -631,6 +635,10 @@ void WebDAVHandler::handleCopy(WebServer& s) {
     return;
   }
 
+  // An overwrite can preserve FAT stamps. Invalidate before the first mutation,
+  // including a copy that later fails after replacing the old destination.
+  clearBookCache(dstPath.c_str());
+  library::markLibraryIndexDirty();
   if (dstExists) {
     Storage.remove(dstPath.c_str());
   }

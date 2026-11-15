@@ -4,7 +4,7 @@
 #include "../ui/PixelMenu.h"
 class PresentationSettingsActivity final : public UiListActivity {
  public:
-  enum class Kind { Theme, ReadingFormats, FontOverview, GameFonts, AppFonts, ThemeOverview };
+  enum class Kind { Theme, ReadingFormats, FontOverview, GameFonts, AppFonts, ThemeOverview, CoverLoading };
   PresentationSettingsActivity(GfxRenderer& r, MappedInputManager& i, Kind k)
       : UiListActivity("PresentationSettings", r, i), kind(k) {}
 

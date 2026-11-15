@@ -23,7 +23,7 @@ XTC/XTCH Library metadata support adapts [CrossPoint PR #4023](https://github.co
 
 The local CrossNext source adds or adapts these flows:
 
-- PET reading companion: care, reading-based stages, four minigames, 240 home
+- PET reading companion: care, reading-based stages, four minigames, 223 home
   objects and 50 progressively discovered memories. Home placement is reversible;
   inheritance preserves furnishings without granting new progress memories.
 - Required microSD content packs for PET and The Intercept, using the same
@@ -105,3 +105,7 @@ by the maintainer live in `docs/images/` and are used by both README versions.
   images are excluded, valid image dimensions are preserved, and the ordinary
   gallery uses the space occupied by the selection instruction while choosing.
 - Carnivore keeps its English title and appears as Carnívoro in Spanish, retaining compatible saved-game IDs.
+
+### Configurable reading bars
+
+Independent top/bottom seven-slot bars and session-based time-left estimates use CrossInk as a design reference. CrossNext retains the legacy drawing path until personalization and performs no pace-related SD work on page turns. See [Reading bars](reader-bars.md) for behavior, resource costs and pending device verification.

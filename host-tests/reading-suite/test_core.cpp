@@ -559,10 +559,10 @@ int main() {
   CHECK(!unavailable.begin());
   game2048::Repository unavailableGame;
   CHECK(!unavailableGame.load(other, best));
-  for (int year : {2023, 2024, 2026}) {
+  for (int year : {2023, 2024, 2026, 2199}) {
     readingstats::PeriodStats annual;
     const int jan = readingstats::dayIndex({year, 1, 1});
-    const int end = readingstats::dayIndex({year + 1, 1, 1});
+    const int end = jan + 365 + (readingstats::daysInMonth(year, 2) == 29);
     readingstats::setPeriod(annual, readingstats::Period::Year, jan, false);
     CHECK(annual.first == jan && annual.last == end - 1 && annual.annual);
     for (int day = jan - 1; day <= end; ++day) {
@@ -585,6 +585,64 @@ int main() {
     }
     CHECK(total == annual.seconds && annual.pages == uint64_t(end - jan) * 2);
     CHECK(annual.completed == uint32_t(end - jan));
+  }
+  {
+    readingstats::PeriodStats year;
+    const int jan = readingstats::dayIndex({2026, 1, 1});
+    readingstats::setPeriod(year, readingstats::Period::Year, jan, false);
+    readingstats::Record crossing{};
+    crossing.localDay = jan - 1;
+    crossing.secondOfDay = 86340;
+    crossing.seconds = 120;
+    crossing.pages = 2;
+    crossing.firstCompletion = true;
+    year.add(crossing);
+    CHECK(year.seconds == 60 && year.pages == 1 && year.sessions == 1 && year.completed == 1);
+    for (int offset : {1, 2, 4, 5}) {
+      readingstats::Record day{};
+      day.localDay = jan + offset;
+      day.seconds = 1800;
+      year.add(day);
+    }
+    CHECK(year.daysReadThrough(year.last) == 5);
+    CHECK(year.longestStreakThrough(year.last) == 3);
+    CHECK(year.currentStreak(jan + 5) == 2);
+    CHECK(year.currentStreak(jan + 6) == 2);
+    CHECK(year.currentStreak(jan + 7) == 0);
+    CHECK(year.currentStreak(jan - 1) == 0);
+    readingstats::Record previous{};
+    previous.localDay = jan - 5;
+    previous.seconds = 3600;
+    previous.pages = 9;
+    previous.firstCompletion = true;
+    year.add(previous);
+    CHECK(year.seconds == 7260 && year.pages == 1 && year.sessions == 5 && year.completed == 1);
+    previous.kind = readingstats::RecordKind::Reopen;
+    previous.firstCompletion = false;
+    previous.seconds = 0;
+    previous.reversedCompletionDay = jan;
+    year.add(previous);
+    CHECK(year.completed == 0);
+    readingstats::PeriodStats empty;
+    readingstats::setPeriod(empty, readingstats::Period::Year, jan, false);
+    CHECK(empty.currentStreak(jan) == 0 && empty.longestStreakThrough(empty.last) == 0);
+  }
+  {
+    readingstats::RecordedYears years;
+    years.addDay(readingstats::dayIndex({2024, 2, 29}));
+    years.addDay(readingstats::dayIndex({2026, 11, 7}));
+    years.addDay(readingstats::dayIndex({2024, 12, 31}));
+    CHECK(years.count() == 2 && years.at(0) == 2026 && years.at(1) == 2024);
+    CHECK(years.at(-1) == 0 && years.at(2) == 0);
+    readingstats::Record crossing;
+    crossing.localDay = readingstats::dayIndex({2023, 12, 31});
+    crossing.secondOfDay = 86340;
+    crossing.seconds = 120;
+    years.add(crossing);
+    CHECK(years.count() == 3 && years.at(2) == 2023);
+    for (int year = readingstats::RecordedYears::firstYear; year <= readingstats::RecordedYears::lastYear; ++year)
+      years.addDay(readingstats::dayIndex({year, 1, 2}));
+    CHECK(years.count() == 230 && years.at(0) == 2199 && years.at(229) == 1970 && years.at(230) == 0);
   }
   std::printf("Reading workspace sizes: Summary=%zu PeriodStats=%zu Book=%zu\n", sizeof(readingstats::Summary),
               sizeof(readingstats::PeriodStats), sizeof(readingstats::Book));

@@ -9,6 +9,7 @@
 #include "../study/StudyScreens.h"
 #include "../ui/Dashboard.h"
 #include "../ui/FitText.h"
+#include "../ui/NavigationIcons.h"
 #include "../ui/PageIndicator.h"
 #include "../ui/ToyboxIcons.h"
 #include "FlashArt.h"
@@ -102,8 +103,8 @@ void header(toybox::Screen& screen, const char* title) {
   pixelui::header(screen, model);
 }
 int textPage(fui::DrawTarget& target, fui::Rect box, const char* text, int page, char* line, size_t bytes,
-             TextPageCache* cache, int fontKey) {
-  return cachedTextPage(target, box, text, page, line, bytes, cache, fontKey);
+             TextPageCache* cache, int fontKey, uint8_t alignment) {
+  return cachedTextPage(target, box, text, page, line, bytes, cache, fontKey, alignment);
 }
 
 void interval(char* out, size_t bytes, int minutes, int days) {
@@ -204,8 +205,8 @@ void library(toybox::Screen& s, const LibraryModel& m) {
     const bool selected = s.frame().buttonSelected(OpenDeck, n);
     if (selected) lightui::surface(s.target(), r, dashboard::ink);
     dashboard::frame(s, r, 2);
-    mark(s, makeRect(r.x + 10, r.y + (r.height - 28) / 2, 28, 28), d.folder ? icon_folder_32 : extra_dashboard_cards_32,
-         selected);
+    mark(s, makeRect(r.x + 10, r.y + (r.height - 28) / 2, 28, 28),
+         d.folder ? navicons::Folder32 : extra_dashboard_cards_32, selected);
     pixelui::copyCaps(text, sizeof(text), d.name);
     fui::TextStyle titleStyle;
     titleStyle.font = 0;

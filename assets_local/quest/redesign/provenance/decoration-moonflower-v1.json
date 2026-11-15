@@ -1,0 +1,8 @@
+{
+  "id": "moonflower",
+  "path": "exec-355f3ab1-9cd6-404b-ab64-f4c1402a3f05.png",
+  "prompt": "Production decoration sprite for Aventura lectora, ONE isolated object. Match the reference pets: thick clean pure black rounded outlines, white and soft flat gray shading, cute storybook cartoon, simple readable silhouette for 80x112 pixels, no fine texture. Full object centered with transparent margin, truly transparent RGBA background. No aura, no glow, no scenery, no letters, no frame, no other subjects. Subject: A magical moon-shaped flower with two large leaves in a simple round clay pot, standing upright",
+  "tool": "built-in image_gen",
+  "sha256": "1827daea930f0d2ad3aff4b6e61dd4ef40df490c20f78329fe6affb04564e91c",
+  "name": "decoration-moonflower-v1"
+}

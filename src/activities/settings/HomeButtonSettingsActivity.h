@@ -6,11 +6,13 @@
 
 class HomeButtonSettingsActivity final : public UiListActivity {
  public:
-  enum class Binding : uint8_t { Home, SideLeft, SideRight };
-  HomeButtonSettingsActivity(GfxRenderer& renderer, MappedInputManager& input, Binding binding = Binding::Home)
+  enum class Binding : uint8_t { Home, SideLeft, SideRight, Remote1, Remote2 };
+  HomeButtonSettingsActivity(GfxRenderer& renderer, MappedInputManager& input, Binding binding = Binding::Home,
+                             bleturner::RemoteTable* remote = nullptr)
       : UiListActivity("HomeButtonSettings", renderer, input, false, true),
         binding(binding),
-        page(binding == Binding::Home ? Page::Gestures : Page::Actions) {}
+        page(binding == Binding::Home ? Page::Gestures : Page::Actions),
+        remote(remote) {}
   void onEnter() override;
 
  private:
@@ -22,6 +24,7 @@ class HomeButtonSettingsActivity final : public UiListActivity {
   freeink::ui::ListItem rows[ROW_COUNT]{};
   Binding binding;
   Page page;
+  bleturner::RemoteTable* remote;
   int gesture = 0;
   bool saveFailed = false;
 
@@ -29,7 +32,7 @@ class HomeButtonSettingsActivity final : public UiListActivity {
   const char* headerTitle() const override;
   void onBackButton() override;
   void show(Page next, int selected = 0);
-  uint8_t CrossPointSettings::* actionField() const;
+  uint8_t& storedAction() const;
   char* shortcutTarget() const;
   bool isShortcut() const;
   int shortcutIndex() const;

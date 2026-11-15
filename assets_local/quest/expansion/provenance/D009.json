@@ -1,0 +1,12 @@
+{
+  "id": "D009",
+  "master": "decor-009-v1.png",
+  "sha256": "1bde0947151f7e48b025850ba4b5e78f0437aa2cb8cfc39f777a66e21cd0ccf3",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original collectible decoration sprite for the e-ink fantasy reading app Aventura lectora. Reference fairy is STYLE ONLY. Friendly chibi storybook proportions, white and pale-gray flat fills, VERY THICK solid pure-BLACK outer contours (20-26px at1024px), strong black inner lines, simple broad shapes readable at112x144. Whole subject visible, centered with transparent padding. Genuine transparent background. No scenery, frame, UI, text, lettering, watermark, fine hatching or gray outlines. Do not include the player hero or PET. Subject: a diamond-shaped paper kite with a smiling sun face, three broad ribbon bows and a sturdy dark string, floating. An airborne or hanging ornament; no ground base.",
+  "reference": "assets_local/quest/redesign/masters/decoration-fairy-v1.png",
+  "transparent": true,
+  "width": 1199,
+  "height": 1312,
+  "mode": "RGBA"
+}

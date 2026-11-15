@@ -1,0 +1,19 @@
+{
+  "id": "K055",
+  "key": "Hebilla",
+  "file": "K055.png",
+  "sample": {
+    "es": "Hebilla de cubierta",
+    "en": "Deck buckle"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Deck buckle.",
+  "requests": [
+    66,
+    106
+  ],
+  "sha256": "1514622106f77ebea0b21b68a736597fff8d0673856e5c8c22aa704ddee48e94",
+  "source": "exec-9b2cae9f-7b2c-4042-98b5-7500a976241c.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

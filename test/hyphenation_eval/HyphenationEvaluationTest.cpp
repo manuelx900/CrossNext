@@ -17,6 +17,27 @@
 #error "HYPHENATION_RESOURCES_DIR must be defined by the build system"
 #endif
 
+TEST(HyphenationResources, ThaiEmergencyWrappingPreservesClustersWithoutHyphens) {
+  Hyphenator::setPreferredLanguage("th");
+  for (const std::string word : {"เมื่อเช้านี้ฉันได้อ่านหนังสือที่บ้านแล้วจึงไปเที่ยวกับเพื่อน", "ก่อน‘เมื่อเช้านี้ฉันได้อ่านหนังสือที่บ้าน’แล้ว"}) {
+    const auto points = Hyphenator::breakOffsets(word, true);
+    ASSERT_FALSE(points.empty());
+    for (const auto& point : points) {
+      const auto* start = reinterpret_cast<const uint8_t*>(word.c_str());
+      const auto* cursor = start;
+      uint32_t left = 0;
+      while (cursor < start + point.byteOffset) left = utf8NextCodepoint(&cursor);
+      ASSERT_EQ(cursor, start + point.byteOffset);
+      const uint32_t right = utf8NextCodepoint(&cursor);
+      EXPECT_FALSE(right == 0x0e31 || right == 0x0e33 || (right >= 0x0e34 && right <= 0x0e3a) ||
+                   (right >= 0x0e47 && right <= 0x0e4e));
+      EXPECT_FALSE(left >= 0x0e40 && left <= 0x0e44);
+      EXPECT_FALSE(point.requiresInsertedHyphen);
+    }
+  }
+  Hyphenator::setPreferredLanguage("");
+}
+
 namespace {
 
 struct TestCase {
@@ -300,4 +321,23 @@ TEST(HyphenationResources, UnsupportedCompoundsKeepEmergencyBreaksBeforeExplicit
     }
   }
   Hyphenator::setPreferredLanguage("");
+}
+
+TEST(HyphenationResources, ThaiTokenCapRetainsWholeLastCluster) {
+  std::string text;
+  for (unsigned n = 0; n < 100; ++n) text += "เมื่อเช้านี้กิ่";
+  unsigned checks = 0;
+  for (int length = 190; length <= 200; ++length) {
+    const int cut = utf8SafeReaderTokenPrefix(text.data(), length);
+    EXPECT_GT(cut, 0);
+    EXPECT_LT(cut, length);
+    EXPECT_LE(length - cut, 32);
+    const auto* p = reinterpret_cast<const uint8_t*>(text.data());
+    uint32_t left = 0;
+    while (p < reinterpret_cast<const uint8_t*>(text.data()) + cut) left = utf8NextCodepoint(&p);
+    const uint32_t right = utf8NextCodepoint(&p);
+    EXPECT_TRUE(utf8ThaiBoundaryAllowed(left, right));
+    ++checks;
+  }
+  EXPECT_EQ(checks, 11u);
 }

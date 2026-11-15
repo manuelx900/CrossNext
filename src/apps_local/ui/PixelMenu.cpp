@@ -8,7 +8,9 @@
 
 #include "../../../lib/GfxRenderer/ChromeRegion.h"
 #include "BackButton.h"
+#include "FitText.h"
 #include "LightUi.h"
+#include "StatusBattery.h"
 #include "ToyboxScreen.h"
 #include "ToyboxTokens.h"
 
@@ -68,19 +70,19 @@ void fitLabel(const fui::DrawTarget& target, char* label, const int width, fui::
 }
 
 void text(fui::DrawTarget& target, fui::Rect box, const char* label, fui::FontId font, fui::Color color,
-          fui::TextAlign align, bool emphasis) {
+          fui::TextAlign align, bool emphasis, LabelCase casing) {
   char copy[192];
-  copyNatural(copy, sizeof(copy), label);
+  const char* value = label;
+  if (!label || std::strlen(label) < sizeof(copy) / 2) {
+    copyNatural(copy, sizeof(copy), label, casing);
+    value = copy;
+  }
   fui::TextStyle style;
   style.color = color;
   style.align = align;
   style.font = font;
   style.bold = emphasis || (!chrome::lightHeader && font == kTitle);
-  static constexpr fui::FontId smaller[] = {3, kSmall, kBody};
-  while (style.font < 3 && target.measureText(style.font, copy, style).width > box.width)
-    style.font = smaller[style.font];
-  fitLabel(target, copy, box.width, style);
-  target.text(toybox::inkCentred(target, box, style), copy, style);
+  fittext::draw(target, box, value, style, 2);
 }
 
 static fui::Rect paintHeader(fui::DrawTarget&, const fui::DeviceContext&, const Header&, fui::Rect* = nullptr);
@@ -124,16 +126,8 @@ static fui::Rect paintHeader(fui::DrawTarget& target, const fui::DeviceContext& 
   int right = safe.right() - 14;
   if (model.battery >= 0) {
     const auto icon = fui::makeRect(right - 34, top + 27, 30, 19);
-    target.stroke(icon, white, 2);
-    target.fill(fui::makeRect(icon.right(), icon.y + 5, 4, 9), white);
-    const int percent = std::max(0, std::min(100, model.battery));
-    const int fill = model.charging ? icon.width - 8 : (icon.width - 8) * percent / 100;
-    target.fill(fui::makeRect(icon.x + 4, icon.y + 4, fill, icon.height - 8), white);
-    if (model.charging) {
-      target.line({int16_t(icon.x + 18), int16_t(icon.y)}, {int16_t(icon.x + 12), int16_t(icon.y + 11)}, 2, black);
-      target.line({int16_t(icon.x + 12), int16_t(icon.y + 11)}, {int16_t(icon.x + 19), int16_t(icon.y + 9)}, 2, black);
-      target.line({int16_t(icon.x + 19), int16_t(icon.y + 9)}, {int16_t(icon.x + 14), int16_t(icon.y + 20)}, 2, black);
-    }
+    const int percent = std::clamp(model.battery, 0, 100);
+    statusbattery::draw(target, icon, percent, model.charging, fui::Color::White);
     right = icon.x - 8;
     if (model.showPercent) {
       char percentLabel[8];
@@ -159,7 +153,16 @@ static fui::Rect paintHeader(fui::DrawTarget& target, const fui::DeviceContext& 
     target.bitmap(icon, model.mark, fui::BitmapMode::Contain, white);
     right = icon.x - 12;
   }
-  if (model.secondaryMark) {
+  if (model.secondaryLabel) {
+    fui::TextStyle style;
+    style.font = kSmall;
+    const int width = std::clamp(int(target.measureText(style.font, model.secondaryLabel, style).width) + 24, 44, 160);
+    const auto button = fui::makeRect(right - width, top + 14, width, 44);
+    if (secondary) *secondary = button;
+    target.stroke(button, white, 1, chrome::lightHeader ? lightui::kControlRadius : 0);
+    text(target, button.inset({2, 8, 2, 8}), model.secondaryLabel, kSmall, fui::Color::White, fui::TextAlign::Center);
+    right = button.x - 12;
+  } else if (model.secondaryMark) {
     const auto icon = fui::makeRect(right - 32, top + 20, 32, 32);
     if (secondary) *secondary = icon.inset({-6, -6, -6, -6});
     target.bitmap(icon, model.secondaryMark, fui::BitmapMode::Contain, white);
@@ -183,7 +186,7 @@ static fui::Rect paintHeader(fui::DrawTarget& target, const fui::DeviceContext& 
   titleStyle.font = kBody;
   titleStyle.bold = !chrome::lightHeader;
   char title[192];
-  copyNatural(title, sizeof(title), model.title);
+  copyNatural(title, sizeof(title), model.title, model.titleCase);
   const int titleEnd = left + target.measureText(titleStyle.font, title, titleStyle).width + 14;
   fui::TextStyle clockStyle;
   clockStyle.font = fui::HEADER_CLOCK_FONT;
@@ -196,11 +199,10 @@ static fui::Rect paintHeader(fui::DrawTarget& target, const fui::DeviceContext& 
   }
   if (chrome::lightHeader) {
     titleStyle.color = fui::Color::White;
-    target.text(toybox::inkCentred(target, fui::makeRect(left, top, std::max(0, right - left), 72), titleStyle), title,
-                titleStyle);
+    fittext::draw(target, fui::makeRect(left, top, std::max(0, right - left), 72), title, titleStyle, 2);
   } else
     text(target, fui::makeRect(left, top, std::max(0, right - left), 72), model.title, kBody, fui::Color::White,
-         fui::TextAlign::Left, true);
+         fui::TextAlign::Left, true, model.titleCase);
   return mark;
 }
 
@@ -323,15 +325,15 @@ void RowSource::provide(void* ctx, uint16_t index, fui::ListItem& item) {
   else
     item = self.items[index];
   // Font choices belong to bind(), after the caller finalizes its viewport.
-  if (item.value) {
+  if (item.value && std::strlen(item.value) < sizeof(self.value) / 2) {
     copyMenuLabel(self.value, sizeof(self.value), item.value);
     item.value = self.value;
   }
-  if (item.label) {
+  if (item.label && std::strlen(item.label) < sizeof(self.label) / 2) {
     copyMenuLabel(self.label, sizeof(self.label), item.label);
     item.label = self.label;
   }
-  if (item.subtitle) {
+  if (item.subtitle && std::strlen(item.subtitle) < sizeof(self.subtitle) / 2) {
     copyMenuLabel(self.subtitle, sizeof(self.subtitle), item.subtitle);
     item.subtitle = self.subtitle;
   }

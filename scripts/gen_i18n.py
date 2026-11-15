@@ -90,7 +90,7 @@ def parse_yaml_file(filepath: str) -> Dict[str, str]:
         for line_num, raw_line in enumerate(f, start=1):
             line = raw_line.rstrip("\n\r")
 
-            if not line.strip():
+            if not line.strip() or line.lstrip().startswith("#"):
                 continue
 
             match = YAML_KEY_RE.match(line)
@@ -438,7 +438,9 @@ def format_cpp_string_literal(segments: List[str], indent: str = "    ") -> List
 def compute_character_set(translations: Dict[str, List[str]], lang_index: int) -> str:
     """Return a sorted string of every unique character used in a language."""
     chars = set()
-    for values in translations.values():
+    for key, values in translations.items():
+        if key.startswith("STR_WEB_"):
+            continue
         for ch in values[lang_index]:
             chars.add(ord(ch))
     return "".join(chr(cp) for cp in sorted(chars))
@@ -628,6 +630,7 @@ def generate_strings_cpp(
     output_path: str,
     verbose: bool = False,
     builtin: Optional[Set[str]] = None,
+    language_tags: Optional[List[str]] = None,
 ) -> None:
     """Generate I18nStrings.cpp."""
     compiled = [c for c in languages if builtin is None or c in builtin]
@@ -635,6 +638,7 @@ def generate_strings_cpp(
         AUTO_GENERATED_COMMENT,
         CLANG_FORMAT_OFF_COMMENT,
         '#include "I18nStrings.h"',
+        '#include "I18nPackKeys.h"',
         "",
         "#include <cstddef>",
         "",
@@ -645,6 +649,12 @@ def generate_strings_cpp(
     lines.append("const char* const LANGUAGE_CODES[] = {")
     for code in languages:
         _append_string_entry(lines, code)
+    lines.append("};")
+    lines.append("")
+
+    lines.append("const char* const LANGUAGE_TAGS[] = {")
+    for tag in language_tags or [code.lower() for code in languages]:
+        _append_string_entry(lines, tag)
     lines.append("};")
     lines.append("")
 
@@ -671,6 +681,21 @@ def generate_strings_cpp(
     # Non-English languages skip strings identical to English; their offset
     # tables use bit 31 (0x80000000) to flag "use English blob at offset & 0x7FFFFFFF".
     lines.append(I18N_NAMESPACE_OPEN)
+    lines.append("")
+
+    if len(string_keys) > 65535:
+        raise ValueError("Language pack string IDs exceed uint16_t")
+    key_hashes = sorted((language_key_hash(key), index) for index, key in enumerate(string_keys))
+    if len({key_hash for key_hash, _ in key_hashes}) != len(key_hashes):
+        raise ValueError("Language pack key hash collision")
+    lines.append("const uint64_t PACK_KEY_HASHES[] = {")
+    for key_hash, _ in key_hashes:
+        lines.append(f"    UINT64_C(0x{key_hash:016x}),")
+    lines.append("};")
+    lines.append("const uint16_t PACK_KEY_IDS[] = {")
+    for offset in range(0, len(key_hashes), 12):
+        lines.append("    " + ", ".join(str(index) for _, index in key_hashes[offset:offset + 12]) + ",")
+    lines.append("};")
     lines.append("")
 
     en_strings = [translations[key][0] for key in string_keys]
@@ -750,6 +775,24 @@ def generate_strings_cpp(
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+def language_key_hash(key: str) -> int:
+    value = 14695981039346656037
+    for byte in key.encode("ascii"):
+        value = ((value ^ byte) * 1099511628211) & 0xFFFFFFFFFFFFFFFF
+    return value
+
+
+def generate_pack_header(output_path: str, verbose: bool = False) -> None:
+    _write_file(output_path, [
+        "#pragma once", AUTO_GENERATED_COMMENT, "#include <cstdint>",
+        "extern const char* const LANGUAGE_TAGS[];",
+        "namespace i18n_strings {",
+        "extern const uint64_t PACK_KEY_HASHES[];",
+        "extern const uint16_t PACK_KEY_IDS[];",
+        "}",
+    ], verbose)
+
 
 
 def _print_language_table(
@@ -998,7 +1041,9 @@ def main(
             str(out / "I18nStrings.cpp"),
             verbose,
             builtin,
+            language_bcp47,
         )
+        generate_pack_header(str(out / "I18nPackKeys.h"), verbose)
 
         print()
         print("Code generation complete!")

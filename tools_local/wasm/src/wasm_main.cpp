@@ -3,8 +3,8 @@
 // The desktop simulator owns a window, so its main() must stay on the process's
 // main thread and spin `while (!display.shouldQuit())`. A browser main thread
 // that spins never returns to the event loop, so nothing paints and nothing
-// clicks. Here main() instead starts the firmware on a FreeRTOS task -- a Web
-// Worker, under the simulator's std::thread shim -- and returns immediately.
+// clicks. Here main() returns immediately; the page starts the firmware on a
+// FreeRTOS task after installing its virtual-card overrides.
 // With -sEXIT_RUNTIME=0 the module stays alive, the worker keeps running the
 // firmware's setup()/loop(), and the exported functions below stay callable
 // from the page.
@@ -25,6 +25,7 @@
 #include <emscripten/emscripten.h>
 #include <sys/time.h>
 
+#include <atomic>
 #include <cerrno>
 #include <cstdint>
 
@@ -52,6 +53,9 @@ int consumeDirty();
 
 namespace {
 
+std::atomic<bool> restartRequested{false};
+bool started = false;
+
 void firmwareTask(void*) {
   setup();
   while (true) {
@@ -67,16 +71,25 @@ void firmwareTask(void*) {
 
 }  // namespace
 
+void requestBrowserRestart() { restartRequested.store(true, std::memory_order_release); }
+
 int main(int /*argc*/, char** argv) {
   SimulatorLifecycle::initProcessArgs(argv);
-  // Through xTaskCreate rather than a bare thread: the shim registers a task
-  // handle in thread-local storage, and ActivityManager asserts on
-  // xTaskGetCurrentTaskHandle() being non-null while it holds the render lock.
-  xTaskCreate(&firmwareTask, "firmware", 8192, nullptr, 1, nullptr);
   return 0;
 }
 
 extern "C" {
+
+// The page installs its disposable card before any firmware singleton reads it.
+EMSCRIPTEN_KEEPALIVE void crossplay_start() {
+  if (started) return;
+  started = true;
+  xTaskCreate(&firmwareTask, "firmware", 8192, nullptr, 1, nullptr);
+}
+
+EMSCRIPTEN_KEEPALIVE int crossplay_consume_restart() {
+  return restartRequested.exchange(false, std::memory_order_acq_rel) ? 1 : 0;
+}
 
 EMSCRIPTEN_KEEPALIVE uintptr_t crossplay_frame_ptr() {
   return reinterpret_cast<uintptr_t>(simbrowser::presentPixels());

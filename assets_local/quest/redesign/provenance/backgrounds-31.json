@@ -1,0 +1,13 @@
+{
+  "name": "backgrounds-31",
+  "kind": "backgrounds",
+  "first": 31,
+  "count": 6,
+  "columns": 3,
+  "rows": 2,
+  "prompt": "Use case: illustration-story. Asset type: a production environment atlas for Reading Adventure.\nSTYLE REFERENCE image1 is the user-approved forest background. Preserve its organic smooth BLACK outlines, gentle grayscale cel shading, white highlights, rounded illustrated forms, friendly hand-drawn quality and clear storybook depth. Same illustrator, same world. This is NOT pixel art and NOT sterile vector icon art.\nLAYOUT: ONE landscape atlas of SIX distinct landscape scenes, exactly THREE columns by TWO rows. Every scene fills its own equal cell all the way to its edges; no gutters, borders, labels, dividers, text or numbering. The overall atlas aspect ratio is 9:4, each scene is 3:2. Use generous resolution.\nSHARED CAMERA IN ALL SIX: a wide flat foreground ground plane occupying bottom35%, completely clear in the middle70% for a hero and a pet. Horizon at60% of each cell's height; the two characters' future feet will be at90%. Scene content stays at outer edges and distant background; center above foreground remains mostly white and airy so faces stay readable. No step or ledge under the landing area. No humans, animals, pets or auras anywhere.\nAll scenes use black fine contours and gray filled shadows with clean WHITE surfaces. Keep backgrounds light, no large black masses, no dark skies. Complexity appears in distant architecture and edge framing, NEVER clutter the foreground. Richness follows scene descriptions but keep details broad and readable at480x320. No ground oval shadow. No grain, dithering, hatch, blur, gradient wash, photorealism or 3D. No lettering or readable symbols. Each scene must be different and exactly follow its description.\nSCENES IN ROW-MAJOR ORDER:\n1. Moon palace: crescent-shaped palace towers in distance, pale curved columns framing empty terrace.\n2. Sun palace: rounded sun medallion over distant arch, radiating but restrained architectural details at side pillars.\n3. Titan hall: colossal calm stone guardian statues at extreme edges, tall open hall and pale broad tiles.\n4. Chronicle cathedral: soaring book-shaped vaulted arches, tall side shelves and broad empty central aisle.\n5. Worldtree terrace: great rounded tree trunk arches around luminous white horizon, root railings at sides.\n6. Celestial observatory: graceful armillary-ring architecture high above, pale clouds and side star charts without text.",
+  "tool": "built-in image_gen",
+  "source": "exec-91c4732d-b1ab-499d-b6e0-237c4e6c02aa.png",
+  "date": "2026-11-05",
+  "sha256": "7e488845232f628fbe2c48a04074bf9b111149c84a7e1a2655a980c7e5b95cf8"
+}

@@ -1,0 +1,17 @@
+{
+  "id": "S030",
+  "kind": "scene",
+  "master": "scene-030-v2.png",
+  "reference": "assets_local/quest/redesign/portraits/iri-source.png",
+  "transparent": false,
+  "prompt": "Use case: illustration-story. ONE complete landscape 3:2 narrative illustration for the monochrome e-ink game Aventura lectora. Clean expressive chibi storybook art, thick smooth PURE BLACK contours, white and sparse flat light-gray fills. No color, gradients, crosshatching, collage, lettering, captions, UI or watermark. Large clear clues readable at480x320. Player hero and PET are OFF CAMERA. Depict only people actually physically present in the described event; a person mentioned in a letter or record does NOT appear alive beside its reader. The attached portraits are IDENTITY references, NOT additional cast: match face, age, hairstyle, clothing and distinctive accessories exactly for any named person present. Do not invent another person or clue. Fill the scene to its edges, keep all important faces and objects in frame. IRI: woman with straight dark chin-length bob, shell hair clasp, short dark cape and round throat brooch; no glasses, white bun or beard. Region: The sunken library. Chapter: The dry page. Draw exactly this already-known moment: One page remains dry among the flooded books. It says no memory can stay imprisoned forever while someone is willing to tell it again. Context for setting and continuity only: Inside the cabinet, one page escaped the water and the king's censorship. Ada marked it as a practical example: an account that reached its owner after everyone believed it lost. MANDATORY PHYSICAL SETTING: a dry page laid on the library's reading table beside the matching testimony. Do not anthropomorphize books, pages or objects. No invented smiling ghosts. No person replaces a written record. EXHAUSTIVE VISIBLE CAST (do not add anyone else): Iri examining a page, no invented reader beside her. The reference is STYLE ONLY for any person not explicitly in this cast.",
+  "references": [
+    "assets_local/quest/redesign/portraits/iri-source.png"
+  ],
+  "sha256": "e30eb74ec92631f4fe634dcfac37b7d319c06a113d887808831cf5cf4c9d1ff6",
+  "tool": "built-in image_gen",
+  "source": "exec-c9bc0bca-9fa6-41d7-9d8f-9fe2dadf7c0a.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

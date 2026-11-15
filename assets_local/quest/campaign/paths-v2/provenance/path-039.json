@@ -1,0 +1,17 @@
+{
+  "id": 39,
+  "saga": 3,
+  "step": 9,
+  "title": {
+    "en": "The beast from the depths",
+    "es": "La bestia de las profundidades"
+  },
+  "enemy": "Abyss beast",
+  "guardian": 23,
+  "master": "path-039.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The Library Beneath the Sea. Path episode: The beast from the depths. Story action, which the scene must directly support: A beast rises out of the water and blocks the last stretch of the tunnel to the mountains.\nEnemy identity, MUST match this exact anatomy: a monstrous deep-sea angler beast with four short clawed limbs, broad fanged maw, jagged fins and bent lure. Dramatic medium-wide boss composition, full-body enemy dominating the center, final barrier clearly behind it. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-56e38df2-b04a-431d-9c46-e7e0cc9234d6.png",
+  "sha256": "601b9146359c44b245b775019f16ffbb84a2bed884dc34be6ec724478437a28f"
+}

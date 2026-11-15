@@ -59,6 +59,9 @@ class ActivityManager {
   // see the definition, and util/ButtonReleaseGate.h for the seam.
   void setCurrentActivity(std::unique_ptr<Activity>&& next);
 
+  uint32_t screenVisit = 0;
+  std::atomic<uint32_t> paintedVisit{0};
+
   // Pending activity to be launched on next loop iteration
   std::unique_ptr<Activity> pendingActivity;
   enum class PendingAction { None, Push, Pop, Replace };
@@ -162,6 +165,17 @@ class ActivityManager {
   bool preventAutoSleep() const;
   bool requiresExclusiveStorageLoop() const;
   bool isReaderActivity() const;
+  bool isForegroundReader() const;
+  bool readerTextInputActive() const;
+  bool isRemoteReaderContext() const;
+  bool isRemoteControlContext() const;
+  bool isRemoteControlShown() const;
+  bool isForegroundHomeShown() const;
+  bool remoteRadioReady() const;
+  bool remoteClick(RemoteButton button);
+  bool remoteShortcut(bool readerMenu);
+  bool remoteTurn(bool forward, bool chapter);
+  uint32_t visit() const { return screenVisit; }
 
   // The name of the activity on screen, or "" when there is none. A
   // replacement requested but not yet swapped in counts as the current one, so

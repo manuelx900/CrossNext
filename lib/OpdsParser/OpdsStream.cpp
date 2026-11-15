@@ -1,6 +1,6 @@
 #include "OpdsStream.h"
 
-OpdsParserStream::OpdsParserStream(OpdsParser& parser) : parser(parser) {}
+OpdsParserStream::OpdsParserStream(OpdsFeedParser& parser) : parser(parser) {}
 
 int OpdsParserStream::available() { return 0; }
 

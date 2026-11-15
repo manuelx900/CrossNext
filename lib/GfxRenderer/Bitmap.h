@@ -69,18 +69,25 @@ class Bitmap {
   explicit Bitmap(HalFile& file, bool dithering = false, bool originalThresholds = false)
       : file(file), dithering(dithering), originalThresholds(originalThresholds) {}
   ~Bitmap();
+  // Optional immutable BMP bytes, borrowed until cleared. Null restores HAL reads.
+  void setMemorySource(const uint8_t* bytes, size_t size);
+  void enableSourceChecksum(bool enabled) { checksumEnabled = enabled; }
+  uint32_t sourceChecksum() const { return readChecksum; }
+  size_t sourceBytesRead() const { return hashedBytes; }
   BmpReaderError parseHeaders();
   BmpReaderError readNextRow(uint8_t* data, uint8_t* rowBuffer) const;
   // Packed monochrome rows, normalized to 1=white; caller supplies getRowBytes().
   BmpReaderError readNext1BitRow(uint8_t* rowBuffer) const;
   BmpReaderError rewindToData() const;
+  // Unprocessed luminance of display-order row y (0 = top); leaves readNextRow()'s dither state alone.
+  BmpReaderError readRowGray(int y, uint8_t* gray, uint8_t* rowBuffer) const;
   int getWidth() const { return width; }
   int getHeight() const { return height; }
   bool isTopDown() const { return topDown; }
   bool hasGreyscale() const { return bpp > 1; }
   int getRowBytes() const { return rowBytes; }
   // Optional caller-owned scratch; sequential row reads may advance the file ahead.
-  void setReadAheadBuffer(uint8_t* buffer, size_t bytes) {
+  void setReadAheadBuffer(uint8_t* buffer, size_t bytes) const {
     readAhead = buffer;
     readAheadCapacity = bytes;
     readAheadUsed = readAheadPosition = 0;
@@ -89,11 +96,19 @@ class Bitmap {
   uint16_t getBpp() const { return bpp; }
 
  private:
+  int readSource(void* dst, size_t bytes) const;
+  bool seekSource(size_t offset) const;
   BmpReaderError readRowBytes(uint8_t* rowBuffer) const;
   static uint16_t readLE16(const uint8_t* bytes);
   static uint32_t readLE32(const uint8_t* bytes);
 
   HalFile& file;
+  const uint8_t* memorySource = nullptr;
+  size_t memorySize = 0;
+  mutable size_t memoryPosition = 0;
+  bool checksumEnabled = false;
+  mutable uint32_t readChecksum = 2166136261u;
+  mutable size_t hashedBytes = 0;
   bool dithering = false;
   bool originalThresholds = false;
   int width = 0;
@@ -104,8 +119,8 @@ class Bitmap {
   uint32_t colorsUsed = 0;
   bool nativePalette = false;  // true if all palette entries map to native gray levels
   int rowBytes = 0;
-  uint8_t* readAhead = nullptr;
-  size_t readAheadCapacity = 0;
+  mutable uint8_t* readAhead = nullptr;
+  mutable size_t readAheadCapacity = 0;
   mutable size_t readAheadUsed = 0, readAheadPosition = 0;
   uint8_t paletteLum[256] = {};
 

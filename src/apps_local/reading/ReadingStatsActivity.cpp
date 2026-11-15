@@ -9,6 +9,7 @@
 #include <cstring>
 
 #include "../ui/PixelMenuTheme.h"
+#include "CrossInkStatsImport.h"
 #include "ReadingGoal.h"
 #include "ReadingStatsCloudClient.h"
 #include "ReadingStatsScreens.h"
@@ -24,6 +25,13 @@ void ReadingStatsActivity::onEnter() {
                    mappedInput.isPressed(MappedInputManager::Button::NavPrevious));
   toybox::ensureFonts(renderer);
   currentDay = readingstats::today();
+  if (currentDay && SETTINGS.readingDailyGoal && !SETTINGS.readingGoalStartDay) {
+    SETTINGS.readingGoalStartDay = currentDay;
+    if (!SETTINGS.saveToFile()) {
+      SETTINGS.readingGoalStartDay = 0;
+      goalSaveFailed = true;
+    }
+  }
   clockKnown = currentDay != 0;
   displayedDay = currentDay;
   readingstats::setPeriod(dayStats, readingstats::Period::Day, currentDay, SETTINGS.weekStartsSunday);
@@ -32,9 +40,11 @@ void ReadingStatsActivity::onEnter() {
   const auto date = readingstats::dateFromDay(currentDay ? currentDay : readingstats::dayIndex({2026, 1, 1}));
   month = date.year * 12 + date.month - 1;
   pickerYear = date.year;
+  readingstats::setPeriod(annualStats, readingstats::Period::Year, currentDay, SETTINGS.weekStartsSunday);
   summary.anchorDay = currentDay;
   finishedCapacity = pageSize;
-  if (!*initialBook && readingstats::cloud::Client::configured()) {
+  if (!*initialBook && history != History::Local &&
+      (readingstats::crossink::installed() || readingstats::cloud::Client::configured())) {
     cloud = makeUniqueNoThrow<readingstats::cloud::Reader>();
     if (!cloud) LOG_ERR("STATS", "OOM: imported history reader");
     loading = cloud ? Load::Cloud : Load::Failed;
@@ -157,6 +167,26 @@ void ReadingStatsActivity::loadPeriod(readingstats::Period next, int day) {
   loading = beginScan(true) ? Load::Period : Load::Failed;
   requestUpdate();
 }
+void ReadingStatsActivity::loadAnnual(int year) {
+  if (year < readingstats::RecordedYears::firstYear || year > readingstats::RecordedYears::lastYear) return;
+  statsScope = readingui::StatsScope::Year;
+  ready = false;
+  if (annualReady && readingstats::dateFromDay(annualStats.first).year == year) {
+    requestUpdate();
+    return;
+  }
+  readingstats::setPeriod(annualStats, readingstats::Period::Year, readingstats::dayIndex({year, 1, 1}),
+                          SETTINGS.weekStartsSunday);
+  annualKnown = true;
+  annualReady = false;
+  if (source == readingstats::Source::Unified) {
+    loading = combined->project(annualStats, &annualKnown) ? Load::Ready : Load::Failed;
+    annualKnown &= combined->annualTimeKnown(annualStats);
+    annualReady = loading == Load::Ready;
+  } else
+    loading = beginScan() ? Load::Annual : Load::Failed;
+  requestUpdate();
+}
 void ReadingStatsActivity::scan() {
   for (int n = 0; n < 32; ++n) {
     const auto status = repository.next(record);
@@ -181,9 +211,12 @@ void ReadingStatsActivity::scan() {
       }
       if (loading == Load::Anchor || loading == Load::Summary) {
         summaryReady = true;
+        annualReady = true;
         finishedPage = -1;
         dayReady = clockKnown;
-      } else if (loading == Load::Day)
+      } else if (loading == Load::Annual)
+        annualReady = true;
+      else if (loading == Load::Day)
         dayReady = true;
       else if (loading == Load::Books) {
         finishedPage = page;
@@ -220,12 +253,16 @@ void ReadingStatsActivity::scan() {
         summary.anchorDay = currentDay;
         const auto d = readingstats::dateFromDay(currentDay);
         month = d.year * 12 + d.month - 1;
+        pickerYear = d.year;
+        readingstats::setPeriod(annualStats, readingstats::Period::Year, currentDay, SETTINGS.weekStartsSunday);
         repository.close();
         loading = beginScan() ? Load::Summary : Load::Failed;
         return;
       }
       case Load::Summary:
         summary.add(record);
+        annualStats.add(record);
+        recordedYears.add(record);
         if (clockKnown) dayStats.add(record);
         readingstats::addRecent(books, recentCount, record.book);
         break;
@@ -234,6 +271,9 @@ void ReadingStatsActivity::scan() {
         break;
       case Load::Period:
         periodStats.add(record);
+        break;
+      case Load::Annual:
+        annualStats.add(record);
         break;
       case Load::Streak:
         periodStats.consistency.add(record);
@@ -291,8 +331,43 @@ void ReadingStatsActivity::action(fui::ActionId action, int value) {
       goalPopup.show(StrId::STR_GOAL_DAILY, options, SETTINGS.readingDailyGoal, [this](int n) {
         if (n < 0 || n >= int(std::size(readinggoal::minutes))) return;
         if (SETTINGS.readingDailyGoal != n) {
+          const auto previousGoal = SETTINGS.readingDailyGoal;
+          const auto previousStart = SETTINGS.readingGoalStartDay;
+          const auto previousLegacy = SETTINGS.readingGoalLegacyHistory;
+          if (!n || !SETTINGS.readingDailyGoal) SETTINGS.readingGoalStartDay = n ? currentDay : 0;
+          if (!n || !SETTINGS.readingDailyGoal) SETTINGS.readingGoalLegacyHistory = false;
           SETTINGS.readingDailyGoal = n;
-          SETTINGS.saveToFile();
+          if (!SETTINGS.saveToFile()) {
+            SETTINGS.readingDailyGoal = previousGoal;
+            SETTINGS.readingGoalStartDay = previousStart;
+            SETTINGS.readingGoalLegacyHistory = previousLegacy;
+            goalSaveFailed = true;
+          }
+        }
+        requestUpdate();
+      });
+      requestUpdate();
+      return;
+    }
+    case readingui::GoalReset: {
+      if (!goalCalendarVisible || !SETTINGS.readingDailyGoal) return;
+      const char* options[] = {tr(STR_CANCEL), tr(STR_RESET)};
+      goalPopup.showMessage(tr(STR_GOAL_RESET_TITLE), tr(STR_GOAL_RESET_CONFIRM), options, 2, 0, [this](int choice) {
+        if (choice == 1) {
+          const auto previousGoal = SETTINGS.readingDailyGoal;
+          const auto previousStart = SETTINGS.readingGoalStartDay;
+          const auto previousLegacy = SETTINGS.readingGoalLegacyHistory;
+          SETTINGS.readingDailyGoal = 0;
+          SETTINGS.readingGoalStartDay = 0;
+          SETTINGS.readingGoalLegacyHistory = false;
+          if (!SETTINGS.saveToFile()) {
+            SETTINGS.readingDailyGoal = previousGoal;
+            SETTINGS.readingGoalStartDay = previousStart;
+            SETTINGS.readingGoalLegacyHistory = previousLegacy;
+            goalSaveFailed = true;
+          } else {
+            goalCalendarVisible = false;
+          }
         }
         requestUpdate();
       });
@@ -329,6 +404,33 @@ void ReadingStatsActivity::action(fui::ActionId action, int value) {
       ready = false;
       requestUpdate();
       return;
+    case readingui::ChooseStatsScope: {
+      if (tab != 1 || pickerVisible || periodFromPicker || loading != Load::Ready) return;
+      std::vector<std::string> options;
+      // At most 231 short labels; moved into the existing paginated popup.
+      options.reserve(recordedYears.count() + 1);
+      options.emplace_back(tr(STR_STATS_ALL_TIME));
+      int selected = 0;
+      for (int n = 0; n < recordedYears.count(); ++n) {
+        char label[12];
+        const int year = recordedYears.at(n);
+        std::snprintf(label, sizeof(label), "%d", year);
+        options.emplace_back(label);
+        if (statsScope == readingui::StatsScope::Year && year == readingstats::dateFromDay(annualStats.first).year)
+          selected = n + 1;
+      }
+      goalPopup.show(StrId::STR_STATS_SCOPE_TITLE, std::move(options), selected, [this](int choice) {
+        RenderLock lock;
+        if (choice == 0) {
+          statsScope = readingui::StatsScope::AllTime;
+          ready = false;
+          requestUpdate();
+        } else if (choice > 0 && choice <= recordedYears.count())
+          loadAnnual(recordedYears.at(choice - 1));
+      });
+      requestUpdate();
+      return;
+    }
     case readingui::PickerYear:
       if (!pickerVisible || !clockKnown || currentDay < readingstats::dayIndex({2020, 1, 1})) return;
       pickerYear = std::clamp(pickerYear + value, 2020, readingstats::dateFromDay(currentDay).year);
@@ -385,6 +487,10 @@ void ReadingStatsActivity::action(fui::ActionId action, int value) {
       periodFromPicker = false;
       tab = value;
       period = readingstats::Period::Calendar;
+      if (tab == 1 && statsScope == readingui::StatsScope::Year && !annualReady) {
+        loadAnnual(readingstats::dateFromDay(annualStats.first).year);
+        return;
+      }
       if (tab == 3)
         loadPage(0);
       else {
@@ -467,6 +573,14 @@ void ReadingStatsActivity::action(fui::ActionId action, int value) {
   }
 }
 void ReadingStatsActivity::loop() {
+  if (goalSaveFailed && !goalPopup.isActive()) {
+    goalSaveFailed = false;
+    const char* options[] = {tr(STR_DONE)};
+    goalPopup.showMessage(tr(STR_GOAL_DAILY), tr(STR_TOOLS_SAVE_FAILED), options, 1, 0,
+                          [this](int) { requestUpdate(); });
+    requestUpdate();
+    return;
+  }
   if (goalPopup.handleInput(mappedInput, [this] { requestUpdate(); })) return;
   if (!navigation.capture(mappedInput, millis())) LOG_ERR("STATS", "Navigation queue full");
   RenderLock lock(RenderLock::Mode::Try);
@@ -631,6 +745,9 @@ void ReadingStatsActivity::render(RenderLock&&) {
   model.showPercent = uiWork.status.status.battery.label != nullptr;
   model.displayedDay = displayedDay;
   model.summary = &summary;
+  model.annualStats = &annualStats;
+  model.statsScope = statsScope;
+  model.annualKnown = annualKnown;
   model.periodStats = tab == 0 ? &dayStats : &periodStats;
   model.period = period;
   model.filter = filter;
@@ -648,6 +765,8 @@ void ReadingStatsActivity::render(RenderLock&&) {
   model.month = goalCalendarVisible ? goalMonth : month;
   model.goalCalendarVisible = goalCalendarVisible;
   model.goalMinutes = readinggoal::target(SETTINGS.readingDailyGoal);
+  model.goalStartDay = SETTINGS.readingGoalStartDay;
+  model.goalLegacyHistory = SETTINGS.readingGoalLegacyHistory;
   model.tab = tab;
   model.page = page;
   model.count = count;
@@ -658,7 +777,7 @@ void ReadingStatsActivity::render(RenderLock&&) {
   model.failed = loading == Load::Failed;
   model.damaged = damaged;
   model.source = source;
-  model.syncAvailable = readingstats::cloud::Client::configured();
+  model.syncAvailable = readingstats::crossink::installed() || readingstats::cloud::Client::configured();
   model.importedAvailable = cloudAvailable;
   model.importedActive = cloudAvailable ? combined->data().active : nullptr;
   model.importedAnchor = cloudAvailable ? combined->data().summary.anchorDay : 0;
@@ -679,6 +798,28 @@ int ReadingStatsActivity::bookTotal() const {
   return filter == readingstats::BookFilter::Recent ? recentCount : summary.completed;
 }
 void ReadingStatsActivity::importHistory() {
+  if (!readingstats::crossink::installed()) {
+    syncHistory();
+    return;
+  }
+  const char* labels[] = {tr(STR_CROSSINK_LOCAL), tr(STR_CROSSINK_HISTORY), tr(STR_READING_SYNC_IMPORT)};
+  const bool network = readingstats::cloud::Client::configured();
+  goalPopup.showMessage(tr(STR_CROSSINK_SOURCE), tr(STR_CROSSINK_SOURCES_HELP), labels, network ? 3 : 2, 1,
+                        [this](int selected) {
+                          if (selected == 2) {
+                            syncHistory();
+                            return;
+                          }
+                          auto next = makeUniqueNoThrow<ReadingStatsActivity>(renderer, mappedInput);
+                          if (next) {
+                            next->useHistory(selected == 0 ? History::Local : History::CrossInk);
+                            activityManager.replaceActivity(std::move(next));
+                          } else
+                            LOG_ERR("STATS", "OOM: history source");
+                        });
+  requestUpdate();
+}
+void ReadingStatsActivity::syncHistory() {
   if (*initialBook || !readingstats::cloud::Client::configured()) return;
   auto next = makeUniqueNoThrow<ReadingStatsSyncActivity>(renderer, mappedInput);
   if (!next) {
@@ -692,23 +833,27 @@ void ReadingStatsActivity::importHistory() {
   startActivityForResult(std::move(next), [this](const ActivityResult& result) {
     (void)result;
     auto replacement = makeUniqueNoThrow<ReadingStatsActivity>(renderer, mappedInput);
-    if (replacement)
+    if (replacement) {
+      replacement->useHistory(History::Cloud);
       activityManager.replaceActivity(std::move(replacement));
-    else {
+    } else {
       LOG_ERR("STATS", "OOM: imported history");
       activityManager.goHome(HomeMenuItem::READING_STATS);
     }
   });
 }
 void ReadingStatsActivity::loadCloud() {
-  const auto status = cloud->open();
+  const bool crossink =
+      history == History::CrossInk || (history == History::Automatic && readingstats::crossink::installed());
+  const auto status =
+      cloud->open(crossink ? readingstats::cloud::SnapshotKind::CrossInk : readingstats::cloud::SnapshotKind::Cloud);
   const bool available = status == readingstats::cloud::Result::Success &&
-                         cloud->data().account == readingstats::cloud::Client::accountId();
+                         (crossink || cloud->data().account == readingstats::cloud::Client::accountId());
   auto projected = readingstats::cloud::Result::Success;
   if (available) {
     combined = makeUniqueNoThrow<readingstats::cloud::Projection>();
     if (combined)
-      projected = combined->open(cloud.get(), currentDay, readingstats::cloud::Client::deviceTag());
+      projected = combined->open(cloud.get(), currentDay, crossink ? 1 : readingstats::cloud::Client::deviceTag());
     else {
       LOG_ERR("STATS", "OOM: combined projection");
       projected = readingstats::cloud::Result::LowMemory;
@@ -738,6 +883,7 @@ void ReadingStatsActivity::loadCloud() {
   }
   source = readingstats::Source::Unified;
   summary = combined->data().summary;
+  recordedYears = combined->recordedYears();
   if (!clockKnown) {
     currentDay = summary.anchorDay;
     displayedDay = currentDay;
@@ -753,6 +899,14 @@ void ReadingStatsActivity::loadCloud() {
       return;
     }
   }
+  readingstats::setPeriod(annualStats, readingstats::Period::Year, currentDay, SETTINGS.weekStartsSunday);
+  if (!combined->project(annualStats, &annualKnown)) {
+    loading = Load::Failed;
+    requestUpdate();
+    return;
+  }
+  annualKnown &= combined->annualTimeKnown(annualStats);
+  annualReady = true;
   summaryReady = true;
   dayReady = true;
   loading = Load::Ready;

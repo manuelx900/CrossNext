@@ -1,0 +1,18 @@
+{
+  "id": "K003",
+  "key": "Sello-hoja",
+  "file": "K003.png",
+  "sample": {
+    "es": "Sello de la hoja",
+    "en": "Leaf seal"
+  },
+  "prompt": "Use case: illustration-story. Create one isolated fantasy RPG inventory object illustration: a wax seal with a deeply embossed, unmistakable leaf emblem, two short folded ribbon tails and an antique wooden stamp handle resting beside the seal, composing a single small keepsake called the leaf seal. Style: charming hand inked black-and-white storybook / cozy chibi fantasy game prop, to match the bold outlined black-and-white characters of an e-ink reading adventure. This must look like a crafted tangible object, not a geometric line icon or a loose leaf. Chunky dark black outside contours and clear solid black accents; white object surfaces, at most a little flat pale gray shading. Large simple readable masses, no tiny filigree, no crosshatching, no color, no text, no lettering, no numbers, no label, no frame, no ground or scene. Center the complete object within a square with generous transparent padding, no cropping. True transparent background. It will be displayed at 64 by 64 pixels so emphasize recognizability and a strong silhouette.",
+  "requests": [
+    3
+  ],
+  "sha256": "52bc57c6d482a04a6cc90dff582f7df6b0be7e2c799648303f50c56220aa960d",
+  "source": "exec-5d9597ff-6c7c-42f6-aa08-fb40ea22a26d.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

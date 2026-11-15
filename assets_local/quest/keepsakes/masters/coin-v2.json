@@ -1,0 +1,12 @@
+{
+  "id": "coin",
+  "key": "coin",
+  "file": "coin-v2.png",
+  "requests": [],
+  "prompt": "Use case: illustration-story. Create one single inventory currency coin for a monochrome e-ink fantasy reading app. Exactly one round coin, front view, no stack, no perspective tilt. Very simple bold hand-inked silhouette. Pure black and white only. A thick circular black rim that is 7 percent of the coin diameter, white face, one simple open-book engraving in the center drawn with equally bold strokes. Only two large blank book pages and one central spine, no page lines. No stars, no sparkles, no lettering, no numbers, no text, no extra rings, no tiny details, no shadows, no ground, no surrounding props. True transparent background, complete centered coin with transparent padding. Designed to remain clear when reduced to 20 pixels. An illustrated crafted coin rather than a line drawing of stacked currency.",
+  "sha256": "aa1ae42ba83d98ba8e63529a8d950531a719c4b7a38dd13385e5a69b2eb42618",
+  "source": "exec-095cb19e-d957-4e51-a228-dbcaaa0eb24f.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

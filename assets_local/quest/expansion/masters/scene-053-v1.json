@@ -1,0 +1,12 @@
+{
+  "id": "S053",
+  "master": "scene-053-v1.png",
+  "sha256": "f503652f6970c664073ffca5a18cbe577b19969e9bafdeaaf5b9539113c5a72f",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The ash clock. Chapter: Tomorrow's letter. Illustrate this already-authored event faithfully, without inventing another object or plot: The letter describes a lunar palace reached by a road beyond the city. Its date proves the repeated day does not control the lands outside. Context only, do not try to draw all of it: A letter appears among Ada's experiments, dated after the morning the city repeats. It is not a message from a future you must fulfill: she wrote it after escaping the clock's hold.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

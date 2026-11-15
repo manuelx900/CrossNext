@@ -2,6 +2,7 @@
 
 #include <Epub/Page.h>
 
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -12,6 +13,7 @@
 #include "apps_local/words/VocabularyStorage.h"
 #include "components/UiAppHost.h"
 #include "util/ButtonNavigator.h"
+#include "util/Dictionary.h"
 
 // Paged viewer for one dictionary definition. HTML definitions are laid out
 // through the EPUB chapter parser into styled Pages; anything else (plain
@@ -29,6 +31,7 @@ class DictionaryDefinitionActivity final : public Activity, protected UiAppHost 
         htmlDefinition(htmlDefinition),
         captureNotice(captureNotice) {}
 
+  void enableLookup(Dictionary& dictionary, const std::string& query);
   void onEnter() override;
   void onExit() override;
   void loop() override;
@@ -63,11 +66,35 @@ class DictionaryDefinitionActivity final : public Activity, protected UiAppHost 
   void drawBody(int fontId, int x, int startY) const;
   void turnPage(int delta);
 
-  const std::string headword;
+  void prepareDefinition();
+  std::string wordAt(int x, int y) const;
+  void navigateDefinition();
+  void goBack();
+  void showLookupMessage(StrId message);
+
+  static constexpr size_t MAX_LOOKUP_DEPTH = 16;
+  static constexpr size_t MAX_QUERY_BYTES = 192;
+  struct HistoryEntry {
+    char query[MAX_QUERY_BYTES]{};
+    int page = 0;
+  };
+  // Keep queries, not definition payloads or laid-out pages, while the parent owns the dictionary.
+  std::array<HistoryEntry, MAX_LOOKUP_DEPTH> history;
+  size_t historyDepth = 0;
+  Dictionary* lookupDictionary = nullptr;
+  char currentQuery[MAX_QUERY_BYTES]{};
+  enum class Navigation : uint8_t { None, Lookup, Back };
+  Navigation navigation = Navigation::None;
+  std::string pendingWord;
+  StrId lookupMessage = StrId::STR_DICT_NOT_FOUND;
+  unsigned long lookupMessageAt = 0;
+  bool lookupMessageVisible = false;
+
+  std::string headword;
   // Not const: onEnter() normalizes embedded NULs (StarDict multi-type
   // separators) to newlines so C-string APIs see the whole text.
   std::string definition;
-  const bool htmlDefinition;
+  bool htmlDefinition;
   // Styled path: reader-identical Pages laid out from the HTML definition.
   // Empty means the plain-text span path below is active.
   std::vector<std::unique_ptr<Page>> pages;

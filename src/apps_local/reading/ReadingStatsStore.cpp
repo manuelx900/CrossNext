@@ -10,6 +10,8 @@
 #include <cstring>
 #include <ctime>
 
+#include "util/ReadingTimeMemo.h"
+
 namespace readingstats {
 namespace {
 constexpr const char* kRoot = "/.crosspoint/reading-history";
@@ -183,9 +185,16 @@ bool Repository::append(const Record& record) {
   setOffset(index, offset);
   const auto hash = checksum(index, 8);
   for (int n = 0; n < 4; ++n) index[8 + n] = static_cast<uint8_t>(hash >> (n * 8));
-  HalFile cached;
-  if (!Storage.openFileForWrite("READ-STATS", path, cached) || cached.write(index, sizeof(index)) != sizeof(index))
+  bool savedIndex = false;
+  {
+    HalFile cached;
+    savedIndex = Storage.openDerivedCacheForWrite("READ-STATS", path, cached) &&
+                 cached.write(index, sizeof(index)) == sizeof(index) && cached.close();
+  }
+  if (!savedIndex)
     LOG_ERR("READ-STATS", "Index save failed; journal remains recoverable");
+  else
+    readingtime::publish(record.book.document, record.book.seconds);
   return true;
 }
 bool Repository::record(const char* document, const char* title, const char* author, int64_t epoch, uint32_t seconds,
@@ -244,10 +253,30 @@ bool Repository::reopen(const char* document, const char* title, const char* aut
     return false;
   if (previous.manuallyUnfinished && !previous.completed) return true;
   if (previous.completed && !previous.finishedDay) {
-    const auto finished = static_cast<time_t>(previous.finishedEpoch);
-    tm date{};
-    if (!localtime_r(&finished, &date) || date.tm_year < 120 || date.tm_year > 299) return false;
-    previous.finishedDay = dayIndex({date.tm_year + 1900, date.tm_mon + 1, date.tm_mday});
+    // Legacy snapshots lack the day; the original journal uses the time zone
+    // at completion, which can differ from the device's current time zone.
+    if (!begin(true)) return false;
+    unsigned batch = 0;
+    for (;;) {
+      const auto status = next(scratch);
+      if (status == ScanResult::Error) {
+        close();
+        return false;
+      }
+      if (status == ScanResult::Finished) break;
+      if (status == ScanResult::Record && scratch.firstCompletion && !std::strcmp(scratch.book.document, document) &&
+          scratch.book.finishedEpoch == previous.finishedEpoch) {
+        previous.finishedDay =
+            scratch.localDay + static_cast<int>((uint64_t(scratch.secondOfDay) + scratch.seconds) / 86400);
+        break;
+      }
+      if (++batch == 64) {
+        batch = 0;
+        vTaskDelay(1);
+      }
+    }
+    close();
+    if (!previous.finishedDay) return false;
   }
   scratch = {};
   scratch.kind = RecordKind::Reopen;

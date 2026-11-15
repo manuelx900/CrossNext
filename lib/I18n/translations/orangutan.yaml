@@ -342,3 +342,140 @@ STR_TILT_PAGE_TURN: "Oook OOK"
 STR_SD_FIRMWARE_UPDATE: "SD Oooook Ooook Ooooook"
 STR_STEP_HINT_FRONT: "Ooook Ooooook:"
 STR_STEP_HINT_SIDE: "OOK Oook:"
+STR_KEY_PINYIN: "Pinyin"
+
+STR_WORDLE_ENTER_GUESS: "Enter a word"
+
+STR_WORDLE_NATIVE_ACCENTS: "Keep the accents. Each tile holds one character or a group of letters."
+
+STR_KEY_TOUCH_HINT: "Ook! Ook!"
+
+STR_NOTES_INVALID_NAME: "Choose a different name."
+
+STR_NOTES_DUPLICATE_NAME: "This name is already in use."
+
+STR_NOTES_CARD_NEARLY_FULL: "microSD nearly full. Free up space and try again."
+
+STR_HEARTS_PASS_CARDS: "Pass cards"
+
+STR_AUTHOR: "Ook!"
+
+STR_PLUGIN_UNINSTALL_CONFIRM: "Ook %s?"
+
+STR_INSTALL_PLUGIN_HUB: "Ook!"
+
+STR_DETAILS: "Ook!"
+
+STR_REPOSITORY: "Ook!"
+
+STR_INSTALL: "Ook!"
+
+STR_PLUGIN_HUB_INSTALLED: "Ook!"
+
+STR_PLUGIN_HUB: "Plugin Hub"
+
+STR_PLUGIN_UNINSTALL: "Ook!"
+
+STR_PLUGIN_HUB_DESCRIPTION: "Ook!"
+
+STR_PLUGIN_UNINSTALL_TITLE: "Ook!"
+
+STR_PLUGIN_HUB_INSTALL_DESCRIPTION: "Ook!"
+
+STR_PLUGIN_HUB_INSTALLED_HINT: "Ook!"
+
+STR_VERSION: "Ook!"
+
+STR_PLUGIN_SYSTEM: "Ook!"
+
+STR_CROSSINK_IMPORT: "Ook!"
+
+STR_CROSSINK_IMPORT_ACTION: "Ook!"
+
+STR_CROSSINK_HISTORY: "Ook!"
+
+STR_CROSSINK_LOCAL: "Ook!"
+
+STR_CROSSINK_SOURCE: "Ook!"
+
+STR_CROSSINK_SOURCES_HELP: "Ook!"
+
+STR_CROSSINK_HELP: "Ook!"
+
+STR_CROSSINK_BUSY: "Ook!"
+
+STR_CROSSINK_DONE: "Ook!"
+
+STR_CROSSINK_EMPTY: "Ook!"
+
+STR_CROSSINK_LIBRARY: "Ook!"
+
+STR_CROSSINK_COUNTS: "%lu / %lu · %lu Ook"
+
+STR_READING_SYNC_NO_DAILY: "Ook!"
+
+STR_PLUGIN_WEB_EMPTY: "Ook!"
+
+STR_PLUGIN_WEB_ERROR: "Ook?"
+
+STR_CALCULATOR_APP: "Ook"
+STR_CALCULATOR_DIVIDE_ZERO: "Ook! Ook!"
+STR_CALCULATOR_OVERFLOW: "Ook!"
+STR_CALCULATOR_INVALID: "Ook?"
+
+STR_GOAL_RESET_TITLE: "Ook! Ook?"
+STR_GOAL_RESET_CONFIRM: "Ook? Ook! Ook. Ook! Ook? Ook."
+
+STR_STATS_SCOPE_TITLE: "Statistics period"
+STR_STATS_ALL_TIME: "All time"
+STR_STATS_YEAR_UNAVAILABLE: "This imported history has no complete data for this year. Select All time."
+
+STR_PREPARE_INTRO: "Prepare EPUB, XTC and XTCH, with covers for every theme."
+STR_PREPARE_SIZES: "Text sizes"
+STR_PREPARE_ALL_SIZES: "All available sizes"
+STR_PREPARE_LAYOUTS: "Page layouts: %u"
+STR_PREPARE_COVERS_ONLY: "XTC and XTCH have fixed pages. Their covers will be prepared."
+STR_PREPARE_SIZE_HINT: "Each font uses its nearest available size."
+STR_PREPARE_ENGINE_HINT: "EPUB pages work only with this engine. Change it in Settings."
+STR_PREPARE_FONT_COUNT: "Fonts: %u"
+STR_PREPARE_REVIEW: "Review"
+STR_PREPARE_FORMAT_EPUB: "EPUB"
+STR_PREPARE_FORMAT_XTC: "XTC"
+STR_PREPARE_FORMAT_XTCH: "XTCH"
+
+STR_COLLECTIONS: "Collections"
+STR_COLLECTION_NEW: "New collection"
+STR_COLLECTION_EDIT: "Choose books"
+STR_COLLECTION_FROM_FOLDER: "Create from folder"
+STR_COLLECTION_ADD: "Add to collection"
+STR_COLLECTION_MOVE: "Move to another collection"
+STR_COLLECTION_REMOVE: "Remove from collection"
+STR_COLLECTION_FAVORITE: "Add to favorites"
+STR_COLLECTION_UNFAVORITE: "Remove from favorites"
+STR_BOOK_FAVORITE: "Add to favorites"
+STR_BOOK_UNFAVORITE: "Remove from favorites"
+STR_COLLECTION_FAVORITES: "Favorite books"
+STR_COLLECTION_FINISHED: "Finished books"
+STR_COLLECTION_SAVE: "Save collection"
+STR_COLLECTION_ALL_FOLDER: "Select folder"
+STR_COLLECTION_NONE_FOLDER: "Deselect folder"
+STR_COLLECTION_SELECTED: "%u selected"
+STR_COLLECTION_COUNT: "%u books"
+STR_COLLECTION_EMPTY: "No books in this collection"
+STR_COLLECTION_DELETE_NOTE: "Delete this collection? Books stay on the microSD."
+STR_COLLECTION_FAILED: "Could not complete the change. Check the microSD and available memory."
+STR_COLLECTION_DISCARD: "Discard unsaved changes?"
+STR_COLLECTION_CHOOSE_NOTE: "Choose books from any folder. Save when ready."
+STR_COLLECTION_PICK_TARGET: "Choose a collection"
+STR_COLLECTION_REMOVE_NOTE: "Remove this book from the collection? The file stays on the microSD."
+
+STR_TEXT_COPY_DEFAULTS: "OOK OOK"
+STR_KEY_SPACE: "space"
+STR_KEY_RETURN: "return"
+STR_KEY_LETTERS: "abc"
+STR_TEXT_DEFAULTS_HELP: "Ook. Ook! Ook. Ook? Ook. Ook!"
+
+STR_READER_TEXT_TRIGGER: "Oooook OOK: Ook!"
+
+STR_READER_TRIGGER_BOTTOM_TAP: "Ook ook eek"
+STR_READER_TRIGGER_TOP_TAP: "Eek ook ook"

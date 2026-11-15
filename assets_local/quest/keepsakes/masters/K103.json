@@ -1,0 +1,18 @@
+{
+  "id": "K103",
+  "key": "Espejo",
+  "file": "K103.png",
+  "sample": {
+    "es": "Espejo de bolsillo lunar",
+    "en": "Moon pocket mirror"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Moon pocket mirror.",
+  "requests": [
+    178
+  ],
+  "sha256": "7dd796a53a3c1fbae47bfa152a739118c5f99a0bd91dfa00670020e18081f828",
+  "source": "exec-1d28efea-2629-4d76-ab17-43cd42811c0d.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

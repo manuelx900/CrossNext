@@ -1,0 +1,8 @@
+{
+  "id": "fairy",
+  "path": "exec-ecd5ec8f-ffb7-4e2e-90a1-1a80165acd47.png",
+  "prompt": "Production game sprite, ONE isolated tiny forest fairy with butterfly wings, short leafy dress, holding a small acorn lantern, gentle friendly face, full body hovering. For the e-ink Spanish reading RPG Aventura lectora. Match the supplied pets reference strictly: very bold rounded pure black ink contour, simple friendly chibi proportions, clean white and soft flat pale gray interior patches, large readable silhouette, limited detail that survives 80x112 pixels. Transparent RGBA background, no glow, no aura, no shadow cloud, no scenery, no lettering, no grid or frame, no other subjects. Fairy is a small decorative reward, not a main hero. Center the complete silhouette with generous transparent margin.",
+  "tool": "built-in image_gen",
+  "sha256": "ecf530d1ed5c3b133899b992bebaa609d598ebe30f0095676aaea4eb8b3dd519",
+  "name": "decoration-fairy-v1"
+}

@@ -17,7 +17,7 @@ namespace {
 constexpr size_t MAX_TOKEN_FILE_SIZE = 2 * 1024;
 
 // Resolves the caller's reused TLS session (or `tmp`) into a configured,
-// connected client, or nullptr if begin() failed.
+// connected client, or nullptr if begin() or the connection failed.
 freeink::SecureHttpClient* openClient(freeink::SecureHttpClient* session, freeink::SecureHttpClient& tmp,
                                       const std::string& url, const pluginhttp::Headers& headers) {
   freeink::SecureHttpClient& http = session ? *session : tmp;
@@ -26,7 +26,7 @@ freeink::SecureHttpClient* openClient(freeink::SecureHttpClient* session, freein
   // with the transport, so verification is skipped; traffic stays encrypted.
   http.setInsecure();
   http.setTimeout(30000);
-  if (!http.begin(url)) return nullptr;
+  if (!http.begin(pluginhttp::escapeUrl(url))) return nullptr;
   for (const auto& h : headers) http.addHeader(h.first, h.second);
   return &http;
 }
@@ -108,6 +108,24 @@ std::string urlEncodeQuery(const std::string& s) {
   out.reserve(s.size() * 3);
   for (const unsigned char c : s) {
     if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
+      out += static_cast<char>(c);
+    } else {
+      char buf[4];
+      snprintf(buf, sizeof(buf), "%%%02X", c);
+      out += buf;
+    }
+  }
+  return out;
+}
+
+std::string escapeUrl(const std::string& url) {
+  const auto kept = [](const unsigned char c) { return c > 0x20 && c < 0x7F; };
+  const size_t escaped =
+      std::count_if(url.begin(), url.end(), [&](const char c) { return !kept(static_cast<unsigned char>(c)); });
+  std::string out;
+  out.reserve(url.size() + 2 * escaped);
+  for (const unsigned char c : url) {
+    if (kept(c)) {
       out += static_cast<char>(c);
     } else {
       char buf[4];

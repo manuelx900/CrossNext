@@ -1,0 +1,18 @@
+{
+  "id": "K106",
+  "key": "Paño",
+  "file": "K106.png",
+  "sample": {
+    "es": "Paño del espejo",
+    "en": "Mirror cloth"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Mirror cloth.",
+  "requests": [
+    189
+  ],
+  "sha256": "5ff7e773ce9a591c4579adb5979c082d11c5db6adf9c236435c8ac5032929211",
+  "source": "exec-3414fd8f-b427-4be0-ae5a-e46a9811ae48.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

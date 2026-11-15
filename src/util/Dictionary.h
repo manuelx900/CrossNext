@@ -189,6 +189,7 @@ class Dictionary {
   bool hasPlainDict = false;
   bool hasSyn = false;  // a <stem>.syn synonym index exists next to the .idx
   bool htmlDefinitions = false;
+  bool englishSource = false;
 
   // Shared scan buffer: lookups are single-threaded and this avoids a
   // 256-byte array on the stack of every locate() call.

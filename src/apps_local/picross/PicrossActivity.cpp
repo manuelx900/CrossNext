@@ -48,6 +48,15 @@ void PicrossActivity::onEnter() {
   // Open on whatever the save was in the middle of, so the picker points at the
   // resumable puzzle the moment the app appears.
   selected = (board.touched() && !board.solved()) ? board.index() : progress.nextUnsolved();
+  {
+    HalFile config;
+    uint8_t tab = 0;
+    if (Storage.openFileForRead("PICR", "/.crosspoint/picross-size.cfg", config) && config.size() == 1 &&
+        config.read(&tab, 1) == 1 && tab < picross::kSizeGroupCount) {
+      savedSizeTab = tab;
+      if (ui::groupFor(selected) != tab) selected = ui::groupFirst(tab);
+    }
+  }
   view = View::Menu;
   syncPicker();
   recorded = false;
@@ -59,6 +68,7 @@ void PicrossActivity::onExit() { flushSave(); }
 void PicrossActivity::setMode(const int newMode) {
   if (view != View::Board || mode == newMode) return;
   mode = newMode;
+  dirtyBoardRegions |= DIRTY_TOOLS;
   requestUpdate();
 }
 
@@ -88,11 +98,10 @@ void PicrossActivity::openPuzzle(const int requested) {
   // the marks it was offering to resume. RESUME therefore only ever worked on a
   // cold entry, and the tabs are what made the loss visible.
   selected = index;
+  saveSizePreference(ui::groupFor(index));
   // Start physical-button activation with the fill tool.
   mode = ui::ModeFill;
   view = View::Board;
-  // Full refresh on open clears whatever the last screen left behind.
-  flashOnNextPaint = true;
   paintsSinceFlash = 0;
   requestUpdate();
 }
@@ -120,7 +129,6 @@ void PicrossActivity::settleWin() {
   unsaved = 1;
   flushSave();
   view = View::Won;
-  flashOnNextPaint = true;  // the full blink as punctuation for a finished picture
   requestUpdate();
 }
 
@@ -156,13 +164,10 @@ void PicrossActivity::routeBoardTap(const int x, const int y, const int inputMod
   if (!layout.cellAt(x, y, row, col)) return;
 
   bool changed = false;
-  bool newMistake = false;
   if (inputMode == ui::ModeMark) {
     changed = board.mark(row, col);
   } else {
-    const int before = board.mistakes();
     changed = board.fill(row, col);
-    newMistake = board.mistakes() > before;
   }
   if (!changed) return;
 
@@ -178,10 +183,11 @@ void PicrossActivity::routeBoardTap(const int x, const int y, const int inputMod
     settleWin();
     return;
   }
-  if (newMistake || ++paintsSinceFlash >= kFlashEvery) {
+  if (++paintsSinceFlash >= kFlashEvery) {
     flashOnNextPaint = true;
     paintsSinceFlash = 0;
   }
+  dirtyBoardRegions |= DIRTY_GRID;
   requestUpdate();
 }
 
@@ -196,6 +202,17 @@ void PicrossActivity::routeBoardTap(const int x, const int y, const int inputMod
 // what it drew and menuPage is copied back from that.
 void PicrossActivity::syncPicker() { menuFollowsSelection = true; }
 
+void PicrossActivity::saveSizePreference(const int tab) {
+  if (savedSizeTab == tab) return;
+  HalFile config;
+  const uint8_t value = tab;
+  if (!Storage.openFileForWrite("PICR", "/.crosspoint/picross-size.cfg", config) || config.write(&value, 1) != 1) {
+    LOG_ERR("PICR", "Could not save board size");
+    return;
+  }
+  savedSizeTab = tab;
+}
+
 // Show size group `tab`, from a tab tap. The page resets to the first of that
 // group: keeping it would land on page 4 of a tier that has two, and the picker
 // would clamp it to the last page rather than the first, which reads as the tab
@@ -203,7 +220,16 @@ void PicrossActivity::syncPicker() { menuFollowsSelection = true; }
 void PicrossActivity::showTab(const int tab) {
   if ((view != View::Picker && view != View::Sizes) || tab < 0 || tab >= picross::kSizeGroupCount) return;
   if (view == View::Sizes) {
+    if (pendingSizeTab == tab) {
+      saveSizePreference(tab);
+      return;
+    }
     pendingSizeTab = tab;
+    if (ui::groupFor(selected) != tab) selected = ui::groupFirst(tab);
+    menuTab = tab;
+    menuPage = 0;
+    menuFollowsSelection = true;
+    saveSizePreference(tab);
     requestUpdate();
     return;
   }
@@ -211,7 +237,6 @@ void PicrossActivity::showTab(const int tab) {
   menuTab = tab;
   menuPage = 0;
   menuFollowsSelection = false;  // an explicit tab beats "open on the selection"
-  flashOnNextPaint = true;       // a wholesale content swap earns a clean full refresh
   requestUpdate();
 }
 
@@ -222,7 +247,6 @@ void PicrossActivity::showPage(const int page) {
   if (view != View::Picker || page == menuPage) return;
   menuPage = page;
   menuFollowsSelection = false;  // an explicit page beats "open on the selection"
-  flashOnNextPaint = true;       // a wholesale page swap earns a clean full refresh
   requestUpdate();
 }
 
@@ -240,14 +264,12 @@ void PicrossActivity::routeButton(const int button) {
       mode = ui::ModeFill;
       unsaved = 1;
       flushSave();
-      flashOnNextPaint = true;
       requestUpdate();
       break;
     case ui::ButtonPuzzles:
       flushSave();
       view = View::Picker;
       syncPicker();
-      flashOnNextPaint = true;
       requestUpdate();
       break;
     case ui::ButtonSizes:
@@ -283,7 +305,6 @@ void PicrossActivity::loop() {
       flushSave();
       view = View::Menu;
       syncPicker();
-      flashOnNextPaint = true;
       requestUpdate();
     }
     return;
@@ -373,16 +394,6 @@ void PicrossActivity::loop() {
           if (next == helpPage) return;
           helpPage = next;
         }
-        requestUpdate();
-      }
-      break;
-    case ui::ActionApplySize:
-      if (view == View::Sizes) {
-        if (ui::groupFor(selected) != pendingSizeTab) selected = ui::groupFirst(pendingSizeTab);
-        menuTab = pendingSizeTab;
-        menuPage = 0;
-        menuFollowsSelection = true;
-        view = View::Menu;
         requestUpdate();
       }
       break;
@@ -481,8 +492,37 @@ void PicrossActivity::render(RenderLock&&) {
 
   const auto labels = mappedInput.mapLabels(tr(STR_QUEST_BACK), "", "", "");
   GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);
-  renderer.displayBuffer(flashOnNextPaint ? HalDisplay::FULL_REFRESH : HalDisplay::FAST_REFRESH);
+  const auto pixels = picross::PaintState::fingerprint(renderer.getFrameBuffer(), renderer.getBufferSize());
+  const uint32_t context = uint32_t(renderer.getOrientation()) | (uint32_t(SETTINGS.screenInverted != 0) << 8);
+  if (!flashOnNextPaint && paintedFrame.unchanged(pixels, paintclock::painted(), surfaceMeaning(), context)) {
+    dirtyBoardRegions = 0;
+    LOG_DBG("PCR", "Unchanged screen: no panel update");
+    return;
+  }
+  const bool windowPaint = view == View::Board && dirtyBoardRegions && !flashOnNextPaint;
+  if (windowPaint) {
+    fui::Rect dirty = dirtyBoardRegions & DIRTY_GRID ? layout.repaint : layout.tools;
+    if (dirtyBoardRegions == (DIRTY_GRID | DIRTY_TOOLS)) {
+      const int right = std::max(dirty.right(), layout.tools.right());
+      const int bottom = std::max(dirty.bottom(), layout.tools.bottom());
+      dirty.x = std::min(dirty.x, layout.tools.x);
+      dirty.y = std::min(dirty.y, layout.tools.y);
+      dirty.width = right - dirty.x;
+      dirty.height = bottom - dirty.y;
+    }
+    LOG_DBG("PCR", "Window paint: regions=%u %d,%d %dx%d", dirtyBoardRegions, dirty.x, dirty.y, dirty.width,
+            dirty.height);
+    renderer.displayWindow(dirty.x, dirty.y, dirty.width, dirty.height);
+  } else {
+    LOG_DBG("PCR", "Page paint: full=%d", flashOnNextPaint);
+    renderer.displayBuffer(flashOnNextPaint ? HalDisplay::FULL_REFRESH : HalDisplay::FAST_REFRESH);
+  }
   flashOnNextPaint = false;
+  dirtyBoardRegions = 0;
+  if (!windowPaint)
+    paintedFrame.remember(pixels, paintclock::painted(), surfaceMeaning(), context);
+  else
+    paintedFrame.invalidate();
 }
 
 void PicrossActivity::touchSave() {

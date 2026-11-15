@@ -90,6 +90,60 @@ if (parsedSize != fileSize) {
 
 ## `section.bin`
 
+Whole-card preparation also creates `sections/<spine>.p<8-hex-signature>.bin`.
+These files use the same section header and page format as ordinary layouts;
+the signature covers the font/content, viewport and reading layout (including
+paragraph indentation). The reader validates every header field before reuse.
+They remain outside the four ordinary `<spine>.bin[.1-.3]` slots. Preparation
+copies a matching existing slot to its named path, including valid partial files.
+Normal reading keeps a primary mirror for existing page-count/LUT progress probes;
+the named layout remains available after normal reader-slot eviction. Copies use
+a `.prep.tmp` staging file and the existing `.swap` recovery convention.
+Cancellation keeps saved named layouts; cache clearing removes them with the
+book's other section files. A `.part` suffix is an uncommitted build, as usual.
+Preparing more families or layouts consumes additional card space, not more
+simultaneously loaded fonts. The binary section version is unchanged.
+
+
+### Version 75
+
+Version 75 uses percentage line heights (100, 110, 120, 130, 145, 160 and 175%
+of the font size). The settings key is `lineHeight`; the old `lineSpacing`
+indices migrate to 110, 120, 130 and 145%, respectively. Old section caches
+rebuild automatically. Reading progress, statistics and goal journals are not
+changed.
+
+After the TextBlock block-font ID and before `hasWordFonts`, a `u8 hasDropCap`
+flag optionally adds `s32 fontId; u16 scale256; s16 inset, baseline, height;
+u8 prefixBytes, style`. The complete NFC first word and its original source
+range remain in the text arena. This annotation only changes glyph rendering
+and the selection rectangle; it does not remove the initial from copied text.
+Its allocation is included in the speculative page-read budget.
+
+### Version 74
+
+The header retains the CrossNext forced-bold and spacing fields. Completed and
+partial caches from older versions rebuild automatically; metadata, bookmarks,
+reading progress, goals and statistics are not reset. The reader layout signature
+also changes because styled text can wrap differently.
+
+After the existing serialized `BlockStyle` fields, each TextBlock adds an `s32`
+block font ID (`0` means the section font), then a `u8 hasWordFonts` flag. When set,
+three `s32` font IDs and `wordCount` slot bytes follow. Slot zero uses the block
+font; slots 1–3 select the font table. The high bit records small caps. These bytes
+are included in the speculative page-load memory budget.
+
+Page tags 1–3 retain their meaning. Tag 5 is a bordered/shaded block slice:
+`s16 x, y; u16 width, height;` four pairs of `u8 width, style` (top, right,
+bottom, left), followed by `bool shaded`. Tag 4 decodes an initial-letter glyph:
+`s16 x, y; s32 fontId; u16 scale256; u8 style, byteLength; char text[byteLength]`.
+Initial letters currently remain in normal logical text rather than generating
+tag 4, preserving lookup, copying and source ranges.
+
+Chapter event-cache version 2 excludes chapters containing tables. Their column
+planning needs the raw XML parser; ordinary chapters still replay cached events.
+Saved page caches for table chapters are reused normally.
+
 ### Version 57
 
 The binary structure is unchanged. English/Spanish-only hyphenation patterns and
@@ -252,6 +306,7 @@ import std.mem;
 import std.string;
 import std.core;
 
+// Historical version-56 inspection pattern; see version 75 above for current additions.
 #define EXPECTED_VERSION 56
 #define MAX_STRING_LENGTH 65535
 #define FOOTNOTE_NUMBER_LEN 32
@@ -592,6 +647,14 @@ Local Wordle uses two 256-byte WDL1 records at /.crosspoint/wordle-local-{a,b}.b
 
 Pomodoro POM2 retains the 64-byte POM1 layout and paths. Byte15 now stores the cycle stage0..2*rounds-1; even stages are Focus, odd stages are Short Break except the final Long Break. POM1 load derives a stage from phase/completed sessions and pauses, retaining remaining time where compatible. POM2 validates phase against stage. Bytes60..63 remain the FNV-1a checksum over0..59. A higher format version remains read-only. See pomodoro.md.
 
+## Focus FCS4
+
+`/.crosspoint/focus-a.bin` and `focus-b.bin` alternate 13,856-byte verified files. Integers are little endian. Bytes 0–3 are `FCS4`, 4–7 generation, byte 8 active-task index (255 for none), and bytes 16–79 hold a Pomodoro record. The fixed 96-byte header is followed by 12 × 52-byte project records, 96 × 72-byte task records, seven × 20-byte daily records, and 14 × 12-byte aggregate records. Task byte 70 is list ownership (0 project, 1 Today, 2 Tasks); independent lists require project index 255. Daily fields are day, milliseconds, sessions, Today milliseconds and Today sessions, each serialized as u32, with session values validated to fit u16. Aggregate records contain deleted-completed task count, planned sessions and completed sessions.
+
+At offset 7,940 follow 96 × 61-byte study records: u32 recorded seconds, u16 fractional milliseconds, u16 skipped focus stages, u32 hourly-record day, 24 × u16 hourly seconds and a u8 legacy-history-incomplete flag. Then 14 × u32 aggregate study seconds follow. The final u32 is FNV-1a over all preceding bytes. Each task retains only its latest dated hourly breakdown and its all-time total. Paused/break time is excluded; skipped stages do not earn sessions.
+
+FCS1 (7,636 bytes), FCS2 (7,720) and FCS3 (7,944) remain readable. FCS1/2 tasks stay in projects; V3 list ownership and aggregates survive. Earlier formats have no per-task time, so migration marks it incomplete and starts recorded time at zero without fabricating history. The next changed save writes FCS4. Future versions and wholly damaged saves remain read-only. See [Focus](apps/focus.md) for deletion retention and device checks.
+
 ## CrossNext Anki zoom images
 
 `images.dat` retains the v1 answer-only / v2 question-answer `XSTUDYI` format,
@@ -625,7 +688,7 @@ little endian; the fixed header and records do not use native struct padding.
 | Header field | Bytes |
 | --- | ---: |
 | Magic `EVC1` | 4 |
-| Format version `1` | 2 |
+| Format version `2` | 2 |
 | Header length `20` | 2 |
 | Source XHTML size | 4 |
 | Source XHTML modification time (HalFile/FAT representation) | 4 |
@@ -654,3 +717,88 @@ publish a stream. Source size and timestamp are a stale-cache check, not a
 cryptographic content identity. A format/parser-configuration change must bump
 the version/path if the recorded Expat events are no longer interchangeable.
 CSS is still resolved by the live parser and is not serialized in this file.
+
+## PET generation history (`PTL2`)
+
+The alternating `/.crosspoint/pet-v2/lives-a.bin` and `lives-b.bin` files are 640 bytes
+with up to twelve 52-byte records. Each record stores generation (u32), accumulated
+reading seconds (u64), ending epoch (i64), reading days (u16), species (u8), ending
+reason (u8) and a 25-byte name. Three formerly reserved bytes at record offsets
+49–51 now store calendar age in days (u16, little endian) and a known-age flag
+(0 unknown, 1 recorded). Age is the ending local calendar day minus the birth
+calendar day, clamped to 65535 days. It is separate from days with reading.
+
+Previous PTL2 writers zeroed those bytes, so their ages remain unknown. PTL1
+records likewise migrate with unknown age. The existing file size, record stride,
+checksum, alternating-save and read-back contracts remain unchanged. Older
+firmware can read these PTL2 files, but drops age metadata if it rewrites them.
+
+
+### PET8 food-choice compatibility
+
+PET8 keeps the fixed PET7 byte layout, length and checksum. Only the accepted
+food-choice range at byte 72 expands from 0-5 to 0-8. The encoder keeps PET7 for
+0-5 and writes PET8 for 6-8. The store recognizes both; unknown future versions
+disable writes. Older firmware rejects PET8 rather than silently loading an
+older PET7 meal balance. The required new breathing.bin has 1182 CNART003
+records, appending to the original 1014 stable IDs.
+
+## Reading Adventure campaign (`RQU6`)
+
+`/.crosspoint/reading-adventure-v2/reading-quest-v6.dat` contains two alternating 512-byte records.
+The writer verifies the new slot before publishing its sequence. First migration
+uses a temporary file and rename; RQU1–RQU5 files remain available as backups.
+A present corrupt newer file disables writes rather than loading an older format.
+
+Bytes 0–315 retain the RQU5 profile fields (including name extension). Byte 316
+holds the legacy-layout FNV-1a checksum, and byte 508 holds the full record FNV-1a checksum over
+bytes 0–507. RQU6 magic replaces RQU5; no old writer can accept its record.
+Little-endian extension offsets are:
+
+| Offset | Value |
+| --- | --- |
+| 320, 328, 336, 344 | u64 observed reading cursor, adventure reading baseline, banked seconds, extra reward coins |
+| 352, 356, 360 | i32 start local day, u32 seconds already read that day, u32 completed-book baseline |
+| 364, 368, 372 | u32 encounter seconds, frozen victory coins, i32 claimed Monday local day |
+| 376, 378 | u16 encounter index (0–719), u16 reading-XP remainder (0–5999) |
+| 380–383 | u8 initialized, battle phase (reading/victory/story/complete), adventure state (active/unfinished/peace/setup), extension version (1) |
+| 384–398 | 120 chapter-reward claim bits |
+| 399 | u8 first adventure day contains new reading, for multi-year streak bounds |
+| 400–404 | u8 introduced-region count, extension schema (5), prologue acknowledged; u16 narrated-encounter cursor |
+| 405–412 | u16 decoration ownership, two equipped decoration IDs, pending chapter item |
+| 413–450 | 300 request/keepsake claim bits; high four bits of byte 450 are zero |
+| 451–458 | u64 observed-reading cursor when the active request was accepted; zero when none |
+| 459–460 | u16 active request ID 0–299, or 300 for none |
+| 461–473 | 104 ownership bits for expansion decorations and royal equipment (item IDs 216–319) |
+| 474 | u8 ending acknowledged (0 or 1) |
+| 475–507 | reserved zero bytes |
+
+Schema 5 retains schema 4 requests and schema 3 decoration fields and adds earned
+expansion equipment and an ending acknowledgment. The legacy empty decoration
+and pending-reward sentinel 216 maps to the current sentinel 320. Optional outfit,
+background and PET slots keep the serialized empty marker 200. Stable item IDs
+0–215 retain their meaning. Existing completed chapters and claimed requests
+restore their new decorations without awarding EXP or coins again. Completed
+campaigns also restore the four royal items and permit continued ordinary reading.
+
+Schema 4 adds finite character requests.
+Earlier schemas initialise an empty collection and no active request. Decode
+rejects out-of-range IDs, a claimed active request, an unintroduced/incomplete
+source chapter, or an acceptance cursor outside the campaign reading cursors.
+A claim bit is also ownership of that task's unique keepsake. EXP, coins and its
+bit are published in the same verified record. `RQU7` uses the same 512-byte
+layout for names needing the Unicode name format.
+
+Migration retains old reward bits and XP-derived wallet semantics but does not
+apply the old mission list. Campaign reading begins at the current journal total.
+Retirement saves one of two ending states; restart resets only this profile and
+sets a fresh baseline against the unchanged reader journal.
+
+The active PET and Reading Adventure storage namespaces are described in [save generation 2](apps/save-generation-v2.md). Binary format compatibility does not import files from the former generation.
+
+
+### Reading Adventure RQUA / QBAL 5
+
+The current record remains 8192 bytes. QBAL revision byte 7110 is 5. Offsets 7124–7659 contain 134 little-endian uint32 Hunt win counters indexed by the stable Hunt outfit order; the existing whole-record CRC covers them. A nonzero counter requires its matching historical unique claim. Revisions 1–4 leave counters zero in memory, and an existing unique claim is interpreted as one victory when displayed or incremented. Revision 5 permits an active or paused rematch despite a historical claim; the stricter older-revision validation remains. Counters saturate at UINT32_MAX without disabling further play. Older firmware rejects CRC-valid newer QBAL records and preserves the journal. Dates, reading and reward values in the existing Hunt victory record describe the latest collected attempt. Unique equipment claims remain idempotent.
+
+Home settings add homeCoverLoadingMask, a four-bit mask indexed Framed, Carousel, Carousel 2 and Bookshelf. Missing or invalid values use 8, enabling Bookshelf only. Zero is a valid explicit choice and is retained on save.

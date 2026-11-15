@@ -1,0 +1,18 @@
+{
+  "id": "K107",
+  "key": "Luna",
+  "file": "K107.png",
+  "sample": {
+    "es": "Luna de plata tallada",
+    "en": "Carved silver moon"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Carved silver moon.",
+  "requests": [
+    193
+  ],
+  "sha256": "80af96c999a5a8513803849bac6d0e2cb2c6009a624db780c988127182ee97d4",
+  "source": "exec-6a70c4ea-7990-4389-80ee-c1a443b638c4.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

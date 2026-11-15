@@ -28,6 +28,7 @@
 
 class FontDownloadActivity final : public UiListActivity {
  public:
+  bool allowsRemoteControl() const override { return false; }
   explicit FontDownloadActivity(GfxRenderer& renderer, MappedInputManager& mappedInput);
 
   void onEnter() override;

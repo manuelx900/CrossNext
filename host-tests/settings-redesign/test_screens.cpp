@@ -78,10 +78,14 @@ fui::DeviceContext makeDevice(fui::DisplayTarget& target) {
   d.safeArea = {9, 7, 3, 7};
   return d;
 }
+bool encloses(fui::Rect outer, fui::Rect inner) {
+  return inner.x >= outer.x && inner.y >= outer.y && inner.right() <= outer.right() && inner.bottom() <= outer.bottom();
+}
 struct RecordingTarget : fui::DrawTarget {
   fui::DisplayTarget backend;
+  const fui::Rect initialClip;
   RecordingTarget(uint8_t* data, int w, int h, int stride, fui::Orientation orientation)
-      : backend(data, w, h, stride, orientation) {}
+      : backend(data, w, h, stride, orientation), initialClip(backend.clipRect()) {}
   void setFont(fui::FontId id, const fui::BitmapFont& font) { backend.setFont(id, font); }
   fui::Size measureText(fui::FontId id, const char* text, fui::TextStyle style) const override {
     return backend.measureText(id, text, style);
@@ -112,15 +116,18 @@ struct RecordingTarget : fui::DrawTarget {
     CHECK(r.width > 0 && r.height > 0);
     const auto clip = clipRect();
     const bool inside = r.x >= clip.x && r.y >= clip.y && r.right() <= clip.right() && r.bottom() <= clip.bottom();
-    const bool partial =
-        allowClippedBitmap && r.x < clip.right() && r.right() > clip.x && r.y < clip.bottom() && r.bottom() > clip.y;
-    CHECK(inside || partial);
+    const bool overlaps = r.x < clip.right() && r.right() > clip.x && r.y < clip.bottom() && r.bottom() > clip.y;
+    const bool scopedClip = clip.x != initialClip.x || clip.y != initialClip.y || clip.width != initialClip.width ||
+                            clip.height != initialClip.height;
+    // A partial row may center its icon entirely below its scoped viewport.
+    CHECK(inside || (allowClippedBitmap && (overlaps || scopedClip)));
     backend.bitmap(r, ref, mode, p, rotation);
   }
   struct Label {
     std::string value;
     fui::FontId font;
     fui::Rect box;
+    fui::Color color;
   };
   bool allowEllipsis = false;
   bool allowClippedBitmap = false;
@@ -134,7 +141,7 @@ struct RecordingTarget : fui::DrawTarget {
       CHECK(line.bottom() <= box.bottom());
       if (!allowEllipsis) CHECK(!std::strstr(run, "…") && !std::strstr(run, "..."));
     });
-    labels.push_back({value ? value : "", style.font, box});
+    labels.push_back({value ? value : "", style.font, box, style.color});
     backend.text(box, value, style);
   }
 };
@@ -223,9 +230,62 @@ struct Canvas {
   }
 };
 
+void checkSettingsHeadings(const char* output) {
+  FontBridge labelFont(ubuntu_12_bold);
+  for (bool light : {false, true}) {
+    chrome::lightHeader = light;
+    for (bool wide : {false, true}) {
+      Canvas c(wide ? 800 : 480, wide ? 480 : 800);
+      c.target.setFont(0, labelFont.font);
+      pixelui::begin(c.screen);
+      fui::ListItem items[2]{};
+      items[0].sectionHeading = "Suspension";
+      items[0].label = "Sleep timeout";
+      items[1].sectionHeading = "Display";
+      items[1].label = "Orientation";
+      fui::ListProps p;
+      settingsui::styleRows(p);
+      p.items = items;
+      p.count = 2;
+      p.action = 1;
+      pixelui::list(c.screen, p);
+      for (const auto& label : c.target.labels)
+        if (label.value == "Suspension" || label.value == "Display") {
+          CHECK(c.target.lineHeight(label.font) <= c.target.lineHeight(p.labelText.font));
+          CHECK(c.target.lineHeight(label.font) <= p.headerRowHeight);
+        }
+      CHECK(c.label("Suspension") && c.label("Display"));
+      c.checkHits();
+      if (output)
+        c.write(std::string(output) + "/section-headings-" + (light ? "light-" : "dark-") +
+                (wide ? "landscape" : "portrait") + ".pbm");
+    }
+  }
+  chrome::lightHeader = false;
+}
 }  // namespace
 
 int main(int argc, char** argv) {
+  if (argc > 1 && std::strcmp(argv[1], "--headings-only") == 0) {
+    checkSettingsHeadings(argc > 2 ? argv[2] : nullptr);
+    std::printf("settings headings: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  {
+    Canvas c(64, 64);
+    static constexpr uint8_t bits[8]{};
+    const fui::BitmapRef image{bits, 8, 8, fui::BitmapFormat::Mask1};
+    c.target.allowClippedBitmap = true;
+    CHECK(c.target.setClipRect(fui::makeRect(24, 24, 8, 8)));
+    c.target.bitmap(fui::makeRect(8, 8, 8, 8), image, fui::BitmapMode::Contain);
+    CHECK(std::all_of(c.pixels.begin(), c.pixels.end(), [](uint8_t b) { return b == 255; }));
+    c.target.bitmap(fui::makeRect(20, 20, 8, 8), image, fui::BitmapMode::Contain);
+    for (int y = 0; y < c.height; ++y)
+      for (int x = 0; x < c.width; ++x) {
+        const bool black = !(c.pixels[y * ((c.width + 7) / 8) + x / 8] & (0x80 >> (x % 8)));
+        CHECK(black == (x >= 24 && x < 28 && y >= 24 && y < 28));
+      }
+  }
   for (int radius : {0, 2, 5, 8, 255})
     for (int width : {1, 2, 3, 24})
       for (uint8_t corners :
@@ -279,6 +339,7 @@ int main(int argc, char** argv) {
   chrome::lightHeader = false;
 
   FontBridge labelFont(ubuntu_12_bold), captionFont(ubuntu_10_regular);
+  checkSettingsHeadings(argc > 1 ? argv[1] : nullptr);
   for (bool wide : {false, true}) {
     Canvas c(wide ? 800 : 480, wide ? 480 : 800);
     pixelui::begin(c.screen);
@@ -298,7 +359,7 @@ int main(int argc, char** argv) {
     props.action = 1;
     props.inputMask = fui::InputTouch;
     CHECK(props.toggleCheckbox && props.checkboxCheckmark);
-    CHECK(props.selectionMarker == fui::SelectionMarker::Underline);
+    CHECK(props.selectionMarker == fui::SelectionMarker::None);
     pixelui::list(c.screen, props);
     for (const auto& fill : c.target.blackFills)
       CHECK(fill.width < c.screen.body().width || fill.height < props.rowHeight);
@@ -338,7 +399,7 @@ int main(int argc, char** argv) {
     readertext::Work w;
     readertext::build(c.screen, m, w);
     const int rows = readertext::sheetRowsPerPage(c.device);
-    CHECK(rows == 4);
+    CHECK(rows == (size.first > size.second ? 2 : 4));
     for (int n = 0; n < rows; ++n) CHECK(c.has(6, readertext::ChapterPick + n));
     CHECK(!c.has(6, readertext::ChapterPick + rows));
     c.checkHits();
@@ -445,10 +506,35 @@ int main(int argc, char** argv) {
               padded = true;
           CHECK(padded);
         }
-        bool alignmentFrame = false;
+        fui::Rect options{};
+        int optionCount = 0;
+        for (size_t n = 0; n < layout.interactions.count(); ++n) {
+          const auto& hit = layout.interactions.data()[n];
+          if (hit.action != 6 || hit.value < readertext::AlignmentLeft || hit.value > readertext::AlignmentBook)
+            continue;
+          CHECK(hit.rect.width == hit.rect.height);
+          CHECK(hit.rect.height >= (wide ? 44 : 64));
+          if (!optionCount)
+            options = hit.rect;
+          else
+            options.width = hit.rect.right() - options.x;
+          ++optionCount;
+        }
+        CHECK(optionCount == 5);
+        fui::Rect alignmentBox{};
         for (const auto box : layout.target.roundedFrames)
-          if (box.width > 300 && box.height == 78) alignmentFrame = true;
-        CHECK(alignmentFrame);
+          if (encloses(box, options) && box.height > options.height &&
+              (alignmentBox.empty() || box.width * box.height < alignmentBox.width * alignmentBox.height))
+            alignmentBox = box;
+        CHECK(!alignmentBox.empty());
+        if (!wide) {
+          CHECK(std::abs((options.x - alignmentBox.x) - (alignmentBox.right() - options.right())) <= 1);
+          CHECK(options.y >= alignmentBox.y + 40 && options.bottom() <= alignmentBox.bottom());
+        }
+        bool alignmentLabel = false;
+        for (const auto& label : layout.target.labels)
+          if (label.value == tr(STR_ALIGNMENT) && encloses(alignmentBox, label.box)) alignmentLabel = true;
+        CHECK(alignmentLabel);
       }
       Canvas families(wide ? 800 : 480, wide ? 480 : 800);
       m.view = readertext::SheetView::Families;
@@ -471,6 +557,9 @@ int main(int argc, char** argv) {
         c.target.setFont(1, c.prose.font);
         readertext::Model m;
         m.tab = tab;
+        const auto safe = c.device.safeRect();
+        const int previewLines = wide ? 1 : 4;
+        m.minTop = safe.y + previewLines * c.target.lineHeight(1) + 8;
         m.contentsAvailable = true;
         m.family = "Noto Serif";
         m.spacingLabel = "1.1x";
@@ -480,8 +569,10 @@ int main(int argc, char** argv) {
         readertext::Work w;
         readertext::build(c.screen, m, w);
         c.checkHits();
-        const auto sheet = readertext::sheetRect(c.device);
-        CHECK(sheet.height < c.height * (wide ? 90 : 65) / 100);
+        const auto sheet = readertext::sheetRect(c.device, m.fixed, m.minTop);
+        CHECK(encloses(safe, sheet) && sheet.bottom() == safe.bottom());
+        CHECK(sheet.y - safe.y >= previewLines * c.target.lineHeight(1) + 8);
+        CHECK(readertext::sheetRect(c.device).height == safe.height * (wide ? 94 : 76) / 100);
         for (const auto r : c.target.frames) CHECK(r.y >= sheet.y && r.bottom() <= c.height);
       }
   chrome::lightHeader = false;
@@ -601,14 +692,15 @@ int main(int argc, char** argv) {
       char labels[settingsui::homeCount][64];
       for (int n = 0; n < settingsui::homeCount; ++n) {
         settingsui::homeRow(n, items[n]);
-        CHECK(items[n].subtitle == nullptr || items[n].subtitle[0] == 0);
+        CHECK(items[n].subtitle && items[n].subtitle[0]);
         pixelui::copyCaps(labels[n], sizeof(labels[n]), items[n].label);
         items[n].label = labels[n];
       }
       fui::ListProps p;
       settingsui::styleHome(p);
       CHECK(!p.labelText.bold);
-      CHECK(p.rowHeight == pixelui::kRowHeight);
+      CHECK(p.rowHeight >= 48);
+      CHECK(p.rowHeight >= p.iconSize + 2 * p.rowPaddingY);
       CHECK(pixelui::buttonStyles().normal.borderWidth == pixelui::kBorder);
       CHECK(pixelui::rowStyles().normal.borderWidth == 1);
       CHECK(pixelui::rowStyles().disabled.borderWidth == pixelui::rowStyles().normal.borderWidth);
@@ -629,6 +721,23 @@ int main(int argc, char** argv) {
         }
       }
       c.checkHits();
+      for (size_t n = 0; n < c.interactions.count(); ++n) {
+        const auto& hit = c.interactions.data()[n];
+        if (hit.action != 1 || hit.rect.y < c.screen.body().y) continue;
+        CHECK(hit.value >= 0 && hit.value < settingsui::homeCount);
+        if (hit.value < 0 || hit.value >= settingsui::homeCount) continue;
+        const auto& item = items[hit.value];
+        const RecordingTarget::Label *title = nullptr, *help = nullptr;
+        for (const auto& label : c.target.labels) {
+          if (label.value == item.label) title = &label;
+          if (item.subtitle && label.value == item.subtitle) help = &label;
+        }
+        CHECK(title && help);
+        if (title && help) {
+          CHECK(encloses(hit.rect, title->box) && encloses(hit.rect, help->box));
+          CHECK(title->box.bottom() <= help->box.y);
+        }
+      }
       if (size.first < size.second) {
         for (int n = 0; n < settingsui::homeCount; ++n) CHECK(c.has(1, n));
       }
@@ -684,7 +793,7 @@ int main(int argc, char** argv) {
         c.target.setFont(4, captionFont.font);
         pixelui::begin(c.screen);
         const auto initial = c.screen.body();
-        const auto body = fui::makeRect(initial.x, initial.y + 52, initial.width, initial.height - 52);
+        const auto body = initial;
         fui::ListItem choices[4];
         const StrId names[] = {StrId::STR_HOME_FRAMED, StrId::STR_HOME_FOCUS_CAROUSEL, StrId::STR_HOME_BOOX,
                                StrId::STR_HOME_LICORICE};
@@ -710,8 +819,13 @@ int main(int argc, char** argv) {
         const auto actions = settingsui::appearanceActions(body, body.y + 4 * p.rowHeight, size.first > size.second);
         CHECK(size.first > size.second ? actions.themes.x > body.x + body.width / 2
                                        : actions.themes.y >= body.y + total);
-        CHECK(actions.recent.y == actions.themes.bottom() + 12);
+        CHECK(actions.recent.y == actions.themes.bottom() + 8);
+        CHECK(actions.themes.height >= 56);
+        CHECK(actions.recent.height == actions.themes.height && actions.font.height == actions.themes.height);
+        CHECK(actions.covers.height == actions.themes.height);
         CHECK(actions.font.bottom() <= body.bottom());
+        CHECK(actions.covers.bottom() <= body.bottom());
+        CHECK(actions.covers.y == actions.font.bottom() + 8);
         c.screen.setContentMarginAbsolute(fui::Insets{body.y, static_cast<int16_t>(c.device.width - body.right()),
                                                       static_cast<int16_t>(c.device.height - body.y - 4 * p.rowHeight),
                                                       body.x});
@@ -802,7 +916,26 @@ int main(int argc, char** argv) {
             const auto event = c.interactions.route(tap);
             CHECK(event.action == hit.action && event.value == hit.value);
           }
-          for (const auto r : c.target.blackFills) CHECK(r.height <= 2 || r.width < 24);
+          fui::Rect focusedRow{};
+          for (size_t n = 0; n < c.interactions.count(); ++n) {
+            const auto& hit = c.interactions.data()[n];
+            if (hit.action == 71 && hit.value == focused) focusedRow = hit.rect;
+          }
+          int focusedFills = 0;
+          for (const auto r : c.target.blackFills) {
+            const bool focusFill = r.x == focusedRow.x && r.y == focusedRow.y && r.width == focusedRow.width &&
+                                   r.height == focusedRow.height;
+            if (focusFill) ++focusedFills;
+            CHECK(focusFill || r.height <= 2 || r.width < 24);
+          }
+          CHECK(focusedFills == 1);
+          int whiteLabels = 0;
+          for (const auto& label : c.target.labels)
+            if (encloses(focusedRow, label.box)) {
+              CHECK(label.color == fui::Color::White);
+              ++whiteLabels;
+            }
+          CHECK(whiteLabels == 1);
         }
       for (int count : {2, 16}) {
         Canvas c(wide ? 800 : 480, wide ? 480 : 800);

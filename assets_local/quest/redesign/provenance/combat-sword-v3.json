@@ -1,0 +1,10 @@
+{
+  "name": "combat-sword-v3",
+  "tool": "image_gen",
+  "created": "2026-11-06",
+  "prompt_file": "combat-sword-v3-prompt.txt",
+  "source_path": "exec-097653de-1470-42ed-98bb-b90a3b9cc0c0.png",
+  "reference": "masters/combat-sword-v2.png",
+  "purpose": "Same approved sword with thicker pure black contours for small-size readability.",
+  "sha256": "9f2151cb31edb31ffcbfea824b611e7c3b2e47c5d096ebd246ac153fca93044b"
+}

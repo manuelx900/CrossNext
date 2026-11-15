@@ -21,6 +21,9 @@ void indexBuildYield(void*) { vTaskDelay(1); }
 void DictionaryWordSelectActivity::onEnter() {
   Activity::onEnter();
   fontId = SETTINGS.getReaderFontId();
+  if (!dictionaryOverride)
+    std::snprintf(dictionaryName, sizeof(dictionaryName), "%s",
+                  translate ? SETTINGS.translationDictionaryName : SETTINGS.dictionaryName);
   lookupPending = true;
   popupMsg = StrId::STR_DICT_LOOKING_UP;
   popup = Popup::Busy;
@@ -35,7 +38,7 @@ void DictionaryWordSelectActivity::performLookup() {
   }
   if (!dictOpenAttempted) {
     dictOpenAttempted = true;
-    dictOpenOk = dict.open(translate ? SETTINGS.translationDictionaryName : SETTINGS.dictionaryName);
+    dictOpenOk = dict.open(dictionaryName);
     // needsIndex() opens and validates the .qidx sidecar, so ask it once per
     // open rather than once per word: the answer only changes when we build
     // the sidecar ourselves, which is handled below.
@@ -80,12 +83,11 @@ void DictionaryWordSelectActivity::performLookup() {
       requestUpdate();
       return;
     }
+    activity->enableLookup(dict, lookupText);
     if (source) {
       source->purpose = translate ? vocabulary::Purpose::Language : vocabulary::Purpose::Vocabulary;
       if (!vocabulary::copy(source->surface, sizeof(source->surface), lookupText.c_str())) source->surface[0] = 0;
-      activity->offerVocabulary(std::move(source),
-                                translate ? SETTINGS.translationDictionaryName : SETTINGS.dictionaryName,
-                                sourceLanguage.c_str());
+      activity->offerVocabulary(std::move(source), dictionaryName, sourceLanguage.c_str());
     }
     startActivityForResult(std::move(activity), [this](const ActivityResult&) { finish(); });
     return;

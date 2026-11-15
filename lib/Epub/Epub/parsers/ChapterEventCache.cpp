@@ -1,6 +1,7 @@
 #include "ChapterEventCache.h"
 
 #include <Logging.h>
+#include <Performance.h>
 
 #include <algorithm>
 #include <atomic>
@@ -8,9 +9,29 @@
 
 namespace {
 constexpr uint32_t MAGIC = 0x31435645;  // EVC1
-constexpr uint16_t VERSION = 1;
+// Table chapters are no longer admitted: column planning requires the raw XML parser.
+constexpr uint16_t VERSION = 2;
 constexpr size_t HEADER_BYTES = 20;
 std::atomic_flag writerLease = ATOMIC_FLAG_INIT;
+std::atomic_flag replayLease = ATOMIC_FLAG_INIT;
+bool retainReplay = false;
+constexpr size_t REPLAY_LIMIT = 256 * 1024;
+constexpr size_t REPLAY_HEADROOM = 1024 * 1024;
+struct ReplayMemo {
+  HalMemory::PsramBuffer bytes;
+  char path[256]{};
+  size_t size = 0;
+  size_t length = 0;
+  uint32_t modified = 0;
+};
+ReplayMemo replayMemo;
+void clearReplayMemo() {
+  replayMemo.bytes.reset();
+  replayMemo.path[0] = '\0';
+  replayMemo.size = 0;
+  replayMemo.length = 0;
+  replayMemo.modified = 0;
+}
 
 constexpr auto makeCrcTable() {
   std::array<uint32_t, 256> table{};
@@ -41,6 +62,60 @@ uint32_t get32(const uint8_t* in) {
 }  // namespace
 
 ChapterEventCache::~ChapterEventCache() { abort(); }
+
+void ChapterEventCache::retainReaderReplay(bool enabled) {
+  retainReplay = enabled;
+  clearReplayMemo();
+}
+
+void ChapterEventCache::prepareReplay(const uint8_t* header) {
+  if (!retainReplay || !sourceModified || streamSize > REPLAY_LIMIT || path.size() >= sizeof(replayMemo.path)) return;
+  const auto modified = file.modificationTime();
+  if (!modified || replayLease.test_and_set()) return;
+  ownsReplay = true;
+  replayModified = modified;
+  if (HalMemory::getPsramHeap().freeBytes < REPLAY_HEADROOM) clearReplayMemo();
+  if (replayMemo.bytes && replayMemo.size == streamSize && replayMemo.modified == modified && path == replayMemo.path &&
+      !memcmp(replayMemo.bytes.get(), header, HEADER_BYTES)) {
+    performance::count(performance::Counter::EventMemoHit);
+    replayBuffer = std::move(replayMemo.bytes);
+    replayOffset = HEADER_BYTES;
+    replayLength = replayMemo.length;
+    LOG_DBG("EVC", "Reused reader replay (%u bytes)", unsigned(streamSize));
+    return;
+  }
+  performance::count(performance::Counter::EventMemoMiss);
+  clearReplayMemo();
+  if (HalMemory::getPsramHeap().freeBytes < streamSize + REPLAY_HEADROOM) return;
+  // Up to 256 KiB, PSRAM only, moved back to the reader memo on parser release.
+  // A stack buffer cannot hold the chapter and internal RAM remains available to layout.
+  replayBuffer = HalMemory::allocatePsram(streamSize);
+  if (!replayBuffer) {
+    LOG_ERR("EVC", "No PSRAM replay snapshot (%u bytes); streaming", unsigned(streamSize));
+    return;
+  }
+  memcpy(replayBuffer.get(), header, HEADER_BYTES);
+  replayLength = replayOffset = HEADER_BYTES;
+}
+
+size_t ChapterEventCache::replayPosition() const { return replayBuffer ? replayOffset : file.position(); }
+
+size_t ChapterEventCache::readReplay(void* data, size_t length) {
+  if (!replayBuffer) return file.read(data, length);
+  if (replayOffset > streamSize || length > streamSize - replayOffset) return 0;
+  const size_t cached = replayOffset < replayLength ? std::min(length, replayLength - replayOffset) : 0;
+  if (cached) memcpy(data, replayBuffer.get() + replayOffset, cached);
+  replayOffset += cached;
+  if (cached == length) return length;
+  if (file.position() != replayOffset && !file.seekSet(replayOffset)) return cached;
+  const int result = file.read(static_cast<uint8_t*>(data) + cached, length - cached);
+  if (result <= 0) return cached;
+  const size_t read = size_t(result);
+  memcpy(replayBuffer.get() + replayOffset, static_cast<uint8_t*>(data) + cached, read);
+  replayOffset += read;
+  replayLength = replayOffset;
+  return cached + read;
+}
 
 bool ChapterEventCache::allocateBuffer() {
   if (buffer) return true;
@@ -93,6 +168,11 @@ bool ChapterEventCache::openReplay() {
     return false;
   }
   mode = Mode::Replay;
+  prepareReplay(header);
+  if (readError) {
+    abort();
+    return false;
+  }
   depth = 0;
   consumed = HEADER_BYTES;
   ioLength = ioOffset = 0;
@@ -101,6 +181,7 @@ bool ChapterEventCache::openReplay() {
 }
 
 void ChapterEventCache::beginWrite() {
+  if (path == replayMemo.path) clearReplayMemo();
   if (writerLease.test_and_set()) {
     buffer.reset();
     return;
@@ -112,8 +193,8 @@ void ChapterEventCache::beginWrite() {
     writeFailed("directory");
     return;
   }
-  if (Storage.exists(temporaryPath.c_str())) Storage.remove(temporaryPath.c_str());
-  if (!Storage.openFileForWrite("EVC", temporaryPath, file)) {
+  if (Storage.exists(temporaryPath.c_str())) Storage.removeDerivedCache(temporaryPath.c_str());
+  if (!Storage.openDerivedCacheForWrite("EVC", temporaryPath.c_str(), file)) {
     writeFailed("open");
     return;
   }
@@ -177,6 +258,11 @@ bool ChapterEventCache::writeRecord(const Kind kind, const void* data, const siz
 
 void ChapterEventCache::startElement(const char* name, const char** atts) {
   if (mode != Mode::Write) return;
+  // Both EPUB engines share this stream; modern table planning needs raw XML.
+  if (strcmp(name, "table") == 0) {
+    abort();
+    return;
+  }
   size_t count = 0;
   while (atts && atts[count * 2]) {
     if (count == MAX_ATTRIBUTES || !atts[count * 2 + 1]) {
@@ -231,11 +317,11 @@ void ChapterEventCache::text(const Kind kind, const char* data, const int length
 
 bool ChapterEventCache::readBlock() {
   uint8_t header[6];
-  if (file.position() > streamSize || streamSize - file.position() < sizeof(header) ||
-      file.read(header, sizeof(header)) != sizeof(header))
+  if (replayPosition() > streamSize || streamSize - replayPosition() < sizeof(header) ||
+      readReplay(header, sizeof(header)) != sizeof(header))
     return false;
   const size_t count = get16(header);
-  if (!count || count > IO_BYTES || count > streamSize - file.position() || file.read(buffer.get(), count) != count ||
+  if (!count || count > IO_BYTES || count > streamSize - replayPosition() || readReplay(buffer.get(), count) != count ||
       crc(buffer.get(), count) != get32(header + 2))
     return false;
   ioLength = count;
@@ -287,7 +373,7 @@ ChapterEventCache::Next ChapterEventCache::next(Record& record) {
   };
   switch (record.kind) {
     case Kind::End:
-      if (length || depth || ioOffset != ioLength || file.position() != streamSize) return invalidRecord();
+      if (length || depth || ioOffset != ioLength || replayPosition() != streamSize) return invalidRecord();
       return Next::End;
     case Kind::StartElement: {
       if (length < 3 || data[0] > MAX_ATTRIBUTES || depth == MAX_DEPTH) return invalidRecord();
@@ -330,7 +416,7 @@ void ChapterEventCache::commit() {
     return;
   }
   const bool closed = file.close();
-  if (!closed || !sourceMatches() || !Storage.replaceFile(temporaryPath.c_str(), path.c_str())) {
+  if (!closed || !sourceMatches() || !Storage.replaceDerivedCache(temporaryPath.c_str(), path.c_str())) {
     writeFailed("commit");
     return;
   }
@@ -340,8 +426,22 @@ void ChapterEventCache::commit() {
 
 void ChapterEventCache::abort() {
   if (file) file.close();
+  if (ownsReplay) {
+    if (retainReplay && replayBuffer && replayLength > HEADER_BYTES && !readError && sourceMatches()) {
+      replayMemo.bytes = std::move(replayBuffer);
+      replayMemo.size = streamSize;
+      replayMemo.length = replayLength;
+      replayMemo.modified = replayModified;
+      memcpy(replayMemo.path, path.c_str(), path.size() + 1);
+    }
+    replayBuffer.reset();
+    ownsReplay = false;
+    replayLease.clear();
+  }
+  replayOffset = replayLength = 0;
   if (ownsWriter) {
-    if (!temporaryPath.empty() && Storage.exists(temporaryPath.c_str())) Storage.remove(temporaryPath.c_str());
+    if (!temporaryPath.empty() && Storage.exists(temporaryPath.c_str()))
+      Storage.removeDerivedCache(temporaryPath.c_str());
     ownsWriter = false;
     writerLease.clear();
   }

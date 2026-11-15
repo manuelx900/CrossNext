@@ -1,0 +1,18 @@
+{
+  "id": "K061",
+  "key": "Caracola",
+  "file": "K061.png",
+  "sample": {
+    "es": "Caracola de las voces",
+    "en": "Voices conch"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Voices conch.",
+  "requests": [
+    83
+  ],
+  "sha256": "33bcdfc2af55229eb4457f9ff2cc5da776ad7bc359542945a00cf647aaf0c750",
+  "source": "exec-a2321952-ec7d-4889-a3e0-debbbd6cca88.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

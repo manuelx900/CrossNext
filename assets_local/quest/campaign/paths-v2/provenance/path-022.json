@@ -1,0 +1,17 @@
+{
+  "id": 22,
+  "saga": 2,
+  "step": 2,
+  "title": {
+    "en": "The wrecked ship",
+    "es": "El barco destruido"
+  },
+  "enemy": "Drowned corsair",
+  "guardian": 14,
+  "master": "path-022.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The Harbor of Mist. Path episode: The wrecked ship. Story action, which the scene must directly support: Monsters have wrecked a ship. A creature watches over a smaller boat that looks ready to sail.\nEnemy identity, MUST match this exact anatomy: a broad shell-backed tidal bull with wave-shaped horns. Wide diagonal perspective with the blocked crossing clear in the middle, creature in front of it. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-72337fd8-d444-478f-b50e-30049a3d5ee0.png",
+  "sha256": "0d6946ecaeda15f1958018fa35d9aa6bddacea7a60d6e571fe78ea79054bcfd2"
+}

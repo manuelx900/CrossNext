@@ -5,9 +5,11 @@
 
 #include <Icon.h>
 
+#include "../../activities/util/EmbeddedKeyboard.h"
 #include "../ui/ToyboxScreen.h"
 #include "../ui/WordleKeyboard.h"
 #include "LocalWordle.h"
+#include "NativeWordle.h"
 #include "WordleCore.h"
 
 namespace wordleui {
@@ -24,6 +26,7 @@ enum : fui::ActionId {
   ActionConfirm = 107,
   ActionApplyLength = 108,
   ActionNext = 105,  // a finished game: the newest day not yet finished
+  ActionGuess = 109,
 };
 
 using KeyboardLayout = wordlekeys::Layout;
@@ -36,12 +39,15 @@ struct GameModel {
   const char* date = nullptr;     // chosen word length above the grid
   const char* message = nullptr;  // one line under the header, or null
   bool canNext = false;           // a finished game: is there a day left to play
+  uint8_t language = 0;           // vocabulary of the saved game, independent of UI locale
 };
 
 // Returns the keyboard it drew, for keyAt(); an empty one once the game is
 // over, when the keyboard gives way to the result and Menu / Play Again.
 struct Work {
   char label[128]{};
+  char sample[97]{};
+  uint8_t boundaries[6]{};
 };
 KeyboardLayout buildGame(toybox::Screen& screen, const GameModel& model, Work& work);
 inline KeyboardLayout buildGame(toybox::Screen& screen, const GameModel& model) {
@@ -58,6 +64,8 @@ struct MenuModel {
   wordle::Stats stats;
   int puzzles = 0;
   bool upToDate = false;
+  uint8_t language = 0;
+  wordle::NativeWordle* localized = nullptr;
 };
 
 void buildMenu(toybox::Screen& screen, const MenuModel& model, Work& work);
@@ -67,6 +75,9 @@ inline void buildMenu(toybox::Screen& screen, const MenuModel& model) {
 }
 void buildLengths(toybox::Screen& screen, int selected, Work& work);
 void buildConfirm(toybox::Screen& screen, Work& work);
-void buildHowTo(toybox::Screen& screen);
+void buildHowTo(toybox::Screen& screen, bool localized = false);
+void buildNativeGame(toybox::Screen& screen, const wordle::NativeWordle& game, const char* message, Work& work,
+                     EmbeddedKeyboard& keyboard);
+void buildNativeLengths(toybox::Screen& screen, const wordle::NativeWordle& game, unsigned selected, Work& work);
 
 }  // namespace wordleui

@@ -11,10 +11,10 @@
 #include "../../src/apps_local/quest/QuestCore.h"
 #include "../../src/apps_local/wordle/LocalWordle.h"
 int main() {
-  assert(quest::count(quest::Slot::Aura) == 50);
+  assert(quest::count(quest::Slot::Background) == 51);
   std::set<int> ids;
   for (int n = 0; n < 50; ++n) {
-    int id = quest::catalogItem(quest::Slot::Aura, n);
+    int id = quest::catalogItem(quest::Slot::Background, n);
     assert(id >= 100 && id < 150 && quest::visibleItem(id));
     ids.insert(id);
   }
@@ -23,24 +23,25 @@ int main() {
   p.xp = 100000000;
   assert(quest::equip(p, 123));
   assert(quest::equip(p, 160));
-  assert(quest::unequip(p, quest::Slot::Aura));
+  assert(quest::unequip(p, quest::Slot::Background));
   assert(quest::unequip(p, quest::Slot::Pet));
   assert(!quest::unequip(p, quest::Slot::Body));
   assert(quest::owns(p, 123) && quest::owns(p, 160));
   uint8_t profile[quest::kProfileBytes];
   quest::encode(p, profile);
   assert(quest::decode(profile, q));
-  assert(q.equipped[int(quest::Slot::Aura)] == quest::kGearCount &&
+  assert(q.equipped[int(quest::Slot::Background)] == quest::kGearCount &&
          q.equipped[int(quest::Slot::Pet)] == quest::kGearCount);
   assert(quest::equip(p, 123));
   quest::encode(p, profile);
-  assert(quest::decode(profile, q) && q.equipped[int(quest::Slot::Aura)] == 123);
-  assert(quest::ownedAuraCount(q) == 1 && quest::ownedAuraItem(q, 0) == 123);
+  assert(quest::decode(profile, q) && q.equipped[int(quest::Slot::Background)] == 123);
+  assert(quest::ownedCount(q, quest::Slot::Background) == 2 && quest::ownedItem(q, quest::Slot::Background, 0) == 100 &&
+         quest::ownedItem(q, quest::Slot::Background, 1) == 123);
   assert(quest::visibleItem(123) && !quest::visibleItem(233));
   const auto balance = quest::coins(q);
-  assert(quest::unequip(q, quest::Slot::Aura));
-  assert(quest::equip(q, quest::ownedAuraItem(q, 0)) && quest::coins(q) == balance);
-  assert(quest::ownedAuraItem(q, 1) == quest::kGearCount);
+  assert(quest::unequip(q, quest::Slot::Background));
+  assert(quest::equip(q, quest::ownedItem(q, quest::Slot::Background, 1)) && quest::coins(q) == balance);
+  assert(quest::ownedItem(q, quest::Slot::Background, 2) == quest::kGearCount);
   habits::Store historic;
   const int historyDay = habits::dayIndex(2026, 10, 17);
   assert(habits::add(historic, "A", historyDay - 1) == habits::NameResult::Ok);
@@ -168,7 +169,8 @@ int main() {
   std::fclose(file);
   assert(sessions == 53 && totals.completed == 3 && totals.onDay(totals.anchorDay) > 0);
   std::printf(
-      "Refinement: 50 auras, ownership+unequip, Spanish/Ñ submit+save, %d large minefields, 450 Picross/199 migrated "
+      "Refinement: 50 backgrounds, ownership+unequip, Spanish/Ñ submit+save, %d large minefields, 450 Picross/199 "
+      "migrated "
       "identities\n",
       grids);
 }

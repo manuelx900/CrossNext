@@ -9,6 +9,11 @@
 #include <string>
 #include <vector>
 
+#include "../../../lib/hal/StorageRevision.h"
+
+inline StorageRevision testContentRevision;
+inline StorageRevision testMediaRevision;
+
 struct TestStorage {
   std::map<std::string, std::vector<uint8_t>> files;
   bool available = true;
@@ -19,6 +24,8 @@ struct TestStorage {
   bool failJournalVerification = false;
   int writes = 0;
   uint64_t readBytes = 0;
+  void (*onRead)() = nullptr;
+  uint32_t modified = 1;
   bool refuseRename = false;
   bool enforceParents = false;
   int readLimit = -1;
@@ -33,6 +40,7 @@ struct TestStorage {
   bool exists(const char* path) const { return files.count(path) != 0; }
 };
 inline TestStorage testStorage;
+inline uint32_t testStateRevision = 0;
 
 class HalFile {
  public:
@@ -42,12 +50,13 @@ class HalFile {
   std::string path;
   bool directory = false;
   std::string lastEntry;
-  void close() {
+  bool close() {
     data = nullptr;
     cursor = 0;
     directory = false;
     path.clear();
     lastEntry.clear();
+    return true;
   }
   bool seek(size_t at) {
     if (!data || testStorage.refuseSeeks || at > data->size()) return false;
@@ -58,12 +67,14 @@ class HalFile {
   bool seekSet(size_t at) { return seek(at); }
   bool truncate(uint64_t at) {
     if (!data || at > data->size()) return false;
+    testContentRevision.bump();
     data->resize(at);
     return true;
   }
   size_t size() const { return data ? data->size() : 0; }
   size_t position() const { return cursor; }
   uint64_t fileSize64() const { return size(); }
+  uint32_t modificationTime() const { return testStorage.modified; }
   bool isOpen() const { return data != nullptr || directory; }
   explicit operator bool() const { return isOpen(); }
   bool isDirectory() const { return directory; }
@@ -93,6 +104,11 @@ class HalFile {
     if (testStorage.corruptReadChecksum && length > 0) static_cast<uint8_t*>(out)[length - 1] ^= 1;
     cursor += length;
     testStorage.readBytes += length;
+    if (testStorage.onRead) {
+      const auto callback = testStorage.onRead;
+      testStorage.onRead = nullptr;
+      callback();
+    }
     return static_cast<int>(length);
   }
   size_t write(const void* input, size_t count) {
@@ -103,6 +119,7 @@ class HalFile {
     if (data->size() < cursor + length) data->resize(cursor + length);
     std::memcpy(data->data() + cursor, bytes, length);
     cursor += length;
+    testContentRevision.bump();
     ++testStorage.writes;
     return length;
   }
@@ -110,7 +127,17 @@ class HalFile {
 
 class HalStorage {
  public:
+  uint32_t stateFileRevision(const char*) { return testStateRevision; }
   bool ready() const { return testStorage.available; }
+  uint32_t contentRevision() const { return testContentRevision.get(); }
+  uint32_t resourceRevision() const { return contentRevision(); }
+  bool openDerivedCoverForUpdate(const char* module, const char* path, size_t, HalFile& file) {
+    return openFileForUpdate(module, path, file);
+  }
+  bool openDerivedCacheForWrite(const char* module, const char* path, HalFile& file) {
+    return openFileForWrite(module, path, file);
+  }
+  uint32_t mediaRevision() const { return testMediaRevision.get(); }
   static HalStorage& getInstance() {
     static HalStorage value;
     return value;

@@ -29,7 +29,7 @@ namespace library {
 inline constexpr char CLIX_MAGIC[4] = {'C', 'L', 'X', '1'};
 // Bumping this is the whole migration: an index from an older version fails
 // validation and is rebuilt. Version 3 is accepted only for reconciliation.
-inline constexpr uint8_t CLIX_FORMAT_VERSION = 4;
+inline constexpr uint8_t CLIX_FORMAT_VERSION = 5;
 
 // Bump when the fold or a permutation's sort key changes.
 // Forces fold and ranks to be rebuilt while firstSeen values are preserved, so
@@ -183,7 +183,8 @@ inline ClixValidity validateHeaderStructure(const ClixHeader& h, const uint64_t 
   for (size_t i = 0; i < sizeof(CLIX_MAGIC); i++) {
     if (h.magic[i] != CLIX_MAGIC[i]) return ClixValidity::BadMagic;
   }
-  if (h.formatVersion != CLIX_FORMAT_VERSION && h.formatVersion != 3) return ClixValidity::UnknownFormatVersion;
+  if (h.formatVersion != CLIX_FORMAT_VERSION && h.formatVersion != 4 && h.formatVersion != 3)
+    return ClixValidity::UnknownFormatVersion;
   if (h.bookCount > CLIX_MAX_RECORDS) return ClixValidity::CountOutOfRange;
   if (h.metadataEnabled > 1) return ClixValidity::SectionsInconsistent;
   if (actualFileSize != h.selfSize) return ClixValidity::SizeMismatch;

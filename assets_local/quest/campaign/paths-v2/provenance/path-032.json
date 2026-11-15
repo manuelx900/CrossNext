@@ -1,0 +1,17 @@
+{
+  "id": 32,
+  "saga": 3,
+  "step": 2,
+  "title": {
+    "en": "The king's story",
+    "es": "La historia del rey"
+  },
+  "enemy": "Abyss guardian",
+  "guardian": 20,
+  "master": "path-032.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The Library Beneath the Sea. Path episode: The king's story. Story action, which the scene must directly support: A guardian protects the book about the king. You need to read it to understand the monsters' magic.\nEnemy identity, MUST match this exact anatomy: a pale sea anemone sentinel with six broad tentacle arms and a stone mask. Wide diagonal perspective with the blocked crossing clear in the middle, creature in front of it. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-b8ce375f-2566-4f72-93a6-40546d8b646e.png",
+  "sha256": "13a83ffb391389360c83d8142c68ac2d9424628f490cf4dd03c979dffac6c5f6"
+}

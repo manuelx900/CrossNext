@@ -32,7 +32,7 @@ class EpubReaderChapterSelectionActivity final : public UiListActivity {
   // Back cancels with a result and Confirm activates on RELEASE here, and a
   // missing epub swallows everything past Back.
   bool handleButtons() override;
-  // Header is drawn inside the safe area (not full-width like the base).
+  // Use the same single-row header as the reader's other full-screen controls.
   void drawChrome() override;
 
  public:

@@ -1,0 +1,12 @@
+{
+  "id": "D080",
+  "master": "decor-080-v1.png",
+  "sha256": "d286b3c4bc6f5dac786915ec7b7dc4ac48de55236c198f399608b752e340bc79",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original collectible decoration sprite for the e-ink fantasy reading app Aventura lectora. Reference fairy is STYLE ONLY. Friendly chibi storybook proportions, white and pale-gray flat fills, VERY THICK solid pure-BLACK outer contours (20-26px at1024px), strong black inner lines, simple broad shapes readable at112x144. Whole subject visible, centered with transparent padding. Genuine transparent background. No scenery, frame, UI, text, lettering, watermark, fine hatching or gray outlines. Do not include the player hero or PET. Subject: a friendly small turtle with a faceted star-shaped shell resting on a low moon-shaped stone. A grounded ornament with a small clear base.",
+  "reference": "assets_local/quest/redesign/masters/decoration-fairy-v1.png",
+  "transparent": true,
+  "width": 1199,
+  "height": 1312,
+  "mode": "RGBA"
+}

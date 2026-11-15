@@ -11,7 +11,6 @@
 #include <Epub/Page.h>
 #include <Epub/Section.h>
 #include <FreeInkUIGfxRenderer.h>
-#include <PaintClock.h>
 
 #include <memory>
 #include <string>
@@ -72,11 +71,9 @@ class WikipediaActivity final : public Activity {
 
   // search
   void refreshResults();
-  void handleKey(int value);
+  void openSearchKeyboard();
   void openTitle(const std::string& title);
   void openRandom();
-  freeink::ui::Rect keyboardRect() const;
-  void drawKeyboard();
 
   // article
   // The title comes from the caller because every path into an article has
@@ -114,13 +111,6 @@ class WikipediaActivity final : public Activity {
   // search
   std::string query_;
   std::vector<wikipedia::IndexEntry> results_;
-  bool shifted_ = false;
-  bool symbols_ = false;
-  // The keyboard rises on a tap of the field and goes down with the X or Back.
-  bool keyboardShown_ = false;
-  freeink::ui::InteractionBuffer<56> kbInteractions_;
-  paintclock::RevealGate kbGate_;
-
   // article
   uint32_t locator_ = 0;
   wikipedia::Article article_;

@@ -1,0 +1,30 @@
+{
+  "source": "User-provided action icon reference",
+  "sha256": "35e8879f297504c8d9e54209791ea737314824f12a9c85d0204538aab8df3aee",
+  "boxes": {
+    "campaign": [
+      110,
+      175,
+      475,
+      415
+    ],
+    "missions": [
+      655,
+      175,
+      1010,
+      415
+    ],
+    "equipment": [
+      1195,
+      175,
+      1550,
+      415
+    ],
+    "shop": [
+      1740,
+      175,
+      2085,
+      415
+    ]
+  }
+}

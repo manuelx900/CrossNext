@@ -1,0 +1,13 @@
+{
+  "name": "companions-3",
+  "kind": "pets",
+  "first": 30,
+  "count": 10,
+  "columns": 5,
+  "rows": 2,
+  "prompt": "Use case: illustration-story. ONE production atlas of TEN full-body Reading Adventure animal/creature companions.\nStyle reference1 is the APPROVED puppy/cat/hamster/fox/dragons atlas: match its soft organic smooth black outlines, clean white and light/mid-gray filled cel shading, gentle expressive eyes and rounded dimensional anatomy. Same illustrator, no pixel art, sharp stair-stepped edges, generic vector icons, hatching, grain, dithering, photorealism or3D.\nExactly FIVE equal columns by TWO equal rows on actual TRANSPARENT background, with opaque white interiors. EXACTLY ONE complete creature per cell, each distinct, in row-major order. Generous transparent gutters, margins and same ground baseline in each row. Calm friendly pose facing slightly left toward a hero but face readable. All paws/wings/tails must connect logically and fit safely inside cell. No giant surrounding effects, aura, floating sparkles, ground, cast shadow, scenery, text, labels, UI, grids or dividing lines.\nBLACK outer contour about1.3%of subject height, stronger than inner gray shading; broad clean surfaces. Creature silhouettes must read at96\u2013190px native height. Large legendary creatures have clear bold contours and restrained broad details. Avoid tiny filigree or black masses. Keep natural species proportions.\nTHE TEN CREATURES IN ORDER:\n1. Griffin: Griffin\n2. Hippogriff: Hippogriff\n3. Unicorn: Unicorn\n4. Pegasus: Pegasus\n5. Kirin: Kirin\n6. Manticore: Manticore\n7. Basilisk: Basilisk\n8. Stone golem: Stone golem\n9. Chimera: Chimera\n10. Phoenix: Phoenix",
+  "tool": "built-in image_gen",
+  "source": "exec-8492b241-751f-4131-98f0-78ef8f89bb75.png",
+  "date": "2026-11-05",
+  "sha256": "2dee3a51371c9fc75277658cef77956658bfdc19d6253c1630cb8ab9c7d68dbf"
+}

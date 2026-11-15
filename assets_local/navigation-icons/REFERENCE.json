@@ -1,0 +1,589 @@
+{
+  "images": {
+    "1": {
+      "file": "codex-clipboard-9d992fe4-0472-4e8a-aef3-1b3611c02811.png",
+      "sha256": "a3ae8320490cf415b9009fa1e1f85826da9d27de3e0988fa9b3a35d239a76102"
+    },
+    "2": {
+      "file": "codex-clipboard-46046edf-23a8-4f88-a65e-64e015ad4610.png",
+      "sha256": "2e561c55bc29b4ec7e6c880150cffbe046593f41f85493e25517ccc3a765dd8b"
+    },
+    "3": {
+      "file": "codex-clipboard-4b9f7666-982e-40b2-99f7-ebe279593f76.png",
+      "sha256": "b979891a7d2899c1afbfb17703d89a1464f69053a1d5bcd92544e5280e2db4f1"
+    },
+    "4": {
+      "file": "codex-clipboard-a6327f5c-5996-49d1-97fa-551d4f0817e8.png",
+      "sha256": "3e4de7664a3c4b6df8ecf7458fe1dc79ef136e2bd33fc98fdac82e2098f78a53"
+    },
+    "5": {
+      "file": "codex-clipboard-f7622dc5-c925-423f-baf2-ad5afa9834d2.png",
+      "sha256": "6cbda71b80f180d4b5032cd07ffa89ac8d556432ee315782bffcc112a84ab486"
+    },
+    "6": {
+      "file": "codex-clipboard-13d8948d-f6f8-4989-a641-ee39c71679f2.png",
+      "sha256": "23bf85b736f8524a1ea4e5eb51190d0e64f9e12c0c5b4b1e2c1122f11a33448c"
+    },
+    "7": {
+      "file": "codex-clipboard-c9fae3a5-59da-4f3e-b2b1-25175b80626d.png",
+      "sha256": "ea39480c8b8228be9e7d7379d95b55dfb09f4c7c4b663b0e761e529a53904a35"
+    },
+    "8": {
+      "file": "codex-clipboard-b8788444-e603-4a62-a124-854de4f61551.png",
+      "sha256": "53608cd1b5b8bc5f81b70ab962d6ddbab024b628aa27a1c9510a2ce50d53d3c3"
+    },
+    "9": {
+      "file": "codex-clipboard-0ccd1b45-4c27-412f-9e91-8677e655e90f.png",
+      "sha256": "bee2645d32731f822a77edb18761231017f0520bbd0b8b4908fa9150a21f1210"
+    },
+    "10": {
+      "file": "codex-clipboard-6e1b8beb-240f-48f0-ac75-0567958d2892.png",
+      "sha256": "29b3cb3093ad949463fa6eb95ffa603fadd093fedd871e447c6c24605db6f42d"
+    }
+  },
+  "regions": [
+    {
+      "name": "Folder",
+      "image": 1,
+      "rect": [
+        45,
+        343,
+        127,
+        410
+      ]
+    },
+    {
+      "name": "Text",
+      "image": 1,
+      "rect": [
+        53,
+        715,
+        125,
+        795
+      ]
+    },
+    {
+      "name": "Library",
+      "image": 2,
+      "rect": [
+        48,
+        838,
+        161,
+        936
+      ],
+      "invert": true
+    },
+    {
+      "name": "Send",
+      "image": 2,
+      "rect": [
+        48,
+        962,
+        161,
+        1060
+      ]
+    },
+    {
+      "name": "Stats",
+      "image": 2,
+      "rect": [
+        48,
+        1085,
+        161,
+        1183
+      ]
+    },
+    {
+      "name": "Games",
+      "image": 2,
+      "rect": [
+        48,
+        1210,
+        161,
+        1308
+      ]
+    },
+    {
+      "name": "Apps",
+      "image": 2,
+      "rect": [
+        48,
+        1333,
+        161,
+        1431
+      ]
+    },
+    {
+      "name": "Sliders",
+      "image": 2,
+      "rect": [
+        48,
+        1452,
+        161,
+        1550
+      ]
+    },
+    {
+      "name": "Chess",
+      "image": 3,
+      "rect": [
+        59,
+        194,
+        166,
+        302
+      ]
+    },
+    {
+      "name": "Checkers",
+      "image": 3,
+      "rect": [
+        59,
+        321,
+        166,
+        429
+      ]
+    },
+    {
+      "name": "Go",
+      "image": 3,
+      "rect": [
+        59,
+        446,
+        166,
+        554
+      ]
+    },
+    {
+      "name": "Bomb",
+      "image": 3,
+      "rect": [
+        59,
+        573,
+        166,
+        681
+      ]
+    },
+    {
+      "name": "Image",
+      "image": 3,
+      "rect": [
+        59,
+        698,
+        166,
+        806
+      ]
+    },
+    {
+      "name": "Wordle",
+      "image": 3,
+      "rect": [
+        59,
+        825,
+        166,
+        933
+      ]
+    },
+    {
+      "name": "Grid",
+      "image": 3,
+      "rect": [
+        59,
+        952,
+        166,
+        1060
+      ]
+    },
+    {
+      "name": "Skull",
+      "image": 3,
+      "rect": [
+        59,
+        1080,
+        166,
+        1188
+      ]
+    },
+    {
+      "name": "Ship",
+      "image": 3,
+      "rect": [
+        59,
+        1206,
+        166,
+        1314
+      ]
+    },
+    {
+      "name": "Spade",
+      "image": 4,
+      "rect": [
+        52,
+        195,
+        151,
+        301
+      ]
+    },
+    {
+      "name": "Heart",
+      "image": 4,
+      "rect": [
+        52,
+        322,
+        151,
+        428
+      ]
+    },
+    {
+      "name": "Footprints",
+      "image": 4,
+      "rect": [
+        52,
+        448,
+        151,
+        554
+      ]
+    },
+    {
+      "name": "PawSolid",
+      "image": 4,
+      "rect": [
+        52,
+        574,
+        151,
+        680
+      ]
+    },
+    {
+      "name": "ConnectFour",
+      "image": 4,
+      "rect": [
+        52,
+        700,
+        151,
+        806
+      ]
+    },
+    {
+      "name": "Hash",
+      "image": 4,
+      "rect": [
+        52,
+        827,
+        151,
+        933
+      ]
+    },
+    {
+      "name": "Othello",
+      "image": 4,
+      "rect": [
+        52,
+        953,
+        151,
+        1059
+      ]
+    },
+    {
+      "name": "BookOpen",
+      "image": 5,
+      "rect": [
+        59,
+        197,
+        178,
+        299
+      ]
+    },
+    {
+      "name": "Paw",
+      "image": 5,
+      "rect": [
+        59,
+        324,
+        178,
+        426
+      ]
+    },
+    {
+      "name": "Check",
+      "image": 5,
+      "rect": [
+        59,
+        450,
+        178,
+        552
+      ]
+    },
+    {
+      "name": "List",
+      "image": 5,
+      "rect": [
+        59,
+        576,
+        178,
+        678
+      ]
+    },
+    {
+      "name": "Note",
+      "image": 5,
+      "rect": [
+        59,
+        701,
+        178,
+        803
+      ]
+    },
+    {
+      "name": "Timer",
+      "image": 5,
+      "rect": [
+        59,
+        828,
+        178,
+        930
+      ]
+    },
+    {
+      "name": "Books",
+      "image": 5,
+      "rect": [
+        59,
+        1083,
+        178,
+        1185
+      ]
+    },
+    {
+      "name": "Cards",
+      "image": 5,
+      "rect": [
+        59,
+        1209,
+        178,
+        1311
+      ]
+    },
+    {
+      "name": "Calendar",
+      "image": 6,
+      "rect": [
+        57,
+        324,
+        157,
+        426
+      ]
+    },
+    {
+      "name": "Clock",
+      "image": 6,
+      "rect": [
+        57,
+        450,
+        157,
+        552
+      ]
+    },
+    {
+      "name": "Calculator",
+      "image": 6,
+      "rect": [
+        57,
+        828,
+        157,
+        930
+      ]
+    },
+    {
+      "name": "Wifi",
+      "image": 7,
+      "rect": [
+        57,
+        201,
+        169,
+        297
+      ],
+      "invert": true
+    },
+    {
+      "name": "Signal",
+      "image": 7,
+      "rect": [
+        67,
+        330,
+        159,
+        410
+      ]
+    },
+    {
+      "name": "Hotspot",
+      "image": 7,
+      "rect": [
+        53,
+        442,
+        174,
+        566
+      ]
+    },
+    {
+      "name": "Sessions",
+      "image": 8,
+      "rect": [
+        128,
+        881,
+        239,
+        966
+      ]
+    },
+    {
+      "name": "Goal",
+      "image": 8,
+      "rect": [
+        49,
+        1168,
+        155,
+        1259
+      ]
+    },
+    {
+      "name": "ListBox",
+      "image": 9,
+      "rect": [
+        43,
+        316,
+        138,
+        411
+      ]
+    },
+    {
+      "name": "Gauge",
+      "image": 9,
+      "rect": [
+        686,
+        852,
+        771,
+        917
+      ]
+    },
+    {
+      "name": "Flame",
+      "image": 9,
+      "rect": [
+        138,
+        1148,
+        231,
+        1258
+      ]
+    },
+    {
+      "name": "Trophy",
+      "image": 9,
+      "rect": [
+        446,
+        1148,
+        543,
+        1250
+      ]
+    },
+    {
+      "name": "Letters",
+      "image": 10,
+      "rect": [
+        32,
+        123,
+        105,
+        175
+      ]
+    },
+    {
+      "name": "Orientation",
+      "image": 10,
+      "rect": [
+        32,
+        282,
+        105,
+        334
+      ]
+    },
+    {
+      "name": "Expand",
+      "image": 10,
+      "rect": [
+        32,
+        340,
+        105,
+        392
+      ]
+    },
+    {
+      "name": "Picture",
+      "image": 10,
+      "rect": [
+        32,
+        397,
+        105,
+        449
+      ]
+    },
+    {
+      "name": "Epub",
+      "image": 10,
+      "rect": [
+        32,
+        453,
+        105,
+        505
+      ]
+    },
+    {
+      "name": "ReadingMenu",
+      "image": 10,
+      "rect": [
+        32,
+        520,
+        105,
+        572
+      ]
+    },
+    {
+      "name": "Manga",
+      "image": 10,
+      "rect": [
+        32,
+        584,
+        105,
+        629
+      ]
+    },
+    {
+      "name": "Define",
+      "image": 10,
+      "rect": [
+        32,
+        692,
+        105,
+        744
+      ]
+    },
+    {
+      "name": "Translate",
+      "image": 10,
+      "rect": [
+        32,
+        759,
+        105,
+        811
+      ]
+    },
+    {
+      "name": "Gear",
+      "image": 3,
+      "rect": [
+        894,
+        46,
+        981,
+        130
+      ],
+      "invert": true
+    }
+  ]
+}

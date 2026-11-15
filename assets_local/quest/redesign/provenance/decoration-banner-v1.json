@@ -1,0 +1,8 @@
+{
+  "id": "banner",
+  "path": "exec-91d1ceca-5219-4bcd-8fea-1a59530a3057.png",
+  "prompt": "Production decoration sprite for Aventura lectora, ONE isolated object. Match the reference pets: thick clean pure black rounded outlines, white and soft flat gray shading, cute storybook cartoon, simple readable silhouette for 112x144 pixels, no fine texture. Full object centered with transparent margin, truly transparent RGBA background. No aura, no glow, no scenery, no letters, no frame, no other subjects. Subject: A short triangular cloth pennant with an open book symbol, tied to a small curved branch-like support, two rounded ribbon ends",
+  "tool": "built-in image_gen",
+  "sha256": "dcaeff89506a98a586b2505c73a1041902a9993f4861d9a6643a72c84984bc2c",
+  "name": "decoration-banner-v1"
+}

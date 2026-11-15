@@ -10,6 +10,7 @@ lib/EpdFont/fontsrc
 lib/I18n/I18nKeys.h
 lib/I18n/I18nStrings.h
 lib/I18n/I18nStrings.cpp
+lib/I18n/I18nPackKeys.h
 *.generated.h
 .vs
 build
@@ -136,3 +137,24 @@ GEMINI.md
 /docs/apps/xkcd-viewing-plan.md
 /docs/apps/wavelength-teams.md
 /tools_local/trivia/us_shift_check.py
+
+# Derived Reading Adventure sprite previews.
+/assets_local/quest/redesign/native/
+
+# Generated content and operator data are distributed separately from source.
+/qa-artifacts/
+/*.pbm
+/REDISEÑOS/
+/FIRMWARE_ACTUAL.md
+/SIMULADOR_ACTUAL.md
+/Start-Simulator.cmd
+/assets_local/simulator/
+/assets_local/sd-resources/
+/assets_local/wordle-languages/*.cpwb
+/tools_local/wordle_sources/
+/tools_local/wasm/sdcard/
+/site/showcase/files/
+/site/showcase/wordle/
+/site/showcase/languages/
+/site/showcase/catalog.json
+/docs/images/spiflash/

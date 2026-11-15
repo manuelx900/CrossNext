@@ -1,12 +1,37 @@
 # Wordle
 
-> Current profile (October2026): Wordle selects English or Spanish dictionaries from the interface language, with separate 4/5/6-letter answers and accepted guesses. Ñ is distinct; enter vowels without accents. Six valid guesses: black means correct place, gray means present elsewhere, white absent. Unknown words remain editable without spending a try. Replacing unfinished games after a length or vocabulary change requires confirmation. The sections below retain background on the original English implementation.
+> Built-in English/Spanish profile: Wordle selects English or Spanish dictionaries from the interface language, with separate 4/5/6-letter answers and accepted guesses. Ñ is distinct; enter vowels without accents. Six valid guesses: black means correct place, gray means present elsewhere, white absent. Unknown words remain editable without spending a try. Replacing unfinished games after a length or vocabulary change requires confirmation. The sections below retain background on the original English implementation.
+
+Other interface languages use optional `/languages/wordle/<CODE>.cpwb` banks.
+Install the complete Languages resource bundle, including `keyboards` and `fonts`.
+The game opens in the selected interface language; it does not silently use an
+English vocabulary when that bank is missing. The available word lengths are
+2–6 Unicode grapheme units, depending on the bank. A unit can include a letter
+and its accent. Japanese uses kana; Chinese offers pinyin-to-character entry.
+The localized keyboard stays inside the game: below the board in portrait and beside it in landscape. Accents are kept,
+case is ignored, and only words in the selected bank use an attempt.
+
+There are 36 optional banks. Most contain up to 600 corpus words per length;
+Azerbaijani and Belarusian currently have smaller original starter lists. These
+are playable starter vocabularies, not comprehensive dictionaries. The corpus
+selections still need native editorial review. Attribution and license notices
+ship with the banks; maintainers regenerate them with
+`python tools_local/build_wordle_languages.py`.
+
+Optional-language games and statistics are saved separately by language in
+`/.crosspoint/wordle/<CODE>.bin`, using two bounded 1 KiB slots. English/Spanish
+saves are unchanged. Changing a bank preserves its totals but discards an
+unfinished word if it cannot safely be reconstructed from that bank. Unsubmitted typing is cleared when leaving and reopening a game; submitted rows resume.
+The active
+word list is searched directly on the card and is never copied into the heap.
+The embedded keyboard and its Chinese candidate file belong to the active game;
+there is no network connection or background worker.
 
 Wordle is offline free play with six guesses and a choice of four, five or six letters. Play resumes an unfinished word of the selected length, or starts a new one. Word Length shows four-, five- and six-square cards. Apply stores the next game's length; Back discards the draft selection. Starting a different length while another word is unfinished asks for confirmation and counts the abandoned game as a loss; Cancel preserves it.
 
 The local vocabulary contains 2,465 common English words: 615 four-letter, 973 five-letter and 877 six-letter words. It is an original curated selection, distributed under the project's MIT license, not a downloaded NYT answer archive. The same bank validates guesses. Invalid words remain editable. An answer imported from an old save is also accepted even if it is outside the new bank. Each length uses a saved permutation of its bank, avoiding repeated answers until that bank has been exhausted, then cycling. This is a local game, not a promise to match a daily puzzle elsewhere.
 
-Correct-position letters are white on black, letters in another position are dithered, and absent letters remain white with an outline. The QWERTY keyboard uses the same marks. OK submits; the erase key removes a letter. The board and keyboard adapt to portrait/landscape. At the end the grid retains the attempt count and the result area reveals the answer; Menu and Play Again replace the keyboard.
+Correct-position letters are white on black, letters in another position are dithered, and absent letters on the board remain white with an outline. Keyboard letters ruled out by all submitted guesses fade, including their borders, but remain tappable. The same feedback applies to the built-in and optional-language keyboards, including Chinese character candidates. Alternate characters fade independently when ruled out. Untried letters stay solid; correct and misplaced marks take priority over an absent copy of a repeated letter. This keyboard-only fade uses the monochrome framebuffer and adds no SD resources. OK submits; the erase key removes a letter. The board and keyboard adapt to portrait/landscape. At the end the grid retains the attempt count and the result area reveals the answer; Menu and Play Again replace the keyboard.
 
 The menu shows one row of Played, Win %, Streak, Max Streak and the distribution of successful attempts. Played counts finished games and confirmed abandonments. Streaks count consecutive wins across completed local games, regardless of calendar date. Exiting and resuming a word does not count a loss. Each completed game contributes once. Counters are capped at one million completed games to keep record arithmetic and display bounded.
 

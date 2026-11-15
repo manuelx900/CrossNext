@@ -24,6 +24,37 @@ Bitmap::~Bitmap() {
   delete fsDitherer;
 }
 
+void Bitmap::setMemorySource(const uint8_t* bytes, size_t size) {
+  memorySource = bytes;
+  memorySize = bytes ? size : 0;
+  memoryPosition = 0;
+  setReadAheadBuffer(nullptr, 0);
+}
+
+int Bitmap::readSource(void* dst, size_t bytes) const {
+  int count;
+  if (!memorySource)
+    count = file.read(dst, bytes);
+  else {
+    count = static_cast<int>(std::min(bytes, memorySize - memoryPosition));
+    std::memcpy(dst, memorySource + memoryPosition, count);
+    memoryPosition += count;
+  }
+  if (checksumEnabled && count > 0) {
+    const auto* data = static_cast<const uint8_t*>(dst);
+    for (int n = 0; n < count; ++n) readChecksum = (readChecksum ^ data[n]) * 16777619u;
+    hashedBytes += count;
+  }
+  return count;
+}
+
+bool Bitmap::seekSource(size_t offset) const {
+  if (!memorySource) return file.seek(offset);
+  if (offset > memorySize) return false;
+  memoryPosition = offset;
+  return true;
+}
+
 uint16_t Bitmap::readLE16(const uint8_t* bytes) {
   return static_cast<uint16_t>(bytes[0]) | (static_cast<uint16_t>(bytes[1]) << 8);
 }
@@ -74,14 +105,16 @@ const char* Bitmap::errorToString(BmpReaderError err) {
 }
 
 BmpReaderError Bitmap::parseHeaders() {
+  readChecksum = 2166136261u;
+  hashedBytes = 0;
   readAheadUsed = readAheadPosition = 0;
   prevRowY = -1;
-  if (!file) return BmpReaderError::FileInvalid;
-  if (!file.seek(0)) return BmpReaderError::SeekStartFailed;
+  if (!memorySource && !file) return BmpReaderError::FileInvalid;
+  if (!seekSource(0)) return BmpReaderError::SeekStartFailed;
 
   // Fixed file/DIB fields are contiguous; one HAL read avoids per-byte storage locks.
   uint8_t header[54];
-  const int headerBytes = file.read(header, sizeof(header));
+  const int headerBytes = readSource(header, sizeof(header));
   if (headerBytes < 2 || readLE16(header) != 0x4D42) return BmpReaderError::NotBMP;
   if (headerBytes != sizeof(header)) return BmpReaderError::FileInvalid;
   bfOffBits = readLE32(header + 10);
@@ -126,12 +159,12 @@ BmpReaderError Bitmap::parseHeaders() {
   if (colorsUsed > 0) {
     for (uint32_t i = 0; i < colorsUsed; i++) {
       uint8_t rgb[4];
-      file.read(rgb, 4);  // Read B, G, R, Reserved in one go
+      if (readSource(rgb, sizeof(rgb)) != sizeof(rgb)) return BmpReaderError::FileInvalid;
       paletteLum[i] = (77u * rgb[2] + 150u * rgb[1] + 29u * rgb[0]) >> 8;
     }
   }
 
-  if (!file.seek(bfOffBits)) {
+  if (!seekSource(bfOffBits)) {
     return BmpReaderError::SeekPixelDataFailed;
   }
 
@@ -186,14 +219,14 @@ BmpReaderError Bitmap::readRowBytes(uint8_t* rowBuffer) const {
   if (readAhead && readAheadCapacity >= static_cast<size_t>(rowBytes)) {
     if (readAheadUsed - readAheadPosition < static_cast<size_t>(rowBytes)) {
       const size_t rows = std::min(readAheadCapacity / rowBytes, static_cast<size_t>(height - prevRowY - 1));
-      const int bytes = file.read(readAhead, rows * rowBytes);
+      const int bytes = readSource(readAhead, rows * rowBytes);
       readAheadUsed = bytes > 0 ? static_cast<size_t>(bytes) : 0;
       readAheadPosition = 0;
     }
     if (readAheadUsed - readAheadPosition < static_cast<size_t>(rowBytes)) return BmpReaderError::ShortReadRow;
     std::memcpy(rowBuffer, readAhead + readAheadPosition, rowBytes);
     readAheadPosition += rowBytes;
-  } else if (file.read(rowBuffer, rowBytes) != rowBytes) {
+  } else if (readSource(rowBuffer, rowBytes) != rowBytes) {
     return BmpReaderError::ShortReadRow;
   }
 
@@ -316,10 +349,42 @@ BmpReaderError Bitmap::readNextRow(uint8_t* data, uint8_t* rowBuffer) const {
   return BmpReaderError::Ok;
 }
 
+BmpReaderError Bitmap::readRowGray(const int y, uint8_t* gray, uint8_t* rowBuffer) const {
+  const uint32_t fileRow = topDown ? y : height - 1 - y;
+  if (!seekSource(bfOffBits + fileRow * rowBytes)) return BmpReaderError::SeekPixelDataFailed;
+  if (readSource(rowBuffer, rowBytes) != rowBytes) return BmpReaderError::ShortReadRow;
+
+  switch (bpp) {
+    case 32:
+    case 24: {
+      const int step = bpp / 8;
+      const uint8_t* p = rowBuffer;
+      for (int x = 0; x < width; x++, p += step) gray[x] = (77u * p[2] + 150u * p[1] + 29u * p[0]) >> 8;
+      break;
+    }
+    case 8:
+      for (int x = 0; x < width; x++) gray[x] = paletteLum[rowBuffer[x]];
+      break;
+    case 4:
+      for (int x = 0; x < width; x++)
+        gray[x] = paletteLum[(x & 1) ? (rowBuffer[x >> 1] & 0x0F) : (rowBuffer[x >> 1] >> 4)];
+      break;
+    case 2:
+      for (int x = 0; x < width; x++) gray[x] = paletteLum[(rowBuffer[x >> 2] >> (6 - ((x & 3) * 2))) & 0x03];
+      break;
+    case 1:
+      for (int x = 0; x < width; x++) gray[x] = paletteLum[(rowBuffer[x >> 3] & (0x80 >> (x & 7))) ? 1 : 0];
+      break;
+    default:
+      return BmpReaderError::UnsupportedBpp;
+  }
+  return BmpReaderError::Ok;
+}
+
 BmpReaderError Bitmap::rewindToData() const {
   readAheadUsed = readAheadPosition = 0;
   prevRowY = -1;
-  if (!file.seek(bfOffBits)) {
+  if (!seekSource(bfOffBits)) {
     return BmpReaderError::SeekPixelDataFailed;
   }
 

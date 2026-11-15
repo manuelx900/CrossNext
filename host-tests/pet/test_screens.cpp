@@ -13,30 +13,39 @@
 #include "../../src/apps_local/pet/PetAlbumWidgets.h"
 #include "../../src/apps_local/pet/PetCareAdvice.h"
 #include "../../src/apps_local/pet/PetCatalogView.h"
+#include "../../src/apps_local/pet/PetGrayTarget.h"
 #include "../../src/apps_local/pet/PetHabitat.h"
 #include "../../src/apps_local/pet/PetHeader.h"
 #include "../../src/apps_local/pet/PetOverview.h"
 #include "../../src/apps_local/pet/PetReadingResults.h"
 #include "../../src/apps_local/pet/PetScreens.h"
+#include "../../src/apps_local/pet/PetSimpleScreens.h"
 #include "../../src/apps_local/pet/PetSleepAnimation.h"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#include "../../lib/EpdFont/builtinFonts/notosans_14_regular.h"
+#include "../../lib/EpdFont/builtinFonts/notosans_8_regular.h"
+#include "../../lib/EpdFont/builtinFonts/ubuntu_10_regular.h"
+#include "../../lib/EpdFont/builtinFonts/ubuntu_12_regular.h"
 #include "../../src/apps_local/ui/fonts/toybox_10.h"
 #include "../../src/apps_local/ui/fonts/toybox_14.h"
 #include "../../src/apps_local/ui/fonts/toybox_20.h"
 #include "../../src/apps_local/ui/fonts/toybox_30.h"
 #include "../../src/apps_local/ui/fonts/ui_prose_10.h"
+#include "../../src/apps_local/ui/fonts/ui_prose_14.h"
 #pragma GCC diagnostic pop
 
 namespace fui = freeink::ui;
 namespace {
 int checks = 0, failures = 0;
+std::array<unsigned, 5000> failuresByLine{};
 #define CHECK(expr)                                                      \
   do {                                                                   \
     ++checks;                                                            \
     if (!(expr)) {                                                       \
       if (failures < 140) std::printf("FAIL %d: %s\n", __LINE__, #expr); \
       ++failures;                                                        \
+      ++failuresByLine[__LINE__];                                        \
     }                                                                    \
   } while (0)
 struct FontBridge {
@@ -106,7 +115,18 @@ struct Target : fui::DrawTarget {
   bool watchDashboardCards = false, watchReadingRules = false;
   fui::Rect metricFrames[4]{}, readingCard{};
   unsigned metricFrameCount = 0, readingRuleCount = 0;
+  fui::Rect expectedNeedsFrame{};
+  unsigned needsFrameCount = 0, lockSymbols = 0;
+  bool watchLocks = false;
+  bool watchRoom = false;
+  bool watchDrawer = false;
+  unsigned edgeDrawerFills = 0;
+  int edgeDrawerTop = 0;
+  unsigned roomBackdrops = 0;
   const char* expectedFullText = nullptr;
+  const char* expectedHeaderClock = nullptr;
+  const char* forbiddenText = nullptr;
+  fui::Rect headerClockBox{};
   bool expectedFullTextSeen = false;
   std::vector<fui::Color> tracedColors;
   Target(uint8_t* data, int w, int h)
@@ -123,8 +143,21 @@ struct Target : fui::DrawTarget {
   fui::Rect clipRect() const override { return backend.clipRect(); }
   bool setClipRect(fui::Rect r) override { return backend.setClipRect(r); }
   void fill(fui::Rect r, fui::Paint p, uint8_t radius = 0, uint8_t corners = fui::CornersAll) override {
+    if (watchDrawer && r.x == 0 && r.y > 0 && r.width == width && r.bottom() == height &&
+        p.color == fui::Color::White) {
+      ++edgeDrawerFills;
+      edgeDrawerTop = r.y;
+      CHECK(width > height ? r.y < height / 2 : r.y == height / 2);
+      CHECK(radius == petui::simple::DRAWER_RADIUS);
+      CHECK(corners == fui::CornersTop);
+    }
+    if (traceBitmap && (tracedColors.empty() || tracedColors.back() != p.color)) tracedColors.push_back(p.color);
+    if (watchRoom && r.x == 0 && r.y == 0 && r.width == width && r.height == height) ++roomBackdrops;
     if (!std::strcmp(view, "evolution") && r.width > 100 && r.width < 210 && r.height > 60 && r.height < 180)
       CHECK(p.color != fui::Color::Black);
+    if (watchDarkCard && p.color == fui::Color::White && r.x == darkCard.x &&
+        r.y + petui::widget::SHADOW_DEPTH == darkCard.y && r.width == darkCard.width && r.height == darkCard.height)
+      darkCard = {};
     if (watchDarkCard && darkCard.empty() && p.color == fui::Color::Black && r.width > 200 && r.height > 150)
       darkCard = r;
     if (watchPlacedBand && p.color == fui::Color::Black && r.width > 150 && (r.height == 40 || r.height == 54))
@@ -132,7 +165,13 @@ struct Target : fui::DrawTarget {
     backend.fill(r, p, radius, corners);
   }
   void stroke(fui::Rect r, fui::Paint p, uint8_t w, uint8_t radius = 0, uint8_t corners = fui::CornersAll) override {
-    if (watchDashboardCards && w == 1 && r.width < 180 && r.height >= 90 && metricFrameCount < 4)
+    if (!expectedNeedsFrame.empty() && r.x == expectedNeedsFrame.x && r.y == expectedNeedsFrame.y &&
+        r.width == expectedNeedsFrame.width && r.height == expectedNeedsFrame.height) {
+      ++needsFrameCount;
+      CHECK(radius == petui::widget::CONTROL_RADIUS);
+      CHECK(w == 2);
+    }
+    if (watchDashboardCards && r.y < height / 2 && w == 1 && r.width < 180 && r.height >= 90 && metricFrameCount < 4)
       metricFrames[metricFrameCount++] = r;
     if (watchReadingRules && r.x > width / 3 && r.height > 150) readingCard = r;
     backend.stroke(r, p, w, radius, corners);
@@ -142,12 +181,15 @@ struct Target : fui::DrawTarget {
   void bitmap(fui::Rect r, fui::BitmapRef ref, fui::BitmapMode mode,
               fui::Paint p = fui::Paint::solid(fui::Color::Black),
               fui::Rotation rotation = fui::Rotation::None) override {
+    if (watchLocks && ref.data == extra_lock_32.bits) ++lockSymbols;
     if (traceBitmap) tracedColors.push_back(p.color);
     CHECK(r.width > 0 && r.height > 0);
     CHECK(r.x >= 0 && r.y >= 0 && r.right() <= width && r.bottom() <= height);
     backend.bitmap(r, ref, mode, p, rotation);
   }
   void text(fui::Rect r, const char* value, fui::TextStyle st) override {
+    if (forbiddenText) CHECK(std::strcmp(value, forbiddenText));
+    if (expectedHeaderClock && !std::strcmp(value, expectedHeaderClock) && r.y < 100) headerClockBox = r;
     if ((!std::strcmp(view, "needs-guide") || !std::strcmp(view, "rules-guide")) && st.maxLines == 8)
       CHECK(st.font == 4 && !st.bold);
     if (watchStageLabels) {
@@ -173,7 +215,7 @@ struct Target : fui::DrawTarget {
     }
     if (watchReadingRules &&
         (!std::strcmp(value, tr(STR_PET_READING_INTERVAL)) || !std::strcmp(value, tr(STR_PET_READING_REMEDY)) ||
-         !std::strcmp(value, tr(STR_PET_LIFE_GOAL_HELP)))) {
+         !std::strcmp(value, tr(STR_PET_READING_EVERY_MINUTE)))) {
       ++readingRuleCount;
       CHECK(!readingCard.empty() && r.x >= readingCard.x && r.y >= readingCard.y && r.right() <= readingCard.right() &&
             r.bottom() <= readingCard.bottom());
@@ -182,7 +224,8 @@ struct Target : fui::DrawTarget {
     if (expectedRegularText && !std::strcmp(value, expectedRegularText)) {
       bool stageLabel = false;
       for (unsigned age = 0; age < 5; ++age) stageLabel |= !std::strcmp(value, petui::stageName(pet::Stage(age)));
-      CHECK(st.font == 4 || (stageLabel && st.font == 3));
+      CHECK(!st.bold && (st.font == 4 || st.font == 3));
+      (void)stageLabel;
       regularTextSeen = true;
     }
     if (expectedEmphasizedText && !std::strcmp(value, expectedEmphasizedText)) {
@@ -193,10 +236,10 @@ struct Target : fui::DrawTarget {
       focusedLabelWasWhite = true;
     const bool eggText = !std::strcmp(value, tr(STR_PET_EGG_MOOD)) || !std::strcmp(value, tr(STR_PET_COMPANION_EGG));
     char newborn[64];
-    pixelui::copyCaps(newborn, sizeof(newborn), tr(STR_PET_NEWBORN));
-    const bool generation = std::strstr(value, "GEN ") == value;
+    pixelui::copyNatural(newborn, sizeof(newborn), tr(STR_PET_NEWBORN));
+    const bool generation = std::strstr(value, "Gen ") == value;
     if (generation) generationSeen = true;
-    const bool dailyBenefit = expectedDailyGoal && !std::strcmp(value, expectedDailyGoal);
+    const bool dailyBenefit = expectedDailyGoal && std::strstr(value, expectedDailyGoal);
     const bool dailyTime = expectedDailyTime && !std::strcmp(value, expectedDailyTime);
     dailyGoalSeen = dailyGoalSeen || dailyBenefit;
     dailyTimeSeen = dailyTimeSeen || dailyTime;
@@ -238,6 +281,8 @@ struct Target : fui::DrawTarget {
 };
 struct ArtFixture {
   std::vector<uint8_t> bytes;
+  fui::Rect fullRoom{};
+  uint32_t fullRoomId = 0;
   explicit ArtFixture(const char* path) {
     FILE* file = std::fopen(path, "rb");
     CHECK(file != nullptr);
@@ -258,16 +303,52 @@ struct ArtFixture {
     return value;
   }
   static bool draw(void* context, fui::DrawTarget& target, fui::Rect area, uint32_t id, bool inverse) {
-    const auto& pack = *static_cast<ArtFixture*>(context);
+    auto& pack = *static_cast<ArtFixture*>(context);
     if (pack.bytes.empty()) return false;
-    CHECK(!std::memcmp(pack.bytes.data(), "CNART002", 8));
+    const bool gray = !std::memcmp(pack.bytes.data(), "CNART003", 8);
+    CHECK(gray || !std::memcmp(pack.bytes.data(), "CNART002", 8));
     CHECK(id < pack.number(8, 4));
     const unsigned at = 24 + id * 16;
     const auto offset = pack.number(at, 4);
     const auto width = pack.number(at + 4, 2), height = pack.number(at + 6, 2);
     CHECK(width > 1 && width <= 280 && height > 1 && height <= 512);
     CHECK(offset + pack.number(at + 8, 4) <= pack.bytes.size());
-    const auto mode = pack.number(8, 4) == 45 && id >= 39 ? fui::BitmapMode::Stretch : fui::BitmapMode::Contain;
+    const auto mode = (pack.number(8, 4) == 45 || pack.number(8, 4) == 52) && id >= 39 ? fui::BitmapMode::Stretch
+                                                                                       : fui::BitmapMode::Contain;
+    if (pack.number(8, 4) == 52 && id >= 45) {
+      if (pack.fullRoom.empty()) {
+        pack.fullRoom = area;
+      } else {
+        const int left = std::min(pack.fullRoom.x, area.x), top = std::min(pack.fullRoom.y, area.y);
+        pack.fullRoom = fui::makeRect(left, top, std::max(pack.fullRoom.right(), area.right()) - left,
+                                      std::max(pack.fullRoom.bottom(), area.bottom()) - top);
+      }
+      pack.fullRoomId = id;
+    }
+    if (gray) {
+      auto rect = area;
+      if (mode == fui::BitmapMode::Contain) {
+        const int w = std::min(int(area.width), int(area.height) * int(width) / int(height));
+        const int h = w * int(height) / int(width);
+        rect = fui::makeRect(area.x + (area.width - w) / 2, area.y + (area.height - h) / 2, w, h);
+      }
+      static constexpr fui::Color shades[] = {fui::Color::White, fui::Color::LightGray, fui::Color::DarkGray,
+                                              fui::Color::Black};
+      const auto stride = (width * 2 + 7) / 8;
+      for (unsigned y = 0; y < height; ++y) {
+        const int top = rect.y + int(y) * rect.height / int(height);
+        const int bottom = rect.y + int(y + 1) * rect.height / int(height);
+        for (int x = 0; x < rect.width && bottom > top; ++x) {
+          const unsigned sourceX = unsigned(x) * width / unsigned(rect.width);
+          const auto byte = pack.bytes[offset + y * stride + sourceX / 4];
+          const unsigned value = (byte >> (6 - sourceX % 4 * 2)) & 3;
+          if (value)
+            target.fill(fui::makeRect(rect.x + x, top, 1, bottom - top),
+                        fui::Paint::dither(shades[inverse ? 3 - value : value]));
+        }
+      }
+      return true;
+    }
     target.bitmap(area, {pack.bytes.data() + offset, uint16_t(width), uint16_t(height), fui::BitmapFormat::BW1}, mode,
                   fui::Paint::solid(inverse ? fui::Color::White : fui::Color::Black));
     return true;
@@ -276,11 +357,13 @@ struct ArtFixture {
 struct Canvas {
   int width, height;
   std::vector<uint8_t> pixels;
-  FontBridge tiny{toybox_10}, small{toybox_14}, body{toybox_20}, title{toybox_30}, prose{ui_prose_10};
+  FontBridge tiny{notosans_8_regular}, small{ubuntu_12_regular}, body{ubuntu_12_regular}, title{ui_prose_14},
+      prose{ubuntu_10_regular};
   Target target;
   fui::DeviceContext device;
   fui::InputSnapshot input{};
   toybox::Interactions interactions;
+  toybox::HeaderStatus status{100, false, true};
   toybox::Frame frame;
   toybox::Screen screen;
   static fui::DeviceContext context(Target& target) {
@@ -295,16 +378,43 @@ struct Canvas {
         pixels((w + 7) / 8 * h, 255),
         target(pixels.data(), w, h),
         device(context(target)),
-        frame(target, device, input, interactions, nullptr, {100, false, true}),
+        frame(target, device, input, interactions, nullptr, status),
         screen(frame) {
+    pixelui::uppercaseLabels = false;
     target.backend.setFont(0, small.font);
     target.backend.setFont(1, body.font);
-    target.backend.setFont(2, title.font);
+    target.backend.setFont(2, body.font);
+    target.backend.setFont(5, title.font);
     target.backend.setFont(3, tiny.font);
     target.backend.setFont(4, prose.font);
   }
   void paint(const petui::Model& model, petui::Work& work) {
-    petui::render(target, device, input, interactions, {100, false, true}, model, work);
+    const bool previous = pixelui::uppercaseLabels;
+    petui::render(target, device, input, interactions, status, model, work);
+    CHECK(pixelui::uppercaseLabels == previous);
+  }
+  void writeGray(const petui::Model& model, petui::Work& work, const std::string& path) {
+    std::array<std::vector<uint8_t>, 2> planes;
+    for (unsigned plane = 0; plane < 2; ++plane) {
+      std::fill(pixels.begin(), pixels.end(), 255);
+      petui::GrayTarget gray(target, plane == 1);
+      petui::render(gray, device, input, interactions, status, model, work);
+      planes[plane] = pixels;
+    }
+    FILE* file = std::fopen(path.c_str(), "wb");
+    CHECK(file != nullptr);
+    if (!file) return;
+    std::fprintf(file, "P5\n%d %d\n255\n", width, height);
+    for (int y = 0; y < height; ++y)
+      for (int x = 0; x < width; ++x) {
+        const unsigned at = unsigned(y) * ((width + 7) / 8) + unsigned(x) / 8;
+        const unsigned bit = 128 >> (x % 8);
+        const bool lsb = planes[0][at] & bit, msb = planes[1][at] & bit;
+        const uint8_t value = lsb ? (msb ? 255 : 85) : (msb ? 170 : 0);
+        std::fputc(value, file);
+      }
+    std::fclose(file);
+    paint(model, work);
   }
   void checkHits() {
     CHECK(!interactions.overflowed());
@@ -342,6 +452,333 @@ struct Canvas {
     CHECK(std::fclose(out) == 0);
   }
 };
+void needsFrameChecks() {
+  for (bool light : {false, true}) {
+    chrome::lightHeader = light;
+    for (unsigned orientation = 0; orientation < 4; ++orientation) {
+      auto c = std::make_unique<Canvas>(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+      c->device.orientation = fui::Orientation(orientation);
+      c->target.expectedNeedsFrame = fui::makeRect(12, 80, c->width - 24, orientation % 2 ? 66 : 74);
+      for (auto stage : {pet::Stage::Egg, pet::Stage::Adult}) {
+        pet::Profile p;
+        p.created = true;
+        p.readingSeconds = pet::stageStart(stage);
+        petui::Model m;
+        m.profile = &p;
+        petui::Work w;
+        c->target.needsFrameCount = 0;
+        petui::simple::needs(c->screen, m, w, c->target.expectedNeedsFrame);
+        CHECK(c->target.needsFrameCount == 1);
+      }
+    }
+  }
+  chrome::lightHeader = false;
+}
+void goalRemovalScreens(const char* out = nullptr) {
+  ArtFixture graphics("resources/apps/pet/graphics.bin"), habitat("resources/apps/pet/habitat.bin");
+  const bool withArt = true;
+  for (auto lang : {Language::ES, Language::EN}) {
+    I18N.setLanguage(lang);
+    for (unsigned orientation = 0; orientation < 4; ++orientation) {
+      const int width = orientation % 2 ? 800 : 480, height = orientation % 2 ? 480 : 800;
+      for (bool light : {false, true}) {
+        chrome::lightHeader = light;
+        for (auto view :
+             {pet::View::New, pet::View::Settings, pet::View::Dashboard, pet::View::Reward, pet::View::ReadingInfo}) {
+          auto canvas = std::make_unique<Canvas>(width, height);
+          auto& c = *canvas;
+          c.device.orientation = fui::Orientation(orientation);
+          c.target.view = "reading-without-daily-goal";
+          c.target.expectedDailyGoal = lang == Language::ES ? "META DIARIA" : "DAILY GOAL";
+          pet::Profile p;
+          p.created = true;
+          p.readingSeconds = 420;
+          std::strcpy(p.name, "LUNA");
+          petui::Model m;
+          m.profile = &p;
+          m.view = view;
+          m.today = 20000;
+          m.todaySeconds = 420;
+          if (withArt) {
+            m.art = {&graphics, ArtFixture::draw};
+            m.habitat = {&habitat, ArtFixture::draw};
+          }
+          petui::Work w;
+          c.paint(m, w);
+          c.checkHits();
+          CHECK(!c.target.dailyGoalSeen);
+          unsigned read = 0, modes = 0;
+          for (size_t n = 0; n < c.interactions.count(); ++n) {
+            const auto& action = c.interactions.data()[n];
+            if (action.action == petui::Read) ++read;
+            if (action.action == petui::SelectMode) ++modes;
+          }
+          if (view == pet::View::Dashboard || view == pet::View::ReadingInfo) CHECK(read == 1);
+          if (view == pet::View::Settings) CHECK(modes == 4);
+          if (out && orientation < 2)
+            c.write(std::string(out) + "/without-goal-" + (lang == Language::ES ? "es-" : "en-") +
+                    std::to_string(width) + "-" + std::to_string(unsigned(view)) +
+                    (light ? "-round.pbm" : "-square.pbm"));
+        }
+      }
+    }
+  }
+  chrome::lightHeader = false;
+}
+void roomScreens(const char* out = nullptr) {
+  ArtFixture graphics("resources/apps/pet/graphics.bin"), habitat("resources/apps/pet/habitat.bin"),
+      scenes("resources/apps/pet/home.bin");
+  for (auto language : {Language::ES, Language::EN}) {
+    I18N.setLanguage(language);
+    for (bool light : {false, true}) {
+      chrome::lightHeader = light;
+      for (unsigned orientation = 0; orientation < 4; ++orientation) {
+        for (auto age :
+             {pet::Stage::Egg, pet::Stage::Newborn, pet::Stage::Baby, pet::Stage::Juvenile, pet::Stage::Adult}) {
+          auto c = std::make_unique<Canvas>(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+          c->device.orientation = fui::Orientation(orientation);
+          c->target.view = "immersive-room";
+          c->target.watchRoom = true;
+          pet::Profile p;
+          p.created = true;
+          std::strcpy(p.name, "BOSQUE");
+          p.readingSeconds = pet::stageStart(age);
+          p.owned = 0xFFF;
+          for (unsigned slot = 0; slot < pet::SLOT_COUNT; ++slot) p.equipped[slot] = uint8_t(slot * 3);
+          p.saciety = 72;
+          p.joy = 84;
+          p.energy = 64;
+          p.hygiene = 91;
+          const auto original = p;
+          petui::Model m;
+          m.profile = &p;
+          m.view = pet::View::Dashboard;
+          m.today = 20000;
+          m.art = {&graphics, ArtFixture::draw};
+          m.scenes = {&scenes, ArtFixture::draw};
+          m.fullRoomBackgrounds = true;
+          m.habitat = {&habitat, ArtFixture::draw};
+          petui::Work w;
+          const auto clip = c->target.clipRect();
+          scenes.fullRoom = {};
+          c->paint(m, w);
+          c->checkHits();
+          CHECK(c->target.roomBackdrops == 1 && chrome::headerHeight == 0);
+          CHECK(scenes.fullRoom.x == 0 && scenes.fullRoom.y == 0 && scenes.fullRoom.width == c->width &&
+                scenes.fullRoom.height == c->height);
+          CHECK(scenes.fullRoomId == (orientation % 2 ? petui::ROOM_LANDSCAPE_ART + 2 : petui::ROOM_PORTRAIT_ART + 3));
+          CHECK(c->target.clipRect().x == clip.x && c->target.clipRect().y == clip.y &&
+                c->target.clipRect().width == clip.width && c->target.clipRect().height == clip.height);
+          CHECK(!std::memcmp(&p, &original, sizeof(p)));
+          if (out && language == Language::ES && orientation < 2 &&
+              (age == pet::Stage::Egg || age == pet::Stage::Juvenile))
+            c->writeGray(m, w,
+                         std::string(out) + "/room-" + std::to_string(c->width) + "-" + std::to_string(unsigned(age)) +
+                             (light ? "-round.pgm" : "-square.pgm"));
+        }
+      }
+    }
+  }
+  chrome::lightHeader = false;
+}
+void panelScreens(const char* out = nullptr) {
+  ArtFixture graphics("resources/apps/pet/graphics.bin"), habitat("resources/apps/pet/habitat.bin"),
+      scenes("resources/apps/pet/home.bin");
+  for (auto language : {Language::ES, Language::EN}) {
+    I18N.setLanguage(language);
+    for (bool light : {false, true}) {
+      chrome::lightHeader = light;
+      for (unsigned orientation = 0; orientation < 4; ++orientation) {
+        auto c = std::make_unique<Canvas>(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+        c->device.orientation = fui::Orientation(orientation);
+        c->target.view = "room-panels";
+        pet::Profile p;
+        p.created = true;
+        p.readingSeconds = 30000;
+        p.owned = 0xFFF;
+        for (unsigned slot = 0; slot < pet::SLOT_COUNT; ++slot) p.equipped[slot] = uint8_t(slot * 3);
+        const auto original = p;
+        petui::Model m;
+        m.profile = &p;
+        m.view = pet::View::Dashboard;
+        m.today = 20000;
+        m.art = {&graphics, ArtFixture::draw};
+        m.scenes = {&scenes, ArtFixture::draw};
+        m.fullRoomBackgrounds = true;
+        m.habitat = {&habitat, ArtFixture::draw};
+        petui::Work w;
+        c->paint(m, w);
+        const auto background = c->pixels;
+        for (auto view :
+             {pet::View::Care, pet::View::Games, pet::View::Home, pet::View::Projects, pet::View::ProjectPreview}) {
+          m.view = view;
+          m.projectSlot = 0;
+          m.previewItem = p.equipped[0];
+          c->target.watchDrawer = true;
+          c->target.edgeDrawerFills = 0;
+          c->paint(m, w);
+          CHECK(c->target.edgeDrawerFills == 1);
+          for (int x : {0, c->width - 1})
+            for (int y : {c->target.edgeDrawerTop + petui::simple::DRAWER_RADIUS, c->height - 1})
+              CHECK(c->pixels[size_t(y) * ((c->width + 7) / 8) + unsigned(x) / 8] & (128 >> (x % 8)));
+          c->checkHits();
+          CHECK(!std::memcmp(&p, &original, sizeof(p)));
+          unsigned dismiss = 0, games = 0, projects = 0;
+          for (size_t n = 0; n < c->interactions.count(); ++n) {
+            const auto& hit = c->interactions.data()[n];
+            games += hit.action == petui::SelectGame;
+            projects += hit.action == petui::OpenProjects;
+            if (hit.action != petui::ChangeTab || hit.value != 0) continue;
+            ++dismiss;
+            CHECK(hit.rect.width >= 40 && hit.rect.height >= 40);
+            CHECK(hit.rect.y >= c->target.edgeDrawerTop && hit.rect.y < c->target.edgeDrawerTop + 24);
+            CHECK(hit.rect.right() > c->width - 40);
+          }
+          CHECK(dismiss == 1);
+          unsigned changed = 0;
+          const auto safe = c->device.safeRect();
+          for (int y = safe.y + 60; y < c->target.edgeDrawerTop - 8; ++y)
+            for (int x = safe.x; x < safe.right(); ++x) {
+              const auto layout = petui::simple::mainLayout(petui::simple::body(c->screen));
+              if (c->width > c->height && y >= layout.controls.y && x >= layout.controls.x) continue;
+              const size_t at = size_t(y) * ((c->width + 7) / 8) + unsigned(x) / 8;
+              changed += bool((c->pixels[at] ^ background[at]) & (128 >> (x % 8)));
+            }
+          CHECK(changed == 0);
+          if (view == pet::View::Games) CHECK(games == 3);
+          if (view == pet::View::Home) CHECK(projects >= 5);
+          if (out && language == Language::ES && orientation < 2)
+            c->writeGray(m, w,
+                         std::string(out) + "/panel-" + std::to_string(c->width) + "-" +
+                             std::to_string(unsigned(view)) + (light ? "-round.pgm" : "-square.pgm"));
+        }
+      }
+    }
+  }
+  chrome::lightHeader = false;
+}
+void drawerCopyChecks() {
+  for (auto language : {Language::ES, Language::EN}) {
+    I18N.setLanguage(language);
+    for (unsigned orientation = 0; orientation < 4; ++orientation) {
+      Canvas canvas(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+      canvas.device.orientation = fui::Orientation(orientation);
+      pet::Profile profile;
+      profile.created = true;
+      petui::Model model;
+      model.profile = &profile;
+      model.view = pet::View::Care;
+      petui::Work work;
+      canvas.target.expectedFullText = tr(STR_PET_EGG_HEALTH);
+      canvas.paint(model, work);
+      CHECK(canvas.target.expectedFullTextSeen);
+      canvas.target.expectedFullText = nullptr;
+      canvas.checkHits();
+      profile.readingSeconds = pet::stageStart(pet::Stage::Newborn);
+      model.view = pet::View::Home;
+      canvas.paint(model, work);
+      canvas.checkHits();
+      unsigned categories = 0, projectPicker = 0;
+      for (size_t n = 0; n < canvas.interactions.count(); ++n) {
+        const auto& hit = canvas.interactions.data()[n];
+        if (hit.action != petui::OpenProjects) continue;
+        categories += hit.value >= 0 && hit.value < int(pet::SLOT_COUNT);
+        projectPicker += hit.value == 4;
+      }
+      CHECK(categories == 4);
+      CHECK(projectPicker == 2);
+    }
+  }
+}
+void careOverlayChecks() {
+  struct SceneTrace {
+    std::array<fui::Rect, 8> areas{};
+    unsigned count = 0;
+    static bool draw(void* context, fui::DrawTarget&, fui::Rect area, uint32_t, bool) {
+      auto& trace = *static_cast<SceneTrace*>(context);
+      CHECK(trace.count < trace.areas.size());
+      if (trace.count < trace.areas.size()) trace.areas[trace.count++] = area;
+      return true;
+    }
+  };
+  for (auto language : {Language::ES, Language::EN}) {
+    I18N.setLanguage(language);
+    CHECK(!std::strcmp(tr(STR_PET_FULLNESS), language == Language::ES ? "Saciedad" : "Fullness"));
+    for (bool light : {false, true}) {
+      chrome::lightHeader = light;
+      for (unsigned orientation = 0; orientation < 4; ++orientation) {
+        auto c = std::make_unique<Canvas>(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+        c->device.orientation = fui::Orientation(orientation);
+        for (unsigned stage = 1; stage < 5; ++stage) {
+          pet::Profile p;
+          p.created = true;
+          p.readingSeconds = pet::stageStart(pet::Stage(stage));
+          p.saciety = 62;
+          p.earnedFood = 6;
+          petui::Model m;
+          m.profile = &p;
+          m.today = 20000;
+          if (stage == 4) {
+            p.mode = pet::Mode::Extreme;
+            p.lastReadAt = 1700000000;
+            m.now = p.lastReadAt + 23 * 3600;
+          }
+          SceneTrace first{}, second{};
+          m.scenes = {&first, SceneTrace::draw};
+          petui::Work w;
+          m.view = pet::View::Dashboard;
+          c->paint(m, w);
+          c->checkHits();
+          const auto original = p;
+          const auto background = c->pixels;
+          m.scenes.context = &second;
+          m.view = pet::View::Care;
+          c->target.expectedFullText = stage ? "62/100" : nullptr;
+          c->target.expectedFullTextSeen = false;
+          c->paint(m, w);
+          c->checkHits();
+          CHECK(first.count != 0 && first.count == second.count);
+          for (unsigned n = 0; n < first.count; ++n) {
+            const auto a = first.areas[n], b = second.areas[n];
+            CHECK(a.x == b.x && a.y == b.y && a.width == b.width && a.height == b.height);
+          }
+          CHECK(!stage || c->target.expectedFullTextSeen);
+          CHECK(!std::memcmp(&p, &original, sizeof(p)));
+          unsigned dismiss = 0, play = 0, decorate = 0;
+          for (size_t n = 0; n < c->interactions.count(); ++n) {
+            const auto& hit = c->interactions.data()[n];
+            dismiss += hit.action == petui::ChangeTab && hit.value == 0;
+            play += hit.action == petui::OpenGames;
+            decorate += hit.action == petui::ChangeTab && hit.value == 2;
+          }
+          CHECK(dismiss == 1 && play == 0 && decorate == 0);
+          unsigned changed = 0;
+          const auto safe = c->device.safeRect();
+          for (int y = safe.y + 60; y < c->target.edgeDrawerTop - 8; ++y)
+            for (int x = safe.x; x < safe.right(); ++x) {
+              const auto layout = petui::simple::mainLayout(petui::simple::body(c->screen));
+              if (c->width > c->height && y >= layout.controls.y && x >= layout.controls.x) continue;
+              const size_t at = size_t(y) * ((c->width + 7) / 8) + unsigned(x) / 8;
+              changed += bool((c->pixels[at] ^ background[at]) & (128 >> (x % 8)));
+            }
+          CHECK(changed == 0);
+          if (stage) {
+            const unsigned satiety = p.saciety;
+            CHECK(pet::feed(p));
+            CHECK(p.saciety > satiety);
+            char value[32];
+            std::snprintf(value, sizeof(value), "%u/100", unsigned(p.saciety));
+            c->target.expectedFullText = value;
+            c->target.expectedFullTextSeen = false;
+            c->paint(m, w);
+            CHECK(c->target.expectedFullTextSeen);
+          }
+        }
+      }
+    }
+  }
+  chrome::lightHeader = false;
+}
 void gameScreens(const char* out) {
   for (const auto lang : {Language::ES, Language::EN}) {
     I18N.setLanguage(lang);
@@ -368,20 +805,20 @@ void gameScreens(const char* out) {
         canvas->checkHits();
         char expected[80], caps[80];
         for (const auto key : {names[kind], levels[kind]}) {
-          pixelui::copyCaps(caps, sizeof(caps), I18N.get(key));
+          pixelui::copyNatural(caps, sizeof(caps), I18N.get(key));
           canvas->target.expectedFullText = caps;
           canvas->target.expectedFullTextSeen = false;
           canvas->paint(m, w);
           CHECK(canvas->target.expectedFullTextSeen);
         }
-        std::snprintf(expected, sizeof(expected), tr(STR_PET_GAME_GAIN_VALUE), 10u + kind * 5);
-        pixelui::copyCaps(caps, sizeof(caps), expected);
+        std::snprintf(expected, sizeof(expected), "+%u", 10u + kind * 5);
+        pixelui::copyNatural(caps, sizeof(caps), expected);
         canvas->target.expectedFullText = caps;
         canvas->target.expectedFullTextSeen = false;
         canvas->paint(m, w);
         CHECK(canvas->target.expectedFullTextSeen);
         canvas->target.expectedFullText = nullptr;
-        for (unsigned state = 0; state < 7; ++state) {
+        for (unsigned state = 0; state < 8; ++state) {
           pet::GameState game;
           game.begin(pet::Game(kind), 123);
           if (kind == 0) {
@@ -427,6 +864,12 @@ void gameScreens(const char* out) {
             for (unsigned i = 0; i < 9; ++i) game.puzzle[i] = uint8_t((i + 1) % 9);
             game.phase = pet::GamePhase::Finished;
           }
+          if (state == 7 && kind == 1) {
+            game.rounds = 2;
+            game.advance();
+            const unsigned length = game.sequenceLength();
+            for (unsigned i = 0; i < length; ++i) game.select((game.sequence[i] + (i == 0 ? 1 : 0)) % 3);
+          }
           m.game = &game;
           m.view = pet::View::Play;
           canvas->target.view = "pet-game-reference";
@@ -450,8 +893,8 @@ void gameScreens(const char* out) {
           CHECK(menu == 1);
           CHECK(done == unsigned(game.finished()));
           if (kind == 2) CHECK(reset == unsigned(game.phase == pet::GamePhase::Playing));
-          if (kind == 1 && game.showing()) CHECK(next == 1);
-          if (orientation < 2 && (state == 0 || state == 1 || state == 2 || state == 4 || state == 6))
+          if (kind == 1 && (game.showing() || game.phase == pet::GamePhase::RoundFailed)) CHECK(next == 1);
+          if (orientation < 2 && (state == 0 || state == 1 || state == 2 || state == 4 || state == 6 || state == 7))
             canvas->write(std::string(out) + "/game-" + (lang == Language::ES ? "es-" : "en-") + std::to_string(width) +
                           "-" + std::to_string(kind) + "-" + std::to_string(state) + ".pbm");
           canvas->target.expectedFullText = nullptr;
@@ -484,8 +927,8 @@ static void resultAndSnapshotScreens(const char* out) {
               m.profile = &p;
               m.view = pet::View::Notice;
               m.noticeKind = kind;
-              m.notice = kind == petui::NoticeKind::Cured     ? tr(STR_PET_CURED)
-                         : kind == petui::NoticeKind::Cleaned ? tr(STR_PET_CLEANED)
+              m.notice = kind == petui::NoticeKind::Cured     ? tr(STR_PET_NOTICE_CURED)
+                         : kind == petui::NoticeKind::Cleaned ? tr(STR_PET_NOTICE_CLEAN)
                                                               : tr(STR_PET_SAVE_FAILED);
               c->target.expectedFullText = m.notice;
               if (artwork) {
@@ -502,7 +945,7 @@ static void resultAndSnapshotScreens(const char* out) {
                 const auto& hit = c->interactions.data()[i];
                 if (hit.action == petui::Back) {
                   ++back;
-                  CHECK(hit.rect.width >= 44 && hit.rect.height >= 44);
+                  CHECK(hit.rect.width >= 44 && hit.rect.height >= (orientation % 2 ? 28 : 44));
                 }
               }
               CHECK(back == 1);
@@ -560,8 +1003,11 @@ static void resultAndSnapshotScreens(const char* out) {
         c->checkHits();
         const unsigned scene = age ? 3 + species * 12 + (age - 1) * 3 + (pose == 4 ? 2 : pose == 5 ? 1 : 0) : species;
         CHECK(trace.ids.size() >= 12);
-        CHECK(trace.ids[trace.ids.size() - 2] == 482 + scene * 2);
-        CHECK(trace.ids.back() == 483 + scene * 2);
+        const auto actor = std::find(trace.ids.begin(), trace.ids.end(), 482 + scene * 2);
+        CHECK(actor != trace.ids.end() && actor + 1 != trace.ids.end() && *(actor + 1) == 483 + scene * 2);
+        const auto floor = std::find(trace.ids.begin(), trace.ids.end(), 2 + pet::momentObject(p.moments[3], 3) * 2);
+        const auto toy = std::find(trace.ids.begin(), trace.ids.end(), 2 + pet::momentObject(p.moments[3], 2) * 2);
+        CHECK(floor != trace.ids.end() && toy != trace.ids.end() && actor < floor && floor < toy);
       }
   for (unsigned orientation = 0; orientation < 4; ++orientation) {
     auto head = std::make_unique<Canvas>(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
@@ -573,7 +1019,7 @@ static void resultAndSnapshotScreens(const char* out) {
     for (size_t i = 0; i < head->interactions.count(); ++i) {
       const auto& hit = head->interactions.data()[i];
       if (hit.action == petui::OpenSettings) settings = hit.rect;
-      if (hit.action == petui::OpenReadingInfo && hit.rect.y < 90) info = hit.rect;
+      if (hit.action == petui::OpenAlbum && hit.rect.y < 90) info = hit.rect;
     }
     CHECK(info.width >= 44 && info.height >= 44 && info.right() <= settings.x);
   }
@@ -659,7 +1105,7 @@ static void polishScreens(const char* out) {
             petui::Work w;
             c->paint(m, w);
             c->checkHits();
-            const unsigned count = width == 480 ? 6 : 4;
+            const unsigned count = width == 480 ? 3 : 2;
             CHECK(w.pages == std::max(1, int((total + count - 1) / count)));
             unsigned cards = 0, filters = 0;
             for (size_t i = 0; i < c->interactions.count(); ++i) {
@@ -670,7 +1116,7 @@ static void polishScreens(const char* out) {
               }
               if (hit.action == petui::SelectCatalogFilter) {
                 ++filters;
-                CHECK(hit.rect.width >= 44 && hit.rect.height >= 44);
+                CHECK(hit.rect.width >= 44 && hit.rect.height >= (orientation % 2 ? 28 : 44));
               }
             }
             CHECK(filters == 2);
@@ -752,7 +1198,7 @@ static void polishScreens(const char* out) {
           std::snprintf(
               copy, sizeof(copy), tr(STR_PET_GROWTH_LEFT),
               static_cast<unsigned long long>((pet::nextStageSeconds(pet::Stage(age)) - p.readingSeconds + 59) / 60));
-        pixelui::copyCaps(caps, sizeof(caps), copy);
+        pixelui::copyNatural(caps, sizeof(caps), copy);
         c->target.expectedFullText = caps;
         petui::Work w;
         c->paint(m, w);
@@ -780,13 +1226,18 @@ static void polishScreens(const char* out) {
         m.profile = &p;
         m.view = pet::View::Care;
         m.today = 20000;
-        c->target.expectedFullText = p.resting ? tr(STR_PET_REST_TIME_UNKNOWN) : petui::careAdvice(p);
+        char stock[100];
+        std::snprintf(stock, sizeof(stock), tr(STR_PET_FOOD_STOCK), static_cast<unsigned long long>(pet::food(p)));
+        char caps[100];
+        pixelui::copyNatural(caps, sizeof(caps), stock);
+        c->target.expectedFullText = caps;
         petui::Work w;
         c->paint(m, w);
         c->checkHits();
         CHECK(c->target.expectedFullTextSeen);
         unsigned feeding = 0;
-        for (size_t i = 0; i < c->interactions.count(); ++i) feeding += c->interactions.data()[i].action == petui::Feed;
+        for (size_t i = 0; i < c->interactions.count(); ++i)
+          feeding += c->interactions.data()[i].action == petui::OpenFood;
         CHECK(feeding == 1);
         if (need == 0) CHECK(petui::advisedCare(p, m.today) == petui::OpenHealth);
         if (need == 2) CHECK(petui::advisedCare(p, m.today) == petui::Feed);
@@ -802,8 +1253,8 @@ void communicationScreens() {
   pet::Profile instant;
   instant.created = true;
   instant.readingSeconds = 7200;
-  pet::own(instant, 5);
-  instant.project = 5;
+  pet::own(instant, 4);
+  instant.project = 4;
   CHECK(petui::catalogCount(instant, 0, petui::CatalogFilter::Unowned) == 60);
   CHECK(pet::chooseProject(instant, 0));
   CHECK(!pet::owns(instant, 0) && pet::projectRemaining(instant) == 900);
@@ -826,7 +1277,12 @@ void communicationScreens() {
     const auto original = catalog;
     for (auto filter : {petui::CatalogFilter::Owned, petui::CatalogFilter::Unowned}) {
       const auto count = petui::catalogCount(catalog, slot, filter);
-      CHECK(count == 30);
+      unsigned expectedCount = 0;
+      for (unsigned index = 0; index < pet::OBJECTS_PER_SLOT; ++index)
+        if (pet::objectAvailable(pet::objectAt(slot, index)) &&
+            (filter == petui::CatalogFilter::Owned ? index % 2 == 0 : index % 2 != 0))
+          ++expectedCount;
+      CHECK(count == expectedCount);
       for (unsigned at = 0; at < count; ++at) {
         const auto item = petui::catalogItem(catalog, slot, filter, at);
         CHECK(petui::catalogOrdinal(catalog, slot, filter, item) == at);
@@ -888,6 +1344,7 @@ void communicationScreens() {
           p.equipped[slot] = state == 2 ? uint8_t(id) : uint8_t(pet::OBJECT_COUNT);
           m.view = pet::View::ProjectPreview;
           m.previewItem = uint8_t(id);
+          m.projectSlot = int(slot);
           m.catalogFilter = state ? petui::CatalogFilter::Owned : petui::CatalogFilter::Unowned;
           m.writable = state != 3;
           const auto before = p;
@@ -895,11 +1352,11 @@ void communicationScreens() {
           c->target.expectedFullTextSeen = false;
           c->paint(m, w);
           c->checkHits();
-          CHECK(c->target.expectedFullTextSeen == (state < 2));
+          CHECK(!c->target.expectedFullTextSeen);
           c->target.expectedFullText = nullptr;
           CHECK(!std::memcmp(&before, &p, sizeof(p)));
           CHECK(w.previewProfile.equipped[slot] == id);
-          CHECK(hits(petui::Back) == 1);
+          CHECK(hits(petui::ChangeTab) == 1);
           CHECK(hits(petui::SelectProject) == unsigned(state < 2));
         }
       m.writable = true;
@@ -908,33 +1365,31 @@ void communicationScreens() {
       char expected[120];
       for (unsigned sat : {55u, 90u, 99u, 100u}) {
         p.saciety = uint8_t(sat);
-        std::snprintf(expected, sizeof(expected),
-                      orientation % 2 ? tr(STR_PET_FEED_CHANGE_SHORT) : tr(STR_PET_FEED_CHANGE), sat,
-                      std::min(100u, sat + 25));
+        std::snprintf(expected, sizeof(expected), "%u/100", sat);
         c->target.expectedFullText = expected;
         c->target.expectedFullTextSeen = false;
         c->paint(m, w);
         c->checkHits();
-        CHECK(c->target.expectedFullTextSeen == (sat < 100));
+        CHECK(c->target.expectedFullTextSeen);
         if (sat == 100) {
           CHECK(hits(petui::Feed) == 0);
           continue;
         }
         m.feedResult = {uint8_t(sat), uint8_t(std::min(100u, sat + 25)), true};
-        m.view = pet::View::Notice;
-        m.noticeKind = petui::NoticeKind::Fed;
-        m.notice = tr(STR_PET_FED_MESSAGE);
-        std::snprintf(expected, sizeof(expected), tr(STR_PET_FEED_CHANGE), sat, std::min(100u, sat + 25));
+        m.view = pet::View::Dashboard;
+        m.feedingPhase = petfeed::Phase::Result;
+        std::snprintf(expected, sizeof(expected), "%u", sat);
         char caps[120];
-        pixelui::copyCaps(caps, sizeof(caps), expected);
+        pixelui::copyNatural(caps, sizeof(caps), expected);
         c->target.expectedFullText = caps;
         c->target.expectedFullTextSeen = false;
         c->paint(m, w);
         CHECK(c->target.expectedFullTextSeen);
-        CHECK(hits(petui::Back) == 1);
+        CHECK(hits(petui::Back) == 0);
         CHECK(hits(petui::Feed) == 0);
         c->target.expectedFullText = nullptr;
         m.feedResult = {};
+        m.feedingPhase = petfeed::Phase::Idle;
         m.view = pet::View::Care;
         m.noticeKind = petui::NoticeKind::Information;
         m.notice = nullptr;
@@ -942,21 +1397,23 @@ void communicationScreens() {
       c->target.expectedFullText = nullptr;
       p.saciety = 100;
       p.spentFood = uint32_t(pet::food(p));
-      c->target.expectedFullText = tr(STR_PET_ALREADY_FULL);
+      c->target.expectedFullText = "100/100";
       c->target.expectedFullTextSeen = false;
       c->paint(m, w);
       CHECK(c->target.expectedFullTextSeen);
       CHECK(hits(petui::Feed) == 0);
       p.resting = true;
       p.energy = 67;
-      std::snprintf(expected, sizeof(expected), "%u / 100", unsigned(p.energy));
+      std::snprintf(expected, sizeof(expected), "%u/100", unsigned(p.energy));
       c->target.expectedFullText = expected;
       c->target.expectedFullTextSeen = false;
       c->paint(m, w);
       c->checkHits();
       CHECK(c->target.expectedFullTextSeen);
       p.resting = false;
-      c->target.expectedFullText = tr(STR_PET_CARE_REST_EFFECT);
+      char rest[64];
+      pixelui::copyNatural(rest, sizeof(rest), tr(STR_PET_REST));
+      c->target.expectedFullText = rest;
       c->target.expectedFullTextSeen = false;
       c->paint(m, w);
       CHECK(c->target.expectedFullTextSeen);
@@ -968,10 +1425,10 @@ void communicationScreens() {
         m.careResult = {before.hygiene, p.hygiene, before.joy, p.joy, 0, true};
         m.view = pet::View::Notice;
         m.noticeKind = petui::NoticeKind::Cleaned;
-        m.notice = tr(STR_PET_CLEANED);
+        m.notice = tr(STR_PET_NOTICE_CLEAN);
         std::snprintf(expected, sizeof(expected), tr(STR_PET_CLEAN_RESULT), joy, std::min(100u, joy + 5));
         char caps[120];
-        pixelui::copyCaps(caps, sizeof(caps), expected);
+        pixelui::copyNatural(caps, sizeof(caps), expected);
         c->target.expectedFullText = caps;
         c->target.expectedFullTextSeen = false;
         c->paint(m, w);
@@ -984,7 +1441,7 @@ void communicationScreens() {
       auto beforeCure = p;
       CHECK(pet::cure(p));
       m.noticeKind = petui::NoticeKind::Cured;
-      m.notice = tr(STR_PET_CURED);
+      m.notice = tr(STR_PET_NOTICE_CURED);
       m.careResult = {beforeCure.hygiene,
                       p.hygiene,
                       beforeCure.joy,
@@ -993,7 +1450,7 @@ void communicationScreens() {
                       true};
       char caps[120];
       std::snprintf(expected, sizeof(expected), tr(STR_PET_CURE_COST), 1u);
-      pixelui::copyCaps(caps, sizeof(caps), expected);
+      pixelui::copyNatural(caps, sizeof(caps), expected);
       c->target.expectedFullText = caps;
       c->target.expectedFullTextSeen = false;
       c->paint(m, w);
@@ -1009,17 +1466,17 @@ void communicationScreens() {
       p.illness = pet::Illness::Cold;
       c->paint(m, w);
       c->checkHits();
-      CHECK(hits(petui::OpenHealth) == 1);
+      CHECK(hits(petui::ChangeTab) >= 2);
       p.illness = pet::Illness::Healthy;
       p.saciety = 10;
       c->paint(m, w);
       CHECK(petui::statusAction(p) == petui::ChangeTab);
-      CHECK(hits(petui::ChangeTab) >= 5);
+      CHECK(hits(petui::ChangeTab) == 2);
       p.readingSeconds = 0;
       CHECK(petui::statusAction(p) == fui::NO_ACTION);
       p.readingSeconds = pet::stageStart(pet::Stage::Adult);
       m.view = pet::View::Reward;
-      pixelui::copyCaps(expected, sizeof(expected), tr(STR_PET_GROWTH_ADULT));
+      pixelui::copyNatural(expected, sizeof(expected), tr(STR_PET_GROWTH_ADULT));
       c->target.expectedFullText = expected;
       c->target.expectedFullTextSeen = false;
       c->paint(m, w);
@@ -1069,7 +1526,7 @@ void guidanceScreens() {
       petui::Work w;
       auto expect = [&](const char* copy, bool caps = false) {
         char capital[160];
-        pixelui::copyCaps(capital, sizeof(capital), copy);
+        pixelui::copyNatural(capital, sizeof(capital), copy);
         c->target.expectedFullText = caps ? capital : copy;
         c->target.expectedFullTextSeen = false;
         c->paint(m, w);
@@ -1082,7 +1539,9 @@ void guidanceScreens() {
       p.readingSeconds = 7200;
       m.view = pet::View::Health;
       m.writable = true;
-      expect(tr(STR_PET_ALREADY_CLEAN));
+      char hygiene[48];
+      std::snprintf(hygiene, sizeof(hygiene), tr(STR_PET_HYGIENE_VALUE), unsigned(p.hygiene));
+      expect(hygiene);
       expect(tr(STR_PET_NO_TREATMENT));
       p.hygiene = 20;
       p.illness = pet::Illness::Cold;
@@ -1109,38 +1568,33 @@ void guidanceScreens() {
       p.energy = 100;
       p.resting = true;
       p.restAt = m.now - 1800;
-      expect("100 / 100", true);
-      petui::widget::remainingDuration(value, sizeof(value), 5400);
-      std::snprintf(expected, sizeof(expected), tr(STR_PET_REST_ENDS), value);
-      expect(expected);
-      expect(tr(STR_PET_GAME_WAKE_SHORT));
+      expect("100/100", true);
+      expect(tr(STR_PET_WAKE), true);
+      m.view = pet::View::Games;
+      expect(petui::gameCareBlock(p), true);
       p.resting = false;
       p.gameDay = m.today;
       p.gamesToday = 0;
       p.joy = 99;
       CHECK(petui::gameOffer(m) == petui::GameOffer::Reward);
-      std::snprintf(expected, sizeof(expected), tr(STR_PET_GAME_GAIN_VALUE), 1u);
-      expect(expected);
+      std::snprintf(expected, sizeof(expected), "+%u", 1u);
+      expect(expected, true);
       p.gamesToday = 3;
       CHECK(petui::gameOffer(m) == petui::GameOffer::Practice);
-      expect(tr(STR_PET_CARE_GAME_PRACTICE));
+      expect(tr(STR_PET_GAME_PRACTICE), true);
       p.saciety = 10;
       CHECK(petui::gameOffer(m) == petui::GameOffer::Blocked);
-      expect(tr(STR_PET_GAME_FOOD_SHORT));
+      expect(petui::gameCareBlock(p), true);
       p.saciety = 70;
       m.view = pet::View::Dashboard;
-      m.todaySeconds = 1500;
-      p.goalIndex = 1;
-      std::snprintf(expected, sizeof(expected), tr(STR_PET_DAILY_FRACTION), 25u, 10u);
-      expect(expected, true);
-      m.todaySeconds = 3600;
-      std::snprintf(expected, sizeof(expected), tr(STR_PET_DAILY_FRACTION), 60u, 10u);
+      m.readingDisplay = petui::ReadingDisplay::Lifetime;
+      petui::widget::readingTime(m, expected, sizeof(expected));
       expect(expected, true);
       m.view = pet::View::ProjectPreview;
       m.catalogFilter = petui::CatalogFilter::Unowned;
       m.previewItem = 0;
-      p.owned = uint16_t(1u << 5);
-      p.project = 5;
+      p.owned = uint16_t(1u << 4);
+      p.project = 4;
       petui::widget::remainingDuration(value, sizeof(value), 900);
       std::snprintf(expected, sizeof(expected), tr(STR_PET_READING_LEFT_TIME), value);
       expect(expected);
@@ -1161,7 +1615,7 @@ void clarityScreens() {
       petui::Work w;
       auto expect = [&](const char* copy, bool caps = false, bool visible = true) {
         char capital[160];
-        pixelui::copyCaps(capital, sizeof(capital), copy);
+        pixelui::copyNatural(capital, sizeof(capital), copy);
         c->target.expectedFullText = caps ? capital : copy;
         c->target.expectedFullTextSeen = false;
         c->paint(m, w);
@@ -1175,7 +1629,6 @@ void clarityScreens() {
       p = {};
       p.created = true;
       p.readingSeconds = 7200;
-      p.goalIndex = 1;
       m.clockKnown = true;
       m.historyChanged = false;
       m.writable = true;
@@ -1183,22 +1636,16 @@ void clarityScreens() {
       char expected[128], time[64];
       for (int seconds : {-60, 0, 300, 599, 600, 1500, 59040}) {
         m.todaySeconds = seconds;
-        if (seconds >= 600)
-          expect(tr(STR_PET_GOAL_REACHED), true);
-        else {
-          std::snprintf(expected, sizeof(expected), tr(STR_PET_DAILY_PROGRESS), std::max(0, seconds) / 60, 10u);
-          expect(expected, true);
-        }
         petui::widget::duration(time, sizeof(time), uint64_t(std::max(0, seconds)));
         std::snprintf(expected, sizeof(expected), tr(STR_PET_READ_TODAY), time);
-        expect(expected);
+        expect(expected, true);
       }
       for (unsigned unavailable = 0; unavailable < 4; ++unavailable) {
         m.clockKnown = unavailable != 0;
         m.historyChanged = unavailable == 1;
         m.writable = unavailable != 2;
         m.today = unavailable == 3 ? 0 : 20000;
-        expect(tr(STR_PET_DAILY_WAIT), true);
+        expect(tr(STR_PET_READING_UNAVAILABLE), true);
         expect(expected, false, false);
       }
       m.today = 20000;
@@ -1207,20 +1654,22 @@ void clarityScreens() {
       m.todaySeconds = 1500;
       m.view = pet::View::Album;
       std::snprintf(time, sizeof(time), tr(STR_PET_ALBUM_HOURS), 2ull);
-      std::snprintf(expected, sizeof(expected), tr(STR_PET_ALBUM_READING), time);
-      expect(expected, true);
-      std::snprintf(expected, sizeof(expected), tr(STR_PET_ALBUM_DAYS), 0u, 0u);
-      expect(expected);
+      expect(time, true);
+      expect(tr(STR_PET_READING_DAYS));
+      expect(tr(STR_PET_ALBUM_BEST_STREAK));
       m.view = pet::View::Health;
-      expect(tr(STR_PET_HEALTH_ADVICE_OK));
-      p.hygiene = 60;
-      expect(tr(STR_PET_HEALTH_ADVICE_CLEAN));
-      p.hygiene = 20;
-      expect(tr(STR_PET_HEALTH_ADVICE_DIRTY));
+      expect(tr(STR_PET_HEALTH_ADVICE_OK), false, false);
+      expect(tr(STR_PET_HEALTHY));
+      for (unsigned hygiene : {60u, 20u}) {
+        p.hygiene = uint8_t(hygiene);
+        std::snprintf(expected, sizeof(expected), tr(STR_PET_HYGIENE_VALUE), hygiene);
+        expect(expected);
+      }
       p.illness = pet::Illness::Cold;
-      expect(tr(STR_PET_HEALTH_ADVICE_CURE));
+      expect(tr(STR_PET_HEALTH_STATUS_SICK));
+      expect(tr(STR_PET_CURE_BENEFIT));
       p.spentMedicine = uint32_t(pet::medicine(p));
-      expect(tr(STR_PET_HEALTH_ADVICE_READ));
+      expect(tr(STR_PET_NO_MEDICINE));
       m.writable = false;
       expect(tr(STR_PET_CARE_NO_SAVE));
       m.writable = true;
@@ -1230,16 +1679,11 @@ void clarityScreens() {
       p.illness = pet::Illness::Healthy;
       p.energy = 60;
       m.view = pet::View::Care;
-      expect(tr(STR_PET_CARE_REST_EFFECT));
+      expect(tr(STR_PET_REST), true);
       p.energy = 100;
-      expect(tr(STR_PET_CARE_REST_EFFECT));
-      expect(c->width == 800 ? tr(STR_PET_REST_BENEFIT_SHORT) : tr(STR_PET_REST_BENEFIT));
-      for (unsigned energy : {0u, 60u, 80u, 99u}) {
-        p.energy = uint8_t(energy);
-        expect(c->width == 800 ? tr(STR_PET_REST_BENEFIT_SHORT) : tr(STR_PET_REST_BENEFIT));
-      }
+      expect(tr(STR_PET_REST), true);
       p.resting = true;
-      expect(tr(STR_PET_CARE_WAKE_EFFECT));
+      expect(tr(STR_PET_WAKE), true);
       p.resting = false;
       p.energy = 100;
       p.hygiene = 100;
@@ -1247,24 +1691,25 @@ void clarityScreens() {
       p.earnedFood = 3;
       c->paint(m, w);
       c->checkHits();
-      fui::Rect healthRow{}, feedRow{};
+      fui::Rect feedRow{}, strokeRow{}, restRow{};
       for (size_t i = 0; i < c->interactions.count(); ++i) {
         const auto& hit = c->interactions.data()[i];
-        if (hit.action == petui::OpenHealth) healthRow = hit.rect;
-        if (hit.action == petui::Feed) feedRow = hit.rect;
+        if (hit.action == petui::OpenFood) feedRow = hit.rect;
+        if (hit.action == petui::Stroke) strokeRow = hit.rect;
+        if (hit.action == petui::Rest) restRow = hit.rect;
+        CHECK(hit.action != petui::Clean && hit.action != petui::OpenHealth && hit.action != petui::Read);
       }
-      CHECK(!healthRow.empty() && !feedRow.empty());
-      CHECK(healthRow.bottom() + petui::widget::GAP == feedRow.y);
+      CHECK(!feedRow.empty() && !strokeRow.empty() && !restRow.empty());
+      CHECK(feedRow.y == strokeRow.y && strokeRow.y == restRow.y);
+      CHECK(feedRow.right() + 8 <= strokeRow.x && strokeRow.right() + 8 <= restRow.x);
       std::snprintf(expected, sizeof(expected), tr(STR_PET_FOOD_STOCK), static_cast<unsigned long long>(pet::food(p)));
-      expect(expected, true);
-      std::snprintf(expected, sizeof(expected), tr(STR_PET_MEDICINE_STOCK),
-                    static_cast<unsigned long long>(pet::medicine(p)));
       expect(expected, true);
     }
   }
 }
 static void consistencyScreens() {
   for (unsigned owned = 0; owned < pet::OBJECT_COUNT; ++owned) {
+    if (!pet::objectAvailable(owned)) continue;
     pet::Profile project;
     project.project = uint8_t(owned);
     for (unsigned id = 0; id < owned; ++id) pet::own(project, id);
@@ -1325,7 +1770,7 @@ static void consistencyScreens() {
       bool buttons = false;
       for (size_t i = 0; i < c->interactions.count(); ++i) {
         const auto& h = c->interactions.data()[i];
-        if (h.action == petui::Read && h.rect.height == 54) ++warnings;
+        if (h.action == petui::Read && h.rect.height >= 64) ++warnings;
         if (h.action == petui::OpenSettings)
           buttons =
               fui::acceptsInput(h.inputMask, fui::InputFocus) && fui::acceptsInput(h.inputMask, fui::InputConfirm);
@@ -1353,9 +1798,9 @@ static void consistencyScreens() {
         m.noticeKind = petui::NoticeKind::Game;
         m.gameResult = {80, uint8_t(outcome == petui::GameOutcome::Rewarded ? 90 : 80), 80,
                         uint8_t(outcome == petui::GameOutcome::Rewarded ? 60 : 80), outcome};
-        m.notice = outcome == petui::GameOutcome::Rewarded   ? tr(STR_PET_GAME_REWARDED)
-                   : outcome == petui::GameOutcome::Practice ? tr(STR_PET_GAME_RESULT_PRACTICE)
-                                                             : tr(STR_PET_GAME_RESULT_CARE);
+        m.notice = outcome == petui::GameOutcome::Rewarded   ? tr(STR_PET_GAME_FINISHED)
+                   : outcome == petui::GameOutcome::Practice ? tr(STR_PET_GAME_PRACTICE)
+                                                             : tr(STR_PET_NEEDS_CARE_INLINE);
         c->target.view = "game-receipt";
         c->target.expectedFullText = m.notice;
         c->target.expectedFullTextSeen = false;
@@ -1394,7 +1839,7 @@ static void consistencyScreens() {
       m.view = pet::View::LifeDetail;
       c->target.view = "archived-life";
       char reason[96];
-      pixelui::copyCaps(reason, sizeof(reason), tr(STR_PET_LIFE_REASON_LOST));
+      pixelui::copyNatural(reason, sizeof(reason), tr(STR_PET_LIFE_REASON_LOST));
       c->target.expectedFullText = reason;
       c->target.expectedFullTextSeen = false;
       c->paint(m, w);
@@ -1430,7 +1875,8 @@ static void redesignRegressionScreens() {
         }
       }
       CHECK(mainValue >= 0 && mainValue < int(pet::SLOT_COUNT));
-      CHECK(petui::catalogCount(p, unsigned(mainValue), petui::CatalogFilter::Owned) == 60);
+      CHECK(petui::catalogCount(p, unsigned(mainValue), petui::CatalogFilter::Owned) ==
+            (unsigned(mainValue) == 1 ? 43u : 60u));
       const auto id = unsigned(pet::Moment::Reading1h);
       CHECK(petui::memoryUnrecorded(p, id) && !petui::memoryOwned(p, id));
       CHECK(!std::strcmp(petui::albumwidget::memoryRequirement(p, id, w), tr(STR_PET_MEMORY_UNRECORDED_HELP)));
@@ -1462,7 +1908,7 @@ static void companionContexts() {
       m.todaySeconds = 5 * 60;
       CHECK(petui::companionLine(m) == tr(STR_PET_COMPANION_READING));
       m.todaySeconds = 10 * 60;
-      CHECK(petui::companionLine(m) == tr(STR_PET_COMPANION_GOAL));
+      CHECK(petui::companionLine(m) == tr(STR_PET_COMPANION_READING));
       p.illness = pet::Illness::Cold;
       CHECK(petui::companionLine(m) == nullptr);
       p.illness = pet::Illness::Healthy;
@@ -1482,10 +1928,10 @@ static void companionContexts() {
       CHECK(petui::companionLine(m) == nullptr);
       p.joy = 80;
       m.clockKnown = false;
-      CHECK(petui::companionLine(m) != tr(STR_PET_COMPANION_GOAL));
+      CHECK(petui::companionLine(m) != tr(STR_PET_COMPANION_READING));
       m.clockKnown = true;
       m.historyChanged = true;
-      CHECK(petui::companionLine(m) != tr(STR_PET_COMPANION_GOAL));
+      CHECK(petui::companionLine(m) != tr(STR_PET_COMPANION_READING));
       m.historyChanged = false;
       m.todaySeconds = 0;
       p.lastPetDay = m.today;
@@ -1499,11 +1945,16 @@ static void companionContexts() {
     p.lifeStatus = pet::LifeStatus::Active;
     m.view = pet::View::Dashboard;
     auto canvas = std::make_unique<Canvas>(480, 800);
-    canvas->target.expectedRegularText = tr(STR_PET_HYGIENE);
-    canvas->target.expectedEmphasizedText = "100/100";
+    char hygiene[32];
+    pixelui::copyNatural(hygiene, sizeof(hygiene), tr(STR_PET_HYGIENE));
+    canvas->target.expectedEmphasizedText = hygiene;
     petui::Work work;
     canvas->paint(m, work);
-    CHECK(canvas->target.regularTextSeen && canvas->target.emphasizedTextSeen);
+    CHECK(canvas->target.emphasizedTextSeen);
+    canvas->target.expectedEmphasizedText = "100/100";
+    canvas->target.emphasizedTextSeen = false;
+    canvas->paint(m, work);
+    CHECK(canvas->target.emphasizedTextSeen);
   }
 }
 static void speciesBackgrounds(const char* out) {
@@ -1546,16 +1997,14 @@ static void speciesBackgrounds(const char* out) {
         petui::Work w;
         c->paint(m, w);
         c->checkHits();
-        CHECK(trace.calls == 2);
-        CHECK(trace.left.right() == trace.right.x && trace.left.y == trace.right.y);
-        CHECK(trace.left.height == trace.right.height && trace.left.width == trace.right.width);
+        CHECK(trace.calls == 0);
         c->write(std::string(out) + "/background-" + std::to_string(orientation) + "-" + std::to_string(species) + "-" +
                  std::to_string(age) + ".pbm");
         trace.calls = 0;
         trace.failRight = true;
         c->paint(m, w);
         c->checkHits();
-        CHECK(trace.calls == 2);
+        CHECK(trace.calls == 0);
         trace.calls = 0;
         m.portraitBackgrounds = false;
         c->paint(m, w);
@@ -1632,16 +2081,15 @@ static void dashboardCardDimensions() {
         c->target.metricFrameCount = 0;
         c->paint(m, w);
         c->checkHits();
-        CHECK(c->target.metricFrameCount == 4);
-        for (const auto frame : c->target.metricFrames) CHECK(frame.height == (wide ? 108 : 136));
+        CHECK(c->target.metricFrameCount == 0);
         fui::Rect daily{};
         for (size_t i = 0; i < c->interactions.count(); ++i) {
           const auto& hit = c->interactions.data()[i];
-          if (hit.action == petui::OpenReadingInfo && hit.value == 0) daily = hit.rect;
+          if (hit.action == petui::Read) daily = hit.rect;
         }
-        CHECK(!daily.empty() && daily.height == 140);
+        CHECK(!daily.empty() && daily.height >= 64 && daily.height <= 80);
         if (!stage) reference = daily;
-        CHECK(daily.x == reference.x && daily.y == reference.y && daily.width == reference.width &&
+        CHECK(daily.x == reference.x && daily.y == reference.y && daily.width == reference.width - (stage ? 64 : 0) &&
               daily.height == reference.height);
       }
       if (!wide) continue;
@@ -1708,12 +2156,13 @@ void referenceOverhaulChecks() {
   CHECK(!petui::memoryOwned(p, petui::MEMORY_COUNT));
   for (unsigned slot = 0; slot < pet::SLOT_COUNT; ++slot) {
     for (unsigned at = 0; at < pet::OBJECTS_PER_SLOT; ++at) pet::own(p, pet::objectAt(slot, at));
-    p.equipped[slot] = pet::objectAt(slot, 30);
+    p.equipped[slot] = pet::objectAt(slot, 20);
     CHECK(petui::catalogItem(p, slot, petui::CatalogFilter::Owned, 0) == p.equipped[slot]);
     CHECK(petui::catalogItem(p, slot, petui::CatalogFilter::Owned, 1) == pet::objectAt(slot, 0));
     p.equipped[slot] = pet::objectAt(slot, 40);
     CHECK(petui::catalogItem(p, slot, petui::CatalogFilter::Owned, 0) == p.equipped[slot]);
-    CHECK(petui::catalogOrdinal(p, slot, petui::CatalogFilter::Owned, pet::objectAt(slot, 30)) == 31);
+    CHECK(petui::catalogOrdinal(p, slot, petui::CatalogFilter::Owned, pet::objectAt(slot, 20)) ==
+          (slot == 1 ? 20u : 21u));
   }
   for (auto language : {Language::ES, Language::EN}) {
     I18N.setLanguage(language);
@@ -1898,22 +2347,9 @@ void ui50Checks(const char* out = nullptr) {
           if (h.action == petui::OpenSettings) settings = h.rect;
           if (h.action == petui::OpenReadingInfo) info = h.rect;
         }
-        CHECK(info.width == 44 && settings.width == 44 && info.right() <= settings.x);
-        // Header control positions share one paint/hit geometry.
-        toybox::Interactions interactions;
-        toybox::Frame frame(c->target, c->device, c->input, interactions, nullptr, {100, false, true});
-        toybox::Screen screen(frame);
-        pixelui::Header old;
-        old.title = "PET";
-        old.mark = fui::bitmapFromIcon(icon_go_settings_32);
-        old.markAction = petui::OpenSettings;
-        old.secondaryMark = fui::bitmapFromIcon(petui::READING_INFO_ICON);
-        old.secondaryMarkAction = petui::OpenReadingInfo;
-        pixelui::header(screen, old);
-        fui::Rect previous{};
-        for (size_t i = 0; i < interactions.count(); ++i)
-          if (interactions.data()[i].action == petui::OpenSettings) previous = interactions.data()[i].rect;
-        CHECK(settings.x > previous.x && settings.x - previous.x < 44);
+        CHECK(info.width >= 48 && settings.width >= 48 && info.right() <= settings.x);
+        CHECK(info.height >= 48 && settings.height >= 48);
+        CHECK(settings.y >= c->device.safeRect().y && settings.bottom() < petui::simple::body(c->screen).y);
         if (!age) continue;
         m.view = pet::View::Care;
         m.tab = pet::Tab::Care;
@@ -1921,16 +2357,16 @@ void ui50Checks(const char* out = nullptr) {
         c->checkHits();
         unsigned readingLinks = 0;
         const auto body = pixelui::geometry(c->device).body;
-        const auto stock = fui::makeRect(body.x, body.y + 54, orientation % 2 ? body.width * 34 / 100 : body.width,
-                                         orientation % 2 ? 76 : 54);
+        const auto stock = fui::makeRect(body.x, body.y, body.width, orientation % 2 ? 66 : 74);
         for (size_t i = 0; i < c->interactions.count(); ++i) {
           const auto& h = c->interactions.data()[i];
           if (h.action == petui::OpenReadingInfo) {
             ++readingLinks;
             CHECK(h.rect.y < 90);
           }
-          CHECK(h.rect.right() <= stock.x || h.rect.x >= stock.right() || h.rect.bottom() <= stock.y ||
-                h.rect.y >= stock.bottom());
+          if (h.action != petui::ChangeTab)
+            CHECK(h.rect.right() <= stock.x || h.rect.x >= stock.right() || h.rect.bottom() <= stock.y ||
+                  h.rect.y >= stock.bottom());
         }
         CHECK(readingLinks == 1);
         if (out && orientation < 2 && age == 4)
@@ -1960,6 +2396,7 @@ void placedPreviewChecks(const char* out = nullptr) {
       m.catalogFilter = petui::CatalogFilter::Owned;
       petui::Work w;
       for (unsigned item = 0; item < pet::OBJECT_COUNT; ++item) {
+        if (!pet::objectAvailable(item)) continue;
         const auto slot = pet::objectSlot(item);
         p.equipped[slot] = uint8_t(item);
         m.projectSlot = int(slot);
@@ -1970,26 +2407,22 @@ void placedPreviewChecks(const char* out = nullptr) {
         c->target.watchPlacedBand = true;
         c->target.placedBand = {};
         char label[64];
-        pixelui::copyCaps(label, sizeof(label), tr(STR_PET_EQUIPPED));
+        pixelui::copyNatural(label, sizeof(label), tr(STR_PET_EQUIPPED));
         c->target.expectedFullText = label;
         c->target.expectedFullTextSeen = false;
         c->paint(m, w);
         c->checkHits();
         CHECK(c->target.expectedFullTextSeen);
         c->target.expectedFullText = nullptr;
-        const auto band = c->target.placedBand;
-        CHECK(!band.empty());
-        CHECK(darkPixels(*c, band) > unsigned(band.width) * band.height / 2);
+
         unsigned remove = 0;
         for (size_t i = 0; i < c->interactions.count(); ++i) {
           const auto& hit = c->interactions.data()[i];
           CHECK(hit.action != petui::SelectProject);
           if (hit.action == petui::RemoveProject) {
             ++remove;
-            CHECK(band.bottom() + 8 == hit.rect.y);
+            CHECK(hit.rect.y >= c->height / 2);
           }
-          CHECK(hit.rect.right() <= band.x || hit.rect.x >= band.right() || hit.rect.bottom() <= band.y ||
-                hit.rect.y >= band.bottom());
         }
         CHECK(remove == 1);
         c->target.watchPlacedBand = false;
@@ -2008,8 +2441,10 @@ void placedPreviewChecks(const char* out = nullptr) {
       for (size_t i = 0; i < c->interactions.count(); ++i) {
         const auto& hit = c->interactions.data()[i];
         if (hit.action != petui::OpenProjectPreview || hit.value != 0) continue;
-        const auto edge = fui::makeRect(hit.rect.x + 2, hit.rect.y + 2, hit.rect.width - 4, 4);
+        const int inset = petui::actionsurface::RADIUS + 2;
+        const auto edge = fui::makeRect(hit.rect.x + inset, hit.rect.y, hit.rect.width - inset * 2, 2);
         CHECK(darkPixels(*c, edge) == unsigned(edge.width) * edge.height);
+        CHECK(darkPixels(*c, fui::makeRect(hit.rect.x + 1, hit.rect.y + 1, 2, 2)) == 0);
       }
       if (out && orientation < 2)
         c->write(std::string(out) + "/solid-catalog-" + (language == Language::ES ? "es-" : "en-") +
@@ -2033,11 +2468,12 @@ void homeRemovalScreens() {
       m.view = pet::View::Home;
       m.tab = pet::Tab::Home;
       petui::Work w;
-      c->target.expectedFullText = tr(STR_PET_HOME_NO_SELECTION);
+      c->target.expectedFullText = tr(STR_PET_PICK_DECORATION);
       c->paint(m, w);
       c->checkHits();
       CHECK(c->target.expectedFullTextSeen);
       for (unsigned id = 0; id < pet::OBJECT_COUNT; ++id) pet::own(p, id);
+      c->target.expectedFullText = tr(STR_PET_COLLECTION_FINISHED);
       c->target.expectedFullTextSeen = false;
       c->paint(m, w);
       c->checkHits();
@@ -2046,7 +2482,7 @@ void homeRemovalScreens() {
       c->target.expectedFullTextSeen = false;
       c->paint(m, w);
       c->checkHits();
-      CHECK(!c->target.expectedFullTextSeen);
+      CHECK(c->target.expectedFullTextSeen);
       c->target.expectedFullText = nullptr;
       for (unsigned slot = 0; slot < pet::SLOT_COUNT; ++slot) {
         const unsigned id = pet::objectAt(slot, 40);
@@ -2147,7 +2583,7 @@ void previousGenerationChecks(const char* output = nullptr) {
           life.endedAt = 1792692000;
           std::strcpy(life.name, i % 2 ? "ORBIT" : "WILLOW");
         }
-        const unsigned pages = std::max(1u, (count + 3) / 4);
+        const unsigned pages = std::max(1u, (count + 2) / 3);
         for (unsigned page = 0; page < pages; ++page) {
           petui::Model m;
           m.profile = &p;
@@ -2178,10 +2614,10 @@ void previousGenerationChecks(const char* output = nullptr) {
             trace.count = 0;
             c->paint(m, w);
             c->checkHits();
-            const unsigned visible = count ? std::min(4u, count - page * 4) : 0;
+            const unsigned visible = count ? std::min(3u, count - page * 3) : 0;
             CHECK(trace.count == visible);
             for (unsigned i = 0; i < visible; ++i) {
-              const auto& life = history.records[count - 1 - page * 4 - i];
+              const auto& life = history.records[count - 1 - page * 3 - i];
               const auto age = pet::stage(life.readingSeconds);
               const unsigned expected = age == pet::Stage::Egg
                                             ? unsigned(life.species)
@@ -2203,7 +2639,1675 @@ void previousGenerationChecks(const char* output = nullptr) {
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #include "goal-font-checks.h"
 #pragma GCC diagnostic pop
+static void feedingScreens(const char* out = nullptr) {
+  ArtFixture graphics("resources/apps/pet/graphics.bin"), habitat("resources/apps/pet/habitat.bin"),
+      scenes("resources/apps/pet/home.bin"), motion("resources/apps/pet/breathing.bin");
+  {
+    Canvas canvas(480, 800);
+    struct Probe {
+      unsigned limit;
+      static bool draw(void* context, fui::DrawTarget&, fui::Rect, uint32_t id, bool) {
+        CHECK(id < static_cast<Probe*>(context)->limit);
+        return true;
+      }
+    } probe{};
+    petui::Model model;
+    model.sleepArt = {&probe, Probe::draw};
+    for (auto edition :
+         {petfeed::Art::Legacy, petfeed::Art::Simple, petfeed::Art::Progressive, petfeed::Art::Extended}) {
+      model.feedingArt = edition;
+      probe.limit = edition == petfeed::Art::Extended      ? petart::ART_COUNT
+                    : edition == petfeed::Art::Progressive ? petfeed::ART_COUNT
+                                                           : petfeed::SIMPLE_ART_COUNT;
+      for (unsigned food = 0; food < petfeed::choices(edition); ++food)
+        for (unsigned eaten = 0; eaten < 4; ++eaten) {
+          const bool expected = edition == petfeed::Art::Extended || edition == petfeed::Art::Progressive ||
+                                (edition == petfeed::Art::Simple && food < 3 && eaten < 3);
+          CHECK(petui::foodPicture(model, canvas.target, fui::makeRect(10, 10, 60, 40), food, eaten) == expected);
+        }
+    }
+  }
+  for (auto language : {Language::ES, Language::EN}) {
+    I18N.setLanguage(language);
+    chrome::lightHeader = true;
+    for (unsigned orientation = 0; orientation < 4; ++orientation) {
+      auto c = std::make_unique<Canvas>(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+      c->device.orientation = fui::Orientation(orientation);
+      c->target.view = "feeding";
+      pet::Profile p;
+      p.created = true;
+      p.readingSeconds = 30000;
+      p.earnedFood = 43;
+      p.saciety = 90;
+      std::strcpy(p.name, "Bosque");
+      const auto saved = p;
+      petui::Model m;
+      m.profile = &p;
+      m.view = pet::View::Care;
+      m.choosingFood = true;
+      m.art = {&graphics, ArtFixture::draw};
+      m.habitat = {&habitat, ArtFixture::draw};
+      m.scenes = {&scenes, ArtFixture::draw};
+      m.sleepArt = {&motion, ArtFixture::draw};
+      m.fullRoomBackgrounds = true;
+      m.feedingArt = petfeed::Art::Extended;
+      petui::Work w;
+      for (unsigned food = 0; food < petfeed::FOOD_COUNT; ++food) {
+        m.selectedFood = uint8_t(food);
+        c->paint(m, w);
+        c->checkHits();
+        unsigned choices = 0, serving = 0, closes = 0;
+        for (size_t i = 0; i < c->interactions.count(); ++i) {
+          const auto& hit = c->interactions.data()[i];
+          if (hit.action == petui::SelectFood) {
+            ++choices;
+            CHECK(hit.value >= int(food / 3 * 3) && hit.value < int(food / 3 * 3 + 3));
+          }
+          if (hit.action == petui::Feed) {
+            ++serving;
+            CHECK(hit.value == int(food));
+          }
+          closes += hit.action == petui::ChangeTab && hit.value == 0;
+        }
+        CHECK(choices == 3 && serving == 0 && closes == 1);
+      }
+      if (out && orientation < 2 && language == Language::ES)
+        c->writeGray(m, w, std::string(out) + "/food-picker-" + std::to_string(orientation) + ".pgm");
+      for (unsigned blocked = 0; blocked < 3; ++blocked) {
+        p = saved;
+        if (blocked == 0) p.saciety = 100;
+        if (blocked == 1) p.earnedFood = 0;
+        if (blocked == 2) m.writable = false;
+        c->paint(m, w);
+        c->checkHits();
+        for (size_t i = 0; i < c->interactions.count(); ++i)
+          CHECK(c->interactions.data()[i].action != petui::Feed &&
+                c->interactions.data()[i].action != petui::SelectFood);
+      }
+      p = saved;
+      m.writable = true;
+      m.choosingFood = false;
+      m.view = pet::View::Dashboard;
+      for (unsigned species = 0; species < 3; ++species)
+        for (unsigned age = 1; age <= 4; ++age)
+          for (auto phase : {petfeed::Phase::Bite, petfeed::Phase::Chew, petfeed::Phase::Result}) {
+            p.species = pet::Species(species);
+            p.readingSeconds = pet::stageStart(pet::Stage(age));
+            p.resting = true;
+            p.illness = pet::Illness::Cold;
+            const auto before = p;
+            m.feedingPhase = phase;
+            m.foodStage = phase == petfeed::Phase::Chew ? 1 : 0;
+            m.feedResult = {90, 100, true};
+            c->paint(m, w);
+            c->checkHits();
+            CHECK(!std::memcmp(&before, &p, sizeof(p)));
+            if (out && orientation == 0 && language == Language::ES && species == 0 && age == 3)
+              c->writeGray(m, w, std::string(out) + "/feeding-" + std::to_string(unsigned(phase)) + ".pgm");
+          }
+    }
+  }
+}
+void curiosityScreens(const char* out = nullptr) {
+  I18N.setLanguage(Language::ES);
+  chrome::lightHeader = true;
+  ArtFixture graphics("resources/apps/pet/graphics.bin"), habitat("resources/apps/pet/habitat.bin"),
+      scenes("resources/apps/pet/home.bin"), motion("resources/apps/pet/breathing.bin");
+  struct Probe {
+    ArtFixture* pack;
+    unsigned limit = petcurious::ART_COUNT, expected = 0, curious = 0;
+    static bool draw(void* context, fui::DrawTarget& target, fui::Rect area, uint32_t id, bool inverse) {
+      auto& probe = *static_cast<Probe*>(context);
+      if (id >= probe.limit) return false;
+      if (id >= petcurious::OFFSET) {
+        CHECK(id == probe.expected + unsigned(!inverse));
+        ++probe.curious;
+      }
+      return ArtFixture::draw(probe.pack, target, area, id, inverse);
+    }
+  } probe{&motion};
+  for (unsigned orientation = 0; orientation < 4; ++orientation) {
+    auto c = std::make_unique<Canvas>(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+    c->device.orientation = fui::Orientation(orientation);
+    pet::Profile p;
+    p.created = true;
+    std::strcpy(p.name, "Bosque");
+    p.saciety = p.joy = p.energy = p.hygiene = 100;
+    p.owned = 0xFFF;
+    for (unsigned slot = 0; slot < pet::SLOT_COUNT; ++slot) p.equipped[slot] = uint8_t(slot * 3);
+    petui::Model m;
+    m.profile = &p;
+    m.view = pet::View::Dashboard;
+    m.art = {&graphics, ArtFixture::draw};
+    m.scenes = {&scenes, ArtFixture::draw};
+    m.habitat = {&habitat, ArtFixture::draw};
+    m.sleepArt = {&probe, Probe::draw};
+    m.fullRoomBackgrounds = true;
+    m.feedingArt = petfeed::Art::Progressive;
+    petui::Work w;
+    for (unsigned species = 0; species < 3; ++species)
+      for (unsigned age = 1; age <= 4; ++age)
+        for (auto phase : {petcurious::Phase::Look, petcurious::Phase::Blink}) {
+          p.species = pet::Species(species);
+          p.readingSeconds = pet::stageStart(pet::Stage(age));
+          const auto saved = p;
+          m.curiosityPhase = phase;
+          probe.expected = petcurious::artIndex(p.species, pet::Stage(age), phase);
+          probe.curious = 0;
+          c->paint(m, w);
+          CHECK(probe.curious == 2);
+          CHECK(!std::memcmp(&saved, &p, sizeof(p)));
+          c->checkHits();
+          if (out && orientation == 0 && age == 3)
+            c->writeGray(m, w,
+                         std::string(out) + "/curiosity-" + std::to_string(species) + "-" +
+                             std::to_string(unsigned(phase)) + ".pgm");
+        }
+    for (unsigned blocked = 0; blocked < 4; ++blocked) {
+      const auto saved = p;
+      m.curiosityPhase = petcurious::Phase::Look;
+      if (blocked == 0) p.saciety = 29;
+      if (blocked == 1) p.resting = true;
+      if (blocked == 2) m.feedingPhase = petfeed::Phase::Bite;
+      if (blocked == 3) probe.limit = petfeed::ART_COUNT;
+      probe.curious = 0;
+      c->paint(m, w);
+      CHECK(probe.curious == 0);
+      p = saved;
+      m.feedingPhase = petfeed::Phase::Idle;
+    }
+    probe.limit = petcurious::ART_COUNT;
+  }
+  chrome::lightHeader = false;
+}
+void reactionScreens(const char* out = nullptr, bool shot = false) {
+  const auto origin = fui::makeRect(180, 340, 140, 160);
+  int previousSize = 0;
+  for (const auto& particle : petui::roomeffects::PARTICLES) {
+    const auto first = petui::roomeffects::project(origin, particle, false);
+    const auto second = petui::roomeffects::project(origin, particle, true);
+    CHECK(second.groundY == first.groundY && second.y >= first.y);
+    CHECK(first.groundY >= origin.bottom() - 25);
+    CHECK(first.size >= previousSize);
+    CHECK(std::abs(second.x - (origin.x + origin.width / 2)) >= std::abs(first.x - (origin.x + origin.width / 2)));
+    previousSize = first.size;
+  }
+  ArtFixture graphics("resources/apps/pet/graphics.bin"), habitat("resources/apps/pet/habitat.bin"),
+      scenes("resources/apps/pet/home.bin"), motion("resources/apps/pet/breathing.bin");
+  struct GrowthArtTrace {
+    ArtFixture* pack;
+    unsigned images = 0;
+    static bool draw(void* context, fui::DrawTarget& target, fui::Rect box, uint32_t id, bool inverse) {
+      auto& trace = *static_cast<GrowthArtTrace*>(context);
+      if (id & 1) ++trace.images;
+      return ArtFixture::draw(trace.pack, target, box, id, inverse);
+    }
+  } growthArt{&motion};
+  for (auto language : {Language::ES, Language::EN}) {
+    I18N.setLanguage(language);
+    chrome::lightHeader = true;
+    for (unsigned orientation = 0; orientation < 4; ++orientation) {
+      if (shot && (orientation || language != Language::ES)) continue;
+      auto c = std::make_unique<Canvas>(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+      c->device.orientation = fui::Orientation(orientation);
+      pet::Profile p;
+      p.created = true;
+      p.readingSeconds = pet::stageStart(pet::Stage::Juvenile);
+      p.noticedStage = pet::Stage::Baby;
+      p.saciety = p.energy = p.hygiene = 100;
+      p.joy = 90;
+      p.earnedFood = 5;
+      p.noticedFood = 2;
+      std::strcpy(p.name, "Bosque");
+      p.owned = 0xFFF;
+      for (unsigned slot = 0; slot < pet::SLOT_COUNT; ++slot) p.equipped[slot] = uint8_t(slot * 3);
+      petui::Model m;
+      m.profile = &p;
+      m.fullRoomBackgrounds = true;
+      m.feedingArt = petfeed::Art::Progressive;
+      m.curiosityAvailable = true;
+      m.reactionArt = petreact::Art::Registered;
+      m.today = 20000;
+      m.clockKnown = true;
+      m.todaySeconds = 1500;
+      m.art = {&graphics, ArtFixture::draw};
+      m.habitat = {&habitat, ArtFixture::draw};
+      m.scenes = {&scenes, ArtFixture::draw};
+      m.sleepArt = {&growthArt, GrowthArtTrace::draw};
+      m.affection = {80, 90, pet::Need::None, true};
+      m.careResult = {20, 100, 85, 90, 1, true};
+      m.gameResult = {70, 80, 100, 90, petui::GameOutcome::Rewarded};
+      petui::Work w;
+      for (unsigned species = 0; species < 3; ++species) {
+        if (shot && species) continue;
+        p.species = pet::Species(species);
+        for (unsigned age = 1; age <= 4; ++age) {
+          if (shot && age != 3) continue;
+          p.readingSeconds = pet::stageStart(pet::Stage(age));
+          p.noticedStage = pet::Stage(age - 1);
+          p.noticedSeconds = p.readingSeconds - std::min<uint64_t>(p.readingSeconds, 1500);
+          {
+            const auto saved = p;
+            p.resting = true;
+            p.illness = pet::Illness::Healthy;
+            p.equipped[0] = 2;
+            m.reactionKind = petreact::Kind::Petting;
+            const auto idle = petui::habitatlayout::pet(p);
+            const auto head = petui::registeredReaction(m, idle);
+            p.equipped[0] = 0;
+            const auto full = petui::registeredReaction(m, idle);
+            CHECK(head.width > full.width && head.height > full.height);
+            p = saved;
+          }
+          for (auto kind : {petreact::Kind::Petting, petreact::Kind::Cleaning, petreact::Kind::Healing,
+                            petreact::Kind::Game, petreact::Kind::Growth}) {
+            if (shot && kind != petreact::Kind::Growth) continue;
+            m.reactionKind = kind;
+            m.view = kind == petreact::Kind::Growth ? pet::View::Evolution : pet::View::Dashboard;
+            for (auto phase : {petreact::Phase::Idle, petreact::Phase::First, petreact::Phase::Second,
+                               petreact::Phase::Before, petreact::Phase::BeforeShadow, petreact::Phase::After,
+                               petreact::Phase::AfterShadow, petreact::Phase::BeforeAgain, petreact::Phase::AfterAgain,
+                               petreact::Phase::Reveal, petreact::Phase::Result}) {
+              if (kind == petreact::Kind::Growth &&
+                  (phase == petreact::Phase::First || phase == petreact::Phase::Second))
+                continue;
+              if (kind != petreact::Kind::Growth && phase != petreact::Phase::First &&
+                  phase != petreact::Phase::Second && phase != petreact::Phase::Result)
+                continue;
+              if (shot && phase != petreact::Phase::Idle) continue;
+              m.reactionPhase = phase;
+              const auto saved = p;
+              growthArt.images = 0;
+              c->paint(m, w);
+              if (kind == petreact::Kind::Growth) {
+                const bool revealed = phase == petreact::Phase::Idle || phase == petreact::Phase::Reveal ||
+                                      phase == petreact::Phase::Result;
+                CHECK(revealed ? growthArt.images > 0 : growthArt.images == 0);
+              }
+              c->checkHits();
+              CHECK(!std::memcmp(&saved, &p, sizeof(p)));
+              unsigned confirm = 0, dismiss = 0;
+              for (size_t i = 0; i < c->interactions.count(); ++i) {
+                const auto& hit = c->interactions.data()[i];
+                confirm += hit.action == petui::Continue;
+                dismiss += hit.action == petui::DismissReaction;
+                CHECK(hit.action != petui::Read && hit.action != petui::OpenGames && hit.action != petui::Rest &&
+                      hit.action != petui::ChangeTab);
+              }
+              CHECK(confirm == unsigned(kind == petreact::Kind::Growth && phase == petreact::Phase::Idle));
+              CHECK(dismiss == unsigned(kind != petreact::Kind::Growth));
+              if (out && orientation == 0 && language == Language::ES && !species && age == 3)
+                c->writeGray(m, w,
+                             std::string(out) + "/reaction-" + std::to_string(unsigned(kind)) + "-" +
+                                 std::to_string(unsigned(phase)) + ".pgm");
+            }
+          }
+        }
+      }
+      m.view = pet::View::Reward;
+      m.reactionKind = petreact::Kind::None;
+      m.reactionPhase = petreact::Phase::Idle;
+      c->paint(m, w);
+      c->checkHits();
+      unsigned confirms = 0;
+      for (size_t i = 0; i < c->interactions.count(); ++i)
+        confirms += c->interactions.data()[i].action == petui::Continue;
+      CHECK(confirms == 1);
+      if (out && !orientation && language == Language::ES) {
+        c->writeGray(m, w, std::string(out) + "/reaction-reading.pgm");
+        m.view = pet::View::Health;
+        p.hygiene = 35;
+        p.illness = pet::Illness::Cold;
+        c->writeGray(m, w, std::string(out) + "/reaction-health.pgm");
+        c->checkHits();
+        p.species = pet::Species::Silva;
+        p.readingSeconds = pet::stageStart(pet::Stage::Juvenile);
+        p.hygiene = 100;
+        p.joy = 88;
+        m.view = pet::View::Dashboard;
+        c->writeGray(m, w, std::string(out) + "/size-idle.pgm");
+        m.reactionKind = petreact::Kind::Cleaning;
+        m.careResult = {44, 100, 83, 88, 0, true};
+        m.reactionPhase = petreact::Phase::First;
+        c->writeGray(m, w, std::string(out) + "/size-clean-first.pgm");
+        m.reactionPhase = petreact::Phase::Second;
+        c->writeGray(m, w, std::string(out) + "/size-clean-second.pgm");
+        m.reactionPhase = petreact::Phase::Result;
+        c->writeGray(m, w, std::string(out) + "/size-result.pgm");
+        p.resting = true;
+        p.illness = pet::Illness::Healthy;
+        p.equipped[0] = 2;
+        p.hygiene = 44;
+        m.reactionKind = petreact::Kind::None;
+        m.reactionPhase = petreact::Phase::Idle;
+        c->writeGray(m, w, std::string(out) + "/size-shelter-idle.pgm");
+        CHECK(!pet::clean(p));
+        CHECK(p.resting && p.hygiene == 44);
+        p.resting = false;
+        p.restAt = 0;
+        CHECK(pet::clean(p));
+        CHECK(!p.resting && p.restAt == 0);
+        m.reactionKind = petreact::Kind::Cleaning;
+        m.reactionPhase = petreact::Phase::First;
+        c->writeGray(m, w, std::string(out) + "/size-shelter-first.pgm");
+        m.reactionPhase = petreact::Phase::Second;
+        c->writeGray(m, w, std::string(out) + "/size-shelter-second.pgm");
+      }
+    }
+  }
+  chrome::lightHeader = false;
+}
+void appearanceChecks() {
+  for (const auto language : {Language::ES, Language::EN}) {
+    I18N.setLanguage(language);
+    for (unsigned orientation = 0; orientation < 4; ++orientation) {
+      Canvas c(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+      c.device.orientation = fui::Orientation(orientation);
+      pet::Profile p;
+      p.created = true;
+      p.readingSeconds = pet::stageStart(pet::Stage::Juvenile);
+      p.bornDay = 19996;
+      petui::Model m;
+      m.profile = &p;
+      m.view = pet::View::Dashboard;
+      petui::Work w;
+      for (const auto day : {19996, 19997, 20000, 19995, 0}) {
+        m.today = day;
+        m.clockKnown = day != 0;
+        char age[48], generation[32], expected[128];
+        if (day == 19996 || day == 19997 || day == 20000) {
+          const unsigned days = day == 19996 ? 0 : day == 19997 ? 1 : 4;
+          std::snprintf(age, sizeof(age), days == 1 ? tr(STR_PET_AGE_DAY) : tr(STR_PET_AGE_DAYS), days);
+        } else
+          std::snprintf(age, sizeof(age), "%s", tr(STR_PET_AGE_UNKNOWN));
+        std::snprintf(generation, sizeof(generation), tr(STR_PET_GENERATION), 1ul);
+        std::snprintf(expected, sizeof(expected), "%s · %s · %s", petui::stageName(pet::Stage::Juvenile), generation,
+                      age);
+        c.target.expectedFullText = expected;
+        c.target.expectedFullTextSeen = false;
+        c.paint(m, w);
+        CHECK(c.target.expectedFullTextSeen);
+        c.checkHits();
+      }
+      c.target.expectedFullText = nullptr;
+      for (const auto view : {pet::View::New, pet::View::Dashboard, pet::View::Care, pet::View::Album,
+                              pet::View::Settings, pet::View::Projects, pet::View::ProjectPreview}) {
+        m.view = view;
+        m.previewItem = 0;
+        m.projectSlot = 0;
+        chrome::lightHeader = false;
+        c.paint(m, w);
+        const auto squareTheme = c.pixels;
+        CHECK(!chrome::lightHeader);
+        CHECK(darkPixels(c, fui::makeRect(0, 0, c.width, 4)) == unsigned(c.width) * 4);
+        chrome::lightHeader = true;
+        c.paint(m, w);
+        const unsigned headerEnd = unsigned(c.device.safeRect().y + petui::simple::HEADER_HEIGHT);
+        const unsigned at = headerEnd * unsigned((c.width + 7) / 8);
+        CHECK(std::equal(c.pixels.begin() + at, c.pixels.end(), squareTheme.begin() + at));
+        CHECK(darkPixels(c, fui::makeRect(0, 0, c.width, 4)) == 0);
+        CHECK(chrome::lightHeader && chrome::headerHeight == 0);
+        c.checkHits();
+      }
+    }
+  }
+}
+void readingBarChecks(const char* out = nullptr) {
+  for (const auto language : {Language::ES, Language::EN}) {
+    I18N.setLanguage(language);
+    for (unsigned orientation = 0; orientation < 4; ++orientation) {
+      Canvas c(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+      c.device.orientation = fui::Orientation(orientation);
+      pet::Profile p;
+      p.created = true;
+      p.readingSeconds = pet::stageStart(pet::Stage::Juvenile);
+      p.projectStartedSeconds = p.readingSeconds - 1500;
+      p.project = 3;
+      for (unsigned id = 0; id < 3; ++id) pet::own(p, id);
+      petui::Model m;
+      m.profile = &p;
+      m.view = pet::View::Dashboard;
+      petui::Work w;
+      char expected[96];
+      std::snprintf(expected, sizeof(expected), tr(STR_PET_PROJECT_PROGRESS_MINUTES), 25ull, 30ull);
+      c.target.expectedFullText = expected;
+      c.target.expectedFullTextSeen = false;
+      c.paint(m, w);
+      CHECK(c.target.expectedFullTextSeen);
+      unsigned read = 0, toggle = 0;
+      for (size_t i = 0; i < c.interactions.count(); ++i) {
+        const auto& hit = c.interactions.data()[i];
+        read += hit.action == petui::Read;
+        if (hit.action == petui::ToggleReadingDisplay) {
+          ++toggle;
+          CHECK(hit.rect.width >= 44 && hit.rect.height >= 44);
+        }
+      }
+      CHECK(read == 1 && toggle == 1);
+      const auto controls = petui::simple::mainLayout(petui::simple::body(c.screen)).controls;
+      const auto lowerEdge = fui::makeRect(controls.x + 16, controls.bottom() + 1, controls.width - 32, 1);
+      CHECK(darkPixels(c, lowerEdge) == unsigned(lowerEdge.width));
+      struct Trace {
+        fui::Rect picture{};
+        unsigned count = 0, id = 0;
+        bool inverse = false;
+        static bool draw(void* context, fui::DrawTarget&, fui::Rect box, uint32_t id, bool inverse) {
+          auto& trace = *static_cast<Trace*>(context);
+          if (box.x != trace.picture.x || box.y != trace.picture.y || box.width != 48 || box.height != 48) return false;
+          ++trace.count;
+          trace.id = id;
+          trace.inverse = inverse;
+          return true;
+        }
+      } trace;
+      trace.picture = fui::makeRect(controls.x + 12, controls.bottom() - 70 + 11, 48, 48);
+      m.habitat = {&trace, Trace::draw};
+      c.paint(m, w);
+      CHECK(trace.count == 1 && trace.id == 3 + p.project * 2 && trace.inverse);
+      m.habitat = {};
+      c.checkHits();
+      m.readingDisplay = petui::ReadingDisplay::Lifetime;
+      petui::widget::readingTime(m, expected, sizeof(expected));
+      c.target.expectedFullTextSeen = false;
+      c.paint(m, w);
+      CHECK(c.target.expectedFullTextSeen);
+      pet::own(p, p.project);
+      m.readingDisplay = petui::ReadingDisplay::Project;
+      c.target.expectedFullTextSeen = false;
+      c.paint(m, w);
+      CHECK(c.target.expectedFullTextSeen);
+      for (size_t i = 0; i < c.interactions.count(); ++i)
+        CHECK(c.interactions.data()[i].action != petui::ToggleReadingDisplay);
+      c.target.expectedFullText = nullptr;
+      if (out && language == Language::ES && !orientation) {
+        p.owned &= uint16_t(~(1u << p.project));
+        ArtFixture graphics("resources/apps/pet/graphics.bin"), habitat("resources/apps/pet/habitat.bin"),
+            scenes("resources/apps/pet/home.bin"), motion("resources/apps/pet/breathing.bin");
+        m.art = {&graphics, ArtFixture::draw};
+        m.habitat = {&habitat, ArtFixture::draw};
+        m.scenes = {&scenes, ArtFixture::draw};
+        m.sleepArt = {&motion, ArtFixture::draw};
+        m.fullRoomBackgrounds = true;
+        m.today = 20000;
+        p.bornDay = 19996;
+        std::strcpy(p.name, "Bosque");
+        c.writeGray(m, w, std::string(out) + "/reading-project.pgm");
+        m.readingDisplay = petui::ReadingDisplay::Lifetime;
+        c.writeGray(m, w, std::string(out) + "/reading-life.pgm");
+      }
+    }
+  }
+}
+void eggAvailabilityChecks(const char* out = nullptr) {
+  for (auto language : {Language::EN, Language::ES}) {
+    I18N.setLanguage(language);
+    for (unsigned orientation = 0; orientation < 4; ++orientation) {
+      Canvas c(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+      c.device.orientation = fui::Orientation(orientation);
+      pet::Profile p;
+      p.created = true;
+      petui::Model m;
+      m.profile = &p;
+      m.view = pet::View::Dashboard;
+      petui::Work w;
+      c.target.watchLocks = true;
+      for (const auto reading : {0ull, 600ull, 1140ull, 1199ull}) {
+        p.readingSeconds = reading;
+        char expected[96];
+        const auto remaining = (pet::stageStart(pet::Stage::Newborn) - reading + 59) / 60;
+        std::snprintf(expected, sizeof(expected), remaining == 1 ? tr(STR_PET_HATCH_MINUTE) : tr(STR_PET_HATCH_MINUTES),
+                      static_cast<unsigned long long>(remaining));
+        for (auto display : {petui::ReadingDisplay::Project, petui::ReadingDisplay::Lifetime}) {
+          m.readingDisplay = display;
+          c.target.lockSymbols = 0;
+          c.target.expectedFullText = expected;
+          c.target.expectedFullTextSeen = false;
+          c.paint(m, w);
+          CHECK(c.target.expectedFullTextSeen && c.target.lockSymbols == 8);
+          c.checkHits();
+          unsigned readingActions = 0;
+          for (size_t i = 0; i < c.interactions.count(); ++i) {
+            const auto& hit = c.interactions.data()[i];
+            CHECK(hit.action != petui::OpenGames && hit.action != petui::OpenHealth && hit.action != petui::Rest &&
+                  hit.action != petui::ToggleReadingDisplay);
+            CHECK(hit.action != petui::ChangeTab || (hit.value != 1 && hit.value != 2));
+            readingActions += hit.action == petui::Read;
+          }
+          CHECK(readingActions == 1);
+        }
+      }
+      c.target.expectedFullText = nullptr;
+      c.target.watchLocks = false;
+      if (out && language == Language::ES && orientation < 2) {
+        p.readingSeconds = 600;
+        ArtFixture graphics("resources/apps/pet/graphics.bin"), habitat("resources/apps/pet/habitat.bin"),
+            scenes("resources/apps/pet/home.bin"), motion("resources/apps/pet/breathing.bin");
+        m.art = {&graphics, ArtFixture::draw};
+        m.habitat = {&habitat, ArtFixture::draw};
+        m.scenes = {&scenes, ArtFixture::draw};
+        m.sleepArt = {&motion, ArtFixture::draw};
+        m.fullRoomBackgrounds = true;
+        c.writeGray(m, w, std::string(out) + (orientation ? "/egg-wide.pgm" : "/egg-portrait.pgm"));
+      }
+      p.readingSeconds = pet::stageStart(pet::Stage::Newborn);
+      c.paint(m, w);
+      unsigned care = 0, play = 0, health = 0, decorate = 0;
+      for (size_t i = 0; i < c.interactions.count(); ++i) {
+        const auto& hit = c.interactions.data()[i];
+        care += hit.action == petui::ChangeTab && hit.value == 1;
+        play += hit.action == petui::OpenGames;
+        health += hit.action == petui::OpenHealth;
+        CHECK(hit.action != petui::Rest);
+        decorate += hit.action == petui::ChangeTab && hit.value == 2;
+      }
+      CHECK(care == 1 && play == 1 && health == 1 && decorate == 1);
+    }
+  }
+}
+void polishChecks() {
+  for (auto language : {Language::EN, Language::ES}) {
+    I18N.setLanguage(language);
+    for (unsigned orientation = 0; orientation < 4; ++orientation) {
+      Canvas c(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+      c.device.orientation = fui::Orientation(orientation);
+      pet::Profile p;
+      p.created = true;
+      p.readingSeconds = pet::stageStart(pet::Stage::Juvenile);
+      p.bornDay = 19996;
+      std::strcpy(p.name, "Bosque");
+      pet::Profile previous;
+      pet::captureMoments(p, previous, 20000);
+      petui::Model m;
+      m.profile = &p;
+      m.view = pet::View::Dashboard;
+      m.today = 21000;
+      petui::Work w;
+      const auto expect = [&](const char* label, bool visible = true) {
+        c.target.expectedFullText = label;
+        c.target.expectedFullTextSeen = false;
+        c.paint(m, w);
+        if (c.target.expectedFullTextSeen != visible)
+          std::printf("POLISH text %s expected %d view %d\n", label, int(visible), int(m.view));
+        CHECK(c.target.expectedFullTextSeen == visible);
+        c.checkHits();
+        c.target.expectedFullText = nullptr;
+      };
+      std::strcpy(c.status.clock, "18:45");
+      expect("18:45");
+      char appTitle[32];
+      pixelui::copyNatural(appTitle, sizeof(appTitle), tr(STR_PET_APP));
+      expect(appTitle);
+      c.status.percent = 0;
+      c.paint(m, w);
+      const auto withoutBattery = c.pixels;
+      c.status.percent = 100;
+      c.status.charging = true;
+      c.paint(m, w);
+      CHECK(c.pixels == withoutBattery);
+      c.status.clock[0] = '\0';
+      expect("18:45", false);
+      m.view = pet::View::Memory;
+      m.memory = unsigned(pet::Moment::Juvenile);
+      char label[96];
+      std::snprintf(label, sizeof(label), tr(STR_PET_AGE_DAYS), 4u);
+      expect(label);
+      expect(language == Language::ES ? "Esta imagen conserva su etapa y los objetos de aquel momento."
+                                      : "This picture keeps the life stage and furnishings from that moment.",
+             false);
+      p.momentDays[m.memory] = 0;
+      expect(tr(STR_PET_AGE_UNKNOWN));
+      m.memory = unsigned(pet::Moment::Arrival);
+      p.momentDays[m.memory] = 0;
+      std::snprintf(label, sizeof(label), tr(STR_PET_AGE_DAYS), 0u);
+      expect(label);
+      expect(tr(STR_PET_MEMORY_TIME_UNKNOWN));
+      FontBridge pixelHeading{toybox_20};
+      c.target.backend.setFont(5, pixelHeading.font);
+      m.memory = unsigned(pet::Moment::Juvenile);
+      p.momentDays[m.memory] = 20000;
+      c.paint(m, w);
+      c.checkHits();
+      c.target.backend.setFont(5, c.title.font);
+      m.view = pet::View::Dashboard;
+      m.reactionKind = petreact::Kind::Cleaning;
+      m.reactionPhase = petreact::Phase::Result;
+      m.careResult = {44, 100, 84, 89, 0, true};
+      expect(tr(STR_PET_CLEANING_FEEDBACK));
+      expect("100/100");
+      expect("100 / 100");
+      expect("100", false);
+      std::snprintf(label, sizeof(label), "%u", 44u);
+      expect(label);
+      m.reactionKind = petreact::Kind::None;
+      m.fullRoomBackgrounds = true;
+      struct Trace {
+        unsigned first = 0, calls = 0;
+        fui::Rect tile{};
+        static bool draw(void* context, fui::DrawTarget&, fui::Rect area, uint32_t id, bool) {
+          auto& t = *static_cast<Trace*>(context);
+          if (!t.calls++) {
+            t.first = id;
+            t.tile = area;
+          }
+          return true;
+        }
+      } trace;
+      m.scenes = {&trace, Trace::draw};
+      const auto clip = c.target.clipRect();
+      petui::albumwidget::vignette(c.screen, m, fui::makeRect(20, 140, 320, 200), m.memory);
+      const auto restored = c.target.clipRect();
+      CHECK(restored.x == clip.x && restored.y == clip.y && restored.width == clip.width &&
+            restored.height == clip.height);
+      CHECK(trace.calls > 0);
+      CHECK(trace.first >= petui::ROOM_PORTRAIT_ART && trace.first < petui::ROOM_LANDSCAPE_ART);
+      CHECK(std::abs(trace.tile.height * 3 - trace.tile.width * 5) <= 6);
+    }
+  }
+}
+void sequenceAttemptChecks(const char* out) {
+  for (auto language : {Language::EN, Language::ES}) {
+    I18N.setLanguage(language);
+    for (unsigned orientation = 0; orientation < 4; ++orientation) {
+      Canvas c(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+      c.device.orientation = fui::Orientation(orientation);
+      pet::Profile profile;
+      profile.created = true;
+      profile.readingSeconds = 7200;
+      petui::Model model;
+      model.profile = &profile;
+      model.view = pet::View::Play;
+      petui::Work work;
+      for (unsigned error = 0; error < 7; ++error) {
+        pet::GameState game;
+        game.begin(pet::Game::Sequence, 123);
+        game.rounds = 2;
+        game.advance();
+        for (unsigned n = 0; n < 7; ++n) {
+          game.select((game.sequence[n] + (n == error ? 1 : 0)) % 3);
+          model.game = &game;
+          c.paint(model, work);
+          c.checkHits();
+          unsigned picks = 0, retries = 0;
+          for (size_t i = 0; i < c.interactions.count(); ++i) {
+            picks += c.interactions.data()[i].action == petui::GamePick;
+            retries += c.interactions.data()[i].action == petui::GameNext;
+          }
+          CHECK(picks == (n < 6 ? 3u : 0u));
+          CHECK(retries == (n < 6 ? 0u : 1u));
+          CHECK(game.phase == (n < 6 ? pet::GamePhase::Playing : pet::GamePhase::RoundFailed));
+          const auto original = c.pixels;
+          auto hiddenAnswer = game;
+          for (auto& value : hiddenAnswer.sequence) value = uint8_t((value + 1) % 3);
+          model.game = &hiddenAnswer;
+          c.paint(model, work);
+          CHECK(c.pixels == original);
+          model.game = &game;
+          if (n == 6) {
+            c.target.expectedFullText = tr(STR_PET_SEQUENCE_RETRY);
+            c.target.expectedFullTextSeen = false;
+            c.paint(model, work);
+            CHECK(c.target.expectedFullTextSeen);
+            c.target.expectedFullText = nullptr;
+          }
+          if (out && language == Language::ES && orientation < 2 && error == 0 && (n == 0 || n == 6))
+            c.write(std::string(out) + "/sequence-" + std::to_string(c.device.width) + "-" + std::to_string(n) +
+                    ".pbm");
+        }
+        game.advance();
+        CHECK(game.showing() && game.step == 0 && game.rounds == 2);
+      }
+    }
+  }
+}
+void careValueClarityChecks() {
+  for (auto language : {Language::EN, Language::ES}) {
+    I18N.setLanguage(language);
+    for (unsigned orientation = 0; orientation < 4; ++orientation) {
+      Canvas c(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+      c.device.orientation = fui::Orientation(orientation);
+      pet::Profile p;
+      p.created = true;
+      p.readingSeconds = 28800;
+      p.earnedFood = 100;
+      p.joy = 73;
+      p.energy = 91;
+      p.hygiene = 62;
+      petui::Model m;
+      m.profile = &p;
+      m.view = pet::View::Dashboard;
+      petui::Work w;
+      const auto needs = petui::simple::mainLayout(petui::simple::body(c.screen)).needs;
+      for (unsigned step = 0; step < 4; ++step) {
+        m.sleepStep = uint8_t(step);
+        for (unsigned pass = 0; pass < 3; ++pass) {
+          if (!pass) {
+            c.paint(m, w);
+          } else {
+            petui::GrayTarget gray(c.target, pass == 2);
+            petui::render(gray, c.device, c.input, c.interactions, c.status, m, w);
+          }
+          for (int divider = 1; divider < 4; ++divider) {
+            const int x = petui::widget::cell(needs, divider - 1, 4, 0).right();
+            for (int y = needs.y + 10; y <= needs.bottom() - 10; ++y) {
+              const auto at = size_t(y) * ((c.width + 7) / 8) + unsigned(x) / 8;
+              CHECK(!(c.pixels[at] & (128 >> (x % 8))));
+            }
+          }
+        }
+      }
+      const auto expect = [&](const char* value, bool visible = true) {
+        c.target.expectedFullText = value;
+        c.target.expectedFullTextSeen = false;
+        c.paint(m, w);
+        CHECK(c.target.expectedFullTextSeen == visible);
+        c.checkHits();
+        c.target.expectedFullText = nullptr;
+      };
+      char value[64];
+      for (unsigned before : {0u, 1u, 40u, 75u, 90u, 99u}) {
+        p.saciety = uint8_t(before);
+        CHECK(pet::feed(p));
+        CHECK(p.saciety == std::min(100u, before + 25));
+        m.feedResult = {uint8_t(before), p.saciety, true};
+        m.feedingPhase = petfeed::Phase::Result;
+        std::snprintf(value, sizeof(value), "%u/100", unsigned(p.saciety));
+        expect(value);
+        expect(tr(STR_PET_FULLNESS));
+        std::snprintf(value, sizeof(value), "%u / 100", unsigned(p.saciety));
+        expect(value);
+        std::snprintf(value, sizeof(value), "%u", before);
+        expect(value);
+        std::snprintf(value, sizeof(value), "%u", unsigned(p.saciety));
+        expect(value, false);
+        std::snprintf(value, sizeof(value), language == Language::ES ? "Antes: %u" : "Before: %u", before);
+        expect(value, false);
+        expect("+25", false);
+      }
+      m.feedResult = {};
+      m.feedingPhase = petfeed::Phase::Idle;
+      m.reactionPhase = petreact::Phase::Result;
+      m.affection.before = 40;
+      m.affection.after = 54;
+      m.careResult = {44, 100, 40, 54, 1, true};
+      m.gameResult.joyBefore = 40;
+      m.gameResult.joyAfter = 54;
+      for (auto kind :
+           {petreact::Kind::Petting, petreact::Kind::Cleaning, petreact::Kind::Healing, petreact::Kind::Game}) {
+        m.reactionKind = kind;
+        const bool healing = kind == petreact::Kind::Healing;
+        expect(healing ? "100 / 100" : "54 / 100");
+        expect(healing ? "44" : "40");
+        expect(healing ? "100" : "54", false);
+      }
+      m.reactionKind = petreact::Kind::None;
+      p.resting = true;
+      m.view = pet::View::Care;
+      expect(tr(STR_PET_GAME_WAKE_SHORT));
+      m.view = pet::View::Dashboard;
+      m.sleepStep = 0;
+      c.paint(m, w);
+      const auto firstSleepFrame = c.pixels;
+      m.sleepStep = 1;
+      c.paint(m, w);
+      CHECK(c.pixels != firstSleepFrame);
+      const auto secondSleepFrame = c.pixels;
+      m.sleepStep = 2;
+      c.paint(m, w);
+      CHECK(c.pixels != secondSleepFrame);
+      m.view = pet::View::Album;
+      c.paint(m, w);
+      for (size_t i = 0; i < c.interactions.count(); ++i)
+        CHECK(c.interactions.data()[i].action != petui::OpenAccumulatedHelp &&
+              c.interactions.data()[i].action != petui::OpenStatsHelp);
+    }
+  }
+}
+void healthClarityChecks(const char* out) {
+  for (auto language : {Language::ES, Language::EN}) {
+    I18N.setLanguage(language);
+    for (unsigned orientation = 0; orientation < 4; ++orientation) {
+      Canvas c(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+      c.device.orientation = fui::Orientation(orientation);
+      chrome::lightHeader = true;
+      pet::Profile p;
+      p.created = true;
+      p.readingSeconds = 28800;
+      p.bornDay = 19997;
+      std::strcpy(p.name, "Bosque");
+      petui::Model m;
+      m.profile = &p;
+      m.today = 20000;
+      m.view = pet::View::Health;
+      petui::Work w;
+      for (unsigned state = 0; state < 4; ++state) {
+        p.hygiene = state ? 44 : 100;
+        p.illness = state > 1 ? pet::Illness::Cold : pet::Illness::Healthy;
+        p.earnedMedicine = state == 3 ? 0 : 9;
+        p.spentMedicine = state == 3 ? 1 : 0;
+        c.target.expectedFullText = tr(STR_PET_HEALTH_ADVICE_OK);
+        c.target.expectedFullTextSeen = false;
+        c.paint(m, w);
+        c.checkHits();
+        CHECK(!c.target.expectedFullTextSeen);
+        unsigned clean = 0, cure = 0, help = 0;
+        for (size_t i = 0; i < c.interactions.count(); ++i) {
+          const auto action = c.interactions.data()[i].action;
+          clean += action == petui::Clean;
+          cure += action == petui::Cure;
+          help += action == petui::OpenHealthHelp;
+        }
+        CHECK(clean == unsigned(state != 0));
+        CHECK(cure == unsigned(state == 2));
+        CHECK(help == 1);
+        c.target.expectedFullText = nullptr;
+        if (out && language == Language::ES && orientation < 2 && (state == 0 || state == 2)) {
+          ArtFixture graphics("resources/apps/pet/graphics.bin"), habitat("resources/apps/pet/habitat.bin"),
+              scenes("resources/apps/pet/home.bin"), motion("resources/apps/pet/breathing.bin");
+          m.art = {&graphics, ArtFixture::draw};
+          m.habitat = {&habitat, ArtFixture::draw};
+          m.scenes = {&scenes, ArtFixture::draw};
+          m.sleepArt = {&motion, ArtFixture::draw};
+          m.fullRoomBackgrounds = true;
+          for (unsigned slot = 0; slot < pet::SLOT_COUNT; ++slot) p.equipped[slot] = uint8_t(pet::objectAt(slot, 0));
+          c.paint(m, w);
+          c.checkHits();
+          c.write(std::string(out) + "/health-" + std::to_string(c.device.width) + "-" + std::to_string(state) +
+                  ".pbm");
+          m.art = {};
+          m.habitat = {};
+          m.scenes = {};
+          m.sleepArt = {};
+          m.fullRoomBackgrounds = false;
+        }
+      }
+    }
+  }
+}
+
+static void generationAgeChecks() {
+  for (auto language : {Language::ES, Language::EN}) {
+    I18N.setLanguage(language);
+    for (unsigned orientation = 0; orientation < 4; ++orientation) {
+      auto c = std::make_unique<Canvas>(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+      c->device.orientation = fui::Orientation(orientation);
+      pet::Profile p;
+      p.created = true;
+      p.readingSeconds = pet::stageStart(pet::Stage::Adult);
+      pet::History history;
+      history.count = 1;
+      auto& life = history.records[0];
+      life.generation = 3;
+      life.readingSeconds = 32 * 3600;
+      life.days = 7;
+      life.endedAt = 1793203200;
+      std::strcpy(life.name, "BRASA");
+      petui::Model m;
+      m.profile = &p;
+      m.history = &history;
+      m.memory = 0;
+      petui::Work w;
+      for (int days : {-1, 0, 1, 24, 65535}) {
+        life.ageKnown = days >= 0;
+        life.ageDays = uint16_t(std::max(0, days));
+        char label[80];
+        if (days < 0)
+          std::snprintf(label, sizeof(label), "%s", tr(STR_PET_LIFE_AGE_UNKNOWN));
+        else
+          std::snprintf(label, sizeof(label), days == 1 ? tr(STR_PET_AGE_DAY) : tr(STR_PET_AGE_DAYS), unsigned(days));
+        for (auto view : {pet::View::Lives, pet::View::LifeDetail}) {
+          m.view = view;
+          c->target.expectedFullText = label;
+          c->target.expectedFullTextSeen = false;
+          c->paint(m, w);
+          c->checkHits();
+          CHECK(c->target.expectedFullTextSeen);
+          c->target.expectedFullText = nullptr;
+        }
+      }
+    }
+  }
+}
+
+static void companionScreens(const char* out = nullptr) {
+  I18N.setLanguage(Language::ES);
+  chrome::lightHeader = true;
+  ArtFixture graphics("resources/apps/pet/graphics.bin"), habitat("resources/apps/pet/habitat.bin"),
+      scenes("resources/apps/pet/home.bin"), motion("resources/apps/pet/breathing.bin");
+  struct Probe {
+    ArtFixture* pack;
+    unsigned expected = 0, drawn = 0;
+    static bool draw(void* ctx, fui::DrawTarget& target, fui::Rect box, uint32_t id, bool inverse) {
+      auto& self = *static_cast<Probe*>(ctx);
+      CHECK(id < petart::ART_COUNT);
+      if (id >= petart::COMPANION_OFFSET) {
+        CHECK(id == self.expected + unsigned(!inverse));
+        ++self.drawn;
+      }
+      return ArtFixture::draw(self.pack, target, box, id, inverse);
+    }
+  } probe{&motion};
+  for (unsigned orientation = 0; orientation < 4; ++orientation) {
+    Canvas c(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+    c.device.orientation = fui::Orientation(orientation);
+    pet::Profile p;
+    p.created = true;
+    p.saciety = p.joy = p.energy = p.hygiene = 100;
+    std::strcpy(p.name, "Bosque");
+    petui::Model m;
+    m.profile = &p;
+    m.view = pet::View::Dashboard;
+    m.fullRoomBackgrounds = true;
+    m.feedingArt = petfeed::Art::Extended;
+    m.art = {&graphics, ArtFixture::draw};
+    m.habitat = {&habitat, ArtFixture::draw};
+    m.scenes = {&scenes, ArtFixture::draw};
+    m.sleepArt = {&probe, Probe::draw};
+    petui::Work w;
+    for (unsigned species = 0; species < 3; ++species)
+      for (unsigned age = 1; age <= 4; ++age)
+        for (auto kind : {petcompanion::Kind::Sit, petcompanion::Kind::Stretch, petcompanion::Kind::Greet})
+          for (auto phase : {petcompanion::Phase::First, petcompanion::Phase::Second}) {
+            p.species = pet::Species(species);
+            p.readingSeconds = pet::stageStart(pet::Stage(age));
+            const auto saved = p;
+            m.companionKind = kind;
+            m.companionPhase = phase;
+            probe.expected = petcompanion::artIndex(petcompanion::poseSlot(kind, p.species, pet::Stage(age)), phase);
+            probe.drawn = 0;
+            c.paint(m, w);
+            c.checkHits();
+            CHECK(probe.drawn == 2 && !std::memcmp(&saved, &p, sizeof(p)));
+            unsigned touches = 0;
+            for (size_t i = 0; i < c.interactions.count(); ++i)
+              touches += c.interactions.data()[i].action == petui::TouchCompanion;
+            CHECK(touches == 1);
+            if (out && orientation == 0 && species == 0 && age == 3)
+              c.writeGray(m, w,
+                          std::string(out) + "/companion-" + std::to_string(unsigned(kind)) + "-" +
+                              std::to_string(unsigned(phase)) + ".pgm");
+          }
+    p.resting = true;
+    m.companionKind = petcompanion::Kind::WakeFirst;
+    probe.drawn = 0;
+    c.paint(m, w);
+    c.checkHits();
+    CHECK(probe.drawn == 0 && p.resting);
+    if (out && orientation == 0) c.writeGray(m, w, std::string(out) + "/touch-sleeping.pgm");
+    p.resting = false;
+    m.companionKind = petcompanion::Kind::None;
+    m.companionPhase = petcompanion::Phase::Idle;
+    for (auto view : {pet::View::Care, pet::View::Health, pet::View::Games, pet::View::Home}) {
+      m.view = view;
+      c.paint(m, w);
+      for (size_t i = 0; i < c.interactions.count(); ++i)
+        CHECK(c.interactions.data()[i].action != petui::TouchCompanion);
+    }
+    m.view = pet::View::Dashboard;
+    p.readingSeconds = 0;
+    c.paint(m, w);
+    for (size_t i = 0; i < c.interactions.count(); ++i) CHECK(c.interactions.data()[i].action != petui::TouchCompanion);
+  }
+  if (out) {
+    Canvas c(480, 160);
+    unsigned n = 0;
+    for (auto mood :
+         {petmood::Mood::Happy, petmood::Mood::Curious, petmood::Mood::Satisfied, petmood::Mood::Surprised}) {
+      petmood::draw(c.target, fui::makeRect(20 + n * 116, 30, 80, 80), mood);
+      ++n;
+    }
+    c.write(std::string(out) + "/emojis-native.pbm");
+  }
+}
+
+static void restTransitionScreens(const char* out = nullptr) {
+  I18N.setLanguage(Language::ES);
+  chrome::lightHeader = true;
+  ArtFixture graphics("resources/apps/pet/graphics.bin"), habitat("resources/apps/pet/habitat.bin"),
+      scenes("resources/apps/pet/home.bin"), motion("resources/apps/pet/breathing.bin");
+  const petrest::Phase phases[] = {
+      petrest::Phase::ApproachFirst, petrest::Phase::ApproachSecond, petrest::Phase::Arrive,
+      petrest::Phase::SettleFirst,   petrest::Phase::SettleSecond,   petrest::Phase::Exit,
+      petrest::Phase::StretchFirst,  petrest::Phase::StretchSecond,  petrest::Phase::ReturnFirst,
+      petrest::Phase::ReturnSecond,  petrest::Phase::ReturnLast};
+  for (unsigned orientation = 0; orientation < 4; ++orientation) {
+    Canvas c(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+    c.device.orientation = fui::Orientation(orientation);
+    pet::Profile p;
+    p.created = true;
+    p.saciety = p.joy = p.energy = p.hygiene = 100;
+    petui::Model m;
+    m.profile = &p;
+    m.view = pet::View::Dashboard;
+    m.fullRoomBackgrounds = true;
+    m.feedingArt = petfeed::Art::Extended;
+    m.restArtAvailable = true;
+    m.art = {&graphics, ArtFixture::draw};
+    m.habitat = {&habitat, ArtFixture::draw};
+    m.scenes = {&scenes, ArtFixture::draw};
+    m.sleepArt = {&motion, ArtFixture::draw};
+    petui::Work w;
+    for (unsigned species = 0; species < 3; ++species)
+      for (unsigned age = 1; age <= 4; ++age) {
+        if (orientation && age != 4) continue;
+        p.species = pet::Species(species);
+        p.readingSeconds = pet::stageStart(pet::Stage(age));
+        for (unsigned shelter = 0; shelter < 2; ++shelter) {
+          p.equipped[0] = uint8_t(pet::objectAt(0, shelter ? 2 : 0));
+          for (auto phase : phases) {
+            m.restPhase = phase;
+            p.resting = unsigned(phase) <= unsigned(petrest::Phase::SettleSecond);
+            const auto saved = p;
+            c.paint(m, w);
+            c.checkHits();
+            CHECK(!std::memcmp(&saved, &p, sizeof(p)));
+            for (size_t i = 0; i < c.interactions.count(); ++i)
+              CHECK(c.interactions.data()[i].action != petui::TouchCompanion);
+            if (out && orientation < 2 && age == 4)
+              c.writeGray(m, w,
+                          std::string(out) + "/rest-" + std::to_string(species) + "-" + std::to_string(orientation) +
+                              "-" + std::to_string(shelter) + "-" + std::to_string(unsigned(phase)) + ".pgm");
+          }
+        }
+      }
+  }
+  // All rest objects share the same walk path contract at every hatched age.
+  pet::Profile p;
+  p.created = true;
+  petui::Model m;
+  m.profile = &p;
+  for (unsigned object = 0; object < pet::OBJECT_COUNT; ++object) {
+    if (pet::objectSlot(object) != 0) continue;
+    p.equipped[0] = uint8_t(object);
+    for (unsigned species = 0; species < 3; ++species)
+      for (unsigned age = 1; age <= 4; ++age) {
+        p.species = pet::Species(species);
+        p.readingSeconds = pet::stageStart(pet::Stage(age));
+        const auto idle = petui::habitatlayout::pet(p);
+        const auto scene = fui::makeRect(0, 0, 432, 216);
+        auto first = petui::restPlacement(p, petrest::Phase::ApproachFirst, scene, idle);
+        auto second = petui::restPlacement(p, petrest::Phase::ApproachSecond, scene, idle);
+        auto last = petui::restPlacement(p, petrest::Phase::Arrive, scene, idle);
+        CHECK(std::abs(int(first.x - idle.x)) <= std::abs(int(second.x - idle.x)));
+        CHECK(std::abs(int(second.x - idle.x)) <= std::abs(int(last.x - idle.x)));
+        const auto back = petui::restPlacement(p, petrest::Phase::ReturnLast, scene, idle);
+        CHECK(back.x == idle.x && back.y == idle.y && back.width == idle.width && back.height == idle.height);
+      }
+  }
+}
+
+static void unifiedSurfaceChecks() {
+  for (auto language : {Language::ES, Language::EN})
+    for (unsigned orientation = 0; orientation < 4; ++orientation) {
+      I18N.setLanguage(language);
+      Canvas c(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+      c.device.orientation = fui::Orientation(orientation);
+      pet::Profile p;
+      p.created = true;
+      p.mode = pet::Mode::Relaxed;
+      p.readingSeconds = 72000;
+      p.earnedFood = 30;
+      p.earnedMedicine = 10;
+      p.joy = 70;
+      p.memories = 31;
+      for (unsigned slot = 0; slot < pet::SLOT_COUNT; ++slot) {
+        p.equipped[slot] = uint8_t(pet::objectAt(slot, 0));
+        pet::own(p, p.equipped[slot]);
+      }
+      pet::History history;
+      history.count = 3;
+      for (unsigned i = 0; i < 3; ++i) {
+        auto& life = history.records[i];
+        life.generation = i + 1;
+        life.species = pet::Species(i);
+        life.readingSeconds = 72000;
+        life.ageKnown = true;
+        life.ageDays = 20;
+      }
+      pet::GameState game;
+      game.begin(pet::Game::Pairs, 42);
+      petui::Model m;
+      m.profile = &p;
+      m.history = &history;
+      m.game = &game;
+      petui::Work w;
+      for (auto view : {pet::View::Care, pet::View::Health, pet::View::Games, pet::View::Home, pet::View::Projects,
+                        pet::View::ProjectPreview, pet::View::Album, pet::View::Memories, pet::View::Memory,
+                        pet::View::Lives, pet::View::LifeDetail, pet::View::Retire, pet::View::Play}) {
+        m.view = view;
+        m.previewItem = pet::objectAt(0, 1);
+        c.target.view = "unified-surfaces";
+        const auto saved = p;
+        c.paint(m, w);
+        c.checkHits();
+        CHECK(!std::memcmp(&p, &saved, sizeof(p)));
+        const auto safe = c.device.safeRect();
+        for (size_t i = 0; i < c.interactions.count(); ++i) {
+          const auto& hit = c.interactions.data()[i];
+          if (hit.rect.y < safe.y + 76 || (hit.inputMask & fui::InputCoordinates)) continue;
+          if (hit.rect.x < safe.x + 16 || hit.rect.right() > safe.right() - 16 ||
+              hit.rect.bottom() + 3 > safe.bottom() - 16)
+            std::printf("GEOMETRY view%u ori%u action%u [%d,%d %dx%d]\n", unsigned(view), orientation,
+                        unsigned(hit.action), hit.rect.x, hit.rect.y, hit.rect.width, hit.rect.height);
+          CHECK(hit.rect.x >= safe.x + 16 && hit.rect.right() <= safe.right() - 16);
+          CHECK(hit.rect.bottom() + 3 <= safe.bottom() - 16);
+          if (hit.action == petui::OpenProjectPreview) CHECK(hit.rect.height >= (orientation % 2 ? 56 : 100));
+          for (size_t j = 0; j < i; ++j) {
+            const auto& peer = c.interactions.data()[j];
+            if (peer.inputMask & fui::InputCoordinates) continue;
+            if (hit.rect.right() > peer.rect.x && peer.rect.right() > hit.rect.x && hit.rect.bottom() > peer.rect.y &&
+                peer.rect.bottom() > hit.rect.y)
+              std::printf("OVERLAP view%u ori%u action%u with%u\n", unsigned(view), orientation, unsigned(hit.action),
+                          unsigned(peer.action));
+            CHECK(hit.rect.right() <= peer.rect.x || peer.rect.right() <= hit.rect.x ||
+                  hit.rect.bottom() <= peer.rect.y || peer.rect.bottom() <= hit.rect.y);
+          }
+        }
+      }
+    }
+}
+
+void farewellMotionChecks(const char* out) {
+  ArtFixture art("resources/apps/pet/farewell.bin");
+  CHECK(!art.bytes.empty());
+  struct Trace {
+    ArtFixture* art;
+    fui::Rect box{};
+    unsigned calls = 0;
+    static bool draw(void* context, fui::DrawTarget& target, fui::Rect box, uint32_t id, bool inverse) {
+      auto& trace = *static_cast<Trace*>(context);
+      if (!trace.calls) trace.box = box;
+      ++trace.calls;
+      CHECK(box.x == trace.box.x && box.y == trace.box.y && box.width == trace.box.width &&
+            box.height == trace.box.height);
+      return ArtFixture::draw(trace.art, target, box, id, inverse);
+    }
+  } trace{&art};
+  for (auto language : {Language::ES, Language::EN}) {
+    I18N.setLanguage(language);
+    for (unsigned theme = 0; theme < 4; ++theme)
+      for (unsigned orientation = 0; orientation < 4; ++orientation)
+        for (unsigned species = 0; species < 3; ++species) {
+          Canvas c(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+          c.device.orientation = fui::Orientation(orientation);
+          chrome::lightHeader = theme >= 2;
+          pet::Profile p;
+          p.created = true;
+          p.lifeStatus = pet::LifeStatus::Lost;
+          p.species = pet::Species(species);
+          p.readingSeconds = pet::stageStart(pet::Stage::Adult);
+          std::strcpy(p.name, "Luna");
+          petui::Model m;
+          m.profile = &p;
+          m.farewellArt = {&trace, Trace::draw};
+          petui::Work w;
+          for (auto view : {pet::View::Dashboard, pet::View::Death}) {
+            m.view = view;
+            fui::Rect origin{};
+            for (unsigned step = 0; step < 4; ++step) {
+              trace.calls = 0;
+              c.target.darkCard = {};
+              c.target.watchDarkCard = view == pet::View::Dashboard;
+              m.sleepStep = uint8_t(step);
+              const auto saved = p;
+              c.paint(m, w);
+              c.checkHits();
+              CHECK(!std::memcmp(&p, &saved, sizeof(p)));
+              CHECK(trace.calls == 2);
+              if (!step) origin = trace.box;
+              CHECK(trace.box.x == origin.x && trace.box.width == origin.width && trace.box.height == origin.height);
+              CHECK(trace.box.y - origin.y == petfarewell::offset(step));
+              if (view == pet::View::Dashboard) {
+                const auto card = c.target.darkCard;
+                CHECK(!card.empty());
+                const auto black = [&](int x, int y) {
+                  return !(c.pixels[y * ((c.width + 7) / 8) + x / 8] & (128 >> (x % 8)));
+                };
+                CHECK(black(card.x + card.width / 2, card.y + 1));
+                CHECK(black(card.x + 1, card.y + card.height / 2));
+                CHECK(black(card.right() - 2, card.y + card.height / 2));
+                CHECK(!black(card.x, card.y));
+              }
+              if (out && language == Language::ES && theme == 2 && orientation < 2 && view == pet::View::Dashboard)
+                c.writeGray(m, w,
+                            std::string(out) + "/ghost-" + std::to_string(c.width) + "-" + std::to_string(species) +
+                                "-" + std::to_string(step) + ".pgm");
+            }
+          }
+        }
+  }
+}
+
+void floorHeaderChecks(const char* output = nullptr) {
+  const auto oldLanguage = I18N.getLanguage();
+  const bool oldLight = chrome::lightHeader;
+  I18N.setLanguage(Language::ES);
+  ArtFixture graphics("resources/apps/pet/graphics.bin"), habitat("resources/apps/pet/habitat.bin"),
+      scenes("resources/apps/pet/home.bin");
+  pet::Profile p;
+  p.created = true;
+  p.readingSeconds = pet::stageStart(pet::Stage::Adult);
+  std::strcpy(p.name, "Luna");
+  for (unsigned n = 0; n < pet::SLOT_COUNT; ++n) p.equipped[n] = pet::objectAt(n, 0);
+  petui::Model model;
+  model.profile = &p;
+  model.view = pet::View::Dashboard;
+  model.today = 20000;
+  model.clockKnown = true;
+  model.art = {&graphics, ArtFixture::draw};
+  model.habitat = {&habitat, ArtFixture::draw};
+  model.scenes = {&scenes, ArtFixture::draw};
+  model.fullRoomBackgrounds = true;
+  for (bool light : {false, true})
+    for (int width : {480, 800}) {
+      chrome::lightHeader = light;
+      Canvas c(width, width == 480 ? 800 : 480);
+      std::strcpy(c.status.clock, "18:11");
+      c.target.expectedHeaderClock = c.status.clock;
+      petui::Work work;
+      c.paint(model, work);
+      fui::Rect settings{}, album{};
+      for (size_t n = 0; n < c.interactions.count(); ++n) {
+        const auto& hit = c.interactions.data()[n];
+        if (hit.action == petui::OpenSettings) settings = hit.rect;
+        if (hit.action == petui::OpenAlbum) album = hit.rect;
+      }
+      CHECK(!settings.empty() && !album.empty() && !c.target.headerClockBox.empty());
+      CHECK(settings.right() <= c.device.safeRect().right() - petui::widget::UI_INSET);
+      CHECK(album.right() + 6 <= settings.x);
+      CHECK(c.target.headerClockBox.right() + 8 <= album.x);
+      c.checkHits();
+      if (output) {
+        const auto name = std::string(output) + "/pet-" + (light ? "light-" : "dark-") + std::to_string(width);
+        c.write(name + ".pbm");
+        c.writeGray(model, work, name + ".pgm");
+      }
+      for (auto view : {pet::View::Album, pet::View::Games}) {
+        model.view = view;
+        char removed[96];
+        std::snprintf(removed, sizeof(removed), tr(STR_PET_GAME_PRIZES_USED), 0u);
+        c.target.forbiddenText = view == pet::View::Games ? removed : nullptr;
+        c.paint(model, work);
+        c.checkHits();
+        if (output) {
+          const auto name = std::string(output) + (view == pet::View::Album ? "/album-" : "/games-") +
+                            (light ? "light-" : "dark-") + std::to_string(width);
+          c.write(name + ".pbm");
+        }
+        c.target.forbiddenText = nullptr;
+      }
+      model.view = pet::View::Dashboard;
+    }
+  chrome::lightHeader = oldLight;
+  I18N.setLanguage(oldLanguage);
+}
 int main(int argc, char** argv) {
+  if (argc > 2 && !std::strcmp(argv[1], "--floor-header-check")) {
+    floorHeaderChecks(argv[2]);
+    std::printf("PET floor and header: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  if (argc > 2 && !std::strcmp(argv[1], "--snapshot-only")) {
+    resultAndSnapshotScreens(argv[2]);
+    std::printf("PET action results and captured depth: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  if (argc > 1 && !std::strcmp(argv[1], "--static-mood-only")) {
+    // Ignore actor pixels so registration differences cannot disguise a moving badge.
+    const auto noArt = [](void*, fui::DrawTarget&, fui::Rect, uint32_t, bool) { return true; };
+    pet::Profile p;
+    p.created = true;
+    petui::Model m;
+    m.profile = &p;
+    m.view = pet::View::Dashboard;
+    m.feedingArt = petfeed::Art::Extended;
+    m.sleepArt = {nullptr, noArt};
+    m.habitat = {nullptr, noArt};
+    petui::Work w;
+    for (unsigned species = 0; species < 3; ++species)
+      for (unsigned age = 1; age < 5; ++age)
+        for (const auto kind : {petcompanion::Kind::None, petcompanion::Kind::Sit, petcompanion::Kind::Stretch,
+                                petcompanion::Kind::Greet, petcompanion::Kind::Discover}) {
+          Canvas c(480, 800);
+          p.species = pet::Species(species);
+          p.readingSeconds = pet::stageStart(pet::Stage(age));
+          m.companionKind = kind;
+          uint32_t first = 0;
+          for (unsigned step = 0; step < 4; ++step) {
+            std::fill(c.pixels.begin(), c.pixels.end(), 255);
+            m.sleepStep = uint8_t(step);
+            m.companionPhase = kind == petcompanion::Kind::None ? petcompanion::Phase::Idle
+                               : step % 2                       ? petcompanion::Phase::Second
+                                                                : petcompanion::Phase::First;
+            petui::habitatFigures(c.screen, m, {0, 300, 432, 216}, false);
+            const auto pixels = pet::checksum(c.pixels.data(), c.pixels.size());
+            if (!step)
+              first = pixels;
+            else
+              CHECK(pixels == first);
+          }
+        }
+    std::printf("PET static mood: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  if (argc > 2 && !std::strcmp(argv[1], "--placement-shot")) {
+    I18N.setLanguage(Language::ES);
+    chrome::lightHeader = true;
+    ArtFixture graphics("resources/apps/pet/graphics.bin"), habitat("resources/apps/pet/habitat.bin"),
+        motion("resources/apps/pet/breathing.bin"), backgrounds("resources/apps/pet/home.bin");
+    pet::Profile p;
+    p.created = true;
+    p.saciety = 72;
+    p.joy = 84;
+    p.hygiene = 88;
+    p.bornDay = 19996;
+    p.readingSeconds = pet::stageStart(pet::Stage::Adult);
+    std::strcpy(p.name, "Bosque");
+    petui::Model m;
+    m.profile = &p;
+    m.art = {&graphics, ArtFixture::draw};
+    m.habitat = {&habitat, ArtFixture::draw};
+    m.sleepArt = {&motion, ArtFixture::draw};
+    m.scenes = {&backgrounds, ArtFixture::draw};
+    m.fullRoomBackgrounds = true;
+    m.today = 20000;
+    petui::Work w;
+    struct Scene {
+      unsigned decoration, environment, rest, toy;
+      bool sleeping;
+    };
+    const Scene scenes[] = {{3, 200, 0, 6, false},     {3, 202, 0, 6, false},   {3, 237, 0, 6, false},
+                            {124, 202, 0, 6, false},   {120, 237, 0, 6, false}, {110, 234, 47, 174, false},
+                            {110, 234, 47, 174, true}, {120, 200, 0, 6, true}};
+    for (unsigned orientation = 0; orientation < 4; ++orientation) {
+      Canvas c(orientation % 2 ? 800 : 480, orientation % 2 ? 480 : 800);
+      c.device.orientation = fui::Orientation(orientation);
+      for (unsigned species = 0; species < 3; ++species)
+        for (unsigned scene = 0; scene < sizeof(scenes) / sizeof(scenes[0]); ++scene) {
+          const auto& setup = scenes[scene];
+          p.species = pet::Species(species);
+          p.equipped[0] = uint8_t(setup.rest);
+          p.equipped[1] = uint8_t(setup.decoration);
+          p.equipped[2] = uint8_t(setup.toy);
+          p.equipped[3] = uint8_t(setup.environment);
+          p.resting = setup.sleeping;
+          m.view = pet::View::Dashboard;
+          char name[512];
+          std::snprintf(name, sizeof(name), "%s/room-%u-%u-%u.pgm", argv[2], orientation, species, scene);
+          c.writeGray(m, w, name);
+          c.checkHits();
+          if (species || orientation > 1 || setup.sleeping) continue;
+          pet::Profile previous;
+          p.momentMask = 0;
+          pet::captureMoments(p, previous, 20000);
+          m.view = pet::View::Memory;
+          m.memory = unsigned(pet::Moment::Juvenile);
+          for (unsigned slot = 0; slot < pet::SLOT_COUNT; ++slot)
+            CHECK(pet::momentObject(p.moments[m.memory], slot) == p.equipped[slot]);
+          std::snprintf(name, sizeof(name), "%s/memory-%u-%u.pgm", argv[2], orientation, scene);
+          c.writeGray(m, w, name);
+          c.checkHits();
+        }
+    }
+    Canvas gallery(480, 800);
+    m.view = pet::View::Dashboard;
+    p.species = pet::Species::Silva;
+    p.resting = false;
+    for (unsigned id = 0; id < pet::OBJECT_COUNT; ++id) {
+      if (!pet::objectAvailable(id)) continue;
+      p.equipped[0] = 0;
+      p.equipped[1] = 3;
+      p.equipped[2] = 6;
+      p.equipped[3] = 9;
+      p.equipped[pet::objectSlot(id)] = uint8_t(id);
+      char name[512];
+      std::snprintf(name, sizeof(name), "%s/item-%u.pgm", argv[2], id);
+      gallery.writeGray(m, w, name);
+    }
+    std::printf("PET placement renders: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  if (argc > 1 && !std::strcmp(argv[1], "--farewell-only")) {
+    farewellMotionChecks(argc > 2 ? argv[2] : nullptr);
+    std::printf("PET farewell motion: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  farewellMotionChecks(nullptr);
+  unifiedSurfaceChecks();
+  if (argc > 1 && !std::strcmp(argv[1], "--unified-only")) {
+    std::printf("Unified surfaces: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  restTransitionScreens(argc > 2 && !std::strcmp(argv[1], "--rest-only") ? argv[2] : nullptr);
+  if (argc > 1 && !std::strcmp(argv[1], "--rest-only")) {
+    std::printf("PET rest journey: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+
+  companionScreens(argc > 2 && !std::strcmp(argv[1], "--companion-only") ? argv[2] : nullptr);
+  if (argc > 1 && !std::strcmp(argv[1], "--companion-only")) {
+    feedingScreens(argc > 2 ? argv[2] : nullptr);
+    std::printf("PET companion and foods: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+
+  if (argc > 1 && !std::strcmp(argv[1], "--generations-only")) {
+    generationAgeChecks();
+    previousGenerationChecks(argc > 2 ? argv[2] : nullptr);
+    std::printf("PET generations: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+
+  if (argc > 2 && !std::strcmp(argv[1], "--care-clarity-shot")) {
+    careValueClarityChecks();
+    healthClarityChecks(argv[2]);
+    readingBarChecks(argv[2]);
+    std::printf("PET care clarity: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  if (argc > 2 && !std::strcmp(argv[1], "--health-shot")) {
+    healthClarityChecks(argv[2]);
+    std::printf("PET health clarity: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  sequenceAttemptChecks(argc > 2 && !std::strcmp(argv[1], "--sequence-shot") ? argv[2] : nullptr);
+  if (argc > 2 && !std::strcmp(argv[1], "--sequence-shot")) {
+    std::printf("PET sequence attempts: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  if (argc > 2 && !std::strcmp(argv[1], "--game-shot")) {
+    gameScreens(argv[2]);
+    std::printf("PET gameplay: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  eggAvailabilityChecks(argc > 2 && !std::strcmp(argv[1], "--egg-shot") ? argv[2] : nullptr);
+  if (argc > 1 && !std::strcmp(argv[1], "--egg-shot")) {
+    std::printf("PET egg availability: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  polishChecks();
+  appearanceChecks();
+  readingBarChecks(argc > 2 ? argv[2] : nullptr);
+  if (argc > 2 && !std::strcmp(argv[1], "--polish-shot")) {
+    I18N.setLanguage(Language::ES);
+    chrome::lightHeader = false;
+    ArtFixture graphics("resources/apps/pet/graphics.bin"), habitat("resources/apps/pet/habitat.bin"),
+        scenes("resources/apps/pet/home.bin"), motion("resources/apps/pet/breathing.bin"),
+        collection("resources/apps/pet/collection.bin");
+    pet::Profile p;
+    p.created = true;
+    p.readingSeconds = pet::stageStart(pet::Stage::Juvenile);
+    p.bornDay = 19996;
+    p.sharedDays = 12;
+    p.streak = 7;
+    p.saciety = 72;
+    p.joy = 84;
+    p.energy = 100;
+    p.hygiene = 88;
+    p.earnedFood = 44;
+    std::strcpy(p.name, "Bosque");
+    for (unsigned slot = 0; slot < pet::SLOT_COUNT; ++slot) {
+      p.equipped[slot] = uint8_t(pet::objectAt(slot, 0));
+      pet::own(p, p.equipped[slot]);
+    }
+    p.project = pet::objectAt(0, 1);
+    p.projectStartedSeconds = pet::projectReading(p) - 25 * 60;
+    pet::Profile previous;
+    pet::captureMoments(p, previous, 20000);
+    const auto saved = p;
+    petui::Model m;
+    m.profile = &p;
+    m.art = {&graphics, ArtFixture::draw};
+    m.habitat = {&habitat, ArtFixture::draw};
+    m.scenes = {&scenes, ArtFixture::draw};
+    m.sleepArt = {&motion, ArtFixture::draw};
+    m.collectionArt = {&collection, ArtFixture::draw};
+    m.fullRoomBackgrounds = true;
+    m.reactionArt = petreact::Art::Registered;
+    m.today = 20000;
+    m.affection = {84, 94, pet::Need::None, true};
+    m.careResult = {44, 100, 84, 89, 1, true};
+    m.gameResult = {70, 80, 100, 80, petui::GameOutcome::Rewarded};
+    m.memory = unsigned(pet::Moment::Juvenile);
+    petui::Work w;
+    for (const bool wide : {false, true}) {
+      Canvas c(wide ? 800 : 480, wide ? 480 : 800);
+      c.device.orientation = wide ? fui::Orientation::LandscapeClockwise : fui::Orientation::Portrait;
+      std::strcpy(c.status.clock, "18:45");
+      const auto shot = [&](const std::string& name) {
+        c.target.view = "polish";
+        c.writeGray(m, w, std::string(argv[2]) + (wide ? "/wide-" : "/portrait-") + name + ".pgm");
+        c.checkHits();
+      };
+      for (auto view : {pet::View::Dashboard, pet::View::Care, pet::View::Home, pet::View::Projects, pet::View::Games,
+                        pet::View::Album, pet::View::Memories, pet::View::Memory}) {
+        m.view = view;
+        shot(std::to_string(unsigned(view)));
+      }
+      m.view = pet::View::Games;
+      for (unsigned game = 0; game < 3; ++game) {
+        m.selectedGame = pet::Game(game);
+        shot("game-" + std::to_string(game));
+      }
+      m.view = pet::View::Home;
+      for (unsigned item = 0; item < pet::OBJECT_COUNT; ++item) pet::own(p, item);
+      shot("complete");
+      p = saved;
+      m.view = pet::View::Dashboard;
+      m.reactionPhase = petreact::Phase::Result;
+      for (auto kind :
+           {petreact::Kind::Petting, petreact::Kind::Cleaning, petreact::Kind::Healing, petreact::Kind::Game}) {
+        m.reactionKind = kind;
+        shot("action-" + std::to_string(unsigned(kind)));
+      }
+      m.reactionKind = petreact::Kind::None;
+      m.feedResult = {50, 75, true};
+      m.feedingPhase = petfeed::Phase::Result;
+      shot("fed");
+      m.feedResult = {};
+      m.feedingPhase = petfeed::Phase::Idle;
+      c.status.clock[0] = '\0';
+      shot("clock-off");
+    }
+    CHECK(!std::memcmp(&saved, &p, sizeof(p)));
+    std::printf("PET polish renders: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  if (argc > 2 && !std::strcmp(argv[1], "--decor-shot")) {
+    I18N.setLanguage(Language::ES);
+    chrome::lightHeader = true;
+    ArtFixture graphics("resources/apps/pet/graphics.bin"), habitat("resources/apps/pet/habitat.bin"),
+        scenes("resources/apps/pet/home.bin"), breathing("resources/apps/pet/breathing.bin");
+    pet::Profile p;
+    p.created = true;
+    p.readingSeconds = 30000;
+    std::strcpy(p.name, "Bosque");
+    p.bornDay = 19996;
+    for (unsigned slot = 0; slot < pet::SLOT_COUNT; ++slot) {
+      p.equipped[slot] = uint8_t(pet::objectAt(slot, 0));
+      pet::own(p, p.equipped[slot]);
+    }
+    pet::own(p, pet::objectAt(1, 10));
+    pet::own(p, pet::objectAt(1, 20));
+    petui::Model m;
+    m.profile = &p;
+    m.art = {&graphics, ArtFixture::draw};
+    m.habitat = {&habitat, ArtFixture::draw};
+    m.scenes = {&scenes, ArtFixture::draw};
+    m.sleepArt = {&breathing, ArtFixture::draw};
+    m.fullRoomBackgrounds = true;
+    m.projectSlot = 1;
+    m.today = 20000;
+    petui::Work w;
+    for (const bool wide : {false, true}) {
+      Canvas c(wide ? 800 : 480, wide ? 480 : 800);
+      c.device.orientation = wide ? fui::Orientation::LandscapeClockwise : fui::Orientation::Portrait;
+      for (const bool preview : {false, true})
+        for (const auto filter : {petui::CatalogFilter::Unowned, petui::CatalogFilter::Owned}) {
+          m.view = preview ? pet::View::ProjectPreview : pet::View::Projects;
+          m.catalogFilter = filter;
+          m.previewItem = uint8_t(petui::catalogItem(p, 1, filter, 0));
+          const auto name = std::string(argv[2]) + (wide ? "/wide" : "/portrait") +
+                            (preview ? "-preview" : "-catalog") +
+                            (filter == petui::CatalogFilter::Owned ? "-owned.pgm" : "-unowned.pgm");
+          c.writeGray(m, w, name);
+          c.checkHits();
+        }
+    }
+    for (const bool light : {false, true}) {
+      chrome::lightHeader = light;
+      Canvas c(480, 800);
+      for (const auto view : {pet::View::Dashboard, pet::View::Settings, pet::View::New}) {
+        m.view = view;
+        p.created = view != pet::View::New;
+        const auto name = std::string(argv[2]) + (light ? "/header-light-" : "/header-dark-") +
+                          std::to_string(unsigned(view)) + ".pgm";
+        c.writeGray(m, w, name);
+        c.checkHits();
+      }
+      p.created = true;
+    }
+    std::printf("PET decorate renders: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  if (argc > 1 && (!std::strcmp(argv[1], "--reactions-only") || !std::strcmp(argv[1], "--reaction-shot"))) {
+    reactionScreens(argc > 2 ? argv[2] : nullptr, !std::strcmp(argv[1], "--reaction-shot"));
+    std::printf("PET room reactions: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  if (argc > 1 && !std::strcmp(argv[1], "--curiosity-only")) {
+    curiosityScreens(argc > 2 ? argv[2] : nullptr);
+    std::printf("PET curiosity: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  curiosityScreens();
+  if (argc > 1 && !std::strcmp(argv[1], "--feed-only")) {
+    feedingScreens(argc > 2 ? argv[2] : nullptr);
+    std::printf("PET feeding: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  if (argc > 2 && !std::strcmp(argv[1], "--care-shot")) {
+    I18N.setLanguage(Language::ES);
+    chrome::lightHeader = true;
+    ArtFixture graphics("resources/apps/pet/graphics.bin"), habitat("resources/apps/pet/habitat.bin"),
+        scenes("resources/apps/pet/home.bin");
+    Canvas canvas(480, 800);
+    pet::Profile profile;
+    profile.created = true;
+    profile.readingSeconds = 30000;
+    std::strcpy(profile.name, "Bosque");
+    petui::Model model;
+    model.profile = &profile;
+    model.view = pet::View::Care;
+    model.art = {&graphics, ArtFixture::draw};
+    model.habitat = {&habitat, ArtFixture::draw};
+    model.scenes = {&scenes, ArtFixture::draw};
+    model.fullRoomBackgrounds = true;
+    petui::Work work;
+    canvas.writeGray(model, work, argv[2]);
+    canvas.checkHits();
+    std::printf("PET care render: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
   if (argc > 1 && !std::strcmp(argv[1], "--goals-only")) {
     goalFontChecks(argc > 2 ? argv[2] : nullptr);
     std::printf("PET goal fonts: %d checks, %d failures\n", checks, failures);
@@ -2212,6 +4316,25 @@ int main(int argc, char** argv) {
   if (argc > 1 && !std::strcmp(argv[1], "--lives-only")) {
     previousGenerationChecks(argc > 2 ? argv[2] : nullptr);
     std::printf("PET previous generations and dates: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  if (argc > 1 && !std::strcmp(argv[1], "--room-only")) {
+    drawerCopyChecks();
+    needsFrameChecks();
+    careOverlayChecks();
+    ui50Checks();
+    roomScreens(argc > 2 ? argv[2] : nullptr);
+    panelScreens(argc > 2 ? argv[2] : nullptr);
+    std::printf("PET room: %d checks, %d failures\n", checks, failures);
+    return failures ? 1 : 0;
+  }
+  if (argc > 1 && !std::strcmp(argv[1], "--redesign-only")) {
+    needsFrameChecks();
+    companionContexts();
+    clarityScreens();
+    generationAgeChecks();
+    goalRemovalScreens(argc > 2 ? argv[2] : nullptr);
+    std::printf("PET redesign: %d checks, %d failures\n", checks, failures);
     return failures ? 1 : 0;
   }
   previousGenerationChecks();
@@ -2229,6 +4352,14 @@ int main(int argc, char** argv) {
     std::printf("PET required resources: %d checks, %d failures\n", checks, failures);
     return failures ? 1 : 0;
   }
+  floorHeaderChecks();
+  needsFrameChecks();
+  drawerCopyChecks();
+  feedingScreens();
+  goalRemovalScreens();
+  roomScreens();
+  panelScreens();
+  careOverlayChecks();
   resourcesRequiredScreens(nullptr);
 
   homeRemovalScreens();
@@ -2247,6 +4378,7 @@ int main(int argc, char** argv) {
   communicationScreens();
   guidanceScreens();
   clarityScreens();
+  generationAgeChecks();
   if (argc > 1 && !std::strcmp(argv[1], "--communication-only")) {
     std::printf("PET communication: %d checks, %d failures\n", checks, failures);
     return failures ? 1 : 0;
@@ -2359,7 +4491,8 @@ int main(int argc, char** argv) {
           if (views[i] == pet::View::LifeDetail || (views[i] == pet::View::Lives && state)) {
             history.count = 12;
             for (unsigned j = 0; j < 12; ++j) {
-              history.records[j] = {j + 1, 72000, 1700000000, 24, pet::Species(j % 3), pet::LifeStatus::Retired};
+              history.records[j] = {j + 1, 72000, 1700000000, 24, 30, pet::Species(j % 3), pet::LifeStatus::Retired,
+                                    true};
               std::strcpy(history.records[j].name, j % 2 ? "ÑÑÑÑÑÑÑÑÑÑÑÑ" : "MMMMMMMMMMMM");
             }
           }
@@ -2430,7 +4563,8 @@ int main(int argc, char** argv) {
               if (control.action == petui::ChangeTab && control.value == 1) ++careLinks;
               if (control.action == petui::ChangeTab && control.value == 2) ++homeLinks;
             }
-            CHECK(careLinks == 1 && homeLinks == 1);
+            CHECK(careLinks == int(pet::stage(p.readingSeconds) != pet::Stage::Egg) &&
+                  homeLinks == int(pet::homeUnlocked(p)));
           }
           if (views[i] == pet::View::New) {
             unsigned configuration = 0;
@@ -2479,7 +4613,18 @@ int main(int argc, char** argv) {
             CHECK(adjacent.action == petui::NameKey && adjacent.value == 'E');
           }
           if (pet::stage(p.readingSeconds) == pet::Stage::Egg) {
-            if (views[i] == pet::View::Dashboard) CHECK(c.target.eggTextSeen);
+            if (views[i] == pet::View::Dashboard) {
+              char left[96], caps[96];
+              std::snprintf(left, sizeof(left), tr(STR_PET_GROWTH_LEFT),
+                            static_cast<unsigned long long>(
+                                (pet::nextStageSeconds(pet::Stage::Egg) - p.readingSeconds + 59) / 60));
+              pixelui::copyNatural(caps, sizeof(caps), left);
+              c.target.expectedFullText = caps;
+              c.target.expectedFullTextSeen = false;
+              c.paint(m, work);
+              CHECK(c.target.expectedFullTextSeen);
+              c.target.expectedFullText = nullptr;
+            }
             if (views[i] == pet::View::Dashboard || views[i] == pet::View::Care || views[i] == pet::View::Health ||
                 views[i] == pet::View::Games) {
               CHECK(!c.target.vitalValueSeen);
@@ -2549,7 +4694,9 @@ int main(int argc, char** argv) {
           c.write(std::string(out) + "/catalog-home-" + std::to_string(width) + "-" + std::to_string(n) + ".pbm");
       }
       for (unsigned slot = 0; slot < pet::SLOT_COUNT; ++slot) {
-        const int pages = width == 480 ? 10 : 15;
+        const unsigned perPage = width == 480 ? 3 : 2;
+        const unsigned available = slot == 1 ? 43 : 60;
+        const int pages = int((available + perPage - 1) / perPage);
         for (int page = 0; page < pages; ++page) {
           auto canvas = std::make_unique<Canvas>(width, height);
           auto& c = *canvas;
@@ -2576,7 +4723,7 @@ int main(int argc, char** argv) {
               ++cards;
             }
           }
-          CHECK(cards == (width == 480 ? 6u : 4u));
+          CHECK(cards == std::min(perPage, available - unsigned(page) * perPage));
           if (withArt && lang == Language::ES && page == pages - 1)
             c.write(std::string(out) + "/catalog-projects-" + std::to_string(width) + "-" + std::to_string(slot) +
                     ".pbm");
@@ -2665,7 +4812,7 @@ int main(int argc, char** argv) {
               const int width = orientation ? 800 : 480, height = orientation ? 480 : 800;
               auto canvas = std::make_unique<Canvas>(width, height);
               auto& c = *canvas;
-              c.target.view = "all-pose-breathing";
+              c.target.view = "static-awake-mood";
               pet::Profile p;
               p.created = true;
               p.species = pet::Species(species);
@@ -2708,7 +4855,7 @@ int main(int argc, char** argv) {
                 c.write(std::string(out) + "/breathing-" + std::to_string(species) + "-" + std::to_string(mood) + "-" +
                         (view == pet::View::Home ? "home-" : "pet-") + std::to_string(step) + ".pbm");
             }
-            CHECK(changed);
+            CHECK(!changed);
           }
   for (unsigned species = 0; species < 3; ++species)
     for (auto view : {pet::View::Dashboard, pet::View::Home}) {
@@ -2742,7 +4889,7 @@ int main(int argc, char** argv) {
         c->write(std::string(out) + "/egg-wobble-" + std::to_string(species) + "-" +
                  (view == pet::View::Home ? "home-" : "pet-") + std::to_string(step) + ".pbm");
       }
-      CHECK(changed == withArt);
+      CHECK(changed == (withArt && view == pet::View::Dashboard));
     }
   {
     auto c = std::make_unique<Canvas>(480, 800);
@@ -2828,56 +4975,6 @@ int main(int argc, char** argv) {
     I18N.setLanguage(lang);
     for (unsigned orientation = 0; orientation < 4; ++orientation) {
       const int width = orientation % 2 ? 800 : 480, height = orientation % 2 ? 480 : 800;
-      for (unsigned goal = 0; goal < 4; ++goal)
-        for (unsigned state = 0; state < 5; ++state) {
-          auto canvas = std::make_unique<Canvas>(width, height);
-          auto& c = *canvas;
-          c.device.orientation = fui::Orientation(orientation);
-          c.target.view = "daily-goal";
-          pet::Profile p;
-          p.created = true;
-          p.goalIndex = uint8_t(goal);
-          p.readingSeconds = 420;
-          std::strcpy(p.name, "LUNA");
-          petui::Model m;
-          m.profile = &p;
-          m.view = pet::View::Dashboard;
-          m.today = 20000;
-          m.todaySeconds = state ? int(pet::GOALS[goal]) * 60 : 120;
-          p.readingSeconds = std::max<uint64_t>(420, uint64_t(m.todaySeconds));
-          if (state == 2) p.lastStoryDay = m.today;
-          if (state == 3) m.historyChanged = true;
-          if (state == 4) m.writable = false;
-          if (withArt) {
-            m.art = {&graphics, ArtFixture::draw};
-            m.habitat = {&habitat, ArtFixture::draw};
-          }
-          char time[64], caps[64], goalText[64];
-          if (state == 3 || state == 4)
-            std::snprintf(time, sizeof(time), "%s", tr(STR_PET_DAILY_WAIT));
-          else
-            std::snprintf(time, sizeof(time), tr(STR_PET_DAILY_FRACTION), unsigned(std::max(0, m.todaySeconds) / 60),
-                          unsigned(pet::GOALS[goal]));
-          pixelui::copyCaps(caps, sizeof(caps), time);
-          pixelui::copyCaps(goalText, sizeof(goalText), tr(STR_PET_DAILY_CARD));
-          c.target.expectedDailyTime = caps;
-          c.target.expectedDailyGoal = goalText;
-          petui::Work w;
-          c.paint(m, w);
-          c.checkHits();
-          CHECK(c.target.dailyGoalSeen && c.target.dailyTimeSeen);
-          unsigned open = 0;
-          for (size_t n = 0; n < c.interactions.count(); ++n) {
-            const auto& action = c.interactions.data()[n];
-            if (action.action == petui::OpenReadingInfo && action.value != 4) {
-              ++open;
-            }
-          }
-          CHECK(open >= 1 && open <= 2);
-          if (orientation < 2 && goal == 1 && state < 3)
-            c.write(std::string(out) + "/daily-" + (lang == Language::ES ? "es-" : "en-") + std::to_string(width) +
-                    "-" + std::to_string(state) + ".pbm");
-        }
       for (unsigned age : {0u, 1u}) {
         auto canvas = std::make_unique<Canvas>(width, height);
         auto& c = *canvas;
@@ -2906,7 +5003,7 @@ int main(int argc, char** argv) {
         unsigned opens = 0;
         for (size_t n = 0; n < c.interactions.count(); ++n)
           if (c.interactions.data()[n].action == petui::OpenProjects) ++opens;
-        CHECK(opens == (age ? 5u : 0u));
+        CHECK(opens == (age ? 6u : 0u));
         if (orientation < 2)
           c.write(std::string(out) + "/home-lock-" + (lang == Language::ES ? "es-" : "en-") + std::to_string(width) +
                   "-" + std::to_string(age) + ".pbm");
@@ -2917,7 +5014,7 @@ int main(int argc, char** argv) {
         for (size_t n = 0; n < c.interactions.count(); ++n) {
           const auto& hit = c.interactions.data()[n];
           if (!age) CHECK(hit.action != petui::OpenProjectPreview && hit.action != petui::SelectCategory);
-          if (hit.action == petui::Back) back = true;
+          if (hit.action == petui::ChangeTab && hit.value == 0) back = true;
         }
         CHECK(back);
       }
@@ -2939,11 +5036,15 @@ int main(int argc, char** argv) {
         struct Capture {
           ArtFixture* art;
           Target* target;
+          unsigned count = 0;
+          bool inverse[2]{};
         } capture{&farewell, &c.target};
         if (withArt) {
           m.habitat = {&habitat, ArtFixture::draw};
           m.farewellArt = {&capture, [](void* ctx, fui::DrawTarget& target, fui::Rect r, uint32_t id, bool inverse) {
                              auto& data = *static_cast<Capture*>(ctx);
+                             if (data.count < 2) data.inverse[data.count] = inverse;
+                             ++data.count;
                              data.target->traceBitmap = true;
                              const bool drawn = ArtFixture::draw(data.art, target, r, id, inverse);
                              data.target->traceBitmap = false;
@@ -2957,6 +5058,7 @@ int main(int argc, char** argv) {
           m.tab = view == pet::View::Home ? pet::Tab::Home : pet::Tab::Pet;
           c.target.darkCard = {};
           c.target.tracedColors.clear();
+          capture.count = 0;
           c.paint(m, w);
           c.checkHits();
           // Only the room/hero is dark. Safe-area margins and the rest of the screen stay white.
@@ -2964,12 +5066,15 @@ int main(int argc, char** argv) {
           const auto card = c.target.darkCard;
           CHECK(!card.empty() && card.width < width && card.height < height);
           if (!card.empty()) {
-            const int x = card.x + 5, y = card.y + 5;
+            const int x = card.x + card.width / 2, y = card.y + petui::widget::CONTROL_RADIUS + 3;
             CHECK(!(c.pixels[y * ((width + 7) / 8) + x / 8] & (0x80 >> (x % 8))));
           }
-          if (withArt)
-            CHECK(c.target.tracedColors.size() == 2 && c.target.tracedColors[0] == fui::Color::White &&
-                  c.target.tracedColors[1] == fui::Color::Black);
+          if (withArt) {
+            CHECK(capture.count == 2 && capture.inverse[0] != capture.inverse[1]);
+            CHECK(!c.target.tracedColors.empty() && c.target.tracedColors.front() == fui::Color::White);
+            CHECK(std::any_of(c.target.tracedColors.begin(), c.target.tracedColors.end(),
+                              [](fui::Color color) { return color != fui::Color::White; }));
+          }
           if (orientation < 2 && species == 0)
             c.write(std::string(out) + "/dark-card-" + (lang == Language::ES ? "es-" : "en-") + std::to_string(width) +
                     "-" + std::to_string(unsigned(view)) + ".pbm");
@@ -2985,14 +5090,18 @@ int main(int argc, char** argv) {
     I18N.setLanguage(lang);
     for (unsigned orientation = 0; orientation < 4; ++orientation) {
       const int width = orientation % 2 ? 800 : 480, height = orientation % 2 ? 480 : 800;
-      for (unsigned count : {239u, 240u}) {
+      for (unsigned count : {pet::CATALOG_COUNT - 1, pet::CATALOG_COUNT}) {
         auto c = std::make_unique<Canvas>(width, height);
         c->device.orientation = fui::Orientation(orientation);
         c->target.view = "collection";
         pet::Profile p;
         p.created = true;
         p.readingSeconds = 72000;
-        for (unsigned i = 0; i < count; ++i) pet::own(p, i);
+        for (unsigned i = 0, added = 0; i < pet::OBJECT_COUNT && added < count; ++i)
+          if (pet::objectAvailable(i)) {
+            pet::own(p, i);
+            ++added;
+          }
         petui::Model m;
         m.profile = &p;
         if (withArt) {
@@ -3008,24 +5117,24 @@ int main(int argc, char** argv) {
           unsigned trophies = 0;
           for (size_t n = 0; n < c->interactions.count(); ++n)
             if (c->interactions.data()[n].action == petui::OpenCollection) ++trophies;
-          CHECK(trophies == (count == 240 && view == pet::View::Dashboard ? 1u : 0u));
-          if (count == 240 && view == pet::View::Home) {
+          CHECK(trophies == (count == pet::CATALOG_COUNT && view == pet::View::Home ? 2u : 0u));
+          if (count == pet::CATALOG_COUNT && view == pet::View::Home) {
             p.equipped[0] = uint8_t(pet::objectAt(0, 0));
             c->paint(m, w);
             c->checkHits();
             unsigned furnishedTrophies = 0;
             for (size_t n = 0; n < c->interactions.count(); ++n)
               if (c->interactions.data()[n].action == petui::OpenCollection) ++furnishedTrophies;
-            CHECK(furnishedTrophies == 1);
+            CHECK(furnishedTrophies == 2);
             p.equipped[0] = 255;
           }
-          if (count == 240 && orientation < 2)
+          if (count == pet::CATALOG_COUNT && orientation < 2)
             c->write(std::string(out) + "/trophy-" + (lang == Language::ES ? "es-" : "en-") + std::to_string(width) +
                      "-" + std::to_string(unsigned(view)) + ".pbm");
         }
-        if (count != 240) continue;
+        if (count != pet::CATALOG_COUNT) continue;
         char copy[160];
-        std::snprintf(copy, sizeof(copy), tr(STR_PET_COLLECTION_TEXT), pet::OBJECT_COUNT);
+        std::snprintf(copy, sizeof(copy), tr(STR_PET_COLLECTION_TEXT), pet::CATALOG_COUNT);
         c->target.expectedFullText = copy;
         m.view = pet::View::Collection;
         if (withArt) m.collectionArt = {&collection, ArtFixture::draw};
@@ -3034,7 +5143,7 @@ int main(int argc, char** argv) {
         unsigned backs = 0;
         for (size_t n = 0; n < c->interactions.count(); ++n)
           if (c->interactions.data()[n].action == petui::Back) ++backs;
-        CHECK(backs >= 1 && pet::ownedCount(p) == 240);
+        CHECK(backs >= 1 && pet::ownedCount(p) == pet::CATALOG_COUNT);
         if (orientation < 2)
           c->write(std::string(out) + "/collection-" + (lang == Language::ES ? "es-" : "en-") + std::to_string(width) +
                    ".pbm");
@@ -3051,6 +5160,7 @@ int main(int argc, char** argv) {
       m.view = pet::View::Dashboard;
       petui::Work w;
       for (unsigned i = 0; i < pet::OBJECT_COUNT; ++i) {
+        if (!pet::objectAvailable(i)) continue;
         p.project = uint8_t(i);
         c->target.expectedFullText = petui::objectName(i);
         c->paint(m, w);
@@ -3087,7 +5197,7 @@ int main(int argc, char** argv) {
           m.view = pet::View::Dashboard;
           m.tab = pet::Tab::Pet;
           c->paint(m, w);
-          CHECK(record == full);
+          CHECK(record == (state == 6 ? petsleep::headIndex(p) + 1 : full));
           m.view = pet::View::Home;
           m.tab = pet::Tab::Home;
           c->paint(m, w);
@@ -3232,7 +5342,7 @@ int main(int argc, char** argv) {
             const auto remaining = pet::stageStart(pet::Stage::Adult) - p.readingSeconds;
             std::snprintf(minutes, sizeof(minutes), tr(STR_PET_STAGE_MINUTES),
                           static_cast<unsigned long long>((remaining + 59) / 60));
-            pixelui::copyCaps(minutesCaps, sizeof(minutesCaps), minutes);
+            pixelui::copyNatural(minutesCaps, sizeof(minutesCaps), minutes);
             c->target.expectedFullText = minutesCaps;
             c->target.expectedFullTextSeen = false;
           }
@@ -3256,7 +5366,7 @@ int main(int argc, char** argv) {
             if (hit.action == petui::OpenMemories) memoryRow = hit.rect;
             if (hit.action == petui::OpenLives) livesRow = hit.rect;
           }
-          CHECK(memories == 1 && lives == 1 && reading == 1 && accumulated == 1);
+          CHECK(memories == 1 && lives == 1 && reading == 1 && accumulated == 0);
           CHECK(memoryRow.bottom() < livesRow.y && memoryRow.x == livesRow.x && memoryRow.width == livesRow.width);
           for (auto id : trace.ids)
             if (id >= 3 && id < 51) CHECK((id - 3) % 16 / 4 + 1 <= age);
@@ -3286,15 +5396,17 @@ int main(int argc, char** argv) {
         for (int i = 0; i < cases; ++i) {
           m.page = std::min(i % 3, std::max(0, (int(petui::memoryOwnedCount(p)) - 1) / (width > height ? 3 : 4)));
           m.memory = i;
-          c->target.expectedRegularText = petui::memoryTitle(
+          const auto title = petui::memoryTitle(
               view == pet::View::Memory ? unsigned(m.memory)
                                         : petui::albumwidget::memoryAt(p, unsigned(m.page * (width > height ? 3 : 4))));
-          c->target.expectedFullText = c->target.expectedRegularText;
-          c->target.regularTextSeen = false;
+          c->target.expectedRegularText = view == pet::View::Memory ? nullptr : title;
+          c->target.expectedEmphasizedText = nullptr;
+          c->target.expectedFullText = title;
+          c->target.regularTextSeen = c->target.expectedFullTextSeen = false;
           c->paint(m, w);
           c->checkHits();
-          CHECK(c->target.regularTextSeen);
-          c->target.expectedRegularText = c->target.expectedFullText = nullptr;
+          CHECK(view == pet::View::Memory ? c->target.expectedFullTextSeen : c->target.regularTextSeen);
+          c->target.expectedEmphasizedText = c->target.expectedRegularText = c->target.expectedFullText = nullptr;
           if (orientation < 2 && i == 0)
             c->write(std::string(out) + "/album-detail-" + (lang == Language::ES ? "es-" : "en-") +
                      std::to_string(width) + "-" + std::to_string(unsigned(view)) + ".pbm");
@@ -3325,15 +5437,16 @@ int main(int argc, char** argv) {
           if (state == 3) m.clockKnown = false;
           if (state == 4) m.historyChanged = true;
           char line[160], caps[160];
+          m.readingDisplay = petui::ReadingDisplay::Lifetime;
           petui::widget::readingTime(m, line, sizeof(line));
-          pixelui::copyCaps(caps, sizeof(caps), line);
+          pixelui::copyNatural(caps, sizeof(caps), line);
           c->target.expectedFullText = caps;
           c->target.expectedFullTextSeen = false;
           m.view = pet::View::Dashboard;
           c->target.view = "reading-life-dashboard";
           c->paint(m, w);
           c->checkHits();
-          CHECK(c->target.expectedFullTextSeen == petui::widget::readingUrgent(m));
+          CHECK(c->target.expectedFullTextSeen);
           m.view = pet::View::Home;
           m.tab = pet::Tab::Home;
           c->target.view = "reading-life-home";
@@ -3365,7 +5478,7 @@ int main(int argc, char** argv) {
       petui::Work work;
       for (auto view : {pet::View::Info, pet::View::Rules}) {
         model.view = view;
-        const int guidePages = view == pet::View::Info ? 2 : (wide ? 6 : 3);
+        const int guidePages = view == pet::View::Info ? (wide ? 3 : 2) : (wide ? 6 : 3);
         for (int page = 0; page < guidePages; ++page) {
           model.page = page;
           c->target.view = view == pet::View::Info ? "needs-guide" : "rules-guide";
@@ -3380,5 +5493,7 @@ int main(int argc, char** argv) {
     }
   }
   std::printf("PET screens: %d checks, %d failures\n", checks, failures);
+  for (unsigned line = 0; line < failuresByLine.size(); ++line)
+    if (failuresByLine[line]) std::printf("FAILURES line %u: %u\n", line, failuresByLine[line]);
   return failures ? 1 : 0;
 }

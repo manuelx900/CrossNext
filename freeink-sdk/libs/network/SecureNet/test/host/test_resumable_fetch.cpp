@@ -74,6 +74,17 @@ bool sentRange(size_t i, const char* range) {
 }  // namespace
 
 int main() {
+  reset({"HTTP/1.1 301 Moved Permanently\r\nLocation: /opds/\r\nContent-Length: 0\r\n\r\n",
+         "HTTP/1.1 200 OK\r\nContent-Length: 3\r\n\r\nabc"});
+  {
+    std::string effectiveUrl;
+    FetchOptions options;
+    options.effectiveUrl = &effectiveUrl;
+    const auto result = get("http://a/opds", sink(), options);
+    assert(result.complete);
+    assert(effectiveUrl == "http://a/opds/");
+    assert(body == "abc");
+  }
   // Borrow a unique header during streaming, with no header collection copies.
   reset({"HTTP/1.1 200 OK\r\nContent-Disposition: attachment; filename=Book.epub\r\nContent-Length: 3\r\n\r\nabc"});
   {
@@ -96,7 +107,9 @@ int main() {
     assert(http.getUniqueHeader("content-disposition") == nullptr);
   }
   for (const char* second : {"attachment; filename=Other.epub", "attachment; filename=Book.epub", ""}) {
-    const std::string response = std::string("HTTP/1.1 200 OK\r\nContent-Disposition: attachment; filename=Book.epub\r\ncOnTeNt-DiSpOsItIoN: ") + second + "\r\nContent-Length: 0\r\n\r\n";
+    const std::string response =
+        std::string("HTTP/1.1 200 OK\r\nContent-Disposition: attachment; filename=Book.epub\r\ncOnTeNt-DiSpOsItIoN: ") +
+        second + "\r\nContent-Length: 0\r\n\r\n";
     reset({response.c_str()});
     freeink::SecureHttpClient http;
     assert(http.begin("http://a/f"));

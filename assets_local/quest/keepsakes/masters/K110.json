@@ -1,0 +1,19 @@
+{
+  "id": "K110",
+  "key": "Estrella",
+  "file": "K110.png",
+  "sample": {
+    "es": "Estrella del espectro lunar",
+    "en": "Moon spectre star"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Moon spectre star.",
+  "requests": [
+    198,
+    250
+  ],
+  "sha256": "c341d474414003919c85a535ee9e249c4c795b88eaf7a5b54c2b8c9a1bae4d9b",
+  "source": "exec-bc0e6cc9-22e2-4f24-bcde-eae0fba342d3.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

@@ -122,6 +122,11 @@ int shownCount(int folder);
 // under the finger was not naming.
 int shownItem(int folder, int row);
 
+// All installed items in the saved order, including hidden items.
+int orderedItem(int folder, int row);
+// One adjacent move, saved by stable folder/item titles. A failed write rolls back.
+bool moveOrderedItem(int folder, int row, int delta);
+
 // How many shown items sit BEFORE registry item `item` -- which is the shown
 // row of `item` itself when it is shown, and the row of the next surviving
 // item when it is not.

@@ -1,0 +1,12 @@
+{
+  "id": "S049",
+  "master": "scene-049-v1.png",
+  "sha256": "b3178c72a866521bba77913aa1e556922702facc10fc14ea06f29adba92de319",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The desert of names. Chapter: The sand scorpion. Illustrate this already-authored event faithfully, without inventing another object or plot: The restored trade records place Ada at this gate after she left Nadir's camp. The clock beyond still rings the same arrival hour. Context only, do not try to draw all of it: Ada's route reaches an iron gate beside the dunes. The sand scorpion sustains the shadows around it, cutting the caravan's road from the clock citadel. Break its final bond before crossing onward.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

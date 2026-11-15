@@ -1,5 +1,9 @@
 # Local simulator on Windows
 
+The launcher now opens the [screenshot studio](simulator-studio.md), with English
+defaults, a language selector, Pet/Reading Quest presets and native PNG export.
+The prebuilt studio ZIP also works without the compilation toolchain.
+
 Double-click `Start-Simulator.cmd` in this checkout. It opens the current
 firmware in your browser at `http://127.0.0.1:8765/`. Keep the console open;
 Ctrl+C stops the server. If the same checkout already serves that port, the
@@ -38,8 +42,10 @@ The archive includes the actual `freeink-sdk/` source tree. Do not replace it
 with the older revision named by `.gitmodules`. PlatformIO downloads its own
 framework dependencies on the first build. The launcher generates the browser
 compilation database and bundle; no precompiled simulator is required.
-The showcase save generator separately requires a C++17 compiler when its
-fixtures are deliberately rebuilt; normal simulator builds only copy them.
+Source builds regenerate the promotional saves using their production codecs.
+Windows uses the bundled Emscripten compiler; other hosts need a C++17 compiler
+selected by `CXX`, or `c++` on PATH. The prebuilt studio needs neither compiler
+nor Emscripten at runtime.
 
 ## Tools used for this build
 

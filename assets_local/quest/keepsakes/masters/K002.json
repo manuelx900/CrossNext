@@ -1,0 +1,28 @@
+{
+  "id": "K002",
+  "key": "Cinta",
+  "file": "K002.png",
+  "sample": {
+    "es": "Cinta de la canción",
+    "en": "Song ribbon"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Song ribbon.",
+  "requests": [
+    2,
+    77,
+    117,
+    128,
+    165,
+    192,
+    207,
+    231,
+    252,
+    270,
+    287
+  ],
+  "sha256": "977e0a51ce8bb565e212897d04de139488ac96dc027e784f6c4f5acbd91d9fbd",
+  "source": "exec-6565b60a-186f-4bdb-9605-485efd3e9284.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

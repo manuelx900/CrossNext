@@ -162,7 +162,7 @@ void buildMenu(toybox::Screen& s, const MenuModel& m) {
   begin(s);
   const auto b = s.body();
   const bool wide = b.width > b.height;
-  const int rows = m.inProgress ? 4 : 3, rowH = wide ? 54 : chrome::lightHeader ? 62 : 46;
+  const int rows = m.inProgress ? 4 : 3, rowH = wide ? 54 : 62, gap = 8;
   const auto side = wide ? fui::makeRect(b.x + b.width / 2 + 12, b.y, b.width / 2 - 12, b.height) : b;
   dashboard::text(s, fui::makeRect(b.x, b.y, wide ? b.width / 2 - 8 : b.width, 40),
                   m.inProgress ? tr(STR_GAME_PAUSED) : tr(STR_WORDLE_PLAY), 1);
@@ -170,8 +170,9 @@ void buildMenu(toybox::Screen& s, const MenuModel& m) {
   std::snprintf(label, sizeof(label), m.sharedDevice ? tr(STR_GO_LOCAL_DETAIL) : tr(STR_GO_MENU_DETAIL), m.boardSize,
                 m.boardSize, colour(m.seat));
   prose(s, fui::makeRect(b.x, b.y + 40, wide ? b.width / 2 - 8 : b.width, 28), label, 1, 0, fui::TextAlign::Center);
-  const int actionHeight = rows * (rowH + 6) - 6;
-  const int actionsY = wide ? gamepanel::centeredBlock(side, actionHeight + 60).y : b.bottom() - 46 - rows * (rowH + 6);
+  const int actionHeight = rows * (rowH + gap) - gap;
+  const int actionsY =
+      wide ? gamepanel::centeredBlock(side, actionHeight + 60).y : b.bottom() - 46 - rows * (rowH + gap);
   const auto area = wide ? fui::makeRect(b.x, b.y + 76, b.width / 2 - 8, b.height - 78)
                          : fui::makeRect(b.x, b.y + 76, b.width, actionsY - b.y - 88);
   const int edge = std::min(int(area.width), int(area.height));
@@ -184,14 +185,14 @@ void buildMenu(toybox::Screen& s, const MenuModel& m) {
   if (m.inProgress) {
     gamepanel::row(s, fui::makeRect(side.x, y, side.width, rowH), tr(STR_MATCH_CONTINUE), ActionMenuRow,
                    int(MenuRow::Play), gamepanel::Mark::Play, true);
-    y += rowH + 6;
+    y += rowH + gap;
   }
   gamepanel::row(s, fui::makeRect(side.x, y, side.width, rowH), tr(STR_UI_NEW_GAME_F6F041), ActionDiscard, 0,
                  gamepanel::Mark::Restart, !m.inProgress);
-  y += rowH + 6;
+  y += rowH + gap;
   gamepanel::row(s, fui::makeRect(side.x, y, side.width, rowH), tr(STR_WORDLE_HELP), ActionHelp, 0,
                  gamepanel::Mark::Book, false, nullptr, true, &matchart::Book);
-  y += rowH + 6;
+  y += rowH + gap;
   gamepanel::row(s, fui::makeRect(side.x, y, side.width, rowH), tr(STR_SETTINGS_TITLE), ActionMenuRow,
                  int(MenuRow::Settings), gamepanel::Mark::Settings, false, nullptr, true, &matchart::Gear);
   prose(s, fui::makeRect(side.x, wide ? actionsY + actionHeight + 16 : side.bottom() - 44, side.width, 44),
@@ -311,9 +312,16 @@ void buildBoard(toybox::Screen& s, const BoardModel& m) {
   const int half = (actionW - 8) / 2, actionY = wide ? turn.y : c.bottom() - 60;
   button(s, fui::makeRect(actionX, actionY, m.review && wide ? actionW : half, wide ? 56 : 60),
          m.review ? tr(STR_MATCH_RESULTS) : tr(STR_WORDLE_MENU), m.review ? ActionResult : ActionDone);
-  if (!m.review && m.yourTurn)
-    button(s, fui::makeRect(actionX + half + 8, actionY, actionW - half - 8, wide ? 56 : 60), tr(STR_UI_PASS_BD564D),
-           ActionPass, 0, true);
+  if (!m.review) {
+    const auto pass = fui::makeRect(actionX + half + 8, actionY, actionW - half - 8, wide ? 56 : 60);
+    if (m.yourTurn)
+      button(s, pass, tr(STR_UI_PASS_BD564D), ActionPass, 0, true);
+    else {
+      lightui::surface(s.target(), pass, ink);
+      pixelui::text(s.target(), pass.inset({0, 8, 0, 8}), tr(STR_UI_PASS_BD564D), pixelui::kSmall, fui::Color::White,
+                    fui::TextAlign::Center);
+    }
+  }
 }
 
 void buildCount(toybox::Screen& s, const CountModel& m) {

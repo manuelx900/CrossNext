@@ -1,0 +1,16 @@
+APP AND GAME ORDER
+
+Settings > System > Home Menu > Reorder games / Reorder apps.
+Select an item, then use Move up or Move down. Each successful move is saved.
+Games and apps have separate orders. Hidden items can be ordered too and remain hidden.
+The saved file /.crosspoint/shelf-order.cfg uses stable folder and item titles.
+New items appear after the saved items. Unknown, duplicate and incomplete records are ignored.
+A missing file or one with no valid records uses the installed registry order.
+Valid records survive malformed neighbours. Save failures preserve the previous file or its recovery backup.
+Returning from an app and waking from sleep still identify it by its registry item, not its visible row.
+
+DEVICE CHECKS
+Move two games and two apps, return to their menus, and restart. Check the order persists.
+Hide an item, reorder its neighbours, show it again, and check no other item is opened by mistake.
+Open an item on a later page, return, sleep and wake. Check the correct app opens and the saved order persists.
+Check both orientations and all four themes. Changes do not affect the reading font or book order.

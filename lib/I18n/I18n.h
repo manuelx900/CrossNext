@@ -3,6 +3,9 @@
 #include <cstdint>
 
 #include "I18nKeys.h"
+namespace languagepack {
+class Pack;
+}
 /**
  * Internationalization (i18n) system for CrossPoint Reader
  */
@@ -23,6 +26,9 @@ class I18n {
   Language getLanguage() const { return _language; }
   void setLanguage(Language lang);
   const char* getLanguageName(Language lang) const;
+  const char* getLanguageName() const;
+  bool loadLanguagePack(const char* filename);
+  bool hasLanguagePack() const { return externalActive; }
   static Language languageFromCode(const char* code);
 
   // Get all unique characters used in a specific language
@@ -33,6 +39,8 @@ class I18n {
   I18n() : _language(Language::EN) {}
 
   Language _language;
+  static languagepack::Pack externalPack;
+  bool externalActive = false;
 };
 
 // Convenience macros

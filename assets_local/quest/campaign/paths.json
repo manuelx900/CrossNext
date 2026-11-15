@@ -1,0 +1,1709 @@
+{
+  "version": 2,
+  "prologue": [
+    {
+      "title": {
+        "en": "The beginning of the adventure",
+        "es": "El comienzo de la aventura"
+      },
+      "text": {
+        "en": "For many years people lived in peace and enjoyed their books. Then the King of Forgetting began to destroy them. He wanted to stop everyone from reading and make all stories disappear forever.",
+        "es": "Durante muchos años, las personas vivieron en paz y disfrutaron de sus libros. Pero un día, el Rey del Olvido comenzó a destruirlos. Su objetivo era que nadie pudiera volver a leer y que todas las historias desaparecieran para siempre."
+      }
+    },
+    {
+      "title": {
+        "en": "The king's monsters",
+        "es": "Los monstruos del rey"
+      },
+      "text": {
+        "en": "The King of Forgetting sent his monsters all over the world. They destroyed every book they found and attacked anyone who tried to stop them. Libraries began to disappear, and people stopped reading.",
+        "es": "Para cumplir su plan, el Rey del Olvido envió a sus monstruos por todo el mundo. Estas criaturas destruyen los libros que encuentran y atacan a cualquiera que intente detenerlas. Poco a poco, las bibliotecas comenzaron a desaparecer y las personas dejaron de leer."
+      }
+    },
+    {
+      "title": {
+        "en": "The power of reading",
+        "es": "El poder de la lectura"
+      },
+      "text": {
+        "en": "One day, while you are reading near your village, a monster appears. You try to get away, but something surprising happens: the more you read, the weaker it becomes. You realize reading is the only way to fight the king's magic.",
+        "es": "Un día, mientras lees cerca de tu aldea, aparece uno de estos monstruos. Intentas escapar, pero descubres algo sorprendente: cuanto más lees, más débil se vuelve la criatura. Entonces comprendes que la lectura es la única forma de luchar contra la magia del Rey del Olvido."
+      }
+    },
+    {
+      "title": {
+        "en": "Your mission",
+        "es": "Tu misión"
+      },
+      "text": {
+        "en": "You set out to stop the king. On your way to his castle you must cross forests, cities, mountains and other places full of enemies. Each monster you defeat takes you a little closer. Keep reading, defeat his guardians and reach him before he destroys every book in the world.",
+        "es": "Decides emprender un viaje para detener al rey. Para llegar hasta su castillo tendrás que recorrer bosques, ciudades, montañas y otros lugares llenos de enemigos. Cada monstruo que derrotes te permitirá avanzar un poco más. Tu misión es sencilla: seguir leyendo, vencer a los guardianes del rey y llegar hasta él antes de que destruya todos los libros del mundo."
+      }
+    }
+  ],
+  "sagas": [
+    {
+      "title": {
+        "en": "The Forest of Monsters",
+        "es": "El bosque de los monstruos"
+      },
+      "versions": [
+        {
+          "en": "The forest separates your village from the first city. The King of Forgetting's monsters have seized its paths, but the road to his castle begins beyond the trees.",
+          "es": "El bosque separa tu aldea de la primera ciudad. Sabes que los monstruos del Rey del Olvido han tomado sus caminos, pero no puedes detener tu viaje. En algún lugar, al otro lado de los árboles, comienza la ruta hacia su castillo."
+        },
+        {
+          "en": "You find torn books among the trees and monsters on the roads. They have destroyed a bridge, so you repair it with the remaining planks and cross the river. The king's enemies are trying to stop anyone from reaching him.",
+          "es": "Entras al bosque que separa tu aldea de la primera ciudad. Pronto descubres restos de libros entre los árboles y caminos tomados por los monstruos del Rey del Olvido. Tras abrirte paso, llegas a un río cuyo puente ha sido destruido. Consigues repararlo con las tablas que quedan y cruzas a la otra orilla. Los enemigos del rey no solo destruyen libros: también intentan impedir que alguien llegue hasta él."
+        },
+        {
+          "en": "You find torn books among the trees and monsters on the roads. They have destroyed a bridge, so you repair it with the remaining planks and cross the river. The king's enemies are trying to stop anyone from reaching him.\n\nAn abandoned house holds a map of the forest. It leads you to an old well and a trail hidden in the branches. The woods grow darker, but now you know where to go.",
+          "es": "Entras al bosque que separa tu aldea de la primera ciudad. Pronto descubres restos de libros entre los árboles y caminos tomados por los monstruos del Rey del Olvido. Tras abrirte paso, llegas a un río cuyo puente ha sido destruido. Consigues repararlo con las tablas que quedan y cruzas a la otra orilla. Los enemigos del rey no solo destruyen libros: también intentan impedir que alguien llegue hasta él.\n\nAl otro lado del río encuentras una casa abandonada. Entre los libros dañados hay un mapa que muestra la salida del bosque. Lo sigues hasta un viejo pozo y desde allí encuentras un sendero escondido entre las ramas. Aunque el bosque es cada vez más oscuro, ahora tienes una dirección clara para continuar."
+        },
+        {
+          "en": "You find torn books among the trees and monsters on the roads. They have destroyed a bridge, so you repair it with the remaining planks and cross the river. The king's enemies are trying to stop anyone from reaching him.\n\nAn abandoned house holds a map of the forest. It leads you to an old well and a trail hidden in the branches. The woods grow darker, but now you know where to go.\n\nYou spot the city roofs, but enormous roots have grown across the way out. They grow from an old gate whose guardian controls the last barrier.",
+          "es": "Entras al bosque que separa tu aldea de la primera ciudad. Pronto descubres restos de libros entre los árboles y caminos tomados por los monstruos del Rey del Olvido. Tras abrirte paso, llegas a un río cuyo puente ha sido destruido. Consigues repararlo con las tablas que quedan y cruzas a la otra orilla. Los enemigos del rey no solo destruyen libros: también intentan impedir que alguien llegue hasta él.\n\nAl otro lado del río encuentras una casa abandonada. Entre los libros dañados hay un mapa que muestra la salida del bosque. Lo sigues hasta un viejo pozo y desde allí encuentras un sendero escondido entre las ramas. Aunque el bosque es cada vez más oscuro, ahora tienes una dirección clara para continuar.\n\nEl sendero te lleva cerca de la salida. Desde allí alcanzas a distinguir los tejados de la ciudad, pero unas raíces enormes cierran el paso. Descubres que salen de una vieja puerta y que un poderoso guardián controla esa última barrera. Ya solo queda encontrar la forma de atravesarla."
+        },
+        {
+          "en": "You find torn books among the trees and monsters on the roads. They have destroyed a bridge, so you repair it with the remaining planks and cross the river. The king's enemies are trying to stop anyone from reaching him.\n\nAn abandoned house holds a map of the forest. It leads you to an old well and a trail hidden in the branches. The woods grow darker, but now you know where to go.\n\nYou spot the city roofs, but enormous roots have grown across the way out. They grow from an old gate whose guardian controls the last barrier.\n\nThe Lord of Roots falls and the barrier disappears. The road to the city is open, though the king's soldiers are still destroying books beyond the trees.",
+          "es": "Entras al bosque que separa tu aldea de la primera ciudad. Pronto descubres restos de libros entre los árboles y caminos tomados por los monstruos del Rey del Olvido. Tras abrirte paso, llegas a un río cuyo puente ha sido destruido. Consigues repararlo con las tablas que quedan y cruzas a la otra orilla. Los enemigos del rey no solo destruyen libros: también intentan impedir que alguien llegue hasta él.\n\nAl otro lado del río encuentras una casa abandonada. Entre los libros dañados hay un mapa que muestra la salida del bosque. Lo sigues hasta un viejo pozo y desde allí encuentras un sendero escondido entre las ramas. Aunque el bosque es cada vez más oscuro, ahora tienes una dirección clara para continuar.\n\nEl sendero te lleva cerca de la salida. Desde allí alcanzas a distinguir los tejados de la ciudad, pero unas raíces enormes cierran el paso. Descubres que salen de una vieja puerta y que un poderoso guardián controla esa última barrera. Ya solo queda encontrar la forma de atravesarla.\n\nFinalmente, el Señor de las Raíces cae y las enormes raíces desaparecen. El bosque queda atrás y el camino a la ciudad se abre ante ti. Has superado la primera parte de tu viaje, pero sabes que los soldados del Rey del Olvido siguen destruyendo libros más allá de los árboles."
+        }
+      ]
+    },
+    {
+      "title": {
+        "en": "The City Without Books",
+        "es": "La ciudad sin libros"
+      },
+      "versions": [
+        {
+          "en": "The city seems deserted. The king's soldiers have shut its library and are hunting anyone who keeps a book. The road to the castle runs through the city and on to the harbor.",
+          "es": "La ciudad parece desierta. Los soldados del Rey del Olvido han cerrado su biblioteca y persiguen a quienes intentan conservar sus libros. Para seguir hacia el castillo tendrás que entrar, averiguar qué ha pasado y encontrar la salida que lleva al puerto."
+        },
+        {
+          "en": "The city's inhabitants are hiding from the king's soldiers. You find burnt books and shuttered stalls in the market. In the square, the king's orders demand that every library close. You set out to reach the main library before the last books disappear.",
+          "es": "La primera ciudad está casi vacía. Sus habitantes se esconden de los soldados del Rey del Olvido y el mercado muestra señales de los ataques: puestos cerrados y libros quemados. En la plaza encuentras una orden del rey que exige cerrar todas las bibliotecas. Decides llegar a la biblioteca principal antes de que desaparezcan los últimos libros."
+        },
+        {
+          "en": "The city's inhabitants are hiding from the king's soldiers. You find burnt books and shuttered stalls in the market. In the square, the king's orders demand that every library close. You set out to reach the main library before the last books disappear.\n\nYou cross the guarded streets and enter the library. Some of the books can still be saved. Old maps show that the road to the castle leads through a harbor on the far side of town. The soldiers plan to come back, so you stay to protect the books.",
+          "es": "La primera ciudad está casi vacía. Sus habitantes se esconden de los soldados del Rey del Olvido y el mercado muestra señales de los ataques: puestos cerrados y libros quemados. En la plaza encuentras una orden del rey que exige cerrar todas las bibliotecas. Decides llegar a la biblioteca principal antes de que desaparezcan los últimos libros.\n\nCruzas las calles vigiladas y consigues entrar en la biblioteca. Parte del edificio ha sido destruida, pero todavía quedan libros que se pueden salvar. Entre los mapas antiguos descubres que la ruta hacia el castillo pasa por un puerto al otro lado de la ciudad. También averiguas que los soldados planean regresar, así que no puedes marcharte sin proteger lo que queda."
+        },
+        {
+          "en": "The city's inhabitants are hiding from the king's soldiers. You find burnt books and shuttered stalls in the market. In the square, the king's orders demand that every library close. You set out to reach the main library before the last books disappear.\n\nYou cross the guarded streets and enter the library. Some of the books can still be saved. Old maps show that the road to the castle leads through a harbor on the far side of town. The soldiers plan to come back, so you stay to protect the books.\n\nWith the library safe, you ask how to reach the harbor. The townspeople point you to the bell tower. You get part of the mechanism moving, but its chief guardian still prevents the city gate from opening.",
+          "es": "La primera ciudad está casi vacía. Sus habitantes se esconden de los soldados del Rey del Olvido y el mercado muestra señales de los ataques: puestos cerrados y libros quemados. En la plaza encuentras una orden del rey que exige cerrar todas las bibliotecas. Decides llegar a la biblioteca principal antes de que desaparezcan los últimos libros.\n\nCruzas las calles vigiladas y consigues entrar en la biblioteca. Parte del edificio ha sido destruida, pero todavía quedan libros que se pueden salvar. Entre los mapas antiguos descubres que la ruta hacia el castillo pasa por un puerto al otro lado de la ciudad. También averiguas que los soldados planean regresar, así que no puedes marcharte sin proteger lo que queda.\n\nDespués de impedir que destruyan la biblioteca, buscas la salida hacia el puerto. Los habitantes te explican que la puerta de la ciudad se abre desde la torre de las campanas. Llegas a ella y consigues mover parte del mecanismo, aunque el guardián principal todavía impide que la puerta se levante."
+        },
+        {
+          "en": "The city's inhabitants are hiding from the king's soldiers. You find burnt books and shuttered stalls in the market. In the square, the king's orders demand that every library close. You set out to reach the main library before the last books disappear.\n\nYou cross the guarded streets and enter the library. Some of the books can still be saved. Old maps show that the road to the castle leads through a harbor on the far side of town. The soldiers plan to come back, so you stay to protect the books.\n\nWith the library safe, you ask how to reach the harbor. The townspeople point you to the bell tower. You get part of the mechanism moving, but its chief guardian still prevents the city gate from opening.\n\nThe bell rings and the city gate opens. You leave the library's books safe and take the road to a harbor shrouded in mist.",
+          "es": "La primera ciudad está casi vacía. Sus habitantes se esconden de los soldados del Rey del Olvido y el mercado muestra señales de los ataques: puestos cerrados y libros quemados. En la plaza encuentras una orden del rey que exige cerrar todas las bibliotecas. Decides llegar a la biblioteca principal antes de que desaparezcan los últimos libros.\n\nCruzas las calles vigiladas y consigues entrar en la biblioteca. Parte del edificio ha sido destruida, pero todavía quedan libros que se pueden salvar. Entre los mapas antiguos descubres que la ruta hacia el castillo pasa por un puerto al otro lado de la ciudad. También averiguas que los soldados planean regresar, así que no puedes marcharte sin proteger lo que queda.\n\nDespués de impedir que destruyan la biblioteca, buscas la salida hacia el puerto. Los habitantes te explican que la puerta de la ciudad se abre desde la torre de las campanas. Llegas a ella y consigues mover parte del mecanismo, aunque el guardián principal todavía impide que la puerta se levante.\n\nCuando la campana vuelve a sonar, la puerta de la ciudad se abre. Los libros de la biblioteca quedan a salvo y ya conoces el siguiente tramo del viaje. Sales de la ciudad y sigues el camino hasta un puerto cubierto de niebla."
+        }
+      ]
+    },
+    {
+      "title": {
+        "en": "The Harbor of Mist",
+        "es": "El puerto de la niebla"
+      },
+      "versions": [
+        {
+          "en": "Thick mist hides the water, and nobody dares take the abandoned boats out. You need to find a way across the sea.",
+          "es": "El puerto está cubierto por una niebla tan espesa que casi no se ve el agua. Los barcos permanecen abandonados y nadie se atreve a navegar. Necesitas encontrar una forma de cruzar el mar para continuar tu viaje."
+        },
+        {
+          "en": "A light flickers near an island offshore. You find a small boat that can still sail and leave the deserted docks, following the light.",
+          "es": "El puerto está abandonado y una niebla espesa oculta casi todo el mar. Entre los muelles descubres una luz que parece venir de una isla cercana. Buscas cómo llegar hasta ella y encuentras una pequeña embarcación que todavía puede navegar. Siguiendo aquella luz, dejas atrás el puerto."
+        },
+        {
+          "en": "A light flickers near an island offshore. You find a small boat that can still sail and leave the deserted docks, following the light.\n\nYou reach the island and relight its lighthouse. The beam parts the mist just enough to reveal a ship aground on the rocks. You go to investigate.",
+          "es": "El puerto está abandonado y una niebla espesa oculta casi todo el mar. Entre los muelles descubres una luz que parece venir de una isla cercana. Buscas cómo llegar hasta ella y encuentras una pequeña embarcación que todavía puede navegar. Siguiendo aquella luz, dejas atrás el puerto.\n\nConsigues llegar a la isla y descubres un faro apagado. Subes hasta su torre y logras encenderlo. La luz despeja parte de la niebla y deja ver un barco encallado entre las rocas. Tal vez haya algo útil en su interior, así que decides acercarte para investigar."
+        },
+        {
+          "en": "A light flickers near an island offshore. You find a small boat that can still sail and leave the deserted docks, following the light.\n\nYou reach the island and relight its lighthouse. The beam parts the mist just enough to reveal a ship aground on the rocks. You go to investigate.\n\nOn the ship, an old map points to a library below the harbor and a floodgate that lowers the water. You open it and uncover stone steps, but the Captain of the Mist guards the entrance.",
+          "es": "El puerto está abandonado y una niebla espesa oculta casi todo el mar. Entre los muelles descubres una luz que parece venir de una isla cercana. Buscas cómo llegar hasta ella y encuentras una pequeña embarcación que todavía puede navegar. Siguiendo aquella luz, dejas atrás el puerto.\n\nConsigues llegar a la isla y descubres un faro apagado. Subes hasta su torre y logras encenderlo. La luz despeja parte de la niebla y deja ver un barco encallado entre las rocas. Tal vez haya algo útil en su interior, así que decides acercarte para investigar.\n\nDentro del barco encuentras un mapa antiguo. Muestra una biblioteca construida bajo el puerto y un sistema de compuertas que permite bajar el nivel del agua. Sigues las indicaciones hasta el mecanismo y consigues abrirlo. Al retirarse el agua aparecen unas escaleras de piedra, pero el Capitán de la Niebla aún vigila la entrada."
+        },
+        {
+          "en": "A light flickers near an island offshore. You find a small boat that can still sail and leave the deserted docks, following the light.\n\nYou reach the island and relight its lighthouse. The beam parts the mist just enough to reveal a ship aground on the rocks. You go to investigate.\n\nOn the ship, an old map points to a library below the harbor and a floodgate that lowers the water. You open it and uncover stone steps, but the Captain of the Mist guards the entrance.\n\nWith the captain defeated, you take the steps down to the ancient library. The lighthouse shines above you as you look for books the king may have missed.",
+          "es": "El puerto está abandonado y una niebla espesa oculta casi todo el mar. Entre los muelles descubres una luz que parece venir de una isla cercana. Buscas cómo llegar hasta ella y encuentras una pequeña embarcación que todavía puede navegar. Siguiendo aquella luz, dejas atrás el puerto.\n\nConsigues llegar a la isla y descubres un faro apagado. Subes hasta su torre y logras encenderlo. La luz despeja parte de la niebla y deja ver un barco encallado entre las rocas. Tal vez haya algo útil en su interior, así que decides acercarte para investigar.\n\nDentro del barco encuentras un mapa antiguo. Muestra una biblioteca construida bajo el puerto y un sistema de compuertas que permite bajar el nivel del agua. Sigues las indicaciones hasta el mecanismo y consigues abrirlo. Al retirarse el agua aparecen unas escaleras de piedra, pero el Capitán de la Niebla aún vigila la entrada.\n\nCon el capitán derrotado, nadie puede impedirte bajar. El faro sigue iluminando el puerto mientras desciendes por las escaleras. Tu viaje por mar termina en un lugar inesperado: una biblioteca antigua que podría guardar libros que el rey todavía no ha destruido."
+        }
+      ]
+    },
+    {
+      "title": {
+        "en": "The Library Beneath the Sea",
+        "es": "La biblioteca bajo el mar"
+      },
+      "versions": [
+        {
+          "en": "An ancient library lies under the harbor. Some rooms are flooded, and the king's monsters have come for its books. You go to see what can still be saved.",
+          "es": "Bajo el puerto se encuentra una biblioteca muy antigua. Parte de sus salas está inundada y los monstruos del Rey del Olvido han entrado para destruir sus libros. No sabes cuánto queda a salvo, pero decides investigar antes de continuar hacia el castillo."
+        },
+        {
+          "en": "Shelves have fallen and books float in the water. One volume explains that the king made his monsters with dark magic. It confirms what you discovered at the start of your journey: reading weakens them.",
+          "es": "Bajo el puerto encuentras una biblioteca inundada. Muchas estanterías han caído y hay libros flotando en el agua. Mientras intentas salvarlos descubres un volumen sobre el Rey del Olvido. Sus páginas explican que creó a sus monstruos con magia oscura y confirman que la lectura puede debilitarlos. Ahora entiendes mejor el poder que descubriste al comenzar el viaje."
+        },
+        {
+          "en": "Shelves have fallen and books float in the water. One volume explains that the king made his monsters with dark magic. It confirms what you discovered at the start of your journey: reading weakens them.\n\nDocuments reveal that the king has sent his soldiers to destroy libraries in every region. You discover a tunnel to the mountains, but the water starts rising. First you need to stop the flood.",
+          "es": "Bajo el puerto encuentras una biblioteca inundada. Muchas estanterías han caído y hay libros flotando en el agua. Mientras intentas salvarlos descubres un volumen sobre el Rey del Olvido. Sus páginas explican que creó a sus monstruos con magia oscura y confirman que la lectura puede debilitarlos. Ahora entiendes mejor el poder que descubriste al comenzar el viaje.\n\nEn otras salas encuentras documentos que revelan el plan del rey: ha enviado a sus soldados a destruir las bibliotecas de todas las regiones. También descubres un túnel que conduce a las montañas. Antes de buscarlo, el agua comienza a subir y amenaza con arruinar los libros que quedan. Decides detener la inundación para que la biblioteca pueda sobrevivir."
+        },
+        {
+          "en": "Shelves have fallen and books float in the water. One volume explains that the king made his monsters with dark magic. It confirms what you discovered at the start of your journey: reading weakens them.\n\nDocuments reveal that the king has sent his soldiers to destroy libraries in every region. You discover a tunnel to the mountains, but the water starts rising. First you need to stop the flood.\n\nYou shut the floodgate and protect the main rooms. The plans lead you to the service tunnel. You can see daylight ahead when a huge creature comes after you.",
+          "es": "Bajo el puerto encuentras una biblioteca inundada. Muchas estanterías han caído y hay libros flotando en el agua. Mientras intentas salvarlos descubres un volumen sobre el Rey del Olvido. Sus páginas explican que creó a sus monstruos con magia oscura y confirman que la lectura puede debilitarlos. Ahora entiendes mejor el poder que descubriste al comenzar el viaje.\n\nEn otras salas encuentras documentos que revelan el plan del rey: ha enviado a sus soldados a destruir las bibliotecas de todas las regiones. También descubres un túnel que conduce a las montañas. Antes de buscarlo, el agua comienza a subir y amenaza con arruinar los libros que quedan. Decides detener la inundación para que la biblioteca pueda sobrevivir.\n\nConsigues cerrar la compuerta y proteger las salas principales. Luego sigues los planos hasta el túnel de servicio. Recorres su oscuridad hasta ver la luz del exterior, pero escuchas un ruido enorme a tus espaldas. Una bestia de las profundidades se acerca y amenaza con impedir que salgas."
+        },
+        {
+          "en": "Shelves have fallen and books float in the water. One volume explains that the king made his monsters with dark magic. It confirms what you discovered at the start of your journey: reading weakens them.\n\nDocuments reveal that the king has sent his soldiers to destroy libraries in every region. You discover a tunnel to the mountains, but the water starts rising. First you need to stop the flood.\n\nYou shut the floodgate and protect the main rooms. The plans lead you to the service tunnel. You can see daylight ahead when a huge creature comes after you.\n\nYou escape the creature and step into the open air. Part of the library is safe, and you know the king's soldiers are attacking books everywhere. The road to his castle continues into the mountains.",
+          "es": "Bajo el puerto encuentras una biblioteca inundada. Muchas estanterías han caído y hay libros flotando en el agua. Mientras intentas salvarlos descubres un volumen sobre el Rey del Olvido. Sus páginas explican que creó a sus monstruos con magia oscura y confirman que la lectura puede debilitarlos. Ahora entiendes mejor el poder que descubriste al comenzar el viaje.\n\nEn otras salas encuentras documentos que revelan el plan del rey: ha enviado a sus soldados a destruir las bibliotecas de todas las regiones. También descubres un túnel que conduce a las montañas. Antes de buscarlo, el agua comienza a subir y amenaza con arruinar los libros que quedan. Decides detener la inundación para que la biblioteca pueda sobrevivir.\n\nConsigues cerrar la compuerta y proteger las salas principales. Luego sigues los planos hasta el túnel de servicio. Recorres su oscuridad hasta ver la luz del exterior, pero escuchas un ruido enorme a tus espaldas. Una bestia de las profundidades se acerca y amenaza con impedir que salgas.\n\nLa bestia queda atrás y por fin sales al aire libre. Has salvado parte de la biblioteca y confirmado que el ejército del rey está destruyendo libros por todo el mundo. No puedes detenerte todavía. Frente a ti se levantan las montañas por donde continúa la ruta hacia su castillo."
+        }
+      ]
+    },
+    {
+      "title": {
+        "en": "The Mountains of Echoes",
+        "es": "Las montañas del eco"
+      },
+      "versions": [
+        {
+          "en": "Snow covers the quickest route into the heart of the kingdom. The king's monsters use false voices to mislead travelers, so you need to find a safe trail.",
+          "es": "Las montañas son el paso más directo hacia el interior del reino. Sus senderos están cubiertos de nieve y los monstruos del rey confunden a los viajeros con voces falsas. Para llegar al otro lado necesitarás encontrar una ruta segura."
+        },
+        {
+          "en": "The snowy paths branch in several directions, and creatures mimic voices to confuse you. You follow the signs to a shelter where a map shows a safe route to the summit.",
+          "es": "Comienzas a subir por las Montañas del Eco. La nieve y los senderos divididos hacen difícil orientarse, y algunas criaturas imitan voces para confundir a los viajeros. Después de seguir varias señales llegas a un refugio. Allí encuentras un mapa que indica un paso seguro hacia la cima."
+        },
+        {
+          "en": "The snowy paths branch in several directions, and creatures mimic voices to confuse you. You follow the signs to a shelter where a map shows a safe route to the summit.\n\nWith the map, you spot the misleading trails. You cross a stone bridge and push through a snowstorm, following signs that tell you the summit is near.",
+          "es": "Comienzas a subir por las Montañas del Eco. La nieve y los senderos divididos hacen difícil orientarse, y algunas criaturas imitan voces para confundir a los viajeros. Después de seguir varias señales llegas a un refugio. Allí encuentras un mapa que indica un paso seguro hacia la cima.\n\nCon ayuda del mapa distingues el camino verdadero de los senderos engañosos. Cruzas un puente de piedra y atraviesas una tormenta de nieve. El frío vuelve lento el viaje, pero las señales que encuentras confirman que estás acercándote a la parte más alta de las montañas."
+        },
+        {
+          "en": "The snowy paths branch in several directions, and creatures mimic voices to confuse you. You follow the signs to a shelter where a map shows a safe route to the summit.\n\nWith the map, you spot the misleading trails. You cross a stone bridge and push through a snowstorm, following signs that tell you the summit is near.\n\nAn old rope helps you cross the last dangerous gap. From the summit you see a vast desert below. On the descent, the Lord of Echoes tries one last time to lead you astray.",
+          "es": "Comienzas a subir por las Montañas del Eco. La nieve y los senderos divididos hacen difícil orientarse, y algunas criaturas imitan voces para confundir a los viajeros. Después de seguir varias señales llegas a un refugio. Allí encuentras un mapa que indica un paso seguro hacia la cima.\n\nCon ayuda del mapa distingues el camino verdadero de los senderos engañosos. Cruzas un puente de piedra y atraviesas una tormenta de nieve. El frío vuelve lento el viaje, pero las señales que encuentras confirman que estás acercándote a la parte más alta de las montañas.\n\nUna vieja cuerda te permite atravesar el último paso peligroso. Desde la cima ves que la nieve termina y comienza un desierto inmenso. Inicias el descenso, aunque los ecos vuelven a confundirte. El Señor del Eco sigue controlando la salida y todavía debes superar su última trampa."
+        },
+        {
+          "en": "The snowy paths branch in several directions, and creatures mimic voices to confuse you. You follow the signs to a shelter where a map shows a safe route to the summit.\n\nWith the map, you spot the misleading trails. You cross a stone bridge and push through a snowstorm, following signs that tell you the summit is near.\n\nAn old rope helps you cross the last dangerous gap. From the summit you see a vast desert below. On the descent, the Lord of Echoes tries one last time to lead you astray.\n\nThe Lord of Echoes loses his power, and the false voices fall silent. You leave the cold behind. The desert is the next stretch of road to the king's castle.",
+          "es": "Comienzas a subir por las Montañas del Eco. La nieve y los senderos divididos hacen difícil orientarse, y algunas criaturas imitan voces para confundir a los viajeros. Después de seguir varias señales llegas a un refugio. Allí encuentras un mapa que indica un paso seguro hacia la cima.\n\nCon ayuda del mapa distingues el camino verdadero de los senderos engañosos. Cruzas un puente de piedra y atraviesas una tormenta de nieve. El frío vuelve lento el viaje, pero las señales que encuentras confirman que estás acercándote a la parte más alta de las montañas.\n\nUna vieja cuerda te permite atravesar el último paso peligroso. Desde la cima ves que la nieve termina y comienza un desierto inmenso. Inicias el descenso, aunque los ecos vuelven a confundirte. El Señor del Eco sigue controlando la salida y todavía debes superar su última trampa.\n\nEl Señor del Eco pierde su poder y las voces falsas desaparecen. Al bajar por la última ladera dejas atrás el frío de las montañas. El desierto se extiende ante ti, y debes cruzarlo para seguir acercándote al castillo del Rey del Olvido."
+        }
+      ]
+    },
+    {
+      "title": {
+        "en": "The Sea of Sand",
+        "es": "El desierto de arena"
+      },
+      "versions": [
+        {
+          "en": "Beyond the mountains lies a seemingly endless desert. Monsters have destroyed camps and signs. A distant citadel marks the route to the castle.",
+          "es": "Después de las montañas encuentras un desierto que parece no terminar nunca. Los monstruos han destruido campamentos y señales, y el calor hace difícil avanzar. A lo lejos se encuentra una ciudadela por la que deberás pasar para continuar hacia el castillo."
+        },
+        {
+          "en": "The heat and sand make the journey slow. You follow surviving signs to abandoned tents, then follow tracks to an old well where you find water.",
+          "es": "Entras en un desierto donde el calor y la arena dificultan el avance. Los monstruos del rey han destruido muchas señales y campamentos. Siguiendo los postes que aún quedan llegas a unas tiendas abandonadas. Allí descubres huellas que conducen a un pozo y consigues agua para continuar el viaje."
+        },
+        {
+          "en": "The heat and sand make the journey slow. You follow surviving signs to abandoned tents, then follow tracks to an old well where you find water.\n\nA torn map points to a garden lost among the dunes. There you find a working compass. With the wind erasing your tracks, it is your only reliable guide.",
+          "es": "Entras en un desierto donde el calor y la arena dificultan el avance. Los monstruos del rey han destruido muchas señales y campamentos. Siguiendo los postes que aún quedan llegas a unas tiendas abandonadas. Allí descubres huellas que conducen a un pozo y consigues agua para continuar el viaje.\n\nEntre los restos del campamento encuentras un mapa roto que señala un jardín perdido entre las dunas. Cuando llegas, descubres una brújula que todavía funciona. La utilizas para orientarte mientras el viento borra tus huellas. Es la única pista segura que tienes para encontrar la salida del desierto."
+        },
+        {
+          "en": "The heat and sand make the journey slow. You follow surviving signs to abandoned tents, then follow tracks to an old well where you find water.\n\nA torn map points to a garden lost among the dunes. There you find a working compass. With the wind erasing your tracks, it is your only reliable guide.\n\nYou cross a sandstorm and find signs left by earlier travelers. From a dune you spot the walls of a citadel, but a huge creature guards the entrance.",
+          "es": "Entras en un desierto donde el calor y la arena dificultan el avance. Los monstruos del rey han destruido muchas señales y campamentos. Siguiendo los postes que aún quedan llegas a unas tiendas abandonadas. Allí descubres huellas que conducen a un pozo y consigues agua para continuar el viaje.\n\nEntre los restos del campamento encuentras un mapa roto que señala un jardín perdido entre las dunas. Cuando llegas, descubres una brújula que todavía funciona. La utilizas para orientarte mientras el viento borra tus huellas. Es la única pista segura que tienes para encontrar la salida del desierto.\n\nUna tormenta de arena vuelve peligroso el camino. Consigues atravesarla y, al otro lado, encuentras señales de antiguos viajeros. Las sigues hasta que desde lo alto de una duna distingues las murallas de una ciudadela. Está cerca, pero una enorme criatura protege la entrada."
+        },
+        {
+          "en": "The heat and sand make the journey slow. You follow surviving signs to abandoned tents, then follow tracks to an old well where you find water.\n\nA torn map points to a garden lost among the dunes. There you find a working compass. With the wind erasing your tracks, it is your only reliable guide.\n\nYou cross a sandstorm and find signs left by earlier travelers. From a dune you spot the walls of a citadel, but a huge creature guards the entrance.\n\nThe creature falls and you reach the citadel. Its great clock has stopped, and the far gate will stay closed until it works again.",
+          "es": "Entras en un desierto donde el calor y la arena dificultan el avance. Los monstruos del rey han destruido muchas señales y campamentos. Siguiendo los postes que aún quedan llegas a unas tiendas abandonadas. Allí descubres huellas que conducen a un pozo y consigues agua para continuar el viaje.\n\nEntre los restos del campamento encuentras un mapa roto que señala un jardín perdido entre las dunas. Cuando llegas, descubres una brújula que todavía funciona. La utilizas para orientarte mientras el viento borra tus huellas. Es la única pista segura que tienes para encontrar la salida del desierto.\n\nUna tormenta de arena vuelve peligroso el camino. Consigues atravesarla y, al otro lado, encuentras señales de antiguos viajeros. Las sigues hasta que desde lo alto de una duna distingues las murallas de una ciudadela. Está cerca, pero una enorme criatura protege la entrada.\n\nLa criatura cae y las puertas de la ciudadela quedan libres. Dejas atrás el desierto, agotado pero decidido a seguir. Al entrar descubres que el gran reloj de la ciudadela se ha detenido y que, mientras no funcione, la salida permanecerá cerrada."
+        }
+      ]
+    },
+    {
+      "title": {
+        "en": "The Clockwork Citadel",
+        "es": "La ciudadela del reloj"
+      },
+      "versions": [
+        {
+          "en": "The citadel's great clock has stopped. Its mechanism also controls the exit, so you need to get into the tower and start it again.",
+          "es": "En la ciudadela hay un gran reloj detenido. Los habitantes cuentan que su mecanismo también controla la puerta de salida, pero los monstruos del rey han bloqueado la torre. Para seguir tu viaje tendrás que conseguir que vuelva a funcionar."
+        },
+        {
+          "en": "The townspeople tell you how the clock controls the gate. In a workshop you find a gear that might get the tower working again.",
+          "es": "La ciudadela está dominada por una torre con un gran reloj detenido. Sus habitantes explican que el mecanismo también abre la puerta por la que necesitas salir. Buscas un taller y encuentras un engranaje que todavía puede utilizarse. Parece una pieza pequeña, pero es el primer paso para poner de nuevo en marcha la torre."
+        },
+        {
+          "en": "The townspeople tell you how the clock controls the gate. In a workshop you find a gear that might get the tower working again.\n\nThe gear opens the tower entrance. Inside you find a smaller clock with a missing hand. You fetch the hand from the workshop and fit it in place, opening the machine room. The king's monsters have jammed its huge wheels.",
+          "es": "La ciudadela está dominada por una torre con un gran reloj detenido. Sus habitantes explican que el mecanismo también abre la puerta por la que necesitas salir. Buscas un taller y encuentras un engranaje que todavía puede utilizarse. Parece una pieza pequeña, pero es el primer paso para poner de nuevo en marcha la torre.\n\nCon el engranaje abres la entrada de la torre. Dentro descubres un reloj más pequeño al que le falta una manecilla. Vuelves al taller para conseguirla y, al colocarla, se abre el acceso a la sala de máquinas. Allí encuentras enormes ruedas de metal que los monstruos han dejado bloqueadas."
+        },
+        {
+          "en": "The townspeople tell you how the clock controls the gate. In a workshop you find a gear that might get the tower working again.\n\nThe gear opens the tower entrance. Inside you find a smaller clock with a missing hand. You fetch the hand from the workshop and fit it in place, opening the machine room. The king's monsters have jammed its huge wheels.\n\nYou repair most of the mechanism, but the hands still won't move. At the top of the tower, a living machine controls the last wheel and keeps the gate shut.",
+          "es": "La ciudadela está dominada por una torre con un gran reloj detenido. Sus habitantes explican que el mecanismo también abre la puerta por la que necesitas salir. Buscas un taller y encuentras un engranaje que todavía puede utilizarse. Parece una pieza pequeña, pero es el primer paso para poner de nuevo en marcha la torre.\n\nCon el engranaje abres la entrada de la torre. Dentro descubres un reloj más pequeño al que le falta una manecilla. Vuelves al taller para conseguirla y, al colocarla, se abre el acceso a la sala de máquinas. Allí encuentras enormes ruedas de metal que los monstruos han dejado bloqueadas.\n\nConsigues reparar buena parte del mecanismo, aunque las agujas del reloj principal aún no se mueven. Subes a la zona más alta de la torre y descubres que una máquina viviente controla la última rueda. Hasta que deje de funcionar, las puertas de la ciudadela seguirán cerradas."
+        },
+        {
+          "en": "The townspeople tell you how the clock controls the gate. In a workshop you find a gear that might get the tower working again.\n\nThe gear opens the tower entrance. Inside you find a smaller clock with a missing hand. You fetch the hand from the workshop and fit it in place, opening the machine room. The king's monsters have jammed its huge wheels.\n\nYou repair most of the mechanism, but the hands still won't move. At the top of the tower, a living machine controls the last wheel and keeps the gate shut.\n\nThe Clockwork Automaton stops and the great wheels turn. The bells ring as the gate opens. Night is falling when you spot an old palace in the moonlight.",
+          "es": "La ciudadela está dominada por una torre con un gran reloj detenido. Sus habitantes explican que el mecanismo también abre la puerta por la que necesitas salir. Buscas un taller y encuentras un engranaje que todavía puede utilizarse. Parece una pieza pequeña, pero es el primer paso para poner de nuevo en marcha la torre.\n\nCon el engranaje abres la entrada de la torre. Dentro descubres un reloj más pequeño al que le falta una manecilla. Vuelves al taller para conseguirla y, al colocarla, se abre el acceso a la sala de máquinas. Allí encuentras enormes ruedas de metal que los monstruos han dejado bloqueadas.\n\nConsigues reparar buena parte del mecanismo, aunque las agujas del reloj principal aún no se mueven. Subes a la zona más alta de la torre y descubres que una máquina viviente controla la última rueda. Hasta que deje de funcionar, las puertas de la ciudadela seguirán cerradas.\n\nEl Autómata del Reloj se detiene y las grandes ruedas vuelven a girar. Suenan las campanas y la salida de la ciudadela se abre. Continúas tu viaje al caer la noche y, bajo la luz de la luna, distingues un palacio antiguo en el camino."
+        }
+      ]
+    },
+    {
+      "title": {
+        "en": "The Palace of the Moon",
+        "es": "El palacio de la luna"
+      },
+      "versions": [
+        {
+          "en": "A quiet palace stands in the moonlight. Monsters still patrol its halls. You go inside to look for a way into the King of Forgetting's fortress.",
+          "es": "El palacio aparece bajo la luz de la luna, silencioso y casi vacío. Los monstruos aún vigilan sus salones. Buscas alguna pista que te permita entrar en la fortaleza del Rey del Olvido, porque sabes que no será tan sencillo como llegar hasta sus puertas."
+        },
+        {
+          "en": "Ancient symbols and a drawing of a key catch your eye in the palace. The key seems to belong to the king's castle, so you search the palace books to learn more.",
+          "es": "Llegas a un palacio casi abandonado, iluminado por la luna. Mientras recorres sus salones descubres símbolos antiguos y el dibujo de una llave. Parece tener relación con las puertas del castillo del Rey del Olvido. Buscas entre los libros del palacio con la esperanza de averiguar para qué sirve."
+        },
+        {
+          "en": "Ancient symbols and a drawing of a key catch your eye in the palace. The key seems to belong to the king's castle, so you search the palace books to learn more.\n\nAn old book says the castle opens with a special key and three seals. The key may be in a garden behind the palace. Now you know what you need and where to look first.",
+          "es": "Llegas a un palacio casi abandonado, iluminado por la luna. Mientras recorres sus salones descubres símbolos antiguos y el dibujo de una llave. Parece tener relación con las puertas del castillo del Rey del Olvido. Buscas entre los libros del palacio con la esperanza de averiguar para qué sirve.\n\nUn libro antiguo revela que el castillo solo puede abrirse con una llave especial y tres sellos. También explica que la llave podría estar en un jardín situado detrás del palacio. Por primera vez sabes qué necesitarás para entrar en la fortaleza. Ahora debes encontrar la salida hacia ese jardín."
+        },
+        {
+          "en": "Ancient symbols and a drawing of a key catch your eye in the palace. The key seems to belong to the king's castle, so you search the palace books to learn more.\n\nAn old book says the castle opens with a special key and three seals. The key may be in a garden behind the palace. Now you know what you need and where to look first.\n\nAn old mirror reveals hidden marks on the walls. They lead to the mechanism of the back gate. Beyond it you see dry trees and a disused fountain, but a great shadow guards the way.",
+          "es": "Llegas a un palacio casi abandonado, iluminado por la luna. Mientras recorres sus salones descubres símbolos antiguos y el dibujo de una llave. Parece tener relación con las puertas del castillo del Rey del Olvido. Buscas entre los libros del palacio con la esperanza de averiguar para qué sirve.\n\nUn libro antiguo revela que el castillo solo puede abrirse con una llave especial y tres sellos. También explica que la llave podría estar en un jardín situado detrás del palacio. Por primera vez sabes qué necesitarás para entrar en la fortaleza. Ahora debes encontrar la salida hacia ese jardín.\n\nUn espejo antiguo te permite descubrir marcas escondidas en las paredes. Gracias a ellas llegas al mecanismo de la puerta trasera y consigues ponerlo en marcha. Desde allí ves un jardín con árboles secos y una fuente abandonada. Sin embargo, una gran sombra vigila el último paso."
+        },
+        {
+          "en": "Ancient symbols and a drawing of a key catch your eye in the palace. The key seems to belong to the king's castle, so you search the palace books to learn more.\n\nAn old book says the castle opens with a special key and three seals. The key may be in a garden behind the palace. Now you know what you need and where to look first.\n\nAn old mirror reveals hidden marks on the walls. They lead to the mechanism of the back gate. Beyond it you see dry trees and a disused fountain, but a great shadow guards the way.\n\nThe Lunar Specter disappears and you leave the palace. The garden ahead holds the first part of your search for the key and its seals.",
+          "es": "Llegas a un palacio casi abandonado, iluminado por la luna. Mientras recorres sus salones descubres símbolos antiguos y el dibujo de una llave. Parece tener relación con las puertas del castillo del Rey del Olvido. Buscas entre los libros del palacio con la esperanza de averiguar para qué sirve.\n\nUn libro antiguo revela que el castillo solo puede abrirse con una llave especial y tres sellos. También explica que la llave podría estar en un jardín situado detrás del palacio. Por primera vez sabes qué necesitarás para entrar en la fortaleza. Ahora debes encontrar la salida hacia ese jardín.\n\nUn espejo antiguo te permite descubrir marcas escondidas en las paredes. Gracias a ellas llegas al mecanismo de la puerta trasera y consigues ponerlo en marcha. Desde allí ves un jardín con árboles secos y una fuente abandonada. Sin embargo, una gran sombra vigila el último paso.\n\nEl Espectro Lunar desaparece y abandonas el palacio. Ya conoces el secreto de las puertas del rey: necesitarás la llave y sus tres sellos. El jardín que tienes delante guarda la primera parte de esa búsqueda."
+        }
+      ]
+    },
+    {
+      "title": {
+        "en": "The Garden of the Gods",
+        "es": "El jardín de los dioses"
+      },
+      "versions": [
+        {
+          "en": "The garden has been abandoned for years. Its channels are dry, and at its center stands an old fountain. The key to the fortress may still be there.",
+          "es": "El jardín donde debería estar la llave lleva años abandonado. Sus canales están secos y casi todas las plantas han muerto. En el centro se encuentra una fuente antigua. Si consigues llegar hasta ella, quizá encuentres lo que necesitas para abrir la fortaleza."
+        },
+        {
+          "en": "You find dead plants and dry channels. A statue has shut the main gate, but you get it open and the water flows to the fountain. Something metallic glints at the bottom.",
+          "es": "En el jardín encuentras plantas secas y canales sin agua. Descubres que una estatua ha cerrado la compuerta principal y consigues abrirla. El agua vuelve a circular hasta la fuente del centro. En su fondo brilla un objeto de metal que podría ser la llave mencionada en el palacio."
+        },
+        {
+          "en": "You find dead plants and dry channels. A statue has shut the main gate, but you get it open and the water flows to the fountain. Something metallic glints at the bottom.\n\nThe object is the key, with three empty places for its seals. A map shows the first seal near the exit, but the path has collapsed. You look for another way through.",
+          "es": "En el jardín encuentras plantas secas y canales sin agua. Descubres que una estatua ha cerrado la compuerta principal y consigues abrirla. El agua vuelve a circular hasta la fuente del centro. En su fondo brilla un objeto de metal que podría ser la llave mencionada en el palacio.\n\nRecuperas la llave y compruebas que tiene tres espacios vacíos para colocar los sellos. Un mapa del jardín señala que el primero está cerca de la salida, pero el camino ha quedado destruido. Buscas un paso alternativo, decidido a conseguir la primera pieza antes de continuar."
+        },
+        {
+          "en": "You find dead plants and dry channels. A statue has shut the main gate, but you get it open and the water flows to the fountain. Something metallic glints at the bottom.\n\nThe object is the key, with three empty places for its seals. A map shows the first seal near the exit, but the path has collapsed. You look for another way through.\n\nYou repair a small bridge and follow a tunnel to the far end of the garden. A giant statue bears the symbol from the key. As you get closer, the stone starts to move.",
+          "es": "En el jardín encuentras plantas secas y canales sin agua. Descubres que una estatua ha cerrado la compuerta principal y consigues abrirla. El agua vuelve a circular hasta la fuente del centro. En su fondo brilla un objeto de metal que podría ser la llave mencionada en el palacio.\n\nRecuperas la llave y compruebas que tiene tres espacios vacíos para colocar los sellos. Un mapa del jardín señala que el primero está cerca de la salida, pero el camino ha quedado destruido. Buscas un paso alternativo, decidido a conseguir la primera pieza antes de continuar.\n\nReparas un pequeño puente y atraviesas un túnel hasta la parte más alejada del jardín. Allí encuentras una estatua enorme con el mismo símbolo de la llave. La piedra comienza a moverse cuando te acercas. Comprendes que el primer sello está protegido por un poderoso guardián."
+        },
+        {
+          "en": "You find dead plants and dry channels. A statue has shut the main gate, but you get it open and the water flows to the fountain. Something metallic glints at the bottom.\n\nThe object is the key, with three empty places for its seals. A map shows the first seal near the exit, but the path has collapsed. You look for another way through.\n\nYou repair a small bridge and follow a tunnel to the far end of the garden. A giant statue bears the symbol from the key. As you get closer, the stone starts to move.\n\nYou defeat the Stone Colossus and fit the first seal into the key. Two remain. The king's banners in the distance mark the land where his soldiers hold the next seal.",
+          "es": "En el jardín encuentras plantas secas y canales sin agua. Descubres que una estatua ha cerrado la compuerta principal y consigues abrirla. El agua vuelve a circular hasta la fuente del centro. En su fondo brilla un objeto de metal que podría ser la llave mencionada en el palacio.\n\nRecuperas la llave y compruebas que tiene tres espacios vacíos para colocar los sellos. Un mapa del jardín señala que el primero está cerca de la salida, pero el camino ha quedado destruido. Buscas un paso alternativo, decidido a conseguir la primera pieza antes de continuar.\n\nReparas un pequeño puente y atraviesas un túnel hasta la parte más alejada del jardín. Allí encuentras una estatua enorme con el mismo símbolo de la llave. La piedra comienza a moverse cuando te acercas. Comprendes que el primer sello está protegido por un poderoso guardián.\n\nDespués de vencer al Coloso de Piedra, recuperas el primer sello y lo colocas en la llave. Aún faltan dos. A lo lejos ves los estandartes del ejército del Rey del Olvido: el siguiente sello está en el territorio que controlan sus soldados."
+        }
+      ]
+    },
+    {
+      "title": {
+        "en": "The War for the Books",
+        "es": "La guerra de los libros"
+      },
+      "versions": [
+        {
+          "en": "The king's army occupies this region. The soldiers gather stolen books to destroy and hold the second seal in one of their camps.",
+          "es": "Has llegado a una región ocupada por los soldados del Rey del Olvido. Aquí reúnen libros robados antes de destruirlos y guardan el segundo sello que necesitas. Para recuperarlo tendrás que entrar en uno de sus campamentos."
+        },
+        {
+          "en": "You reach an army camp and find a cart full of books that can still be saved. A map inside it leads you to the commander's tent, where you hope to learn about the second seal.",
+          "es": "Llegas a una región ocupada por el ejército del Rey del Olvido. Los soldados reúnen libros robados para destruirlos. En uno de sus campamentos descubres un carro lleno de libros que todavía pueden salvarse. Dentro encuentras un mapa que te lleva hacia la tienda del comandante, donde podrían guardar información sobre el segundo sello."
+        },
+        {
+          "en": "You reach an army camp and find a cart full of books that can still be saved. A map inside it leads you to the commander's tent, where you hope to learn about the second seal.\n\nA note points to the camp archive. Inside you find records of attacks on libraries and a plan of a room behind an iron door. The seal should be among the valuables kept there.",
+          "es": "Llegas a una región ocupada por el ejército del Rey del Olvido. Los soldados reúnen libros robados para destruirlos. En uno de sus campamentos descubres un carro lleno de libros que todavía pueden salvarse. Dentro encuentras un mapa que te lleva hacia la tienda del comandante, donde podrían guardar información sobre el segundo sello.\n\nEn la tienda encuentras una nota que señala un archivo del campamento. Logras entrar y descubres documentos sobre los ataques a bibliotecas de toda la región. Un plano indica que los objetos más valiosos están guardados detrás de una puerta de hierro. Allí debe encontrarse el sello que buscas."
+        },
+        {
+          "en": "You reach an army camp and find a cart full of books that can still be saved. A map inside it leads you to the commander's tent, where you hope to learn about the second seal.\n\nA note points to the camp archive. Inside you find records of attacks on libraries and a plan of a room behind an iron door. The seal should be among the valuables kept there.\n\nYou open the room and recover the second seal. A map shows the road to the fortress, but the commander still controls the camp's last checkpoint.",
+          "es": "Llegas a una región ocupada por el ejército del Rey del Olvido. Los soldados reúnen libros robados para destruirlos. En uno de sus campamentos descubres un carro lleno de libros que todavía pueden salvarse. Dentro encuentras un mapa que te lleva hacia la tienda del comandante, donde podrían guardar información sobre el segundo sello.\n\nEn la tienda encuentras una nota que señala un archivo del campamento. Logras entrar y descubres documentos sobre los ataques a bibliotecas de toda la región. Un plano indica que los objetos más valiosos están guardados detrás de una puerta de hierro. Allí debe encontrarse el sello que buscas.\n\nConsigues abrir la sala y recuperar el segundo sello. La llave ya tiene dos piezas y solo falta una. Entre los mapas del archivo descubres una ruta hacia la fortaleza, pero el comandante sigue controlando la salida del campamento. Todavía debes atravesar el último puesto de vigilancia."
+        },
+        {
+          "en": "You reach an army camp and find a cart full of books that can still be saved. A map inside it leads you to the commander's tent, where you hope to learn about the second seal.\n\nA note points to the camp archive. Inside you find records of attacks on libraries and a plan of a room behind an iron door. The seal should be among the valuables kept there.\n\nYou open the room and recover the second seal. A map shows the road to the fortress, but the commander still controls the camp's last checkpoint.\n\nThe commander falls. You leave with the second seal and some of the saved books. The map leads to ancient paths suspended over a void, where you will look for the last seal.",
+          "es": "Llegas a una región ocupada por el ejército del Rey del Olvido. Los soldados reúnen libros robados para destruirlos. En uno de sus campamentos descubres un carro lleno de libros que todavía pueden salvarse. Dentro encuentras un mapa que te lleva hacia la tienda del comandante, donde podrían guardar información sobre el segundo sello.\n\nEn la tienda encuentras una nota que señala un archivo del campamento. Logras entrar y descubres documentos sobre los ataques a bibliotecas de toda la región. Un plano indica que los objetos más valiosos están guardados detrás de una puerta de hierro. Allí debe encontrarse el sello que buscas.\n\nConsigues abrir la sala y recuperar el segundo sello. La llave ya tiene dos piezas y solo falta una. Entre los mapas del archivo descubres una ruta hacia la fortaleza, pero el comandante sigue controlando la salida del campamento. Todavía debes atravesar el último puesto de vigilancia.\n\nEl comandante es derrotado y puedes dejar atrás el campamento. Llevas contigo el segundo sello y algunos libros que conseguiste salvar. El mapa conduce hacia un lugar extraño, con caminos antiguos suspendidos sobre un enorme vacío. Allí buscarás el último sello."
+        }
+      ]
+    },
+    {
+      "title": {
+        "en": "The Path of Stars",
+        "es": "El camino de las estrellas"
+      },
+      "versions": [
+        {
+          "en": "The fortress is close, but the third seal is still missing. An ancient road over a void leads to an archive where the seal may be hidden.",
+          "es": "Te encuentras muy cerca de la fortaleza, pero aún te falta el tercer sello. Un antiguo camino suspendido sobre un enorme vacío conduce a un archivo donde podría estar escondido. Sin esa pieza no podrás abrir las puertas del Rey del Olvido."
+        },
+        {
+          "en": "You cross a suspended bridge and open a door covered in lights. Beyond it lies an old archive whose books may tell you where to find the last seal.",
+          "es": "La ruta te lleva a un puente suspendido sobre un enorme vacío. Lo cruzas y llegas a una puerta cubierta de luces. Después de descubrir cómo abrirla entras en un archivo antiguo. Sus libros hablan de la fortaleza del Rey del Olvido y quizá indiquen dónde está escondido el último sello."
+        },
+        {
+          "en": "You cross a suspended bridge and open a door covered in lights. Beyond it lies an old archive whose books may tell you where to find the last seal.\n\nA book says the third seal is kept below the archive. You take the stairs into dark tunnels that lead to a sealed chamber.",
+          "es": "La ruta te lleva a un puente suspendido sobre un enorme vacío. Lo cruzas y llegas a una puerta cubierta de luces. Después de descubrir cómo abrirla entras en un archivo antiguo. Sus libros hablan de la fortaleza del Rey del Olvido y quizá indiquen dónde está escondido el último sello.\n\nEn uno de los libros encuentras la respuesta: el tercer sello se guarda debajo del archivo. Sigues unas escaleras hasta los túneles y avanzas por sus salas oscuras. Al fondo descubres una cámara cerrada donde parece terminar la búsqueda."
+        },
+        {
+          "en": "You cross a suspended bridge and open a door covered in lights. Beyond it lies an old archive whose books may tell you where to find the last seal.\n\nA book says the third seal is kept below the archive. You take the stairs into dark tunnels that lead to a sealed chamber.\n\nYou recover the third seal and complete the key. Leaving the tunnels, you see the fortress walls. A bridge leads to the gate, where the last monsters stand watch.",
+          "es": "La ruta te lleva a un puente suspendido sobre un enorme vacío. Lo cruzas y llegas a una puerta cubierta de luces. Después de descubrir cómo abrirla entras en un archivo antiguo. Sus libros hablan de la fortaleza del Rey del Olvido y quizá indiquen dónde está escondido el último sello.\n\nEn uno de los libros encuentras la respuesta: el tercer sello se guarda debajo del archivo. Sigues unas escaleras hasta los túneles y avanzas por sus salas oscuras. Al fondo descubres una cámara cerrada donde parece terminar la búsqueda.\n\nConsigues entrar y recuperar el tercer sello. Ahora la llave está completa. Sales de los túneles y ves las murallas de la fortaleza por primera vez. Un puente conduce hasta su puerta, aunque los últimos monstruos del rey todavía vigilan la entrada."
+        },
+        {
+          "en": "You cross a suspended bridge and open a door covered in lights. Beyond it lies an old archive whose books may tell you where to find the last seal.\n\nA book says the third seal is kept below the archive. You take the stairs into dark tunnels that lead to a sealed chamber.\n\nYou recover the third seal and complete the key. Leaving the tunnels, you see the fortress walls. A bridge leads to the gate, where the last monsters stand watch.\n\nThe Void Serpent can no longer guard the arch. The three seals glow as you fit the key into the door. The castle opens, and only the King of Forgetting remains.",
+          "es": "La ruta te lleva a un puente suspendido sobre un enorme vacío. Lo cruzas y llegas a una puerta cubierta de luces. Después de descubrir cómo abrirla entras en un archivo antiguo. Sus libros hablan de la fortaleza del Rey del Olvido y quizá indiquen dónde está escondido el último sello.\n\nEn uno de los libros encuentras la respuesta: el tercer sello se guarda debajo del archivo. Sigues unas escaleras hasta los túneles y avanzas por sus salas oscuras. Al fondo descubres una cámara cerrada donde parece terminar la búsqueda.\n\nConsigues entrar y recuperar el tercer sello. Ahora la llave está completa. Sales de los túneles y ves las murallas de la fortaleza por primera vez. Un puente conduce hasta su puerta, aunque los últimos monstruos del rey todavía vigilan la entrada.\n\nLa Serpiente del Vacío deja de proteger el arco y consigues acercarte a las grandes puertas. Los tres sellos brillan al colocar la llave y el castillo se abre ante ti. Has recorrido un largo camino para llegar hasta aquí; ahora tendrás que detener al propio Rey del Olvido."
+        }
+      ]
+    },
+    {
+      "title": {
+        "en": "The Last Page",
+        "es": "La última página"
+      },
+      "versions": [
+        {
+          "en": "At last you reach the King of Forgetting's castle. It holds many books his soldiers stole. His last guardians protect the throne, and you must weaken his magic before facing him.",
+          "es": "Por fin has llegado al castillo del Rey del Olvido. Dentro se guardan muchos de los libros que sus soldados robaron. El rey continúa destruyéndolos y sus últimos guardianes protegen el camino al trono. Debes encontrar una forma de debilitar su magia antes de enfrentarlo."
+        },
+        {
+          "en": "Rooms are piled with stolen and damaged books. You free the ones still locked in boxes, then climb toward the highest part of the fortress to find the source of the king's power.",
+          "es": "Entras en el castillo y descubres salones llenos de libros robados y dañados. Algunos todavía están encerrados en grandes cajas. Consigues liberarlos mientras buscas el lugar del que proviene la magia del rey. Las escaleras te llevan hacia la parte más alta de la fortaleza, donde se encuentra su poder."
+        },
+        {
+          "en": "Rooms are piled with stolen and damaged books. You free the ones still locked in boxes, then climb toward the highest part of the fortress to find the source of the king's power.\n\nAn enormous book holds some of the king's magic. Its lock matches the three seals on the key. When you open it, the dark magic weakens and you can head for the throne.",
+          "es": "Entras en el castillo y descubres salones llenos de libros robados y dañados. Algunos todavía están encerrados en grandes cajas. Consigues liberarlos mientras buscas el lugar del que proviene la magia del rey. Las escaleras te llevan hacia la parte más alta de la fortaleza, donde se encuentra su poder.\n\nEn una sala superior descubres un libro gigantesco que guarda parte de la magia del Rey del Olvido. Su cerradura tiene la misma forma que los tres sellos de tu llave. Consigues abrirlo y sientes que la magia oscura del castillo comienza a debilitarse. Ya puedes avanzar hacia la sala del trono."
+        },
+        {
+          "en": "Rooms are piled with stolen and damaged books. You free the ones still locked in boxes, then climb toward the highest part of the fortress to find the source of the king's power.\n\nAn enormous book holds some of the king's magic. Its lock matches the three seals on the key. When you open it, the dark magic weakens and you can head for the throne.\n\nThe king makes one last shadow to protect himself. You make it disappear. No guardian stands between you now, and the battle for the books is about to begin.",
+          "es": "Entras en el castillo y descubres salones llenos de libros robados y dañados. Algunos todavía están encerrados en grandes cajas. Consigues liberarlos mientras buscas el lugar del que proviene la magia del rey. Las escaleras te llevan hacia la parte más alta de la fortaleza, donde se encuentra su poder.\n\nEn una sala superior descubres un libro gigantesco que guarda parte de la magia del Rey del Olvido. Su cerradura tiene la misma forma que los tres sellos de tu llave. Consigues abrirlo y sientes que la magia oscura del castillo comienza a debilitarse. Ya puedes avanzar hacia la sala del trono.\n\nCruzas las últimas puertas y llegas ante el Rey del Olvido. Para protegerse, crea una sombra enorme con la magia que todavía conserva. Logras hacerla desaparecer. Ahora no quedan más guardianes entre ustedes: la batalla que decidirá el destino de los libros está por comenzar."
+        },
+        {
+          "en": "Rooms are piled with stolen and damaged books. You free the ones still locked in boxes, then climb toward the highest part of the fortress to find the source of the king's power.\n\nAn enormous book holds some of the king's magic. Its lock matches the three seals on the key. When you open it, the dark magic weakens and you can head for the throne.\n\nThe king makes one last shadow to protect himself. You make it disappear. No guardian stands between you now, and the battle for the books is about to begin.\n\nYou defeat the King of Forgetting. His monsters can no longer threaten the world, and the stolen books return to their owners. Back home, you open a book just as you did before the journey.",
+          "es": "Entras en el castillo y descubres salones llenos de libros robados y dañados. Algunos todavía están encerrados en grandes cajas. Consigues liberarlos mientras buscas el lugar del que proviene la magia del rey. Las escaleras te llevan hacia la parte más alta de la fortaleza, donde se encuentra su poder.\n\nEn una sala superior descubres un libro gigantesco que guarda parte de la magia del Rey del Olvido. Su cerradura tiene la misma forma que los tres sellos de tu llave. Consigues abrirlo y sientes que la magia oscura del castillo comienza a debilitarse. Ya puedes avanzar hacia la sala del trono.\n\nCruzas las últimas puertas y llegas ante el Rey del Olvido. Para protegerse, crea una sombra enorme con la magia que todavía conserva. Logras hacerla desaparecer. Ahora no quedan más guardianes entre ustedes: la batalla que decidirá el destino de los libros está por comenzar.\n\nFinalmente derrotas al Rey del Olvido. Sin su magia, los monstruos dejan de amenazar al mundo y los libros robados pueden regresar a sus dueños. Vuelves a tu aldea y abres un libro, como hacías antes de iniciar el viaje. Has salvado las historias y puedes disfrutar de ellas otra vez."
+        }
+      ]
+    }
+  ],
+  "paths": [
+    {
+      "id": 0,
+      "title": {
+        "en": "The first guardian",
+        "es": "El primer guardián"
+      },
+      "approach": {
+        "en": "A dark wolf bars your way as you enter the forest looking for the road to the city.",
+        "es": "Entras al bosque para buscar el camino a la ciudad. Un lobo oscuro se planta frente a ti y no te deja pasar."
+      }
+    },
+    {
+      "id": 1,
+      "title": {
+        "en": "A dangerous crossing",
+        "es": "Un camino peligroso"
+      },
+      "approach": {
+        "en": "You find fallen trees and torn books. A pack of wolves watches the crossroads ahead.",
+        "es": "Encuentras árboles caídos y restos de libros. Más adelante, una manada de lobos vigila el cruce de caminos."
+      }
+    },
+    {
+      "id": 2,
+      "title": {
+        "en": "The river bridge",
+        "es": "El puente del río"
+      },
+      "approach": {
+        "en": "The bridge is broken, and a root guardian stands on the planks that remain.",
+        "es": "Llegas al río, pero el puente está roto. Un guardián de raíces ocupa las tablas que aún quedan."
+      }
+    },
+    {
+      "id": 3,
+      "title": {
+        "en": "The abandoned house",
+        "es": "La casa abandonada"
+      },
+      "approach": {
+        "en": "The house is full of damaged books. A bark monster guards the door and keeps you from looking for clues.",
+        "es": "La casa está llena de libros rotos. Un monstruo de corteza guarda la puerta y no te deja entrar a buscar pistas."
+      }
+    },
+    {
+      "id": 4,
+      "title": {
+        "en": "The guardian of the well",
+        "es": "El guardián del pozo"
+      },
+      "approach": {
+        "en": "The map leads you to an old well. A beast springs from between the stones and cuts you off.",
+        "es": "Sigues el mapa hasta un viejo pozo. Una bestia sale de entre las piedras y te corta el paso."
+      }
+    },
+    {
+      "id": 5,
+      "title": {
+        "en": "The hidden trail",
+        "es": "El sendero escondido"
+      },
+      "approach": {
+        "en": "You follow the tracks along a trail almost buried in branches. A creature creeps toward you from between the trees.",
+        "es": "Sigues las huellas, pero las ramas tapan casi todo el sendero. Una criatura se esconde entre los árboles y se acerca a ti."
+      }
+    },
+    {
+      "id": 6,
+      "title": {
+        "en": "The dark pack",
+        "es": "La manada oscura"
+      },
+      "approach": {
+        "en": "You reach the stone, but a dark pack has surrounded it. You cannot examine it while the wolves are there.",
+        "es": "Llegas hasta la piedra, pero una manada oscura la rodea. No puedes examinarla mientras los lobos sigan allí."
+      }
+    },
+    {
+      "id": 7,
+      "title": {
+        "en": "Near the way out",
+        "es": "Cerca de la salida"
+      },
+      "approach": {
+        "en": "The first houses are visible in the distance. A guardian watches over the enormous roots that block the road.",
+        "es": "A lo lejos ves las primeras casas de la ciudad. Antes de llegar encuentras unas raíces enormes que bloquean el camino. Un guardián las vigila."
+      }
+    },
+    {
+      "id": 8,
+      "title": {
+        "en": "The last barrier",
+        "es": "La última barrera"
+      },
+      "approach": {
+        "en": "You reach the gate covered in roots. A bark sentinel steps in front of it.",
+        "es": "Llegas a la puerta cubierta de raíces. Un centinela de corteza se coloca frente a ella para impedir que avances."
+      }
+    },
+    {
+      "id": 9,
+      "title": {
+        "en": "The lord of the forest",
+        "es": "El señor del bosque"
+      },
+      "approach": {
+        "en": "The Lord of Roots guards the last way out. He is bigger and stronger than any monster you have faced so far.",
+        "es": "El Señor de las Raíces protege la última salida. Es más grande y fuerte que los otros monstruos que has encontrado."
+      }
+    },
+    {
+      "id": 10,
+      "title": {
+        "en": "The city gate",
+        "es": "La entrada a la ciudad"
+      },
+      "approach": {
+        "en": "A soldier of the king guards the entrance and refuses to let travelers through.",
+        "es": "Llegas a la ciudad. Un soldado del rey controla la entrada e impide que los viajeros pasen."
+      }
+    },
+    {
+      "id": 11,
+      "title": {
+        "en": "The abandoned market",
+        "es": "El mercado abandonado"
+      },
+      "approach": {
+        "en": "You see shuttered stalls and burnt books. A guardian patrols the square and keeps people away.",
+        "es": "Llegas al mercado y ves puestos cerrados y libros quemados. Un guardián recorre la plaza para impedir que alguien se acerque."
+      }
+    },
+    {
+      "id": 12,
+      "title": {
+        "en": "The central square",
+        "es": "La plaza central"
+      },
+      "approach": {
+        "en": "A notice orders every library to close. A monster watches the road to the main street.",
+        "es": "En la plaza ves un aviso del rey que ordena cerrar todas las bibliotecas. Un monstruo vigila el camino hacia la calle principal."
+      }
+    },
+    {
+      "id": 13,
+      "title": {
+        "en": "Streets under guard",
+        "es": "Calles vigiladas"
+      },
+      "approach": {
+        "en": "Soldiers fill the streets to the library. One spots you and steps into your way.",
+        "es": "El camino a la biblioteca está lleno de soldados. Uno de ellos te descubre y se coloca delante de la calle que necesitas cruzar."
+      }
+    },
+    {
+      "id": 14,
+      "title": {
+        "en": "The closed library",
+        "es": "La biblioteca cerrada"
+      },
+      "approach": {
+        "en": "A large monster guards the closed library. There could still be books inside that you can save.",
+        "es": "La biblioteca está cerrada y un gran monstruo vigila la entrada. Dentro podrían quedar libros que todavía se pueden salvar."
+      }
+    },
+    {
+      "id": 15,
+      "title": {
+        "en": "An important clue",
+        "es": "Una pista importante"
+      },
+      "approach": {
+        "en": "You find a locked room where the library kept its maps. A guardian watches the door.",
+        "es": "Mientras revisas la biblioteca, encuentras una sala cerrada donde se guardaban los mapas. Un guardián protege la puerta."
+      }
+    },
+    {
+      "id": 16,
+      "title": {
+        "en": "The attack on the library",
+        "es": "El ataque a la biblioteca"
+      },
+      "approach": {
+        "en": "Something pounds on the door. Monsters are breaking into the library to destroy the remaining books.",
+        "es": "Escuchas golpes en la entrada. Varios monstruos están entrando en la biblioteca para destruir los libros que quedan."
+      }
+    },
+    {
+      "id": 17,
+      "title": {
+        "en": "The road to the harbor",
+        "es": "El camino al puerto"
+      },
+      "approach": {
+        "en": "The townspeople direct you to the bell tower, but soldiers are guarding the way.",
+        "es": "Los habitantes te indican que la salida está junto a la torre de las campanas. Al acercarte, encuentras soldados vigilando el paso."
+      }
+    },
+    {
+      "id": 18,
+      "title": {
+        "en": "The tower",
+        "es": "La torre"
+      },
+      "approach": {
+        "en": "You climb the tower to open the gate. A guardian stands between you and the wheel that controls it.",
+        "es": "Subes las escaleras de la torre para abrir la puerta. Un guardián se interpone entre tú y la rueda del mecanismo."
+      }
+    },
+    {
+      "id": 19,
+      "title": {
+        "en": "The guardian of the bells",
+        "es": "El guardián de las campanas"
+      },
+      "approach": {
+        "en": "The Bell Guardian appears at the top of the tower. The gate to the harbor stays closed while it stands there.",
+        "es": "El Guardián de las Campanas aparece en lo alto de la torre. Mientras siga allí, no podrás abrir la salida al puerto."
+      }
+    },
+    {
+      "id": 20,
+      "title": {
+        "en": "The empty harbor",
+        "es": "El puerto vacío"
+      },
+      "approach": {
+        "en": "You find abandoned boats and a monster watching the dock. You still need a way across the water.",
+        "es": "Llegas al puerto y encuentras varios barcos abandonados. Un monstruo vigila el muelle mientras buscas cómo cruzar el mar."
+      }
+    },
+    {
+      "id": 21,
+      "title": {
+        "en": "A light in the mist",
+        "es": "Una luz en la niebla"
+      },
+      "approach": {
+        "en": "A light flickers in the mist, but a guardian blocks access to the boats.",
+        "es": "Desde el muelle ves una luz que aparece y desaparece entre la niebla. Un guardián protege el acceso a las embarcaciones."
+      }
+    },
+    {
+      "id": 22,
+      "title": {
+        "en": "The wrecked ship",
+        "es": "El barco destruido"
+      },
+      "approach": {
+        "en": "Monsters have wrecked a ship. A creature watches over a smaller boat that looks ready to sail.",
+        "es": "Encuentras un barco que los monstruos han destrozado. Una criatura vigila una pequeña embarcación que todavía parece funcionar."
+      }
+    },
+    {
+      "id": 23,
+      "title": {
+        "en": "Across the sea",
+        "es": "El viaje por el mar"
+      },
+      "approach": {
+        "en": "As you sail toward the island, a creature rises from the water and blocks your way.",
+        "es": "Comienzas a cruzar el mar, pero una criatura sale del agua y bloquea tu camino hacia la isla."
+      }
+    },
+    {
+      "id": 24,
+      "title": {
+        "en": "The lighthouse island",
+        "es": "La isla del faro"
+      },
+      "approach": {
+        "en": "Monsters guard the entrance. You need to light the lighthouse to see through the mist.",
+        "es": "El faro está apagado y necesitas encenderlo para ver mejor entre la niebla. Varios monstruos protegen su entrada."
+      }
+    },
+    {
+      "id": 25,
+      "title": {
+        "en": "Climbing the lighthouse",
+        "es": "La subida al faro"
+      },
+      "approach": {
+        "en": "A guardian bars the stairs that lead to the lamp.",
+        "es": "Subes por las escaleras del faro. Un guardián bloquea el paso hacia el lugar donde se enciende la luz."
+      }
+    },
+    {
+      "id": 26,
+      "title": {
+        "en": "The stranded ship",
+        "es": "El barco encallado"
+      },
+      "approach": {
+        "en": "A monster on the stranded ship's deck keeps you from looking inside.",
+        "es": "Te acercas al barco encallado. En su cubierta hay un monstruo que no deja entrar a buscar algo útil."
+      }
+    },
+    {
+      "id": 27,
+      "title": {
+        "en": "The path under water",
+        "es": "El camino bajo el agua"
+      },
+      "approach": {
+        "en": "The map shows the library entrance is submerged. A nearby gate could lower the water, but a guardian protects it.",
+        "es": "El mapa muestra que la entrada a la biblioteca está cubierta por el agua. Cerca hay una compuerta, pero un guardián protege el mecanismo."
+      }
+    },
+    {
+      "id": 28,
+      "title": {
+        "en": "The hidden entrance",
+        "es": "La entrada escondida"
+      },
+      "approach": {
+        "en": "You reach the mechanism that controls the water. A creature stands in front of the wheel.",
+        "es": "Llegas al mecanismo que controla el agua. Una criatura se coloca delante de la rueda que necesitas mover."
+      }
+    },
+    {
+      "id": 29,
+      "title": {
+        "en": "The Captain of the Mist",
+        "es": "El capitán de la niebla"
+      },
+      "approach": {
+        "en": "The Captain of the Mist appears at the lighthouse. He wants to put out the light and bring the mist back.",
+        "es": "Antes de bajar por las escaleras, el Capitán de la Niebla aparece junto al faro. Quiere apagarlo y volver a cubrirlo todo de niebla."
+      }
+    },
+    {
+      "id": 30,
+      "title": {
+        "en": "The library door",
+        "es": "La puerta de la biblioteca"
+      },
+      "approach": {
+        "en": "You follow the steps to the flooded entrance. A creature from the depths guards the door.",
+        "es": "Bajas por las escaleras hasta la biblioteca. La entrada está inundada y una criatura de las profundidades vigila la puerta."
+      }
+    },
+    {
+      "id": 31,
+      "title": {
+        "en": "Books in danger",
+        "es": "Libros en peligro"
+      },
+      "approach": {
+        "en": "A monster smashes books floating between the broken shelves.",
+        "es": "Entras en una sala llena de estantes rotos. Un monstruo sigue destrozando libros que flotan en el agua."
+      }
+    },
+    {
+      "id": 32,
+      "title": {
+        "en": "The king's story",
+        "es": "La historia del rey"
+      },
+      "approach": {
+        "en": "A guardian protects the book about the king. You need to read it to understand the monsters' magic.",
+        "es": "El libro sobre el rey está protegido por un guardián. Necesitas leerlo para comprender mejor la magia de sus monstruos."
+      }
+    },
+    {
+      "id": 33,
+      "title": {
+        "en": "The army's plan",
+        "es": "El plan del ejército"
+      },
+      "approach": {
+        "en": "You discover papers about the king's army, but a creature guards the archive.",
+        "es": "Encuentras más documentos sobre el ejército del rey, pero una criatura vigila el archivo donde están guardados."
+      }
+    },
+    {
+      "id": 34,
+      "title": {
+        "en": "The guarded room",
+        "es": "La sala protegida"
+      },
+      "approach": {
+        "en": "A guardian keeps you out of the room where the oldest books might tell you about the castle.",
+        "es": "Llegas a la sala de los libros más antiguos. Un guardián bloquea la entrada y no te deja buscar información sobre el castillo."
+      }
+    },
+    {
+      "id": 35,
+      "title": {
+        "en": "Saving the last books",
+        "es": "Salvar los últimos libros"
+      },
+      "approach": {
+        "en": "The water is rising. A monster guards the gate that could stop the flood.",
+        "es": "El agua está subiendo y amenaza con destruir los libros que quedan. Un monstruo protege la compuerta que podría detenerla."
+      }
+    },
+    {
+      "id": 36,
+      "title": {
+        "en": "The shadow attack",
+        "es": "El ataque de las sombras"
+      },
+      "approach": {
+        "en": "Shadows appear between the shelves and begin tearing up the last books. You must stop them.",
+        "es": "Varias sombras aparecen entre los estantes y comienzan a romper los últimos libros. Debes impedir que los destruyan."
+      }
+    },
+    {
+      "id": 37,
+      "title": {
+        "en": "The secret exit",
+        "es": "La salida secreta"
+      },
+      "approach": {
+        "en": "A guardian blocks the service door that leads toward the mountains.",
+        "es": "Buscas el túnel que conecta la biblioteca con las montañas. Un guardián protege la puerta de servicio."
+      }
+    },
+    {
+      "id": 38,
+      "title": {
+        "en": "The dark tunnel",
+        "es": "El túnel oscuro"
+      },
+      "approach": {
+        "en": "You spot daylight at the end of the tunnel, but a monster is blocking the exit.",
+        "es": "Avanzas por el túnel oscuro. Al fondo ves luz, pero un monstruo ocupa la salida y te impide escapar."
+      }
+    },
+    {
+      "id": 39,
+      "title": {
+        "en": "The beast from the depths",
+        "es": "La bestia de las profundidades"
+      },
+      "approach": {
+        "en": "A beast rises out of the water and blocks the last stretch of the tunnel to the mountains.",
+        "es": "Una bestia de las profundidades sale del agua y bloquea el último tramo del túnel. No puedes alcanzar la montaña mientras siga allí."
+      }
+    },
+    {
+      "id": 40,
+      "title": {
+        "en": "The first climb",
+        "es": "La primera subida"
+      },
+      "approach": {
+        "en": "A stone creature appears between the rocks and blocks the narrow path up the mountain.",
+        "es": "Empiezas a subir la montaña por un camino estrecho. Una criatura de piedra aparece entre las rocas y bloquea el sendero."
+      }
+    },
+    {
+      "id": 41,
+      "title": {
+        "en": "A fork in the road",
+        "es": "Un camino dividido"
+      },
+      "approach": {
+        "en": "At a crossing, a monster watches a wooden sign that might show you the way.",
+        "es": "Llegas a un cruce sin señales claras. Un monstruo vigila una tabla de madera que podría indicar la ruta correcta."
+      }
+    },
+    {
+      "id": 42,
+      "title": {
+        "en": "The shelter",
+        "es": "El refugio"
+      },
+      "approach": {
+        "en": "Snow starts falling as you spot a shelter. A guardian has taken up position at the door.",
+        "es": "La nieve comienza a caer cuando ves el refugio. Un guardián se ha instalado frente a la puerta y no te deja entrar."
+      }
+    },
+    {
+      "id": 43,
+      "title": {
+        "en": "The false voices",
+        "es": "Las voces falsas"
+      },
+      "approach": {
+        "en": "A voice calls from the wrong trail. A monster is trying to lure you away from the route on the map.",
+        "es": "Mientras sigues el mapa, escuchas una voz que intenta llevarte en otra dirección. Un monstruo está usando ese sonido para engañarte."
+      }
+    },
+    {
+      "id": 44,
+      "title": {
+        "en": "The stone bridge",
+        "es": "El puente de piedra"
+      },
+      "approach": {
+        "en": "A winged creature swoops across the stone bridge and keeps you from crossing the gorge.",
+        "es": "Llegas a un puente de piedra sobre un barranco. Una criatura alada vuela delante de él e impide que cruces."
+      }
+    },
+    {
+      "id": 45,
+      "title": {
+        "en": "The storm",
+        "es": "La tormenta"
+      },
+      "approach": {
+        "en": "Snow covers the trail and a guardian lurks among the rocks. You need to find the path before the storm worsens.",
+        "es": "La nieve cubre el sendero y un guardián se esconde entre las rocas. Necesitas encontrar el camino antes de que empeore la tormenta."
+      }
+    },
+    {
+      "id": 46,
+      "title": {
+        "en": "The rope crossing",
+        "es": "La cuerda del paso"
+      },
+      "approach": {
+        "en": "A rope is your only way across, and a monster guards the far end.",
+        "es": "Llegas a una zona donde debes sujetarte de una cuerda para cruzar. Un monstruo protege el otro extremo."
+      }
+    },
+    {
+      "id": 47,
+      "title": {
+        "en": "The summit",
+        "es": "La cima"
+      },
+      "approach": {
+        "en": "From the summit you see a vast desert. A guardian protects the start of the trail down.",
+        "es": "Desde la cima ves un desierto enorme al otro lado. Un guardián protege el inicio del camino de bajada."
+      }
+    },
+    {
+      "id": 48,
+      "title": {
+        "en": "The descent",
+        "es": "El descenso"
+      },
+      "approach": {
+        "en": "Creatures block the trail. The final mountain pass lies beyond them.",
+        "es": "Mientras bajas, varias criaturas bloquean el sendero. Detrás de ellas se encuentra el último paso de la montaña."
+      }
+    },
+    {
+      "id": 49,
+      "title": {
+        "en": "The Lord of Echoes",
+        "es": "El señor del eco"
+      },
+      "approach": {
+        "en": "The Lord of Echoes appears and surrounds you with voices coming from every direction.",
+        "es": "El Señor del Eco se presenta ante ti e intenta confundirte con voces que vienen de todas partes."
+      }
+    },
+    {
+      "id": 50,
+      "title": {
+        "en": "The desert heat",
+        "es": "El calor del desierto"
+      },
+      "approach": {
+        "en": "A giant scorpion guards a sign marking the route into the desert.",
+        "es": "Entras al desierto y descubres un poste que indica la ruta. Un escorpión gigante lo vigila y te corta el paso."
+      }
+    },
+    {
+      "id": 51,
+      "title": {
+        "en": "The empty camp",
+        "es": "El campamento vacío"
+      },
+      "approach": {
+        "en": "You find wrecked supplies and torn books. A monster guards the remains of the tents.",
+        "es": "Llegas a un campamento donde los libros y las provisiones están destrozados. Un monstruo vigila los restos de las tiendas."
+      }
+    },
+    {
+      "id": 52,
+      "title": {
+        "en": "The old well",
+        "es": "El viejo pozo"
+      },
+      "approach": {
+        "en": "You follow tracks to an old well. A creature rises out of the sand and blocks it.",
+        "es": "Sigues las huellas hasta un viejo pozo. Una criatura sale de la arena y se planta delante de él."
+      }
+    },
+    {
+      "id": 53,
+      "title": {
+        "en": "The lost map",
+        "es": "El mapa perdido"
+      },
+      "approach": {
+        "en": "You find where the camp map is kept, but a guardian stands outside the tent.",
+        "es": "Encuentras el mapa del campamento, pero un guardián protege la tienda donde está guardado."
+      }
+    },
+    {
+      "id": 54,
+      "title": {
+        "en": "The dry garden",
+        "es": "El jardín seco"
+      },
+      "approach": {
+        "en": "A creature watches the stones in a dry garden. Something seems to be buried beneath them.",
+        "es": "Llegas al jardín seco. Una criatura vigila unas piedras donde parece haber algo enterrado."
+      }
+    },
+    {
+      "id": 55,
+      "title": {
+        "en": "The compass",
+        "es": "La brújula"
+      },
+      "approach": {
+        "en": "The compass points between the dunes. A monster appears and tries to drive you back.",
+        "es": "La brújula señala un sendero entre las dunas. Un monstruo aparece a tu paso e intenta obligarte a regresar."
+      }
+    },
+    {
+      "id": 56,
+      "title": {
+        "en": "The sandstorm",
+        "es": "La tormenta de arena"
+      },
+      "approach": {
+        "en": "The storm hides the path. A creature moving in the sand prevents you from going any farther.",
+        "es": "La tormenta hace difícil ver el camino. Además, una criatura se mueve entre la arena e impide avanzar."
+      }
+    },
+    {
+      "id": 57,
+      "title": {
+        "en": "The safe path",
+        "es": "El camino seguro"
+      },
+      "approach": {
+        "en": "Old signs point toward the citadel, but a guardian watches the road you need.",
+        "es": "Encuentras varias señales que apuntan hacia la ciudadela. Un guardián vigila el camino que debes tomar."
+      }
+    },
+    {
+      "id": 58,
+      "title": {
+        "en": "The citadel in the distance",
+        "es": "La ciudadela a lo lejos"
+      },
+      "approach": {
+        "en": "From a dune you spot the citadel walls. Several monsters guard the last stretch of road.",
+        "es": "Desde una duna ves la ciudadela. Sus grandes murallas están cerca, pero varios monstruos vigilan el último camino."
+      }
+    },
+    {
+      "id": 59,
+      "title": {
+        "en": "The giant scorpion",
+        "es": "El escorpión gigante"
+      },
+      "approach": {
+        "en": "An enormous scorpion blocks the citadel gate. You need to get past it to reach the castle.",
+        "es": "Un escorpión gigantesco bloquea la entrada de la ciudadela. No puedes seguir hacia el castillo sin pasar por allí."
+      }
+    },
+    {
+      "id": 60,
+      "title": {
+        "en": "The frozen square",
+        "es": "La plaza detenida"
+      },
+      "approach": {
+        "en": "A soldier guards the tower in a square dominated by a great, silent clock.",
+        "es": "Entras a la ciudadela y encuentras una plaza con un reloj enorme que no funciona. Un soldado del rey vigila el acceso a la torre."
+      }
+    },
+    {
+      "id": 61,
+      "title": {
+        "en": "The abandoned workshop",
+        "es": "El taller abandonado"
+      },
+      "approach": {
+        "en": "A monster among the tools keeps you out of the workshop.",
+        "es": "Buscas un taller para reparar el reloj. Un monstruo se ha instalado entre las herramientas y no te deja entrar."
+      }
+    },
+    {
+      "id": 62,
+      "title": {
+        "en": "The first part",
+        "es": "La primera pieza"
+      },
+      "approach": {
+        "en": "You spot a gear the clock might need, but a guardian protects the bench.",
+        "es": "Encuentras un engranaje que podría servir para el reloj, pero un guardián protege la mesa donde está."
+      }
+    },
+    {
+      "id": 63,
+      "title": {
+        "en": "The tower door",
+        "es": "La puerta de la torre"
+      },
+      "approach": {
+        "en": "You bring the gear to the tower. A monster watches the mechanism that opens the door.",
+        "es": "Llegas a la puerta de la torre con el engranaje. Un monstruo vigila el mecanismo de entrada."
+      }
+    },
+    {
+      "id": 64,
+      "title": {
+        "en": "The clock hand",
+        "es": "La manecilla"
+      },
+      "approach": {
+        "en": "You return to the workshop for the hand. A guardian is trying to destroy the remaining parts.",
+        "es": "Regresas al taller a buscar la manecilla. Un guardián intenta destruir las piezas que quedan."
+      }
+    },
+    {
+      "id": 65,
+      "title": {
+        "en": "The little clock",
+        "es": "El reloj pequeño"
+      },
+      "approach": {
+        "en": "You bring the missing part to the small clock, but a monster stands in front of it.",
+        "es": "Llegas al reloj pequeño con la pieza que faltaba. Un monstruo se interpone entre tú y la máquina."
+      }
+    },
+    {
+      "id": 66,
+      "title": {
+        "en": "The machine room",
+        "es": "La sala de máquinas"
+      },
+      "approach": {
+        "en": "Monsters have jammed the wheels. A guardian protects the controls.",
+        "es": "Entras a la sala de máquinas. Varias ruedas están bloqueadas por los monstruos del rey, y un guardián protege el control."
+      }
+    },
+    {
+      "id": 67,
+      "title": {
+        "en": "The main mechanism",
+        "es": "El mecanismo central"
+      },
+      "approach": {
+        "en": "The mechanism is stuck, and a guardian watches the wheels you need to repair.",
+        "es": "El mecanismo central está atascado. Un guardián vigila las ruedas que debes reparar."
+      }
+    },
+    {
+      "id": 68,
+      "title": {
+        "en": "The last wheel",
+        "es": "La última rueda"
+      },
+      "approach": {
+        "en": "You climb to the last wheel and find a creature holding it still.",
+        "es": "Subes hasta la última rueda. Allí encuentras una criatura sujetando la máquina para que no avance."
+      }
+    },
+    {
+      "id": 69,
+      "title": {
+        "en": "The Clockwork Automaton",
+        "es": "El autómata del reloj"
+      },
+      "approach": {
+        "en": "The wheels are nearly ready, but the Clockwork Automaton holds the main machine still. Defeat it to open the way out.",
+        "es": "Las ruedas están casi listas, pero el Autómata del Reloj mantiene detenida la máquina principal. Debes derrotarlo para abrir la salida de la ciudadela."
+      }
+    },
+    {
+      "id": 70,
+      "title": {
+        "en": "The dark palace",
+        "es": "El palacio oscuro"
+      },
+      "approach": {
+        "en": "In the moonlight, a monster guards the palace and keeps you from reaching the courtyard.",
+        "es": "Llegas a un palacio iluminado por la luna. Un monstruo protege la entrada y no te deja llegar al patio."
+      }
+    },
+    {
+      "id": 71,
+      "title": {
+        "en": "The empty halls",
+        "es": "Los salones vacíos"
+      },
+      "approach": {
+        "en": "A guardian protects a room full of books and old symbols.",
+        "es": "Recorres los salones vacíos. Un guardián protege una sala donde hay libros y símbolos antiguos."
+      }
+    },
+    {
+      "id": 72,
+      "title": {
+        "en": "The palace book",
+        "es": "El libro del palacio"
+      },
+      "approach": {
+        "en": "A creature guards the shelf that holds a book about the castle gates.",
+        "es": "En la sala hay un libro sobre las puertas del castillo. Una criatura protege el estante donde está guardado."
+      }
+    },
+    {
+      "id": 73,
+      "title": {
+        "en": "The first clue",
+        "es": "La primera pista"
+      },
+      "approach": {
+        "en": "The book mentions a garden where the key may be hidden. A guardian blocks the hall to the palace exit.",
+        "es": "El libro menciona un jardín donde podría estar escondida la llave. Un guardián bloquea el pasillo que lleva hacia la salida del palacio."
+      }
+    },
+    {
+      "id": 74,
+      "title": {
+        "en": "The closed passage",
+        "es": "El corredor cerrado"
+      },
+      "approach": {
+        "en": "The door is shut. A monster watches a nearby corridor full of broken objects.",
+        "es": "La puerta está cerrada. Cerca hay un monstruo que vigila un viejo corredor lleno de objetos rotos."
+      }
+    },
+    {
+      "id": 75,
+      "title": {
+        "en": "The hall mirror",
+        "es": "El espejo del salón"
+      },
+      "approach": {
+        "en": "You find a mirror, but a guardian keeps you from reaching a mark on the wall.",
+        "es": "Encuentras un espejo en el salón. Un guardián impide que te acerques a una marca en la pared."
+      }
+    },
+    {
+      "id": 76,
+      "title": {
+        "en": "The moonlit room",
+        "es": "La sala de la luna"
+      },
+      "approach": {
+        "en": "You follow the signs into a moonlit room. A creature blocks access to the gate mechanism.",
+        "es": "Sigues las señales hasta una sala iluminada por la luna. Una criatura bloquea el acceso al mecanismo de salida."
+      }
+    },
+    {
+      "id": 77,
+      "title": {
+        "en": "The passage guardian",
+        "es": "El guardián del corredor"
+      },
+      "approach": {
+        "en": "You reach the mechanism, but a guardian steps in to stop you from using it.",
+        "es": "Llegas al mecanismo, pero un guardián aparece y te impide activarlo."
+      }
+    },
+    {
+      "id": 78,
+      "title": {
+        "en": "The garden gate",
+        "es": "La puerta del jardín"
+      },
+      "approach": {
+        "en": "The gate is almost open. A creature bars it, and beyond you see dry trees and an empty fountain.",
+        "es": "La puerta del jardín está casi abierta, pero una criatura bloquea la entrada. Desde allí ves árboles secos y una fuente sin agua."
+      }
+    },
+    {
+      "id": 79,
+      "title": {
+        "en": "The Lunar Specter",
+        "es": "El espectro lunar"
+      },
+      "approach": {
+        "en": "The Lunar Specter blocks the way out. Beyond it lies the garden where the key may be hidden.",
+        "es": "El Espectro Lunar bloquea la salida del palacio. Si lo vences, podrás buscar la llave escondida en el jardín."
+      }
+    },
+    {
+      "id": 80,
+      "title": {
+        "en": "The abandoned garden",
+        "es": "El jardín abandonado"
+      },
+      "approach": {
+        "en": "Dry plants and empty channels surround you. A guardian watches the way to the first gate.",
+        "es": "Entras al jardín y ves plantas secas y canales sin agua. Un guardián vigila el camino hasta la primera compuerta."
+      }
+    },
+    {
+      "id": 81,
+      "title": {
+        "en": "The floodgate",
+        "es": "La compuerta"
+      },
+      "approach": {
+        "en": "A living statue keeps the floodgate closed. You need to open it to reach the fountain.",
+        "es": "Una estatua viviente mantiene cerrada la compuerta. Sin abrirla no podrás llegar a la fuente del jardín."
+      }
+    },
+    {
+      "id": 82,
+      "title": {
+        "en": "The path to the fountain",
+        "es": "El camino a la fuente"
+      },
+      "approach": {
+        "en": "You follow the water to a guarded door. The fountain should be on the other side.",
+        "es": "Sigues el agua hasta una puerta protegida por un monstruo. Detrás de ella debería estar la fuente del jardín."
+      }
+    },
+    {
+      "id": 83,
+      "title": {
+        "en": "The old key",
+        "es": "La llave antigua"
+      },
+      "approach": {
+        "en": "An ancient key lies at the bottom of the fountain. A guardian keeps you away.",
+        "es": "En el fondo de la fuente hay una llave antigua. Un guardián protege el lugar y no permite que te acerques."
+      }
+    },
+    {
+      "id": 84,
+      "title": {
+        "en": "Searching for the first seal",
+        "es": "La búsqueda del primer sello"
+      },
+      "approach": {
+        "en": "The map puts the first seal near the exit. A monster blocks the trail.",
+        "es": "El mapa del jardín muestra que el primer sello está cerca de la salida. Un monstruo bloquea el camino para comenzar a buscarlo."
+      }
+    },
+    {
+      "id": 85,
+      "title": {
+        "en": "The broken path",
+        "es": "El paso destruido"
+      },
+      "approach": {
+        "en": "You find a guardian among the stones of a collapsed path. The crossing needs repairs.",
+        "es": "Llegas a un camino derrumbado y encuentras un guardián entre las piedras. Necesitas reparar el paso para continuar."
+      }
+    },
+    {
+      "id": 86,
+      "title": {
+        "en": "The garden tunnel",
+        "es": "El túnel del jardín"
+      },
+      "approach": {
+        "en": "The tunnel might lead to the exit, but a monster keeps you from entering.",
+        "es": "El túnel podría llevarte hasta la salida del jardín. Un monstruo lo vigila y no te deja entrar."
+      }
+    },
+    {
+      "id": 87,
+      "title": {
+        "en": "The giant statue",
+        "es": "La estatua gigante"
+      },
+      "approach": {
+        "en": "You approach the statue to look for the seal. A stone guardian stands in your way.",
+        "es": "Te acercas a la estatua para buscar el sello. Un guardián de piedra se interpone ante ella."
+      }
+    },
+    {
+      "id": 88,
+      "title": {
+        "en": "The first seal",
+        "es": "El primer sello"
+      },
+      "approach": {
+        "en": "You see the seal's symbol on the statue. A stone guardian wakes and stands before you.",
+        "es": "Al examinar la estatua, descubres el símbolo del primer sello. Un guardián de piedra despierta a su lado y se coloca delante de ti."
+      }
+    },
+    {
+      "id": 89,
+      "title": {
+        "en": "The Stone Colossus",
+        "es": "El coloso de piedra"
+      },
+      "approach": {
+        "en": "The guardian falls, but the larger statue comes alive. The Stone Colossus is the last protector of the first seal.",
+        "es": "Has vencido al guardián, pero la estatua más grande cobra vida. Es el Coloso de Piedra, el último enemigo que protege el primer sello."
+      }
+    },
+    {
+      "id": 90,
+      "title": {
+        "en": "The king's camp",
+        "es": "El campamento del rey"
+      },
+      "approach": {
+        "en": "Soldiers are destroying books. A guardian watches the road to their camp.",
+        "es": "Llegas a una zona donde los soldados del rey destruyen libros. Un guardián vigila el camino hacia su campamento."
+      }
+    },
+    {
+      "id": 91,
+      "title": {
+        "en": "The cart of books",
+        "es": "El carro de libros"
+      },
+      "approach": {
+        "en": "Soldiers surround a cart full of books. One steps into your way when you try to approach.",
+        "es": "Un carro cargado de libros está rodeado de soldados. Uno de ellos te corta el paso cuando intentas acercarte."
+      }
+    },
+    {
+      "id": 92,
+      "title": {
+        "en": "The voiceless soldiers",
+        "es": "Los soldados sin voz"
+      },
+      "approach": {
+        "en": "You follow the map, but soldiers spot you before you can reach the center of camp.",
+        "es": "Sigues el mapa, pero varios soldados te encuentran antes de llegar al centro del campamento."
+      }
+    },
+    {
+      "id": 93,
+      "title": {
+        "en": "The commander's tent",
+        "es": "La tienda principal"
+      },
+      "approach": {
+        "en": "A guardian protects the commander's papers inside the main tent.",
+        "es": "Llegas a la tienda principal. Un guardián protege los documentos del comandante."
+      }
+    },
+    {
+      "id": 94,
+      "title": {
+        "en": "The archive entrance",
+        "es": "La entrada del archivo"
+      },
+      "approach": {
+        "en": "You reach the archive as a monster tries to destroy the books inside.",
+        "es": "Llegas al archivo, pero un monstruo intenta destruir los libros que hay dentro."
+      }
+    },
+    {
+      "id": 95,
+      "title": {
+        "en": "The stolen records",
+        "es": "Los documentos robados"
+      },
+      "approach": {
+        "en": "You find a room full of stolen records. A guardian keeps you from opening the cabinets.",
+        "es": "Encuentras una sala llena de documentos robados. Un guardián impide que examines los armarios."
+      }
+    },
+    {
+      "id": 96,
+      "title": {
+        "en": "The iron door",
+        "es": "La puerta de hierro"
+      },
+      "approach": {
+        "en": "A soldier guards the station where the room's key is kept.",
+        "es": "Llegas a la puerta de hierro. Un soldado vigila el puesto donde guardan la llave de esa sala."
+      }
+    },
+    {
+      "id": 97,
+      "title": {
+        "en": "The second seal",
+        "es": "El segundo sello"
+      },
+      "approach": {
+        "en": "You see the second seal in the chamber. A guardian stands between you and the seal.",
+        "es": "Dentro de la cámara ves el segundo sello. Un guardián se interpone entre tú y la pieza."
+      }
+    },
+    {
+      "id": 98,
+      "title": {
+        "en": "The route to the fortress",
+        "es": "La ruta a la fortaleza"
+      },
+      "approach": {
+        "en": "A map shows a road to the fortress. A soldier blocks the exit from the camp.",
+        "es": "Revisas un mapa del archivo y encuentras una ruta hacia la fortaleza. Un soldado bloquea la salida del campamento."
+      }
+    },
+    {
+      "id": 99,
+      "title": {
+        "en": "The commander without a story",
+        "es": "El comandante sin historia"
+      },
+      "approach": {
+        "en": "The king's commander waits at the last gate. He refuses to let you pass toward the fortress.",
+        "es": "El comandante del rey te espera junto a la última puerta del campamento. No dejará que avances hacia la fortaleza."
+      }
+    },
+    {
+      "id": 100,
+      "title": {
+        "en": "The hanging bridge",
+        "es": "El puente suspendido"
+      },
+      "approach": {
+        "en": "A creature blocks the only way across a bridge suspended over the void.",
+        "es": "Llegas a un puente suspendido sobre un enorme vacío. Una criatura bloquea el único camino hacia el otro lado."
+      }
+    },
+    {
+      "id": 101,
+      "title": {
+        "en": "The door of lights",
+        "es": "La puerta iluminada"
+      },
+      "approach": {
+        "en": "Lights flicker on the door. A guardian steps in front as you approach.",
+        "es": "La puerta tiene varias luces que se encienden y se apagan. Un guardián se coloca delante cuando intentas acercarte."
+      }
+    },
+    {
+      "id": 102,
+      "title": {
+        "en": "The old archive",
+        "es": "El archivo antiguo"
+      },
+      "approach": {
+        "en": "The archive holds books about the fortress. A monster protects the section that holds the maps.",
+        "es": "En el archivo hay libros que hablan de la fortaleza del rey. Un monstruo protege la sección donde se guardan los mapas."
+      }
+    },
+    {
+      "id": 103,
+      "title": {
+        "en": "The dark tunnels",
+        "es": "Los túneles oscuros"
+      },
+      "approach": {
+        "en": "You descend the archive steps. A creature waits in the dark tunnels.",
+        "es": "Bajas por las escaleras del archivo. En los túneles oscuros te espera una criatura que protege el camino."
+      }
+    },
+    {
+      "id": 104,
+      "title": {
+        "en": "The hidden chamber",
+        "es": "La cámara escondida"
+      },
+      "approach": {
+        "en": "A guardian blocks the door of the hidden chamber.",
+        "es": "Llegas a la cámara escondida. Un guardián protege la puerta y no te permite entrar."
+      }
+    },
+    {
+      "id": 105,
+      "title": {
+        "en": "The final guardian",
+        "es": "El último guardián"
+      },
+      "approach": {
+        "en": "A guardian appears in the chamber and prevents you from reaching the last seal.",
+        "es": "Dentro de la cámara aparece un guardián que protege el último sello. No podrás acercarte a la pieza mientras siga allí."
+      }
+    },
+    {
+      "id": 106,
+      "title": {
+        "en": "The third seal",
+        "es": "El tercer sello"
+      },
+      "approach": {
+        "en": "The guardian has fallen, but a shadow rises when you reach for the seal. You must get past it to complete the key.",
+        "es": "El guardián ha caído, pero una sombra sale del suelo cuando intentas recoger el tercer sello. Tendrás que vencerla para completar la llave."
+      }
+    },
+    {
+      "id": 107,
+      "title": {
+        "en": "The fortress in sight",
+        "es": "La fortaleza a la vista"
+      },
+      "approach": {
+        "en": "You leave the tunnels and spot the fortress in the distance. A guardian watches the way to its walls.",
+        "es": "Sales de los túneles y ves la fortaleza del Rey del Olvido a lo lejos. Un guardián protege el camino hacia sus murallas."
+      }
+    },
+    {
+      "id": 108,
+      "title": {
+        "en": "The last bridge",
+        "es": "El puente final"
+      },
+      "approach": {
+        "en": "Creatures crowd the final bridge to stop you from reaching the castle gate.",
+        "es": "El puente final está lleno de criaturas que intentan detenerte antes de llegar a las puertas del castillo."
+      }
+    },
+    {
+      "id": 109,
+      "title": {
+        "en": "The Void Serpent",
+        "es": "La serpiente del vacío"
+      },
+      "approach": {
+        "en": "The Void Serpent guards the arch. It is the last monster before the castle.",
+        "es": "La Serpiente del Vacío vigila el arco de entrada a la fortaleza. Es el último monstruo antes del castillo."
+      }
+    },
+    {
+      "id": 110,
+      "title": {
+        "en": "Inside the castle",
+        "es": "Dentro del castillo"
+      },
+      "approach": {
+        "en": "Piles of stolen books fill the castle. A guardian blocks the way to the tower.",
+        "es": "Entras al castillo del Rey del Olvido. Hay montones de libros robados, pero un guardián bloquea el camino hacia la torre."
+      }
+    },
+    {
+      "id": 111,
+      "title": {
+        "en": "The king's hall",
+        "es": "El salón del rey"
+      },
+      "approach": {
+        "en": "You cross a hall full of torn books. A monster protects the stairs to the rooms where the king keeps his magic.",
+        "es": "Cruzas un salón lleno de libros rotos. Un monstruo protege la escalera que lleva a las salas donde el rey guarda su magia."
+      }
+    },
+    {
+      "id": 112,
+      "title": {
+        "en": "The captive books",
+        "es": "Los libros prisioneros"
+      },
+      "approach": {
+        "en": "Books are locked inside large crates. A guardian is about to destroy them.",
+        "es": "Descubres muchos libros encerrados en grandes cajas. Un guardián se prepara para destruirlos antes de que puedas liberarlos."
+      }
+    },
+    {
+      "id": 113,
+      "title": {
+        "en": "The last army",
+        "es": "El último ejército"
+      },
+      "approach": {
+        "en": "The king's remaining soldiers block the stairs to the upper castle.",
+        "es": "Los últimos soldados del rey bloquean las escaleras. Necesitas pasar para llegar a la parte superior del castillo."
+      }
+    },
+    {
+      "id": 114,
+      "title": {
+        "en": "The source of his power",
+        "es": "La fuente de su poder"
+      },
+      "approach": {
+        "en": "A monster guards an enormous book in the center of the room. You need to get closer to see what it holds.",
+        "es": "En el centro de la sala hay un libro gigantesco. Un monstruo lo vigila y no permite que te acerques a descubrir qué contiene."
+      }
+    },
+    {
+      "id": 115,
+      "title": {
+        "en": "Opening the great book",
+        "es": "Abrir el gran libro"
+      },
+      "approach": {
+        "en": "The great book is locked and a guardian watches over it. The key with three seals might fit.",
+        "es": "El gran libro está cerrado y un guardián protege su cerradura. La llave de los tres sellos podría abrirlo."
+      }
+    },
+    {
+      "id": 116,
+      "title": {
+        "en": "The way to the throne",
+        "es": "El camino al trono"
+      },
+      "approach": {
+        "en": "You climb toward the throne. A guardian refuses to let you through the last door.",
+        "es": "Subes las escaleras hacia el trono. Un guardián protege la última puerta y se niega a dejarte pasar."
+      }
+    },
+    {
+      "id": 117,
+      "title": {
+        "en": "The throne guard",
+        "es": "La guardia del trono"
+      },
+      "approach": {
+        "en": "The king's personal guard blocks the entrance. You have to defeat it to reach him.",
+        "es": "La puerta del trono está cerca, pero la guardia personal del rey bloquea la entrada. Tendrás que vencerla para llegar hasta él."
+      }
+    },
+    {
+      "id": 118,
+      "title": {
+        "en": "The king's shadow",
+        "es": "La sombra del rey"
+      },
+      "approach": {
+        "en": "At the throne, the King of Forgetting makes a huge shadow to stop you.",
+        "es": "Llegas al trono. El Rey del Olvido crea una sombra enorme con su magia para impedir que te acerques."
+      }
+    },
+    {
+      "id": 119,
+      "title": {
+        "en": "The last battle",
+        "es": "La última batalla"
+      },
+      "approach": {
+        "en": "The shadow fades. The King of Forgetting stands before you, ready to fight so that nobody can ever read again.",
+        "es": "La sombra se desvanece. Frente a ti queda el Rey del Olvido, dispuesto a luchar para que nadie vuelva a leer."
+      }
+    }
+  ],
+  "epilogue": {
+    "en": "After defeating the King of Forgetting, you return home. His army can no longer destroy books, and people read in peace again. You have saved the stories of the world. There are still many books left to discover.",
+    "es": "Tras derrotar al Rey del Olvido, regresas a casa. Su ejército ya no puede destruir libros y las personas vuelven a leer en paz. Has salvado las historias del mundo. Pero todavía quedan muchos libros por descubrir."
+  }
+}

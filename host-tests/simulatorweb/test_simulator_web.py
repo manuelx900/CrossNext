@@ -1,6 +1,8 @@
 import http.client
 import http.server
+import hashlib
 import importlib.util
+import json
 from pathlib import Path
 import shutil
 import subprocess
@@ -87,8 +89,76 @@ class ServerTests(unittest.TestCase):
             with mock.patch.object(web.Handler, "end_headers", http.server.SimpleHTTPRequestHandler.end_headers):
                 self.assertFalse(web.existing_server(self.url))
 
+    def test_word_banks_are_compressed_but_their_notices_are_plain(self):
+        folder = self.root / "showcase/wordle"
+        folder.mkdir(parents=True)
+        (folder / "EN.cpwb").write_bytes(b"packed bank")
+        (folder / "LICENSE.txt").write_text("License")
+        status, headers, _ = self.request("/showcase/wordle/EN.cpwb")
+        self.assertEqual(status, 200)
+        self.assertEqual(headers.get("Content-Encoding"), "br")
+        status, headers, body = self.request("/showcase/wordle/LICENSE.txt")
+        self.assertEqual(status, 200)
+        self.assertNotIn("Content-Encoding", headers)
+        self.assertEqual(body, b"License")
+
 
 class BuildStateTests(unittest.TestCase):
+    def test_shared_translation_compiler_and_word_sources_invalidate_build(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for relative in ("platformio.ini", "platformio.sim.ini", "tools_local/build_app_resources.py",
+                             "tools_local/language_packs.py", "scripts_local/sim_catchup.py",
+                             "scripts_local/sim_host_libs.py", "scripts_local/sconsign_per_tree.py",
+                             "tools_local/wordle/build_words.py", "assets_local/wordle/words-5.txt"):
+                path = root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("initial")
+            with mock.patch.object(web, "REPO", root):
+                before = web.source_digest()
+                (root / "tools_local/language_packs.py").write_text("updated compiler")
+                compiler_changed = web.source_digest()
+                self.assertNotEqual(before, compiler_changed)
+                (root / "assets_local/wordle/words-5.txt").write_text("updated vocabulary")
+                self.assertNotEqual(compiler_changed, web.source_digest())
+
+    def test_prebuilt_bundle_rejects_changed_or_missing_artifacts(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            site = root / "site"
+            (site / "emulator").mkdir(parents=True)
+            files = {}
+            for name in web.ARTIFACTS:
+                path = site / "emulator" / name
+                path.write_bytes(name.encode())
+                files[path.relative_to(root).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
+            manifest = root / "simulator-bundle.json"
+            manifest.write_text(json.dumps({"format": 1, "files": files}))
+            with mock.patch.object(web, "REPO", root), mock.patch.object(web, "SITE", site):
+                web.validate_bundle()
+                path.write_bytes(b"changed")
+                with self.assertRaises(RuntimeError):
+                    web.validate_bundle()
+                path.unlink()
+                with self.assertRaises(OSError):
+                    web.validate_bundle()
+
+    def test_prebuilt_bundle_rejects_escape_and_omitted_engine(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "site").mkdir()
+            private = root / "outside.txt"
+            private.write_bytes(b"outside")
+            manifest = root / "simulator-bundle.json"
+            manifest.write_text(json.dumps({"format": 1, "files": {"outside.txt": hashlib.sha256(b"outside").hexdigest()}}))
+            with mock.patch.object(web, "REPO", root), mock.patch.object(web, "SITE", root / "site"):
+                with self.assertRaises(RuntimeError):
+                    web.validate_bundle()
+                (root / "site/one.txt").write_bytes(b"one")
+                manifest.write_text(json.dumps({"format": 1, "files": {"site/one.txt": hashlib.sha256(b"one").hexdigest()}}))
+                with self.assertRaises(RuntimeError):
+                    web.validate_bundle()
+
     def test_build_can_clean_outputs_while_locked(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

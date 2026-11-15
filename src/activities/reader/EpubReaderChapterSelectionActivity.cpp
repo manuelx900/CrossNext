@@ -7,6 +7,7 @@
 #include <string>
 
 #include "MappedInputManager.h"
+#include "apps_local/ui/PixelMenuTheme.h"
 #include "components/UIScale.h"
 #include "components/UITheme.h"
 
@@ -16,9 +17,11 @@ EpubReaderChapterSelectionActivity::EpubReaderChapterSelectionActivity(GfxRender
                                                                        MappedInputManager& mappedInput,
                                                                        const std::shared_ptr<Epub>& epub,
                                                                        const int currentSpineIndex)
-    : UiListActivity("EpubReaderChapterSelection", renderer, mappedInput),
+    : UiListActivity("EpubReaderChapterSelection", renderer, mappedInput, false, true),
       epub(epub),
-      currentSpineIndex(currentSpineIndex) {}
+      currentSpineIndex(currentSpineIndex) {
+  setInterfaceFontSection(menufont::Section::Reader);
+}
 
 void EpubReaderChapterSelectionActivity::onEnter() {
   UiListActivity::onEnter();
@@ -76,7 +79,7 @@ void EpubReaderChapterSelectionActivity::refreshTocWindow(const int start) {
     int count;
   } prewarmCtx{windowLabels, windowCount};
   renderer.prewarmFallbackText(
-      uiScaleSpec().bodyFontId,
+      toybox::kBookListFontId,
       [](const void* ctx, uint32_t i) -> const char* {
         const auto* c = static_cast<const PrewarmCtx*>(ctx);
         return i < static_cast<uint32_t>(c->count) ? c->labels[i].c_str() : nullptr;
@@ -126,14 +129,9 @@ bool EpubReaderChapterSelectionActivity::handleButtons() {
 }
 
 void EpubReaderChapterSelectionActivity::buildScreen(UiScreen& screen) {
-  const auto& metrics = UITheme::getInstance().getMetrics();
-  const Rect safe = UITheme::getInstance().getScreenSafeArea(renderer, true, false);
-  // Content: the safe area minus the header band drawChrome paints the title in.
-  screen.setContentMarginFromScreen(fui::Insets{
-      static_cast<int16_t>(safe.y + metrics.topPadding + metrics.headerHeight),
-      static_cast<int16_t>(renderer.getScreenWidth() - (safe.x + safe.width)),
-      static_cast<int16_t>(renderer.getScreenHeight() - (safe.y + safe.height)), static_cast<int16_t>(safe.x)});
-  screen.spacer(static_cast<int16_t>(metrics.verticalSpacing));
+  pixelui::bindFonts(uiTarget, renderer);
+  uiTarget.setFont(4, toybox::kBookListFontId);
+  pixelui::begin(screen);
 
   if (!epub) {
     return;
@@ -148,6 +146,18 @@ void EpubReaderChapterSelectionActivity::buildScreen(UiScreen& screen) {
   props.action = ACTION_ROW;
   props.inputMask = fui::InputTouch;  // physical buttons stay in loop()
   syncListViewport(screen, props);
+  props.rowStyles = pixelui::rowStyles();
+  props.rowStyles.normal.background = fui::Paint::solid(fui::Color::White);
+  props.rowStyles.normal.foreground = fui::Paint::solid(fui::Color::Black);
+  props.rowStyles.normal.borderWidth = 0;
+  props.rowStyles.selected.background = fui::Paint::solid(fui::Color::Black);
+  props.rowStyles.selected.foreground = fui::Paint::solid(fui::Color::White);
+  props.rowStyles.selected.borderWidth = 0;
+  props.rowStyles.focused = props.rowStyles.active = props.rowStyles.selected;
+  props.selectionMarker = fui::SelectionMarker::None;
+  props.rowRadius = lightui::radius();
+  props.labelText.font = 4;
+  props.labelText.bold = false;
   // Materialize the row window for the final viewport (syncListViewport just
   // applied follow/clamping to nav.top) and hand list() the window with its
   // absolute base index.
@@ -157,9 +167,4 @@ void EpubReaderChapterSelectionActivity::buildScreen(UiScreen& screen) {
   screen.list(props);
 }
 
-void EpubReaderChapterSelectionActivity::drawChrome() {
-  const auto& metrics = UITheme::getInstance().getMetrics();
-  const Rect safe = UITheme::getInstance().getScreenSafeArea(renderer, true, false);
-  GUI.drawHeader(renderer, Rect{safe.x, safe.y + metrics.topPadding, safe.width, metrics.headerHeight},
-                 tr(STR_SELECT_CHAPTER));
-}
+void EpubReaderChapterSelectionActivity::drawChrome() { pixelui::drawHeader(renderer, tr(STR_SELECT_CHAPTER)); }

@@ -1,6 +1,7 @@
 #include "NotesLibrary.h"
 
 #include <HalStorage.h>
+#include <I18n.h>
 #include <Logging.h>
 #include <Memory.h>
 
@@ -22,8 +23,6 @@ constexpr int kMaxNotes = 120;
 // by who PAYS when the card fills: the reader's own caches and Study's review
 // log, which loses answers silently rather than refusing. See
 // preconditions-protect-another-app.
-constexpr const char* kFullMessage = "The card is nearly full, so nothing was saved.";
-constexpr const char* kRefusedMessage = "The card would not take the change.";
 constexpr uint64_t kCardFloorBytes = 12ull * 1024 * 1024;
 
 // A note is one screen of text that a person typed on a phone keyboard or a
@@ -216,11 +215,11 @@ bool Library::save(const std::string& name, const std::string& doc, std::string&
   {
     HalFile file;
     if (!Storage.openFileForWrite("NOTES", part, file)) {
-      message = cardIsFull() ? kFullMessage : kRefusedMessage;
+      message = cardIsFull() ? tr(STR_NOTES_CARD_NEARLY_FULL) : tr(STR_TOOLS_SAVE_FAILED);
       return false;
     }
     if (!doc.empty() && file.write(doc.data(), doc.size()) != doc.size()) {
-      message = cardIsFull() ? kFullMessage : kRefusedMessage;
+      message = cardIsFull() ? tr(STR_NOTES_CARD_NEARLY_FULL) : tr(STR_TOOLS_SAVE_FAILED);
       Storage.remove(part.c_str());
       return false;
     }
@@ -230,7 +229,7 @@ bool Library::save(const std::string& name, const std::string& doc, std::string&
   const std::string real = pathFor(name);
   Storage.remove(real.c_str());
   if (!Storage.rename(part.c_str(), real.c_str())) {
-    message = cardIsFull() ? kFullMessage : kRefusedMessage;
+    message = cardIsFull() ? tr(STR_NOTES_CARD_NEARLY_FULL) : tr(STR_TOOLS_SAVE_FAILED);
     Storage.remove(part.c_str());
     return false;
   }
@@ -240,11 +239,11 @@ bool Library::save(const std::string& name, const std::string& doc, std::string&
 bool Library::create(const std::string& name, std::string& message) {
   const std::string clean = sanitise(name);
   if (clean.empty()) {
-    message = "That name cannot be used.";
+    message = tr(STR_NOTES_INVALID_NAME);
     return false;
   }
   if (exists(entries_, clean) || Storage.exists(pathFor(clean).c_str())) {
-    message = "There is already a note called that.";
+    message = tr(STR_NOTES_DUPLICATE_NAME);
     return false;
   }
   if (!save(clean, std::string(), message)) return false;
@@ -261,16 +260,16 @@ bool Library::create(const std::string& name, std::string& message) {
 bool Library::rename(const std::string& from, const std::string& to, std::string& message) {
   const std::string clean = sanitise(to);
   if (clean.empty()) {
-    message = "That name cannot be used.";
+    message = tr(STR_NOTES_INVALID_NAME);
     return false;
   }
   if (clean == from) return true;
   if (exists(entries_, clean) || Storage.exists(pathFor(clean).c_str())) {
-    message = "There is already a note called that.";
+    message = tr(STR_NOTES_DUPLICATE_NAME);
     return false;
   }
   if (!Storage.rename(pathFor(from).c_str(), pathFor(clean).c_str())) {
-    message = cardIsFull() ? kFullMessage : kRefusedMessage;
+    message = cardIsFull() ? tr(STR_NOTES_CARD_NEARLY_FULL) : tr(STR_TOOLS_SAVE_FAILED);
     return false;
   }
   for (Entry& entry : entries_) {

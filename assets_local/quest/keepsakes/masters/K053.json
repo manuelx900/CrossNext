@@ -1,0 +1,18 @@
+{
+  "id": "K053",
+  "key": "Mecha",
+  "file": "K053.png",
+  "sample": {
+    "es": "Mecha del faro",
+    "en": "Lighthouse wick"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Lighthouse wick.",
+  "requests": [
+    63
+  ],
+  "sha256": "b467bbef5f2f9daa2b730acd69ba98d42c55608db26e982f2354c8f4fc64cad5",
+  "source": "exec-6d4a7847-b3c7-4ac1-b582-2483d2780783.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

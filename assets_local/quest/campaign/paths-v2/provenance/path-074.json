@@ -1,0 +1,17 @@
+{
+  "id": 74,
+  "saga": 7,
+  "step": 4,
+  "title": {
+    "en": "The closed passage",
+    "es": "El corredor cerrado"
+  },
+  "enemy": "Queen's shadow",
+  "guardian": 46,
+  "master": "path-074.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The Palace of the Moon. Path episode: The closed passage. Story action, which the scene must directly support: The door is shut. A monster watches a nearby corridor full of broken objects.\nEnemy identity, MUST match this exact anatomy: a lanky crescent-antlered shadow deer with large armored hooves. Eye-level approach across foreground stones, enemy full-body in the center-right, destination visible behind. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-8ca1227a-e8fd-45b8-a1b9-9c1cd08be7cc.png",
+  "sha256": "9d04af98da33b51eab5ffa327312d2e00af158b63b3195d67c57f307bfe8f501"
+}

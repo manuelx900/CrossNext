@@ -60,13 +60,14 @@ LIST = "src/SettingsList.h"
 # it, and the activity that sorts the fork's rows. A reader here says nothing
 # about who owns the value.
 PLUMBING = {
+    "src/SettingsList.cpp",
     LIST,
     "src/CrossPointSettings.h",
     "src/CrossPointSettings.cpp",
     "src/activities/settings/SettingsActivity.cpp",
 }
 
-list_src = open(LIST).read()
+list_src = (open(LIST).read() + "\n" + open("src/SettingsList.cpp").read())
 
 
 def calls(src):

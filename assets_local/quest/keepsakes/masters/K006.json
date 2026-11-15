@@ -1,0 +1,19 @@
+{
+  "id": "K006",
+  "key": "Guijarro",
+  "file": "K006.png",
+  "sample": {
+    "es": "Guijarro del eco",
+    "en": "Echo pebble"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Echo pebble.",
+  "requests": [
+    6,
+    209
+  ],
+  "sha256": "e6d4a6c8886aa245d4d796cb9dff589daa19bfec44f9a4bff495d15edf59a703",
+  "source": "exec-f1600d10-a6b9-4c5f-9b56-bbea25569ef1.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

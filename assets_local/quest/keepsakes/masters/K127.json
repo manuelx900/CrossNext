@@ -1,0 +1,21 @@
+{
+  "id": "K127",
+  "key": "Medalla-clock",
+  "file": "K127.png",
+  "sample": {
+    "es": "Medalla de las horas",
+    "en": "Hours medal"
+  },
+  "requests": [
+    174
+  ],
+  "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: clock face and one cogwheel.",
+  "transparent": true,
+  "kind": "keepsake",
+  "sha256": "0f45ee68cbb8f99fc63c3c5e0742f4de679703b4366f881040bbb4a4b76a7779",
+  "tool": "built-in image_gen",
+  "source": "exec-30997d33-4dc4-4762-8cc0-9d648e32b62a.png",
+  "width": 1141,
+  "height": 1379,
+  "mode": "RGBA"
+}

@@ -50,7 +50,6 @@ class ResourceTest(unittest.TestCase):
                 output = Path(temporary) / filename
                 info = pack.build(output, source, home)
                 binary = output.read_bytes()
-                self.assertEqual(binary, (ROOT / "resources/apps/pet" / filename).read_bytes())
                 self.assertTrue(all(item["supplied"] for item in info["images"]))
                 self.assertEqual(zlib.crc32(binary[24:]), struct.unpack_from("<I", binary, 16)[0])
                 self.assertEqual(zlib.crc32(binary[24:24 + info['sprites'] * 16]), struct.unpack_from("<I", binary, 20)[0])

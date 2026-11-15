@@ -1,0 +1,19 @@
+{
+  "id": "K028",
+  "key": "Campanilla",
+  "file": "K028.png",
+  "sample": {
+    "es": "Campanilla de la plaza",
+    "en": "Square bell"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: a small handbell from the village square, rounded brass bell and short carved wooden handle.",
+  "requests": [
+    31,
+    108
+  ],
+  "sha256": "22aac5646efd62e590f4e04da92f545bdb093026a76407a4356493e6732131a5",
+  "source": "exec-2937d4b4-1098-41b7-87d7-b653aa0b73d9.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

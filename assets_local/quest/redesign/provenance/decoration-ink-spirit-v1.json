@@ -1,0 +1,8 @@
+{
+  "id": "ink-spirit",
+  "path": "exec-1b93a9a2-0abc-4803-8da2-259dbe42a5b9.png",
+  "prompt": "Production decoration sprite for Aventura lectora, ONE isolated object. Match the reference pets: thick clean pure black rounded outlines, white and soft flat gray shading, cute storybook cartoon, simple readable silhouette for 80x112 pixels, no fine texture. Full object centered with transparent margin, truly transparent RGBA background. No aura, no glow, no scenery, no letters, no frame, no other subjects. Subject: A tiny floating friendly spirit made of a single ink droplet with a small paper scarf, two large expressive eyes, small arms",
+  "tool": "built-in image_gen",
+  "sha256": "6f43232036d94438626b4810dc76a64af9adfac8af318b079de352ecfe182ba0",
+  "name": "decoration-ink-spirit-v1"
+}

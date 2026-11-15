@@ -1,0 +1,17 @@
+{
+  "id": 109,
+  "saga": 10,
+  "step": 9,
+  "title": {
+    "en": "The Void Serpent",
+    "es": "La serpiente del vacío"
+  },
+  "enemy": "Void serpent",
+  "guardian": 65,
+  "master": "path-109.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The Path of Stars. Path episode: The Void Serpent. Story action, which the scene must directly support: The Void Serpent guards the arch. It is the last monster before the castle.\nEnemy identity, MUST match this exact anatomy: a large coiled void serpent with a horned dragonlike head, three narrow eyes, fangs and pale layered belly plates. Dramatic medium-wide boss composition, full-body enemy dominating the center, final barrier clearly behind it. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-152345a0-4fe2-4365-9663-144c99374cc4.png",
+  "sha256": "70052dc33ed8f21f2eaca4fe4c5e3a74bde6d217adf62210129f293612f5ce34"
+}

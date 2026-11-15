@@ -163,8 +163,8 @@ void buildBoard(toybox::Screen& s, const BoardModel& m, Layout& l) {
       }
     const auto pass = fui::makeRect(felt.x + felt.width * 62 / 100, felt.y + 60, felt.width * 38 / 100 - 12,
                                     std::min(80, int(felt.height) - 72));
-    gamepanel::row(s, pass, tr(STR_UI_PASS_BD564D), m.confirmEnabled ? ActionButton : fui::ActionId(0), ButtonConfirm,
-                   gamepanel::Mark::Play, m.confirmEnabled, nullptr, false);
+    gamepanel::row(s, pass, tr(STR_HEARTS_PASS_CARDS), m.confirmEnabled ? ActionButton : fui::ActionId(0),
+                   ButtonConfirm, gamepanel::Mark::Play, m.confirmEnabled, nullptr, false);
   } else {
     const int ch = std::min(80, (int(felt.height) - 60) / 2), cw = ch * 3 / 4, cx = felt.x + felt.width / 2,
               cy = felt.y + felt.height / 2;

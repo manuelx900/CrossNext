@@ -1,12 +1,11 @@
 #pragma once
 
+#include <OpdsFeedParser.h>
 #include <Stream.h>
-
-#include "OpdsParser.h"
 
 class OpdsParserStream : public Stream {
  public:
-  explicit OpdsParserStream(OpdsParser& parser);
+  explicit OpdsParserStream(OpdsFeedParser& parser);
 
   // That functions are not implemented for that stream
   int available() override;
@@ -19,5 +18,5 @@ class OpdsParserStream : public Stream {
   ~OpdsParserStream() override;
 
  private:
-  OpdsParser& parser;
+  OpdsFeedParser& parser;
 };

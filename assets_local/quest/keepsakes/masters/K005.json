@@ -1,0 +1,21 @@
+{
+  "id": "K005",
+  "key": "Broche",
+  "file": "K005.png",
+  "sample": {
+    "es": "Broche del puente",
+    "en": "Bridge clasp"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Bridge clasp.",
+  "requests": [
+    5,
+    113,
+    175,
+    234
+  ],
+  "sha256": "b6994698fb3ca2971540f7f2f9c5d78271c05da2721af8513e744d36f836e9cb",
+  "source": "exec-e0ba5f04-1ee5-41bb-b8d4-4a94442e08be.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

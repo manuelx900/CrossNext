@@ -24,7 +24,7 @@ the repository root. The six outputs are `graphics.bin`, `home.bin`,
 `habitat.bin`, `breathing.bin`, `farewell.bin` and `collection.bin` under
 `resources/apps/pet/`. Install all six under `/apps/pet/` on the microSD.
 Missing or incompatible contents show the app installation notice; personal
-save data is stored separately under `/.crosspoint/pet/`.
+save data is stored separately under `/.crosspoint/pet-v2/`.
 
 Use pure black and white, a consistent pixel-art outline and enough margin
 to preserve ears, tails and object supports. Keep characters and furnishings

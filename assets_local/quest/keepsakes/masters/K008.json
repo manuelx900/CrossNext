@@ -1,0 +1,27 @@
+{
+  "id": "K008",
+  "key": "Llave",
+  "file": "K008.png",
+  "sample": {
+    "es": "Llave de la casa",
+    "en": "House key"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: House key.",
+  "requests": [
+    8,
+    25,
+    58,
+    85,
+    105,
+    163,
+    184,
+    205,
+    254,
+    268
+  ],
+  "sha256": "ed65946303467133a452d2b10845644647593a1d1f12e47651e738124d6b1d42",
+  "source": "exec-142c083a-a836-4f4c-9a4b-4d5dd4bd0c96.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

@@ -1,11 +1,13 @@
 #include "ReaderActivity.h"
 
+#include <BlePageTurner.h>
 #include <FontCacheManager.h>
 #include <FsHelpers.h>
 #include <HalStorage.h>
 #include <I18n.h>
 #include <KOReaderDocumentId.h>
 #include <Memory.h>
+#include <Performance.h>
 #include <TrustedTime.h>
 
 #include <algorithm>
@@ -21,6 +23,7 @@
 #include "SdCardFontSystem.h"
 #include "XtcReaderActivity.h"
 #include "activities/util/ConfirmationActivity.h"
+#include "apps_local/readertext/BookTextPreferences.h"
 #include "util/PluginEvents.h"
 
 ReaderActivity::ReaderActivity(const char* name, GfxRenderer& renderer, MappedInputManager& mappedInput,
@@ -57,6 +60,7 @@ void ReaderActivity::notePageTurn(const bool forward, const bool succeeded) {
   RenderLock lock(*this);
   if (succeeded) clearContentsReturn();
   readerSession.noteTurn(forward, succeeded);
+  if (SETTINGS.readerBars.needsPace()) readingPace.turn(forward, succeeded, millis());
 }
 void ReaderActivity::rememberContentsPosition(ContentsPosition position) {
   clearContentsReturn();
@@ -111,7 +115,11 @@ void ReaderActivity::onEnter() {
     APP_STATE.saveToFile();
   }
 
-  sdFontSystem.ensureLoaded(renderer);
+  booktext::begin(bookPath);
+  {
+    performance::Scope font(performance::Stage::Font);
+    sdFontSystem.ensureLoaded(renderer);
+  }
   applyInitialOrientation();
 
   if (!loadBook()) {
@@ -162,11 +170,16 @@ void ReaderActivity::onExit() {
   APP_STATE.readerActivityLoadCount = 0;
   APP_STATE.saveToFile();
 
+  booktext::end();
+  sdFontSystem.ensureLoaded(renderer);
   endOfBookOptions.reset();
   endOfBookOptionsReady.store(false, std::memory_order_release);
 }
 
-void ReaderActivity::prepareForSleep() { flushReaderSession(); }
+void ReaderActivity::prepareForSleep() {
+  readingPace.pause();
+  flushReaderSession();
+}
 
 bool ReaderActivity::flushReaderSession() {
   if (!readerSession.isEmitWorthy()) {
@@ -304,6 +317,25 @@ void ReaderActivity::clearEndOfBookOptionsIfNeeded() {
   endOfBookOptionsReady.store(false, std::memory_order_release);
   endOfBookOptions.reset();
 }
+bool ReaderActivity::handleReaderTextSettingsGesture() {
+  const bool button = mappedInput.homeButtonAction() == HomeButtonAction::ReaderMenu;
+  const bool bottom = mappedInput.wasReaderTextSettingsGesture() && !button;
+  const auto trigger = readertext::menuTrigger(SETTINGS.readerTextTrigger);
+  int x = 0, y = 0;
+  const bool tap = SETTINGS.touchReaderControls && mappedInput.wasScreenTapped(x, y) &&
+                   readertext::menuTap(trigger, x, y, renderer.getScreenWidth(), renderer.getScreenHeight());
+  if (!bottom && !button && !tap) return false;
+  RenderLock lock(*this);
+  if (!pageRendered.load(std::memory_order_acquire) || hasReadingOverlay()) return bottom || button;
+  if (tap && !readerMenuTapAllowed(x, y)) return false;
+  if (button || tap || (bottom && trigger == readertext::MenuTrigger::SwipeUp)) {
+    lock.unlock();
+    openTextSettings();
+    return true;
+  }
+  // The reader reserves this edge even when a different opening gesture is selected.
+  return bottom;
+}
 
 bool ReaderActivity::endOfBookMenuActive() const {
   return isAtEndOfBook() && endOfBookOptionsReady.load(std::memory_order_acquire) && endOfBookOptions->menuActive();
@@ -376,6 +408,7 @@ void ReaderActivity::loop() {
 }
 
 void ReaderActivity::render(RenderLock&&) {
+  bleturner::settleStart();
   if (isAtEndOfBook()) {
     if (!endOfBookOptions) {
       endOfBookOptions = makeUniqueNoThrow<EndOfBookOptions>(renderer);
@@ -398,7 +431,14 @@ void ReaderActivity::render(RenderLock&&) {
   }
 
   renderBook();
+  bleturner::afterPaint();
   readerSession.onRenderComplete(millis(), trustedtime::trustedNow(), getProgressBasisPoints());
+  if (SETTINGS.readerBars.needsPace()) readingPace.painted(millis(), pacePosition, !hasReadingOverlay());
+}
+
+void ReaderActivity::drawConfiguredBars(const readerbars::Data& data) {
+  readerbars::draw(renderer, SETTINGS.readerBars.top, readerbars::Position::Top, data, barWorkspace);
+  readerbars::draw(renderer, SETTINGS.readerBars.bottom, readerbars::Position::Bottom, data, barWorkspace);
 }
 
 bool ReaderActivity::handleForcedRefresh() {

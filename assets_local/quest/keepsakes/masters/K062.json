@@ -1,0 +1,25 @@
+{
+  "id": "K062",
+  "key": "Calco",
+  "file": "K062.png",
+  "sample": {
+    "es": "Calco de la llave",
+    "en": "Key tracing"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Key tracing.",
+  "requests": [
+    86,
+    103,
+    139,
+    235,
+    243,
+    258,
+    263,
+    276
+  ],
+  "sha256": "4d43960460d324e92220aa5b4592195ca529b3abd2c55b52d131791a8cfb8323",
+  "source": "exec-f07bd87c-115a-4b76-9640-1736ce320e66.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

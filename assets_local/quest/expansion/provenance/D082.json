@@ -1,0 +1,12 @@
+{
+  "id": "D082",
+  "master": "decor-082-v1.png",
+  "sha256": "4332abedfe3e95fa5b85c2fba19f0b721ffdad8bb6696cf42a7305e660630511",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original collectible decoration sprite for the e-ink fantasy reading app Aventura lectora. Reference fairy is STYLE ONLY. Friendly chibi storybook proportions, white and pale-gray flat fills, VERY THICK solid pure-BLACK outer contours (20-26px at1024px), strong black inner lines, simple broad shapes readable at112x144. Whole subject visible, centered with transparent padding. Genuine transparent background. No scenery, frame, UI, text, lettering, watermark, fine hatching or gray outlines. Do not include the player hero or PET. Subject: a miniature freestanding rounded stone portal showing a simple white star within, broad base and two leaves. A grounded ornament with a small clear base.",
+  "reference": "assets_local/quest/redesign/masters/decoration-fairy-v1.png",
+  "transparent": true,
+  "width": 1312,
+  "height": 1199,
+  "mode": "RGBA"
+}

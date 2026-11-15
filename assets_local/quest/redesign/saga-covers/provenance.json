@@ -1,0 +1,35 @@
+{
+  "source": "First four covers extracted from supplied saga reference; others reuse existing approved background emblems",
+  "sha256": "1fd588669aa8bb9779e9c65cc4aacbfb0dab22777fc9a1e5c756c03a3cdfafa0",
+  "boxes": [
+    [
+      90,
+      486,
+      435,
+      694
+    ],
+    [
+      553,
+      493,
+      920,
+      694
+    ],
+    [
+      60,
+      883,
+      435,
+      1104
+    ],
+    [
+      552,
+      886,
+      920,
+      1104
+    ]
+  ],
+  "bottomTrimPixels": {
+    "cover-2-source.png": 18,
+    "cover-3-source.png": 18
+  },
+  "preprocessing": "Remove UI bookmark corner and bottom title fragments; trim white margins and fit with preserved aspect ratio."
+}

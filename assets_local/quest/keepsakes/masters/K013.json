@@ -1,0 +1,18 @@
+{
+  "id": "K013",
+  "key": "Asta",
+  "file": "K013.png",
+  "sample": {
+    "es": "Asta de madera",
+    "en": "Wooden antler"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Wooden antler.",
+  "requests": [
+    13
+  ],
+  "sha256": "daa590fa51d683a072a4ce56e6a30a340f109d83b04c2547c743bd5f143dda5b",
+  "source": "exec-163f9357-c599-4bea-8ad0-d0c1483ede29.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

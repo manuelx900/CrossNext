@@ -17,6 +17,7 @@
 // bumped manually when the firmware is updated to support a new format.
 // Reader enforcement: SdCardFont::load().
 #define CPFONT_VERSION 4
+#define CPFONT_EXTENDED_LIGATURE_VERSION 5
 
 class SdCardFont {
  public:
@@ -36,7 +37,7 @@ class SdCardFont {
   SdCardFont& operator=(SdCardFont&&) = delete;
 
   // Load .cpfont file: reads header + intervals into RAM, records file layout offsets.
-  // Supports v4 (multi-style) format.
+  // Supports v4 and v5 (extended ligature count) multi-style formats.
   // Returns true on success.
   bool load(const char* path);
 
@@ -75,7 +76,7 @@ class SdCardFont {
   // (paragraph word-arena chunks), scanned without per-word string objects.
   int buildAdvanceTablePacked(const char* const* segments, const size_t* segmentLens, size_t segmentCount,
                               bool includeSpace, bool includeHyphen, uint8_t styleMask = 0x0F,
-                              const char* extraText = nullptr);
+                              const char* extraText = nullptr, bool includeSmallCaps = false);
 
   // Look up advanceX for a codepoint from the advance table.
   // Returns the 12.4 fixed-point advance, or 0 if not found.
@@ -157,7 +158,7 @@ class SdCardFont {
     uint16_t kernRightEntryCount = 0;
     uint8_t kernLeftClassCount = 0;
     uint8_t kernRightClassCount = 0;
-    uint8_t ligaturePairCount = 0;
+    uint16_t ligaturePairCount = 0;
   };
 
   // All per-style data: file offsets, intervals, kern/lig, prewarm cache, EpdFont

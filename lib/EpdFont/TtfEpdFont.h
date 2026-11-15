@@ -44,6 +44,7 @@
 
 #include <FontPsram.h>
 #include <FtFont.h>
+#include <HalMemory.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -76,6 +77,7 @@ class TtfEpdFont {
   // Retain complete faces between reader pages; retry a face after any raster
   // or arena allocation failure. Valid empty glyphs (spaces) remain cached.
   void discardFailedGlyphs();
+  uint64_t metricsIdentity(uint8_t styleMask) const;
 
   // Heap-critical teardown (mirrors SdCardFont::releaseResidentCaches): free
   // every rebuildable cache — the byte arenas, glyph tables, and the lazy bold/
@@ -85,9 +87,12 @@ class TtfEpdFont {
   // transitions (WiFi + web server, image decode, dictionary, sleep).
   void releaseResidentCaches();
 
-  // Optional batch pre-warm of the REGULAR face (other styles fault lazily).
-  bool build(const char* utf8);
-  bool addCoverage(const char* utf8);
+  // Batch prewarm only requested style faces; ordinary callers default to regular.
+  bool build(const char* utf8, uint8_t styleMask = 0x01);
+  bool addCoverage(const char* utf8, uint8_t styleMask = 0x01);
+  size_t residentCacheBytes() const;
+  void retainReaderCache(bool retain) { retainReaderCache_ = retain; }
+  bool retainsReaderCache() const { return retainReaderCache_; }
 
  private:
   // A borrowed source file (one per style role that the caller supplies).
@@ -99,6 +104,12 @@ class TtfEpdFont {
     freeink::font::FtFont::ReadFn read = nullptr;  // streamed form
     void* ctx = nullptr;
     unsigned long fileSize = 0;
+    enum class PairState : uint8_t { Unchecked, Absent, Ready, Failed };
+    PairState pairState = PairState::Unchecked;
+    // Shared by regular/oblique faces of this source; at most 4096 pairs (32 KiB),
+    // PSRAM only. Font-lifetime ownership avoids allocating on page turns.
+    HalMemory::PsramBuffer preparedPairs;
+    uint16_t preparedPairCount = 0;
   };
 
   struct Face {
@@ -146,6 +157,8 @@ class TtfEpdFont {
   void initFace(Face& f);          // lazy: create the FT face on first use
   void setupFace(Face& f);         // wire data handlers + metrics
   void resolveLigatures(Face& f);  // query GSUB once, build ligGid/ligPairs
+  bool loadPreparedPairs(Source& source);
+  static unsigned long readSource(void* ctx, unsigned long offset, unsigned char* buffer, unsigned long count);
   const EpdGlyph* faultGlyph(Face& f, uint32_t codepoint);
   int8_t faultKern(Face& f, uint32_t leftCp, uint32_t rightCp);
   static void flushFace(Face& f);
@@ -153,11 +166,14 @@ class TtfEpdFont {
   Source sources_[4];      // indexed by Style role
   Face faces_[4];          // 0=regular 1=bold 2=italic 3=bold-italic
   uint32_t size26_6_ = 0;  // exact 26.6 ppem (pt @150DPI), no whole-pixel rounding
+  uint32_t metricsIdentity_ = 0;
+  uint16_t pointSize_ = 0;
   bool loaded_ = false;
   // Set while a glyph fault runs MemoryManager::ensureFree(): the eviction
   // sink calls releaseResidentCaches() on every TTF font, and tearing down
   // the very faces mid-fault would be use-after-free.
   bool evictionLocked_ = false;
+  bool retainReaderCache_ = false;
 };
 
 #endif  // CROSSPOINT_VECTOR_FONTS

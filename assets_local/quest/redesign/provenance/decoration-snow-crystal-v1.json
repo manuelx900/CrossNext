@@ -1,0 +1,8 @@
+{
+  "id": "snow-crystal",
+  "path": "exec-ac0ca7e8-cf9e-4a5b-8b2b-92edf3dc20cd.png",
+  "prompt": "Production decoration sprite for Aventura lectora, ONE isolated object. Match the reference pets: thick clean pure black rounded outlines, white and soft flat gray shading, cute storybook cartoon, simple readable silhouette for 80x112 pixels, no fine texture. Full object centered with transparent margin, truly transparent RGBA background. No aura, no glow, no scenery, no letters, no frame, no other subjects. Subject: A small floating six-point ice crystal with a teardrop-shaped central gem and a simple silver loop",
+  "tool": "built-in image_gen",
+  "sha256": "6f072d898ddb375a093cb0f6ea6118260cd6b88b59e8ccf70fcb67e6d55060ab",
+  "name": "decoration-snow-crystal-v1"
+}

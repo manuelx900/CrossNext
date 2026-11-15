@@ -68,6 +68,13 @@ uint8_t g_targetType = 0;
 bool g_targetTryAltType = false;
 // Set by an end() that could not finish; cleared by the one that does.
 std::atomic<bool> g_teardownPending{false};
+// Held by the one end() that is running. end() is called from more than one task
+// (an app may stop the radio from its main loop and from a render task), and its
+// teardown (connection task delete, client delete, NimBLEDevice::deinit) is not
+// re-entrant: two at once can double-free NimBLE state. A second caller does not
+// wait; it gets false, which reads as "still stopping" and is retried like a
+// teardown that ran out of time.
+std::atomic<bool> g_endBusy{false};
 // False while a link attempt or a link exists; set again by NimBLE's disconnect
 // callback. NimBLE only lets go of the client once that callback has run.
 std::atomic<bool> g_disconnectObserved{true};
@@ -100,9 +107,22 @@ void clearSelectedPlanLocked() {
 // edge-detects the generic path so one physical press = one key event.
 bool g_hasKeyboardPage = false;
 bool g_hasConsumerPage = false;
-uint8_t g_preferredByteIndex = 0xFF;  // byte the report map suggests holds the code
-uint8_t g_lastGenericCode = 0;        // last non-zero code seen on the generic path
+uint8_t g_preferredByteIndex = 0xFF;   // byte the report map suggests holds the code
+uint8_t g_lastGenericCode = 0;         // last non-zero code seen on the generic path
 volatile uint32_t g_lastReportMs = 0;  // millis() of the last HID notification (stale-release)
+// A keyboard whose Report Map has one Input item, a Keyboard-page array of 8- or
+// 16-bit slots (Flic Duo: four 16-bit slots, "4F 00 .." for Right Arrow), has no
+// modifier byte: its keys start at byte 0. len 0 = no such keyboard.
+struct BareKeys {
+  uint8_t reportId;
+  uint8_t slotBytes;
+  uint8_t len;
+};
+BareKeys g_bareKeys{};
+
+bool isBareKeys(uint8_t reportId, size_t len) {
+  return g_bareKeys.len != 0 && reportId == g_bareKeys.reportId && len == g_bareKeys.len;
+}
 
 // Report id each subscribed Input characteristic declares in its Report Reference
 // descriptor, so a report keeps its identity when its payload has no id byte.
@@ -133,7 +153,7 @@ RawFrame rawFrameOf(const uint8_t* data, size_t len) {
   }
   const size_t n = len - offset;
   for (size_t i = 0; i < n && i < sizeof(f.bytes); ++i) f.bytes[i] = data[offset + i];
-  if (n >= 7) f.bytes[0] = 0;
+  if (n >= 7 && !isBareKeys(f.id, n)) f.bytes[0] = 0;
   return f;
 }
 
@@ -151,8 +171,50 @@ BleKeyboardHost& self() { return BleKeyboardHost::getInstance(); }
 // The client can be deleted: its disconnect callback ran and NimBLE reports it
 // DISCONNECTED. deleteClient() on a CONNECTED or DISCONNECTING client only
 // defers the delete, and a deinit() after that leaks NimBLE's client slot.
-bool clientReleased() {
-  return g_disconnectObserved.load() && NimBLEDevice::getDisconnectedClient() == g_client;
+bool clientReleased() { return g_disconnectObserved.load() && NimBLEDevice::getDisconnectedClient() == g_client; }
+
+// The BareKeys layout of a Report Map, or {}. Walks whole items (HID 1.11 6.2.2),
+// so item data is never read as a tag; the hint scan in parseReportMapHints stays
+// a byte scan so other remotes keep their behaviour. A second Input, Push/Pop, a
+// long item or a map cut mid-item gives {}; so does a report shorter than the
+// 7 bytes the boot layout decode starts at.
+BareKeys bareKeysOf(const uint8_t* map, size_t len) {
+  BareKeys found{};
+  uint32_t page = 0, size = 0, count = 0, id = 0;
+  for (size_t i = 0; i < len;) {
+    const uint8_t prefix = map[i];
+    const size_t n = (prefix & 3) == 3 ? 4 : (prefix & 3);
+    if (prefix == 0xFE || i + n >= len) return {};
+    uint32_t value = 0;
+    for (size_t b = 0; b < n; ++b) value |= static_cast<uint32_t>(map[i + 1 + b]) << (8 * b);
+    switch (prefix & 0xFC) {
+      case 0x04:  // Usage Page
+        page = value;
+        break;
+      case 0x74:  // Report Size
+        size = value;
+        break;
+      case 0x94:  // Report Count
+        count = value;
+        break;
+      case 0x84:  // Report ID
+        id = value;
+        break;
+      case 0xA4:  // Push
+      case 0xB4:  // Pop
+        return {};
+      case 0x80:  // Input: must be the only one, a Data,Array on the Keyboard page
+        // count <= 64 keeps the report length in a uint8_t.
+        if (found.len || value != 0 || page != 0x07 || (size != 8 && size != 16) || count > 64 ||
+            count * size / 8 < 7) {
+          return {};
+        }
+        found = {static_cast<uint8_t>(id), static_cast<uint8_t>(size / 8), static_cast<uint8_t>(count * size / 8)};
+        break;
+    }
+    i += 1 + n;
+  }
+  return found;
 }
 
 // Scan a HID Report Map descriptor for Usage Page (0x05 nn) items and note whether
@@ -166,12 +228,16 @@ void parseReportMapHints(const uint8_t* map, size_t len) {
   if (!map || len < 2) return;
   for (size_t i = 0; i + 1 < len; ++i) {
     if (map[i] == 0x05) {  // Usage Page (1-byte value follows)
-      if (map[i + 1] == 0x07) g_hasKeyboardPage = true;
-      else if (map[i + 1] == 0x0C) g_hasConsumerPage = true;
+      if (map[i + 1] == 0x07)
+        g_hasKeyboardPage = true;
+      else if (map[i + 1] == 0x0C)
+        g_hasConsumerPage = true;
     }
   }
-  if (g_hasKeyboardPage) g_preferredByteIndex = 2;
-  else if (g_hasConsumerPage) g_preferredByteIndex = 1;
+  if (g_hasKeyboardPage)
+    g_preferredByteIndex = 2;
+  else if (g_hasConsumerPage)
+    g_preferredByteIndex = 1;
 }
 
 // Pick a representative "primary" code from a report that the standard keyboard
@@ -248,14 +314,17 @@ bool setupHid(NimBLEClient* client) {
   g_hasKeyboardPage = false;
   g_hasConsumerPage = false;
   g_preferredByteIndex = 0xFF;
+  g_bareKeys = {};
   g_lastGenericCode = 0;
   if (NimBLERemoteCharacteristic* rmap = hid->getCharacteristic(NimBLEUUID(kCharReportMap))) {
     if (rmap->canRead()) {
       NimBLEAttValue v = rmap->readValue();
       parseReportMapHints(v.data(), v.size());
+      g_bareKeys = bareKeysOf(v.data(), v.size());
 #if FREEINK_BLE_HID_REPORT_DEBUG
-      Serial.printf("[BleHid] report map: kbd=%d consumer=%d preferredByte=%d len=%u\n", g_hasKeyboardPage,
-                    g_hasConsumerPage, (int)g_preferredByteIndex, (unsigned)v.size());
+      Serial.printf("[BleHid] report map: kbd=%d consumer=%d preferredByte=%d bareKeysLen=%u len=%u\n",
+                    g_hasKeyboardPage, g_hasConsumerPage, (int)g_preferredByteIndex, (unsigned)g_bareKeys.len,
+                    (unsigned)v.size());
 #endif
     }
   }
@@ -283,6 +352,9 @@ bool setupHid(NimBLEClient* client) {
   }
 
   if (!subscribed) {  // fallback: boot keyboard input report
+    // Boot reports always lead with the modifier byte. One byte store: a report
+    // already notifying must never see a half-cleared layout.
+    g_bareKeys.len = 0;
     NimBLERemoteCharacteristic* boot = hid->getCharacteristic(NimBLEUUID(kCharBootKbdInput));
     if (boot && boot->canNotify() && boot->subscribe(true, onHidNotify)) subscribed = true;
   }
@@ -290,7 +362,16 @@ bool setupHid(NimBLEClient* client) {
 }
 
 bool hasHidService(NimBLEClient* client) {
-  return client && client->getService(NimBLEUUID(kHidService)) != nullptr;
+  if (!client) return false;
+  const NimBLEUUID hid(kHidService);
+  if (client->getService(hid)) return true;
+  // Some peripherals (Flic) return nothing for a search for one service UUID (ATT
+  // Find By Type Value). Android and BlueZ list every service instead; do that too.
+  // setupHid's getService() then finds HID in that list.
+  for (const NimBLERemoteService* svc : client->getServices(true)) {
+    if (svc->getUUID() == hid) return true;
+  }
+  return false;
 }
 
 // Ends an in-flight connection attempt at whatever stage it has reached.
@@ -388,8 +469,8 @@ class ScanCB : public NimBLEScanCallbacks {
     const bool hid = dev->isAdvertisingService(NimBLEUUID(kHidService)) || keyboardAppearance;
 #if FREEINK_BLE_HID_SCAN_DEBUG
     if (named || hid || connectable) {
-      Serial.printf("[BLE adv] %s  name='%s'  rssi=%d  hid=%d  app=0x%04x  conn=%d  addrType=%u",
-                    a.c_str(), nm.c_str(), rssi, hid ? 1 : 0, appearance, connectable ? 1 : 0, type);
+      Serial.printf("[BLE adv] %s  name='%s'  rssi=%d  hid=%d  app=0x%04x  conn=%d  addrType=%u", a.c_str(), nm.c_str(),
+                    rssi, hid ? 1 : 0, appearance, connectable ? 1 : 0, type);
 #if CONFIG_BT_NIMBLE_EXT_ADV
       Serial.printf("  legacy=%d  advType=0x%02x  data=%u  phy=%u/%u  len=%u", dev->isLegacyAdvertisement() ? 1 : 0,
                     dev->getAdvType(), dev->getDataStatus(), dev->getPrimaryPhy(), dev->getSecondaryPhy(),
@@ -542,6 +623,12 @@ bool BleKeyboardHost::begin(const char* hostName) {
 }
 
 bool BleKeyboardHost::end(uint32_t timeoutMs) {
+  if (g_endBusy.exchange(true)) return false;
+  struct EndBusyRelease {
+    ~EndBusyRelease() { g_endBusy.store(false); }
+  } endBusyRelease;
+  // Read under g_endBusy: no other end() can be between its begun_ and
+  // g_teardownPending writes, so "both false" really means stopped.
   if (!begun_ && !g_teardownPending.load()) return true;
   const uint32_t budgetMs = timeoutMs > kMaxTeardownTimeoutMs ? kMaxTeardownTimeoutMs : timeoutMs;
   const uint32_t startMs = millis();
@@ -549,8 +636,10 @@ bool BleKeyboardHost::end(uint32_t timeoutMs) {
   clearSelectedPlanLocked();
   portEXIT_CRITICAL(&g_mux);
   if (begun_) {
-    begun_ = false;
+    // Stopping before not-running: an observer of isRunning()/isStopping() never
+    // sees both false while the stack is still up.
     g_teardownPending.store(true);
+    begun_ = false;
     NimBLEScan* scan = NimBLEDevice::getScan();
     if (scan && scan->isScanning()) scan->stop();
   }
@@ -753,7 +842,7 @@ bool BleKeyboardHost::armSelectedPeerReconnect(const char* addr) {
 }
 
 bool BleKeyboardHost::connectInternal(const char* addr, const bool explicitRequest) {
-  if (!begun_ || !addr || g_connecting) return false;
+  if (!begun_ || !addr || g_connecting || connected_ || (g_client && !clientReleased())) return false;
   if (explicitRequest) {
     portENTER_CRITICAL(&g_mux);
     clearSelectedPlanLocked();
@@ -845,9 +934,8 @@ bool BleKeyboardHost::popRawButton(RawButtonEvent& out) {
   return got;
 }
 
-bool BleKeyboardHost::pushRawLocked(const uint32_t code, const bool pressed, const uint32_t atMs,
-                                    const uint8_t keycode, const uint8_t mods, const uint8_t keep,
-                                    const bool wasRest) {
+bool BleKeyboardHost::pushRawLocked(const uint32_t code, const bool pressed, const uint32_t atMs, const uint8_t keycode,
+                                    const uint8_t mods, const uint8_t keep, const bool wasRest) {
   const uint8_t used = static_cast<uint8_t>((rawHead_ - rawTail_ + kRawQueueLen) % kRawQueueLen);
   if (kRawQueueLen - 1 - used <= keep) return false;  // drop rather than block, like the key ring
   RawButtonEvent& e = rawRing_[rawHead_];
@@ -929,7 +1017,16 @@ void BleKeyboardHost::onReportIngest(const uint8_t* data, size_t len) {
   uint8_t mod = 0;
   uint8_t keys[6] = {0};
   bool keyboardShaped = false;
-  if (n >= 8) {
+  if (isBareKeys(g_notifyReportId, n)) {
+    // Every slot from byte 0; the first six keys are kept. Keyboard usages end at
+    // 0xFF, so a 16-bit slot whose high byte is set holds no key.
+    const size_t w = g_bareKeys.slotBytes;
+    size_t k = 0;
+    for (size_t i = 0; i + w <= n && k < 6; i += w) {
+      if (p[i] && (w == 1 || !p[i + 1])) keys[k++] = p[i];
+    }
+    keyboardShaped = true;
+  } else if (n >= 8) {
     mod = p[0];
     for (int i = 0; i < 6; ++i) keys[i] = p[2 + i];
     keyboardShaped = true;
@@ -1131,8 +1228,8 @@ void BleKeyboardHost::onScanResultIngest(const char* addr, const char* name, int
 #if !FREEINK_BLE_HID_SHOW_UNNAMED_DEVICES
   if (!realName && !hid) {
 #if FREEINK_BLE_HID_SCAN_DEBUG
-    Serial.printf("[BleHid] scan filtered: %s name='%s' rssi=%d hid=%d conn=%d type=%u\n", addr, name ? name : "",
-                  rssi, hid ? 1 : 0, connectable ? 1 : 0, type);
+    Serial.printf("[BleHid] scan filtered: %s name='%s' rssi=%d hid=%d conn=%d type=%u\n", addr, name ? name : "", rssi,
+                  hid ? 1 : 0, connectable ? 1 : 0, type);
 #endif
     return;
   }

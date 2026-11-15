@@ -5,6 +5,7 @@
 #include <cstring>
 
 #include "../ui/Dashboard.h"
+#include "../ui/FitText.h"
 #include "../ui/ToyboxIcons.h"
 #include "PetCareAdvice.h"
 #include "PetFarewell.h"
@@ -17,18 +18,28 @@
 namespace petui {
 namespace widget {
 inline constexpr int GAP = 8, BORDER = 2;
+inline constexpr uint8_t CONTROL_RADIUS = 12;
 inline constexpr auto ink = fui::Paint::solid(fui::Color::Black);
 inline constexpr auto paper = fui::Paint::solid(fui::Color::White);
 inline constexpr int CARE_METRICS_H = 84, CARE_ACTIONS_H = 92, HOME_SLOTS_H = 104, HOME_PROJECT_H = 180,
                      ALBUM_STAGES_H = 180;
-inline constexpr int UI_GAP = 16, UI_INSET = 16, SETUP_CONFIG_H = 78;
+inline constexpr int UI_GAP = 16, UI_INSET = 16, SHADOW_DEPTH = 3, CONTROL_HEIGHT = 48, COMPACT_HEIGHT = 36,
+                     MIN_CONTROL_TOUCH = 24, SETUP_CONFIG_H = 78;
 inline fui::Rect rect(int x, int y, int w, int h) { return fui::makeRect(x, y, std::max(0, w), std::max(0, h)); }
 inline fui::Rect cell(fui::Rect r, int index, int count, int gap = GAP) {
   const int width = (r.width - (count - 1) * gap) / count;
   return rect(r.x + index * (width + gap), r.y, index + 1 == count ? r.right() - r.x - index * (width + gap) : width,
               r.height);
 }
-inline void frame(toybox::Screen& s, fui::Rect r) { lightui::outline(s.target(), r, ink, BORDER); }
+inline void shadow(toybox::Screen& s, fui::Rect r) {
+  s.target().fill(rect(r.x, r.y + SHADOW_DEPTH, r.width, r.height), ink, CONTROL_RADIUS);
+}
+inline void frame(toybox::Screen& s, fui::Rect r) { s.target().stroke(r, ink, BORDER, CONTROL_RADIUS); }
+inline void panel(toybox::Screen& s, fui::Rect r) {
+  shadow(s, r);
+  s.target().fill(r, paper, CONTROL_RADIUS);
+  frame(s, r);
+}
 inline void text(toybox::Screen& s, fui::Rect r, const char* value, int font = 0, bool inverse = false,
                  fui::TextAlign align = fui::TextAlign::Left, bool emphasis = false) {
   pixelui::text(s.target(), r, value, font, inverse ? fui::Color::White : fui::Color::Black, align, emphasis);
@@ -39,24 +50,8 @@ inline void prose(toybox::Screen& s, fui::Rect r, const char* value, int lines =
   style.font = 4;
   style.align = align;
   style.color = inverse ? fui::Color::White : fui::Color::Black;
-  for (const int font : {4, 3}) {
-    if (s.target().lineHeight(font) > r.height) continue;
-    style.font = font;
-    style.maxLines = std::max(1, std::min(lines, int(r.height) / std::max(1, int(s.target().lineHeight(font)))));
-    const char* next = value;
-    bool complete = true;
-    fui::layoutText(s.target(), r, value, style, [&](const char* run, fui::Rect) {
-      while (*next == ' ' || *next == '\n') ++next;
-      const auto length = std::strlen(run);
-      if (std::strncmp(next, run, length))
-        complete = false;
-      else
-        next += length;
-    });
-    while (*next == ' ' || *next == '\n') ++next;
-    if (complete && !*next) break;
-  }
-  s.target().text(r, value, style);
+  const int capacity = int(r.height) / std::max(1, int(s.target().lineHeight(3)));
+  fittext::draw(s.target(), r, value, style, std::max(lines, capacity));
 }
 // Fit short card names by their actual ink, without falling back to tiny captions.
 inline void cardCopy(toybox::Screen& s, fui::Rect box, const char* value, bool inverse = false, int lines = 3,
@@ -133,15 +128,22 @@ inline void icon(toybox::Screen& s, fui::Rect r, const freeink::Icon& mark, bool
 }
 inline bool button(toybox::Screen& s, Work& w, fui::Rect r, const char* label, fui::ActionId id, int value = 0,
                    bool filled = false, const freeink::Icon* mark = nullptr, bool enabled = true) {
+  shadow(s, r);
   const bool inverse = enabled && s.frame().buttonSelected(id, value, filled);
   w.button = {};
   w.button.label = "";
   w.button.action = enabled ? id : fui::NO_ACTION;
   w.button.value = int16_t(value);
   w.button.styles = pixelui::buttonStyles();
-  w.button.minTouchSize = 0;
+  for (auto* style : {&w.button.styles.normal, &w.button.styles.selected, &w.button.styles.focused,
+                      &w.button.styles.active, &w.button.styles.disabled}) {
+    style->radius = CONTROL_RADIUS;
+    style->borderWidth = BORDER;
+  }
+  w.button.minTouchSize = MIN_CONTROL_TOUCH;
   w.button.state = !enabled ? fui::StateDisabled : inverse ? fui::StateSelected : fui::StateNormal;
-  s.button(w.button, r);
+  // The row wrapper forces its 44px target even for an explicit compact rectangle.
+  fui::button(s.frame(), r, w.button);
   if (mark) {
     const int side = std::min(34, int(r.height) - 18);
     icon(s, rect(r.x + 14, r.y + (r.height - side) / 2, side, side), *mark, inverse);
@@ -198,6 +200,19 @@ inline void chevron(toybox::Screen& s, fui::Rect r, bool inverse = false) {
   const int y = r.y + r.height / 2;
   s.target().line({r.x, r.y}, {int16_t(r.right() - 1), int16_t(y)}, 3, paint);
   s.target().line({int16_t(r.right() - 1), int16_t(y)}, {r.x, int16_t(r.bottom() - 1)}, 3, paint);
+}
+inline void pager(toybox::Screen& s, Work& w, fui::Rect r, const char* label, fui::ActionId action, bool previous,
+                  bool next) {
+  const int side = r.height;
+  for (int n = 0; n < 2; ++n) {
+    const auto box = rect(n ? r.right() - side : r.x, r.y, side, r.height);
+    button(s, w, box, "", action, n ? 1 : -1, false, nullptr, n ? next : previous);
+    const int direction = n ? 1 : -1, x = box.x + box.width / 2, y = box.y + box.height / 2;
+    s.target().line({int16_t(x - direction * 3), int16_t(y - 7)}, {int16_t(x + direction * 4), int16_t(y)}, 2, ink);
+    s.target().line({int16_t(x + direction * 4), int16_t(y)}, {int16_t(x - direction * 3), int16_t(y + 7)}, 2, ink);
+  }
+  text(s, rect(r.x + side + GAP, r.y, r.width - 2 * (side + GAP), r.height), label, 0, false, fui::TextAlign::Center,
+       true);
 }
 inline const freeink::Icon& objectIcon(unsigned value) {
   static constexpr const freeink::Icon* icons[] = {&icon_cat_house_32,  &extra_moon_64,       &icon_cat_house_32,
@@ -284,7 +299,7 @@ inline void creature(toybox::Screen& s, const Model& m, fui::Rect r, bool portra
       }
     }
   } else if (showMood && band) {
-    petmood::draw(s.target(), badge, petmood::select(p), m.sleepStep);
+    petmood::draw(s.target(), badge, petmood::select(p));
   }
   if (portrait) {
     r = portraitBody(p, r);
@@ -296,9 +311,12 @@ inline void creature(toybox::Screen& s, const Model& m, fui::Rect r, bool portra
     art(s, m, r, creatureArt(p), speciesIcon(p.species));
 }
 inline void object(toybox::Screen& s, const Model& m, fui::Rect r, unsigned id, bool inverse = false) {
-  if (id < pet::OBJECT_COUNT && m.habitat.draw && m.habitat.draw(m.habitat.context, s.target(), r, 3 + id * 2, inverse))
+  if (!pet::objectAvailable(id)) return;
+  DecorationInk ink(s.target());
+  auto& target = inverse ? s.target() : static_cast<fui::DrawTarget&>(ink);
+  if (id < pet::OBJECT_COUNT && m.habitat.draw && m.habitat.draw(m.habitat.context, target, r, 3 + id * 2, inverse))
     return;
-  if (id < 12 && m.art.draw && m.art.draw(m.art.context, s.target(), r, 51 + id, inverse)) return;
+  if (id < 12 && m.art.draw && m.art.draw(m.art.context, target, r, 51 + id, inverse)) return;
   icon(s, r, objectIcon(id), inverse);
 }
 inline const char* mood(const pet::Profile& p) {
@@ -370,14 +388,14 @@ inline void hero(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, bool h
                  Palette* palette = nullptr) {
   const auto& p = *m.profile;
   PaletteScope scope(palette, p.lifeStatus == pet::LifeStatus::Lost);
-  if (scope.inverted()) lightui::surface(s.target(), r, paper);
-  frame(s, r);
   if (p.lifeStatus == pet::LifeStatus::Lost) {
+    if (scope.inverted()) s.target().fill(r, paper, CONTROL_RADIUS);
     identity(s, m, w, rect(r.x + 12, r.y + 8, r.width - 24, 47));
     text(s, rect(r.x + 12, r.y + 60, r.width - 24, 28), tr(STR_PET_DIED_STATUS), 0);
     farewellPicture(s, m, rect(r.x + 12, r.y + 99, r.width - 24, r.height - 111), scope.inverted());
     return;
   }
+  frame(s, r);
   const bool background = portraitBackground(s, m, r);
   identity(s, m, w, rect(r.x + 12, r.y + 8, r.width - 24, 50));
   icon(s, rect(r.x + 12, r.y + 67, 28, 28), speciesIcon(p.species));

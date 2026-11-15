@@ -483,7 +483,8 @@ void FlashHistoryActivity::render(RenderLock&&) {
     }
     target.setFont(4, flashcards::textSizeFont(textSize));
     textPage = std::clamp(textPage, 0, textPages - 1);
-    flashui::textPage(target, area, shown, textPage, text, sizeof(text), &textCache, textSize);
+    flashui::textPage(target, area, shown, textPage, text, sizeof(text), &textCache, textSize,
+                      SETTINGS.flashcardTextAlignment);
     target.setFont(4, UI_10_FONT_ID);
     pageui::build(screen, fui::makeRect(b.x, b.bottom() - 112, b.width, 48), textPage + 1, textPages, flashui::Page, -1,
                   flashui::Page, 1);

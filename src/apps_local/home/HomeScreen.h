@@ -30,6 +30,7 @@ struct Model {
   int selected = 0;
   int battery = 0;
   bool hasBook = false;
+  bool loadingShell = false;
   bool charging = false;
   bool showPercent = true;
   bool unicode = false;

@@ -46,6 +46,7 @@ void Projection::close() {
   remote = nullptr;
   countBooks = 0;
   header = {};
+  years = {};
   current = {};
 }
 Projection::Entry* Projection::locate(const char* text, bool create) {
@@ -116,6 +117,9 @@ Result Projection::open(Reader* source, int today, uint64_t device, const Header
     if (!remote->days(daily, kDates)) return Result::StorageError;
     for (uint32_t n = 0; n < remote->data().books; ++n) {
       if (!remote->at(n, base)) return Result::StorageError;
+      years.addDay(base.firstDay);
+      years.addDay(base.lastDay);
+      years.addDay(base.finishedDay);
       auto* entry = locate(base.document, true);
       if (!entry) return Result::LimitExceeded;
       entry->cloud = n + 1;
@@ -148,6 +152,7 @@ Result Projection::open(Reader* source, int today, uint64_t device, const Header
     uint64_t fingerprint = 14695981039346656037ULL;
     for (uint64_t at = 16; at < size; at += kRecordBytes) {
       if (input.read(raw, kRecordBytes) != kRecordBytes || !decode(raw, record)) return Result::StorageError;
+      years.add(record);
       fingerprint = hash(fingerprint, raw, kRecordBytes);
       if (same && at + kRecordBytes == checkpoint.localLength && fingerprint != checkpoint.localHash)
         return Result::LocalChanged;
@@ -203,7 +208,8 @@ Result Projection::open(Reader* source, int today, uint64_t device, const Header
   header.finished = 0;
   for (uint32_t n = 0; n < countBooks; ++n) header.finished += entries[order[n]].finished;
   // Completion is a book state, including explicit local reversals, not a sum across devices.
-  header.summary.completed = header.finished;
+  if (UINT32_MAX - header.finished < header.unattributedCompleted) return Result::LimitExceeded;
+  header.summary.completed = header.finished + header.unattributedCompleted;
   header.summary.anchorDay = anchor;
   auto& s = header.summary;
   s.totalDays = 0;
@@ -222,6 +228,7 @@ Result Projection::open(Reader* source, int today, uint64_t device, const Header
     }
     const bool active = daily[n] || (in && (header.active[off / 8] & (1u << (off % 8))));
     if (active) {
+      years.addDay(day);
       ++s.totalDays;
       ++run;
       s.lastReadDay = day;
@@ -257,10 +264,16 @@ bool Projection::merge(const Entry& e, Book& out) {
     if (!out.firstEpoch || (latest.firstEpoch && latest.firstEpoch < out.firstEpoch))
       out.firstEpoch = latest.firstEpoch;
     out.lastEpoch = std::max(out.lastEpoch, latest.lastEpoch);
-    out.finishedEpoch = std::max(out.finishedEpoch, latest.finishedEpoch);
+    if (latest.completed && latest.finishedEpoch > out.finishedEpoch) {
+      out.finishedEpoch = latest.finishedEpoch;
+      out.finishedDay = latest.finishedDay;
+    }
     out.completed = latest.manuallyUnfinished ? false : out.completed || latest.completed;
     out.manuallyUnfinished = latest.manuallyUnfinished;
-    if (latest.manuallyUnfinished) out.finishedEpoch = 0;
+    if (latest.manuallyUnfinished) {
+      out.finishedEpoch = 0;
+      out.finishedDay = 0;
+    }
     if (e.latest >= cutoff) out.progressBp = latest.progressBp;
   }
   if (out.completed) out.progressBp = 10000;
@@ -286,6 +299,20 @@ bool Projection::page(BookFilter filter, int page, Book* out, int capacity, int&
 }
 uint64_t Projection::daySeconds(int day) const {
   return daily && day >= firstDay && day < firstDay + int(kDates) ? daily[day - firstDay] : 0;
+}
+bool Projection::annualTimeKnown(const PeriodStats& period) const {
+  if (!remote) return true;
+  bool datedActivity = false;
+  const auto& imported = remote->data();
+  if (imported.summary.seconds && !imported.days && period.first < imported.summary.anchorDay - kHistoryDays + 1)
+    return false;
+  for (int n = 0; n < kHistoryDays; ++n) {
+    const int day = imported.summary.anchorDay - n;
+    if (!remote->activeOn(day)) continue;
+    datedActivity = true;
+    if (day >= period.first && day <= period.last && !remote->knownOn(day)) return false;
+  }
+  return datedActivity || imported.days || !imported.summary.seconds;
 }
 bool Projection::project(PeriodStats& out, bool* known) const {
   if (known) *known = false;

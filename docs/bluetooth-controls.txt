@@ -1,0 +1,21 @@
+BLUETOOTH REMOTE CONTROLS - CrossNext test firmware
+
+Bluetooth must already be paired and connected. Configure it in Settings > System > Bluetooth.
+Map buttons: select an action and press a remote button; a tap and a hold can have separate assignments. Hold a row to clear its mapping. Each remote retains up to eight button/gesture assignments.
+Left/right side button: follows the current physical side-button assignment. With Navigation selected it navigates normally; a reassigned side button performs only that action.
+Power button: performs the configured short-press Power action. Bluetooth is stopped in deep sleep, so a remote cannot wake a deeply sleeping reader.
+Remote shortcut 1/2: configure the desired system action or app/game first, then learn its remote button in Map buttons. These two shortcuts are independent of the device side-button settings. Confirm starts/pauses Pomodoro when no control has focus, or adds a count in Counter. App-specific behavior follows its physical Confirm button.
+Quick Settings: choose Bluetooth for one of the four configurable top-panel shortcuts in Settings > Display > Quick settings. It toggles the saved opt-in; Wi-Fi and exclusive storage transfers take priority over Bluetooth.
+Radio operation extends to opted-in local apps and list screens. Network catalogs and network-capable apps, Wi-Fi, exclusive storage, startup and sleep retain their own ownership; these screens do not accept Bluetooth controls. A connected radio consumes power even while idle; turn it off when unused.
+
+DEVICE CHECKS
+1. Map Confirm, Back, both side buttons, Power and the two custom shortcuts. Verify a tap and hold never both run.
+2. Pomodoro: open it with shortcut 1. Confirm starts and pauses with one press. Counter: open it with shortcut 2. Confirm adds one per press.
+3. Change a physical side-button assignment. Its remote equivalent follows it and does not also turn pages. Restore Navigation and check both portrait and landscape.
+4. Navigate Home > Apps > Pomodoro > Settings > Back. Check the same remote remains connected. A press made while changing screens must not activate a newly opened screen.
+5. Open Wi-Fi and USB storage. Bluetooth must stop without blocking the transfer. Disconnect them and return to an app; a saved opt-in can reconnect.
+6. Assign Bluetooth to a top-panel tile. Switch it off/on. Check the saved state after restart.
+7. Open reader > Contents > All. Current chapter is white text on a black rounded background in Carousel 2/Bookshelf; Framed/Carousel keep square theme geometry. Check long titles and landscape.
+8. Language pack tests are in the companion language-packs/PRUEBAS-X4-PRO.txt. Existing packs fall back to English for newly added labels until regenerated.
+
+This firmware has host/simulator checks; physical BLE interaction and radio power require the X4 Pro.

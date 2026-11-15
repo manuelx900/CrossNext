@@ -8,7 +8,7 @@ void readingInfo(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   text(s, rect(r.x + 6, r.y, r.width - 12, 44), tr(STR_PET_LIFE_HELP), 1);
   const int left = wide ? r.width * 40 / 100 : r.width;
   const auto life = rect(r.x, r.y + 52, left, wide ? r.height - 114 : 200);
-  frame(s, life);
+  panel(s, life);
   icon(s, rect(life.x + 12, life.y + 12, 34, 34), extra_reading_book_64);
   text(s, rect(life.x + 56, life.y + 9, life.width - 68, 38), modeName(p.mode), 1);
   readingTime(m, w.label, sizeof(w.label));
@@ -23,17 +23,12 @@ void readingInfo(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
         p.mode == pet::Mode::Relaxed ? tr(STR_PET_LIFE_RELAXED_HELP) : w.label, 7);
   const auto benefits = wide ? rect(life.right() + GAP, life.y, r.right() - life.right() - GAP, life.height)
                              : rect(r.x, life.bottom() + GAP, r.width, r.bottom() - life.bottom() - 70);
-  frame(s, benefits);
+  panel(s, benefits);
   text(s, rect(benefits.x + 12, benefits.y + 7, benefits.width - 24, 28), tr(STR_PET_READING_BENEFITS), 1);
-  const int goalH = wide ? 56 : 84;
-  const auto copy = [&](fui::Rect box, const char* value, int lines) {
-    fui::TextStyle style;
-    style.font = 4;
-    style.maxLines = lines;
-    s.target().text(box, value, style);
-  };
-  copy(rect(benefits.x + 12, benefits.y + 42, benefits.width - 24, goalH), tr(STR_PET_LIFE_GOAL_HELP), 3);
-  const int suppliesY = benefits.y + 42 + goalH + 8, foodH = 84;
+  const int introH = wide ? 48 : 72;
+  const auto copy = [&](fui::Rect box, const char* value, int lines) { prose(s, box, value, lines); };
+  copy(rect(benefits.x + 12, benefits.y + 42, benefits.width - 24, introH), tr(STR_PET_READING_EVERY_MINUTE), 3);
+  const int suppliesY = benefits.y + 42 + introH + 8, foodH = wide ? 72 : 76;
   copy(rect(benefits.x + 12, suppliesY, benefits.width - 24, foodH), tr(STR_PET_READING_INTERVAL), 3);
   const int medicineY = suppliesY + foodH + 8;
   copy(rect(benefits.x + 12, medicineY, benefits.width - 24, 56), tr(STR_PET_READING_REMEDY), 2);

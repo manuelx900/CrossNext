@@ -6,7 +6,11 @@
 #include <I18n.h>
 #include <LibraryBuilder.h>
 #include <Logging.h>
+#include <Memory.h>
+#include <OpdsSearchTemplate.h>
 #include <OpdsStream.h>
+
+#include <algorithm>
 
 #include "CrossPointSettings.h"
 #include "MappedInputManager.h"
@@ -16,6 +20,7 @@
 #include "network/HttpDownloader.h"
 #include "util/BookCacheUtils.h"
 #include "util/OpdsFilename.h"
+#include "util/OpdsPolicy.h"
 #include "util/PluginHttp.h"
 #include "util/StringUtils.h"
 #include "util/UrlUtils.h"
@@ -103,36 +108,58 @@ void OpdsBookBrowserActivity::fetchFeed(const std::string& path) {
 
   std::string url = UrlUtils::buildUrl(server.url, path);
   LOG_DBG("OPDS", "Fetching: %s", url.c_str());
-  OpdsParser parser;
-  {
-    OpdsParserStream stream{parser};
-    if (!HttpDownloader::fetchUrl(url, stream, server.username, server.password)) {
-      fail(StrId::STR_FETCH_FEED_FAILED);
-      return;
-    }
-  }
-
+  // Allocate only the detected backend; its token/state buffer is too large for the task stack.
+  auto parser = makeUniqueNoThrow<OpdsFeedParser>();
   if (!parser) {
+    LOG_ERR("OPDS", "OOM: feed parser");
     fail(StrId::STR_PARSE_FEED_FAILED);
     return;
   }
+  parser->setPreferredLanguage(I18N.getLanguage() == Language::ES ? "es" : "en");
+  {
+    OpdsParserStream stream{*parser};
+    std::string effectiveUrl;
+    if (!HttpDownloader::fetchUrl(url, stream, server.username, server.password,
+                                  {{"Accept", "application/opds+json, application/atom+xml;q=0.9"}}, &effectiveUrl)) {
+      fail(StrId::STR_FETCH_FEED_FAILED);
+      return;
+    }
+    if (!effectiveUrl.empty()) url = std::move(effectiveUrl);
+  }
 
-  searchTemplate = parser.getSearchTemplate();
-  const auto& nextUrl = parser.getNextPageUrl();
-  const auto& prevUrl = parser.getPrevPageUrl();
-  const bool feedTruncated = parser.truncated();
+  if (parser->error()) {
+    fail(StrId::STR_PARSE_FEED_FAILED);
+    return;
+  }
+  currentPath = url;
+
+  searchTemplate = parser->getSearchTemplate();
+  const auto& nextUrl = parser->getNextPageUrl();
+  const auto& prevUrl = parser->getPrevPageUrl();
+  const bool feedTruncated = parser->truncated();
   // Reset selection before swapping in a potentially shorter feed.
   nav.reset();
-  entries = std::move(parser).getEntries();
+  entries = parser->takeEntries();
+  // The browser downloads direct, unprotected EPUBs. Do not mistake a license,
+  // purchase page or publication document for an EPUB file.
+  entries.erase(
+      std::remove_if(entries.begin(), entries.end(), [](const OpdsEntry& entry) { return !canBrowseOpdsEntry(entry); }),
+      entries.end());
+  for (auto& entry : entries) {
+    if (entry.id == OPDS_SEE_ALL_ID) entry.title = tr(STR_RT_ALL);
+    entry.href = UrlUtils::resolveReference(url, entry.href);
+  }
 
   entries.reserve(entries.size() + (prevUrl.empty() ? 0 : 1) + (nextUrl.empty() ? 0 : 1));
   prevRowPresent = !prevUrl.empty();
   nextRowPresent = !nextUrl.empty();
   if (prevRowPresent) {
-    entries.insert(entries.begin(), OpdsEntry{OpdsEntryType::NAVIGATION, tr(STR_PREV_PAGE), "", prevUrl, ""});
+    entries.insert(entries.begin(), OpdsEntry{OpdsEntryType::NAVIGATION, tr(STR_PREV_PAGE), "",
+                                              UrlUtils::resolveReference(url, prevUrl), ""});
   }
   if (nextRowPresent) {
-    entries.push_back(OpdsEntry{OpdsEntryType::NAVIGATION, tr(STR_NEXT_PAGE), "", nextUrl, ""});
+    entries.push_back(
+        OpdsEntry{OpdsEntryType::NAVIGATION, tr(STR_NEXT_PAGE), "", UrlUtils::resolveReference(url, nextUrl), ""});
   }
   if (feedTruncated) {
     LOG_INF("OPDS", "Feed truncated to fit memory");
@@ -244,10 +271,9 @@ void OpdsBookBrowserActivity::performSearch(const std::string& query) {
     return;
   }
 
-  std::string url = searchTemplate;
-  const std::string placeholder = "{searchTerms}";
-  const size_t pos = url.find(placeholder);
-  if (pos != std::string::npos) url.replace(pos, placeholder.length(), pluginhttp::urlEncodeQuery(query));
+  const std::string feedUrl = UrlUtils::buildUrl(server.url, currentPath);
+  std::string url =
+      UrlUtils::resolveReference(feedUrl, expandOpdsSearchTemplate(searchTemplate, pluginhttp::urlEncodeQuery(query)));
 
   navigationHistory.push_back(currentPath);
   currentPath = url;

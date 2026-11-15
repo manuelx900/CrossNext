@@ -1,0 +1,21 @@
+{
+  "id": "K123",
+  "key": "Medalla-harbor",
+  "file": "K123.png",
+  "sample": {
+    "es": "Medalla del puerto",
+    "en": "Harbour medal"
+  },
+  "requests": [
+    74
+  ],
+  "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: lighthouse above a single wave.",
+  "transparent": true,
+  "kind": "keepsake",
+  "sha256": "e12c31f749e8f3a24ec54ddb446c6facef00e33a3c6ceae2271e61d38925158f",
+  "tool": "built-in image_gen",
+  "source": "exec-9d669beb-12f3-4d73-9ebd-081f418454a7.png",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA"
+}

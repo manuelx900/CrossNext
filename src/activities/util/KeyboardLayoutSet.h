@@ -28,6 +28,7 @@ inline constexpr LayoutInfo ALL[] = {
 };
 inline constexpr uint8_t COUNT = sizeof(ALL) / sizeof(ALL[0]);
 static_assert(COUNT <= 16, "keyboard layout mask is uint16_t");
+static_assert(unsigned(Language::_COUNT) <= 64, "language keyboard mask is uint64_t");
 
 inline constexpr uint16_t bitAt(const uint8_t i) { return static_cast<uint16_t>(1u << i); }
 // Symbol layers have no Latin letters, so credentials and URLs require at
@@ -37,5 +38,18 @@ inline constexpr uint16_t LATIN_BITS = bitAt(0) | bitAt(1) | bitAt(2) | bitAt(3)
 uint16_t enabled();
 freeink::ui::KeyboardLayoutId startingLayout();
 freeink::ui::KeyboardLayoutId next(freeink::ui::KeyboardLayoutId current);
+
+struct Selection {
+  freeink::ui::KeyboardLayoutId builtin = freeink::ui::KeyboardLayoutId::QwertyEn;
+  Language language = Language::EN;
+  bool external = false;
+};
+inline uint64_t languageBit(Language language) {
+  return unsigned(language) < unsigned(Language::_COUNT) ? uint64_t{1} << unsigned(language) : 0;
+}
+bool builtinLanguage(Language language);
+uint64_t scanCardLayouts();
+Selection startingSelection(uint64_t cardLayouts);
+Selection nextSelection(Selection current, uint64_t cardLayouts);
 
 }  // namespace keyboard_layouts

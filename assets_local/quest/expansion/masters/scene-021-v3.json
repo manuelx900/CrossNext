@@ -1,0 +1,17 @@
+{
+  "id": "S021",
+  "kind": "scene",
+  "master": "scene-021-v3.png",
+  "reference": "assets_local/quest/redesign/portraits/mara-source.png",
+  "transparent": false,
+  "prompt": "Use case: illustration-story. ONE complete landscape 3:2 narrative illustration for the monochrome e-ink game Aventura lectora. Clean expressive chibi storybook art, thick smooth PURE BLACK contours, white and sparse flat light-gray fills. No color, gradients, crosshatching, collage, lettering, captions, UI or watermark. Large clear clues readable at480x320. Player hero and PET are OFF CAMERA. Depict only people actually physically present in the described event; a person mentioned in a letter or record does NOT appear alive beside its reader. The attached portraits are IDENTITY references, NOT additional cast: match face, age, hairstyle, clothing and distinctive accessories exactly for any named person present. Do not invent another person or clue. Fill the scene to its edges, keep all important faces and objects in frame. MARA: the lighthouse keeper in the reference, keep her age, hair, cape and face. Region: The fog harbor. Chapter: The dark lighthouse. Draw exactly this already-known moment: Mara released the counterweight and opened the shutters. The beam guided the signaling ship away from the rocks and revealed others near the island. One carried a captain who might remember Ada. Context for setting and continuity only: Mara's lighthouse has fuel, but its keeper can no longer recall the sequence that opens the old shutters. The Olvido took that working knowledge with her predecessor's account. Without the beam, boats cannot reach the island safely. MANDATORY PHYSICAL SETTING: inside the lighthouse with Mara and its jammed shutter mechanism. Do not anthropomorphize books, pages or objects. No invented smiling ghosts. No person replaces a written record. EXHAUSTIVE VISIBLE CAST (do not add anyone else): Mara. The reference is STYLE ONLY for any person not explicitly in this cast. EXACT CURRENT STATE: the lighthouse shutter is JAMMED HALF CLOSED against its frame. Mara looks worried and strains at the blocked crank. A broken wooden slat catches its gear, counterweight cannot drop. NO fully restored light beam, NO safe rescue boats: the ship is still lost in fog. Show the jam clearly.",
+  "references": [
+    "assets_local/quest/redesign/portraits/mara-source.png"
+  ],
+  "sha256": "813677639b086be6cbd93a804eb66a015db83987eb9dec7e550c4f4cbdc6fd1b",
+  "tool": "built-in image_gen",
+  "source": "exec-29506173-a3ed-4bf9-a60c-95d84d599d51.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

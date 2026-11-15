@@ -1,0 +1,18 @@
+{
+  "id": "K091",
+  "key": "Cuchara",
+  "file": "K091.png",
+  "sample": {
+    "es": "Cuchara de la mesa",
+    "en": "Table spoon"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Table spoon.",
+  "requests": [
+    153
+  ],
+  "sha256": "08a73bfa1279797ae18ac17ae2cc421b1efc2388c380da7d90bcaead151d615d",
+  "source": "exec-b798ae0b-ddd6-4a75-9f22-a707107067d3.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

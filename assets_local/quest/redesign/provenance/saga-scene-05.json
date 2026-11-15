@@ -1,0 +1,9 @@
+{
+  "name": "saga-scene-05",
+  "tool": "image_gen",
+  "created": "2026-11-06",
+  "prompt_file": "saga-scene-05-prompt.txt",
+  "source_path": "exec-28846066-ba58-4fdb-80c9-c40ceb130132.png",
+  "purpose": "Exclusive large saga scene; hero and companion are composed at runtime.",
+  "sha256": "ec27af439836c9bed3f454e35bb34759b1cebae464c0f26aea288d5f8a600388"
+}

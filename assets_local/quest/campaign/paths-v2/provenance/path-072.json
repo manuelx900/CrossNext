@@ -1,0 +1,17 @@
+{
+  "id": 72,
+  "saga": 7,
+  "step": 2,
+  "title": {
+    "en": "The palace book",
+    "es": "El libro del palacio"
+  },
+  "enemy": "Pact guardian",
+  "guardian": 44,
+  "master": "path-072.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The Palace of the Moon. Path episode: The palace book. Story action, which the scene must directly support: A creature guards the shelf that holds a book about the castle gates.\nEnemy identity, MUST match this exact anatomy: a squat black-glass toad sentinel with moonstone plates and a wide stern mouth. Wide diagonal perspective with the blocked crossing clear in the middle, creature in front of it. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-e085e499-9052-43f7-b988-4c81cd9d9bee.png",
+  "sha256": "7f8830f69bfc3ebaaccd82b3b90c56e8012b68ca6e7c23f8656f5383d69f8221"
+}

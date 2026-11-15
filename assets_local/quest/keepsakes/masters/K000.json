@@ -1,0 +1,20 @@
+{
+  "id": "K000",
+  "key": "Marcapáginas",
+  "file": "K000.png",
+  "sample": {
+    "es": "Marcapáginas de haya",
+    "en": "Beech bookmark"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Beech bookmark.",
+  "requests": [
+    0,
+    261,
+    288
+  ],
+  "sha256": "320fd6b270c17485a34155a8d9a2c180250416b7d398fad683268f34c8bdcd6f",
+  "source": "exec-4a58898a-b364-4a0e-82f7-91b25f956c18.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

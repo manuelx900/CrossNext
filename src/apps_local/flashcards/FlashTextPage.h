@@ -7,6 +7,7 @@
 #include <cstring>
 
 #include "../study/StudyText.h"
+#include "../ui/TextAlignment.h"
 #include "../ui/WrapLine.h"
 
 namespace flashui {
@@ -21,7 +22,8 @@ struct TextPageCache {
 };
 
 inline int cachedTextPage(freeink::ui::DrawTarget& target, freeink::ui::Rect box, const char* text, int page,
-                          char* line, size_t bytes, TextPageCache* cache = nullptr, int fontKey = -1) {
+                          char* line, size_t bytes, TextPageCache* cache = nullptr, int fontKey = -1,
+                          uint8_t alignment = 0) {
   namespace fui = freeink::ui;
   if (!text || box.empty() || bytes < 5) return 1;
   fui::TextStyle style;
@@ -55,7 +57,8 @@ inline int cachedTextPage(freeink::ui::DrawTarget& target, freeink::ui::Rect box
     cursor = text + wrapped.end;
     if (cache && !hit && study::isWordContinuation(cursor)) cache->wordBroken = true;
     if (count / per == page)
-      target.text(fui::makeRect(box.x, box.y + (count % per) * height, box.width, height), line, style);
+      textalignment::line(target, fui::makeRect(box.x, box.y + (count % per) * height, box.width, height), line, style,
+                          alignment, !*cursor || text[wrapped.end] == '\n' || text[wrapped.end] == '\r');
     ++count;
     cursor = text + wrapped.after;
     if (page == -2 && count >= per && *cursor) return 2;

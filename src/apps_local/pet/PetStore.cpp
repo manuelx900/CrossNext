@@ -7,7 +7,7 @@
 
 namespace pet {
 namespace {
-constexpr const char* PATHS[] = {"/.crosspoint/pet/state-a.bin", "/.crosspoint/pet/state-b.bin"};
+constexpr const char* PATHS[] = {"/.crosspoint/pet-v2/state-a.bin", "/.crosspoint/pet-v2/state-b.bin"};
 }
 bool Store::load(Profile& p, bool& writable) {
   p = {};
@@ -21,7 +21,8 @@ bool Store::load(Profile& p, bool& writable) {
     const auto length = file.size();
     if (length != STATE_BYTES && length != LEGACY_STATE_BYTES) {
       if (file.read(bytes, 4) == 4 && std::memcmp(bytes, "PET", 3) == 0 && bytes[3] != '1' && bytes[3] != '2' &&
-          bytes[3] != '3' && bytes[3] != '4' && bytes[3] != '5' && bytes[3] != '6' && bytes[3] != '7') {
+          bytes[3] != '3' && bytes[3] != '4' && bytes[3] != '5' && bytes[3] != '6' && bytes[3] != '7' &&
+          bytes[3] != '8' && bytes[3] != '9') {
         writable = false;
         LOG_ERR("PET", "Unsupported save size/version");
         return false;
@@ -30,13 +31,13 @@ bool Store::load(Profile& p, bool& writable) {
     }
     if (file.read(bytes, length) != int(length)) continue;
     if (std::memcmp(bytes, "PET", 3) == 0 && bytes[3] != '1' && bytes[3] != '2' && bytes[3] != '3' && bytes[3] != '4' &&
-        bytes[3] != '5' && bytes[3] != '6' && bytes[3] != '7') {
+        bytes[3] != '5' && bytes[3] != '6' && bytes[3] != '7' && bytes[3] != '8' && bytes[3] != '9') {
       writable = false;
       LOG_ERR("PET", "Unsupported save version");
       return false;
     }
     if ((!std::memcmp(bytes, "PET4", 4) || !std::memcmp(bytes, "PET5", 4) || !std::memcmp(bytes, "PET6", 4) ||
-         !std::memcmp(bytes, "PET7", 4)) &&
+         !std::memcmp(bytes, "PET7", 4) || !std::memcmp(bytes, "PET8", 4) || !std::memcmp(bytes, "PET9", 4)) &&
         bytes[MOMENTS_VERSION_OFFSET] > (bytes[3] >= '6' ? 2 : 1)) {
       uint32_t storedChecksum = 0;
       for (unsigned i = 0; i < 4; ++i) storedChecksum |= uint32_t(bytes[length - 4 + i]) << (8 * i);
@@ -56,7 +57,7 @@ bool Store::load(Profile& p, bool& writable) {
 }
 bool Store::save(Profile& p, bool writable) {
   if (!writable || !Storage.ensureDirectoryExists("/.crosspoint") ||
-      !Storage.ensureDirectoryExists("/.crosspoint/pet")) {
+      !Storage.ensureDirectoryExists("/.crosspoint/pet-v2")) {
     LOG_ERR("PET", "Save directory unavailable");
     return false;
   }

@@ -3,6 +3,7 @@
 #include <atomic>
 
 #include "../../activities/Activity.h"
+#include "../../components/OptionPopup.h"
 #include "FlashSettingsScreens.h"
 
 class FlashSettingsActivity final : public Activity {
@@ -21,7 +22,8 @@ class FlashSettingsActivity final : public Activity {
  private:
   toybox::Interactions interactions;
   flashui::TextSettingsModel model;
-  uint8_t originalQuestion = 0, originalAnswer = 0;
+  OptionPopup popup;
+  uint8_t originalQuestion = 0, originalAnswer = 0, originalAlignment = 0;
   bool originalSmart = true;
   std::atomic<bool> ready{false};
   bool saveChanges();

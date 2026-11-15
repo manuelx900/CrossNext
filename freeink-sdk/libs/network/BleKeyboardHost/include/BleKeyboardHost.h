@@ -23,6 +23,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <atomic>
+
 namespace freeink {
 
 // Non-character keys an editor/UI cares about. Printable keys arrive as `ch`.
@@ -47,9 +49,9 @@ enum class SpecialKey : uint8_t {
 // host emits on the press edge and synthesizes repeats while a key is held; key
 // releases are tracked internally for repeat but not surfaced.
 struct KeyEvent {
-  char ch = 0;                          // printable ASCII, or 0 for a special key
-  uint8_t keycode = 0;                  // raw HID usage id
-  uint8_t mods = 0;                     // HID modifier bitmask (ctrl/shift/alt/gui)
+  char ch = 0;          // printable ASCII, or 0 for a special key
+  uint8_t keycode = 0;  // raw HID usage id
+  uint8_t mods = 0;     // HID modifier bitmask (ctrl/shift/alt/gui)
   SpecialKey special = SpecialKey::None;
   bool pressed = true;
 };
@@ -79,8 +81,7 @@ struct RawButtonEvent {
   // read that no byte edge carries (an axis gamepad's zone) comes as one tap with
   // byteIndex 0xFF and reportId 0xFF.
   uint32_t code() const {
-    return static_cast<uint32_t>(value) | static_cast<uint32_t>(byteIndex) << 8 |
-           static_cast<uint32_t>(reportId) << 16;
+    return static_cast<uint32_t>(value) | static_cast<uint32_t>(byteIndex) << 8 | static_cast<uint32_t>(reportId) << 16;
   }
 };
 
@@ -130,7 +131,9 @@ class BleKeyboardHost {
   // 2 s) for the connection task to leave a connect, pairing or discovery wait
   // and for the link to finish closing. When that takes longer, nothing is
   // deleted under NimBLE: end() returns false, isStopping() stays true and a
-  // later end() carries on from there. end(0) never waits.
+  // later end() carries on from there. end(0) never waits. Safe to call from
+  // more than one task: while one end() runs, another returns false at once
+  // (still stopping) instead of tearing down alongside it.
   bool end(uint32_t timeoutMs = 1000);
 
   // True from an end() that returned false until one returns true. begin() is
@@ -211,7 +214,7 @@ class BleKeyboardHost {
   bool pushRawLocked(uint32_t code, bool pressed, uint32_t atMs, uint8_t keycode, uint8_t mods, uint8_t keep,
                      bool wasRest = false);
   void ingestRawEdge(const uint8_t* data, size_t len, uint32_t now, uint32_t lastMs);
-  void enqueue(const KeyEvent& ev);    // ring push (spinlock-guarded)
+  void enqueue(const KeyEvent& ev);             // ring push (spinlock-guarded)
   void emitUsage(uint8_t usage, uint8_t mods);  // translate + enqueue
   void persistBonds();
   void loadBonds();
@@ -238,7 +241,9 @@ class BleKeyboardHost {
   volatile bool connectFailed_ = false;
   volatile bool pairingPasskeyReady_ = false;
   volatile bool scanning_ = false;
-  bool begun_ = false;
+  // Atomic: read from other tasks (isRunning) while end() clears it after
+  // raising the stopping flag.
+  std::atomic<bool> begun_{false};
 
   // Key auto-repeat: HID delivers one report per state change, so holding a key
   // (backspace, arrows) only sends a single press. The backend records the held

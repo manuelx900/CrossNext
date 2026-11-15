@@ -3,13 +3,14 @@
 #include <HalStorage.h>
 #include <Logging.h>
 
+#include <algorithm>
 #include <cstring>
 
 namespace pet {
 namespace {
 constexpr unsigned ENTRY_BYTES = 52;
-static_assert(NAME_BYTES <= ENTRY_BYTES - 24 && 12 + HISTORY_CAPACITY * ENTRY_BYTES + 4 <= HISTORY_BYTES);
-constexpr const char* PATHS[] = {"/.crosspoint/pet/lives-a.bin", "/.crosspoint/pet/lives-b.bin"};
+static_assert(NAME_BYTES <= ENTRY_BYTES - 27 && 12 + HISTORY_CAPACITY * ENTRY_BYTES + 4 <= HISTORY_BYTES);
+constexpr const char* PATHS[] = {"/.crosspoint/pet-v2/lives-a.bin", "/.crosspoint/pet-v2/lives-b.bin"};
 void reset(History& h) {
   h.sequence = 0;
   h.count = 0;
@@ -24,18 +25,26 @@ uint64_t get(const uint8_t* in, unsigned n) {
   return value;
 }
 }  // namespace
-bool addLife(History& h, const Profile& p) {
+bool addLife(History& h, const Profile& p, int32_t endedDay) {
   if (!p.created || p.lifeStatus == LifeStatus::Active || !p.generation || p.endedAt < 1577836800) return false;
+  const bool ageKnown = p.bornDay > 0 && endedDay >= p.bornDay;
+  const auto ageDays = uint16_t(ageKnown ? std::min<int64_t>(UINT16_MAX, int64_t(endedDay) - p.bornDay) : 0);
   for (unsigned i = 0; i < h.count; ++i) {
     auto& record = h.records[i];
     if (record.generation != p.generation) continue;
+    const bool reuseAge = record.ageKnown && record.endedAt == p.endedAt;
+    const bool known = reuseAge || ageKnown;
+    const auto days = reuseAge ? record.ageDays : ageDays;
     if (record.readingSeconds == p.readingSeconds && record.endedAt == p.endedAt && record.days == p.sharedDays &&
-        record.species == p.species && record.reason == p.lifeStatus && !std::strcmp(record.name, p.name))
+        record.species == p.species && record.reason == p.lifeStatus && !std::strcmp(record.name, p.name) &&
+        record.ageKnown == known && record.ageDays == days)
       return false;
     record.generation = p.generation;
     record.readingSeconds = p.readingSeconds;
     record.endedAt = p.endedAt;
     record.days = p.sharedDays;
+    record.ageDays = days;
+    record.ageKnown = known;
     record.species = p.species;
     record.reason = p.lifeStatus;
     std::memcpy(record.name, p.name, NAME_BYTES);
@@ -50,6 +59,8 @@ bool addLife(History& h, const Profile& p) {
   record.readingSeconds = p.readingSeconds;
   record.endedAt = p.endedAt;
   record.days = p.sharedDays;
+  record.ageDays = ageDays;
+  record.ageKnown = ageKnown;
   record.species = p.species;
   record.reason = p.lifeStatus;
   std::memcpy(record.name, p.name, NAME_BYTES);
@@ -70,6 +81,8 @@ void encodeHistory(const History& h, uint8_t* out) {
     entry[22] = uint8_t(record.species);
     entry[23] = uint8_t(record.reason);
     std::memcpy(entry + 24, record.name, NAME_BYTES);
+    put(entry + 49, record.ageKnown ? record.ageDays : 0, 2);
+    entry[51] = record.ageKnown ? 1 : 0;
   }
   put(out + HISTORY_BYTES - 4, checksum(out, HISTORY_BYTES - 4), 4);
 }
@@ -98,6 +111,9 @@ bool decodeHistory(const uint8_t* in, History& h, size_t bytes) {
     if (!legacy) {
       if (!validName(reinterpret_cast<const char*>(entry + 24))) return false;
       std::memcpy(record.name, entry + 24, NAME_BYTES);
+      if (entry[51] > 1) return false;
+      record.ageKnown = entry[51] == 1;
+      record.ageDays = record.ageKnown ? uint16_t(get(entry + 49, 2)) : 0;
     }
   }
   return true;
@@ -130,7 +146,7 @@ bool HistoryStore::load(History& h, bool& writable) {
 }
 bool HistoryStore::save(History& h, bool writable) {
   if (!writable || !Storage.ensureDirectoryExists("/.crosspoint") ||
-      !Storage.ensureDirectoryExists("/.crosspoint/pet")) {
+      !Storage.ensureDirectoryExists("/.crosspoint/pet-v2")) {
     LOG_ERR("PET", "Life history is not writable");
     return false;
   }

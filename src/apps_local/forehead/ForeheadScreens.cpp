@@ -148,7 +148,7 @@ void drawKeyBands(toybox::Screen& screen) {
   screen.target().fill(top, fui::Paint::solid(ground));
   screen.target().fill(bottom, fui::Paint::solid(ground));
 
-  drawText(screen, top, tr(STR_UI_PASS_BD564D), toybox::kBodyFont, fui::TextAlign::Center, toybox::kDisplayCut, ink);
+  drawText(screen, top, tr(STR_UI_SKIP_431DE8), toybox::kBodyFont, fui::TextAlign::Center, toybox::kDisplayCut, ink);
   drawText(screen, bottom, tr(STR_UI_GOT_IT_C3A894), toybox::kBodyFont, fui::TextAlign::Center, toybox::kDisplayCut,
            ink);
 }
@@ -888,7 +888,7 @@ void drawMiniDevice(toybox::Screen& screen, const fui::Rect& box, const char* wo
   screen.target().fill(top, fui::Paint::solid(fui::Color::Black));
   screen.target().fill(bottom, fui::Paint::solid(fui::Color::Black));
   if (labelled) {
-    drawText(screen, top, tr(STR_UI_PASS_BD564D), toybox::kSmallFont, fui::TextAlign::Center, toybox::kButtonCut,
+    drawText(screen, top, tr(STR_UI_SKIP_431DE8), toybox::kSmallFont, fui::TextAlign::Center, toybox::kButtonCut,
              fui::Color::White);
     drawText(screen, bottom, tr(STR_UI_GOT_IT_C3A894), toybox::kSmallFont, fui::TextAlign::Center, toybox::kButtonCut,
              fui::Color::White);

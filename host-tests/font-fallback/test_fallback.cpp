@@ -48,6 +48,26 @@ int main() {
   assert(resolve("中文") == 3);
   assert(resolve("Français 中文") == 3);
   assert(resolve("中文 Français") == 3);
+  // Language resources cover translated labels, not every possible book title.
+  static constexpr EpdUnicodeInterval catalogUnicode[] = {{32, 0x7e, 0}, {0x65e5, 0x65e5, 95}};
+  EpdFontData catalogData = toybox_30;
+  catalogData.intervals = catalogUnicode;
+  catalogData.intervalCount = 2;
+  const EpdFont catalog(&catalogData);
+  fonts.emplace(4, EpdFontFamily(&catalog));
+  const std::map<int, int> catalogFallbacks{{2, 4}};
+  for (const auto* text : {"慶.epub", "한글.epub", "红楼梦", "日 慶"}) {
+    assert(fontfallback::resolve(fonts, fallbacks, 1, text, EpdFontFamily::REGULAR, &catalogFallbacks) == 3);
+    assert(fontfallback::resolve(fonts, fallbacks, 2, text, EpdFontFamily::REGULAR, &catalogFallbacks) == 3);
+  }
+  assert(fontfallback::resolve(fonts, fallbacks, 1, "日", EpdFontFamily::REGULAR, &catalogFallbacks) == 4);
+  assert(fontfallback::resolve(fonts, fallbacks, 2, "English", EpdFontFamily::REGULAR, &catalogFallbacks) == 2);
+  // A narrower language face must not lose characters that the UI already has.
+  assert(fontfallback::resolve(fonts, fallbacks, 1, "Français 日", EpdFontFamily::REGULAR, &catalogFallbacks) == 3);
+  std::map<int, int> languageFallbacks{{2, 3}};
+  fallbacks[2] = 1;
+  assert(fontfallback::resolve(fonts, fallbacks, 1, "日本語", EpdFontFamily::REGULAR, &languageFallbacks) == 3);
+  assert(fontfallback::resolve(fonts, fallbacks, 1, "English", EpdFontFamily::REGULAR, &languageFallbacks) == 1);
   fallbacks.clear();
   assert(resolve("Français") == 1);
   fallbacks.emplace(1, 2);

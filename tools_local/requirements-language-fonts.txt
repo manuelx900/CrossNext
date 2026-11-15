@@ -1,0 +1,2 @@
+# In addition to the font conversion dependencies in requirements-resources.txt.
+uharfbuzz==0.57.0

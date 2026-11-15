@@ -1,7 +1,9 @@
 #pragma once
+#include <HalMemory.h>
 #include <HalStorage.h>
 
 #include <deque>
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -25,6 +27,29 @@ class ZipFile {
     bool isSet;
   };
 
+  // One bounded catalog per Epub; no open file survives a resource operation.
+  class Catalog {
+    friend class ZipFile;
+
+   public:
+    explicit Catalog(const std::string& archive) : archive(archive) {}
+
+   private:
+    struct Entry {
+      char name[256];
+      FileStatSlim stat;
+    };
+    static constexpr size_t CAPACITY = 128;
+    const std::string& archive;
+    std::mutex mutex;
+    HalMemory::PsramBuffer entries;
+    uint32_t content = 0, media = 0;
+    size_t bytes = 0, count = 0, next = 0;
+    ZipDetails details{0, 0, false};
+    uint32_t cursor = 0;
+    bool attempted = false;
+  };
+
   // Target for batch uncompressed size lookup (sorted by hash, then len)
   struct SizeTarget {
     uint64_t hash;   // FNV-1a 64-bit hash of normalized path
@@ -45,19 +70,29 @@ class ZipFile {
  private:
   const std::string& filePath;
   HalFile file;
+  Catalog* catalog = nullptr;
+  uint32_t catalogContent = 0, catalogMedia = 0;
+  bool lookupCatalog(const char* name, FileStatSlim& result);
+  void rememberCatalog(const char* name, const FileStatSlim& result);
+  void rememberDetails();
+  bool catalogCurrent() const;
   ZipDetails zipDetails = {0, 0, false};
   std::unordered_map<std::string, FileStatSlim> fileStatSlimCache;
 
   // Cursor for sequential central-dir scanning optimization
   uint32_t lastCentralDirPos = 0;
   bool lastCentralDirPosValid = false;
+  // Bounded lookup key also serves as name scratch; no per-lookup allocation.
+  char lastLookupName[256] = {};
+  FileStatSlim lastLookup = {};
+  bool lastLookupValid = false;
 
   bool loadFileStatSlim(const char* filename, FileStatSlim* fileStat);
   long getDataOffset(const FileStatSlim& fileStat);
   bool loadZipDetails();
 
  public:
-  explicit ZipFile(const std::string& filePath) : filePath(filePath) {}
+  explicit ZipFile(const std::string& filePath, Catalog* catalog = nullptr) : filePath(filePath), catalog(catalog) {}
   ~ZipFile() = default;
   // Zip file can be opened and closed by hand in order to allow for quick calculation of inflated file size
   // It is NOT recommended to pre-open it for any kind of inflation due to memory constraints

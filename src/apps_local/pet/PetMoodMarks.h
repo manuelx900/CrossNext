@@ -9,7 +9,8 @@
 
 namespace petmood {
 namespace fui = freeink::ui;
-enum class Mood : uint8_t { None, Happy, Sad, Hungry, Tired, Sick };
+enum class Mood : uint8_t { None, Happy, Sad, Hungry, Tired, Sick, Curious, Satisfied, Surprised };
+inline constexpr int ROOM_MAX_SIDE = 42;
 inline fui::Rect portraitBounds(fui::Rect area) {
   const int side = std::min(
       {int(area.width), int(area.height), std::clamp(std::min(int(area.width) / 5, int(area.height) / 4), 36, 64)});
@@ -20,8 +21,8 @@ inline int overlap(fui::Rect a, fui::Rect b) {
          std::max(0, std::min(int(a.bottom()), int(b.bottom())) - std::max(int(a.y), int(b.y)));
 }
 inline fui::Rect roomBounds(fui::Rect area, fui::Rect subject, const fui::Rect* obstacles, unsigned count) {
-  const int side = std::min(
-      {int(area.width), int(area.height), std::clamp(std::min(int(area.width) / 10, int(area.height) / 5), 28, 42)});
+  const int side = std::min({int(area.width), int(area.height),
+                             std::clamp(std::min(int(area.width) / 10, int(area.height) / 5), 28, ROOM_MAX_SIDE)});
   fui::Rect best{};
   int bestScore = INT32_MAX;
   for (unsigned candidate = 0; candidate < 4; ++candidate) {
@@ -61,10 +62,9 @@ inline Mood select(const pet::Profile& p) {
   }
   return Mood::None;
 }
-inline void draw(fui::DrawTarget& target, fui::Rect area, Mood mood, unsigned step) {
+inline void draw(fui::DrawTarget& target, fui::Rect area, Mood mood) {
   if (mood == Mood::None || area.width < 16 || area.height < 16) return;
-  const int maxSide = std::min(int(area.width), int(area.height));
-  const int side = step % 2 ? maxSide * 4 / 5 : maxSide;
+  const int side = std::min(int(area.width), int(area.height));
   const auto box = fui::makeRect(area.x + (area.width - side) / 2, area.y + (area.height - side) / 2, side, side);
   const auto ink = fui::Paint::solid(fui::Color::Black), paper = fui::Paint::solid(fui::Color::White);
   const auto rect = [&](int x, int y, int w, int h) {
@@ -85,7 +85,23 @@ inline void draw(fui::DrawTarget& target, fui::Rect area, Mood mood, unsigned st
       if (left < 16) fill(left, y, 32 - left * 2, 1, inner ? paper : ink);
     }
   }
-  if (mood == Mood::Tired) {
+  if (mood == Mood::Satisfied) {
+    for (const int x : {7, 19}) {
+      fill(x, 12, 2, 2);
+      fill(x + 2, 13, 3, 2);
+      fill(x + 5, 12, 2, 2);
+    }
+  } else if (mood == Mood::Curious) {
+    fill(8, 11, 2, 5);
+    fill(21, 10, 2, 5);
+    fill(7, 7, 5, 1);
+    fill(20, 6, 5, 1);
+  } else if (mood == Mood::Surprised) {
+    fill(9, 10, 2, 5);
+    fill(21, 10, 2, 5);
+    fill(8, 6, 4, 1);
+    fill(20, 6, 4, 1);
+  } else if (mood == Mood::Tired) {
     fill(7, 12, 6, 2);
     fill(20, 12, 6, 2);
   } else if (mood == Mood::Sick) {
@@ -110,6 +126,20 @@ inline void draw(fui::DrawTarget& target, fui::Rect area, Mood mood, unsigned st
     }
   }
   switch (mood) {
+    case Mood::Curious:
+      fill(14, 21, 6, 2);
+      fill(18, 20, 2, 1);
+      break;
+    case Mood::Satisfied:
+      fill(11, 20, 2, 2);
+      fill(13, 22, 7, 2);
+      fill(20, 20, 2, 2);
+      break;
+    case Mood::Surprised:
+      fill(14, 19, 6, 8);
+      fill(13, 21, 8, 4);
+      fill(16, 21, 2, 4, paper);
+      break;
     case Mood::Happy:
       fill(11, 18, 11, 3);
       fill(12, 21, 9, 2);

@@ -79,7 +79,8 @@ const char* rowValue(const SettingsModel& model, const MenuRow row) {
     case MenuRow::TakeBack:
       return model.canTakeBack ? "" : tr(STR_UI_NONE_0654A0);
     case MenuRow::Level:
-      return model.level == 0 ? tr(STR_UI_EASY_493F11) : (model.level == 1 ? "NORMAL" : tr(STR_UI_HARD_A06A58));
+      return model.level == 0 ? tr(STR_UI_EASY_493F11)
+                              : (model.level == 1 ? tr(STR_CHESS_NORMAL) : tr(STR_UI_HARD_A06A58));
     case MenuRow::PlayAs:
       return model.humanPlaysWhite ? tr(STR_UI_WHITE_40D23F) : tr(STR_UI_BLACK_A9414A);
     case MenuRow::Opponent:

@@ -48,6 +48,13 @@ GRAMMAR = {language: dict(zip(GRAMMAR_KEYS, labels.split("|"), strict=True)) for
 TRANSLATION = {"EN": "Translation", "ES": "Traducción", "FR": "Traduction", "DE": "Übersetzung", "PT": "Tradução"}
 
 
+def lexical_text(value):
+    """Resolve leaked wiki links without altering unmatched chemical brackets."""
+    value = re.sub(r"\[\[([^\[\]]+)\]\]", lambda match: match[1].split("|")[-1], value)
+    value = re.sub(r"\{\{(?:l|m|link)\|[a-z-]+\|([^{}|]+)(?:\|[^{}]*)?\}\}", r"\1", value)
+    return value
+
+
 class Node:
     def __init__(self, tag="", attrs=()):
         self.tag, self.attrs, self.children = tag, dict(attrs), []
@@ -82,7 +89,7 @@ class Entry(HTMLParser):
                 break
 
     def handle_data(self, data):
-        self.stack[-1].children.append(data)
+        self.stack[-1].children.append(lexical_text(data))
 
 
 def pronunciation(node):
@@ -172,8 +179,6 @@ def translation_html(entry, language, headword="", source_language=None):
     visit(entry.root)
     # Private is the lowest army rank, not corporal (cabo). This narrow source
     # correction affects only the EN-ES noun, never the independent headword cabo.
-    # https://dictionary.cambridge.org/dictionary/english-spanish/private
-    # https://www.larousse.com/en/dictionaries/english-spanish/private/29210
     if source_language == "EN" and language == "ES" and headword.casefold() == "private" and source_categories == ["noun"]:
         groups = [[term for term in group if term != "cabo"] for group in groups]
         groups = [group for group in groups if group]
@@ -282,6 +287,8 @@ def compact_dictionary(folder):
         raise ValueError(f"Expected one dictionary: {folder}")
     ifo = ifos[0]
     metadata = ifo.read_text(encoding="utf-8")
+    if "compact_layout=crossnext-2" in metadata.splitlines():
+        return []
     if "sametypesequence=h" not in metadata.splitlines():
         return []
     if "idxoffsetbits=64" in metadata.splitlines():

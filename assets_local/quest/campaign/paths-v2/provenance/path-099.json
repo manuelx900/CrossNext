@@ -1,0 +1,17 @@
+{
+  "id": 99,
+  "saga": 9,
+  "step": 9,
+  "title": {
+    "en": "The commander without a story",
+    "es": "El comandante sin historia"
+  },
+  "enemy": "Storyless marshal",
+  "guardian": 59,
+  "master": "path-099.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The War for the Books. Path episode: The commander without a story. Story action, which the scene must directly support: The king's commander waits at the last gate. He refuses to let you pass toward the fortress.\nEnemy identity, MUST match this exact anatomy: an armored revenant war knight with a horned closed helm, grim skull-like face, short broken sword and battered shield. Dramatic medium-wide boss composition, full-body enemy dominating the center, final barrier clearly behind it. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-a4962559-26f4-4b0f-bd08-9126280db324.png",
+  "sha256": "8d1062083dbb1f4a1f15be939ae3e2d765898662cdc9dc45345c97d7ceac35f6"
+}

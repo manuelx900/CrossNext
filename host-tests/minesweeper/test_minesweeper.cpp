@@ -859,9 +859,37 @@ void testDigRoutesATapToTheMoveItMeans() {
   CHECK((guarded.cell[3][0] & kRevealed) == 0);
 }
 
+void testEveryConfigurableMineCount() {
+  for (const int size : {10, 15, 20}) {
+    for (int count = 1; count <= maxMines(size, size); ++count) {
+      for (const int point : {0, size / 2, size - 1}) {
+        Game game;
+        start(game, size * 1000 + count, size, size, count);
+        CHECK(game.mines == count);
+        CHECK(dig(game, point, point));
+        CHECK(game.status != Status::Lost);
+        int placed = 0;
+        for (int x = 0; x < size; ++x) {
+          for (int y = 0; y < size; ++y) {
+            placed += has(game, x, y, kMine);
+            if (std::abs(x - point) <= 1 && std::abs(y - point) <= 1) CHECK(!has(game, x, y, kMine));
+          }
+        }
+        CHECK(placed == count);
+      }
+    }
+  }
+  Game bounded;
+  start(bounded, 7, 10, 10, 999);
+  CHECK(bounded.mines == maxMines(10, 10));
+  start(bounded, 7, 15, 15, -1);
+  CHECK(bounded.mines == 1);
+}
+
 }  // namespace
 
 int main() {
+  testEveryConfigurableMineCount();
   testTheFirstTapIsAlwaysSafeAndAlwaysFloods();
   testAZeroFloodsAndANumberDoesNot();
   testAFlagStopsTheFloodAndCannotBeTornOff();

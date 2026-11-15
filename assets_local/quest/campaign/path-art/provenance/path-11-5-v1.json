@@ -1,0 +1,10 @@
+{
+  "id": 71,
+  "book": 11,
+  "step": 5,
+  "master": "path-11-5-v1.png",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape 3:2 composition, filled scene reaching the edges, large readable foreground subjects and clear depth. Match the reference storybook artwork: bold smooth rounded pure-black contours, simple expressive chibi proportions, clean white and flat soft gray shading, no sketch texture, no crosshatching, no color. No UI, no text, no lettering or captions. The playable hero and PET are off camera: this is the reader's viewpoint and must work equally for a male or female hero. Any named people below are story NPCs. Hostile creatures look serious and threatening, never cheerful. No graphic violence. Keep important objects clear at480x320. The reference is STYLE ONLY; do not add its librarian unless the scene specifically names Liora. Scene: The Demon King Aren in heavy horned armor and a long dark cape stands before his book-built throne; he holds a child's illustrated page as a small bell rests beside a cracked crown.",
+  "generatedPath": "exec-fecf52db-2d34-471e-981a-63d6cda306a7.png",
+  "tool": "built-in image_gen",
+  "sha256": "5d6384c527fff84e5c6cee420c15ab2891487aa56e1b8ae30a53bbb9fdb14440"
+}

@@ -1,0 +1,17 @@
+{
+  "id": 95,
+  "saga": 9,
+  "step": 5,
+  "title": {
+    "en": "The stolen records",
+    "es": "Los documentos robados"
+  },
+  "enemy": "Frontier prowler",
+  "guardian": 54,
+  "master": "path-095.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The War for the Books. Path episode: The stolen records. Story action, which the scene must directly support: You find a room full of stolen records. A guardian keeps you from opening the cabinets.\nEnemy identity, MUST match this exact anatomy: a heavy empty shield armor walking on broad iron boots with a torn blank pennant. View along a winding route, enemy emerging from the left and occupying a third of the scene. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-c19de497-19ee-4350-aa92-4e926c1e4dac.png",
+  "sha256": "0aac9c13f4c36ea7f473e0340a5298c5452eb9bac5defb2861005745058da678"
+}

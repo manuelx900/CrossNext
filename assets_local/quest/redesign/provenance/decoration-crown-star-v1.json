@@ -1,0 +1,8 @@
+{
+  "id": "crown-star",
+  "path": "exec-cfb48696-05e2-485d-9aab-1c14be8f8b8f.png",
+  "prompt": "Production decoration sprite for Aventura lectora, ONE isolated object. Match the reference pets: thick clean pure black rounded outlines, white and soft flat gray shading, cute storybook cartoon, simple readable silhouette for 80x112 pixels, no fine texture. Full object centered with transparent margin, truly transparent RGBA background. No aura, no glow, no scenery, no letters, no frame, no other subjects. Subject: A floating five-point star bearing a small royal crown with three rounded points, two tiny attached ribbon tails",
+  "tool": "built-in image_gen",
+  "sha256": "2b3ad4b802614e11a6cfe2c5f4f070612844f0856458a55f6fde6758caad56d9",
+  "name": "decoration-crown-star-v1"
+}

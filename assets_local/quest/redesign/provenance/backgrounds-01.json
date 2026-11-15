@@ -1,0 +1,13 @@
+{
+  "name": "backgrounds-01",
+  "kind": "backgrounds",
+  "first": 1,
+  "count": 6,
+  "columns": 3,
+  "rows": 2,
+  "prompt": "Use case: illustration-story. Asset type: a production environment atlas for Reading Adventure.\nSTYLE REFERENCE image1 is the user-approved forest background. Preserve its organic smooth BLACK outlines, gentle grayscale cel shading, white highlights, rounded illustrated forms, friendly hand-drawn quality and clear storybook depth. Same illustrator, same world. This is NOT pixel art and NOT sterile vector icon art.\nLAYOUT: ONE landscape atlas of SIX distinct landscape scenes, exactly THREE columns by TWO rows. Every scene fills its own equal cell all the way to its edges; no gutters, borders, labels, dividers, text or numbering. The overall atlas aspect ratio is 9:4, each scene is 3:2. Use generous resolution.\nSHARED CAMERA IN ALL SIX: a wide flat foreground ground plane occupying bottom35%, completely clear in the middle70% for a hero and a pet. Horizon at60% of each cell's height; the two characters' future feet will be at90%. Scene content stays at outer edges and distant background; center above foreground remains mostly white and airy so faces stay readable. No step or ledge under the landing area. No humans, animals, pets or auras anywhere.\nAll scenes use black fine contours and gray filled shadows with clean WHITE surfaces. Keep backgrounds light, no large black masses, no dark skies. Complexity appears in distant architecture and edge framing, NEVER clutter the foreground. Richness follows scene descriptions but keep details broad and readable at480x320. No ground oval shadow. No grain, dithering, hatch, blur, gradient wash, photorealism or 3D. No lettering or readable symbols. Each scene must be different and exactly follow its description.\nSCENES IN ROW-MAJOR ORDER:\n1. Open meadow: simple low rolling meadow, grass clusters at far edges, clouds above distant hills.\n2. Country path: curving country path, simple split-rail fence at edges and distant farmhouse.\n3. Quiet riverbank: gentle river behind a flat foreground bank, reeds at edges and distant stones.\n4. Birch grove: slender birch trees at outer edges, sparse leaves and low distant shrubs.\n5. Dawn hill: wide grassy hilltop, sunrise far behind distant hills, clouds and small edge flowers.\n6. Stone garden: simple curved garden wall, two stones and neat plants at corners.",
+  "tool": "built-in image_gen",
+  "source": "exec-ef5a4f49-4f7c-4b33-b22c-3045bf132b66.png",
+  "date": "2026-11-05",
+  "sha256": "13a1ab8af95f7cb326dad7adff6fb74599f9319a38a913cba3a8d1e2101e47a0"
+}

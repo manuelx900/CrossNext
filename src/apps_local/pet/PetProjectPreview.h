@@ -18,7 +18,7 @@ inline void projectPreview(toybox::Screen& s, const Model& m, Work& w, fui::Rect
   using namespace widget;
   const auto& p = *m.profile;
   const unsigned id = m.previewItem;
-  if (!pet::homeUnlocked(p) || id >= pet::OBJECT_COUNT) {
+  if (!pet::homeUnlocked(p) || !pet::objectAvailable(id)) {
     info(s, rect(r.x, r.y + 20, r.width, 100), tr(STR_PET_HOME_LOCKED));
     button(s, w, rect(r.x, r.bottom() - 54, r.width, 54), tr(STR_PET_BACK_CATALOG), Back);
     return;

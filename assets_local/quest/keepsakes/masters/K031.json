@@ -1,0 +1,20 @@
+{
+  "id": "K031",
+  "key": "Regla",
+  "file": "K031.png",
+  "sample": {
+    "es": "Regla del cartógrafo",
+    "en": "Cartographer's ruler"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Cartographer's ruler.",
+  "requests": [
+    34,
+    68,
+    82
+  ],
+  "sha256": "0d8bbddbbc81a6554dfa0ce3846a3f43e8c5f719c2d5958b0c15848012ef95d8",
+  "source": "exec-f9b17b84-de46-44e3-b419-76f8a87ca0ca.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

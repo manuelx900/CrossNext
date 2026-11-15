@@ -23,7 +23,7 @@ cover-only jobs cannot consume a normal repaint waiting behind a slow frame.
 Failed covers are attempted once per visible page and retain the file fallback.
 Existing cover files and the library index format are unchanged.
 
-In Settings → Controls → Touch, **Invert XTC/XTCH direction** reverses horizontal
+In Settings → Reading → Reading → Manga, **Invert XTC/XTCH direction** reverses horizontal
 page swipes and both edge/regular page tap zones for those two fixed-layout
 formats. It defaults to Off, including existing settings files without the key.
 The setting uses the normal validated settings persistence. Physical page buttons,
@@ -46,3 +46,22 @@ A slow refresh must not stop its input polling either.
 Test rapid forward/back bursts and holds during a slow refresh and while covers
 are missing: the final book must match the input, with no later cursor movement
 after release. Check both the row list and cover grid, including page boundaries.
+
+
+## Collection entry and navigation
+
+Entering a collection first paints its header and a compact black loading
+notice with a white border and white text. Only after that display call does
+idle work open the selected-books index and allocate the existing row buffer.
+Cover grids paint placeholders and Loading covers before opening cached cover
+bitmaps. Missing-cover generation runs as existing serialized idle work after
+the notice, not in the first render. This improves feedback latency; SD access
+and e-ink refresh still take physical time. No cover resolution, resampling or
+font quality changes. Back from a collection's books returns to its catalog;
+Back from the Collection catalog exits the library to the menu. Explicitly
+selecting Recents or Filters retains the tab navigation behavior.
+
+Verify collections with cached, missing and mixed covers on a disposable card,
+including cold and warm entry, page changes, rapid Back during loading, both
+header appearances and every orientation. Expect the notice before SD work,
+then the same covers and selection. No stale cover should replace a new page.

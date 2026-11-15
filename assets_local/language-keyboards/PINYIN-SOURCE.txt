@@ -1,0 +1,5 @@
+Unicode Unihan 17.0.0
+https://www.unicode.org/Public/17.0.0/ucd/Unihan.zip
+SHA-256: f7a48b2b545acfaa77b2d607ae28747404ce02baefee16396c5d2d7a8ef34b5e
+Unicode License v3; see UNICODE-LICENSE.txt.
+Derived common-character pinyin table; no word prediction.

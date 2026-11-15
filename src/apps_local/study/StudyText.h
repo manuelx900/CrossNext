@@ -326,6 +326,7 @@ struct WrappedLine {
   int bytes = 0;
   int startCodepoint = 0;  // index of the first character, into the whole string
   int codepoints = 0;      // how many characters are on this line
+  bool paragraphEnd = false;
 };
 
 // Break `text` into lines no wider than `maxWidth`.
@@ -355,7 +356,7 @@ void wrapText(const char* text, const int maxWidth, char* line, const int lineBy
   const char* lastUnitSrc = nullptr;
   int lastUnitCp = 0;
 
-  const auto flush = [&]() {
+  const auto flush = [&](bool paragraphEnd = false) {
     if (lineLength == 0) return;
     line[lineLength] = '\0';
     WrappedLine out;
@@ -363,6 +364,7 @@ void wrapText(const char* text, const int maxWidth, char* line, const int lineBy
     out.bytes = lineLength;
     out.startCodepoint = lineStartCp;
     out.codepoints = cpIndex - lineStartCp;
+    out.paragraphEnd = paragraphEnd;
     emit(out);
     lineLength = 0;
     lineStartCp = cpIndex;
@@ -413,7 +415,7 @@ void wrapText(const char* text, const int maxWidth, char* line, const int lineBy
     // drawn, and still counts as a codepoint, because the span offsets the
     // converter recorded were measured over the string as it is.
     if (*p == '\n') {
-      flush();
+      flush(true);
       ++cpIndex;
       ++lineStartCp;
       ++p;
@@ -522,7 +524,7 @@ void wrapText(const char* text, const int maxWidth, char* line, const int lineBy
     cpIndex += unitCp;
     p = unitEnd;
   }
-  flush();
+  flush(true);
 }
 
 // The part of the codepoint run [spanStart, spanStart + spanLength) that falls
@@ -592,7 +594,8 @@ template <typename Target>
 int drawWrappedMarked(const Target& target, const int fontId, int y, const int maxWidth, const char* text,
                       const int spanStart, const int spanLength, const bool measureOnly, char* line,
                       const int lineBytes, char* scratch, const int rubyFontId = 0, const int bottom = INT_MAX,
-                      bool* clipped = nullptr, const int centerX = -1, TextPages* pages = nullptr) {
+                      bool* clipped = nullptr, const int centerX = -1, TextPages* pages = nullptr,
+                      uint8_t alignment = 1) {
   if (text == nullptr || *text == '\0') return y;
 
   const bool paged = pages && pages->height > 0;
@@ -630,16 +633,20 @@ int drawWrappedMarked(const Target& target, const int fontId, int y, const int m
         const bool past = y + above + lineHeight > bottom;
         if (past && clipped != nullptr) *clipped = true;
         if (!measureOnly && !past && (!pages || pages->visible(y))) {
+          if (alignment == 3 && !hasRuby(laid.text)) {
+            int length = int(std::strlen(line));
+            while (length && line[length - 1] == ' ') line[--length] = 0;
+          }
           const int totalWidth = measureLine(laid.text);
           if (centerX >= 0 && totalWidth > maxWidth) {
             if (clipped) *clipped = true;
             y += lineHeight + above;
             return;
           }
-          int x = ((centerX < 0 ? screenWidth : 2 * centerX) - totalWidth) / 2;
+          const int left = ((centerX < 0 ? screenWidth : 2 * centerX) - maxWidth) / 2;
+          int x = left + (alignment == 1 ? (maxWidth - totalWidth) / 2 : alignment == 2 ? maxWidth - totalWidth : 0);
           int cp = laid.startCodepoint;
-
-          forEachRubySegment(laid.text, [&](const RubySegment& segment) {
+          const auto drawSegment = [&](const RubySegment& segment) {
             const int width = rubySegmentWidth(segment, measureBase, measureRuby, scratch, lineBytes);
 
             // The base, centred under its reading when the reading is wider.
@@ -681,7 +688,43 @@ int drawWrappedMarked(const Target& target, const int fontId, int y, const int m
 
             x += width;
             cp += segment.codepoints;
-          });
+          };
+          int gaps = 0;
+          if (alignment == 3 && !laid.paragraphEnd && !hasRuby(laid.text)) {
+            for (int i = 0; laid.text[i] && laid.text[i + 1]; ++i)
+              if (laid.text[i] == ' ' && laid.text[i + 1] != ' ') ++gaps;
+          }
+          if (gaps && totalWidth < maxWidth) {
+            const int extra = maxWidth - totalWidth;
+            int ordinal = 0;
+            const char* start = laid.text;
+            for (const char* end = start; *end;) {
+              const char* unit = end;
+              nextCodepoint(end);
+              if (*unit != ' ' || *end == ' ') continue;
+              RubySegment part;
+              part.base = start;
+              part.baseBytes = int(end - start);
+              copyRun(start, part.baseBytes, scratch, lineBytes);
+              part.codepoints = codepointCount(scratch);
+              drawSegment(part);
+              if (*end) {
+                x += (ordinal + 1) * extra / gaps - ordinal * extra / gaps;
+                ++ordinal;
+              }
+              start = end;
+            }
+            if (*start) {
+              RubySegment part;
+              part.base = start;
+              part.baseBytes = int(std::strlen(start));
+              copyRun(start, part.baseBytes, scratch, lineBytes);
+              part.codepoints = codepointCount(scratch);
+              drawSegment(part);
+            }
+          } else {
+            forEachRubySegment(laid.text, drawSegment);
+          }
         }
         y += lineHeight + above;
       },

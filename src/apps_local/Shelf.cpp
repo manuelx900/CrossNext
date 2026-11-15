@@ -13,15 +13,16 @@
 #include "../activities/ActivityManager.h"
 #include "ShelfFolderActivity.h"
 #include "ShelfHidden.h"
+#include "ShelfOrder.h"
 #include "ShelfState.h"
 #include "battleship/BattleshipActivity.h"
+#include "calculator/CalculatorActivity.h"
 #include "carnivoro/CarnivoroActivity.h"
-#include "carnivoro/CarnivoroIcon.h"
 #include "checkers/DraughtsActivity.h"
 #include "chess/ChessActivity.h"
-#include "components/icons/listIcons.h"
 #include "connectfour/ConnectFourActivity.h"
 #include "flashcards/FlashcardsActivity.h"
+#include "focus/FocusActivity.h"
 #include "forehead/ForeheadActivity.h"
 #include "game2048/Game2048Activity.h"
 #include "go/GoActivity.h"
@@ -38,7 +39,6 @@
 #include "player/PlayerActivity.h"
 #include "pocketgames/PocketGamesActivity.h"
 #include "pomodoro/PomodoroActivity.h"
-#include "pomodoro/PomodoroIcon.h"
 #include "quest/ReadingQuestActivity.h"
 #include "quotes/QuotesActivity.h"
 #include "solitaire/SolitaireActivity.h"
@@ -46,8 +46,7 @@
 #include "sudoku/SudokuActivity.h"
 #include "tools/ToolsActivity.h"
 #include "toybattle/ToyBattleActivity.h"
-#include "ui/ExtraIcons.h"
-#include "ui/ToyboxIcons.h"
+#include "ui/NavigationIcons.h"
 #include "wallpapers/WallpapersActivity.h"
 #include "wikipedia/WikipediaActivity.h"
 #include "wordle/WordleActivity.h"
@@ -56,41 +55,41 @@
 
 namespace {
 
-// Icons come from tools_local/toybox/icons.txt via Lucide. Picked for silhouette
-// rather than literalness: a crown, a hull, a grid and a card suit share no
-// shape, so a row is scannable before the label is read.
+// Shelf silhouettes share the navigation reference family and upright SDK layout.
 constexpr shelf::Item kGames[] = {
-    {"CHESS", &icon_chess_32, &ChessActivity::create},
-    {"CHECKERS", &icon_checkers_32, &DraughtsActivity::create},
-    {"GO", &icon_go_32, &GoActivity::create},
-    {"MINESWEEPER", &icon_minesweeper_32, &MinesweeperActivity::create},
-    {"PICROSS", &icon_picross_32, &PicrossActivity::create},
-    {"WORDLE", &icon_wordle_32, &WordleActivity::create},
-    {"2048", &icon_connections_32, &Game2048Activity::create},
-    {"THE INTERCEPT", &icon_underhand_32, &InterceptActivity::create},
-    {"BATTLESHIP", &icon_battleship_32, &BattleshipActivity::create},
-    {"SOLITAIRE", &icon_solitaire_32, &SolitaireActivity::create},
-    {"HEARTS", &icon_hearts_32, &HeartsActivity::create},
-    {"MURDLE", &icon_murdle_32, &MurdleActivity::create},
-    {"CARNIVORO", &carnivoroPawIcon, &CarnivoroActivity::create},
-    {"CONNECT FOUR", &icon_connectfour_32, &ConnectFourActivity::create},
-    {"SUDOKU", &icon_sudoku_32, &SudokuActivity::create},
-    {"OTHELLO", &extra_circle_dot_32, &PocketGamesActivity::createOthello},
+    {"CHESS", &navicons::Chess32, &ChessActivity::create},
+    {"CHECKERS", &navicons::Checkers32, &DraughtsActivity::create},
+    {"GO", &navicons::Go32, &GoActivity::create},
+    {"MINESWEEPER", &navicons::Bomb32, &MinesweeperActivity::create},
+    {"PICROSS", &navicons::Image32, &PicrossActivity::create},
+    {"WORDLE", &navicons::Wordle32, &WordleActivity::create},
+    {"2048", &navicons::Grid32, &Game2048Activity::create},
+    {"THE INTERCEPT", &navicons::Skull32, &InterceptActivity::create},
+    {"BATTLESHIP", &navicons::Ship32, &BattleshipActivity::create},
+    {"SOLITAIRE", &navicons::Spade32, &SolitaireActivity::create},
+    {"HEARTS", &navicons::Heart32, &HeartsActivity::create},
+    {"MURDLE", &navicons::Footprints32, &MurdleActivity::create},
+    {"CARNIVORO", &navicons::PawSolid32, &CarnivoroActivity::create},
+    {"CONNECT FOUR", &navicons::ConnectFour32, &ConnectFourActivity::create},
+    {"SUDOKU", &navicons::Hash32, &SudokuActivity::create},
+    {"OTHELLO", &navicons::Othello32, &PocketGamesActivity::createOthello},
 };
 constexpr shelf::Item kApps[] = {
-    {"READING QUEST", &icon_dungeon_32, &ReadingQuestActivity::create},
-    {"PET", &icon_cat_animals_32, &PetActivity::create},
-    {"HABITS", &icon_tick_24, &HabitsActivity::create},
-    {"TO DO LIST", &icon_murdle_face_clues_32, &NotesActivity::createTodo},
-    {"NOTES", &extra_notes_32, &NotesActivity::create},
-    {"POMODORO", &pomodoro::timerIcon, &PomodoroActivity::create},
-    {"WALLPAPERS", &icon_wallpapers_32, &WallpapersActivity::create},
-    {"QUOTES", &icon_library_32, &QuotesActivity::create},
-    {"FLASHCARDS", &extra_cards_32, &FlashcardsActivity::create},
-    {"WORDS", &icon_library_32, &WordsActivity::create},
-    {"CALENDAR", &extra_calendar_32, &ToolsActivity::calendar},
-    {"CLOCK", &extra_clock_32, &ToolsActivity::clock},
-    {"COUNTER", &icon_calculator_32, &ToolsActivity::counter},
+    {"READING QUEST", &navicons::BookOpen32, &ReadingQuestActivity::create},
+    {"PET", &navicons::Paw32, &PetActivity::create},
+    {"HABITS", &navicons::Check32, &HabitsActivity::create},
+    {"TO DO LIST", &navicons::List32, &NotesActivity::createTodo},
+    {"NOTES", &navicons::Note32, &NotesActivity::create},
+    {"POMODORO", &navicons::Timer32, &PomodoroActivity::create},
+    {"WALLPAPERS", &navicons::Image32, &WallpapersActivity::create},
+    {"QUOTES", &navicons::Books32, &QuotesActivity::create},
+    {"FLASHCARDS", &navicons::Cards32, &FlashcardsActivity::create},
+    {"WORDS", &navicons::Books32, &WordsActivity::create},
+    {"CALENDAR", &navicons::Calendar32, &ToolsActivity::calendar},
+    {"CLOCK", &navicons::Clock32, &ToolsActivity::clock},
+    {"COUNTER", &navicons::Counter32, &ToolsActivity::counter},
+    {"FOCUS", &navicons::Focus32, &FocusActivity::create},
+    {"CALCULATOR", &navicons::Calculator32, &CalculatorActivity::create},
 };
 
 // The two rows Home grows, in reading order. Titles are Title Case because
@@ -98,8 +97,8 @@ constexpr shelf::Item kApps[] = {
 // shouts its own header, which is our side of the line. A third folder is one row here and
 // nothing else: the Home hook counts this table rather than knowing its length.
 constexpr shelf::Folder kFolders[] = {
-    {"Games", UIIcon::Games, &icon_go_settings_32, kGames, static_cast<int>(sizeof(kGames) / sizeof(shelf::Item))},
-    {"Apps", UIIcon::Apps, &icon_apps_32, kApps, static_cast<int>(sizeof(kApps) / sizeof(shelf::Item))},
+    {"Games", UIIcon::Games, &navicons::Gear32, kGames, static_cast<int>(sizeof(kGames) / sizeof(shelf::Item))},
+    {"Apps", UIIcon::Apps, &navicons::Gear32, kApps, static_cast<int>(sizeof(kApps) / sizeof(shelf::Item))},
 };
 
 constexpr int kFolderCount = static_cast<int>(sizeof(kFolders) / sizeof(kFolders[0]));
@@ -178,6 +177,72 @@ bool homeReturn = false;
 // player.cfg already established the pattern.
 shelf::State state;
 bool stateLoaded = false;
+
+shelf::Order itemOrder[shelf::MAX_FOLDERS];
+bool orderLoaded = false;
+constexpr const char* kOrderPath = "/.crosspoint/shelf-order.cfg";
+constexpr const char* kOrderTempPath = "/.crosspoint/shelf-order.cfg.tmp";
+constexpr shelf::OrderPaths kOrderPaths{kOrderPath, kOrderTempPath, "/.crosspoint/shelf-order.cfg.bak"};
+constexpr size_t kMaxOrderFileBytes = 16384;
+constexpr bool orderFitsRegistry() {
+  for (const auto& folder : kFolders)
+    if (folder.count > shelf::Order::CAPACITY) return false;
+  return true;
+}
+static_assert(orderFitsRegistry(), "raise shelf::Order::CAPACITY for a larger registry");
+
+void ensureOrderLoaded() {
+  if (orderLoaded) return;
+  orderLoaded = true;
+  if (!shelf::recoverOrderFile(Storage, kOrderPaths)) LOG_ERR("SHELF", "Could not recover item order");
+  {
+    HalFile file;
+    if (Storage.openFileForRead("SHELF", kOrderPath, file) && file.fileSize64() <= kMaxOrderFileBytes) {
+      char chunk[128];
+      shelf::OrderLine line;
+      bool failed = false;
+      while (file.available()) {
+        const int bytes = file.read(chunk, sizeof(chunk));
+        if (bytes <= 0) {
+          failed = true;
+          break;
+        }
+        for (int n = 0; n < bytes; ++n)
+          if (line.push(chunk[n])) shelf::consumeOrderLine(line.text, kFolders, kFolderCount, itemOrder);
+        delay(0);
+      }
+      if (failed) {
+        LOG_ERR("SHELF", "Could not read item order");
+        for (auto& order : itemOrder) order.count = 0;
+      }
+    }
+  }
+  for (int folder = 0; folder < kFolderCount; ++folder) itemOrder[folder].complete(kFolders[folder].count);
+}
+
+bool saveItemOrder() {
+  bool okay = true;
+  {
+    HalFile file;
+    if (!Storage.openFileForWrite("SHELF", kOrderTempPath, file)) return false;
+    char line[64];
+    for (int folder = 0; folder < kFolderCount && okay; ++folder)
+      for (int row = 0; row < itemOrder[folder].count; ++row) {
+        const auto& self = kFolders[folder];
+        const int bytes =
+            snprintf(line, sizeof(line), "%s\t%s\n", self.title, self.items[itemOrder[folder].items[row]].title);
+        if (bytes < 0 || bytes >= int(sizeof(line)) || file.write(line, size_t(bytes)) != size_t(bytes)) {
+          okay = false;
+          break;
+        }
+      }
+    if (!file.close()) okay = false;
+  }
+  if (shelf::publishOrderFile(Storage, kOrderPaths, okay)) return true;
+  LOG_ERR("SHELF", "Could not save item order");
+  Storage.remove(kOrderTempPath);
+  return false;
+}
 
 // The items no folder shows, by title, mirroring shelf-hidden.cfg. Loaded on
 // the first question anyone asks of it and not at boot, because the shelf has
@@ -323,6 +388,7 @@ bool replaceWith(std::unique_ptr<Activity> activity, const char* what) {
     LOG_ERR("SHELF", "OOM opening %s", what);
     return false;
   }
+  activity->setRemoteControlEnabled();
   activityManager.replaceActivity(std::move(activity));
   // Read back from the activity itself rather than written down beside the
   // registry: a table mapping titles to activity names would be a second copy
@@ -360,10 +426,13 @@ const char* label(const char* stableTitle) {
   if (std::strcmp(stableTitle, "CALENDAR") == 0) return tr(STR_UI_CALENDAR_09D04E);
   if (std::strcmp(stableTitle, "CLOCK") == 0) return tr(STR_UI_CLOCK_6E3C9D);
   if (std::strcmp(stableTitle, "COUNTER") == 0) return tr(STR_UI_COUNTER_C1AA9D);
+  if (std::strcmp(stableTitle, "FOCUS") == 0) return tr(STR_FOCUS_APP);
+  if (std::strcmp(stableTitle, "CALCULATOR") == 0) return tr(STR_CALCULATOR_APP);
   if (std::strcmp(stableTitle, "TO DO LIST") == 0) return tr(STR_UI_TO_DO_LIST_D61BE9);
   if (std::strcmp(stableTitle, "NOTES") == 0) return tr(STR_UI_NOTES_E69FC1);
   if (std::strcmp(stableTitle, "HABITS") == 0) return tr(STR_UI_HABITS_630758);
   if (std::strcmp(stableTitle, "Games") == 0) return tr(STR_SHORT_GAMES);
+  if (std::strcmp(stableTitle, "Apps") == 0) return tr(STR_HOME_APPS);
   return stableTitle;
 }
 
@@ -456,13 +525,30 @@ int shownCount(const int folder) {
 int shownItem(const int folder, const int row) {
   if (folder < 0 || folder >= kFolderCount) return -1;
   ensureHiddenLoaded();
-  return shownItemIn(hiddenItems, kFolders[folder].count, row, titlesOf(folder));
+  ensureOrderLoaded();
+  return orderedShownItem(itemOrder[folder], hiddenItems, row, titlesOf(folder));
+}
+
+int orderedItem(const int folder, const int row) {
+  if (folder < 0 || folder >= kFolderCount) return -1;
+  ensureOrderLoaded();
+  return itemOrder[folder].at(row);
+}
+
+bool moveOrderedItem(const int folder, const int row, const int delta) {
+  if (folder < 0 || folder >= kFolderCount) return false;
+  ensureOrderLoaded();
+  if (!itemOrder[folder].move(row, delta)) return false;
+  if (saveItemOrder()) return true;
+  itemOrder[folder].move(row + delta, -delta);
+  return false;
 }
 
 int shownRowFor(const int folder, const int item) {
   if (folder < 0 || folder >= kFolderCount) return 0;
   ensureHiddenLoaded();
-  return shownRowForIn(hiddenItems, kFolders[folder].count, item, titlesOf(folder));
+  ensureOrderLoaded();
+  return orderedShownRowFor(itemOrder[folder], hiddenItems, item, titlesOf(folder));
 }
 
 void autostartFromEnv(GfxRenderer& renderer, MappedInputManager& mappedInput) {

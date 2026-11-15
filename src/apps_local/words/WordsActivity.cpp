@@ -19,6 +19,7 @@
 #include "../ui/PixelMenuTheme.h"
 #include "../ui/ToyboxFonts.h"
 #include "CrossPointSettings.h"
+#include "DefinitionText.h"
 #include "activities/ActivityManager.h"
 #include "activities/reader/EpubReaderActivity.h"
 #include "components/HeaderBackTapTarget.h"
@@ -225,6 +226,7 @@ void WordsActivity::buildText() {
   model.textCache.invalidate();
   model.known = word.known;
   std::snprintf(content, sizeof(content), "%s%s", word.meaning, word.shortened ? tr(STR_WORDS_SHORTENED) : "");
+  wordsui::compactDefinition(content);
   model.meaning = content;
   const auto sentenceAt = std::strlen(content) + 1;
   std::snprintf(content + sentenceAt, sizeof(content) - sentenceAt, "%s%s",
@@ -546,6 +548,7 @@ void WordsActivity::screen(UiScreen& screen, void* user) {
   wordsui::build(screen, self.model, self.geometry, self.wrap, &contentTarget);
 }
 void WordsActivity::render(RenderLock&&) {
+  model.alignment = SETTINGS.wordsTextAlignment;
   renderer.clearScreen();
   pixelui::drawHeader(renderer, tr(STR_WORDS_APP), true);
   backui::publish(true, pixelui::geometry(uiTarget.deviceContext()).back);

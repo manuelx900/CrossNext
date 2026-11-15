@@ -47,6 +47,7 @@ namespace linkplay {
 
 class LinkActivity : public Activity {
  public:
+  bool allowsRemoteControl() const override { return false; }
   LinkActivity(const char* name, GfxRenderer& renderer, MappedInputManager& mappedInput)
       : Activity(name, renderer, mappedInput) {}
 

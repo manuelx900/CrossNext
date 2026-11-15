@@ -1,15 +1,18 @@
 #include "ImageDecoderFactory.h"
 
 #include <Logging.h>
+#include <Memory.h>
 
 #include <memory>
 #include <string>
 
+#include "GifToFramebufferConverter.h"
 #include "JpegToFramebufferConverter.h"
 #include "PngToFramebufferConverter.h"
 
 std::unique_ptr<JpegToFramebufferConverter> ImageDecoderFactory::jpegDecoder = nullptr;
 std::unique_ptr<PngToFramebufferConverter> ImageDecoderFactory::pngDecoder = nullptr;
+std::unique_ptr<GifToFramebufferConverter> ImageDecoderFactory::gifDecoder = nullptr;
 
 ImageToFramebufferDecoder* ImageDecoderFactory::getDecoder(const std::string& imagePath) {
   std::string ext = imagePath;
@@ -25,14 +28,22 @@ ImageToFramebufferDecoder* ImageDecoderFactory::getDecoder(const std::string& im
 
   if (JpegToFramebufferConverter::supportsFormat(ext)) {
     if (!jpegDecoder) {
-      jpegDecoder.reset(new JpegToFramebufferConverter());
+      jpegDecoder = makeUniqueNoThrow<JpegToFramebufferConverter>();
+      if (!jpegDecoder) LOG_ERR("DEC", "OOM: JPEG decoder");
     }
     return jpegDecoder.get();
   } else if (PngToFramebufferConverter::supportsFormat(ext)) {
     if (!pngDecoder) {
-      pngDecoder.reset(new PngToFramebufferConverter());
+      pngDecoder = makeUniqueNoThrow<PngToFramebufferConverter>();
+      if (!pngDecoder) LOG_ERR("DEC", "OOM: PNG decoder");
     }
     return pngDecoder.get();
+  } else if (GifToFramebufferConverter::supportsFormat(ext)) {
+    if (!gifDecoder) {
+      gifDecoder = makeUniqueNoThrow<GifToFramebufferConverter>();
+      if (!gifDecoder) LOG_ERR("DEC", "OOM: GIF decoder");
+    }
+    return gifDecoder.get();
   }
 
   LOG_ERR("DEC", "No decoder found for image: %s", imagePath.c_str());

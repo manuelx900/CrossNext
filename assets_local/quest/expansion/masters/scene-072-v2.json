@@ -1,0 +1,20 @@
+{
+  "id": "S072",
+  "kind": "scene",
+  "master": "scene-072-v2.png",
+  "reference": "assets_local/quest/redesign/portraits/aster-source.png",
+  "transparent": false,
+  "prompt": "Use case: illustration-story. ONE complete landscape 3:2 narrative illustration for the monochrome e-ink game Aventura lectora. Clean expressive chibi storybook art, thick smooth PURE BLACK contours, white and sparse flat light-gray fills. No color, gradients, crosshatching, collage, lettering, captions, UI or watermark. Large clear clues readable at480x320. Player hero and PET are OFF CAMERA. Depict only people actually physically present in the described event; a person mentioned in a letter or record does NOT appear alive beside its reader. The attached portraits are IDENTITY references, NOT additional cast: match face, age, hairstyle, clothing and distinctive accessories exactly for any named person present. Do not invent another person or clue. Fill the scene to its edges, keep all important faces and objects in frame. ASTER: the woman in the reference, keep pale flowing hair, leaf circlet, long robe and bare feet. Region: The garden of gods. Chapter: The incomplete name. Draw exactly this already-known moment (Spanish is authoritative): Memoria ocultaba lo ocurrido durante la guerra; Voluntad, las decisiones que sostenían la prisión; Despedida, el relato de Elia y el pasado que Aren había cambiado en su nombre. Juntos podían revelar los engaños que protegían su poder. Context only: Los registros describían tres sellos: Memoria, Voluntad y Despedida. Cada uno ocultaba una parte de la vida de Aren. Juntos impedían reconstruir su historia y cuestionar el pacto. MANDATORY PHYSICAL SETTING: the divine garden's incomplete three-part key and the three seal records. Do not anthropomorphize books, pages or objects. No invented smiling ghosts. No person replaces a written record. EXHAUSTIVE VISIBLE CAST (do not add anyone else): Aster. The reference is STYLE ONLY for any person not explicitly in this cast.",
+  "references": [
+    "assets_local/quest/redesign/portraits/aster-source.png"
+  ],
+  "chapter": 86,
+  "beat": "discovery",
+  "eventEs": "Memoria ocultaba lo ocurrido durante la guerra; Voluntad, las decisiones que sostenían la prisión; Despedida, el relato de Elia y el pasado que Aren había cambiado en su nombre. Juntos podían revelar los engaños que protegían su poder.",
+  "sha256": "e5b8883d3b9752ae411c6cad446c51d319d7d70a93625109a85216c2e13f5126",
+  "tool": "built-in image_gen",
+  "source": "exec-8038a965-4874-4839-9723-e84a7ec62665.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

@@ -1,0 +1,62 @@
+{
+  "width": 96,
+  "height": 112,
+  "portraitCount": 9,
+  "bitmapBytes": 12096,
+  "records": [
+    {
+      "name": "liora",
+      "sourceSha256": "606c6530861bbcb277ad0155f059f3f07a806f9c1f159c6511bdaf8a2024bd1c",
+      "bitmapSha256": "c167a0af2f90cdfbee3fee88d91b60e8b7b7b9be6d527589fefc9cf8fc87a4e6",
+      "bytes": 1344
+    },
+    {
+      "name": "market",
+      "sourceSha256": "255236ab3f34ab40021c4b66d1e4d9dbb4a1d520665ac38ecb8b1ca184a32244",
+      "bitmapSha256": "07bad9521fa356e5eac15a312afddbdda49298c7fc252e7539ac6bd6afa25a42",
+      "bytes": 1344
+    },
+    {
+      "name": "mara",
+      "sourceSha256": "b5f073ca0a0ccb9ba785e92c4e934af48e22181e0411e923e50e835d45c61c09",
+      "bitmapSha256": "8f4ccf50553375382bc10b171568fba4af6ac4785484801a7f36ecfabfac39bc",
+      "bytes": 1344
+    },
+    {
+      "name": "iri",
+      "sourceSha256": "aa32c307e9a00bee22fad76812b5be9c42cc79da2a33a0dd0ba233955cb53570",
+      "bitmapSha256": "3a342d388915a7be5336657ed7a2d49aef55b4309b05b53d68a7f7335632363e",
+      "bytes": 1344
+    },
+    {
+      "name": "taren",
+      "sourceSha256": "9819db140bda83e17c07c15d4fce5a7d6ccd883b378298f2d926d7d9ec52bea8",
+      "bitmapSha256": "dd432edc6bee10985a2baf132a6ba404d6ce6ae888fc591384ba6347ab63ce3d",
+      "bytes": 1344
+    },
+    {
+      "name": "nadir",
+      "sourceSha256": "cf41f5a0c180480a1a6c6346650085cfd6abe48ed4fddaeadc6ffd115f7de8a2",
+      "bitmapSha256": "44ceaa7e4514a1faeb30bf2d5ba86d9640e9e8feb0eae3c11eeb26a8b3d51448",
+      "bytes": 1344
+    },
+    {
+      "name": "orin",
+      "sourceSha256": "b0d422a3a3d8748fe34f8aa5555585689216225ccccce30999f2b424aef6558d",
+      "bitmapSha256": "8e08bc74ff5b471815d20cdb40a710c0bd2644859f3f0ae942e6361cdd0c8d10",
+      "bytes": 1344
+    },
+    {
+      "name": "sera",
+      "sourceSha256": "68d5cc82c8616d6e2a34318b0971be6bd11e4ceae47f1d60379f57723d746d0e",
+      "bitmapSha256": "ecf51d85e69e644fdbc2954725f3c05044f7ca58305cd33d1dffc651ddbb0285",
+      "bytes": 1344
+    },
+    {
+      "name": "aster",
+      "sourceSha256": "62260db36d1e7ec7ebdce3678c87dbbdcffdecb36eabbed3de92ed2fd07bd2fa",
+      "bitmapSha256": "188f7c6c5c989b446859f6745448de31d54df1112c2d4fa66d43b0d0c61c416e",
+      "bytes": 1344
+    }
+  ]
+}

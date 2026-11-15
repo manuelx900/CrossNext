@@ -39,6 +39,7 @@
 
 class HackerNewsActivity final : public Activity {
  public:
+  bool allowsRemoteControl() const override { return false; }
   HackerNewsActivity(GfxRenderer& renderer, MappedInputManager& mappedInput)
       : Activity("HackerNews", renderer, mappedInput) {}
   ~HackerNewsActivity() override = default;

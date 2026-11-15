@@ -92,3 +92,62 @@ Physical speed, fragmentation, power and long-run SD behavior remain unverified
 until tested on the device. Host percentages must not be presented as device
 speed guarantees. If there is no repeatable device improvement, reconsider the
 copying and maintenance cost of this buffer.
+
+
+## Sequential reads and bounded reuse
+
+Section owns a reusable 4 KiB PSRAM read buffer, serialized by its read mutex.
+Both committed-page reads and reads during a partial build use it. The borrowed
+ReadBuffer stream passes through every page/block decoder; direct HalFile entry
+points remain available. Allocation failure preserves direct reads. Its logical
+cursor is restored before returning, including decode failures. Read-ahead is
+bounded to the page LUT extent, so short pages do not fetch adjacent payloads. Cache bytes,
+read budgets, pagination and renderer behavior are unchanged.
+
+Existing layout profiles are read in place. Eight fixed in-memory chapter
+histories choose a least-recently-used alternate slot on a miss. Cache hits make
+no FAT rename or cursor-file write; a miss preserves the primary in an alternate
+slot before rebuilding. Existing profile formats and interrupted-swap recovery
+remain readable. The histories are process-local and do not survive reboot.
+
+SD-font prewarm coalesces contiguous metadata and bitmap runs. Metadata runs
+read directly into the existing mini arena when source and
+destination are both contiguous; other records keep single-glyph reads. Bitmap
+runs read directly into the bitmap arena. This adds no font scratch allocation.
+Sparse glyph sets never read the gaps between runs.
+
+Each modern chapter parser may own an exact 512-slot word-width cache (at most
+48 KiB PSRAM, leaving 2 MiB headroom). Keys compare text bytes, font/style
+identity, tracking, spacing and
+focus emphasis. Long words, fallback-font words, unavailable PSRAM, unstable SD
+advance tables and
+uninitialized or failed vector styles use ordinary measurement. Vector load
+identities prevent reuse across face reloads or recycled object addresses. A
+failed glyph disables word memoization for that vector font until reload.
+
+An Epub owns a mutex-protected catalog with at most 128 ZIP entry names/stats
+(about 34 KiB PSRAM with 1 MiB headroom), directory details and a scan cursor.
+Separate ZipFile objects can reuse it. Archive path, file size and nonzero storage/media revisions
+must match. Any storage mutation conservatively invalidates the catalog; it
+never bypasses local-header or payload validation or retains an idle SD handle.
+
+The reader retains its existing three bounded PSRAM image slots across redraws.
+Exact resource paths, dimensions and nonzero storage/media stamps validate hits;
+slots used by the current render are pinned across its planes. Each allocation
+holds at most 96 KiB of pixels plus 1,025 path bytes. The 512 KiB free-PSRAM floor,
+reader exit, child-activity handoff and explicit memory-pressure release discard
+optional images. The child transition calls Activity::prepareForChild under the
+existing RenderLock; the reader releases payloads there, after drawing stops. Chapter builds also shed retained images below 2 MiB free PSRAM.
+Internal-RAM fallback chunks remain transient. All planes, pixel values,
+antialiasing, dithering and display waveforms retain their existing behavior.
+
+Host checks: `host-tests/reader-io/run.py` uses the production read/compose/font/
+ZIP/index code; set CROSSNEXT_GTEST to an existing googletest source directory.
+Windows uses Emscripten and a Node filesystem mount. Image regressions run with
+`host-tests/reader-speed/run.py`. Host I/O counts are not physical SD transaction
+counts or device timing. For hardware, compare the same books/fonts/card with
+cold and warm caches: input-to-first-frame, input-to-complete-content, p50/p95,
+read calls/bytes, internal/PSRAM low-water and repeated back/font/redraw cycles.
+Check four orientations, three render planes, ruby, focus, accents, ligatures,
+partial builds, truncated caches and memory-pressure fallback. No hardware test
+or rank against stock is inferred from host checks.

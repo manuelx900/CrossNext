@@ -1,0 +1,17 @@
+{
+  "id": 23,
+  "saga": 2,
+  "step": 3,
+  "title": {
+    "en": "Across the sea",
+    "es": "El viaje por el mar"
+  },
+  "enemy": "Tide watcher",
+  "guardian": 15,
+  "master": "path-023.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The Harbor of Mist. Path episode: Across the sea. Story action, which the scene must directly support: As you sail toward the island, a creature rises from the water and blocks your way.\nEnemy identity, MUST match this exact anatomy: a hovering old diving helmet specter with thick rope tentacles. Three-quarter view toward a doorway or passage, creature guarding it, clear layers of foreground, landmark and distance. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-8e888e2b-69f5-476c-8a06-ee7bf5b86dab.png",
+  "sha256": "569aca18a858cb35b3b3af95aa88d183643745327a951fd0c511efb15deaa82f"
+}

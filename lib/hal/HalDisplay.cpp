@@ -1,5 +1,6 @@
 #include <HalDisplay.h>
 #include <HalGPIO.h>
+#include <Logging.h>
 
 // Global HalDisplay instance
 HalDisplay display;
@@ -73,6 +74,16 @@ void HalDisplay::displayBufferAsync(HalDisplay::RefreshMode mode) {
   }
 
   einkDisplay.displayBufferAsyncNoShadow(convertRefreshMode(mode));
+}
+
+bool HalDisplay::displayWindow(uint16_t x, uint16_t y, uint16_t width, uint16_t height, bool turnOffScreen) {
+  if (!width || !height || x % 8 || width % 8 || uint32_t(x) + width > einkDisplay.getDisplayWidth() ||
+      uint32_t(y) + height > einkDisplay.getDisplayHeight()) {
+    LOG_ERR("DISPLAY", "Invalid display window: %u,%u %ux%u", x, y, width, height);
+    return false;
+  }
+  einkDisplay.displayWindow(x, y, width, height, turnOffScreen);
+  return true;
 }
 
 void HalDisplay::waitRefreshComplete() { einkDisplay.waitRefreshComplete(); }

@@ -78,9 +78,15 @@ Dictionary layout uses compact line spacing without the reader's extra paragraph
 
 The resource builder compacts all bundled HTML dictionaries in its generated copies. The monolingual dictionaries keep numbered meanings, lexical relations and examples supplied by the source. Web styling, pronunciation (including regional AFI transcriptions), syllabification, repeated headword/inflection rows and etymology metadata are omitted so the first meaning follows the word category. Examples and synonyms are never invented. Long entries can still require several pages. The bundled text renderer supplies the missing ♁ and 🜨 symbols without changing their meaning in the source.
 
-The eight bundled WikDict translators show target-language equivalents together, grouped by the source's sense divisions. The part-of-speech labels use the destination language: EN–ES shows **Adjetivo: privado**, while ES–EN shows English equivalents and labels. Select the bilingual pair for the direction you need; the interface language does not reverse a manually selected pair. Source-language glosses and source gender metadata are omitted from these translation entries. These dictionaries supply word equivalents, not translated explanatory paragraphs or contextual sentence translation. Use a monolingual dictionary for definitions in its own language. Custom dictionaries keep their own content and language; the viewer does not automatically translate arbitrary dictionary text.
+The eight bundled WikDict translators show explicit target-language equivalents and localized word categories. Source-language usage contexts stay below the equivalents, in italics, to distinguish meanings, historical uses and regions. These contexts are not automatically translated or invented. The dictionary direction remains independent of the interface language. These are word dictionaries, not contextual sentence translators. Custom dictionaries retain their own content and language.
 
-Run `python tools_local/build_resources.py` to regenerate the microSD package. Source dictionaries remain unchanged; generated `.idx` offsets and `.ifo` sizes are rebuilt while word order and `.syn` pointers remain intact. `SOURCES.json` records the source hash and the new output hash. Install the complete updated dictionary folders while the reader is powered off; merge the resource folders without removing `.crosspoint` or your saved words. The viewer spacing correction also applies to dictionaries already installed.
+The default resource builder uses the pinned WikDict SQLite data for bilingual senses and source inflection pointers for alternate forms. Explicitly obsolete usages and proper names follow ordinary meanings; source importance and confidence order other senses. Unqualified reverse-generated alternatives are omitted when a forward lexeme exists. Exact duplicate monolingual meanings are merged while preserving their examples and qualifiers. Headwords and alternate forms use composed Unicode accents. Selected independently authored corrections replace known erroneous translations, including **lastly → por último; finalmente**, **actually → en realidad; de hecho**, numerical scale distinctions for **billion**, and regional meanings of Portuguese **propina**. Each folder lists the corrections that affect it.
+
+The resource builder also refines redundant equivalents using pinned wordfreq 3.1.1 usage data (coverage through about 2021). Within an unqualified bilingual sense, a single-word alternative is omitted only when its Zipf frequency is below 1.5, another equivalent reaches 3.5, and the difference is at least 2.0. This does not remove headwords or sole translations. Compound expressions, parenthetically qualified senses, explicit usage registers, recognized technical domains, proper names and symbols are protected. Surviving equivalents retain their source order: frequency alone cannot choose a meaning or prefer a plural over a singular. Monolingual definition wording, synonym lists and examples are not rewritten by this process. Explicitly historical or uncommon senses follow ordinary senses, with a localized usage label; the original context remains available.
+
+Independently authored corrections additionally separate common senses and fix known translation errors, such as **find → encontrar; hallar**, **found → fundar**, **realize → darse cuenta / hacer realidad**, and Portuguese **emprestar → lend**, according to context. The corrected headwords are listed in each folder. These conversion rules and regression checks improve fidelity; they do not certify every entry of the source datasets as linguistically error-free. Original notices, pinned source URLs, hashes and licenses accompany the generated adaptation, including the wordfreq attribution and its data-source credits. All preparation happens on the computer; the device continues using its existing offline index. No extra firmware memory or network lookup is required by this packaging change.
+
+Install desktop-only dependencies with `python -m pip install -r tools_local/requirements-resources.txt`, then run `python tools_local/build_resources.py` to regenerate the microSD package. Source dictionaries remain unchanged; generated `.idx` offsets and `.ifo` sizes are rebuilt, and `.syn` pointers are remapped to the merged entry order. `SOURCES.json` records the source hash and the new output hash. With the reader powered off, replace only the ten bundled dictionary folders with their complete updated copies so old `.dict`, `.qidx` and `.sidx` files cannot remain alongside them. Preserve other custom dictionaries, `.crosspoint` and your saved words. Merge the app, font and language folders separately. The viewer spacing correction also applies to dictionaries already installed.
 
 - **Left/Right** or side **Up/Down** — previous / next page
 - **Back** — return to word selection
@@ -122,10 +128,18 @@ to that book. Holding the circular button also closes the viewer when its action
 is Reader bottom sheet. Other configured shortcuts and emergency touch unlock
 keep their normal behavior.
 
-Built-in Noto Serif includes Greek, polytonic Greek, and phonetic characters at
-all four reading sizes and styles. An entry uses the selected reading font when
-it covers the text. Otherwise the viewer chooses the nearest built-in Noto Serif
+Noto Serif in Resources includes Greek, polytonic Greek, and phonetic characters at
+all four reading sizes and styles. Copy its `fonts/Noto Serif/` folder to the microSD;
+without those files the content uses resident Ubuntu, with more limited character coverage.
+An entry uses the selected reading font when
+it covers the text. Otherwise the viewer chooses the nearest installed Noto Serif
 size when that supplies missing characters without losing characters supported
 by the selected font. The book's font preference is not
 changed. Characters absent from both fonts still use their normal replacement
 glyph; this is not a universal font for every writing system.
+
+## Consult a word inside a definition
+
+In a definition opened from a book, hold a word to look it up in the same dictionary. This works with styled HTML and plain-text definitions. Use the header Back arrow or physical Back button to return to the previous definition at its previous page; another Back at the first definition returns to the reader flow. A missing word or read error leaves the current definition available.
+
+The viewer keeps at most sixteen previous queries and page numbers, not sixteen copies of their definitions. Returning reopens the stored query from the same offline dictionary and rebuilds its layout. No network request or background task is involved. Saving to Words remains available on the original definition only, preserving its book/sentence context rather than assigning that context to an unrelated recursive lookup.

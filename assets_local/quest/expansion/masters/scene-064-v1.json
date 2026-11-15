@@ -1,0 +1,12 @@
+{
+  "id": "S064",
+  "master": "scene-064-v1.png",
+  "sha256": "1540ca600a7090d2861cb166e60e07c6bb498a349d7ffbb63993b3b6da07af15",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The kingdom beneath the moon. Chapter: Ada's trail. Illustrate this already-authored event faithfully, without inventing another object or plot: Sera's copy records the gods as witnesses to the pact. They may know how the seals were made, so reaching them is a practical next step rather than a detour. Context only, do not try to draw all of it: The opened records include Ada's route from the palace to the divine garden. Her compass responds in that direction. The notes also explain that the gods helped build the first refuge later used by Aren.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

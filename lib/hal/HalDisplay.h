@@ -50,6 +50,8 @@ class HalDisplay {
                             bool fromProgmem = false) const;
 
   void displayBuffer(RefreshMode mode = RefreshMode::FAST_REFRESH, bool turnOffScreen = false);
+  // Physical, byte-aligned window; invalid regions are rejected without painting.
+  bool displayWindow(uint16_t x, uint16_t y, uint16_t width, uint16_t height, bool turnOffScreen = false);
   // Non-blocking refresh (shadow-free): starts the panel waveform and returns
   // while the panel refreshes on its own. The framebuffer must stay untouched
   // until waitRefreshComplete(), and the caller must rebuild the differential

@@ -5,18 +5,21 @@
 
 #include <array>
 #include <climits>
+#include <deque>
 #include <functional>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "ChapterEventCache.h"
+#include "ChapterParser.h"
 #include "Epub/FootnoteEntry.h"
 #include "Epub/ParsedText.h"
 #include "Epub/blocks/ImageBlock.h"
 #include "Epub/blocks/TextBlock.h"
 #include "Epub/css/CssParser.h"
 #include "Epub/css/CssStyle.h"
+#include "ParagraphInputCache.h"
 
 class Page;
 class GfxRenderer;
@@ -24,7 +27,7 @@ class Epub;
 
 #define MAX_WORD_SIZE 200
 
-class ChapterHtmlSlimParser {
+class ChapterHtmlSlimParser final : public ChapterParser {
   std::shared_ptr<Epub> epub;
   const std::string& filepath;
   GfxRenderer& renderer;
@@ -40,6 +43,12 @@ class ChapterHtmlSlimParser {
   char partWordBuffer[MAX_WORD_SIZE + 1] = {};
   int partWordBufferIndex = 0;
   bool nextWordContinues = false;  // true when next flushed word attaches to previous (inline element boundary)
+  WordWidthCacheLease wordWidths;
+  ParagraphInputCache paragraphInputs;
+  void processStart(const XML_Char* name, const XML_Char** atts);
+  void processEnd(const XML_Char* name);
+  void processText(const XML_Char* text, int length);
+  void processDefault(const XML_Char* text, int length);
   std::unique_ptr<ParsedText> currentTextBlock = nullptr;
   // Ruby text state
   bool inRuby = false;
@@ -85,10 +94,19 @@ class ChapterHtmlSlimParser {
     CssTextAlign textAlign = CssTextAlign::Left;
     bool hasSup = false, sup = false;
     bool hasSub = false, sub = false;
+    bool hasSmallCaps = false, smallCaps = false;
+    bool hasWhiteSpace = false, preserveWhitespace = false;
+    // Inline font size: a multiple of the parent size, or of the body size when rem.
+    bool hasFontScale = false, fontScaleRem = false;
+    float fontScale = 1.0f;
   };
   std::vector<StyleStackEntry> inlineStyleStack;
   std::vector<BlockStyle> blockStyleStack;  // accumulated block styles from open ancestor elements
   CssStyle currentCssStyle;
+  // Open elements by depth, for descendant/child CSS selectors. Deeper elements
+  // resolve without ancestors, so contextual rules simply don't match there.
+  static constexpr size_t MAX_CSS_ANCESTORS = 16;
+  std::array<CssAncestor, MAX_CSS_ANCESTORS> cssAncestors{};
   bool effectiveBold = false;
   bool effectiveItalic = false;
   CssTextDecoration effectiveTextDecoration = CssTextDecoration::None;
@@ -98,19 +116,77 @@ class ChapterHtmlSlimParser {
   CssTextAlign effectiveTextAlign = CssTextAlign::Left;
   bool effectiveSup = false;
   bool effectiveSub = false;
+  bool effectiveSmallCaps = false;
+  bool effectivePreserveWhitespace = false;
+  uint8_t dropCapLines = 0;
+  bool dropCapBold = false;
+  void armDropCap(const CssStyle& style);
+  bool hasTables_ = false;        // Raw markup is needed for shared column width planning.
+  bool pendingPageBreak = false;  // set when a page-break-after element closes
+
+  // Open elements with a CSS border or background shade. Each emits a PageBorderBox around
+  // its content on every page it spans.
+  struct BoxScope {
+    int depth = 0;
+    int16_t left = 0;
+    int16_t right = 0;
+    int16_t padTop = 0;  // outer edge to content, border included
+    int16_t padBottom = 0;
+    CssBorderSide sides[4];  // top, right, bottom, left
+    bool shaded = false;
+    int16_t top = -1;  // content extent on the current page
+    int16_t bottom = -1;
+    bool continued = false;  // sliced onto an earlier page
+  };
+  static constexpr size_t MAX_BOX_SCOPES = 8;
+
+  // Page-break carry-over: a paragraph's orphan/widow lines and a heading kept with what
+  // follows move to the next page instead of being left behind.
+  static constexpr size_t MAX_CARRIED_LINES = 6;
+  const ParsedText* layoutParagraph = nullptr;
+  uint8_t paragraphLinesOnPage = 0;
+  uint8_t keepWithNextLines = 0;                       // trailing heading lines on this page
+  uint32_t recentLineOffsets[MAX_CARRIED_LINES] = {};  // visible offsets of this page's last lines, newest last
+  size_t recentLineAnchorBegin[MAX_CARRIED_LINES] = {};
+  size_t boundAnchorCount = 0;  // Anchors bind when their first content actually lands.
+  uint8_t recentLineCount = 0;
+  size_t linesToCarry(size_t& paragraphLines) const;
+  size_t keepWithNextCarry() const;
+  bool canCarry(size_t carry) const;
+  void breakPageCarryingLines(size_t carry, size_t paragraphLines, uint32_t visibleOffset);
+  std::vector<BoxScope> boxScopes;
   static constexpr size_t MAX_GRID_TABLE_COLUMNS = 4;
-  static constexpr size_t MAX_GRID_TABLE_CELL_WORDS = 32;
-  static constexpr size_t MAX_GRID_TABLE_CELL_BYTES = 512;
+  // ponytail: buffer at most 160 tokens / 2 KB per row; larger rows use stacked flow.
+  static constexpr size_t MAX_GRID_TABLE_ROW_WORDS = 160;
+  static constexpr size_t MAX_GRID_TABLE_ROW_BYTES = 2048;
   int tableDepth = 0;
   bool insideTableCell = false;
   bool tableRowStacked = false;
   bool tableRowRtl = false;
   uint16_t tableRowsSpannedRemaining = 0;
-  size_t tableCellTextBytes = 0;
+  size_t tableRowTextBytes = 0;
   std::vector<std::unique_ptr<ParsedText>> tableRowCells;
   std::array<std::vector<std::unique_ptr<TextBlock>>, MAX_GRID_TABLE_COLUMNS> tableCellLines;
   std::vector<uint32_t> tableLineVisibleOffsets;
   bool listItemBulletOnly = false;  // true when currentTextBlock has only the <li> bullet
+  CssBorderSide tableBorder;        // grid lines for the current table; invisible when unbordered
+  // Column widths planned from a pre-scan of the table's markup; 0 columns = equal widths.
+  std::array<uint16_t, MAX_GRID_TABLE_COLUMNS> tableColumnWidths{};
+  uint8_t tableColumnCount = 0;
+  struct TableColumnMeasure {
+    uint16_t minWidth[MAX_GRID_TABLE_COLUMNS] = {};   // longest word
+    uint16_t prefWidth[MAX_GRID_TABLE_COLUMNS] = {};  // longest unwrapped line
+    uint8_t columns = 0;
+  };
+
+  // A font-size span that opens a block and holds all of its text sizes the whole block,
+  // e.g. <p><span class="big">Chapter One</span></p>. Text after the span cancels it.
+  struct InlineSizeState {
+    float scale = 1.0f;
+    int depth = -1;  // outermost sizing span
+    bool valid = false;
+    bool open = false;
+  } inlineSize;
 
   // Tracks the innermost open <ul>/<ol> so <li> knows whether to number itself,
   // bullet itself, or (list-style-type: none) emit no marker at all. Pushed on
@@ -126,9 +202,11 @@ class ChapterHtmlSlimParser {
   };
   std::vector<ListContext> listStack;
 
-  // Anchor-to-page mapping: tracks which page each HTML id attribute lands on
+  // Anchor-to-page mapping: tracks which page each HTML id attribute lands on. A deque grows in
+  // small chunks, so a long chapter never needs one large free block (a vector doubling past 512
+  // anchors needs ~28 KB contiguous, and a failed allocation aborts).
   int completedPageCount = 0;
-  std::vector<std::pair<std::string, uint16_t>> anchorData;
+  std::deque<std::pair<std::string, uint16_t>> anchorData;
   std::string pendingAnchorId;          // deferred until after previous text block is flushed
   std::vector<std::string> tocAnchors;  // the list of anchors that are TOC chapter boundaries
   uint16_t xpathParagraphIndex = 0;
@@ -157,6 +235,7 @@ class ChapterHtmlSlimParser {
   // ParsedText::hadDroppedWords() this turns layout OOM into ParseStatus::Error
   // so the section build fails readably instead of emitting pages with holes.
   bool layoutOom = false;
+  bool stopRequested = false;
 
   // Resumable parse state. The one-shot parseAndBuildPages() drives these
   // internally; the incremental section builder drives them across render ticks
@@ -171,22 +250,40 @@ class ChapterHtmlSlimParser {
   XML_Parser xmlParser_ = nullptr;
   HalFile parseFile_;
   uint32_t parseStartTime_ = 0;
+  bool progressPopupFired_ = false;
 
   void updateEffectiveInlineStyle();
-  void startNewTextBlock(const BlockStyle& blockStyle);
+  void startNewTextBlock(const BlockStyle& blockStyle, bool paragraphEnd = true);
   void flushPendingAnchor();
+  void completeCurrentPage();
+  void emitCurrentPage();
+  void noteContent(int top, int bottom);
+  int lastLineGlyphBottom() const;
+  void openBoxScope(BlockStyle& ownStyle, const CssStyle& cssStyle);
+  void closeBoxScope();
+  void emitBoxSegment(const BoxScope& box, bool closing);
+  void layoutCurrentBlock(bool includeLastLine);
+  bool measureTableColumns(HalFile& file, TableColumnMeasure& out) const;
+  void planTableColumns(const TableColumnMeasure& measure);
+  void applyPendingPageBreak();
+  void pushBlockStyle(const BlockStyle& accumulated);
   void flushPartWordBuffer();
+  void breakTextLine(const BlockStyle& style);
   void fallbackTableRowToStacked();
   void closeTableCell();
   void finishTableRow();
   void addTableRowSeparator();
   void setCurrentPageVisibleOffset(uint32_t offset);
-  void makePages(bool includeLastLine = true);
+  void makePages(bool includeLastLine = true, bool paragraphEnd = true);
+  void applyBlockFontScale(BlockStyle& blockStyle, const CssStyle& cssStyle, const char* tagName) const;
+  int fontIdForScale(float scale) const;
+  int prepareBlockFont(ParsedText& text, float scale);
   static EpdFontFamily::Style fontStyleForTextDecoration(CssTextDecoration decoration);
   static void applyDirectionToEntry(StyleStackEntry& entry, const CssStyle& css);
   static void applyTextDecorationToEntry(StyleStackEntry& entry, const CssStyle& css);
+  static void applyInlinePresentationToEntry(StyleStackEntry& entry, const CssStyle& css);
   static void applyVerticalAlignToEntry(StyleStackEntry& entry, const CssStyle& css);
-  void pushTableTextStyleEntry(const CssStyle& cssStyle);
+  void pushBlockTextStyleEntry(const CssStyle& cssStyle);
   void pushDecorationStyleEntry(CssTextDecoration defaultDecoration, const CssStyle& cssStyle);
   void emitHorizontalRule(const BlockStyle& blockStyle);
   static void XMLCALL recordingStart(void* data, const XML_Char* name, const XML_Char** atts);
@@ -200,8 +297,8 @@ class ChapterHtmlSlimParser {
   static void XMLCALL endElement(void* userData, const XML_Char* name);
 
  public:
-  void setCaptureFootnotes(const bool capture) { captureFootnotes = capture; }
-  void setForceBold(const bool bold) { forceBold = bold; }
+  void setCaptureFootnotes(const bool capture) override { captureFootnotes = capture; }
+  void setForceBold(const bool bold) override { forceBold = bold; }
   explicit ChapterHtmlSlimParser(
       std::shared_ptr<Epub> epub, const std::string& filepath, GfxRenderer& renderer, const int fontId,
       const float lineCompression, const bool extraParagraphSpacing, const uint8_t paragraphAlignment,
@@ -235,12 +332,12 @@ class ChapterHtmlSlimParser {
         eventCachePath_(std::move(eventCachePath)),
         allowCacheReplay_(allowCacheReplay) {}
 
-  ~ChapterHtmlSlimParser();
-  void setTextSpacing(const int8_t character, const uint8_t wordPercent) {
+  ~ChapterHtmlSlimParser() override;
+  void setTextSpacing(const int8_t character, const uint8_t wordPercent) override {
     characterSpacing = character;
     wordSpacingPercent = wordPercent;
   }
-  void setParagraphIndentSpaces(const uint8_t spaces) { paragraphIndentSpaces = spaces; }
+  void setParagraphIndentSpaces(const uint8_t spaces) override { paragraphIndentSpaces = spaces; }
 
   // One-shot parse: builds every page before returning (begin + step* + finish).
   bool parseAndBuildPages();
@@ -250,24 +347,25 @@ class ChapterHtmlSlimParser {
   //   loop: switch (parseStep()) { More: keep going / yield; Done: finishParse(); Error: abortParse(); }
   // Pages are emitted via completePageFn as they complete during parseStep(), so
   // the caller can stop once enough pages are built and resume on a later tick.
-  enum class ParseStatus { More, Done, Error };
-  bool beginParse();
-  ParseStatus parseStep();
-  bool finishParse();  // flush the trailing page and tear down; returns true
-  void abortParse();   // tear down without flushing (error / abandon)
+  bool beginParse() override;
+  ParseStatus parseStep() override;
+  bool finishParse() override;  // flush the trailing page and tear down; false on OOM/stop
+  void abortParse() override;   // tear down without flushing (error / abandon)
+  // Safe from completePageFn; cleanup waits until the active callback returns.
+  void requestStop();
 
   void addLineToPage(std::unique_ptr<TextBlock> line, uint32_t visibleOffset);
-  const std::vector<std::pair<std::string, uint16_t>>& getAnchors() const { return anchorData; }
+  const std::deque<std::pair<std::string, uint16_t>>& getAnchors() const override { return anchorData; }
 
   // Byte progress of the in-flight parse, used to estimate a still-building section's total page
   // count (a giant single-spine book never fully lays out, so its real count is unknown). Valid
   // between beginParse() and finishParse()/abortParse().
-  bool hadEventCacheReadError() const { return eventCache_.hadReadError(); }
-  size_t parseBytesConsumed() {
+  bool hadEventCacheReadError() const override { return eventCache_.hadReadError(); }
+  size_t parseBytesConsumed() override {
     return (eventCache_.replaying() || eventCache_.hadReadError()) ? eventCache_.bytesConsumed()
                                                                    : (parseFile_ ? parseFile_.position() : 0);
   }
-  size_t parseTotalBytes() {
+  size_t parseTotalBytes() override {
     return (eventCache_.replaying() || eventCache_.hadReadError()) ? eventCache_.totalBytes()
                                                                    : (parseFile_ ? parseFile_.size() : 0);
   }

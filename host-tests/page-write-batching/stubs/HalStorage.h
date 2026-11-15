@@ -18,6 +18,7 @@ class HalFile final : public Print {
   size_t calls = 0;
   size_t allowance = std::numeric_limits<size_t>::max();
   HalFile() { bytes.reserve(32768); }
+  size_t position() const { return bytes.size(); }
   size_t write(uint8_t value) override { return write(&value, 1); }
   size_t write(const uint8_t* data, size_t size) override {
     ++calls;

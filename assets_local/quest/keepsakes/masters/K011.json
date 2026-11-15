@@ -1,0 +1,28 @@
+{
+  "id": "K011",
+  "key": "Cuaderno",
+  "file": "K011.png",
+  "sample": {
+    "es": "Cuaderno de los nombres",
+    "en": "Names notebook"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Names notebook.",
+  "requests": [
+    11,
+    42,
+    59,
+    84,
+    102,
+    150,
+    186,
+    204,
+    236,
+    266,
+    279
+  ],
+  "sha256": "6fb83769d3f6be8814865942daf1d7d7bc15a981e0889fa67dc0fcae634806dc",
+  "source": "exec-b713940c-3439-4333-b820-4b657f44110c.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

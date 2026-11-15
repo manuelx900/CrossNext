@@ -48,11 +48,13 @@
 #include "WebDAVHandler.h"
 #include "WifiCredentialStore.h"
 #include "WifiPowerSaveGuard.h"
+#include "apps_local/ui/WebUiScript.h"
 #include "apps_local/wallpapers/WallpapersCore.h"
 #include "html/FilesPageHtml.generated.h"
 #include "html/FontsPageHtml.generated.h"
 #include "html/HomePageHtml.generated.h"
 #include "html/NotesPageHtml.generated.h"
+#include "html/PluginsPageHtml.generated.h"
 #include "html/RunnerPageHtml.generated.h"
 #include "html/SettingsPageHtml.generated.h"
 #include "html/WallpaperPageHtml.generated.h"
@@ -60,9 +62,14 @@
 #include "html/js/wallconvertJs.generated.h"
 #include "util/BookCacheUtils.h"
 #include "util/DictionaryRegistry.h"
+#include "util/FirmwareIdentity.h"
+#include "util/PluginEvents.h"
 #include "util/PluginHttp.h"
 #include "util/PluginLocations.h"
 #include "util/TaskWatchdog.h"
+
+static void sendStaticContent(WebServer* server, const char* data, size_t len, const char* etag,
+                              const char* contentType);
 
 namespace {
 // Arduino's WebServer retains parsed request arguments until the next request.
@@ -223,6 +230,20 @@ void CrossPointWebServer::begin() {
   if (isFull()) server->enableCORS(true);
 
   // Setup routes
+  if (isFull() || isWallpapers() || isNotes()) {
+    server->on("/ui.js", HTTP_GET, [this] {
+      const auto script = webui::script();
+      if (!script.data) {
+        LOG_ERR("WEB", "Unable to allocate translated UI response");
+        server->send(503, "text/plain; charset=utf-8", tr(STR_MEMORY_ERROR));
+        return;
+      }
+      server->sendHeader("Cache-Control", "no-store");
+      server->setContentLength(script.size);
+      server->send(200, "application/javascript; charset=utf-8", "");
+      server->sendContent(script.data.get(), script.size);
+    });
+  }
   LOG_DBG("WEB", "Setting up routes (%s)...",
           isFull() ? "full" : (isDev() ? "developer mode only" : "wallpapers only"));
   if (isFull()) {
@@ -268,6 +289,9 @@ void CrossPointWebServer::begin() {
     // Browser-side plugins (JS on the SD card) + their generic capabilities.
     server->on("/api/plugins", HTTP_GET, [this] { handlePluginList(); });
     server->on("/plugin", HTTP_GET, [this] { handlePluginFile(); });
+    server->on("/plugins", HTTP_GET, [this] {
+      sendStaticContent(server.get(), PluginsPageHtml, sizeof(PluginsPageHtml), PluginsPageHtmlETag, "text/html");
+    });
     server->on("/plugins-run", HTTP_GET, [this] { handlePluginRunnerPage(); });
     server->on("/api/plugin-jobs", HTTP_POST, [this] { handlePluginJobSubmit(); });
     server->on("/api/plugin-jobs/claim", HTTP_GET, [this] { handlePluginJobClaim(); });
@@ -614,6 +638,15 @@ void CrossPointWebServer::handleStatus() const {
 
   JsonDocument doc;
   doc["version"] = CROSSPOINT_VERSION;
+  doc["firmwareFamily"] = firmwareidentity::FAMILY;
+  doc["pluginApi"] = firmwareidentity::PLUGIN_API_VERSION;
+  doc["pluginCapabilities"] = firmwareidentity::PLUGIN_CAPABILITIES;
+  doc["pluginsEnabled"] = bool(SETTINGS.pluginsEnabled);
+  auto ui = doc["pluginUi"].to<JsonObject>();
+  ui["title"] = tr(STR_PLUGINS);
+  ui["settings"] = tr(STR_SETTINGS_TITLE);
+  ui["empty"] = tr(STR_PLUGIN_WEB_EMPTY);
+  ui["error"] = tr(STR_PLUGIN_WEB_ERROR);
   doc["ip"] = ipAddr;
   doc["mode"] = apMode ? "AP" : "STA";
   doc["rssi"] = apMode ? 0 : WiFi.RSSI();
@@ -1608,6 +1641,7 @@ void CrossPointWebServer::handlePostSettings() {
   }
 
   SETTINGS.saveToFile();
+  pluginevents::refreshSubscriptions();
 
   LOG_DBG("WEB", "Applied %d setting(s)", applied);
   server->send(200, "text/plain", String("Applied ") + String(applied) + " setting(s)");
@@ -1922,6 +1956,10 @@ void CrossPointWebServer::sendJson(const JsonDocument& doc) const {
 // plugin.js are listed (the page loads it); optional manifest.json supplies the
 // title and mount point.
 void CrossPointWebServer::handlePluginList() const {
+  if (!SETTINGS.pluginsEnabled) {
+    server->send(403, "text/plain", "plugin system disabled");
+    return;
+  }
   JsonDocument doc;
   JsonArray arr = doc.to<JsonArray>();
 
@@ -1947,6 +1985,10 @@ void CrossPointWebServer::handlePluginList() const {
 
 // GET /plugin?name=<plugin>&file=<file> -> serve /.crosspoint/plugins/<plugin>/<file>
 void CrossPointWebServer::handlePluginFile() const {
+  if (!SETTINGS.pluginsEnabled) {
+    server->send(403, "text/plain", "plugin system disabled");
+    return;
+  }
   const String name = server->arg("name");
   const String file = server->arg("file");
   if (!safeComponent(name) || !safeComponent(file)) {
@@ -1977,6 +2019,10 @@ void CrossPointWebServer::handlePluginFile() const {
 // device makes it via SecureNet. Sending the body raw avoids escaping it into
 // JSON on the device; PluginHost.relay() rebuilds {status, headers, body}.
 void CrossPointWebServer::handleRelay() {
+  if (!SETTINGS.pluginsEnabled) {
+    server->send(403, "text/plain", "plugin system disabled");
+    return;
+  }
   JsonDocument req;
   if (!readJsonBody(req)) return;
   const String plugin = req["plugin"] | "";
@@ -2038,6 +2084,10 @@ namespace {}  // namespace
 // Generic wolfSSL primitives (hash, random, AES, RSA, PKCS#12) a plugin can use.
 // Stateless; keys are base64 in the request/reply.
 void CrossPointWebServer::handleCrypto() {
+  if (!SETTINGS.pluginsEnabled) {
+    server->send(403, "text/plain", "plugin system disabled");
+    return;
+  }
   using namespace freeink::content;
   JsonDocument req;
   if (!readJsonBody(req)) return;
@@ -2221,6 +2271,10 @@ void CrossPointWebServer::handleCrypto() {
 // Device downloads a URL straight to SD, so a large body never passes through
 // the browser.
 void CrossPointWebServer::handleFetch() {
+  if (!SETTINGS.pluginsEnabled) {
+    server->send(403, "text/plain", "plugin system disabled");
+    return;
+  }
   JsonDocument req;
   if (!readJsonBody(req)) return;
   const std::string url = req["url"] | "";
@@ -2429,6 +2483,7 @@ void CrossPointWebServer::handleFetch() {
 // body: WebServer turns a plain body into a NUL-terminated String (truncating
 // binary data) and buffers all of it first, while file parts stream in chunks.
 void CrossPointWebServer::handlePluginFsUpload() {
+  if (!SETTINGS.pluginsEnabled) return;
   static constexpr size_t MAX_PLUGIN_FILE = 256 * 1024;
   auto& st = pluginFsUpload;
   const HTTPUpload& part = server->upload();
@@ -2495,6 +2550,10 @@ void CrossPointWebServer::handlePluginFsUpload() {
 }
 
 void CrossPointWebServer::handlePluginFs() {
+  if (!SETTINGS.pluginsEnabled) {
+    server->send(403, "text/plain", "plugin system disabled");
+    return;
+  }
   auto& st = pluginFsUpload;
   if (!st.started) {
     server->send(400, "application/json", "{\"error\":\"missing file part\"}");
@@ -2515,6 +2574,10 @@ void CrossPointWebServer::handlePluginFs() {
 // Stores a protected book's content key, wrapped to this device, as
 // "<path>.key" for the reader to open the book with.
 void CrossPointWebServer::handleBookKey() {
+  if (!SETTINGS.pluginsEnabled) {
+    server->send(403, "text/plain", "plugin system disabled");
+    return;
+  }
   JsonDocument req;
   if (!readJsonBody(req)) return;
   const std::string path = req["path"] | "";
@@ -2534,6 +2597,10 @@ void CrossPointWebServer::handleBookKey() {
 }
 
 void CrossPointWebServer::handlePluginRunnerPage() const {
+  if (!SETTINGS.pluginsEnabled) {
+    server->send(403, "text/plain", "plugin system disabled");
+    return;
+  }
   sendStaticContent(server.get(), RunnerPageHtml, sizeof(RunnerPageHtml), RunnerPageHtmlETag, "text/html");
   LOG_DBG("WEB", "Served plugin runner page");
 }
@@ -2550,6 +2617,10 @@ CrossPointWebServer::PluginJob* CrossPointWebServer::allocPluginJob() {
 
 // POST /api/plugin-jobs {plugin, action, args?} -> {id}
 void CrossPointWebServer::handlePluginJobSubmit() {
+  if (!SETTINGS.pluginsEnabled) {
+    server->send(403, "text/plain", "plugin system disabled");
+    return;
+  }
   JsonDocument req;
   if (!readJsonBody(req)) return;
   const String plugin = req["plugin"] | "";
@@ -2587,6 +2658,10 @@ void CrossPointWebServer::handlePluginJobSubmit() {
 
 // GET /api/plugin-jobs/claim?plugin=<name> -> {id, action, args} or {id:0}
 void CrossPointWebServer::handlePluginJobClaim() {
+  if (!SETTINGS.pluginsEnabled) {
+    server->send(403, "text/plain", "plugin system disabled");
+    return;
+  }
   const String plugin = server->arg("plugin");
   const uint32_t now = millis();
   for (auto& job : pluginJobs) {
@@ -2611,6 +2686,10 @@ void CrossPointWebServer::handlePluginJobClaim() {
 // 409 when `claim` is stale: the lease expired and another runner re-claimed
 // the job, so this late result must not overwrite that runner's.
 void CrossPointWebServer::handlePluginJobComplete() {
+  if (!SETTINGS.pluginsEnabled) {
+    server->send(403, "text/plain", "plugin system disabled");
+    return;
+  }
   JsonDocument req;
   if (!readJsonBody(req)) return;
   const uint32_t id = req["id"] | 0;
@@ -2646,6 +2725,10 @@ void CrossPointWebServer::handlePluginJobComplete() {
 
 // GET /api/plugin-jobs/status?id=<n> -> {id, state, result}
 void CrossPointWebServer::handlePluginJobStatus() {
+  if (!SETTINGS.pluginsEnabled) {
+    server->send(403, "text/plain", "plugin system disabled");
+    return;
+  }
   const uint32_t id = strtoul(server->arg("id").c_str(), nullptr, 10);
   static constexpr const char* STATE_NAMES[] = {"empty", "pending", "running", "done", "error"};
   for (auto& job : pluginJobs) {
@@ -2883,14 +2966,16 @@ void CrossPointWebServer::handleFontList() const {
 
     JsonArray files = fObj["files"].to<JsonArray>();
     for (const auto& file : family.files) {
+      char path[SdCardFontFamilyInfo::PATH_BUFFER_SIZE];
+      if (!family.filePath(file, path, sizeof(path))) continue;
       JsonObject fileObj = files.add<JsonObject>();
-      // Extract filename from full path
-      const char* name = strrchr(file.path.c_str(), '/');
-      fileObj["name"] = name ? name + 1 : file.path.c_str();
+      const char* name = strrchr(path, '/');
+      // The JSON owns the name because the path buffer is reused.
+      fileObj["name"] = std::string(name ? name + 1 : path);
 
       // Stat the file for size
       HalFile f;
-      if (Storage.openFileForRead("WEB", file.path.c_str(), f)) {
+      if (Storage.openFileForRead("WEB", path, f)) {
         fileObj["size"] = static_cast<unsigned long>(f.size());
         f.close();
       } else {
@@ -3182,6 +3267,10 @@ void CrossPointWebServer::handleDevPair() {
   doc["token"] = token;
   doc["device"] = BoardConfig::ACTIVE.name;
   doc["version"] = CROSSPOINT_VERSION;
+  doc["firmwareFamily"] = firmwareidentity::FAMILY;
+  doc["pluginApi"] = firmwareidentity::PLUGIN_API_VERSION;
+  doc["pluginCapabilities"] = firmwareidentity::PLUGIN_CAPABILITIES;
+  doc["pluginsEnabled"] = bool(SETTINGS.pluginsEnabled);
   String out;
   serializeJson(doc, out);
   server->send(200, "application/json", out);
@@ -3237,6 +3326,10 @@ void CrossPointWebServer::handleDevCrash() {
   doc["logs"] = corrupt ? "" : getLastLogs();
   doc["uptime"] = millis() / 1000;
   doc["version"] = CROSSPOINT_VERSION;
+  doc["firmwareFamily"] = firmwareidentity::FAMILY;
+  doc["pluginApi"] = firmwareidentity::PLUGIN_API_VERSION;
+  doc["pluginCapabilities"] = firmwareidentity::PLUGIN_CAPABILITIES;
+  doc["pluginsEnabled"] = bool(SETTINGS.pluginsEnabled);
 
   String out;
   serializeJson(doc, out);

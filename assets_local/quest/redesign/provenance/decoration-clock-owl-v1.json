@@ -1,0 +1,8 @@
+{
+  "id": "clock-owl",
+  "path": "exec-c2cfb4b1-439c-45bb-86f6-b3b25771cdbf.png",
+  "prompt": "Production decoration sprite for Aventura lectora, ONE isolated object. Match the reference pets: thick clean pure black rounded outlines, white and soft flat gray shading, cute storybook cartoon, simple readable silhouette for 80x112 pixels, no fine texture. Full object centered with transparent margin, truly transparent RGBA background. No aura, no glow, no scenery, no letters, no frame, no other subjects. Subject: A tiny mechanical owl perched on a short curved branch, round clock on its chest, big eyes, strong simple silhouette",
+  "tool": "built-in image_gen",
+  "sha256": "9332c51a8778fe5014bf2edd3d1f45c54056fdfe4aa70cb05062b9e96a4c4e0f",
+  "name": "decoration-clock-owl-v1"
+}

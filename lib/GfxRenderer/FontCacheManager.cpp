@@ -9,29 +9,6 @@
 #include <algorithm>
 #include <cstring>
 
-namespace {
-
-char* appendUtf8Codepoint(char* output, const uint32_t codepoint) {
-  if (codepoint < 0x80) {
-    *output++ = static_cast<char>(codepoint);
-  } else if (codepoint < 0x800) {
-    *output++ = static_cast<char>(0xC0 | (codepoint >> 6));
-    *output++ = static_cast<char>(0x80 | (codepoint & 0x3F));
-  } else if (codepoint < 0x10000) {
-    *output++ = static_cast<char>(0xE0 | (codepoint >> 12));
-    *output++ = static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
-    *output++ = static_cast<char>(0x80 | (codepoint & 0x3F));
-  } else {
-    *output++ = static_cast<char>(0xF0 | (codepoint >> 18));
-    *output++ = static_cast<char>(0x80 | ((codepoint >> 12) & 0x3F));
-    *output++ = static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
-    *output++ = static_cast<char>(0x80 | (codepoint & 0x3F));
-  }
-  return output;
-}
-
-}  // namespace
-
 FontCacheManager::FontCacheManager(const std::map<int, EpdFontFamily>& fontMap,
                                    const std::map<int, SdCardFont*>& sdCardFonts,
                                    const std::map<int, TtfEpdFont*>& ttfFonts)
@@ -39,7 +16,7 @@ FontCacheManager::FontCacheManager(const std::map<int, EpdFontFamily>& fontMap,
 
 void FontCacheManager::setFontDecompressor(FontDecompressor* d) { fontDecompressor_ = d; }
 
-void FontCacheManager::clearCache() { clearScopeCache(ScopeCache::Transient); }
+void FontCacheManager::clearCache() { clearScopeCache(ScopeCache::Reset); }
 
 void FontCacheManager::clearScopeCache(const ScopeCache cache) {
   if (fontDecompressor_) fontDecompressor_->clearCache();
@@ -49,7 +26,7 @@ void FontCacheManager::clearScopeCache(const ScopeCache cache) {
 #if CROSSPOINT_VECTOR_FONTS
   for (auto& [id, font] : ttfFonts_) {
     if (!font) continue;
-    if (cache == ScopeCache::Reader)
+    if (cache == ScopeCache::Reader || (cache == ScopeCache::Transient && font->retainsReaderCache()))
       font->discardFailedGlyphs();
     else
       font->clearCache();
@@ -76,14 +53,14 @@ void FontCacheManager::prewarmCache(int fontId, const char* utf8Text, uint8_t st
   // funnels through (reader endScanAndPrewarm, the settings preview, UI text),
   // so building here covers them all. accumulate=false means "this is the whole
   // glyph set for this render" → replace; accumulate=true → add incrementally.
-  // styleMask is ignored: a TTF face has no synthesized bold/italic here.
+  // Each requested style owns a separate raster cache, including sized faces.
 #if CROSSPOINT_VECTOR_FONTS
   auto tit = ttfFonts_.find(fontId);
   if (tit != ttfFonts_.end() && tit->second) {
-    if (accumulate) {
-      tit->second->addCoverage(utf8Text);
+    if (accumulate || tit->second->retainsReaderCache()) {
+      tit->second->addCoverage(utf8Text, styleMask);
     } else {
-      tit->second->build(utf8Text);
+      tit->second->build(utf8Text, styleMask);
     }
     return;
   }
@@ -163,10 +140,21 @@ void FontCacheManager::recordText(const char* text, int fontId, EpdFontFamily::S
 
   const uint8_t resolvedStyle = resolveScanStyle(fontId, style);
   const uint8_t group = fontSlot * 4 + resolvedStyle;
+  const auto vectorFont = ttfFonts_.find(fontId);
+  const auto family = fontMap_.find(fontId);
+  const bool vectorLigatures = vectorFont != ttfFonts_.end() && family != fontMap_.end();
   const unsigned char* cursor = reinterpret_cast<const unsigned char*>(text);
   while (*cursor) {
-    const uint32_t codepoint = utf8NextCodepoint(&cursor);
+    uint32_t codepoint = utf8NextCodepoint(&cursor);
     if (codepoint == 0) break;
+    // Small caps draw lowercase letters with their uppercase glyphs.
+    if (style & EpdFontFamily::SMALL_CAPS) codepoint = utf8SmallCapsUpper(codepoint);
+    // Preserve shaped clusters before the scan deduplicates and sorts glyphs.
+    if (vectorLigatures && (!(style & EpdFontFamily::SMALL_CAPS) || (codepoint >= 0x0e01 && codepoint <= 0x0e2e))) {
+      const char* suffix = reinterpret_cast<const char*>(cursor);
+      codepoint = family->second.applyLigatures(codepoint, suffix, static_cast<EpdFontFamily::Style>(resolvedStyle));
+      cursor = reinterpret_cast<const unsigned char*>(suffix);
+    }
 
     const uint32_t packed = (static_cast<uint32_t>(fontSlot) << SCAN_FONT_SHIFT) |
                             (static_cast<uint32_t>(resolvedStyle) << SCAN_STYLE_SHIFT) | codepoint;
@@ -206,7 +194,7 @@ FontCacheManager::PrewarmScope::PrewarmScope(FontCacheManager& manager, const Sc
   memset(manager_->scanGroupCounts_, 0, sizeof(manager_->scanGroupCounts_));
 }
 
-void FontCacheManager::PrewarmScope::endScanAndPrewarm() {
+void FontCacheManager::PrewarmScope::endScanAndPrewarm(bool (*continueWork)(void*), void* workContext) {
   manager_->scanMode_ = ScanMode::None;
   if (manager_->scanCodepointCount_ == 0) return;
 
@@ -223,13 +211,29 @@ void FontCacheManager::PrewarmScope::endScanAndPrewarm() {
   for (int group = SCAN_GROUP_COUNT - 1; group >= 0; group--) {
     const uint16_t groupCount = manager_->scanGroupCounts_[group];
     if (groupCount == 0) continue;
+    if (continueWork && !continueWork(workContext)) break;
 
     const uint16_t groupStart = groupStarts[group];
+    if (continueWork && cache_ == ScopeCache::Reader) {
+      // Small batches let foreground input cancel speculative glyph faults.
+      char text[65];
+      for (uint16_t first = 0; first < groupCount; first += 16) {
+        if (!continueWork(workContext)) break;
+        char* end = text;
+        const uint16_t count = std::min<uint16_t>(16, groupCount - first);
+        for (uint16_t n = 0; n < count; ++n)
+          end = utf8AppendCodepoint(end, manager_->scanCodepoints_[groupStart + first + n] & SCAN_CODEPOINT_MASK);
+        *end = '\0';
+        const auto fontId = manager_->scanFontIds_[group / 4];
+        manager_->prewarmCache(fontId, text, 1 << (group & 3), true);
+      }
+      continue;
+    }
     char* const utf8Text = reinterpret_cast<char*>(manager_->scanCodepoints_ + groupStart);
     char* output = utf8Text;
     for (uint16_t i = 0; i < groupCount; i++) {
       const uint32_t codepoint = manager_->scanCodepoints_[groupStart + i] & SCAN_CODEPOINT_MASK;
-      output = appendUtf8Codepoint(output, codepoint);
+      output = utf8AppendCodepoint(output, codepoint);
     }
     *output = '\0';
 
@@ -237,8 +241,8 @@ void FontCacheManager::PrewarmScope::endScanAndPrewarm() {
     const uint8_t style = static_cast<uint8_t>(group) & 0x03;
     // This group is the complete glyph set for one font/style in this render.
     const int fontId = manager_->scanFontIds_[fontSlot];
-    const bool retainVector = cache_ == ScopeCache::Reader && manager_->ttfFonts_.count(fontId) != 0;
-    manager_->prewarmCache(fontId, utf8Text, 1 << style, /*accumulate=*/retainVector);
+    const bool retainReader = cache_ == ScopeCache::Reader;
+    manager_->prewarmCache(fontId, utf8Text, 1 << style, /*accumulate=*/retainReader);
   }
 
   manager_->scanCodepointCount_ = 0;

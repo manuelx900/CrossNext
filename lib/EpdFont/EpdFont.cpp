@@ -56,7 +56,7 @@ void EpdFont::getTextBounds(const char* string, const int startX, const int star
     const int glyphBaseX = isCombining ? combiningMark::anchorOver(anchor, lastBaseX, lastBaseLeft, lastBaseWidth,
                                                                    glyph->left, glyph->width)
                                        : lastBaseX;
-    const int glyphBaseY = startY - raiseBy;
+    const int glyphBaseY = startY + raiseBy;
 
     *minX = std::min(*minX, glyphBaseX + glyph->left);
     *maxX = std::max(*maxX, glyphBaseX + glyph->left + glyph->width);
@@ -238,6 +238,9 @@ const EpdGlyph* EpdFont::getGlyph(const uint32_t cp) const {
     const EpdGlyph* loaded = data->glyphMissHandler(data->glyphMissCtx, cp);
     if (loaded) return loaded;
   }
+
+  // The turned comma uses the matching quotation-mark shape when absent.
+  if (cp == 0x02BB && hasCodepoint(0x2018)) return getGlyph(0x2018);
 
   if (cp != REPLACEMENT_GLYPH) {
     return getGlyph(REPLACEMENT_GLYPH);

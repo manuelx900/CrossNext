@@ -2,7 +2,9 @@
 
 #include <Epub.h>
 #include <FsHelpers.h>
+#include <HalMemory.h>
 #include <HalStorage.h>
+#include <LibraryBuilder.h>
 #include <Logging.h>
 #include <Memory.h>
 #include <Xtc.h>
@@ -11,6 +13,10 @@
 #include <cstdio>
 #include <cstring>
 #include <functional>
+#include <new>
+
+#include "BookProgressCache.h"
+#include "apps_local/home/CoverSceneCache.h"
 
 namespace {
 uint32_t readLe32(const uint8_t* p) {
@@ -18,10 +24,34 @@ uint32_t readLe32(const uint8_t* p) {
 }
 }  // namespace
 
+namespace {
+bookprogress::Cache* progressCache() {
+  // Sixty-four validated results cover the entire shelf, replacing its per-activity path table.
+  // Static internal storage and the render-task stack cannot afford this table.
+  static HalMemory::PsramBuffer memory;
+  static bookprogress::Cache* cache = nullptr;
+  static bool attempted = false;
+  if (!attempted) {
+    attempted = true;
+    if (HalMemory::getPsramHeap().freeBytes >= sizeof(bookprogress::Cache) + 512 * 1024)
+      memory = HalMemory::allocatePsram(sizeof(bookprogress::Cache));
+    if (memory)
+      cache = new (memory.get()) bookprogress::Cache;
+    else
+      LOG_ERR("HOME", "PSRAM progress cache unavailable (%u bytes)", unsigned(sizeof(bookprogress::Cache)));
+  }
+  return cache;
+}
+bookprogress::LiveStamp liveProgressStamp(const char* progressPath) {
+  return {Storage.stateFileRevision(progressPath), Storage.resourceRevision(), Storage.mediaRevision(),
+          library::libraryContentRevision()};
+}
+}  // namespace
+
 static int loadBookProgressUncached(const std::string& path) {
   uint8_t data[10]{};
   if (FsHelpers::hasReflowableBookExtension(path)) {
-    // Metadata objects exceed the stack budget; only the featured book is loaded, once per entry.
+    // Metadata objects exceed the render-task stack budget.
     auto epub = makeUniqueNoThrow<Epub>(path, "/.crosspoint");
     if (!epub) {
       LOG_ERR("HOME", "OOM: progress metadata");
@@ -60,20 +90,20 @@ static int loadBookProgressUncached(const std::string& path) {
 }
 
 int loadBookProgress(const std::string& path) {
-  // One bounded result survives Home recreation; no parser or book data stays resident.
-  static struct {
-    char path[512]{};
-    uint8_t progress[10]{};
-    uint64_t sourceBytes = 0, metadataBytes = 0;
-    uint32_t sourceModified = 0, metadataModified = 0;
-    int progressBytes = 0, percent = -1;
-  } cached;
+  auto* cache = progressCache();
   const bool epub = FsHelpers::hasReflowableBookExtension(path);
-  if ((!epub && !FsHelpers::hasXtcExtension(path)) || path.size() >= sizeof(cached.path))
+  if ((!epub && !FsHelpers::hasXtcExtension(path)) || path.size() >= bookprogress::Cache::PATH_SIZE)
     return loadBookProgressUncached(path);
   char filePath[96];
   const auto hash = static_cast<unsigned long>(std::hash<std::string>{}(path));
   std::snprintf(filePath, sizeof(filePath), "/.crosspoint/%s_%lu/progress.bin", epub ? "epub" : "xtc", hash);
+  const auto live = liveProgressStamp(filePath);
+  if (cache) {
+    const int percent = cache->findLive(path.c_str(), live);
+    if (percent >= 0 && live == liveProgressStamp(filePath)) return percent;
+  }
+  const auto libraryRevision = library::libraryContentRevision();
+  const auto artRevision = homecover::sceneRevision();
   uint8_t progress[10]{};
   int length = 0;
   uint64_t sourceBytes = 0, metadataBytes = 0;
@@ -83,6 +113,14 @@ int loadBookProgress(const std::string& path) {
     if (!Storage.openFileForRead("HOME", filePath, file)) return -1;
     length = file.read(progress, sizeof(progress));
     if (length != 4 && length != 6 && length != 10) return -1;
+  }
+  if (cache) {
+    const int percent =
+        cache->findProgress(path.c_str(), progress, length, libraryRevision, artRevision, live.resource, live.media);
+    if (percent >= 0) {
+      if (live == liveProgressStamp(filePath)) cache->bindLive(path.c_str(), live);
+      return percent;
+    }
   }
   {
     HalFile file;
@@ -97,21 +135,39 @@ int loadBookProgress(const std::string& path) {
     metadataBytes = file.fileSize64();
     metadataModified = file.modificationTime();
   }
-  if (cached.percent >= 0 && !std::strcmp(cached.path, path.c_str()) && cached.progressBytes == length &&
-      !std::memcmp(cached.progress, progress, sizeof(progress)) && cached.sourceBytes == sourceBytes &&
-      cached.sourceModified == sourceModified && cached.metadataBytes == metadataBytes &&
-      cached.metadataModified == metadataModified)
-    return cached.percent;
+  bookprogress::Stamp stamp;
+  stamp.libraryRevision = libraryRevision;
+  stamp.artRevision = artRevision;
+  stamp.resource = live.resource;
+  stamp.media = live.media;
+  std::memcpy(stamp.progress.data(), progress, sizeof(progress));
+  stamp.progressBytes = length;
+  stamp.sourceBytes = sourceBytes;
+  stamp.sourceModified = sourceModified;
+  stamp.metadataBytes = metadataBytes;
+  stamp.metadataModified = metadataModified;
+  if (cache) {
+    const int percent = cache->find(path.c_str(), stamp);
+    if (percent >= 0) {
+      std::snprintf(filePath, sizeof(filePath), "/.crosspoint/%s_%lu/progress.bin", epub ? "epub" : "xtc", hash);
+      if (live == liveProgressStamp(filePath)) cache->bindLive(path.c_str(), live);
+      return percent;
+    }
+  }
   const int percent = loadBookProgressUncached(path);
-  if (percent >= 0) {
-    std::strcpy(cached.path, path.c_str());
-    std::memcpy(cached.progress, progress, sizeof(progress));
-    cached.progressBytes = length;
-    cached.sourceBytes = sourceBytes;
-    cached.sourceModified = sourceModified;
-    cached.metadataBytes = metadataBytes;
-    cached.metadataModified = metadataModified;
-    cached.percent = percent;
+  if (cache) {
+    cache->store(path.c_str(), stamp, percent);
+    std::snprintf(filePath, sizeof(filePath), "/.crosspoint/%s_%lu/progress.bin", epub ? "epub" : "xtc", hash);
+    if (live == liveProgressStamp(filePath)) cache->bindLive(path.c_str(), live);
   }
   return percent;
+}
+
+void publishBookProgress(const std::string& path, int percent) {
+  const bool epub = FsHelpers::hasReflowableBookExtension(path);
+  if (!epub && !FsHelpers::hasXtcExtension(path)) return;
+  char progressPath[96];
+  std::snprintf(progressPath, sizeof(progressPath), "/.crosspoint/%s_%lu/progress.bin", epub ? "epub" : "xtc",
+                static_cast<unsigned long>(std::hash<std::string>{}(path)));
+  if (auto* cache = progressCache()) cache->publish(path.c_str(), liveProgressStamp(progressPath), percent);
 }

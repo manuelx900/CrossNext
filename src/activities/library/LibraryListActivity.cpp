@@ -25,7 +25,12 @@
 #include "RecentBooksStore.h"
 #include "activities/util/ConfirmationActivity.h"
 #include "activities/util/KeyboardEntryActivity.h"
+#include "apps_local/home/CoverSceneCache.h"
+#include "apps_local/library/CollectionActions.h"
+#include "apps_local/library/CollectionsActivity.h"
+#include "apps_local/library/LibraryEntryBackdrop.h"
 #include "apps_local/library/LibraryFinishedBooks.h"
+#include "apps_local/library/LibraryLoadingNotice.h"
 #include "apps_local/ui/PageIndicator.h"
 #include "apps_local/ui/PixelMenuTheme.h"
 #include "components/UIScale.h"
@@ -42,6 +47,7 @@ namespace {
 constexpr int SIDE_PADDING = 12;
 constexpr unsigned long LONG_PRESS_MS = 1000;
 constexpr unsigned long COVER_IDLE_MS = 250;
+constexpr unsigned long COVER_PREFETCH_IDLE_MS = 80;
 
 constexpr int RECENT_TAB = 0;
 constexpr bool isDescending(library::SortOrder order) {
@@ -74,11 +80,8 @@ LibraryListActivity::LibraryListActivity(GfxRenderer& renderer, MappedInputManag
 }
 
 void LibraryListActivity::onEnter() {
-  // One lock across the base lifecycle AND the data phase: the base onEnter
-  // schedules a paint, and the render task must not read the index or the
-  // filter before they are in place. The rebuild also needs the lock: the
-  // render task's SD-loaded fonts read glyph data at draw time, and the walk
-  // needs the card to itself.
+  entryStartedAt = millis();
+  // Register the shell before any index, pruning, or cover I/O.
   RenderLock lock(*this);
   activeTabIndex = 0;
   descendingTabs = SETTINGS.librarySortDirections & 1u;
@@ -123,6 +126,42 @@ void LibraryListActivity::onEnter() {
   gridPath.reserve(520);
   gridFileName.reserve(256);
 
+  restoreResidentLibrary();
+  if (!libraryReady() && !gridView()) initializeLibrary();
+
+  lockNextConfirmRelease = mappedInput.isPressed(MappedInputManager::Button::Confirm);
+  requestUpdate(true);
+}
+
+int LibraryListActivity::entryBookCount() const {
+  if (libraryReady()) return listCount();
+  // SD-dependent filters publish their count after the existing idle preparation.
+  if (!(SETTINGS.libraryDisplay & libraryui::kFinished) || !query.empty() || facetFilter.active()) return -1;
+  const auto& books = RECENT_BOOKS.getBooks();
+  const int limit = std::min<int>(books.size(), RecentBooksStore::MAX_RECENT_BOOKS);
+  int count = 0;
+  for (int n = 0; n < limit; ++n) count += libraryui::acceptsFormat(books[n].path, SETTINGS.libraryFileTypes);
+  return count;
+}
+
+bool LibraryListActivity::restoreResidentLibrary() {
+  // Finished-book filtering needs its completion lookup before publishing a count.
+  if ((SETTINGS.libraryDisplay & libraryui::kFinished) &&
+      index.openRetained(library::libraryIndexPath(), library::libraryContentRevision()) &&
+      index.header().metadataEnabled == (SETTINGS.libraryUseMetadata != 0) &&
+      index.header().reserved[0] == content::VISIBILITY_VERSION) {
+    degraded = index.ranksDegraded();
+    resolvePinned();
+    applyFilter();
+    entryPhase = EntryPhase::Ready;
+    return true;
+  }
+  index.close();
+  return false;
+}
+
+void LibraryListActivity::initializeLibrary() {
+  const auto started = millis();
   // Recent is backed by the resident store. Prune before opening the index so
   // its persistence write never overlaps the long-lived index reader.
   if (RECENT_BOOKS.pruneMissing()) RECENT_BOOKS.saveToFile();
@@ -134,27 +173,48 @@ void LibraryListActivity::onEnter() {
                              index.header().metadataEnabled != readMetadata ||
                              index.header().reserved[0] != content::VISIBILITY_VERSION;
   if (rebuildNeeded) {
-    index.close();
-    GUI.drawPopup(renderer, tr(STR_LIBRARY_REBUILDING));
+    closeIndex();
+
     rebuildIndex();
-    if (!index.open(library::libraryIndexPath())) LOG_ERR("LIB", "cannot open library index");
+    if (!openIndexForBrowsing()) LOG_ERR("LIB", "cannot open library index");
   }
   degraded = index.isOpen() && index.ranksDegraded();
   if (index.isOpen() && index.dedupDegraded()) {
     LOG_ERR("LIB", "index was built without duplicate detection");
   }
+  if (index.canReuseBrowseCache(library::libraryContentRevision()))
+    index.cacheForBrowsing(nullptr, library::libraryContentRevision());
   resolvePinned();
   applyFilter();
-
-  // Entered while Confirm was still held (typical when launched from the home
-  // menu): ignore its release, or we would open whatever sits at row 0.
-  lockNextConfirmRelease = mappedInput.isPressed(MappedInputManager::Button::Confirm);
+  LOG_DBG("LIB", "entry prepare=%lu ms", millis() - started);
+  entryPhase = EntryPhase::Ready;
   requestUpdate(true);
 }
 
-void LibraryListActivity::onExit() {
+void LibraryListActivity::closeIndex() {
+  prefetchCancelled = true;
+  gridCoverBitmap.setMemorySource(nullptr, 0);
+  coverPrefetch.release();
+  preparedCover.release();
+  prefetchFirst = -1;
+  prefetchSlot = 0;
+  facetChoices.clear();
+  index.retainBrowseCache(library::libraryContentRevision());
   index.close();
-  facetChoices.reset();
+}
+
+bool LibraryListActivity::openIndexForBrowsing() {
+  if (!index.open(library::libraryIndexPath())) return false;
+  const auto revision = library::libraryContentRevision();
+  // Confirmation returns must not pay for a cold snapshot when retention was unavailable.
+  if (index.canReuseBrowseCache(revision)) index.cacheForBrowsing(nullptr, revision);
+  return true;
+}
+
+void LibraryListActivity::onExit() {
+  homecover::cancelScenePack();
+  closeIndex();
+  facetChoices.deactivate();
   gridCoverFile.close();
   Activity::onExit();
   gridCoverBitmap.setReadAheadBuffer(nullptr, 0);
@@ -162,6 +222,7 @@ void LibraryListActivity::onExit() {
 }
 
 bool LibraryListActivity::rebuildIndex() {
+  library::LibraryIndexFile::releaseRetainedBrowseCache();
   library::BuildStats stats;
   const bool ok = library::buildLibraryIndex("/", stats, SETTINGS.libraryUseMetadata != 0);
   if (!ok) {
@@ -208,7 +269,13 @@ int LibraryListActivity::storeIndexFor(int entry) const {
 void LibraryListActivity::resolvePinned() {
   const auto& books = RECENT_BOOKS.getBooks();
   pinnedTotal = static_cast<uint8_t>(std::min<size_t>(books.size(), RecentBooksStore::MAX_RECENT_BOOKS));
+  pinnedRowsReady = false;
   for (int i = 0; i < pinnedTotal; i++) pinnedAscRows[i] = 0xFFFF;
+  if (isRecentSort(sortOrder) && !resultMapped()) {
+    refreshOverlap();
+    return;
+  }
+  index.cacheForBrowsing([] { delay(1); }, library::libraryContentRevision());
   if (pinnedTotal > 0 && index.isOpen()) {
     library::BookIdentity identities[RecentBooksStore::MAX_RECENT_BOOKS];
     for (int i = 0; i < pinnedTotal; i++) {
@@ -217,9 +284,10 @@ void LibraryListActivity::resolvePinned() {
       // Size is only a lookup prefilter; 0 (stat failed, e.g. the index handle
       // is the card's one open reader) falls back to hash-only matching.
       identities[i].fileSize = 0;
-      HalFile file;
-      if (Storage.openFileForRead("LIB", path.c_str(), file)) {
-        identities[i].fileSize = static_cast<uint32_t>(file.fileSize());
+      if (!index.hasBrowseCache()) {
+        HalFile file;
+        if (Storage.openFileForRead("LIB", path.c_str(), file))
+          identities[i].fileSize = static_cast<uint32_t>(file.fileSize());
       }
     }
     if (!index.recentRowsFor(identities, pinnedTotal, pinnedAscRows)) {
@@ -230,6 +298,7 @@ void LibraryListActivity::resolvePinned() {
     }
   }
   refreshOverlap();
+  pinnedRowsReady = true;
 }
 
 void LibraryListActivity::refreshOverlap() {
@@ -276,11 +345,12 @@ void LibraryListActivity::openSelectedBook() {
 void LibraryListActivity::openBookByPath(const std::string& path) {
   RenderLock lock;
   app.clearTapFlash();
-  index.close();
+  closeIndex();
   onSelectBook(path);
 }
 
 void LibraryListActivity::activateIndex(const int index) {
+  if (!libraryReady() || (gridView() && coverPresentation != CoverPresentation::Complete)) return;
   if (view == View::Categories) {
     static constexpr library::Facet facets[] = {library::Facet::Genre, library::Facet::Series,
                                                 library::Facet::AuthorFirst, library::Facet::Author,
@@ -311,10 +381,8 @@ bool LibraryListActivity::deleteEligible() const { return !groupsCollapsed && (f
 
 void LibraryListActivity::onRowLongPress(const int index) {
   if (view != View::Books) return;
-  if (isRecentSort(sortOrder)) {
+  if (isRecentSort(sortOrder) || deleteEligible()) {
     showRecentBookOptions(index);
-  } else if (deleteEligible()) {
-    promptDeleteBook(index);
   } else if (!groupsCollapsed && groupable()) {
     collapseGroups(index);
   } else {
@@ -348,12 +416,38 @@ void LibraryListActivity::showRecentBookOptions(const int entry) {
     }
   }
 
-  const char* STORE_OPTIONS[] = {tr(STR_OPEN), tr(STR_REMOVE_FROM_RECENTS), tr(STR_DELETE), tr(STR_LIBRARY_REBUILD)};
-  const char* INDEX_OPTIONS[] = {tr(STR_OPEN), tr(STR_DELETE), tr(STR_LIBRARY_REBUILD)};
+  bool favorite = false;
+  if (!collections::isFavorite(path.c_str(), favorite)) {
+    LOG_ERR("LIB", "Cannot read favorites");
+    const char* confirm[] = {tr(STR_CONFIRM)};
+    optionPopup.showMessage(tr(STR_COLLECTIONS), tr(STR_COLLECTION_FAILED), confirm, 1, 0, [](int) {});
+    requestUpdate();
+    return;
+  }
+  const char* favoriteLabel = favorite ? tr(STR_BOOK_UNFAVORITE) : tr(STR_BOOK_FAVORITE);
+  const char* STORE_OPTIONS[] = {tr(STR_OPEN),  tr(STR_REMOVE_FROM_RECENTS), tr(STR_DELETE), tr(STR_LIBRARY_REBUILD),
+                                 favoriteLabel, tr(STR_COLLECTION_ADD)};
+  const char* INDEX_OPTIONS[] = {tr(STR_OPEN), tr(STR_DELETE), tr(STR_LIBRARY_REBUILD), favoriteLabel,
+                                 tr(STR_COLLECTION_ADD)};
   app.clearTapFlash();
-  optionPopup.show(tr(STR_LIBRARY), title.c_str(), isStoreRow ? STORE_OPTIONS : INDEX_OPTIONS, isStoreRow ? 4 : 3, 0,
-                   [this, path, title, isStoreRow](const int choice) {
+  optionPopup.show(tr(STR_LIBRARY), title.c_str(), isStoreRow ? STORE_OPTIONS : INDEX_OPTIONS, isStoreRow ? 6 : 5, -1,
+                   [this, path, title, isStoreRow, favorite](const int choice) {
                      swallowHeldReleases();
+                     if (choice == (isStoreRow ? 4 : 3)) {
+                       RenderLock lock(*this);
+                       if (!collections::setFavorite(path.c_str(), !favorite)) {
+                         LOG_ERR("LIB", "Favorite save failed");
+                         const char* confirm[] = {tr(STR_CONFIRM)};
+                         optionPopup.showMessage(tr(STR_COLLECTIONS), tr(STR_COLLECTION_FAILED), confirm, 1, 0,
+                                                 [](int) {});
+                       }
+                       requestUpdate();
+                       return;
+                     }
+                     if (choice == (isStoreRow ? 5 : 4)) {
+                       openCollections(path);
+                       return;
+                     }
                      switch (choice) {
                        case 0:
                          openBookByPath(path);
@@ -386,10 +480,10 @@ void LibraryListActivity::showRecentBookOptions(const int entry) {
 // the filter) around it.
 void LibraryListActivity::promptRebuildIndex() {
   RenderLock lock(*this);
-  GUI.drawPopup(renderer, tr(STR_LIBRARY_REBUILDING));
-  index.close();
+  GUI.drawLoadingScreen(renderer, tr(STR_LIBRARY_INITIAL_INDEX));
+  closeIndex();
   rebuildIndex();
-  if (!index.open(library::libraryIndexPath())) LOG_ERR("LIB", "cannot open library index");
+  if (!openIndexForBrowsing()) LOG_ERR("LIB", "cannot open library index");
   resetAfterRebuild();
   requestUpdate();
 }
@@ -400,7 +494,7 @@ void LibraryListActivity::resetAfterRebuild() {
   resolvePinned();
   if (view == View::Facets) {
     view = View::Categories;
-    facetChoices.reset();
+    facetChoices.deactivate();
     preferencesNav.reset();
   }
   applyFilter();
@@ -417,19 +511,19 @@ void LibraryListActivity::resetAfterRebuild() {
 void LibraryListActivity::promptRemoveRecentBook(const std::string& path, const std::string& title) {
   RenderLock lock;
   const bool reopenIndex = index.isOpen();
-  index.close();
+  closeIndex();
   auto confirmation =
       makeUniqueNoThrow<ConfirmationActivity>(renderer, mappedInput, tr(STR_REMOVE_FROM_RECENTS), title);
   if (!confirmation) {
     LOG_ERR("LIB", "OOM: recent removal confirmation");
-    if (reopenIndex && !index.open(library::libraryIndexPath())) LOG_ERR("LIB", "cannot reopen library index");
+    if (reopenIndex && !openIndexForBrowsing()) LOG_ERR("LIB", "cannot reopen library index");
     return;
   }
 
   startActivityForResult(std::move(confirmation), [this, path, reopenIndex](const ActivityResult& result) {
     swallowHeldReleases();
     RenderLock resultLock;
-    if (reopenIndex && !index.open(library::libraryIndexPath())) LOG_ERR("LIB", "cannot reopen library index");
+    if (reopenIndex && !openIndexForBrowsing()) LOG_ERR("LIB", "cannot reopen library index");
     if (!result.isCancelled && RECENT_BOOKS.removeByPath(path)) {
       resolvePinned();
       applyFilter();
@@ -468,12 +562,12 @@ void LibraryListActivity::promptDeleteBook(const int entry) {
 void LibraryListActivity::promptDeleteBookByPath(const std::string& path, const std::string& title) {
   RenderLock lock;
   // The dialog and the delete both want the card; reopen when we resume.
-  index.close();
+  closeIndex();
   auto confirmation =
       makeUniqueNoThrow<ConfirmationActivity>(renderer, mappedInput, tr(STR_DELETE) + std::string("? "), title);
   if (!confirmation) {
     LOG_ERR("LIB", "OOM: delete confirmation");
-    if (!index.open(library::libraryIndexPath())) LOG_ERR("LIB", "cannot reopen library index");
+    if (!openIndexForBrowsing()) LOG_ERR("LIB", "cannot reopen library index");
     return;
   }
 
@@ -488,10 +582,10 @@ void LibraryListActivity::promptDeleteBookByPath(const std::string& path, const 
         LOG_DBG("LIB", "deleting %s", path.c_str());
         if (!removeBookFile(path)) LOG_ERR("LIB", "cannot delete %s", path.c_str());
         if (RECENT_BOOKS.removeByPath(path)) RECENT_BOOKS.saveToFile();
-        GUI.drawPopup(renderer, tr(STR_LIBRARY_REBUILDING));
+        GUI.drawLoadingScreen(renderer, tr(STR_LIBRARY_INITIAL_INDEX));
         rebuildIndex();
       }
-      if (!index.open(library::libraryIndexPath())) LOG_ERR("LIB", "cannot reopen library index");
+      if (!openIndexForBrowsing()) LOG_ERR("LIB", "cannot reopen library index");
       if (!result.isCancelled) {
         resetAfterRebuild();
       }
@@ -542,6 +636,7 @@ fui::ListNav& LibraryListActivity::activeNav() {
   return view != View::Books ? preferencesNav : UiTabListActivity::activeNav();
 }
 void LibraryListActivity::onRowAction(const fui::ActionEvent& event) {
+  if (!libraryReady() || (gridView() && coverPresentation != CoverPresentation::Complete)) return;
   if (view != View::Books)
     UiListActivity::onRowAction(event);
   else
@@ -582,11 +677,11 @@ void LibraryListActivity::closePreferences() {
   closeRouting();
   view = settingsReturn;
   if (preferencesChanged) {
-    GUI.drawPopup(renderer, tr(STR_LOADING));
+    GUI.drawLoadingScreen(renderer, tr(STR_LOADING));
     if (!index.isOpen() || index.header().metadataEnabled != (SETTINGS.libraryUseMetadata != 0)) {
-      index.close();
+      closeIndex();
       const bool rebuilt = rebuildIndex();
-      const bool opened = index.open(library::libraryIndexPath());
+      const bool opened = openIndexForBrowsing();
       if (!rebuilt || !opened) {
         LOG_ERR("LIB", "Cannot update library after metadata change");
         view = View::Settings;
@@ -677,7 +772,7 @@ void LibraryListActivity::buildPreferences(UiScreen& screen) {
 }
 
 void LibraryListActivity::stepTab(const int direction) {
-  selectTab((activeTabIndex + (direction > 0 ? 1 : -1) + 2) % 2, false);
+  selectTab((activeTabIndex + (direction > 0 ? 1 : -1) + 3) % 3, false);
 }
 
 void LibraryListActivity::onTabAction(const int index) {
@@ -686,25 +781,51 @@ void LibraryListActivity::onTabAction(const int index) {
 }
 
 void LibraryListActivity::selectTab(const int index, const bool) {
-  if (index < 0 || index > 1) return;
+  if (index < 0 || index > 2) return;
   if (index == 1) {
+    openCollections();
+    return;
+  }
+  if (index == 2) {
     showCategories();
     return;
   }
   RenderLock lock;
+  const bool reuseRecent = isRecentSort(sortOrder) && !facetFilter.active() && query.empty() && !groupsCollapsed;
   closeRouting();
   view = View::Books;
   activeTabIndex = 0;
   sortOrder = descendingTabs & 1 ? library::SortOrder::RecentDesc : library::SortOrder::RecentAsc;
-  facetChoices.reset();
+  facetChoices.deactivate();
   facetFilter = {};
   query.clear();
   headerSearchTitle.clear();
-  applyFilter();
+  if (!reuseRecent) applyFilter();
   activeNav().reset();
-  invalidateGrid();
   resetUi();
   requestUpdate();
+}
+
+void LibraryListActivity::openCollections(const std::string& book) {
+  RenderLock lock(*this);
+  auto child = makeUniqueNoThrow<CollectionsActivity>(renderer, mappedInput, book);
+  if (!child) {
+    LOG_ERR("LIB", "OOM: collections");
+    return;
+  }
+  closeRouting();
+  startActivityForResult(std::move(child), [this](const ActivityResult& result) {
+    RenderLock lock(*this);
+    swallowHeldReleases();
+    const auto* selection = std::get_if<MenuResult>(&result.data);
+    if (selection && selection->action == collectionui::ReturnHome) {
+      finish();
+      return;
+    }
+    const int tab = selection && selection->action == 2 ? 2 : 0;
+    lock.unlock();
+    selectTab(tab, true);
+  });
 }
 
 void LibraryListActivity::openSortPicker() { selectTab(activeTab(), true); }
@@ -732,45 +853,56 @@ uint16_t LibraryListActivity::facetOrdinal(int row) const {
 
 void LibraryListActivity::openFacetPicker(library::Facet facet) {
   RenderLock lock;
-  facetChoices.reset();
+  facetChoices.deactivate();
   facetCount = 0;
   facetKind = facet;
   const int total = index.bookCount();
-  // One ordinal per book in PSRAM; names are loaded only for the visible cards.
-  if (total) facetChoices = HalMemory::allocatePsram(size_t(total) * sizeof(uint16_t));
-  if (total && !facetChoices) {
-    index.dropBrowseCache();
-    facetChoices = HalMemory::allocatePsram(size_t(total) * sizeof(uint16_t));
+  auto cached = facetChoices.activate(static_cast<int>(facet), size_t(total) * sizeof(uint16_t));
+  if (cached == library::FacetCache::Result::Hit) {
+    facetCount = facetChoices.count();
+    closeRouting();
+    view = View::Facets;
+    preferencesNav.reset();
+    resetUi();
+    requestUpdate();
+    LOG_DBG("LIB", "filter cache hit: %u choices", unsigned(facetCount));
+    return;
   }
-  if (total && !facetChoices) {
+  if (cached == library::FacetCache::Result::Unavailable) {
+    index.dropBrowseCache();
+    cached = facetChoices.activate(static_cast<int>(facet), size_t(total) * sizeof(uint16_t));
+  }
+  if (cached == library::FacetCache::Result::Unavailable) {
     LOG_ERR("LIB", "OOM: %u-byte filter choices", unsigned(total * sizeof(uint16_t)));
     GUI.drawPopup(renderer, tr(STR_LIBRARY_SEARCH_UNAVAILABLE));
     return;
   }
   index.cacheForBrowsing([] { delay(1); });
-  std::string prior, value;
+  std::string prior, value, key;
   prior.reserve(256);
   value.reserve(256);
+  key.reserve(256);
   bool first = true;
   for (int row = 0; row < total; ++row) {
     if ((row & 63) == 0) delay(1);
     const uint16_t ordinal = index.ordinalForRow(library::facetOrder(facet), row);
     library::ClixRecord record{};
     if (ordinal == 0xFFFF || !index.readRecord(ordinal, record) || !library::readFacet(index, record, facet, value)) {
-      facetChoices.reset();
+      facetChoices.discardActive();
       facetCount = 0;
       LOG_ERR("LIB", "cannot read filter choices");
       GUI.drawPopup(renderer, tr(STR_LIBRARY_FILTER_UNAVAILABLE));
       return;
     }
-    const auto key = library::fold(value);
+    library::foldInto(value, key);
     if (first || key != prior) {
       std::memcpy(facetChoices.get() + facetCount * sizeof(ordinal), &ordinal, sizeof(ordinal));
       ++facetCount;
     }
     first = false;
-    prior = key;
+    prior.swap(key);
   }
+  facetChoices.commit(facetCount);
   closeRouting();
   view = View::Facets;
   preferencesNav.reset();
@@ -781,10 +913,10 @@ void LibraryListActivity::openFacetPicker(library::Facet facet) {
 void LibraryListActivity::showCategories() {
   RenderLock lock;
   closeRouting();
-  activeTabIndex = 1;
+  activeTabIndex = 2;
   headerSearchTitle.clear();
   view = View::Categories;
-  facetChoices.reset();
+  facetChoices.deactivate();
   preferencesNav.reset();
   resetUi();
   requestUpdate();
@@ -834,6 +966,8 @@ void LibraryListActivity::buildFilterRows(UiScreen& screen) {
   props.inputMask = fui::InputTouch;
   props.selectedIndex = -1;
   syncListViewport(screen, props);
+  props.labelText.font = view == View::Facets ? 4 : 0;
+  props.labelText.bold = false;
   props.selectedIndex = -1;
   const int first = props.topIndex;
   const int shown = std::min(9, std::max(0, listCount() - first));
@@ -869,7 +1003,7 @@ void LibraryListActivity::buildFilterRows(UiScreen& screen) {
 
 void LibraryListActivity::toggleSortDirection() {
   RenderLock lock;
-  descendingTabs ^= 1u << activeTabIndex;
+  descendingTabs ^= activeTabIndex == 0 ? 1u : 2u;
   if (view == View::Books) {
     sortOrder = static_cast<library::SortOrder>(static_cast<uint8_t>(sortOrder) ^ 1);
     closeRouting();
@@ -884,12 +1018,12 @@ void LibraryListActivity::toggleSortDirection() {
   requestUpdate();
 }
 
-int LibraryListActivity::tabCount() const { return 2; }
+int LibraryListActivity::tabCount() const { return 3; }
 
 int LibraryListActivity::activeTab() const { return activeTabIndex; }
 
 const char* LibraryListActivity::tabLabel(const int index) const {
-  return index == 0 ? tr(STR_LIBRARY_TAB_RECENT) : tr(STR_LIBRARY_FILTER);
+  return index == 0 ? tr(STR_LIBRARY_TAB_RECENT) : index == 1 ? tr(STR_COLLECTIONS) : tr(STR_LIBRARY_FILTER);
 }
 
 fui::TabIndicator LibraryListActivity::tabIndicator(const int) const { return fui::TabIndicator::None; }
@@ -1023,6 +1157,8 @@ void LibraryListActivity::applyFilter() {
   // reader can see what narrowed the list without reopening the keyboard.
   headerSearchTitle = query.empty() ? std::string() : "“" + query + "”";
   if (!resultMapped()) return;
+  index.cacheForBrowsing([] { delay(1); }, library::libraryContentRevision());
+  if (!pinnedRowsReady) resolvePinned();
   if (!SETTINGS.libraryFileTypes) return;
 
   const std::string needle = library::fold(query);
@@ -1162,6 +1298,10 @@ void LibraryListActivity::applyFilter() {
 // clear the search, expand collapsed groups, return focus to the tabs, then
 // leave for home.
 void LibraryListActivity::handleBackAction() {
+  if (!libraryReady()) {
+    onGoHome();
+    return;
+  }
   if (view == View::Settings) {
     closePreferences();
     return;
@@ -1171,7 +1311,7 @@ void LibraryListActivity::handleBackAction() {
     return;
   }
   if (view == View::Categories) {
-    selectTab(0, false);
+    onGoHome();
     return;
   }
   if (facetFilter.active()) {
@@ -1302,17 +1442,25 @@ void LibraryListActivity::ensureGridBuffer() {
 }
 void LibraryListActivity::invalidateGrid() {
   gridFirst = -1;
+  coverPresentation = CoverPresentation::Unannounced;
   gridCacheValid = false;
   gridMissingCovers = 0;
   coverWorkRequested = false;
   coverAttempts = 0;
   pendingCover.clear();
+  prefetchCancelled = true;
+  nativeMissing = 0;
+  prefetchFirst = -1;
+  prefetchSlot = 0;
+  prefetchFallbackHeight = false;
 }
 void LibraryListActivity::requestUpdate(const bool immediate) {
+  prefetchCancelled = true;
   presentationPending = true;
   Activity::requestUpdate(immediate);
 }
 void LibraryListActivity::moveRingTo(const int ringIndex) {
+  prefetchCancelled = true;
   presentationPending = true;
   UiTabListActivity::moveRingTo(ringIndex);
 }
@@ -1355,7 +1503,158 @@ bool LibraryListActivity::loadPendingCover() {
   }
   return true;
 }
+
+void LibraryListActivity::prefetchNextCover() {
+  const int pageSize = gridPageSize();
+  const int count = listCount(), first = gridFirst + pageSize;
+  if (!gridView() || gridFirst < 0 || gridFirst != std::max(0, selectedEntry()) / pageSize * pageSize ||
+      gridMissingCovers || first >= count || gridCoverHeight <= 0 || prefetchCancelled)
+    return;
+  const auto revision = library::libraryContentRevision(), artRevision = homecover::sceneRevision();
+  if (prefetchFirst != first || prefetchRevision != revision || prefetchArtRevision != artRevision) {
+    const auto key = gridSceneKey(first, count, pageSize);
+    if (!key) return;
+    coverPrefetch.begin(key, revision, artRevision);
+    prefetchSceneKey = key;
+    prefetchFirst = first;
+    prefetchRevision = revision;
+    prefetchArtRevision = artRevision;
+    prefetchSlot = 0;
+    prefetchFallbackHeight = false;
+    if (homecover::containsScene(gridArea, key, homecover::SceneKind::Library) ||
+        homecover::prefetchLibraryScene(renderer, gridArea, key, &LibraryListActivity::continueCoverPreparation,
+                                        this)) {
+      prefetchSlot = pageSize;
+      return;
+    }
+  }
+  if (prefetchSlot >= pageSize || first + prefetchSlot >= count) return;
+  const int entry = first + prefetchSlot;
+  const int height = prefetchFallbackHeight ? gridPreparedCoverHeight : gridCoverHeight;
+  if (!coverPrefetch.loading()) {
+    if (const int store = storeIndexFor(entry); store >= 0) {
+      gridPath = RECENT_BOOKS.getBooks()[store].path;
+    } else {
+      const auto ordinal = index.ordinalForRow(sortOrder, static_cast<uint16_t>(rowFor(entry)));
+      if (ordinal == 0xffff || !index.readRecord(ordinal, gridRecord) || !index.readPath(gridRecord, gridPath)) {
+        ++prefetchSlot;
+        prefetchFallbackHeight = false;
+        return;
+      }
+    }
+    if (!FsHelpers::hasEpubExtension(gridPath) && !FsHelpers::hasXtcExtension(gridPath)) {
+      ++prefetchSlot;
+      prefetchFallbackHeight = false;
+      return;
+    }
+    std::snprintf(pixelTitle, sizeof(pixelTitle), "/.crosspoint/%s_%lu/thumb_%s%d.bmp",
+                  FsHelpers::hasXtcExtension(gridPath) ? "xtc" : "epub",
+                  static_cast<unsigned long>(std::hash<std::string>{}(gridPath)),
+                  FsHelpers::hasXtcExtension(gridPath) && SETTINGS.xtcCoverRotation ? "ccw3_" : "", height);
+  }
+  if (prefetchCancelled) return;
+  const auto art = gridLayout.card(prefetchSlot)
+                       .inset(fui::Insets{pixelui::kBorder, pixelui::kBorder, pixelui::kBorder, pixelui::kBorder});
+  const auto nativeKey = libraryui::PreparedCoverCache::key(renderer, art);
+  switch (coverPrefetch.load(prefetchSlot, height, pixelTitle, nativeKey,
+                             renderer.getPackedRegionByteSize(art.x, art.y, art.width, art.height))) {
+    case libraryui::CoverPrefetch::Result::Pending:
+      return;
+    case libraryui::CoverPrefetch::Result::Unavailable:
+      if (!prefetchFallbackHeight && gridPreparedCoverHeight != gridCoverHeight) {
+        prefetchFallbackHeight = true;
+        return;
+      }
+      break;
+    case libraryui::CoverPrefetch::Result::Ready:
+      if (const auto bytes =
+              coverPrefetch.find(prefetchSceneKey, revision, artRevision, prefetchSlot, height, nativeKey);
+          bytes && !bytes.native) {
+        gridCoverBitmap.setMemorySource(bytes.data, bytes.size);
+        if (preparedCover.prepare(renderer, gridCoverBitmap, art, nativeKey, pixelTitle,
+                                  &LibraryListActivity::continueCoverPreparation, this))
+          coverPrefetch.promoteLast(prefetchSlot, height, nativeKey, preparedCover.preparedPixels(),
+                                    renderer.getPackedRegionByteSize(art.x, art.y, art.width, art.height));
+        gridCoverBitmap.setMemorySource(nullptr, 0);
+      }
+      break;
+  }
+  ++prefetchSlot;
+  prefetchFallbackHeight = false;
+  if (prefetchSlot == pageSize || first + prefetchSlot == count)
+    LOG_DBG("LIB", "prefetched page=%d bytes=%u", first / pageSize + 1, unsigned(coverPrefetch.bytesUsed()));
+}
+
+bool LibraryListActivity::continueCoverPreparation(void* context) {
+  auto& self = *static_cast<LibraryListActivity*>(context);
+  return !self.prefetchCancelled && !self.presentationPending && activityManager.idleWorkIsCurrent(self) &&
+         self.gridLibraryRevision == library::libraryContentRevision() &&
+         self.gridSceneRevision == homecover::sceneRevision();
+}
+
+void LibraryListActivity::prepareVisibleCover() {
+  if (!preparedCover.begin()) {
+    nativeMissing = 0;
+    return;
+  }
+  int slot = 0;
+  while (slot < gridPageSize() && !(nativeMissing & (1u << slot))) ++slot;
+  if (slot >= gridPageSize()) {
+    nativeMissing = 0;
+    return;
+  }
+  nativeMissing &= ~(1u << slot);
+  const int entry = gridFirst + slot;
+  if (const int store = storeIndexFor(entry); store >= 0)
+    gridPath = RECENT_BOOKS.getBooks()[store].path;
+  else {
+    const auto ordinal = index.ordinalForRow(sortOrder, static_cast<uint16_t>(rowFor(entry)));
+    if (ordinal == 0xffff || !index.readRecord(ordinal, gridRecord) || !index.readPath(gridRecord, gridPath)) return;
+  }
+  if (!FsHelpers::hasEpubExtension(gridPath) && !FsHelpers::hasXtcExtension(gridPath)) return;
+  const bool probe = nativeHeights[slot] == 0;
+  int height = probe ? gridCoverHeight : nativeHeights[slot];
+  const auto fileName = [&] {
+    std::snprintf(pixelTitle, sizeof(pixelTitle), "/.crosspoint/%s_%lu/thumb_%s%d.bmp",
+                  FsHelpers::hasXtcExtension(gridPath) ? "xtc" : "epub",
+                  static_cast<unsigned long>(std::hash<std::string>{}(gridPath)),
+                  FsHelpers::hasXtcExtension(gridPath) && SETTINGS.xtcCoverRotation ? "ccw3_" : "", height);
+  };
+  fileName();
+  if (!continueCoverPreparation(this)) return;
+  if (!Storage.openFileForRead("LIB", pixelTitle, gridCoverFile)) {
+    if (!probe || height == gridPreparedCoverHeight) return;
+    height = gridPreparedCoverHeight;
+    fileName();
+    if (!Storage.openFileForRead("LIB", pixelTitle, gridCoverFile)) return;
+  }
+  const auto art =
+      gridLayout.card(slot).inset(fui::Insets{pixelui::kBorder, pixelui::kBorder, pixelui::kBorder, pixelui::kBorder});
+  libraryui::PreparedCoverCache::Info info;
+  if (probe && libraryui::PreparedCoverCache::inspect(
+                   gridCoverFile, libraryui::PreparedCoverCache::key(renderer, art),
+                   renderer.getPackedRegionByteSize(art.x, art.y, art.width, art.height), info)) {
+    gridCoverFile.close();
+    return;
+  }
+  preparedCover.prepare(renderer, gridCoverBitmap, art, libraryui::PreparedCoverCache::key(renderer, art), pixelTitle,
+                        &LibraryListActivity::continueCoverPreparation, this);
+  gridCoverFile.close();
+}
+
 bool LibraryListActivity::handleCustomInput() {
+  if (!libraryReady()) {
+    if (lockNextConfirmRelease && mappedInput.wasReleased(MappedInputManager::Button::Confirm))
+      lockNextConfirmRelease = false;
+    if (mappedInput.wasReleased(MappedInputManager::Button::Back)) {
+      handleBackAction();
+    } else {
+      const auto routed = UiAppHost::routeTouch(mappedInput, true);
+      if (routed.routed && app.invalidated()) requestUpdate();
+      if (entryPhase == EntryPhase::Preparing) activityManager.requestIdleWork(*this);
+    }
+    return true;
+  }
   if (pendingFilterMenu != PendingMenu::None) {
     const auto action = pendingFilterMenu;
     pendingFilterMenu = PendingMenu::None;
@@ -1371,7 +1670,7 @@ bool LibraryListActivity::handleCustomInput() {
     }
     return true;
   }
-  if (!optionPopup.isActive() && view != View::Facets) facetChoices.reset();
+  if (!optionPopup.isActive() && view != View::Facets) facetChoices.deactivate();
   int tapX = 0, tapY = 0;
   const bool touchNavigation =
       mappedInput.wasSwipe() != MappedInputManager::SwipeDir::None || mappedInput.wasScreenTapped(tapX, tapY);
@@ -1384,20 +1683,43 @@ bool LibraryListActivity::handleCustomInput() {
   if (navigation) {
     lastNavigationAt = millis();
     coverWorkRequested = false;
+    prefetchCancelled = true;
   }
   if (optionPopup.handleInput(mappedInput, [this] { requestUpdate(); })) return true;
   if (touchNavigation && buttonCursorVisible) {
     buttonCursorVisible = false;
     requestUpdate();
   }
-  if (!navigation && millis() - lastNavigationAt >= COVER_IDLE_MS) {
+  const auto idleMs = millis() - lastNavigationAt;
+  if (!navigation && idleMs >= COVER_PREFETCH_IDLE_MS) {
     // Never wait for an e-ink refresh or thumbnail decode before reading input.
     RenderLock lock(RenderLock::Mode::Try);
-    if (lock.ownsLock() && gridView() && gridMissingCovers && !coverWorkRequested && !presentationPending) {
-      coverWorkPaint = paintclock::counter();
-      coverWorkRequested = true;
-      Activity::requestUpdate();
+    if (lock.ownsLock() && gridView() && !optionPopup.isActive() && !presentationPending && !coverWorkRequested) {
+      if (gridMissingCovers && idleMs >= COVER_IDLE_MS) {
+        coverWorkPaint = paintclock::counter();
+        coverWorkRequested = true;
+        Activity::requestUpdate();
+      } else if (!gridMissingCovers && gridFirst >= 0 &&
+                 (index.hasBrowseCache() || (isRecentSort(sortOrder) && !resultMapped())) &&
+                 (homecover::scenePackPending() || preparedCover.writing() ||
+                  (nativeMissing && preparedCover.enabled()) ||
+                  (coverPrefetch.enabled() && gridFirst + gridPageSize() < listCount() &&
+                   (prefetchFirst != gridFirst + gridPageSize() ||
+                    prefetchRevision != library::libraryContentRevision() ||
+                    prefetchArtRevision != homecover::sceneRevision() ||
+                    (prefetchSlot < gridPageSize() && prefetchFirst + prefetchSlot < listCount()))))) {
+        prefetchWorkPaint = paintclock::counter();
+        prefetchCancelled = false;
+        activityManager.requestIdleWork(*this);
+      }
     }
+  }
+  if (mappedInput.wasSwipe() == MappedInputManager::SwipeDir::Right) {
+    if (view == View::Categories || (view == View::Books && activeTabIndex == 0))
+      onGoHome();
+    else
+      handleBackAction();
+    return true;
   }
   if (gridView()) {
     const auto swipe = mappedInput.wasSwipe();
@@ -1407,7 +1729,7 @@ bool LibraryListActivity::handleCustomInput() {
       const int page = std::max(0, selectedEntry()) / pageSize;
       const int next = std::clamp(page + (swipe == MappedInputManager::SwipeDir::Left ? 1 : -1), 0,
                                   std::max(0, (listCount() - 1) / pageSize));
-      moveRingTo(next * pageSize + 1);
+      if (next != page) moveRingTo(next * pageSize + 1);
       return true;
     }
   }
@@ -1497,12 +1819,9 @@ void LibraryListActivity::buildRows(UiScreen& screen) {
   props.action = ACTION_ROW;
   props.inputMask = fui::InputTouch | fui::InputLongPress;
   uiTarget.setFont(4, toybox::kBookListFontId);
-  libraryui::bookRows(props, screen.target(), false);
-  props.labelText.maxLines = 2;
-  if (isRecentSort(sortOrder) && screen.device().width < screen.device().height) {
-    props.rowHeight = screen.body().height / 9;
-    props.rowPaddingY = 4;
-  }
+  libraryui::styleBookRows(props, screen.target());
+  if (chrome::lightHeader) libraryui::lightRows(props);
+  props.rowHeight = std::max(int(props.rowHeight), 2 * int(screen.target().lineHeight(4)) + 2 * props.rowPaddingY);
 
   props.rtl =
       I18N.getLanguage() == Language::AR || I18N.getLanguage() == Language::FA || I18N.getLanguage() == Language::HE;
@@ -1565,6 +1884,11 @@ void LibraryListActivity::buildRows(UiScreen& screen) {
       // Group headings stay bare; every book row gets its file-type icon.
       if (!groupsCollapsed && !rowFile.empty()) {
         item.icon = listIconFor(UITheme::getFileIcon(rowFile), 32);
+        const auto dot = rowFile.rfind('.'), slash = rowFile.find_last_of("/\\");
+        author.clear();
+        if (dot != std::string::npos && (slash == std::string::npos || dot > slash))
+          author.assign(rowFile, dot + 1, std::string::npos);
+        item.value = author.c_str();
       }
       item.actionValue = static_cast<int16_t>(entry);
       winItems.push_back(item);
@@ -1602,13 +1926,46 @@ void LibraryListActivity::buildRows(UiScreen& screen) {
 int LibraryListActivity::gridPageSize() const {
   return libraryui::gridCapacity(renderer.getScreenWidth(), renderer.getScreenHeight());
 }
+uint64_t LibraryListActivity::gridSceneKey(int first, int count, int pageSize) {
+  uint64_t key = 0x4c49424752494431ULL;
+  const auto number = [&](uint64_t value) { key = (key ^ value) * 1099511628211ULL; };
+  const auto pathKey = [&](const std::string& path) {
+    number(path.size());
+    for (unsigned char c : path) number(c);
+  };
+  number(first);
+  number(count);
+  number(pageSize);
+  number(static_cast<uint8_t>(renderer.getOrientation()));
+  number(SETTINGS.screenInverted);
+  number(SETTINGS.xtcCoverRotation);
+  for (int n = 0; n < pageSize && first + n < count; ++n) {
+    const int entry = first + n;
+    if (const int store = storeIndexFor(entry); store >= 0) {
+      pathKey(RECENT_BOOKS.getBooks()[store].path);
+    } else {
+      const auto ordinal = index.ordinalForRow(sortOrder, static_cast<uint16_t>(rowFor(entry)));
+      if (ordinal == 0xffff || !index.readRecord(ordinal, gridRecord) || !index.readPath(gridRecord, gridPath))
+        return 0;
+      pathKey(gridPath);
+      number(gridRecord.fileSize);
+      number(gridRecord.modificationTime);
+    }
+  }
+  return key ? key : 1;
+}
+
 void LibraryListActivity::buildGrid(UiScreen& screen) {
   windowTop = -1;
   auto& nav = activeNav();
   const auto grid = libraryui::gridLayout(screen.device(), screen.body());
+  gridLayout = grid;
   const int pageSize = grid.capacity();
   const int count = listCount(), first = std::max(0, selectedEntry()) / pageSize * pageSize;
   const auto area = grid.area;
+  gridCoverHeight = grid.card(0).height - 2 * pixelui::kBorder;
+  gridPreparedCoverHeight =
+      libraryui::preparationCoverHeight(screen.device(), facetFilter.active(), libraryui::kFooterHeight);
   const int pages = std::max(1, (count + pageSize - 1) / pageSize);
   pageui::build(screen, grid.pager, first / pageSize + 1, pages, ACTION_GRID_PAGE, first / pageSize, ACTION_GRID_PAGE,
                 first / pageSize + 2, pixelui::kSmall, 48);
@@ -1620,17 +1977,38 @@ void LibraryListActivity::buildGrid(UiScreen& screen) {
   const bool inverted = SETTINGS.screenInverted != 0;
   if (gridFirst != first || gridTotal != count || gridArea.x != area.x || gridArea.y != area.y ||
       gridArea.width != area.width || gridArea.height != area.height || gridOrientation != orientation ||
-      gridInverted != inverted) {
+      gridInverted != inverted || gridLibraryRevision != library::libraryContentRevision() ||
+      gridSceneRevision != homecover::sceneRevision()) {
     invalidateGrid();
     gridFirst = first;
     gridTotal = count;
     gridArea = area;
     gridOrientation = orientation;
     gridInverted = inverted;
+    gridLibraryRevision = library::libraryContentRevision();
+    gridSceneRevision = homecover::sceneRevision();
   }
-  const bool cached =
-      gridCacheValid && gridCache &&
-      renderer.copyBufferToRegion(area.x, area.y, area.width, area.height, gridCache.get(), GRID_CACHE_BYTES);
+  bool cached = gridCacheValid && gridCache &&
+                renderer.copyBufferToRegion(area.x, area.y, area.width, area.height, gridCache.get(), GRID_CACHE_BYTES);
+  uint64_t sceneKey = 0;
+  if (!cached) {
+    nativeMissing = 0;
+    sceneKey = gridSceneKey(first, count, pageSize);
+    if (sceneKey && homecover::restoreScene(renderer, area, sceneKey, homecover::SceneKind::Library,
+                                            coverPresentation != CoverPresentation::Unannounced)) {
+      cached = true;
+      gridMissingCovers = 0;
+      nativeMissing = uint16_t((1u << std::min(pageSize, count - first)) - 1);
+      std::fill(std::begin(nativeHeights), std::end(nativeHeights), 0);
+      if (gridCache)
+        gridCacheValid =
+            renderer.copyRegionToBuffer(area.x, area.y, area.width, area.height, gridCache.get(), GRID_CACHE_BYTES);
+    }
+  }
+  const bool deferCovers = !cached && coverPresentation == CoverPresentation::Unannounced;
+  bool coversDeferred = false;
+  bool completeArtwork = true;
+  int prefetchedCovers = 0;
   if (!cached) {
     gridCacheValid = false;
     gridMissingCovers = 0;
@@ -1651,33 +2029,85 @@ void LibraryListActivity::buildGrid(UiScreen& screen) {
     auto& author = winAuthors[n];
     auto& name = gridFileName;
     auto& path = gridPath;
-    if (!rowTextFor(entry, title, author, &name)) continue;
+    if (!rowTextFor(entry, title, author, &name)) {
+      completeArtwork = false;
+      continue;
+    }
     if (const int store = storeIndexFor(entry); store >= 0)
       path = RECENT_BOOKS.getBooks()[store].path;
     else {
       const auto ordinal = index.ordinalForRow(sortOrder, static_cast<uint16_t>(rowFor(entry)));
-      if (ordinal == 0xffff || !index.readRecord(ordinal, gridRecord) || !index.readPath(gridRecord, path)) continue;
+      if (ordinal == 0xffff || !index.readRecord(ordinal, gridRecord) || !index.readPath(gridRecord, path)) {
+        completeArtwork = false;
+        continue;
+      }
     }
-    const auto art = fui::makeRect(card.x + 5, card.y + 5, card.width - 10, card.height - 10);
-    screen.target().stroke(card, ink, pixelui::kBorder);
+    const auto art = card.inset(fui::Insets{pixelui::kBorder, pixelui::kBorder, pixelui::kBorder, pixelui::kBorder});
+    libraryui::coverFrame(screen.target(), card);
     bool drawn = false;
-    if (FsHelpers::hasEpubExtension(path) || FsHelpers::hasXtcExtension(path)) {
+    bool nativeDrawn = false;
+    const bool coverCandidate = FsHelpers::hasEpubExtension(path) || FsHelpers::hasXtcExtension(path);
+    if (coverCandidate) {
       auto* thumb = pixelTitle;
-      std::snprintf(thumb, sizeof(pixelTitle), "/.crosspoint/%s_%lu/thumb_%s%d.bmp",
-                    FsHelpers::hasXtcExtension(path) ? "xtc" : "epub",
-                    static_cast<unsigned long>(std::hash<std::string>{}(path)),
-                    FsHelpers::hasXtcExtension(path) && SETTINGS.xtcCoverRotation ? "ccw_" : "", art.height);
-      if (Storage.openFileForRead("LIB", thumb, gridCoverFile)) {
-        if (gridCoverBitmap.parseHeaders() == BmpReaderError::Ok)
+      const int heights[] = {art.height, libraryui::preparationCoverHeight(screen.device(), facetFilter.active(),
+                                                                           libraryui::kFooterHeight)};
+      for (const int cachedHeight : heights) {
+        const auto nativeKey = libraryui::PreparedCoverCache::key(renderer, art);
+        const auto bytes = coverPrefetch.find(sceneKey, library::libraryContentRevision(), homecover::sceneRevision(),
+                                              n, cachedHeight, nativeKey);
+        if (bytes) {
+          if (bytes.native) {
+            drawn = libraryui::PreparedCoverCache::canDraw(renderer, art) &&
+                    renderer.copyPackedBufferToRegion(art.x, art.y, art.width, art.height, bytes.data, bytes.size);
+            if (drawn) renderer.preserveImagePolarity(art.x, art.y, art.width, art.height);
+            nativeDrawn = drawn;
+          } else if (!deferCovers) {
+            gridCoverBitmap.setMemorySource(bytes.data, bytes.size);
+            if (gridCoverBitmap.parseHeaders() == BmpReaderError::Ok)
+              drawn = GUI.drawCoverThumbFill(renderer, gridCoverBitmap, Rect{art.x, art.y, art.width, art.height});
+            gridCoverBitmap.setMemorySource(nullptr, 0);
+          }
+          if (drawn) {
+            nativeHeights[n] = cachedHeight;
+            ++prefetchedCovers;
+            break;
+          }
+        }
+      }
+      for (const int cachedHeight : heights) {
+        if (drawn || deferCovers) break;
+        std::snprintf(thumb, sizeof(pixelTitle), "/.crosspoint/%s_%lu/thumb_%s%d.bmp",
+                      FsHelpers::hasXtcExtension(path) ? "xtc" : "epub",
+                      static_cast<unsigned long>(std::hash<std::string>{}(path)),
+                      FsHelpers::hasXtcExtension(path) && SETTINGS.xtcCoverRotation ? "ccw3_" : "", cachedHeight);
+        const auto beforeOpen = libraryui::PreparedCoverCache::sourceStamp();
+        if (!Storage.openFileForRead("LIB", thumb, gridCoverFile)) continue;
+        nativeDrawn = preparedCover.load(gridCoverFile, renderer, art,
+                                         libraryui::PreparedCoverCache::key(renderer, art), true, thumb, &beforeOpen);
+        drawn = nativeDrawn;
+        if (!drawn && gridCoverBitmap.parseHeaders() == BmpReaderError::Ok)
           drawn = GUI.drawCoverThumbFill(renderer, gridCoverBitmap, Rect{art.x, art.y, art.width, art.height});
         gridCoverFile.close();
+        if (drawn) {
+          nativeHeights[n] = cachedHeight;
+          break;
+        }
       }
-      if (!drawn && !(coverAttempts & (1u << n))) {
-        gridMissingCovers |= 1u << n;
-        pendingCoverHeight = art.height;
+      if (drawn && !nativeDrawn) nativeMissing |= 1u << n;
+      if (!drawn) {
+        if (deferCovers) {
+          coversDeferred = true;
+        } else if (!(coverAttempts & (1u << n))) {
+          gridMissingCovers |= 1u << n;
+          pendingCoverHeight = art.height;
+        }
       }
     }
-    if (!drawn) {
+    if (!drawn && coverCandidate && (deferCovers || !(coverAttempts & (1u << n)))) {
+      completeArtwork = false;
+      GUI.drawCoverPlaceholder(renderer, Rect{card.x, card.y, card.width, card.height});
+    } else if (!drawn) {
+      completeArtwork = false;
       const auto icon = listIconFor(UITheme::getFileIcon(name), 32);
       const auto symbol = fui::makeRect(art.x + art.width / 4, art.y + 12, art.width / 2, art.height / 3);
       screen.target().bitmap(symbol, icon, fui::BitmapMode::Contain, ink);
@@ -1692,15 +2122,24 @@ void LibraryListActivity::buildGrid(UiScreen& screen) {
           pixelTitle, style);
     }
   }
-  if (!cached && gridCache && !windowReadFailed && !index.ioFailed())
+  if (!cached && sceneKey && completeArtwork && !windowReadFailed && !index.ioFailed())
+    homecover::storeScene(renderer, true);
+  if (!cached && !coversDeferred && gridCache && !windowReadFailed && !index.ioFailed())
     gridCacheValid =
         renderer.copyRegionToBuffer(area.x, area.y, area.width, area.height, gridCache.get(), GRID_CACHE_BYTES);
+  if (coversDeferred)
+    coverPresentation = CoverPresentation::Notice;
+  else
+    coverPresentation = gridMissingCovers ? CoverPresentation::Loading : CoverPresentation::Complete;
+  if (prefetchedCovers) LOG_DBG("LIB", "grid first=%d prefetched covers=%d", first, prefetchedCovers);
   const int selected = selectedEntry() - first;
   if (buttonCursorVisible && selected >= 0 && selected < std::min(pageSize, count - first)) {
     const auto card = cardFor(selected);
     screen.target().stroke(card.inset(fui::Insets{3, 3, 3, 3}), fui::Paint::solid(fui::Color::White), 8);
     screen.target().stroke(card.inset(fui::Insets{2, 2, 2, 2}), ink, 5);
   }
+  if (coverPresentation == CoverPresentation::Notice || coverPresentation == CoverPresentation::Loading)
+    libraryui::loadingNotice(screen.target(), area, tr(STR_LIBRARY_LOADING_COVERS));
 }
 
 void LibraryListActivity::formatInitialHeading(uint32_t initial, std::string& out) {
@@ -1726,12 +2165,26 @@ void LibraryListActivity::formatAuthorHeading(const std::string& author, std::st
 
 void LibraryListActivity::buildHeader(UiScreen& screen) {
   pixelui::copyNatural(pixelTitle, sizeof(pixelTitle), headerTitle());
-  libraryui::header(screen, pixelHeader, pixelTitle, !degraded && view == View::Books,
+  libraryui::header(screen, pixelHeader, pixelTitle, libraryReady() && !degraded && view == View::Books,
                     fui::bitmapFromIcon(icon_search_32), fui::bitmapFromIcon(icon_refresh_cw_32), ACTION_SEARCH,
-                    ACTION_REBUILD, view == View::Books && isRecentSort(sortOrder) ? ACTION_VIEW : 0, gridView(), 0);
+                    ACTION_REBUILD, libraryReady() && view == View::Books && isRecentSort(sortOrder) ? ACTION_VIEW : 0,
+                    gridView(), 0);
 }
 
 void LibraryListActivity::buildScreen(UiScreen& screen) {
+  if (!libraryReady()) {
+    pixelui::FontScope fonts(uiTarget, renderer, I18N.getLanguage() != Language::EN);
+    buildHeader(screen);
+    const auto& metrics = UITheme::getInstance().getMetrics();
+    const bool covers = gridView();
+    pixelui::begin(screen,
+                   (covers ? 0 : libraryui::kFooterHeight) + (mappedInput.hasTouch() ? 0 : metrics.buttonHintsHeight));
+    libraryui::filterTabs(screen, activeTabIndex, fui::NO_ACTION);
+    const auto area = libraryui::entryBackdrop(renderer, screen.target(), screen.device(), screen.body(), covers,
+                                               entryBookCount(), selectedEntry());
+    if (covers) libraryui::loadingNotice(screen.target(), area, tr(STR_LIBRARY_LOADING));
+    return;
+  }
   if (view == View::Settings) {
     buildPreferences(screen);
     return;
@@ -1742,7 +2195,8 @@ void LibraryListActivity::buildScreen(UiScreen& screen) {
   for (const unsigned char* p = reinterpret_cast<const unsigned char*>(title); p && *p; ++p) unicode |= *p >= 0x80;
   pixelui::FontScope fonts(uiTarget, renderer, unicode);
   buildHeader(screen);
-  pixelui::begin(screen, libraryui::kFooterHeight + (mappedInput.hasTouch() ? 0 : metrics.buttonHintsHeight));
+  pixelui::begin(
+      screen, (gridView() ? 0 : libraryui::kFooterHeight) + (mappedInput.hasTouch() ? 0 : metrics.buttonHintsHeight));
 
   libraryui::filterTabs(screen, activeTabIndex, ACTION_TAB, ACTION_VIEW,
                         activeTabIndex == 0 ? isDescending(sortOrder) : bool(descendingTabs & 2));
@@ -1755,8 +2209,8 @@ void LibraryListActivity::buildScreen(UiScreen& screen) {
     status.font = 3;
     status.maxLines = 1;
     const auto& chosen = facetFilter.forFacet(facetKind);
-    screen.target().text(screen.takeTop(28, 4), chosen.value.empty() ? tr(STR_LIBRARY_FILTERED) : chosen.value.c_str(),
-                         status);
+    screen.target().text(screen.takeTop(libraryui::kFilterCaptionHeight, libraryui::kFilterCaptionGap),
+                         chosen.value.empty() ? tr(STR_LIBRARY_FILTERED) : chosen.value.c_str(), status);
   }
   if (bookRowCount() == 0) {
     const char* message = tr(STR_LIBRARY_NO_RESULTS);
@@ -1785,27 +2239,6 @@ void LibraryListActivity::buildScreen(UiScreen& screen) {
   }
 }
 
-// "12/69 books" at the bottom right: which book is selected, out of how many.
-//
-// NOT a page count. How many rows fit varies with the view (author headings
-// consume band height), so a page total grows and shrinks as you scroll. The
-// book position is stable by construction, and it answers the question the
-// reader actually has: how far in am I, and how much is left.
-void LibraryListActivity::drawPositionReadout() const {
-  if (!gridView()) return;
-  const int count = listCount();
-  if (count <= 0) return;
-
-  char raw[48], buf[48];
-  const char* positionFormat = groupsCollapsed ? tr(STR_LIBRARY_GROUP_POSITION) : tr(STR_LIBRARY_POSITION);
-  snprintf(raw, sizeof(raw), positionFormat, selectedEntry() + 1, count);
-  pixelui::copyCaps(buf, sizeof(buf), raw);
-  const auto& metrics = UITheme::getInstance().getMetrics();
-  auto target = toybox::makeTarget(renderer);
-  pixelui::bindFonts(target, renderer, I18N.getLanguage() != Language::EN);
-  libraryui::footer(target, target.deviceContext(), buf, mappedInput.hasTouch() ? 0 : metrics.buttonHintsHeight);
-}
-
 const char* LibraryListActivity::headerTitle() const {
   if (view == View::Settings) return tr(STR_LIBRARY_SETTINGS);
   if (!headerSearchTitle.empty()) return headerSearchTitle.c_str();
@@ -1832,6 +2265,9 @@ void LibraryListActivity::drawHoldHelp() const {
 // OptionPopup is a self-contained modal: it owns the whole frame (hints
 // included) whenever it is up, mirroring the FileBrowser pattern.
 void LibraryListActivity::render(RenderLock&& lock) {
+  homecover::cancelScenePack();
+  preparedCover.cancel();
+  coverPrefetch.cancelLoad();
   if (optionPopup.processRender(renderer, mappedInput)) return;
   if (coverWorkRequested.exchange(false) && !presentationPending && coverWorkPaint == paintclock::counter() &&
       gridOrientation == static_cast<uint8_t>(renderer.getOrientation()) &&
@@ -1840,14 +2276,52 @@ void LibraryListActivity::render(RenderLock&& lock) {
   }
   presentationPending = false;
   UiTabListActivity::render(std::move(lock));
+  if (!libraryReady()) {
+    if (entryPhase == EntryPhase::Shell) LOG_DBG("LIB", "entry first frame=%lu ms", millis() - entryStartedAt);
+    entryPhase = EntryPhase::Preparing;
+    activityManager.requestIdleWork(*this);
+  } else if (coverPresentation == CoverPresentation::Notice) {
+    // The loading window has reached the panel before any cover file is opened.
+    coverPresentation = CoverPresentation::Loading;
+    requestUpdate(true);
+  }
+}
+
+bool LibraryListActivity::presentationComplete() const {
+  return libraryReady() && (!gridView() || bookRowCount() == 0 || coverPresentation == CoverPresentation::Complete);
+}
+
+void LibraryListActivity::runIdleWork() {
+  if (!libraryReady()) {
+    if (entryPhase == EntryPhase::Preparing && activityManager.idleWorkIsCurrent(*this)) initializeLibrary();
+    return;
+  }
+  if (!prefetchCancelled && !presentationPending && !optionPopup.isActive() &&
+      activityManager.idleWorkIsCurrent(*this) && prefetchWorkPaint == paintclock::counter() &&
+      gridOrientation == static_cast<uint8_t>(renderer.getOrientation()) &&
+      gridInverted == (SETTINGS.screenInverted != 0) && gridLibraryRevision == library::libraryContentRevision() &&
+      gridSceneRevision == homecover::sceneRevision()) {
+    if (preparedCover.writing())
+      preparedCover.step();
+    else if (nativeMissing)
+      prepareVisibleCover();
+    else if (homecover::scenePackPending())
+      homecover::stepScenePack();
+    else
+      prefetchNextCover();
+  } else {
+    coverPrefetch.cancelLoad();
+    preparedCover.cancel();
+    homecover::cancelScenePack();
+  }
 }
 
 void LibraryListActivity::drawFooter() {
+  if (!libraryReady()) return;
   if (view != View::Books) {
     UiListActivity::drawFooter();
     return;
   }
-  drawPositionReadout();
   drawHoldHelp();
 
   const bool backGoesHome = tabsFocused() && !groupsCollapsed && !filtering();

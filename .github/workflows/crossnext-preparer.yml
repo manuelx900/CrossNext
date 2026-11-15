@@ -1,0 +1,85 @@
+name: CrossNext desktop packages
+
+on:
+  push:
+    branches: [codex/release-crossnext-2.0.0]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install preparation build dependencies
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install platformio pillow pyyaml brotli fonttools freetype-py zopfli
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git .venv/emsdk
+          .venv/emsdk/emsdk install 6.0.6
+          .venv/emsdk/emsdk activate 6.0.6
+      - name: Build matching firmware preparation engine
+        run: .venv/bin/python tools_local/build_preparer_ci.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: preparation-engine
+          path: desktop-preparer/dist/runtime/
+          if-no-files-found: error
+          retention-days: 7
+  macos:
+    needs: engine
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: preparation-engine
+          path: desktop-preparer/dist/runtime/
+      - name: Package Apple Silicon and Intel DMGs
+        working-directory: desktop-preparer
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          npm ci
+          npm run dist:mac
+      - name: Verify disk images and app versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          for disk in desktop-preparer/dist/desktop/*.dmg; do
+            hdiutil verify "$disk"
+            mount="$RUNNER_TEMP/crossnext-dmg"
+            mkdir -p "$mount"
+            hdiutil attach -readonly -nobrowse -mountpoint "$mount" "$disk"
+            app=$(find "$mount" -maxdepth 1 -name '*.app' -print -quit)
+            test -n "$app"
+            test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$app/Contents/Info.plist")" = '2.0.0'
+            test -f "$app/Contents/Resources/runtime/engine.wasm"
+            cmp "$app/Contents/Resources/runtime/engine.wasm" desktop-preparer/dist/runtime/engine.wasm
+            executable="$app/Contents/MacOS/CrossNext Book Preparer"
+            architecture=$(lipo -archs "$executable")
+            echo "$architecture"
+            if [ "$architecture" = "$(uname -m)" ]; then
+              ELECTRON_RUN_AS_NODE=1 "$executable" -p 'process.platform + ":" + process.arch'
+            fi
+            hdiutil detach "$mount"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CrossNext-Book-Preparer-macOS-2.0.0
+          path: desktop-preparer/dist/desktop/*.dmg
+          if-no-files-found: error
+          retention-days: 14

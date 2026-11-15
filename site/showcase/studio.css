@@ -1,0 +1,22 @@
+*{box-sizing:border-box}
+body{margin:0;background:#e8e9e5;color:#181b19;font:15px/1.4 system-ui,sans-serif}
+main{max-width:1100px;margin:auto;padding:22px;display:flex;flex-direction:column;align-items:center;gap:16px}
+header{width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px}
+h1{font-size:24px;letter-spacing:-.7px;margin:0}h1 span{font-size:14px;font-weight:500;letter-spacing:0;color:#526057}
+header p{margin:2px 0 0;color:#526057}.actions{display:flex;gap:8px;flex-wrap:wrap}
+button,select{font:inherit;min-height:44px;border:1px solid #a5aea7;border-radius:9px;background:#fff;color:#181b19;padding:8px 12px}
+button{cursor:pointer}button:hover{background:#f3f5f2}button:disabled{cursor:wait;opacity:.5}
+#capture{background:#1e352a;color:white;border-color:#1e352a}
+:focus-visible{outline:3px solid #468466;outline-offset:3px}
+.controls{width:100%;display:flex;align-items:start;gap:12px;flex-wrap:wrap;padding:16px;background:#f9faf7;border:1px solid #c9cec8;border-radius:14px}
+label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;flex:1;min-width:190px}
+select{max-width:100%;width:100%;font-weight:400}details{width:100%}summary{cursor:pointer;padding:10px 0;font-weight:600}
+.scenario-controls{display:flex;gap:12px;flex-wrap:wrap;padding:8px 0}
+.note{font-size:12px;color:#526057;margin:0;max-width:850px}.controls .note{width:100%}
+#device{position:relative;width:min(480px,calc(100vw - 44px));aspect-ratio:3/5;background:white;box-shadow:0 4px 24px #18291f20;flex:none}
+#device[data-orient=landscape]{width:min(800px,calc(100vw - 44px));aspect-ratio:5/3}
+.device-canvas{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none}
+nav{display:flex;gap:8px}#status{margin:0;font-size:13px}
+body.clean main{padding:0}body.clean .chrome{display:none}body.clean #device{box-shadow:none}
+#restore{position:fixed;right:12px;bottom:12px;opacity:.35}#restore:hover,#restore:focus-visible{opacity:1}
+@media(max-width:600px){main{padding:14px}header{align-items:flex-start;flex-direction:column}#device{width:calc(100vw - 28px)}label{min-width:145px}}

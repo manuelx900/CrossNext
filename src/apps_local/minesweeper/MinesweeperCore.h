@@ -19,6 +19,7 @@
 //     that made the player tap every empty cell would be a chore with the same
 //     rules.
 
+#include <algorithm>
 #include <cstdint>
 
 namespace minesweeper {
@@ -69,11 +70,13 @@ inline bool has(const Game& game, const int column, const int row, const uint8_t
   return inside(game, column, row) && (game.cell[column][row] & flag) != 0;
 }
 
-inline void start(Game& game, const uint32_t seed, int columns = kColumns, int rows = kRows) {
+inline int maxMines(int columns, int rows) { return std::min(100, columns * rows - 9); }
+inline void start(Game& game, const uint32_t seed, int columns = kColumns, int rows = kRows, int mines = 0) {
   game = {};
   game.columns = columns >= 8 && columns <= 20 ? columns : kColumns;
   game.rows = rows >= 8 && rows <= 20 ? rows : kRows;
-  game.mines = columns == kColumns && rows == kRows ? kMines : game.columns * game.rows * 15 / 100;
+  const int standard = columns == kColumns && rows == kRows ? kMines : game.columns * game.rows * 15 / 100;
+  game.mines = std::clamp(mines ? mines : standard, 1, maxMines(game.columns, game.rows));
   for (int column = 0; column < game.columns; ++column) {
     for (int row = 0; row < game.rows; ++row) game.cell[column][row] = 0;
   }

@@ -1,0 +1,21 @@
+{
+  "id": "S115",
+  "kind": "scene",
+  "master": "scene-115-v2.png",
+  "reference": "assets_local/quest/redesign/portraits/liora-source.png",
+  "transparent": false,
+  "prompt": "Use case: illustration-story. ONE complete landscape 3:2 narrative illustration for the monochrome e-ink game Aventura lectora. Clean expressive chibi storybook art, thick smooth PURE BLACK contours, white and sparse flat light-gray fills. No color, gradients, crosshatching, collage, lettering, captions, UI or watermark. Large clear clues readable at480x320. Player hero and PET are OFF CAMERA. Depict only people actually physically present in the described event; a person mentioned in a letter or record does NOT appear alive beside its reader. The attached portraits are IDENTITY references, NOT additional cast: match face, age, hairstyle, clothing and distinctive accessories exactly for any named person present. Do not invent another person or clue. Fill the scene to its edges, keep all important faces and objects in frame. LIORA: adult village librarian, dark side braid, round spectacles, white collared blouse, dark buttoned waistcoat; no hair flower. Region: The war of stories. Chapter: The seal of memory. Draw exactly this already-known moment (Spanish is authoritative): El sello de Memoria se abrió y su relato llenó el primer espacio de la llave. Ya podías conservar la historia del incendio. Todavía faltaban Voluntad y Despedida. Context only: Los testigos llegaron al sello de Memoria. Allí estaba encerrada la historia del incendio y de la pérdida de Elia. La llave podía reunir sus relatos en su primer espacio. MANDATORY PHYSICAL SETTING: the seal of Memory and witnesses' preserved fire records. Do not anthropomorphize books, pages or objects. No invented smiling ghosts. No person replaces a written record. EXHAUSTIVE VISIBLE CAST (do not add anyone else): surviving witnesses, Elia is NOT alive among them. The reference is STYLE ONLY for any person not explicitly in this cast. FINAL REFERENCE is the exact KEY PROP design, not extra cast. If key is visible, match that single key: oval loop handle, horizontal shaft with THREE circular windows SIDE BY SIDE, then three rectangular teeth. At chapter94 fill ONLY first window; at chapter98 fill first TWO; from chapter105 onward fill ALL THREE with eight-point stars. Never a clover-shaped or assembled-from-broken-pieces key.",
+  "references": [
+    "assets_local/quest/redesign/portraits/liora-source.png",
+    "assets_local/quest/expansion/masters/scene-087-v2.png"
+  ],
+  "chapter": 94,
+  "beat": "text",
+  "eventEs": "El sello de Memoria se abrió y su relato llenó el primer espacio de la llave. Ya podías conservar la historia del incendio. Todavía faltaban Voluntad y Despedida.",
+  "sha256": "5724c4e958d3f1a2ae2722547e8932a8e38b4555945f979cf0e37ba0cbd9856f",
+  "tool": "built-in image_gen",
+  "source": "exec-527a2818-fcc6-4849-8f62-4de76f4248f1.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

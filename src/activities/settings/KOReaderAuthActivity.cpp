@@ -104,7 +104,11 @@ void KOReaderAuthActivity::render(RenderLock&&) {
     renderer.drawCenteredText(UI_10_FONT_ID, top,
                               mode == Mode::SIGN_UP ? tr(STR_ACCOUNT_CREATED) : tr(STR_AUTH_SUCCESS), true,
                               EpdFontFamily::BOLD);
-    renderer.drawCenteredText(UI_10_FONT_ID, top + height + 10, tr(STR_SYNC_READY));
+    UITheme::drawCenteredWrappedText(
+        renderer,
+        Rect{metrics.contentSidePadding, top + height + 10, pageWidth - 2 * metrics.contentSidePadding,
+             3 * renderer.getLineHeight(UI_10_FONT_ID)},
+        UI_10_FONT_ID, tr(STR_SYNC_READY), 3, true, EpdFontFamily::REGULAR, UITheme::TextVerticalAlignment::TOP);
   } else if (state == FAILED) {
     renderer.drawCenteredText(UI_10_FONT_ID, top, mode == Mode::SIGN_UP ? tr(STR_SIGNUP_FAILED) : tr(STR_AUTH_FAILED),
                               true, EpdFontFamily::BOLD);

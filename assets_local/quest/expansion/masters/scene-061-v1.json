@@ -1,0 +1,12 @@
+{
+  "id": "S061",
+  "master": "scene-061-v1.png",
+  "sha256": "f17d5fa0bee9aa735dc81b02ce7609f30f99109cb20243cfbeb13870083fc4a6",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The kingdom beneath the moon. Chapter: The queen's pact. Illustrate this already-authored event faithfully, without inventing another object or plot: Sera accepted the first seals to shelter war refugees. She never knew the king would use that shelter to imprison their memories too. Context only, do not try to draw all of it: The pact offered permanent refuge to people fleeing the fire. Sera believed the seals would protect their homes. You investigate when a promise of safety became a rule that no one could leave or remember freely.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

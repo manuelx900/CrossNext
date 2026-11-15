@@ -185,24 +185,19 @@ void reward(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   const int progressH = wide ? 90 : 92;
   const auto progress = rect(panels.x, gains.bottom() + GAP, panels.width, progressH);
   growth(s, m, w, progress, true);
-  const auto daily = rect(panels.x, progress.bottom() + GAP, panels.width, panels.bottom() - progress.bottom() - GAP);
-  frame(s, daily);
-  icon(s, rect(daily.x + 12, daily.y + 12, 46, daily.height - 24), referenceicons::GOAL);
-  const int left = daily.x + 74, width = daily.width - 86;
-  const bool available = dailyAvailable(m);
-  const auto goal = unsigned(pet::GOALS[p.goalIndex]);
+  const auto today = rect(panels.x, progress.bottom() + GAP, panels.width, panels.bottom() - progress.bottom() - GAP);
+  frame(s, today);
+  icon(s, rect(today.x + 12, today.y + 12, 46, today.height - 24), referenceicons::BOOK);
+  const int left = today.x + 74, width = today.width - 86;
+  const bool available = m.today > 0 && m.clockKnown && !m.historyChanged && m.writable;
   if (available) {
-    if (m.todaySeconds >= int(goal * 60))
-      std::snprintf(w.label, sizeof(w.label), "%s", tr(STR_PET_GOAL_REACHED));
-    else
-      std::snprintf(w.label, sizeof(w.label), tr(STR_PET_DAILY_PROGRESS),
-                    std::min(std::max(0, m.todaySeconds) / 60, int(goal)), goal);
-  } else
-    std::snprintf(w.label, sizeof(w.label), "%s", tr(STR_PET_DAILY_WAIT));
-  text(s, rect(left, daily.y + 5, width, 30), w.label, 0, false, fui::TextAlign::Left, true);
-  duration(w.secondary, sizeof(w.secondary), uint64_t(std::max(0, m.todaySeconds)));
-  std::snprintf(w.label, sizeof(w.label), tr(STR_PET_READ_TODAY), w.secondary);
-  if (available) prose(s, rect(left, daily.y + 37, width, daily.height - 42), w.label, 1);
+    duration(w.secondary, sizeof(w.secondary), uint64_t(std::max(0, m.todaySeconds)));
+    std::snprintf(w.label, sizeof(w.label), tr(STR_PET_READ_TODAY), w.secondary);
+  } else {
+    std::snprintf(w.label, sizeof(w.label), "%s", tr(STR_PET_READING_UNAVAILABLE));
+  }
+  text(s, rect(left, today.y + 5, width, 30), w.label, 0, false, fui::TextAlign::Left, true);
+  prose(s, rect(left, today.y + 39, width, today.height - 44), tr(STR_PET_READING_EVERY_MINUTE), 2);
   button(s, w, footer, tr(STR_PET_CONTINUE), Continue, 0, true);
 }
 }  // namespace

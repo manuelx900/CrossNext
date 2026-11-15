@@ -22,21 +22,22 @@ input[type=file]{display:none}
 #msg{margin:14px 0 0;min-height:1.45em;font-weight:700}
 .dim{font-weight:400;color:#555}
 </style>
+<!--#include file="shared/UiText.html.inc" -->
 </head>
 <body>
-<header>Add a wallpaper</header>
+<header data-ui>Add a wallpaper</header>
 <main>
-<p class="dim">Pick a photo. It is cropped and dithered here on your phone, then sent to the reader. Nothing leaves your network.</p>
+<p class="dim" data-ui>Pick a photo. It is cropped and dithered here on your phone, then sent to the reader. Nothing leaves your network.</p>
 <canvas id="shot" width="480" height="800"></canvas>
 <div class="row" id="opts" hidden>
-  <button id="fill" aria-pressed="true">Fill</button>
-  <button id="fit" aria-pressed="false">Fit</button>
-  <button id="inv" aria-pressed="false">Invert</button>
+  <button id="fill" aria-pressed="true" data-ui>Fill</button>
+  <button id="fit" aria-pressed="false" data-ui>Fit</button>
+  <button id="inv" aria-pressed="false" data-ui>Invert</button>
 </div>
-<label class="btn" for="pick">Choose a photo</label>
+<label class="btn" for="pick" data-ui>Choose a photo</label>
 <input id="pick" type="file" accept="image/*">
 <p></p>
-<button id="send" class="btn alt" disabled>Send to reader</button>
+<button id="send" class="btn alt" disabled data-ui>Send to reader</button>
 <p id="msg"></p>
 </main>
 <script type="module">
@@ -74,7 +75,7 @@ pick.addEventListener("change", async () => {
     }
     ctx.putImageData(out, 0, 0);
   } catch (e) {
-    say("Could not read that picture. Try another one.");
+    say(uiText("Could not read that picture. Try another one."));
   }
 });
 
@@ -127,10 +128,10 @@ send.addEventListener("click", async () => {
     // preflight. An https page could not make this request at all.
     const r = await fetch("/w/upload", { method: "PUT", body: bmp });
     const t = (await r.text()).trim();
-    if (r.ok) { say("Done. It is on your reader."); pick.value = ""; }
-    else { say(t || "The reader would not take it."); send.disabled = false; }
+    if (r.ok) { say(uiText("Done. It is on your reader.")); pick.value = ""; }
+    else { say(t || uiText("The reader would not take it.")); send.disabled = false; }
   } catch (e) {
-    say("Lost the reader. Is it still showing the code?");
+    say(uiText("Lost the reader. Is it still showing the code?"));
     send.disabled = false;
   }
 });

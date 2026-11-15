@@ -1,0 +1,13 @@
+The reference silhouettes reproduce the ten screenshots supplied by the user
+for this navigation-icon change. REFERENCE.json records their filenames,
+SHA-256 and crop regions. The SVG sources retain the aspect ratio of the marks;
+the screenshots are not needed to regenerate the firmware resources.
+
+Counter (five tally marks), Focus (focus brackets and a central point) and the
+plain folded File are local vector drawings in the same rounded stroke style.
+No downloaded icon library or runtime image-generation dependency is added.
+
+tools_local/navigation_art/trace_reference.py imports the supplied silhouettes.
+tools_local/navigation_art/generate.py produces the committed monochrome masks.
+Do not feed the upright SDK masks directly into legacy GfxRenderer::drawIcon;
+its separately generated masks are rotated to match that path's contract.

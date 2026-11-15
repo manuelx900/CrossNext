@@ -1,0 +1,24 @@
+Optional Wordle vocabularies. Adapted from FrequencyWords by Hermit Dave / OpenSubtitles 2018, CC BY-SA 4.0. Revision 525f9b560de45753a5ea01069454e72e9aa541c6.
+https://github.com/hermitdave/FrequencyWords
+https://creativecommons.org/licenses/by-sa/4.0/
+Azerbaijani, Belarusian and Kazakh: Leipzig Corpora Collection frequency lists, redistributed by WM Keyboard, revision 2c05d4a419a983724ca2479c87f04e712bc5559d.
+https://wortschatz.uni-leipzig.de/en/download
+https://github.com/wasi-master/wmkeyboard-data
+https://creativecommons.org/licenses/by/4.0/
+Japanese supplementary kana guesses: JMdict, copyright Electronic Dictionary Research and Development Group, used in accordance with its licence. CC BY-SA 4.0.
+https://www.edrdg.org/jmdict/j_jmdict.html
+https://www.edrdg.org/edrdg/licence.html
+Modifications: normalized UTF-8, Spanish vowel-accent folding (preserving ñ), keyboard coverage and length filtering, frequency-ranked answer pool, sorted fixed records with checksums. Supplemental kana readings expand guesses only. No source words embedded in firmware flash.
+Answers are selected by corpus frequency; native editorial review is still needed. Rebuild with tools_local/build_wordle_languages.py.
+
+Additional accepted guesses: English Wiktionary contributors, extracted by Kaikki.org / Wiktextract.
+Dump 2026-10-01, extraction 2026-10-30. CC BY-SA 4.0.
+https://kaikki.org/dictionary/
+https://en.wiktionary.org/wiki/Wiktionary:Copyrights
+https://creativecommons.org/licenses/by-sa/4.0/
+Modifications: lexical headwords and inflections only; language, keyboard, Unicode and length filtering;
+Cyrillic stress and Arabic pronunciation annotations removed, existing Spanish accent rules retained.
+All previous guesses retained. All answer records unchanged. No definitions or audio redistributed.
+Source URLs and SHA-256 snapshots: WIKTIONARY-SOURCES.json. A word page and its contributor history
+can be found at https://en.wiktionary.org/wiki/WORD and its History tab.
+Rebuild with tools_local/expand_wordle_languages.py and the pinned previous bank set.

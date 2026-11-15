@@ -1,0 +1,53 @@
+LANGUAGE AND READING RESOURCES
+
+Install the matching firmware and copy languages/ from its resource ZIP to the
+microSD root. English and Spanish remain built in. Other interface languages
+need their .cplang and the interface fonts in languages/fonts/. Reading fonts
+and reading dictionaries are separate resources.
+
+Wordle
+------
+The optional CPWB v2 banks provide 38 natural languages, including English and
+Spanish, with at least 2000 answers per language across the supported word
+lengths and larger allowed-guess lists. Answers are selected by corpus frequency;
+they are not a guarantee of native editorial quality or universally simple words.
+The Ook novelty pack uses its existing English fallback. Missing English/Spanish
+banks use their built-in fallback vocabulary. Install these banks with the
+firmware supplied alongside them; older firmware cannot read CPWB v2.
+The banks are read on demand; opening v2 validates a small header rather than
+scanning the entire file. Accessed records have their own checksums.
+See languages/wordle/SOURCE.txt and MANIFEST.json for source attribution,
+licenses, counts and rebuilding information. These banks replace the older
+small starter banks described in the original Wordle documentation.
+
+Book dictionaries
+-----------------
+In an EPUB, open the bottom reading panel, select More, then Dictionary and
+translator. Choose the definition dictionary or translation dictionary separately.
+Use system setting follows the global choice. None explicitly disables that
+type of lookup for this book. A named choice applies only to this book.
+The choices remain after reopening, clearing regenerable book caches, renaming
+through Files or automatically moving a finished EPUB into Read.
+Preferences live under /.crosspoint/book-dictionaries/ in two small alternating
+records. An interrupted write leaves the previous validated record available.
+The selector lists up to 128 dictionary folders, each with a name of at most
+31 UTF-8 bytes. Removing a selected dictionary does not silently change the
+selection; reinstall it or choose another dictionary.
+
+Preparation and performance
+---------------------------
+Settings > Reading > Prepare full book on opening is optional and off by default.
+When enabled, opening a book shows a compact Indexing popup with percent progress
+over the previous screen. Framed/Carousel use a black square popup; Carousel 2/
+Bookshelf use a white rounded popup. Cancel preserves completed preparation work.
+The separate Prepare books action still prepares the whole card. Font selection
+pages also accept horizontal swipes. Selecting exactly one font changes the
+default reading font when preparation starts; the screen explains this behavior.
+More fonts consume more time and microSD space. Cached layouts can be reused
+until reading layout, source, fonts or cache formats change, or caches are removed.
+Percent represents preparation units, not an estimated remaining time.
+
+Technical checks validate translation coverage, formatting arguments, fonts,
+keyboards and game-bank access. Assisted translations and frequency-ranked words
+still need native-speaker review. Simulator timings do not establish physical
+X4 Pro speed; test actual book opening, page changes and menus on the device.

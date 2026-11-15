@@ -116,14 +116,13 @@ void header(Frame<MaxInteractions>& frame, Rect rect, const HeaderProps& props) 
   const bool centeredTitle = props.centered || props.titleText.align == TextAlign::Center;
 
   // Status chrome measurements first: on shared-line layouts the battery and
-  // clock reserve title space on their respective sides. (+2: the battery
-  // glyph's terminal nub extends past glyphWidth.)
+  // clock reserve title space on their respective sides, including the terminal.
   const HeaderStatusProps& status = props.status;
   const int16_t statusStripH = status.stripHeight;
   const int16_t statusInset = status.edgeInset < 0 ? sidePad : status.edgeInset;
   int16_t batteryReserve = 0;
   if (status.showBattery) {
-    batteryReserve = static_cast<int16_t>(status.battery.glyphWidth + 2);
+    batteryReserve = static_cast<int16_t>(status.battery.glyphWidth + status.battery.terminalWidth);
     if (status.battery.label) {
       batteryReserve = static_cast<int16_t>(
           batteryReserve + status.battery.gap +

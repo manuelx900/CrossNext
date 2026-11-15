@@ -1,0 +1,21 @@
+{
+  "id": "S074",
+  "kind": "scene",
+  "master": "scene-074-v2.png",
+  "reference": "assets_local/quest/redesign/portraits/aster-source.png",
+  "transparent": false,
+  "prompt": "Use case: illustration-story. ONE complete landscape 3:2 narrative illustration for the monochrome e-ink game Aventura lectora. Clean expressive chibi storybook art, thick smooth PURE BLACK contours, white and sparse flat light-gray fills. No color, gradients, crosshatching, collage, lettering, captions, UI or watermark. Large clear clues readable at480x320. Player hero and PET are OFF CAMERA. Depict only people actually physically present in the described event; a person mentioned in a letter or record does NOT appear alive beside its reader. The attached portraits are IDENTITY references, NOT additional cast: match face, age, hairstyle, clothing and distinctive accessories exactly for any named person present. Do not invent another person or clue. Fill the scene to its edges, keep all important faces and objects in frame. ASTER: the woman in the reference, keep pale flowing hair, leaf circlet, long robe and bare feet. Region: The garden of gods. Chapter: The fallen colossus. Draw exactly this already-known moment (Spanish is authoritative): El coloso seguía cumpliendo la orden de impedir que alguien cuestionara el pacto. Aster ya había retirado su apoyo, pero el vínculo del guardián permanecía activo. Context only: El coloso del jardín custodiaba la llave del pacto. Tenía tres espacios vacíos, uno para cada relato oculto por los sellos. Necesitabas conseguirla antes de continuar la búsqueda. MANDATORY PHYSICAL SETTING: the garden's fallen colossus and the empty three-part key. Do not anthropomorphize books, pages or objects. No invented smiling ghosts. No person replaces a written record. EXHAUSTIVE VISIBLE CAST (do not add anyone else): the serious fallen colossus and Aster. The reference is STYLE ONLY for any person not explicitly in this cast. LAST REFERENCE is the actual guardian IDENTITY: keep its species, face, anatomy and armor recognizable. It is a THREE-POSE sprite strip for identity only. Draw ONLY ONE guardian in ONE pose within the scene, never a strip or repeated poses. Do not add the guardian if the described event is focused on witnesses instead.",
+  "references": [
+    "assets_local/quest/redesign/portraits/aster-source.png",
+    "assets_local/quest/campaign/masters/fallen-colossus.png"
+  ],
+  "chapter": 89,
+  "beat": "discovery",
+  "eventEs": "El coloso seguía cumpliendo la orden de impedir que alguien cuestionara el pacto. Aster ya había retirado su apoyo, pero el vínculo del guardián permanecía activo.",
+  "sha256": "045946cf990192e2284b4a291805f9070056b9fb73d2bd14c1cd8b64367002a8",
+  "tool": "built-in image_gen",
+  "source": "exec-487c1811-559b-4362-b4bf-113b67f79724.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

@@ -22,6 +22,7 @@ class TtfEpdFont;
 #include <vector>
 
 #include "Bitmap.h"
+#include "FontVariantProvider.h"
 
 namespace glyphBitmap {
 struct Frame;
@@ -49,6 +50,7 @@ class GfxRenderer {
   HalDisplay& display;
   RenderMode renderMode;
   mutable bool absoluteGrayPlanes = false;
+  bool ditherImagesInBw = false;
   Orientation orientation;
   bool fadingFix;
   uint8_t* frameBuffer = nullptr;
@@ -75,7 +77,7 @@ class GfxRenderer {
   mutable FontCacheManager* fontCacheManager_ = nullptr;
 
   // One-shot refresh promotion (see promoteNextRefresh). Mutable because
-  // displayBuffer() is const but must consume the flag.
+  // Display entry points are const but must consume the flag.
   mutable bool promotedRefreshPending_ = false;
   mutable HalDisplay::RefreshMode promotedRefresh_ = HalDisplay::FAST_REFRESH;
   // Swap in (and clear) the promoted mode, if one is pending.
@@ -104,6 +106,8 @@ class GfxRenderer {
   // appears at the same point size as the surrounding UI text. Populated by the
   // app-level SD font setup when an SD family is loaded. See resolveTextFontId().
   std::map<int, int> fallbackFontMap_;
+  std::map<int, int> languageFallbackFontMap_;
+  FontVariantProvider fontVariantProvider_;
 
   // If `text` contains a CJK codepoint that `fontId` cannot render and `fontId`
   // has a registered fallback, returns the fallback id; otherwise returns
@@ -122,7 +126,8 @@ class GfxRenderer {
   // (#2725). One prewarm per string costs a single file open; re-measuring or
   // re-drawing resident glyphs is a RAM-only subset check. No-op for built-in
   // fonts.
-  void ensureSdGlyphsResident(int fontId, const char* text, EpdFontFamily::Style style, bool metadataOnly) const;
+  void ensureSdGlyphsResident(int fontId, const char* text, EpdFontFamily::Style style, bool metadataOnly,
+                              bool loadKernLig = false) const;
 
   void renderChar(const EpdFontFamily& fontFamily, uint32_t cp, int* x, int* y, bool pixelState,
                   EpdFontFamily::Style style) const;
@@ -146,6 +151,8 @@ class GfxRenderer {
   // Setup
   void begin();  // must be called right after display.begin()
   void insertFont(int fontId, EpdFontFamily font);
+  uint64_t layoutMetricsKey(int fontId, const char* text, EpdFontFamily::Style style) const;
+  uint64_t textMetricsKey(int fontId, const char* text, EpdFontFamily::Style style) const;
   // Rebind a registered flash-font alias without allocating a map entry.
   bool replaceBuiltinFont(int fontId, EpdFontFamily font);
   // Clears both the flash-font map and any SD-font registration for fontId.
@@ -200,6 +207,21 @@ class GfxRenderer {
   // setFallbackFont maps a primary UI font id to an SD font id of the same size.
   void setFallbackFont(int primaryFontId, int fallbackFontId) { fallbackFontMap_[primaryFontId] = fallbackFontId; }
   void clearFallbackFonts() { fallbackFontMap_.clear(); }
+  // Boot-lifetime UI resources survive reader-family changes.
+  void setLanguageFallbackFont(int primaryFontId, int fallbackFontId) {
+    languageFallbackFontMap_[primaryFontId] = fallbackFontId;
+  }
+
+  void setFontVariantProvider(const FontVariantProvider& provider) { fontVariantProvider_ = provider; }
+  int resolveFontVariant(const int fontId, const float scale) const {
+    return fontVariantProvider_.resolveFont(fontId, scale);
+  }
+  // True when fontId is registered, loading it through the variant provider if needed.
+  bool ensureFontLoaded(const int fontId) const {
+    if (fontMap.count(fontId) != 0) return true;
+    return fontVariantProvider_.load && fontVariantProvider_.load(fontVariantProvider_.ctx, fontId) &&
+           fontMap.count(fontId) != 0;
+  }
   // Ensure SD card font glyph data is loaded for the given text. Called from layout code
   // (which holds a const GfxRenderer&) before measuring word widths. Safe to call on non-SD fonts (no-op).
   // styleMask: bitmask of styles to prepare (bit 0=regular, 1=bold, 2=italic, 3=bold-italic).
@@ -208,7 +230,8 @@ class GfxRenderer {
   // consecutive NUL-terminated words (WordStore chunks), so a whole paragraph
   // is scanned without materializing per-word strings.
   void ensureSdCardFontReady(int fontId, const char* const* segments, const size_t* segmentLens, size_t segmentCount,
-                             bool includeSpace, bool includeHyphen, uint8_t styleMask = 0x0F) const;
+                             bool includeSpace, bool includeHyphen, uint8_t styleMask = 0x0F,
+                             bool includeSmallCaps = false) const;
 
   // Orientation control (affects logical width/height and coordinate transforms)
   void setOrientation(const Orientation o) { orientation = o; }
@@ -222,7 +245,8 @@ class GfxRenderer {
   int getScreenHeight() const;
   void tapToLogical(float nx, float ny, int& outX, int& outY) const;
   void displayBuffer(HalDisplay::RefreshMode refreshMode = HalDisplay::FAST_REFRESH) const;
-  // One-shot: the next displayBuffer()/displayBufferAsync() call uses `mode`
+  // One-shot: the next displayBuffer(), displayBufferAsync(), or
+  // displayGrayscaleBase() call uses `mode`
   // instead of what its caller asked for, then the override clears itself.
   // Lets a closing overlay (the control center's refresh tile) hand a
   // ghost-cleanup waveform to the repaint of whatever screen is underneath,
@@ -249,7 +273,7 @@ class GfxRenderer {
   // Compatibility queries for Overlay mode.
   bool supportsAsyncGrayscaleBase() const;
   // EXPERIMENTAL: Windowed update - display only a rectangular region
-  // void displayWindow(int x, int y, int width, int height) const;
+  void displayWindow(int x, int y, int width, int height) const;
   void invertScreen() const;
   void invertHeaderBand(int logicalHeight) const;
   void clearScreen(uint8_t color = 0xFF) const;
@@ -331,6 +355,12 @@ class GfxRenderer {
   // Text
   // Layout may use advance-only SD font tables; rendered measurement includes kerning and ligatures.
   enum class TextMeasureMode { Layout, Rendered };
+  // Ink relative to drawText's line origin; Y grows downward.
+  struct TextBounds {
+    int left = 0, top = 0, width = 0, height = 0;
+  };
+  TextBounds getTextBounds(int fontId, const char* text, EpdFontFamily::Style style = EpdFontFamily::REGULAR,
+                           BidiUtils::BidiBaseDir baseDir = BidiUtils::BidiBaseDir::AUTO) const;
   int getTextWidth(int fontId, const char* text, EpdFontFamily::Style style = EpdFontFamily::REGULAR,
                    BidiUtils::BidiBaseDir baseDir = BidiUtils::BidiBaseDir::AUTO) const;
   void drawCenteredText(int fontId, int y, const char* text, bool black = true,
@@ -342,6 +372,13 @@ class GfxRenderer {
   // B/W raster text, with an 8.8 scale and no intermediate framebuffer.
   void drawTextScaledBw(int fontId, int x, int y, const char* text, uint16_t scale, bool black = true,
                         EpdFontFamily::Style style = EpdFontFamily::REGULAR) const;
+  // Draws one glyph at scale256/256 of its size with its baseline at baselineY (drop caps).
+  // Outlines are bilinearly resampled from the font bitmap, so no larger font is loaded.
+  // Returns the scaled advance in pixels.
+  int drawScaledCodepoint(int fontId, uint32_t cp, EpdFontFamily::Style style, int x, int baselineY,
+                          int scale256) const;
+  // Unscaled metrics for laying out drawScaledCodepoint: advance (12.4 fixed point) and top bearing.
+  bool getCodepointMetrics(int fontId, uint32_t cp, EpdFontFamily::Style style, int32_t& advanceFP, int& top) const;
   int getSpaceWidth(int fontId, EpdFontFamily::Style style = EpdFontFamily::REGULAR) const;
   /// Returns the total inter-word advance: fp4::toPixel(spaceAdvance + kern(leftCp,' ') + kern(' ',rightCp)).
   /// Using a single snap avoids the +/-1 px rounding error that arises when space advance and kern are
@@ -354,6 +391,7 @@ class GfxRenderer {
                       TextMeasureMode mode = TextMeasureMode::Layout) const;
   int getFontAscenderSize(int fontId) const;
   int getLineHeight(int fontId) const;
+  // Explicit line spacing scales font size; the one-argument form returns font metrics.
   int getLineHeight(int fontId, float compression) const;
   std::string truncatedText(int fontId, const char* text, int maxWidth,
                             EpdFontFamily::Style style = EpdFontFamily::REGULAR) const;
@@ -388,6 +426,11 @@ class GfxRenderer {
   void displayGrayBuffer() const;
   // Active input encoding, used when drawing monochrome overlays into planes.
   bool grayPlanesAreAbsolute() const { return absoluteGrayPlanes; }
+  // B/W pass: draw 2-bit image pixels as a 2x2 ordered dither instead of
+  // "any ink is black". Only for pages that get no image grayscale pass,
+  // because overlay gray planes expect every gray pixel black in the base.
+  void setDitherImagesInBw(bool enabled) { ditherImagesInBw = enabled; }
+  bool imagesDitheredInBw() const { return ditherImagesInBw; }
 
   // Tiled grayscale (X4): stream one band of a plane straight to controller RAM
   // from `scratch` (panelWidthBytes * numRows, physical rows [yStart, yStart+
@@ -398,6 +441,9 @@ class GfxRenderer {
   // as one waveform. Route the base through displayGrayscaleBase() when true.
   bool combinesGrayscaleBase() const;
   bool storeBwBuffer();  // Returns true if buffer was stored successfully
+  // Copy the snapshot back without freeing it or changing the panel baseline.
+  // The owner keeps the slot until restoreBwBuffer/discardStoredBwBuffer.
+  bool copyStoredBwBuffer();
   // Restore and free the stored buffer. resyncPanelBaseline rewrites the
   // controller's differential baseline to the restored frame — correct after
   // a grayscale render (the glass matches the stored BW plane), WRONG when
@@ -459,6 +505,10 @@ class GfxRenderer {
   // getRegionByteSize: required buffer length for the rect at current orientation.
   // copyRegionToBuffer / copyBufferToRegion: false if `bufSize` is smaller than that.
   size_t getRegionByteSize(int logicalX, int logicalY, int logicalW, int logicalH) const;
+  // Tight physical rows; restore preserves pixels outside the logical rectangle.
+  size_t getPackedRegionByteSize(int x, int y, int w, int h) const;
+  bool copyPackedRegionToBuffer(int x, int y, int w, int h, uint8_t* dst, size_t bytes) const;
+  bool copyPackedBufferToRegion(int x, int y, int w, int h, const uint8_t* src, size_t bytes) const;
   bool copyRegionToBuffer(int logicalX, int logicalY, int logicalW, int logicalH, uint8_t* buf, size_t bufSize) const;
   bool copyBufferToRegion(int logicalX, int logicalY, int logicalW, int logicalH, const uint8_t* buf,
                           size_t bufSize) const;

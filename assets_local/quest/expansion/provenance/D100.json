@@ -1,0 +1,12 @@
+{
+  "id": "D100",
+  "master": "decor-100-v1.png",
+  "sha256": "3da190a65ba774af1f8ed52a516ed319a7c1939c5ded717cd3a95d639557c488",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original collectible decoration sprite for the e-ink fantasy reading app Aventura lectora. Reference fairy is STYLE ONLY. Friendly chibi storybook proportions, white and pale-gray flat fills, VERY THICK solid pure-BLACK outer contours (20-26px at1024px), strong black inner lines, simple broad shapes readable at112x144. Whole subject visible, centered with transparent padding. Genuine transparent background. No scenery, frame, UI, text, lettering, watermark, fine hatching or gray outlines. Do not include the player hero or PET. Subject: a miniature horned royal crown resting on a cracked basalt pedestal, one tiny friendly shadow wisp rising behind it, a clear black-and-white silhouette. A grounded ornament with a small clear base.",
+  "reference": "assets_local/quest/redesign/masters/decoration-fairy-v1.png",
+  "transparent": true,
+  "width": 1312,
+  "height": 1199,
+  "mode": "RGBA"
+}

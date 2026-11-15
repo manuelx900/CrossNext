@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <cstring>
 
 #include "../ui/Dashboard.h"
 #include "../ui/StatisticsArt.h"
@@ -13,11 +14,28 @@
 namespace readingui {
 namespace fui = freeink::ui;
 namespace {
+void completedMark(fui::DrawTarget& target, fui::Rect box) {
+  target.fill(box, fui::Paint::solid(fui::Color::Black), chrome::lightHeader ? 4 : 0);
+  target.bitmap(box.inset({4, 4, 4, 4}), fui::bitmapFromIcon(extra_check_32), fui::BitmapMode::Contain,
+                fui::Paint::solid(fui::Color::White));
+}
 void progress(toybox::Screen& s, fui::Rect r, uint64_t seconds, unsigned goal) {
   dashboard::frame(s, r, 2);
   const int fill = goal ? int(std::min(uint64_t(r.width - 8), seconds * uint64_t(r.width - 8) / (goal * 60))) : 0;
   if (fill > 0)
     s.target().fill(fui::makeRect(r.x + 4, r.y + 4, fill, r.height - 8), dashboard::ink, chrome::lightHeader ? 3 : 0);
+}
+void goalControls(toybox::Screen& s, fui::Rect row, unsigned minutes) {
+  const int gap = 8, resetWidth = 44, backWidth = row.width / 3;
+  const int goalWidth = row.width - backWidth - resetWidth - 2 * gap;
+  char label[64];
+  std::snprintf(label, sizeof(label), tr(STR_GOAL_TARGET), minutes);
+  dashboard::button(s, fui::makeRect(row.x, row.y, goalWidth, row.height), label, GoalChoose, 0, false, nullptr, 0);
+  const auto reset = fui::makeRect(row.x + goalWidth + gap, row.y, resetWidth, row.height);
+  dashboard::button(s, reset, "", GoalReset);
+  dashboard::icon(s, reset.inset({(int16_t)((row.height - 28) / 2), 8, (int16_t)((row.height - 28) / 2), 8}),
+                  extra_rotate_cw_32);
+  dashboard::button(s, fui::makeRect(row.right() - backWidth, row.y, backWidth, row.height), tr(STR_BACK), GoalBack);
 }
 void value(char* label, size_t size, uint64_t seconds, unsigned goal) {
   std::snprintf(label, size, tr(STR_GOAL_PROGRESS), static_cast<unsigned long long>(seconds / 60), goal);
@@ -29,7 +47,13 @@ void goalCard(toybox::Screen& s, fui::Rect r, const Model& m) {
   const int icon = 36, top = r.y + 8;
   s.target().bitmap(fui::makeRect(r.x + 14, top + 4, icon, icon), statsart::sparkBook, fui::BitmapMode::Contain,
                     dashboard::ink);
-  dashboard::text(s, fui::makeRect(r.x + 58, top, r.width - 116, 44), tr(STR_GOAL_DAILY), 1);
+  fui::TextStyle titleStyle;
+  titleStyle.font = 1;
+  titleStyle.align = fui::TextAlign::Center;
+  titleStyle.maxLines = 2;
+  const int titleHeight =
+      std::max(44, int(fui::measureWrappedText(s.target(), tr(STR_GOAL_DAILY), titleStyle, r.width - 116).height));
+  s.target().text(fui::makeRect(r.x + 58, top, r.width - 116, titleHeight), tr(STR_GOAL_DAILY), titleStyle);
   if (goal) {
     const auto calendar = fui::makeRect(r.right() - 54, top, 44, 44);
     dashboard::button(s, calendar, "", GoalCalendar);
@@ -42,22 +66,32 @@ void goalCard(toybox::Screen& s, fui::Rect r, const Model& m) {
     char label[64];
     std::snprintf(label, sizeof(label), tr(STR_STATS_MINUTE_VALUE), static_cast<unsigned long long>(goal));
     const auto bar = fui::makeRect(r.x + 12, bottom - buttonH - 22, r.width - 24, 12);
-    const int valueTop = top + 50, valueHeight = std::max(24, bar.y - valueTop - 8);
-    const auto number = fui::makeRect(r.x + 24, valueTop + std::max(0, (valueHeight - 44) / 2), r.width - 48,
-                                      std::min(44, valueHeight));
-    bool supported = true;
-    for (char* p = label; *p; ++p) {
-      if (*p >= 'a' && *p <= 'z') *p -= 'a' - 'A';
-      supported &= numerals::glyph(static_cast<unsigned char>(*p)) != nullptr;
-    }
-    if (supported)
-      toolsdigits::draw(s, number, label);
-    else
-      dashboard::text(s, number, label, 1);
+    const int valueTop = top + titleHeight + 6, valueHeight = std::max(24, bar.y - valueTop - 8);
+    const bool completed = m.summary && readinggoal::met(m.summary->onDay(m.today), goal);
+    const auto number = fui::makeRect(r.x + 24, valueTop + std::max(0, (valueHeight - 44) / 2),
+                                      r.width - 48 - (completed ? 36 : 0), std::min(44, valueHeight));
+    char digits[16];
+    std::snprintf(digits, sizeof(digits), "%u", goal);
+    // Keep the same numerical scale in every script; translated units must
+    // not push the entire value onto the small fallback text face.
+    const char* unit = label;
+    while (*unit >= '0' && *unit <= '9') ++unit;
+    while (*unit == ' ') ++unit;
+    fui::TextStyle unitStyle;
+    unitStyle.font = 1;
+    const int unitW = std::min(int(number.width) / 2, int(s.target().measureText(1, unit, unitStyle).width));
+    const int digitW = std::min(int(number.width) - unitW - 12, int(std::strlen(digits)) * number.height * 3 / 4);
+    const int left = number.x + (number.width - digitW - unitW - 12) / 2;
+    toolsdigits::draw(s, fui::makeRect(left, number.y, digitW, number.height), digits);
+    dashboard::text(s, fui::makeRect(left + digitW + 12, number.y, unitW, number.height), unit, 1);
+    if (completed)
+      completedMark(s.target(), fui::makeRect(number.right() + 4, number.y + (number.height - 28) / 2, 28, 28));
     progress(s, bar, m.summary ? m.summary->onDay(m.today) : 0, goal);
   } else {
-    dashboard::text(s, fui::makeRect(r.x + 12, top + 52, r.width - 24, std::max(24, bottom - buttonH - top - 60)),
-                    tr(STR_GOAL_SET_HINT), 1);
+    const int hintTop = top + titleHeight + 8;
+    const int hintHeight = bottom - buttonH - hintTop - 8;
+    if (hintHeight >= 24)
+      dashboard::text(s, fui::makeRect(r.x + 12, hintTop, r.width - 24, hintHeight), tr(STR_GOAL_SET_HINT), 1);
   }
   dashboard::button(s, fui::makeRect(r.x + 10, bottom - buttonH, r.width - 20, buttonH),
                     goal ? tr(STR_CONTINUE_READING) : tr(STR_GOAL_SET), goal ? ContinueReading : GoalChoose, 0, true);
@@ -68,11 +102,7 @@ void goalCalendar(toybox::Screen& s, fui::Rect r, const Model& m) {
     const int messageHeight = 3 * s.target().lineHeight(4);
     dashboard::prose(s, fui::makeRect(r.x + 12, r.y + (r.height - 64 - messageHeight) / 2, r.width - 24, messageHeight),
                      tr(STR_READING_CLOCK), fui::TextAlign::Center, 3);
-    char target[64];
-    std::snprintf(target, sizeof(target), tr(STR_GOAL_TARGET), m.goalMinutes);
-    dashboard::button(s, fui::makeRect(r.x, r.bottom() - 52, r.width * 2 / 3 - 5, 52), target, GoalChoose);
-    dashboard::button(s, fui::makeRect(r.x + r.width * 2 / 3 + 5, r.bottom() - 52, r.width / 3 - 5, 52), tr(STR_BACK),
-                      GoalBack);
+    goalControls(s, fui::makeRect(r.x, r.bottom() - 52, r.width, 52), m.goalMinutes);
     return;
   }
   const int head = wide ? 42 : 50;
@@ -101,8 +131,11 @@ void goalCalendar(toybox::Screen& s, fui::Rect r, const Model& m) {
     const auto cell = fui::makeRect(grid.x + col * grid.width / 7 + 3, grid.y + row * grid.height / 7 + 2,
                                     grid.width / 7 - 6, grid.height / 7 - 4);
     const uint64_t seconds = day <= m.today && m.summary ? m.summary->onDay(day) : 0;
-    const bool done = readinggoal::met(seconds, m.goalMinutes);
-    const bool partial = m.goalMinutes && seconds > 0 && !done;
+    const auto state =
+        m.summary ? readinggoal::dayState(day, m.today, m.goalStartDay, seconds, m.goalMinutes, m.goalLegacyHistory)
+                  : readinggoal::DayState::Untracked;
+    const bool done = state == readinggoal::DayState::Complete;
+    const bool partial = day == m.today && state == readinggoal::DayState::InProgress;
     if (done)
       lightui::surface(s.target(), cell, dashboard::ink);
     else if (partial) {
@@ -111,25 +144,51 @@ void goalCalendar(toybox::Screen& s, fui::Rect r, const Model& m) {
     } else
       dashboard::frame(s, cell, 1);
     std::snprintf(label, sizeof(label), "%d", n + 1);
+    const bool missed = state == readinggoal::DayState::Missed;
     dashboard::text(s, cell, label, wide ? 3 : 0, fui::TextAlign::Center, done);
+    if (missed) {
+      const int inset = 4, weight = std::max(2, std::min(int(cell.width), int(cell.height)) / 12);
+      s.target().line({int16_t(cell.x + inset), int16_t(cell.y + inset)},
+                      {int16_t(cell.right() - inset), int16_t(cell.bottom() - inset)}, weight, dashboard::ink);
+      s.target().line({int16_t(cell.right() - inset), int16_t(cell.y + inset)},
+                      {int16_t(cell.x + inset), int16_t(cell.bottom() - inset)}, weight, dashboard::ink);
+    }
   }
   const int y = grid.bottom() + 8, legendH = wide ? 32 : 52;
-  static constexpr StrId legend[] = {StrId::STR_GOAL_COMPLETE, StrId::STR_GOAL_PARTIAL, StrId::STR_GOAL_INCOMPLETE};
-  for (int n = 0; n < 3; ++n) {
-    const int x = r.x + r.width * n / 3, width = r.width / 3;
+  static constexpr StrId legend[] = {StrId::STR_GOAL_COMPLETE, StrId::STR_GOAL_INCOMPLETE};
+  const int legendWidth = r.width * 31 / 100;
+  for (int n = 0; n < 2; ++n) {
+    const int x = r.x + legendWidth * n;
     const auto swatch = fui::makeRect(x + 2, y + (legendH - 16) / 2, 16, 16);
-    if (n < 2) s.target().fill(swatch, n == 0 ? dashboard::ink : lightui::highlight);
+    if (n == 0) s.target().fill(swatch, dashboard::ink);
     s.target().stroke(swatch, dashboard::ink, 1);
-    dashboard::text(s, fui::makeRect(x + 24, y, width - 26, legendH), I18N.get(legend[n]), 3, fui::TextAlign::Left);
+    if (n == 1) {
+      s.target().line({int16_t(swatch.x + 4), int16_t(swatch.y + 4)},
+                      {int16_t(swatch.right() - 4), int16_t(swatch.bottom() - 4)}, 1, dashboard::ink);
+      s.target().line({int16_t(swatch.right() - 4), int16_t(swatch.y + 4)},
+                      {int16_t(swatch.x + 4), int16_t(swatch.bottom() - 4)}, 1, dashboard::ink);
+    }
+    dashboard::text(s, fui::makeRect(x + 24, y, legendWidth - 26, legendH), I18N.get(legend[n]), 3,
+                    fui::TextAlign::Left);
   }
-  std::snprintf(label, sizeof(label), tr(STR_GOAL_TARGET), m.goalMinutes);
+  const unsigned streakDays = m.summary ? readinggoal::streak(*m.summary, m.today, m.goalMinutes, m.goalStartDay) : 0;
+  char daysLabel[40];
+  std::snprintf(daysLabel, sizeof(daysLabel), streakDays == 1 ? tr(STR_FLASH_INTERVAL_DAY) : tr(STR_GOAL_STREAK_VALUE),
+                streakDays);
+  const int streakX = r.x + 2 * legendWidth + 8, streakW = r.right() - streakX;
+  if (wide) {
+    std::snprintf(label, sizeof(label), "%s: %s", tr(STR_SLEEP_GOAL_STREAK), daysLabel);
+    dashboard::text(s, fui::makeRect(streakX, y, streakW, legendH), label, 3, fui::TextAlign::Right);
+  } else {
+    dashboard::text(s, fui::makeRect(streakX, y, streakW, legendH / 2), tr(STR_SLEEP_GOAL_STREAK), 3,
+                    fui::TextAlign::Right);
+    dashboard::text(s, fui::makeRect(streakX, y + legendH / 2, streakW, legendH / 2), daysLabel, 3,
+                    fui::TextAlign::Right);
+  }
   const int buttonY = y + legendH + 8, buttonH = footer - legendH - 8;
-  dashboard::button(s, fui::makeRect(r.x, buttonY, r.width * 2 / 3 - 5, buttonH), label, GoalChoose, 0, false, nullptr,
-                    0);
-  dashboard::button(s, fui::makeRect(r.x + r.width * 2 / 3 + 5, buttonY, r.width / 3 - 5, buttonH), tr(STR_BACK),
-                    GoalBack);
+  goalControls(s, fui::makeRect(r.x, buttonY, r.width, buttonH), m.goalMinutes);
 }
-void goalWallpaper(toybox::Screen& s, const readingstats::Summary* summary, int day, unsigned goal) {
+void goalWallpaper(toybox::Screen& s, const readingstats::Summary* summary, int day, unsigned goal, int startDay) {
   pixelui::begin(s);
   const auto safe = s.device().safeRect();
   auto r = s.body();
@@ -175,7 +234,7 @@ void goalWallpaper(toybox::Screen& s, const readingstats::Summary* summary, int 
   const int mark = wide ? 72 : 64, flameY = streak.y + (wide ? 28 : 14);
   s.target().bitmap(fui::makeRect(streak.x + (streak.width - mark) / 2, flameY, mark, mark), statsart::flame,
                     fui::BitmapMode::Contain, dashboard::ink);
-  const unsigned days = summary ? readinggoal::streak(*summary, day, goal) : 0;
+  const unsigned days = summary ? readinggoal::streak(*summary, day, goal, startDay) : 0;
   if (days == 1)
     std::snprintf(label, sizeof(label), tr(STR_FLASH_INTERVAL_DAY), 1);
   else
@@ -184,5 +243,50 @@ void goalWallpaper(toybox::Screen& s, const readingstats::Summary* summary, int 
   dashboard::text(s,
                   fui::makeRect(streak.x + 12, streak.bottom() - (wide ? 88 : 54), streak.width - 24, wide ? 64 : 44),
                   tr(STR_GOAL_STREAK), 0);
+}
+void goalOverlay(fui::DrawTarget& target, const fui::DeviceContext& device, const readinggoal::WallpaperData& data) {
+  const auto safe = device.safeRect();
+  const bool wide = device.width > device.height;
+  const int margin = 16, height = wide ? 84 : 100;
+  const auto card = fui::makeRect(safe.x + margin, safe.bottom() - height - margin, safe.width - margin * 2, height);
+  const auto ink = fui::Paint::solid(fui::Color::Black), paper = fui::Paint::solid(fui::Color::White);
+  target.fill(card, paper, chrome::lightHeader ? 8 : 0);
+  target.stroke(card, ink, 2, chrome::lightHeader ? 8 : 0);
+  target.fill(fui::makeRect(card.x + 6, card.y + 12, 4, card.height - 24), ink);
+  fui::TextStyle style;
+  style.font = 0;
+  style.maxLines = 1;
+  style.color = fui::Color::Black;
+  char value[64];
+  if (data.state != readinggoal::WallpaperState::Ready) {
+    style.maxLines = 2;
+    style.align = fui::TextAlign::Center;
+    target.text(
+        card.inset({12, 18, 12, 18}),
+        data.state == readinggoal::WallpaperState::NoGoal ? tr(STR_GOAL_SET_HINT) : tr(STR_READING_STORAGE_ERROR),
+        style);
+    return;
+  }
+  const int pad = 20, row = (height - 16) / 2;
+  const bool completed = readinggoal::met(data.seconds, data.goal);
+  for (int n = 0; n < 2; ++n) {
+    const int y = card.y + 8 + n * row;
+    const int reserve = n == 0 && completed ? 30 : 0;
+    if (n == 0)
+      std::snprintf(value, sizeof(value), tr(STR_GOAL_PROGRESS), static_cast<unsigned long long>(data.seconds / 60),
+                    data.goal);
+    else if (data.streak == 1)
+      std::snprintf(value, sizeof(value), tr(STR_FLASH_INTERVAL_DAY), 1);
+    else
+      std::snprintf(value, sizeof(value), tr(STR_GOAL_STREAK_VALUE), data.streak);
+    style.align = fui::TextAlign::Right;
+    const int valueWidth = target.measureText(0, value, style).width;
+    const int valueX = card.right() - pad - reserve - valueWidth;
+    target.text(fui::makeRect(valueX, y, valueWidth, row), value, style);
+    style.align = fui::TextAlign::Left;
+    target.text(fui::makeRect(card.x + pad, y, valueX - card.x - pad - 12, row),
+                n ? tr(STR_SLEEP_GOAL_STREAK) : tr(STR_SLEEP_GOAL_LABEL), style);
+    if (!n && completed) completedMark(target, fui::makeRect(card.right() - pad - 24, y + (row - 24) / 2, 24, 24));
+  }
 }
 }  // namespace readingui

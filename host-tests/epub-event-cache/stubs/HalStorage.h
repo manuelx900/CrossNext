@@ -14,12 +14,18 @@ class HalFile {
   size_t cursor = 0;
 
  public:
+  inline static size_t reads = 0, readBytes = 0;
   inline static bool failWrite = false, failClose = false;
   HalFile() = default;
   explicit HalFile(std::shared_ptr<Entry> e) : entry(std::move(e)) {}
   explicit operator bool() const { return bool(entry); }
   size_t size() const { return entry->bytes.size(); }
   size_t position() const { return cursor; }
+  bool seekSet(size_t offset) {
+    if (offset > size()) return false;
+    cursor = offset;
+    return true;
+  }
   uint32_t modificationTime() const { return entry->modified; }
   bool close() {
     entry.reset();
@@ -27,6 +33,8 @@ class HalFile {
   }
   size_t read(void* out, size_t n) {
     n = std::min(n, size() - std::min(cursor, size()));
+    ++reads;
+    readBytes += n;
     memcpy(out, entry->bytes.data() + cursor, n);
     cursor += n;
     return n;
@@ -41,6 +49,9 @@ class HalFile {
 };
 class TestStorage {
  public:
+  bool removeDerivedCache(const char* p) { return remove(p); }
+  bool replaceDerivedCache(const char* a, const char* b) { return replaceFile(a, b); }
+  bool openDerivedCacheForWrite(const char* tag, const char* p, HalFile& f) { return openFileForWrite(tag, p, f); }
   std::map<std::string, std::shared_ptr<Entry>> entries;
   bool failReplace = false;
   bool exists(const char* p) const { return entries.count(p); }

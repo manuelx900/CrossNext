@@ -20,12 +20,10 @@ bool BookCoverPainter::paintBitmap(fui::Rect slot, int taper) {
   const int width = coverBitmap.getWidth(), height = coverBitmap.getHeight();
   if (width <= 0 || height <= 0 || slot.empty()) return false;
   int cropWidth = width, cropHeight = height;
-  if (!taper) {
-    if (width * slot.height > height * slot.width)
-      cropWidth = std::max(1, height * slot.width / slot.height);
-    else
-      cropHeight = std::max(1, width * slot.height / slot.width);
-  }
+  if (!taper && int64_t(width) * slot.height > int64_t(height) * slot.width)
+    cropWidth = std::max(1, int(int64_t(height) * slot.width / slot.height));
+  else if (!taper)
+    cropHeight = std::max(1, int(int64_t(width) * slot.height / slot.width));
   const int sourceX = (width - cropWidth) / 2, sourceY = (height - cropHeight) / 2;
   const bool packed = coverBitmap.is1Bit();
   bool filtered = packed && cropWidth >= slot.width && cropHeight >= slot.height &&
@@ -88,7 +86,7 @@ void BookCoverPainter::paint(const RecentBook& book, fui::Rect slot, int taper) 
   if (FsHelpers::hasEpubExtension(book.path) || FsHelpers::hasXtcExtension(book.path)) {
     std::snprintf(thumb, sizeof(thumb), "/.crosspoint/%s_%lu/thumb_%s%d.bmp", xtc ? "xtc" : "epub",
                   static_cast<unsigned long>(std::hash<std::string>{}(book.path)),
-                  xtc && SETTINGS.xtcCoverRotation ? "ccw_" : "", slot.height);
+                  xtc && SETTINGS.xtcCoverRotation ? "ccw3_" : "", slot.height);
   }
   std::string fallback;
   const char* path = thumb;
@@ -96,7 +94,7 @@ void BookCoverPainter::paint(const RecentBook& book, fui::Rect slot, int taper) 
     if (xtc) {
       std::snprintf(thumb, sizeof(thumb), "/.crosspoint/xtc_%lu/cover%s.bmp",
                     static_cast<unsigned long>(std::hash<std::string>{}(book.path)),
-                    SETTINGS.xtcCoverRotation ? "_ccw" : "");
+                    SETTINGS.xtcCoverRotation ? "_ccw3" : "");
       fallback = UITheme::getCoverThumbPath(thumb, slot.height);
     } else
       fallback = UITheme::getCoverThumbPath(book.coverBmpPath, slot.height);
@@ -104,7 +102,7 @@ void BookCoverPainter::paint(const RecentBook& book, fui::Rect slot, int taper) 
   }
   if (*path && Storage.openFileForRead("HOME", path, coverFile)) {
     if (coverBitmap.parseHeaders() == BmpReaderError::Ok) drawn = paintBitmap(slot, taper);
-    homecover::recordSource(path, coverFile, drawn && (!*thumb || path == thumb));
+    homecover::recordSource(path, coverFile, drawn);
     coverFile.close();
   } else {
     homecover::recordSource(path, coverFile, false);

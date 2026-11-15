@@ -53,6 +53,10 @@ class HalFile {
 
 class HalStorage {
  public:
+  uint32_t content = 1, media = 1;
+  uint32_t contentRevision() const { return content; }
+  uint32_t resourceRevision() const { return contentRevision(); }
+  uint32_t mediaRevision() const { return media; }
   static HalStorage& getInstance() {
     static HalStorage instance;
     return instance;

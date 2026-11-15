@@ -1,0 +1,17 @@
+{
+  "id": "S027",
+  "kind": "scene",
+  "master": "scene-027-v2.png",
+  "reference": "assets_local/quest/redesign/portraits/iri-source.png",
+  "transparent": false,
+  "prompt": "Use case: illustration-story. ONE complete landscape 3:2 narrative illustration for the monochrome e-ink game Aventura lectora. Clean expressive chibi storybook art, thick smooth PURE BLACK contours, white and sparse flat light-gray fills. No color, gradients, crosshatching, collage, lettering, captions, UI or watermark. Large clear clues readable at480x320. Player hero and PET are OFF CAMERA. Depict only people actually physically present in the described event; a person mentioned in a letter or record does NOT appear alive beside its reader. The attached portraits are IDENTITY references, NOT additional cast: match face, age, hairstyle, clothing and distinctive accessories exactly for any named person present. Do not invent another person or clue. Fill the scene to its edges, keep all important faces and objects in frame. IRI: woman with straight dark chin-length bob, shell hair clasp, short dark cape and round throat brooch; no glasses, white bun or beard. Region: The sunken library. Chapter: The war book. Draw exactly this already-known moment: Aren arrived too late to save Elia. After the fire, he gained people's trust by promising safety, then used that authority to take their memories and remove opposition to his rule. Context for setting and continuity only: You have learned how stories feed the Olvido, but not why Aren began using it. Iri brings the war chronicle shipped with his private books. It preserves events removed from the city's public version. MANDATORY PHYSICAL SETTING: the war chronicle on a reading table INSIDE the library; the fire is a picture in the book, not a live fire. Do not anthropomorphize books, pages or objects. No invented smiling ghosts. No person replaces a written record. EXHAUSTIVE VISIBLE CAST (do not add anyone else): Iri reading a chronicle, no living Aren or Elia beside her. The reference is STYLE ONLY for any person not explicitly in this cast.",
+  "references": [
+    "assets_local/quest/redesign/portraits/iri-source.png"
+  ],
+  "sha256": "a947aac8a658f189b9fc6ad02ff8a22ffc07185c997476394d0de074fb871ab7",
+  "tool": "built-in image_gen",
+  "source": "exec-fff49d75-fc38-4c0c-b50b-812683f1264c.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

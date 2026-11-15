@@ -492,7 +492,11 @@ void CrossPointWebServerActivity::render(RenderLock&&) {
     } else {
       const auto height = renderer.getLineHeight(UI_10_FONT_ID);
       const auto top = (pageHeight - height) / 2;
-      renderer.drawCenteredText(UI_10_FONT_ID, top, tr(STR_STARTING_HOTSPOT));
+      UITheme::drawCenteredWrappedText(renderer,
+                                       Rect{metrics.contentSidePadding, top, pageWidth - 2 * metrics.contentSidePadding,
+                                            2 * renderer.getLineHeight(UI_10_FONT_ID)},
+                                       UI_10_FONT_ID, tr(STR_STARTING_HOTSPOT), 2, true, EpdFontFamily::REGULAR,
+                                       UITheme::TextVerticalAlignment::TOP);
     }
     renderer.displayBuffer();
   }
@@ -579,10 +583,14 @@ void CrossPointWebServerActivity::renderServerRunning() const {
 
     // STA mode display (original behavior)
     // std::string ipInfo = "IP Address: " + connectedIP;
-    renderer.drawCenteredText(UI_10_FONT_ID, startY, tr(STR_OPEN_URL_HINT), true, EpdFontFamily::BOLD);
-    startY += height10;
-    renderer.drawCenteredText(UI_10_FONT_ID, startY, tr(STR_SCAN_QR_HINT), true, EpdFontFamily::BOLD);
-    startY += height10 + metrics.verticalSpacing * 2;
+    UITheme::drawCenteredWrappedText(
+        renderer, Rect{metrics.contentSidePadding, startY, pageWidth - 2 * metrics.contentSidePadding, 2 * height10},
+        UI_10_FONT_ID, tr(STR_OPEN_URL_HINT), 2, true, EpdFontFamily::BOLD, UITheme::TextVerticalAlignment::TOP);
+    startY += 2 * height10;
+    UITheme::drawCenteredWrappedText(
+        renderer, Rect{metrics.contentSidePadding, startY, pageWidth - 2 * metrics.contentSidePadding, 2 * height10},
+        UI_10_FONT_ID, tr(STR_SCAN_QR_HINT), 2, true, EpdFontFamily::BOLD, UITheme::TextVerticalAlignment::TOP);
+    startY += 2 * height10 + metrics.verticalSpacing * 2;
 
     // Show QR code for URL
     std::string webInfo = "http://" + connectedIP + "/";

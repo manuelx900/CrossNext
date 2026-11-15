@@ -1,0 +1,12 @@
+{
+  "id": "D000",
+  "master": "decor-000-v1.png",
+  "sha256": "4045f7848867f531d3a5ce5097330ce838a9e1faafc05665dc2167a0cc7c374c",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE new original collectible decoration sprite for the e-ink fantasy reading app Aventura lectora. The reference fairy is STYLE ONLY: same friendly chibi storybook proportions, clean white fills and a few flat pale-gray fills, VERY THICK solid pure-BLACK outer contours (about20-26 pixels at1024px), strong black inner lines, simple large readable shapes at112x144. Full object visible, centered with transparent padding, genuine transparent background. No scenery, no frame, no UI, no letters, no watermark, no fine hatching or gray outlines. Subject: one friendly tiny OAK SPRITE, a little woodland gnome with an acorn cap, leaf collar, short root-like boots and a little wooden lantern, standing on a small mossy root base. Distinct simple silhouette; no fairy wings. This is a ground decoration, not the player's hero or PET; do not include the hero or pet.",
+  "reference": "assets_local/quest/redesign/masters/decoration-fairy-v1.png",
+  "transparent": true,
+  "width": 1106,
+  "height": 1422,
+  "mode": "RGBA"
+}

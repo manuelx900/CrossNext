@@ -28,6 +28,9 @@ class HalFile {
     return end >= position ? static_cast<int>(end - position) : 0;
   }
 
+  uint64_t fileSize64() const { return file_ ? uint64_t(available()) + uint64_t(std::ftell(file_)) : 0; }
+  uint32_t modificationTime() const { return 1; }
+
   int read(void* buffer, size_t count) {
     if (!file_) return -1;
     return static_cast<int>(std::fread(buffer, 1, count, file_));
@@ -54,6 +57,10 @@ class HalFile {
 
 class HalStorage {
  public:
+  uint32_t resource = 1, media = 1;
+  int reads = 0;
+  uint32_t resourceRevision() const { return resource; }
+  uint32_t mediaRevision() const { return media; }
   static HalStorage& getInstance() {
     static HalStorage instance;
     return instance;
@@ -66,8 +73,12 @@ class HalStorage {
     return true;
   }
 
-  bool remove(const char* path) { return std::remove(path) == 0; }
+  bool remove(const char* path) {
+    ++resource;
+    return std::remove(path) == 0;
+  }
   bool rename(const char* from, const char* to) {
+    ++resource;
     if (from == failedRenameFrom_ && to == failedRenameTo_) {
       clearFailures();
       return false;
@@ -85,10 +96,22 @@ class HalStorage {
     failedRenameTo_.clear();
   }
 
-  bool openFileForRead(const char*, const char* path, HalFile& file) { return file.open(path, "rb"); }
-  bool openFileForRead(const char*, const std::string& path, HalFile& file) { return file.open(path.c_str(), "rb"); }
-  bool openFileForWrite(const char*, const char* path, HalFile& file) { return file.open(path, "wb"); }
-  bool openFileForWrite(const char*, const std::string& path, HalFile& file) { return file.open(path.c_str(), "wb"); }
+  bool openFileForRead(const char*, const char* path, HalFile& file) {
+    ++reads;
+    return file.open(path, "rb");
+  }
+  bool openFileForRead(const char*, const std::string& path, HalFile& file) {
+    ++reads;
+    return file.open(path.c_str(), "rb");
+  }
+  bool openFileForWrite(const char*, const char* path, HalFile& file) {
+    ++resource;
+    return file.open(path, "wb");
+  }
+  bool openFileForWrite(const char*, const std::string& path, HalFile& file) {
+    ++resource;
+    return file.open(path.c_str(), "wb");
+  }
 
  private:
   std::string failedRenameFrom_;

@@ -17,6 +17,7 @@
 
 class NotesActivity final : public Activity {
  public:
+  bool allowsRemoteControl() const override { return false; }
   NotesActivity(GfxRenderer& renderer, MappedInputManager& mappedInput) : Activity("Notes", renderer, mappedInput) {}
   ~NotesActivity() override = default;
 

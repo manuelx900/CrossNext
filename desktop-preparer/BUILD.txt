@@ -1,0 +1,46 @@
+BUILD — CrossNext Book Preparer
+
+Windows x64. Source and application inherit the repository license.
+Build only from the same source revision as the intended firmware cache ABI.
+
+Prerequisites:
+- Python 3 with Pillow.
+- Node.js x64 (including its LICENSE).
+- Emscripten SDK under .venv/emsdk/upstream/emscripten.
+- Firmware simulator dependencies and compile_commands.json already generated.
+- .NET Framework 4.x C# compiler (Windows inbox csc.exe).
+
+From the repository root:
+  .venv/Scripts/python.exe desktop-preparer/build_engine.py
+  .venv/Scripts/python.exe desktop-preparer/build_portable.py
+
+The final single-file executable is:
+  desktop-preparer/dist/CrossNext-Book-Preparer-DPI.exe
+
+Tests:
+  .venv/Scripts/python.exe desktop-preparer/tests/integration.py
+  .venv/Scripts/python.exe desktop-preparer/tests/resume_count.py
+  .venv/Scripts/python.exe desktop-preparer/tests/catalog.py
+  .venv/Scripts/python.exe desktop-preparer/build_portable.py --test
+  .venv/Scripts/python.exe desktop-preparer/tests/ui_layout.py
+  .venv/Scripts/python.exe desktop-preparer/tests/preparation_options.py
+
+The test-only executable additionally accepts --card PATH --test-output DIR
+and --es / --test-size 1160x740. It renders actual WinForms views and verifies
+that preparing the card completes. Only use a disposable test card/folder.
+The UI layout suite uses synthetic settings and 40 fonts; it never accesses a
+card. It renders native WinForms ready/busy states at 100-250% scale, checks
+work-area bounds, horizontal overflow, action visibility and disabled-button
+contrast. The DPI changes use the same layout path as WM_DPICHANGED. Actual
+multi-monitor movement still needs a physical Windows check.
+preparation_options.py checks saved/overridden engines through the real GUI,
+vector and sparse bitmap size sets, rejected unsupported sizes, deduplicated
+layouts and unchanged reader settings. Tests accept an alternate test EXE name;
+build one with --test --test-name NAME.exe if another test EXE is in use.
+
+engine-build.json records source hashes and cache version. manifest.json
+records runtime hashes. Build adapters are generated only under build/:
+GCC32 string hash compatibility, FAT modification timestamps and read-only
+settings access, and clipping tiny-JPEG cache bands to the visible image
+height. Reader-profile migration reuses the firmware paragraph-indent helper.
+No firmware source is patched by these scripts.

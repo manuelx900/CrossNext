@@ -1,0 +1,21 @@
+{
+  "id": "K131",
+  "key": "Medalla-stars",
+  "file": "K131.png",
+  "sample": {
+    "es": "Medalla de las estrellas",
+    "en": "Stars medal"
+  },
+  "requests": [
+    274
+  ],
+  "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: star-shaped gateway and an open book.",
+  "transparent": true,
+  "kind": "keepsake",
+  "sha256": "b19cd522d30aa21eb18b5617778684e7486e0bffaff71901ca4d6fae41d0a920",
+  "tool": "built-in image_gen",
+  "source": "exec-c12ce36e-dd1f-4621-b541-08762685c097.png",
+  "width": 1199,
+  "height": 1312,
+  "mode": "RGBA"
+}

@@ -5,9 +5,11 @@
 
 namespace petsleep {
 inline constexpr uint32_t FRAME_MS = 750;
-inline constexpr uint32_t MOOD_FRAME_MS = 3000;
+inline constexpr uint32_t MOOD_FRAME_MS = 1500;
+inline constexpr uint32_t SLEEP_FRAME_MS = 600;
 inline uint32_t frameInterval(const pet::Profile& p) {
-  return pet::stage(p.readingSeconds) == pet::Stage::Egg ? FRAME_MS : MOOD_FRAME_MS;
+  if (pet::stage(p.readingSeconds) == pet::Stage::Egg) return FRAME_MS;
+  return p.resting ? SLEEP_FRAME_MS : MOOD_FRAME_MS;
 }
 inline constexpr unsigned POSES = 12, FRAMES = 3, HEAD_OFFSET = POSES * FRAMES * 2,
                           BODY_OFFSET = HEAD_OFFSET + POSES * 2;
@@ -37,6 +39,10 @@ inline bool breathing(const pet::Profile& p, pet::View view) {
 inline bool moodVisible(const pet::Profile& p, pet::View view) {
   return breathing(p, view) && view != pet::View::Evolution && pet::stage(p.readingSeconds) != pet::Stage::Egg &&
          (!p.resting || p.illness != pet::Illness::Healthy);
+}
+inline bool roomMotionVisible(pet::View view) {
+  // The half-screen Decorate drawer covers the companion's moving details.
+  return view != pet::View::Home;
 }
 inline unsigned frame(unsigned step) {
   static constexpr uint8_t frames[] = {0, 1, 2, 1};

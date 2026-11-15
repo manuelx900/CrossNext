@@ -27,12 +27,12 @@ constexpr StrId menuDescs[NetworkModeSelectionActivity::MENU_ITEM_COUNT] = {
     StrId::STR_USB_DRIVE_DESC,
 #endif
 };
-constexpr UIIcon menuIcons[NetworkModeSelectionActivity::MENU_ITEM_COUNT] = {
-    UIIcon::Wifi,
-    UIIcon::Library,
-    UIIcon::Hotspot,
+constexpr const freeink::Icon* menuIcons[NetworkModeSelectionActivity::MENU_ITEM_COUNT] = {
+    &navicons::Wifi32,
+    &navicons::Signal32,
+    &navicons::Hotspot32,
 #if FREEINK_CAP_USB_MSC
-    UIIcon::Usb,
+    &icon_usb_32,
 #endif
 };
 }  // namespace
@@ -45,7 +45,7 @@ NetworkModeSelectionActivity::NetworkModeSelectionActivity(GfxRenderer& renderer
     fui::ListItem item;
     item.label = I18N.get(menuItems[i]);
     item.subtitle = I18N.get(menuDescs[i]);
-    item.icon = listIconFor(menuIcons[i], 32);  // subtitle rows carry the larger icon
+    item.icon = fui::bitmapFromIcon(*menuIcons[i]);  // subtitle rows carry the larger icon
     item.actionValue = static_cast<int16_t>(i);
     rowItems_[i] = item;
   }

@@ -1,0 +1,8 @@
+{
+  "id": "books",
+  "path": "exec-8e073092-98c4-4729-ac7d-b26e863eb748.png",
+  "prompt": "Production decoration sprite for Aventura lectora, ONE isolated object. Match the reference pets: thick clean pure black rounded outlines, white and soft flat gray shading, cute storybook cartoon, simple readable silhouette for 112x144 pixels, no fine texture. Full object centered with transparent margin, truly transparent RGBA background. No aura, no glow, no scenery, no letters, no frame, no other subjects. Subject: A neat stack of three thick storybooks with one large bookmark hanging down, slight staggered arrangement",
+  "tool": "built-in image_gen",
+  "sha256": "8c70a60078a0ad351a28d4088f17a6f1710a09cfce2673fc81dc04e9f9c2a650",
+  "name": "decoration-books-v1"
+}

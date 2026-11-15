@@ -35,7 +35,8 @@ HttpDownloader::DownloadError runGetSecure(const std::string& url, const std::st
                                            const std::string& password,
                                            const std::vector<HttpDownloader::Header>& headers,
                                            const freeink::FetchSink& sink, const bool* cancelFlag = nullptr,
-                                           size_t* bytesOut = nullptr, const bool downgradeRedirectsToHttp = false) {
+                                           size_t* bytesOut = nullptr, const bool downgradeRedirectsToHttp = false,
+                                           std::string* effectiveUrl = nullptr) {
   // Cleared per request: a transport failure returns before it is set, and a
   // stale 200 from the previous fetch would read as success.
   g_lastStatus = 0;
@@ -55,6 +56,7 @@ HttpDownloader::DownloadError runGetSecure(const std::string& url, const std::st
   WifiPowerSaveGuard psGuard;
   freeink::FetchOptions options;
   options.redirectToHttp = downgradeRedirectsToHttp;
+  options.effectiveUrl = effectiveUrl;
 
   // Cancel used to be dead until the first body byte. SecureHttpClient polls
   // the abort callback while it waits for the status line and headers, and the
@@ -147,10 +149,11 @@ bool HttpDownloader::fetchUrl(const std::string& url, std::string& outContent, c
 }
 
 bool HttpDownloader::fetchUrl(const std::string& url, Stream& outContent, const std::string& username,
-                              const std::string& password) {
-  return fetchUrl(
-      url, [&outContent](const uint8_t* data, size_t len) { return outContent.write(data, len) == len; }, username,
-      password);
+                              const std::string& password, const std::vector<Header>& headers,
+                              std::string* effectiveUrl) {
+  freeink::FetchSink sink;
+  sink.write = [&outContent](const uint8_t* data, size_t len) { return outContent.write(data, len) == len; };
+  return runGetSecure(url, username, password, headers, sink, nullptr, nullptr, false, effectiveUrl) == OK;
 }
 
 bool HttpDownloader::fetchUrl(const std::string& url, const DataCallback& onData, const std::string& username,

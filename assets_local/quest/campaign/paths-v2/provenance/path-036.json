@@ -1,0 +1,17 @@
+{
+  "id": 36,
+  "saga": 3,
+  "step": 6,
+  "title": {
+    "en": "The shadow attack",
+    "es": "El ataque de las sombras"
+  },
+  "enemy": "Dome watcher",
+  "guardian": 19,
+  "master": "path-036.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The Library Beneath the Sea. Path episode: The shadow attack. Story action, which the scene must directly support: Shadows appear between the shelves and begin tearing up the last books. You must stop them.\nEnemy identity, MUST match this exact anatomy: an armored squat crab with book-cover claws and a heavy shell. Medium view across an open area; enemy beside the key landmark, clear open sky or ceiling space. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-de65157f-2899-48e8-86da-914a78e3d29f.png",
+  "sha256": "c70de25cdae5b860b4df553b0e2efda964744de065efadff3aac95b2d76d3252"
+}

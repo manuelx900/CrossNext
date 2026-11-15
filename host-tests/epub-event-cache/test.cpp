@@ -19,14 +19,14 @@ static void put32(uint8_t* p, uint32_t v) {
   for (int i = 0; i < 4; ++i) p[i] = v >> (8 * i);
 }
 static std::vector<uint8_t>& bytes() { return Storage.entries.at(PATH)->bytes; }
-static void record(bool large = false) {
+static void record(bool large = false, int repeats = 4) {
   Cache c;
   assert(!c.begin(SOURCE, PATH, false));
   const char* attrs[] = {"id", "alpha", "class", "beta", nullptr};
   c.startElement("html", attrs);
   if (large) {
     const std::string text(4000, 'x');
-    for (int i = 0; i < 4; ++i) c.text(Cache::Kind::Text, text.data(), int(text.size()));
+    for (int i = 0; i < repeats; ++i) c.text(Cache::Kind::Text, text.data(), int(text.size()));
   } else {
     c.text(Cache::Kind::Text, "A & B", 5);
     c.text(Cache::Kind::DefaultData, "&nbsp;", 6);
@@ -52,6 +52,26 @@ static bool replay() {
       return true;
     }
     ++events;
+  }
+}
+static std::vector<uint8_t> replayBytes() {
+  Cache cache;
+  assert(cache.begin(SOURCE, PATH, true));
+  std::vector<uint8_t> output;
+  output.reserve(20000);
+  Cache::Record record;
+  for (;;) {
+    const auto next = cache.next(record);
+    assert(next != Cache::Next::Error);
+    if (next == Cache::Next::End) return output;
+    output.push_back(uint8_t(record.kind));
+    const auto append = [&](const char* text, size_t n) { output.insert(output.end(), text, text + n); };
+    if (record.kind == Cache::Kind::StartElement || record.kind == Cache::Kind::EndElement) {
+      append(record.data, strlen(record.data) + 1);
+      if (record.attributes)
+        for (size_t i = 0; record.attributes[i]; ++i) append(record.attributes[i], strlen(record.attributes[i]) + 1);
+    } else
+      append(record.data, record.length);
   }
 }
 static void fixFirstBlock() {
@@ -223,5 +243,70 @@ int main() {
   HalFile::failClose = false;
   assert(!Storage.exists("/events/0.evc.part"));
   assert(HalMemory::active == 0);
-  puts("PASS: event replay, CRC/bounds, truncation, abort, writer lease, stale source, OOM and I/O failure");
+  const auto beforeTable = bytes();
+  {
+    Cache c;
+    c.begin(SOURCE, PATH, false);
+    c.startElement("html", nullptr);
+    c.startElement("table", nullptr);
+    c.endElement("table");
+    c.endElement("html");
+    c.commit();
+    assert(HalMemory::active == 0);
+    assert(!Storage.exists("/events/0.evc.part"));
+  }
+  assert(bytes() == beforeTable);
+  record(true);
+  const auto expectedEvents = replayBytes();
+  Cache::retainReaderReplay(true);
+  HalFile::readBytes = 0;
+  {
+    Cache partial;
+    assert(partial.begin(SOURCE, PATH, true));
+    assert(HalFile::readBytes == 20);  // no eager chapter-body I/O
+    Cache::Record event;
+    assert(partial.next(event) == Cache::Next::Record);
+  }
+  const size_t prefixBytes = HalFile::readBytes;
+  HalFile::readBytes = 0;
+  assert(replayBytes() == expectedEvents);
+  assert(HalFile::readBytes == bytes().size() - prefixBytes + 20);
+
+  assert(HalMemory::active == 1);  // only the bounded replay survives parser destruction
+  HalFile::reads = HalFile::readBytes = 0;
+  assert(replayBytes() == expectedEvents);
+  assert(HalFile::readBytes == 20);  // header validation; event blocks came from PSRAM
+  Cache::retainReaderReplay(false);
+  assert(HalMemory::active == 0);
+  Cache::retainReaderReplay(true);
+  HalMemory::available = 1024;
+  assert(replay());
+  assert(HalMemory::active == 0);
+  HalMemory::available = 8388608;
+  assert(replay());
+  Storage.entries[PATH]->modified++;
+  HalFile::readBytes = 0;
+  assert(replay());
+  assert(HalFile::readBytes > 20);
+  Cache::retainReaderReplay(false);
+  assert(HalMemory::active == 0);
+  Cache::retainReaderReplay(true);
+  {
+    Cache first, nested;
+    assert(first.begin(SOURCE, PATH, true));
+    assert(nested.begin(SOURCE, PATH, true));  // nested parser cannot evict the active reader's bytes
+    Cache::Record r;
+    while (nested.next(r) == Cache::Next::Record) {
+    }
+    while (first.next(r) == Cache::Next::Record) {
+    }
+  }
+  Cache::retainReaderReplay(false);
+  assert(HalMemory::active == 0);
+  record(true, 80);
+  Cache::retainReaderReplay(true);
+  assert(replay());
+  assert(HalMemory::active == 0);  // over 256 KiB streams without retention
+  Cache::retainReaderReplay(false);
+  puts("PASS: event replay, CRC/bounds, truncation, abort, writer lease, stale source, OOM, I/O and table exclusion");
 }

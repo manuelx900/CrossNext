@@ -78,6 +78,12 @@ upload protocol.
 For Calibre OPDS browsing, add `/opds` to the catalog URL when configuring an
 OPDS server.
 
+OPDS catalogs support both Atom (OPDS 1.x) and JSON (OPDS 2.0); the reader
+detects the format automatically. Catalog navigation, search and pagination use
+the links supplied by the server. Downloads require a direct, unprotected EPUB
+link. Purchase links, indirect publication documents and LCP licenses are omitted;
+a catalog containing only these entries may appear empty.
+
 ## Web Interface
 
 The browser UI has four primary pages.

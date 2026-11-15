@@ -1,0 +1,21 @@
+{
+  "id": "K126",
+  "key": "Medalla-desert",
+  "file": "K126.png",
+  "sample": {
+    "es": "Medalla de las dunas",
+    "en": "Dunes medal"
+  },
+  "requests": [
+    149
+  ],
+  "prompt": "Use case: illustration-story. ONE isolated collectible fantasy medal for a monochrome e-ink reading RPG. Thick smooth BLACK outline, clear white fills, sparse flat light gray, simple readable crafted relief, transparent background. A short plain ribbon above a large round medal; its central emblem must be large and unmistakable at64px. No lettering, numerals, color, scene, extra medals, thin filigree, text or UI. Subject: one dune arch and a small well.",
+  "transparent": true,
+  "kind": "keepsake",
+  "sha256": "eee1acf9e51c765ddb6426736498ead7ed44793a5f0debfdff0664e86dfadf00",
+  "tool": "built-in image_gen",
+  "source": "exec-bc5ec3cc-748a-431f-bbcf-1c033bd2210d.png",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA"
+}

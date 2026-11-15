@@ -1,0 +1,17 @@
+{
+  "id": 0,
+  "saga": 0,
+  "step": 0,
+  "title": {
+    "en": "The first guardian",
+    "es": "El primer guardián"
+  },
+  "enemy": "Trail stalker",
+  "guardian": 0,
+  "master": "path-000.png",
+  "prompt": "Use case: illustration-story. Create ONE finished original landscape 3:2 story illustration for the monochrome e-ink reading RPG Aventura Lectora. A complete scene fills the frame, no borders, no UI, no text or lettering, no symbols resembling writing, no watermark. Visual style: polished cute fantasy videogame storybook, thick smooth pure-black rounded outlines, slightly chibi creatures, expressive serious face, clean white and two flat gray tones, clear silhouettes, no pencil texture, no hatching, no photorealism, no heavy black background. Readable when reduced to 480x320. The playable hero and PET are off camera: reader's viewpoint, no humans or NPCs. Show exactly one fierce dark wolf with a white chest and pointed ears blocking the entrance to a deep woodland trail. Torn ordinary books lie beside a mossy stone, establishing that the king's monsters destroy books. The trail winds toward distant simple city rooftops through big oak trees. The wolf is a prominent full-body foreground subject, medium-wide camera, one paw on the path, growling, facing the viewer. Distinct first encounter at the edge of a forest. No bell, no librarian, no magic song, no envelope, no random plot relics. Spacious balanced scene with strong contour separation and welcoming readable fantasy art despite the threatening wolf.\n",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-9cb12d62-e924-4bb0-85f0-05e0df40a5f5.png",
+  "sha256": "e687f070a6ff7141e1d0c510ba34684c416ec7ab67d642b59066e22d6f5cf587"
+}

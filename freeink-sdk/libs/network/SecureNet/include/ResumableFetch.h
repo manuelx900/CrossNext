@@ -29,6 +29,8 @@ struct FetchOptions {
   // already content-encrypted, this skips a second TLS session and its record
   // buffer on low-heap boards; only the URL token loses transport security.
   bool redirectToHttp = false;
+  // Optional caller-owned result, assigned only after the complete response arrives.
+  std::string* effectiveUrl = nullptr;
 };
 
 struct FetchSink {
@@ -190,6 +192,7 @@ inline FetchResult fetchResumable(const std::string& startUrl, const FetchOption
       if (responseEnd != 0 && result.bytes != responseEnd) return result;
       if (status != 206 || result.bytes == result.total) {
         result.complete = true;
+        if (options.effectiveUrl) *options.effectiveUrl = url;
         return result;
       }
     }

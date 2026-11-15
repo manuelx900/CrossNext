@@ -1,0 +1,416 @@
+{
+  "format": 1,
+  "regions": [
+    {
+      "name": "Wallpaper",
+      "image": "ccb681e0-7dbb-4f77-a0a2-3606379cc772",
+      "x": 50,
+      "centerY": 288,
+      "size": 120,
+      "halfHeight": 44
+    },
+    {
+      "name": "Fit",
+      "image": "ccb681e0-7dbb-4f77-a0a2-3606379cc772",
+      "x": 50,
+      "centerY": 397,
+      "size": 120,
+      "halfHeight": 44
+    },
+    {
+      "name": "Filter",
+      "image": "ccb681e0-7dbb-4f77-a0a2-3606379cc772",
+      "x": 50,
+      "centerY": 505,
+      "size": 120,
+      "halfHeight": 44
+    },
+    {
+      "name": "Resume",
+      "image": "ccb681e0-7dbb-4f77-a0a2-3606379cc772",
+      "x": 50,
+      "centerY": 614,
+      "size": 120,
+      "halfHeight": 44
+    },
+    {
+      "name": "Stats",
+      "image": "ccb681e0-7dbb-4f77-a0a2-3606379cc772",
+      "x": 50,
+      "centerY": 793,
+      "size": 120,
+      "halfHeight": 44
+    },
+    {
+      "name": "BatteryOff",
+      "image": "ccb681e0-7dbb-4f77-a0a2-3606379cc772",
+      "x": 50,
+      "centerY": 906,
+      "size": 120,
+      "halfHeight": 44
+    },
+    {
+      "name": "Refresh",
+      "image": "ccb681e0-7dbb-4f77-a0a2-3606379cc772",
+      "x": 50,
+      "centerY": 1006,
+      "size": 120,
+      "halfHeight": 36
+    },
+    {
+      "name": "Sun",
+      "image": "ccb681e0-7dbb-4f77-a0a2-3606379cc772",
+      "x": 50,
+      "centerY": 1110,
+      "size": 120,
+      "halfHeight": 44
+    },
+    {
+      "name": "Contrast",
+      "image": "ccb681e0-7dbb-4f77-a0a2-3606379cc772",
+      "x": 50,
+      "centerY": 1215,
+      "size": 120,
+      "halfHeight": 44
+    },
+    {
+      "name": "Sliders",
+      "image": "ccb681e0-7dbb-4f77-a0a2-3606379cc772",
+      "x": 50,
+      "centerY": 1323,
+      "size": 120,
+      "halfHeight": 44
+    },
+    {
+      "name": "Home",
+      "image": "51211c16-e352-48e2-b5ca-ca0d8e151bcc",
+      "x": 54,
+      "centerY": 280,
+      "size": 124,
+      "halfHeight": 44
+    },
+    {
+      "name": "Rotate",
+      "image": "51211c16-e352-48e2-b5ca-ca0d8e151bcc",
+      "x": 54,
+      "centerY": 385,
+      "size": 124,
+      "halfHeight": 44
+    },
+    {
+      "name": "Book",
+      "image": "51211c16-e352-48e2-b5ca-ca0d8e151bcc",
+      "x": 54,
+      "centerY": 494,
+      "size": 124,
+      "halfHeight": 44
+    },
+    {
+      "name": "SideLeft",
+      "image": "51211c16-e352-48e2-b5ca-ca0d8e151bcc",
+      "x": 54,
+      "centerY": 596,
+      "size": 124,
+      "halfHeight": 44
+    },
+    {
+      "name": "SideRight",
+      "image": "51211c16-e352-48e2-b5ca-ca0d8e151bcc",
+      "x": 54,
+      "centerY": 699,
+      "size": 124,
+      "halfHeight": 44
+    },
+    {
+      "name": "PowerShort",
+      "image": "51211c16-e352-48e2-b5ca-ca0d8e151bcc",
+      "x": 54,
+      "centerY": 803,
+      "size": 124,
+      "halfHeight": 44
+    },
+    {
+      "name": "PowerLong",
+      "image": "51211c16-e352-48e2-b5ca-ca0d8e151bcc",
+      "x": 54,
+      "centerY": 908,
+      "size": 124,
+      "halfHeight": 44
+    },
+    {
+      "name": "Hold",
+      "image": "51211c16-e352-48e2-b5ca-ca0d8e151bcc",
+      "x": 54,
+      "centerY": 1015,
+      "size": 124,
+      "halfHeight": 44
+    },
+    {
+      "name": "Wake",
+      "image": "51211c16-e352-48e2-b5ca-ca0d8e151bcc",
+      "x": 54,
+      "centerY": 1121,
+      "size": 124,
+      "halfHeight": 50
+    },
+    {
+      "name": "Swipe",
+      "image": "51211c16-e352-48e2-b5ca-ca0d8e151bcc",
+      "x": 54,
+      "centerY": 1318,
+      "size": 124,
+      "halfHeight": 50
+    },
+    {
+      "name": "Lock",
+      "image": "ce8f7d78-094c-4b78-a1b1-2d3647651c6e",
+      "x": 27,
+      "centerY": 34,
+      "size": 67,
+      "halfHeight": 26
+    },
+    {
+      "name": "Touch",
+      "image": "ce8f7d78-094c-4b78-a1b1-2d3647651c6e",
+      "x": 27,
+      "centerY": 95,
+      "size": 67,
+      "halfHeight": 26
+    },
+    {
+      "name": "PageNext",
+      "image": "ce8f7d78-094c-4b78-a1b1-2d3647651c6e",
+      "x": 27,
+      "centerY": 156,
+      "size": 67,
+      "halfHeight": 26
+    },
+    {
+      "name": "PagePrevious",
+      "image": "ce8f7d78-094c-4b78-a1b1-2d3647651c6e",
+      "x": 27,
+      "centerY": 215,
+      "size": 67,
+      "halfHeight": 26
+    },
+    {
+      "name": "Invert",
+      "image": "ce8f7d78-094c-4b78-a1b1-2d3647651c6e",
+      "x": 27,
+      "centerY": 290,
+      "size": 67,
+      "halfHeight": 26
+    },
+    {
+      "name": "Keyboard",
+      "image": "ce8f7d78-094c-4b78-a1b1-2d3647651c6e",
+      "x": 27,
+      "centerY": 415,
+      "size": 67,
+      "halfHeight": 26
+    },
+    {
+      "name": "FolderHidden",
+      "image": "b6d98026-25e3-490e-b467-c00f77e684f0",
+      "x": 50,
+      "centerY": 294,
+      "size": 120,
+      "halfHeight": 44
+    },
+    {
+      "name": "BookInfo",
+      "image": "b6d98026-25e3-490e-b467-c00f77e684f0",
+      "x": 50,
+      "centerY": 410,
+      "size": 120,
+      "halfHeight": 44
+    },
+    {
+      "name": "Trash",
+      "image": "b6d98026-25e3-490e-b467-c00f77e684f0",
+      "x": 50,
+      "centerY": 612,
+      "size": 120,
+      "halfHeight": 46
+    },
+    {
+      "name": "ReadFolder",
+      "image": "b6d98026-25e3-490e-b467-c00f77e684f0",
+      "x": 50,
+      "centerY": 730,
+      "size": 120,
+      "halfHeight": 46
+    },
+    {
+      "name": "Broom",
+      "image": "b6d98026-25e3-490e-b467-c00f77e684f0",
+      "x": 50,
+      "centerY": 929,
+      "size": 120,
+      "halfHeight": 46
+    },
+    {
+      "name": "Books",
+      "image": "b6d98026-25e3-490e-b467-c00f77e684f0",
+      "x": 50,
+      "centerY": 1047,
+      "size": 120,
+      "halfHeight": 46
+    },
+    {
+      "name": "BookZap",
+      "image": "b6d98026-25e3-490e-b467-c00f77e684f0",
+      "x": 50,
+      "centerY": 1163,
+      "size": 120,
+      "halfHeight": 44
+    },
+    {
+      "name": "Puzzle",
+      "image": "285dee4e-3214-4e64-af19-7a83bcf92051",
+      "x": 56,
+      "centerY": 270,
+      "size": 120,
+      "halfHeight": 44
+    },
+    {
+      "name": "Wifi",
+      "image": "285dee4e-3214-4e64-af19-7a83bcf92051",
+      "x": 56,
+      "centerY": 401,
+      "size": 120,
+      "halfHeight": 44
+    },
+    {
+      "name": "Bluetooth",
+      "image": "285dee4e-3214-4e64-af19-7a83bcf92051",
+      "x": 56,
+      "centerY": 538,
+      "size": 120,
+      "halfHeight": 46
+    },
+    {
+      "name": "Sync",
+      "image": "285dee4e-3214-4e64-af19-7a83bcf92051",
+      "x": 56,
+      "centerY": 670,
+      "size": 120,
+      "halfHeight": 46
+    },
+    {
+      "name": "Servers",
+      "image": "285dee4e-3214-4e64-af19-7a83bcf92051",
+      "x": 56,
+      "centerY": 804,
+      "size": 120,
+      "halfHeight": 46
+    },
+    {
+      "name": "Extensions",
+      "image": "285dee4e-3214-4e64-af19-7a83bcf92051",
+      "x": 56,
+      "centerY": 938,
+      "size": 120,
+      "halfHeight": 46
+    },
+    {
+      "name": "QuickMoon",
+      "image": "982d71fb-81bf-4f4d-ab1a-ceb5b1d0f0e1",
+      "x": 46,
+      "centerY": 254,
+      "size": 120,
+      "halfHeight": 52
+    },
+    {
+      "name": "QuickRefresh",
+      "image": "982d71fb-81bf-4f4d-ab1a-ceb5b1d0f0e1",
+      "x": 46,
+      "centerY": 375,
+      "size": 120,
+      "halfHeight": 52
+    },
+    {
+      "name": "QuickRotate",
+      "image": "982d71fb-81bf-4f4d-ab1a-ceb5b1d0f0e1",
+      "x": 46,
+      "centerY": 496,
+      "size": 120,
+      "halfHeight": 52
+    },
+    {
+      "name": "QuickLight",
+      "image": "982d71fb-81bf-4f4d-ab1a-ceb5b1d0f0e1",
+      "x": 46,
+      "centerY": 617,
+      "size": 120,
+      "halfHeight": 52
+    },
+    {
+      "name": "QuickWifi",
+      "image": "982d71fb-81bf-4f4d-ab1a-ceb5b1d0f0e1",
+      "x": 46,
+      "centerY": 739,
+      "size": 120,
+      "halfHeight": 52
+    },
+    {
+      "name": "QuickLock",
+      "image": "982d71fb-81bf-4f4d-ab1a-ceb5b1d0f0e1",
+      "x": 46,
+      "centerY": 861,
+      "size": 120,
+      "halfHeight": 52
+    },
+    {
+      "name": "QuickPower",
+      "image": "982d71fb-81bf-4f4d-ab1a-ceb5b1d0f0e1",
+      "x": 46,
+      "centerY": 1103,
+      "size": 120,
+      "halfHeight": 52
+    },
+    {
+      "name": "QuickWarm",
+      "image": "982d71fb-81bf-4f4d-ab1a-ceb5b1d0f0e1",
+      "x": 46,
+      "centerY": 1346,
+      "size": 120,
+      "halfHeight": 52
+    },
+    {
+      "name": "QuickBluetooth",
+      "image": "982d71fb-81bf-4f4d-ab1a-ceb5b1d0f0e1",
+      "x": 46,
+      "centerY": 1466,
+      "size": 120,
+      "halfHeight": 52
+    },
+    {
+      "name": "QuickRotateRight",
+      "image": "982d71fb-81bf-4f4d-ab1a-ceb5b1d0f0e1",
+      "x": 46,
+      "centerY": 496,
+      "size": 120,
+      "halfHeight": 52,
+      "mirrorX": true
+    },
+    {
+      "name": "QuickLightOff",
+      "image": "982d71fb-81bf-4f4d-ab1a-ceb5b1d0f0e1",
+      "x": 46,
+      "centerY": 617,
+      "size": 120,
+      "halfHeight": 52,
+      "slash": true
+    },
+    {
+      "name": "QuickWarmOff",
+      "image": "982d71fb-81bf-4f4d-ab1a-ceb5b1d0f0e1",
+      "x": 46,
+      "centerY": 1346,
+      "size": 120,
+      "halfHeight": 52,
+      "slash": true
+    }
+  ]
+}

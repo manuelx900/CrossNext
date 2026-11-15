@@ -324,13 +324,13 @@ void draw(fui::DrawTarget& t, const fui::DeviceContext& device, Model& m, Geomet
     return;
   }
   if (m.view == View::Help) {
-    m.textPages = wide ? 10 : 5;
+    m.textPages = wide ? 10 : 9;
     m.page = std::clamp(m.page, 0, m.textPages - 1);
-    if (m.page >= (wide ? 8 : 4)) {
+    if (m.page >= 8) {
       difficultyGuide(t, g, body, m, wide);
       return;
     }
-    const int guidePage = wide ? m.page / 2 : m.page;
+    const int guidePage = m.page / 2;
     static constexpr StrId titles[] = {StrId::STR_CAR_GUIDE_TITLE0, StrId::STR_CAR_GUIDE_TITLE1,
                                        StrId::STR_CAR_GUIDE_TITLE2, StrId::STR_CAR_GUIDE_TITLE3};
     static constexpr StrId heads[][4] = {
@@ -375,7 +375,8 @@ void draw(fui::DrawTarget& t, const fui::DeviceContext& device, Model& m, Geomet
     caps(t, fui::makeRect(body.x, body.y + 32, body.width, 42), I18N.get(titles[guidePage]), 1);
     int required[4] = {}, total = 0, count = 0;
     const int iconW = 78, width = body.width - iconW - 8;
-    for (int n = 0; n < 4 && icons[guidePage][n]; ++n) {
+    const int firstRule = (m.page % 2) * 2;
+    for (int n = firstRule; n < firstRule + 2 && icons[guidePage][n]; ++n) {
       fui::TextStyle style;
       style.font = 4;
       style.maxLines = 16;
@@ -388,7 +389,7 @@ void draw(fui::DrawTarget& t, const fui::DeviceContext& device, Model& m, Geomet
     }
     const int extra = std::max(0, int(body.height) - 144 - total) / std::max(1, count);
     int y = body.y + 80;
-    for (int n = 0; n < count; ++n) {
+    for (int n = firstRule; n < firstRule + count; ++n) {
       const int h = required[n] + extra;
       if (guidePage == 2 && n == 0) {
         caps(t, fui::makeRect(body.x, y, body.width, 30), I18N.get(heads[guidePage][n]), 0);

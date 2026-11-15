@@ -1,0 +1,82 @@
+{
+  "source": "User-provided campaign and path references",
+  "phaseBoxes": [
+    [
+      80,
+      474,
+      182,
+      551
+    ],
+    [
+      80,
+      610,
+      184,
+      699
+    ],
+    [
+      88,
+      777,
+      172,
+      852
+    ],
+    [
+      92,
+      921,
+      169,
+      1001
+    ],
+    [
+      88,
+      1066,
+      171,
+      1154
+    ],
+    [
+      84,
+      1231,
+      184,
+      1313
+    ]
+  ],
+  "pathSha256": "733d497f4dd66c6e1361b16cdb87a63a50ccfa67e86c614b85b1de68c1782ecc",
+  "tabSource": "codex-clipboard-c42e006b-de04-45d3-b158-56992cb58e1c.png",
+  "cleanExtractionBoxes": [
+    [
+      60,
+      453,
+      198,
+      577
+    ],
+    [
+      60,
+      600,
+      198,
+      724
+    ],
+    [
+      60,
+      750,
+      198,
+      874
+    ],
+    [
+      60,
+      898,
+      198,
+      1022
+    ],
+    [
+      60,
+      1046,
+      198,
+      1170
+    ],
+    [
+      60,
+      1205,
+      198,
+      1329
+    ]
+  ],
+  "preprocessing": "Retain inner illustration components; exclude UI frame components, crop to ink bounds."
+}

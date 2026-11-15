@@ -1,0 +1,24 @@
+{
+  "id": "K015",
+  "key": "Sobre",
+  "file": "K015.png",
+  "sample": {
+    "es": "Sobre de la aldea",
+    "en": "Village envelope"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Village envelope.",
+  "requests": [
+    15,
+    93,
+    158,
+    191,
+    218,
+    245,
+    272
+  ],
+  "sha256": "4fbe0477704e0f9a18734224e051fe10a850bb1b324ed4486ad215c6089b3e38",
+  "source": "exec-d74b57a5-b1ce-434b-ad16-1f588b9be495.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

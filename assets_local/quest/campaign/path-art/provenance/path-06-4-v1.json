@@ -1,0 +1,10 @@
+{
+  "id": 40,
+  "book": 6,
+  "step": 4,
+  "master": "path-06-4-v1.png",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape 3:2 composition, filled scene reaching the edges, large readable foreground subjects and clear depth. Match the reference storybook artwork: bold smooth rounded pure-black contours, simple expressive chibi proportions, clean white and flat soft gray shading, no sketch texture, no crosshatching, no color. No UI, no text, no lettering or captions. The playable hero and PET are off camera: this is the reader's viewpoint and must work equally for a male or female hero. Any named people below are story NPCs. Hostile creatures look serious and threatening, never cheerful. No graphic violence. Keep important objects clear at480x320. The reference is STYLE ONLY; do not add its librarian unless the scene specifically names Liora. Scene: A huge iron fist grips jammed clockwork; Orin loosens a small borrowed gear while neighbors' memory tokens surround the mechanism.",
+  "generatedPath": "exec-1851fa2c-64da-4ccf-a7e7-ce976fe31d3d.png",
+  "tool": "built-in image_gen",
+  "sha256": "f3d166f8a81a15afca6bb2d4e55165631aa08d47f5fa7588e2ec37a2ec749189"
+}

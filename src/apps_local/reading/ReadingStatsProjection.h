@@ -19,6 +19,8 @@ class Projection {
   bool page(BookFilter filter, int page, Book* out, int capacity, int& count);
   bool project(PeriodStats& out, bool* known = nullptr) const;
   uint64_t daySeconds(int day) const;
+  const RecordedYears& recordedYears() const { return years; }
+  bool annualTimeKnown(const PeriodStats& period) const;
   uint64_t tod[4]{}, dow[7]{};
 
  private:
@@ -36,6 +38,7 @@ class Projection {
   Reader* remote = nullptr;
   HalFile journal;
   Header header;
+  RecordedYears years;
   Checkpoint current;
   Book base, latest, prior;
   Record record;

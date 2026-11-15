@@ -285,7 +285,11 @@ void SdFirmwareUpdateActivity::render(RenderLock&&) {
   } else {
     // PICKING / CONFIRMING: a sub-activity is on top, nothing to draw.
     if (recoveryMode) {
-      renderer.drawCenteredText(UI_10_FONT_ID, top, tr(STR_RECOVERY_MODE_HINT));
+      UITheme::drawCenteredWrappedText(renderer,
+                                       Rect{metrics.contentSidePadding, top, pageWidth - 2 * metrics.contentSidePadding,
+                                            3 * renderer.getLineHeight(UI_10_FONT_ID)},
+                                       UI_10_FONT_ID, tr(STR_RECOVERY_MODE_HINT), 3, true, EpdFontFamily::REGULAR,
+                                       UITheme::TextVerticalAlignment::TOP);
     }
   }
 

@@ -12,7 +12,7 @@ start = source.index("    case petui::SelectProject:")
 end = source.index("    case petui::OpenMemory:", start)
 branch = source[start:end]
 swipe_start = source.index("void PetActivity::swipeCatalog(")
-swipe_end = source.index("\nvoid PetActivity::loop()", swipe_start)
+swipe_end = source.index("\nvoid PetActivity::swipePages(", swipe_start)
 swipe_method = source[swipe_start:swipe_end].replace("PetActivity::", "")
 program = r'''
 #include <cassert>
@@ -23,6 +23,7 @@ program = r'''
 struct Selection {
   pet::Profile profile, draft;
   pet::View view = pet::View::ProjectPreview;
+  petui::ReadingDisplay readingDisplay = petui::ReadingDisplay::Project;
   petui::CatalogFilter catalogFilter = petui::CatalogFilter::Unowned;
   bool writable = true, failSave = false;
   int projectSlot = 1, page = 8;
@@ -95,12 +96,15 @@ int main() {
     instant.renderer.width = width;
     instant.select(instant.previewItem);
     assert(instant.saves == 1 && !pet::owns(instant.profile, instant.previewItem));
-    assert(pet::projectRemaining(instant.profile) == pet::projectRequiredSeconds(2));
+    assert(pet::projectRemaining(instant.profile) == pet::projectRequiredSeconds(pet::ownedCount(instant.profile)));
     assert(instant.view == pet::View::ProjectPreview && instant.catalogFilter == petui::CatalogFilter::Unowned);
     assert(pet::addReading(instant.profile, instant.profile.readingSeconds + pet::projectRemaining(instant.profile)));
-    assert(pet::owns(instant.profile, instant.previewItem));
+    assert(!pet::owns(instant.profile, instant.previewItem));
+    assert(instant.profile.equipped[1] != instant.previewItem);
+    instant.select(instant.previewItem);
+    assert(instant.saves == 2 && pet::owns(instant.profile, instant.previewItem));
     assert(instant.profile.equipped[1] == instant.previewItem);
-    assert(!petui::catalogMatches(instant.profile, instant.previewItem, instant.catalogFilter));
+    assert(instant.catalogFilter == petui::CatalogFilter::Owned && instant.view == pet::View::Home);
     Selection pending;
     pending.renderer.width = width;
     pending.profile.readingSeconds = 1200;
@@ -110,7 +114,7 @@ int main() {
     assert(pending.profile.project == pending.previewItem);
     assert(pending.catalogFilter == petui::CatalogFilter::Unowned);
     const auto ordinal = petui::catalogOrdinal(pending.profile, 1, pending.catalogFilter, pending.previewItem);
-    assert(ordinal < pet::OBJECTS_PER_SLOT && pending.page == int(ordinal / (width == 480 ? 6 : 4)));
+    assert(ordinal < pet::OBJECTS_PER_SLOT && pending.page == int(ordinal / (width == 480 ? 3 : 2)));
     Selection owned;
     owned.renderer.width = width;
     pet::own(owned.profile, owned.previewItem);

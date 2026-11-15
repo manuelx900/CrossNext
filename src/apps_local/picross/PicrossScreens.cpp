@@ -490,6 +490,7 @@ void buildBoard(toybox::Screen& screen, const BoardModel& model, Layout& layout)
                                boardExtent);
   layout.cell = static_cast<int16_t>(cell);
   layout.size = static_cast<int16_t>(n);
+  layout.repaint = fui::makeRect(status.x, status.y, status.width, layout.board.bottom() - status.y + 4);
 
   // One target for the whole grid, registered from the rect the cells were laid
   // out in and resolved back through the same Layout.
@@ -500,6 +501,7 @@ void buildBoard(toybox::Screen& screen, const BoardModel& model, Layout& layout)
   drawRowClues(screen, board, layout, cm);
 
   drawModeToggle(screen, modeRow, model.mode);
+  layout.tools = modeRow;
 
   drawActionButton(screen, buttonRow, tr(STR_UI_RESTART_69ED00), ButtonRestart);
 }
@@ -856,8 +858,6 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model, PickerLayout& lay
 void buildSizes(toybox::Screen& screen, const MenuModel& model) {
   frontdoor::begin(screen, "PICROSS");
   dashboard::text(screen, screen.takeTop(48, 12), tr(STR_PICROSS_SIZE), 1, fui::TextAlign::Left);
-  dashboard::button(screen, screen.takeBottom(62, 0), tr(STR_GUIDE_APPLY), ActionApplySize, 0, true, &extra_check_32,
-                    pixelui::kBody);
   const auto groups = sizeGroups();
   const auto body = screen.body();
   const bool wide = body.width > body.height;
@@ -868,24 +868,17 @@ void buildSizes(toybox::Screen& screen, const MenuModel& model) {
     const bool active = n == model.sizeTab;
     const auto box = fui::makeRect(body.x + (wide ? n % 2 * (w + gap) : 0),
                                    body.y + (wide ? n / 2 * (h + gap) : n * (h + gap)), w, h);
-    if (active)
-      lightui::surface(screen.target(), box, dashboard::ink);
-    else
-      dashboard::frame(screen, box, pixelui::kBorder);
-    guideui::grid(screen, fui::makeRect(box.x + 16, box.y + 14, 72, h - 28), groups.size[n], active, true);
+    dashboard::frame(screen, box, pixelui::kBorder);
+    guideui::grid(screen, fui::makeRect(box.x + 16, box.y + 14, 72, h - 28), groups.size[n], false, true);
     char label[40];
     std::snprintf(label, sizeof(label), "%d x %d", groups.size[n], groups.size[n]);
-    dashboard::text(screen, fui::makeRect(box.x + 104, box.y + 12, box.width - 164, 40), label, 1, fui::TextAlign::Left,
-                    active);
+    dashboard::text(screen, fui::makeRect(box.x + 104, box.y + 12, box.width - 164, 40), label, 1,
+                    fui::TextAlign::Left);
     std::snprintf(label, sizeof(label), tr(STR_GUIDE_CELLS), groups.size[n] * groups.size[n]);
-    dashboard::text(screen, fui::makeRect(box.x + 104, box.y + 58, box.width - 164, 30), label, 3, fui::TextAlign::Left,
-                    active);
-    const auto paint = active ? dashboard::paper : dashboard::ink;
+    dashboard::text(screen, fui::makeRect(box.x + 104, box.y + 58, box.width - 164, 30), label, 3,
+                    fui::TextAlign::Left);
     const auto check = fui::makeRect(box.right() - 46, box.y + (h - 30) / 2, 30, 30);
-    if (active)
-      screen.target().fill(check, paint);
-    else
-      screen.target().stroke(check, paint, 3);
+    dashboard::check(screen, check, active);
     screen.frame().hit(box, ActionTab, n);
   }
 }

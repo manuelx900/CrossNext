@@ -21,7 +21,10 @@ enum class SettingAction {
   KOReaderSync,
   OPDSBrowser,
   Network,
+  Bluetooth,
   ClearCache,
+  PrepareBooks,
+  ImportCrossInk,
   CheckForUpdates,
   SdFirmwareUpdate,
   Language,
@@ -35,6 +38,7 @@ enum class SettingAction {
   UiPresentation,
   ReadingFormats,
   About,
+  Manga,
 };
 
 struct SettingInfo {
@@ -187,6 +191,8 @@ class SettingsActivity final : public UiTabListActivity {
   std::vector<SettingInfo> readerSettings;
   std::vector<SettingInfo> controlsSettings;
   std::vector<SettingInfo> systemSettings, librarySettings, connectivitySettings, deviceSettings;
+  std::vector<SettingInfo> mangaSettings;
+  int mangaReturnTop = 0, mangaReturnSelection = 0;
   const std::vector<SettingInfo>* currentSettings = nullptr;
 
   bool preserveQuickResumeTimeoutOn = false;
@@ -204,6 +210,8 @@ class SettingsActivity final : public UiTabListActivity {
   std::vector<freeink::ui::ListItem> rowItems_;
   void rebuildRowItems();
   void showCategoryHome();
+  void openManga();
+  void closeManga();
 
   static constexpr int categoryCount = 7;
   static constexpr StrId categoryNames[categoryCount] = {StrId::STR_CAT_DISPLAY,           StrId::STR_SETTINGS_READING,

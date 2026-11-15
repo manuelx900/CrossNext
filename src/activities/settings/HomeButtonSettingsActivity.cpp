@@ -20,18 +20,21 @@ const shelf::Item* shortcutAt(int index) {
 }  // namespace
 void HomeButtonSettingsActivity::onEnter() {
   UiListActivity::onEnter();
-  if (binding != Binding::Home) show(Page::Actions, actionRow(SETTINGS.*actionField()));
+  if (binding != Binding::Home) show(Page::Actions, actionRow(storedAction()));
 }
-uint8_t CrossPointSettings::* HomeButtonSettingsActivity::actionField() const {
+uint8_t& HomeButtonSettingsActivity::storedAction() const {
   switch (binding) {
     case Binding::Home:
-      return home_button::FIELDS[gesture];
+      return SETTINGS.*home_button::FIELDS[gesture];
     case Binding::SideLeft:
-      return &CrossPointSettings::sideLeftAction;
+      return SETTINGS.sideLeftAction;
     case Binding::SideRight:
-      return &CrossPointSettings::sideRightAction;
+      return SETTINGS.sideRightAction;
+    case Binding::Remote1:
+    case Binding::Remote2:
+      return remote->shortcuts[binding == Binding::Remote1 ? 0 : 1].action;
   }
-  return home_button::FIELDS[0];
+  return SETTINGS.*home_button::FIELDS[0];
 }
 char* HomeButtonSettingsActivity::shortcutTarget() const {
   switch (binding) {
@@ -41,11 +44,14 @@ char* HomeButtonSettingsActivity::shortcutTarget() const {
       return SETTINGS.sideLeftShortcutTitle;
     case Binding::SideRight:
       return SETTINGS.sideRightShortcutTitle;
+    case Binding::Remote1:
+    case Binding::Remote2:
+      return remote->shortcuts[binding == Binding::Remote1 ? 0 : 1].title;
   }
   return home_button::shortcutTarget(0);
 }
 bool HomeButtonSettingsActivity::isShortcut() const {
-  const auto value = SETTINGS.*actionField();
+  const auto value = storedAction();
   return binding == Binding::Home ? home_button::opensShortcut(HomeButtonAction(value))
                                   : value == uint8_t(SideButtonAction::OpenShortcut);
 }
@@ -56,7 +62,9 @@ int HomeButtonSettingsActivity::actionAt(int row) const {
   const int count = binding == Binding::Home ? HOME_ACTION_COUNT : int(SideButtonAction::Count);
   for (int action = 0; action < count; ++action) {
     const bool selectable = binding == Binding::Home ? selectableHomeAction(HomeButtonAction(action))
-                                                     : selectableSideAction(SideButtonAction(action));
+                            : remote && action == int(SideButtonAction::Navigation)
+                                ? false
+                                : selectableSideAction(SideButtonAction(action));
     if (selectable && row-- == 0) return action;
   }
   return -1;
@@ -94,6 +102,8 @@ const char* HomeButtonSettingsActivity::headerTitle() const {
     case Page::Actions:
       if (binding == Binding::SideLeft) return tr(STR_SIDE_LEFT_ACTION);
       if (binding == Binding::SideRight) return tr(STR_SIDE_RIGHT_ACTION);
+      if (binding == Binding::Remote1) return tr(STR_BT_SHORTCUT_1);
+      if (binding == Binding::Remote2) return tr(STR_BT_SHORTCUT_2);
       return I18N.get(home_button::GESTURE_LABELS[gesture]);
     case Page::Apps:
       return tr(STR_HOME_SHORTCUT_TARGET);
@@ -128,7 +138,7 @@ void HomeButtonSettingsActivity::onBackButton() {
   }
 }
 bool HomeButtonSettingsActivity::saveAction(uint8_t action, const char* target) {
-  auto& stored = SETTINGS.*actionField();
+  auto& stored = storedAction();
   const auto previous = stored;
   char oldTarget[40];
   std::snprintf(oldTarget, sizeof(oldTarget), "%s", shortcutTarget());
@@ -161,7 +171,7 @@ void HomeButtonSettingsActivity::activateIndex(int index) {
         return;
       }
       gesture = index;
-      show(Page::Actions, actionRow(isShortcut() ? shortcutIndex() : SETTINGS.*actionField()));
+      show(Page::Actions, actionRow(isShortcut() ? shortcutIndex() : storedAction()));
       return;
     }
     case Page::Actions:
@@ -208,7 +218,7 @@ void HomeButtonSettingsActivity::buildScreen(UiScreen& screen) {
   pixelui::FontScope fonts(uiTarget, renderer, I18N.getLanguage() != Language::EN);
   useCompactSettingsRows();
   pixelui::begin(screen, saveFailed ? 52 : 0);
-  if (binding != Binding::Home && page == Page::Actions) {
+  if (binding != Binding::Home && !remote && page == Page::Actions) {
     const auto body = screen.body();
     const int helpH = screen.device().width > screen.device().height ? 52 : 80;
     fui::TextStyle help;
@@ -248,7 +258,7 @@ void HomeButtonSettingsActivity::buildScreen(UiScreen& screen) {
                       home_button::ACTION_LABELS[unsigned(action) < unsigned(HomeButtonAction::Count) ? unsigned(action)
                                                                                                       : 0]);
       } else {
-        const auto current = SETTINGS.*actionField();
+        const auto current = storedAction();
         const auto labels = binding == Binding::Home ? std::span<const StrId>(home_button::ACTION_LABELS)
                                                      : std::span<const StrId>(side_button::LABELS);
         const int action = actionAt(i);

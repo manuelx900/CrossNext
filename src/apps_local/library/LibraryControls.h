@@ -3,28 +3,41 @@
 #include "LibraryPreferences.h"
 namespace libraryui {
 inline constexpr int kPickSort = -4, kReverseSort = -5;
+inline constexpr int kTabsGap = 8, kFilterCaptionHeight = 28, kFilterCaptionGap = 4;
+inline int filterTabsHeight(const fui::DeviceContext& device) { return device.width > device.height ? 44 : 52; }
+inline GridLayout preparationGrid(const fui::DeviceContext& device, bool filtered, int footer = 0) {
+  auto body = pixelui::geometry(device, footer).body;
+  const int reserved = filterTabsHeight(device) + kTabsGap + (filtered ? kFilterCaptionHeight + kFilterCaptionGap : 0);
+  body.y += reserved;
+  body.height -= reserved;
+  return gridLayout(device, body);
+}
+inline int preparationCoverHeight(const fui::DeviceContext& device, bool filtered, int footer = 0) {
+  return preparationGrid(device, filtered, footer).card(0).height - 2 * pixelui::kBorder;
+}
 template <typename Screen>
 void filterTabs(Screen& screen, int active, fui::ActionId action, fui::ActionId reverseAction = 0,
                 bool descending = true) {
   const auto body = screen.body();
-  const int height = screen.device().width > screen.device().height ? 44 : 52;
-  fui::TabItem tabs[] = {fui::tabItem(0, active == 0, true, tr(STR_LIBRARY_TAB_RECENT)),
-                         fui::tabItem(1, active == 1, true, tr(STR_LIBRARY_FILTER))};
-  pixelui::tabs(screen, tabs, 2, reverseAction ? fui::NO_ACTION : action, 4, height, 8);
+  const int height = filterTabsHeight(screen.device());
+  char recent[40], filter[40], collection[48];
+  pixelui::copyNatural(recent, sizeof(recent), tr(STR_LIBRARY_TAB_RECENT));
+  pixelui::copyNatural(filter, sizeof(filter), tr(STR_LIBRARY_FILTER));
+  pixelui::copyNatural(collection, sizeof(collection), tr(STR_COLLECTIONS));
+  fui::TabItem tabs[] = {fui::tabItem(0, active == 0, true, recent), fui::tabItem(1, active == 1, true, collection),
+                         fui::tabItem(2, active == 2, true, filter)};
+  if (reverseAction && active != 1)
+    tabs[active].indicator = descending ? fui::TabIndicator::Down : fui::TabIndicator::Up;
+  pixelui::tabs(screen, tabs, 3, reverseAction ? fui::NO_ACTION : action, 4, height, kTabsGap);
   if (!reverseAction) return;
-  for (int n = 0; n < 2; ++n) {
-    const auto tab = fui::makeRect(body.x + body.width * n / 2, body.y, body.width / 2, height);
-    const int arrow = n == active ? 44 : 0;
+  for (int n = 0; n < 3; ++n) {
+    const auto tab =
+        fui::makeRect(body.x + body.width * n / 3, body.y, body.width * (n + 1) / 3 - body.width * n / 3, height);
+    const int arrow = n == active && n != 1 ? 36 : 0;
     screen.frame().hit(fui::makeRect(tab.x, tab.y, tab.width - arrow, tab.height), action, n, fui::InputTouch);
     if (!arrow) continue;
     const auto hit = fui::makeRect(tab.right() - arrow, tab.y, arrow, height);
     screen.frame().hit(hit, reverseAction, kReverseSort, fui::InputTouch);
-    const int x = hit.x + hit.width / 2, y = hit.y + hit.height / 2, direction = descending ? 1 : -1;
-    const auto ink = fui::Paint::solid(fui::Color::White);
-    screen.target().line({int16_t(x - 5), int16_t(y - direction * 3)}, {int16_t(x), int16_t(y + direction * 3)}, 2,
-                         ink);
-    screen.target().line({int16_t(x), int16_t(y + direction * 3)}, {int16_t(x + 5), int16_t(y - direction * 3)}, 2,
-                         ink);
   }
 }
 
@@ -100,6 +113,7 @@ inline void filterCards(fui::ListProps& props, const fui::DrawTarget& target) {
   props.rowHeight = 64;
   props.rowPaddingY = 8;
   props.labelText.font = 0;
+  props.labelText.bold = false;
   props.labelText.maxLines = 2;
   props.rowStyles.normal.borderWidth = 0;
   props.rowStyles.normal.radius = chrome::lightHeader ? 6 : 0;

@@ -74,6 +74,8 @@ CardCheck checkLibraryCard(const ClixHeader& header);
 
 // Live index path, shared by the builder and activity.
 const char* libraryIndexPath();
+// In-process content changes; a card remount restarts the firmware.
+uint32_t libraryContentRevision();
 
 // A successful book transfer marks the retained index stale. The next Library
 // entry rebuilds it through the normal reconciliation path.

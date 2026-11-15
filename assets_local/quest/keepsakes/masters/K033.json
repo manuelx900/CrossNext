@@ -1,0 +1,25 @@
+{
+  "id": "K033",
+  "key": "Sello",
+  "file": "K033.png",
+  "sample": {
+    "es": "Sello de préstamo real",
+    "en": "Royal loan stamp"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: a handmade wax library seal with its small antique wooden stamp handle, an open-book emblem.",
+  "requests": [
+    36,
+    76,
+    91,
+    134,
+    180,
+    227,
+    246,
+    294
+  ],
+  "sha256": "c07c8cd3f81bae6544c7f400e1548c6beeb24f51fe153d9dba46f6c2464a1a94",
+  "source": "exec-6ba4e4e8-22cc-4928-bfdb-c2e50dbcd5d5.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <cstddef>
 
+#include "PixelText.h"
+#include "fonts/JerseyNumerals.h"
 #include "fonts/Numerals.h"
 namespace numerals {
 struct Face {
@@ -12,13 +14,19 @@ struct Face {
   const uint8_t* bits;
 };
 inline constexpr Face defaultFace{glyphs, sizeof(glyphs) / sizeof(glyphs[0]), bits};
-inline const Glyph* glyph(unsigned char ch, const Face& face = defaultFace) {
+inline constexpr Face jerseyFace{jersey::glyphs, sizeof(jersey::glyphs) / sizeof(jersey::glyphs[0]), jersey::bits};
+inline const Face& activeFace() { return pixelui::uppercaseLabels ? jerseyFace : defaultFace; }
+inline int digitAdvance() { return pixelui::uppercaseLabels ? jersey::kDigitAdvance : kDigitAdvance; }
+inline int digitHeight() { return pixelui::uppercaseLabels ? jersey::kDigitHeight : kDigitHeight; }
+inline int colonAdvance() { return pixelui::uppercaseLabels ? jersey::kColonAdvance : kColonAdvance; }
+inline const Glyph* glyph(unsigned char ch, const Face& face = activeFace()) {
   for (size_t n = 0; n < face.count; ++n)
     if (face.glyphs[n].code == ch) return &face.glyphs[n];
   return nullptr;
 }
 inline void draw(freeink::ui::DrawTarget& target, freeink::ui::Rect box, const char* value,
-                 freeink::ui::Color color = freeink::ui::Color::Black, const Face& face = defaultFace) {
+                 freeink::ui::Color color = freeink::ui::Color::Black, const Face& face = activeFace(),
+                 int maxScale = 0, bool alignRight = false) {
   if (!value || box.empty()) return;
   int advance = 0, left = 0, right = 0, top = 0, bottom = 0;
   bool visible = false;
@@ -35,9 +43,11 @@ inline void draw(freeink::ui::DrawTarget& target, freeink::ui::Rect box, const c
     advance += g->advance;
   }
   if (!visible || right <= left || top + bottom <= 0) return;
-  const int scale = std::min(int(box.width) * 1024 / (right - left), int(box.height) * 1024 / (top + bottom));
+  int scale = std::min(int(box.width) * 1024 / (right - left), int(box.height) * 1024 / (top + bottom));
+  if (maxScale > 0) scale = std::min(scale, maxScale);
   if (!scale) return;
-  const int x = box.x + (box.width - (right - left) * scale / 1024) / 2 - left * scale / 1024;
+  const int spare = box.width - (right - left) * scale / 1024;
+  const int x = box.x + (alignRight ? spare : spare / 2) - left * scale / 1024;
   const int y = box.y + (box.height - (top + bottom) * scale / 1024) / 2;
   const auto ink = freeink::ui::Paint::solid(color);
   advance = 0;

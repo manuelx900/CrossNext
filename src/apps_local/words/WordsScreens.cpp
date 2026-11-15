@@ -336,15 +336,15 @@ void guide(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g) {
 }
 fui::Rect faceBox(fui::Rect body, const Model& m) {
   const bool wide = body.width > body.height;
-  if (m.view == View::Detail)
-    return fui::makeRect(body.x, body.y, wide ? body.width * 63 / 100 : body.width,
-                         wide ? body.height : body.height - 3 * 68 - 8);
+  if (m.view == View::Detail) return fui::makeRect(body.x, body.y, body.width, body.height - 70);
   const int footer = m.answer ? (wide ? 140 : 176) : (wide ? 128 : 190);
   return fui::makeRect(body.x, body.y + 52, wide ? body.width * 57 / 100 : body.width,
                        wide ? body.height - 52 : body.height - 52 - footer);
 }
 fui::Rect contentBox(fui::Rect face, const Model& m) {
-  return face.inset(m.view == View::Review && !m.answer ? fui::Insets{60, 18, 50, 18} : fui::Insets{18, 16, 50, 16});
+  return face.inset(m.view == View::Review && !m.answer ? fui::Insets{60, 18, 50, 18}
+                    : m.view == View::Detail            ? fui::Insets{8, 10, 46, 10}
+                                                        : fui::Insets{18, 16, 50, 16});
 }
 int layoutContent(fui::DrawTarget& t, fui::Rect text, Model& m, pagedtext::Work& work, int selected,
                   int* used = nullptr, uint8_t* wordBreaks = nullptr) {
@@ -354,15 +354,16 @@ int layoutContent(fui::DrawTarget& t, fui::Rect text, Model& m, pagedtext::Work&
   if (m.view == View::Review && !m.answer) {
     heading.align = fui::TextAlign::Center;
     const Paragraph prompt{m.term, heading};
-    return paragraphs(t, text, &prompt, 1, selected, work, 12, used, &m.textCache, wordBreaks);
+    return paragraphs(t, text, &prompt, 1, selected, work, 12, used, &m.textCache, wordBreaks, m.alignment);
   }
   example = body;
   example.italic = false;
-  const Paragraph parts[] = {{m.term, heading, tr(STR_WORDS_TERM_LABEL)},
-                             {m.meaning, body, tr(STR_WORDS_MEANING_LABEL), false, true},
+  const Paragraph parts[] = {{m.term, heading},
+                             {m.meaning, body},
                              {m.sentence, example, tr(STR_WORDS_EXAMPLE_LABEL), false, true},
                              {m.book, example, tr(STR_WORDS_BOOK_LABEL), true, true}};
-  return paragraphs(t, text, parts, m.view == View::Detail ? 4 : 3, selected, work, 12, used, &m.textCache, wordBreaks);
+  return paragraphs(t, text, parts, m.view == View::Detail ? 4 : 3, selected, work, 8, used, &m.textCache, wordBreaks,
+                    m.alignment);
 }
 void contentPage(fui::DrawTarget& t, fui::Rect box, Model& m, Geometry& g, pagedtext::Work& work) {
   const auto text = contentBox(box, m);
@@ -457,24 +458,24 @@ void card(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g, pagedtext::
 }
 void detail(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g, pagedtext::Work& work,
             fui::DrawTarget& content) {
-  const bool wide = body.width > body.height;
-  const int h = 58, gap = 10;
   const auto box = faceBox(body, m);
-  lightui::outline(t, box, black, pixelui::kBorder);
   contentPage(content, box, m, g, work);
   constexpr Action ids[] = {Passage, Delete, ReviewWord};
   const char* labels[] = {tr(STR_WORDS_VIEW_BOOK), tr(STR_WORDS_DELETE), tr(STR_WORDS_REVIEW_ONE)};
   const fui::BitmapRef icons[] = {wordsart::Book, compactart::Trash, wordsart::Review};
-  const int x = wide ? box.right() + 18 : body.x, w = wide ? body.right() - x : body.width;
+  const int width = (body.width - 16) / 3;
   for (int n = 0; n < 3; ++n) {
-    auto r = fui::makeRect(x, (wide ? body.y + 14 : box.bottom() + 18) + n * (h + gap), w, h);
+    const auto r = fui::makeRect(body.x + n * (width + 8), body.bottom() - 56, width, 56);
     g.buttons[ids[n]] = r;
     const bool selected = m.keyboardFocus && m.focus == n;
     lightui::surface(t, r, selected ? black : white);
     lightui::outline(t, r, black, pixelui::kBorder);
-    art(t, fui::makeRect(r.x + 14, r.y + 10, 36, 36), icons[n], selected);
-    caps(t, fui::makeRect(r.x + 64, r.y + 4, r.width - 100, r.height - 8), labels[n], 0, true, selected);
-    dashboard::chevron(t, fui::makeRect(r.right() - 30, r.y, 24, r.height), selected);
+    art(t, fui::makeRect(r.x + 8, r.y + 16, 24, 24), icons[n], selected);
+    fui::TextStyle style;
+    style.font = 3;
+    style.maxLines = 2;
+    style.color = selected ? fui::Color::White : fui::Color::Black;
+    t.text(fui::makeRect(r.x + 38, r.y + 4, r.width - 44, r.height - 8), labels[n], style);
   }
 }
 void waiting(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g) {

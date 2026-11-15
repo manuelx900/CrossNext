@@ -1,7 +1,9 @@
 #include "CrossPointSettings.h"
 
+#include <BlePageTurnerJson.h>
 #include <BoardConfig.h>
 #include <I18n.h>
+#include <LanguagePack.h>
 #include <Logging.h>
 #include <ObfuscationUtils.h>
 
@@ -13,10 +15,15 @@
 
 #include "I18nKeys.h"
 #include "ReaderFontSizes.h"
+#include "ReaderLineSpacing.h"
 #include "SettingsList.h"
+#include "apps_local/readerbars/ReaderBarsJson.h"
+#include "apps_local/readertext/BookTextPreferences.h"
+#include "apps_local/reading/ReadingGoal.h"
 #include "fontIds.h"
 #include "util/InterfaceThemeStyle.h"
 #include "util/ParagraphIndentMigration.h"
+#include "util/PluginLocations.h"
 
 namespace {
 
@@ -65,13 +72,20 @@ uint8_t CrossPointSettings::sleepTimeoutEnumToMinutes(const uint8_t legacyValue)
 }
 
 void CrossPointSettings::toJson(JsonDocument& doc) const {
+  bleturner::writeJson(ble, doc);
+  readerbars::writeJson(doc, readerBars);
   const CrossPointSettings& s = *this;
   doc["readingDailyGoal"] = readingDailyGoal;
+  doc["readingGoalStartDay"] = readingGoalStartDay;
+  doc["readingGoalLegacyHistory"] = readingGoalLegacyHistory;
+  doc["readingGoalHistoryVersion"] = readinggoal::historyVersion;
+  doc["wordsTextAlignment"] = wordsTextAlignment;
+  doc["flashcardTextAlignment"] = flashcardTextAlignment;
 
-  for (const auto& info : getSettingsList(nullptr, nullptr, /*forPersistence=*/true)) {
-    if (!info.key) continue;
+  auto visit = [&](const SettingInfo& info) {
+    if (!info.key) return;
     // Dynamic entries (KOReader etc.) are stored in their own files — skip.
-    if (!info.valuePtr && !info.stringOffset) continue;
+    if (!info.valuePtr && !info.stringOffset) return;
 
     if (info.stringOffset) {
       const char* strPtr = (const char*)&s + info.stringOffset;
@@ -85,8 +99,8 @@ void CrossPointSettings::toJson(JsonDocument& doc) const {
     } else {
       doc[info.key] = s.*(info.valuePtr);
     }
-  }
-
+  };
+  forEachBaseSetting(visit);
   // Front button remap — managed by RemapFrontButtons sub-activity, not in SettingsList.
   doc["frontButtonBack"] = frontButtonBack;
   doc["frontButtonConfirm"] = frontButtonConfirm;
@@ -96,10 +110,12 @@ void CrossPointSettings::toJson(JsonDocument& doc) const {
   // option lists depend on the SD font registry), so the generic loop skips them.
   doc["fontFamily"] = fontFamily;
   doc["fontSize"] = fontPointSize;
+  doc["readerFontStorageVersion"] = 1;
   doc["fontWeight"] = fontWeight;
   doc["libraryView"] = libraryView;
   doc["libraryLayout"] = libraryLayout;
   doc["libraryClassicGrid"] = libraryClassicGrid;
+  doc["libraryCollectionGrid"] = libraryCollectionGrid;
   doc["libraryClassicExpanded"] = libraryClassicExpanded;
   doc["librarySortMethod"] = librarySortMethod;
   doc["librarySortDirections"] = librarySortDirections;
@@ -109,6 +125,7 @@ void CrossPointSettings::toJson(JsonDocument& doc) const {
   doc["weekStartsSunday"] = weekStartsSunday;
   doc["readingFormats"] = readingFormats;
   doc["homeLayout"] = homeLayout;
+  doc["homeCoverLoadingMask"] = homeCoverLoadingMask;
   doc["homeLayoutVersion"] = 2;
   doc["interfaceThemeStyle"] = interfaceThemeStyle;
   auto themeOverrides = doc["interfaceThemeOverrides"].to<JsonArray>();
@@ -135,24 +152,46 @@ void CrossPointSettings::toJson(JsonDocument& doc) const {
   // display-index mapping and is skipped by the generic persistence loop.
   doc["longPressMenuFunction"] = longPressMenuFunction;
   doc["shortPwrBtn"] = shortPwrBtn;
+  doc["pluginHubPromptHidden"] = pluginHubPromptHidden;
+  doc["perBookTextSettings"] = perBookTextSettings;
 
   // Language -- managed by LanguageSelectActivity, not in SettingsList.
   // Stored as ISO code string ("EN", "DE", ...) for stability across enum reorders.
   doc["language"] = (language < getLanguageCount()) ? LANGUAGE_CODES[language] : "EN";
+  if (languagePack[0]) doc["languagePack"] = languagePack;
 
   // A uint16_t mask, so it does not fit the uint8_t generic loop. Omitted while
   // unconfigured, so the default keeps following the UI language.
   if (keyboardLayouts != 0) {
     doc["keyboardLayouts"] = keyboardLayouts;
   }
+  if (keyboardLanguageLayouts) {
+    auto layouts = doc["keyboardLanguageLayouts"].to<JsonArray>();
+    for (uint8_t n = 0; n < getLanguageCount(); ++n)
+      if (keyboardLanguageLayouts & (uint64_t{1} << n)) layouts.add(LANGUAGE_CODES[n]);
+  }
+  booktext::writeGlobalDefaults(doc);
 }
 
 bool CrossPointSettings::fromJson(JsonVariantConst doc) {
+  bleturner::readJson(ble, doc);
   CrossPointSettings& s = *this;
   bool needsResave = false;
+  pluginHubPromptHidden = doc["pluginHubPromptHidden"] | uint8_t(0);
+  perBookTextSettings =
+      doc["perBookTextSettings"].is<uint8_t>() ? uint8_t(doc["perBookTextSettings"].as<uint8_t>() != 0) : 1;
   readingDailyGoal = doc["readingDailyGoal"].is<uint8_t>() && doc["readingDailyGoal"].as<uint8_t>() < 10
                          ? doc["readingDailyGoal"].as<uint8_t>()
                          : 0;
+  const int startDay = doc["readingGoalStartDay"] | 0;
+  readingGoalStartDay = readingDailyGoal && startDay >= 18262 && startDay <= 84005 ? startDay : 0;
+  // Older saves did not distinguish an actual goal start from a migration date.
+  // Preserve fulfilled journal days without inventing failures before that date.
+  readingGoalLegacyHistory =
+      readingDailyGoal && readinggoal::preserveLegacyHistory(doc["readingGoalHistoryVersion"] | 0u,
+                                                             doc["readingGoalLegacyHistory"] | false);
+  wordsTextAlignment = std::min<uint8_t>(doc["wordsTextAlignment"] | uint8_t(0), 3);
+  flashcardTextAlignment = std::min<uint8_t>(doc["flashcardTextAlignment"] | uint8_t(0), 3);
   const auto commonTheme = doc["interfaceThemeStyle"];
   interfaceThemeStyle = commonTheme.is<uint8_t>() ? uint8_t(interfacetheme::normalized(commonTheme.as<uint8_t>())) : 0;
   const auto themeOverrides = doc["interfaceThemeOverrides"];
@@ -189,10 +228,10 @@ bool CrossPointSettings::fromJson(JsonVariantConst doc) {
 
   auto clamp = [](uint8_t val, uint8_t maxVal, uint8_t def) -> uint8_t { return val < maxVal ? val : def; };
 
-  for (const auto& info : getSettingsList(nullptr, nullptr, /*forPersistence=*/true)) {
-    if (!info.key) continue;
+  auto visit = [&](const SettingInfo& info) {
+    if (!info.key) return;
     // Dynamic entries (KOReader etc.) are stored in their own files — skip.
-    if (!info.valuePtr && !info.stringOffset) continue;
+    if (!info.valuePtr && !info.stringOffset) return;
 
     if (info.stringOffset) {
       // destPtr starts out holding the struct-initializer default; it stays that
@@ -202,7 +241,7 @@ bool CrossPointSettings::fromJson(JsonVariantConst doc) {
         LOG_ERR("CPS", "Misconfigured SettingInfo: stringMaxLen is 0 for key '%s'", info.key);
         destPtr[0] = '\0';
         needsResave = true;
-        continue;
+        return;
       }
 
       bool loaded = false;
@@ -248,8 +287,17 @@ bool CrossPointSettings::fromJson(JsonVariantConst doc) {
       }
       s.*(info.valuePtr) = v;
     }
+  };
+  forEachBaseSetting(visit);
+  if (doc["pluginsEnabled"].isNull()) {
+    pluginsEnabled = PluginLocations::anyPluginInstalledOnDisk() ? 1 : 0;
+    needsResave = true;
   }
 
+  if (doc["lineHeight"].isNull() && doc["lineSpacing"].is<uint8_t>()) {
+    lineSpacing = readerlinespacing::fromLegacy(doc["lineSpacing"].as<uint8_t>());
+    needsResave = true;
+  }
   const auto normalizedFont = uint8_t(menufont::normalized(menuFontStyle));
   if (menuFontStyle != normalizedFont) needsResave = true;
   menuFontStyle = normalizedFont;
@@ -303,6 +351,7 @@ bool CrossPointSettings::fromJson(JsonVariantConst doc) {
   libraryView = (doc["libraryView"] | 0) == 1 ? 1 : 0;
   libraryLayout = (doc["libraryLayout"] | 0) == 1 ? 1 : 0;
   libraryClassicGrid = (doc["libraryClassicGrid"] | 1) != 0;
+  libraryCollectionGrid = (doc["libraryCollectionGrid"] | 1) != 0;
   libraryClassicExpanded = (doc["libraryClassicExpanded"] | 0) != 0;
   librarySortMethod = std::min(uint8_t(doc["librarySortMethod"] | 0), uint8_t(6));
   librarySortDirections = uint8_t(doc["librarySortDirections"] | 1) & 0x7f;
@@ -312,6 +361,9 @@ bool CrossPointSettings::fromJson(JsonVariantConst doc) {
   weekStartsSunday = (doc["weekStartsSunday"] | 0) == 1 ? 1 : 0;
   readingFormats = uint8_t(doc["readingFormats"] | 7) & 63;
   homeLayout = uint8_t(doc["homeLayout"] | HOME_FRAMED);
+  const int coverMask = doc["homeCoverLoadingMask"] | int(1u << HOME_LICORICE);
+  homeCoverLoadingMask =
+      coverMask >= 0 && coverMask < (1 << HOME_LAYOUT_COUNT) ? uint8_t(coverMask) : uint8_t(1u << HOME_LICORICE);
   // The retired third layout migrates to the remaining carousel.
   if (homeLayout == HOME_BOOX && (doc["homeLayoutVersion"] | 0) < 2) {
     homeLayout = HOME_CAROUSEL;
@@ -323,7 +375,7 @@ bool CrossPointSettings::fromJson(JsonVariantConst doc) {
 
   // Font family — uses dynamic getter/setter in SettingsList so the generic loop skips it.
   const uint8_t storedFontFamily = doc["fontFamily"] | (uint8_t)0;
-  // Retired built-in families fall back to Noto Serif; SD families keep their name.
+  // Slot zero is the Ubuntu fallback. Legacy Noto Serif selections migrate to SD below.
   fontFamily = clamp(storedFontFamily, BUILTIN_FONT_COUNT, 0);
   // These controls use board-specific display-index mappings and are skipped by
   // the generic settings loop. Persisted action IDs remain stable across boards.
@@ -371,6 +423,10 @@ bool CrossPointSettings::fromJson(JsonVariantConst doc) {
   } else if (storedFontFamily >= BUILTIN_FONT_COUNT) {
     needsResave = true;
   }
+  if ((doc["readerFontStorageVersion"] | 0) < 1 && storedFontFamily == 0 && sdFontFamilyName[0] == '\0') {
+    copyToField(sdFontFamilyName, "Noto Serif", sizeof(sdFontFamilyName));
+    needsResave = true;
+  }
   copyToField(translationDictionaryName, doc["translationDictionaryName"] | "", sizeof(translationDictionaryName));
   // Dictionary folder name — uses dynamic getter/setter in SettingsList, load manually
   copyToField(dictionaryName, doc["dictionaryName"] | "", sizeof(dictionaryName));
@@ -383,9 +439,18 @@ bool CrossPointSettings::fromJson(JsonVariantConst doc) {
     language = static_cast<uint8_t>(I18n::languageFromCode(doc["language"].as<const char*>()));
   }
 
+  const char* pack = doc["languagePack"] | "";
+  copyToField(languagePack, languagepack::validFilename(pack) ? pack : "", sizeof(languagePack));
+
   // Absent means unconfigured, which is the default.
   if (doc["keyboardLayouts"].is<uint16_t>()) {
     keyboardLayouts = doc["keyboardLayouts"].as<uint16_t>();
+  }
+  keyboardLanguageLayouts = 0;
+  for (JsonVariantConst code : doc["keyboardLanguageLayouts"].as<JsonArrayConst>()) {
+    if (!code.is<const char*>()) continue;
+    for (uint8_t n = 0; n < getLanguageCount(); ++n)
+      if (strcmp(code.as<const char*>(), LANGUAGE_CODES[n]) == 0) keyboardLanguageLayouts |= uint64_t{1} << n;
   }
 
   if (needsResave) {
@@ -393,9 +458,29 @@ bool CrossPointSettings::fromJson(JsonVariantConst doc) {
     requestResave();
   }
 
+  if (!readerbars::readJson(doc, readerBars))
+    LOG_ERR("CPS", "Invalid reader bar settings; keeping previous configuration");
+
   LOG_DBG("CPS", "Settings loaded from file");
 
   return true;
+}
+
+readerbars::Config CrossPointSettings::readerBar(readerbars::Position position) const {
+  using namespace readerbars;
+  if (readerBars.customized) return position == Position::Top ? readerBars.top : readerBars.bottom;
+  Config config;
+  if (position == Position::Top) return config;
+  config.progress = static_cast<Progress>(std::min<uint8_t>(statusBarProgressBar, HIDE_PROGRESS));
+  config.thickness = std::min<uint8_t>(statusBarProgressBarThickness, 2);
+  if (statusBarBattery) config.slots[0] = Item::Battery;
+  if (statusBarClock == STATUS_BAR_CLOCK_LEFT) config.slots[1] = Item::Clock;
+  if (statusBarTitle == BOOK_TITLE) config.slots[3] = Item::Book;
+  if (statusBarTitle == CHAPTER_TITLE) config.slots[3] = Item::Chapter;
+  if (statusBarChapterPageCount) config.slots[4] = Item::Pages;
+  if (statusBarBookProgressPercentage) config.slots[5] = Item::Percent;
+  if (statusBarClock == STATUS_BAR_CLOCK_RIGHT) config.slots[6] = Item::Clock;
+  return config;
 }
 
 CrossPointSettings::StatusBarSpec CrossPointSettings::statusBarSpec() const {
@@ -417,7 +502,11 @@ CrossPointSettings::StatusBarSpec CrossPointSettings::statusBarSpec() const {
 ReaderRenderSpec CrossPointSettings::readerRenderSpec(const uint16_t viewportWidth,
                                                       const uint16_t viewportHeight) const {
   ReaderRenderSpec spec;
+  spec.engine = epubEngineFromSetting(epubEngine);
   spec.fontId = getReaderFontId();
+  if (sdFontHashResolver && sdFontFamilyName[0] != '\0') {
+    spec.fontContentHash = sdFontHashResolver(sdFontResolverCtx, sdFontFamilyName, fontPointSize);
+  }
   spec.lineCompression = getReaderLineCompression();
   spec.characterSpacing = getCharacterSpacing();
   spec.wordSpacingPercent = wordSpacing;
@@ -434,38 +523,7 @@ ReaderRenderSpec CrossPointSettings::readerRenderSpec(const uint16_t viewportWid
   return spec;
 }
 
-float CrossPointSettings::getReaderLineCompression() const {
-  // SD card and vector fonts get a wider scale than the built-ins: their
-  // faces carry their own (often generous) natural line height, so the old
-  // Bookerly-tuned 1.1/1.2 steps were visually near-indistinguishable. At
-  // 12pt in portrait (~760px viewport) this scale spans ~26/24/19/15 lines
-  // per page — each step reads as a clearly different density.
-  if (sdFontFamilyName[0] != '\0') {
-    switch (lineSpacing) {
-      case TIGHT:
-        return 0.95f;
-      case NORMAL:
-      default:
-        return 1.0f;
-      case WIDE:
-        return 1.3f;
-      case EXTRA_WIDE:
-        return 1.6f;
-    }
-  }
-
-  switch (lineSpacing) {
-    case TIGHT:
-      return 0.95f;
-    case NORMAL:
-    default:
-      return 1.0f;
-    case WIDE:
-      return 1.1f;
-    case EXTRA_WIDE:
-      return 1.2f;
-  }
-}
+float CrossPointSettings::getReaderLineCompression() const { return readerlinespacing::multiplier(lineSpacing); }
 
 unsigned long CrossPointSettings::getSleepTimeoutMs() const {
   if (sleepTimeoutMinutes >= SLEEP_TIMEOUT_NEVER_MINUTES) return 0UL;
@@ -503,27 +561,14 @@ void CrossPointSettings::clearSdFontFamily() {
 
 int CrossPointSettings::getReaderFontId() const {
   // Check SD card font first
-  if (sdFontFamilyName[0] != '\0' && sdFontIdResolver) {
-    int id = sdFontIdResolver(sdFontResolverCtx, sdFontFamilyName, fontPointSize);
+  if (sdFontIdResolver) {
+    const char* family = sdFontFamilyName[0] ? sdFontFamilyName : "Ubuntu";
+    int id = sdFontIdResolver(sdFontResolverCtx, family, fontPointSize);
     if (id != 0) return id;
     // Fall through to built-in if SD font not found
   }
 
-  // A built-in family only exists at BUILTIN_READER_POINT_SIZES, so a size
-  // carried over from an SD family may not be one of them. ensureLoaded()
-  // normally persists the snap; snap again here (without allocating — this runs
-  // in the page render loop) so rendering is correct even before it has run.
-  const uint8_t pt =
-      snapToNearestPointSize(BUILTIN_READER_POINT_SIZES, std::size(BUILTIN_READER_POINT_SIZES), fontPointSize);
-  switch (pt) {
-    case 12:
-      return NOTOSERIF_12_FONT_ID;
-    case 16:
-      return NOTOSERIF_16_FONT_ID;
-    case 18:
-      return NOTOSERIF_18_FONT_ID;
-    case 14:
-    default:
-      return NOTOSERIF_14_FONT_ID;
-  }
+  // Missing SD resources never erase the desired family or point size.
+  // Ubuntu is always resident and can render without a card font.
+  return UI_12_FONT_ID;
 }

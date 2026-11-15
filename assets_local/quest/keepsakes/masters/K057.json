@@ -1,0 +1,18 @@
+{
+  "id": "K057",
+  "key": "Moneda",
+  "file": "K057.png",
+  "sample": {
+    "es": "Moneda del corsario",
+    "en": "Corsair coin"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Corsair coin.",
+  "requests": [
+    73
+  ],
+  "sha256": "2f8c28f032906fd4c27aa122d7930fe59142be923e1aadf5b9fc152cb70aa4da",
+  "source": "exec-a2c80e87-033f-48dd-b5f3-1f010bb40da0.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

@@ -3,7 +3,8 @@
 // Read side of the CLX1 index.
 //
 // Holds one open file handle and a few hundred bytes by default. Browsers may
-// opt into a bounded PSRAM snapshot until close(). A page of rows is a handful of seeks, which is
+// opt into a bounded PSRAM snapshot, with explicit retention across closes.
+// A page of rows is a handful of seeks, which is
 // what the fixed 128-byte record stride buys — record k is always at
 // recordStart + 128k, so no offset table has to be loaded to find it.
 
@@ -56,6 +57,7 @@ class LibraryIndexFile {
   // caused by a format bug is visible in the log rather than looking like a slow
   // first boot.
   bool open(const char* path);
+  bool openRetained(const char* path, uint32_t contentRevision);
   // Accept an otherwise valid stale fold so a rebuild can preserve arrival
   // history without exposing stale sort/search keys to the browser.
   bool openForReconciliation(const char* path);
@@ -65,12 +67,16 @@ class LibraryIndexFile {
   // Optional immutable snapshot for repeated metadata scans. Failure leaves the
   // file-backed reader usable; no internal-RAM fallback, and close invalidates it.
   static constexpr size_t BROWSE_CACHE_LIMIT = 2 * 1024 * 1024;
-  bool cacheForBrowsing(void (*cooperate)() = nullptr);
+  bool cacheForBrowsing(void (*cooperate)() = nullptr, uint32_t contentRevision = 0);
+  bool hasBrowseCache() const { return browseCache != nullptr; }
+  bool canReuseBrowseCache(uint32_t contentRevision) const;
+  // Transfer, never copy, a small valid snapshot across Library lifetimes.
+  // Larger indexes keep the ordinary per-open cache to protect reader headroom.
+  static constexpr size_t RETAINED_CACHE_LIMIT = 512 * 1024;
+  void retainBrowseCache(uint32_t contentRevision);
+  static void releaseRetainedBrowseCache();
   // Yield optional storage to required browser data; do not reacquire until reopen.
-  void dropBrowseCache() {
-    browseCache.reset();
-    cacheAttempted = true;
-  }
+  void dropBrowseCache();
 
   ClixValidity validity() const { return lastValidity; }
   const ClixHeader& header() const { return head; }
@@ -125,8 +131,12 @@ class LibraryIndexFile {
 
   HalFile file;
   HalMemory::PsramBuffer browseCache;
+  uint64_t pathHash = 0;
+  uint32_t browseRevision = 0;
   bool cacheAttempted = false;
   ClixHeader head{};
+  char backingPath[64] = {};
+  uint32_t browseStorageRevision = 0, browseMediaRevision = 0;
   bool opened = false;
   bool readFailed = false;
   ClixValidity lastValidity = ClixValidity::BadMagic;

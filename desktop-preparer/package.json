@@ -1,0 +1,62 @@
+{
+  "name": "crossnext-book-preparer",
+  "productName": "CrossNext Book Preparer",
+  "version": "2.0.0",
+  "description": "Prepare your CrossNext library on Windows and macOS",
+  "main": "shell/main.cjs",
+  "author": "CrossNext contributors",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "stage": "node shell/stage.cjs",
+    "test": "node tests/platform.cjs && node tests/desktop.cjs && node tests/mac-layout.cjs && node tests/locale.cjs",
+    "dist:win": "npm run stage && electron-builder --win portable --x64",
+    "dist:mac": "npm run stage && electron-builder --mac dmg --arm64 --x64",
+    "pack:mac": "npm run stage && python build_macos.py"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.11.1",
+    "electron": "45.3.1",
+    "electron-builder": "26.18.0",
+    "playwright": "1.65.0"
+  },
+  "build": {
+    "appId": "org.crossnext.bookpreparer",
+    "asar": true,
+    "directories": {
+      "output": "dist/desktop"
+    },
+    "files": [
+      "shell/main.cjs",
+      "shell/preload.cjs",
+      "shell/platform.cjs",
+      "shell/ui/**/*",
+      "shell/assets/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "build/desktop-runtime",
+        "to": "runtime"
+      }
+    ],
+    "win": {
+      "icon": "shell/assets/icon.ico",
+      "signExecutable": false,
+      "artifactName": "CrossNext-Book-Preparer-Windows-v${version}.${ext}"
+    },
+    "portable": {
+      "requestExecutionLevel": "user"
+    },
+    "mac": {
+      "icon": "shell/assets/icon.icns",
+      "category": "public.app-category.books",
+      "identity": "-",
+      "artifactName": "CrossNext-Book-Preparer-macOS-${arch}-v${version}.${ext}",
+      "extendInfo": {
+        "NSHumanReadableCopyright": "CrossNext contributors"
+      }
+    }
+  }
+}

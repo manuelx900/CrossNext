@@ -1,0 +1,12 @@
+{
+  "id": "S081",
+  "master": "scene-081-v1.png",
+  "sha256": "826f8833587ce83996fb521aeea80614b384ba61cc2e2f95fa5342ac652fef01",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The war of stories. Chapter: The seal of will. Illustrate this already-authored event faithfully, without inventing another object or plot: Release the final personal records at the seal. Remembering Aren's choices will prevent him from blaming the crown for every decision he made. Context only, do not try to draw all of it: The seal of Will holds accounts of people obeying after they forgot their own reasons. The soldiers you helped now approach it by choice. Their remembered decisions can expose how the king maintained obedience.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

@@ -22,10 +22,13 @@ void FlashSettingsActivity::onEnter() {
   model.answer = originalAnswer =
       flashcards::validTextSize(words ? SETTINGS.wordsAnswerSize : SETTINGS.flashcardAnswerSize);
   model.smart = originalSmart = words ? SETTINGS.wordsSmartSize : SETTINGS.flashcardSmartSize;
+  model.alignment = originalAlignment = words ? SETTINGS.wordsTextAlignment : SETTINGS.flashcardTextAlignment;
   requestUpdate();
 }
 bool FlashSettingsActivity::saveChanges() {
-  if (model.question == originalQuestion && model.answer == originalAnswer && model.smart == originalSmart) return true;
+  if (model.question == originalQuestion && model.answer == originalAnswer && model.smart == originalSmart &&
+      model.alignment == originalAlignment)
+    return true;
   if (!SETTINGS.saveToFile()) {
     LOG_ERR("FLASH", "Cannot save text sizes");
     return false;
@@ -33,6 +36,7 @@ bool FlashSettingsActivity::saveChanges() {
   originalQuestion = model.question;
   originalAnswer = model.answer;
   originalSmart = model.smart;
+  originalAlignment = model.alignment;
   return true;
 }
 void FlashSettingsActivity::onExit() {
@@ -49,6 +53,7 @@ void FlashSettingsActivity::back() {
   }
 }
 void FlashSettingsActivity::loop() {
+  if (popup.handleInput(mappedInput, [this] { requestUpdate(); })) return;
   if (mappedInput.wasReleased(MappedInputManager::Button::Back)) {
     back();
     return;
@@ -67,7 +72,15 @@ void FlashSettingsActivity::loop() {
   }
   RenderLock lock;
   const bool words = model.app == flashcards::TextApp::Words;
-  if (event.action == flashui::SmartSize) {
+  if (event.action == flashui::Alignment) {
+    static constexpr StrId choices[] = {StrId::STR_ALIGN_LEFT, StrId::STR_CENTER, StrId::STR_ALIGN_RIGHT,
+                                        StrId::STR_JUSTIFY};
+    popup.show(StrId::STR_ALIGNMENT, choices, 4, model.alignment, [this, words](int value) {
+      model.alignment = (words ? SETTINGS.wordsTextAlignment : SETTINGS.flashcardTextAlignment) = uint8_t(value);
+      model.error = false;
+      requestUpdate();
+    });
+  } else if (event.action == flashui::SmartSize) {
     model.smart = !model.smart;
     (words ? SETTINGS.wordsSmartSize : SETTINGS.flashcardSmartSize) = model.smart;
   } else if (event.action == flashui::QuestionSize && event.value >= 0 && event.value < flashcards::kTextSizeCount) {
@@ -93,6 +106,7 @@ void FlashSettingsActivity::render(RenderLock&&) {
   toybox::Screen screen(frame);
   ready = false;
   flashui::textSettings(screen, model);
+  popup.render(renderer);
   ready = true;
   toybox::reportOverflow(interactions, "Flashcard text settings", &renderer);
   renderer.displayBuffer();

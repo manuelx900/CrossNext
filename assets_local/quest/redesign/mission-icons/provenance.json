@@ -1,0 +1,45 @@
+{
+  "source": "User-provided mission redesign reference",
+  "sha256": "a267d4a6ea2e11a98aa31382de6563d223b4c26b6ffc2bf019c6a5c162b00b79",
+  "boxes": {
+    "daily": [
+      74,
+      340,
+      188,
+      454
+    ],
+    "weekly": [
+      72,
+      770,
+      194,
+      890
+    ],
+    "story": [
+      72,
+      1192,
+      194,
+      1310
+    ]
+  },
+  "cleanExtractionBoxes": {
+    "daily": [
+      50,
+      315,
+      215,
+      480
+    ],
+    "weekly": [
+      50,
+      735,
+      215,
+      915
+    ],
+    "story": [
+      50,
+      1160,
+      215,
+      1340
+    ]
+  },
+  "preprocessing": "Retain inner illustration components; exclude UI frame components, crop to ink bounds."
+}

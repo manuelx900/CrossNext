@@ -18,7 +18,7 @@ def check(ok, msg):
 
 LIST = "src/SettingsList.h"
 ACT = "src/activities/settings/SettingsActivity.cpp"
-list_src = open(LIST).read()
+list_src = (open(LIST).read() + "\n" + open("src/SettingsList.cpp").read())
 act_src = open(ACT).read()
 # The commit this fork and upstream last had in common. Everything ownership
 # is decided against is read out of THIS, never out of a branch tip.
@@ -85,16 +85,34 @@ holdback = set(re.findall(r"&CrossPointSettings::(\w+)",
                           rebuild.split("forkSystemSettings.push_back")[0].split(
                               "STR_CAT_SYSTEM")[-1] if "forkSystemSettings" in rebuild else ""))
 
+def setting_calls(src):
+    """Read complete factory calls, including emitted and chained descriptors."""
+    for match in re.finditer(r"SettingInfo::\w+\(", src):
+        start = match.end()
+        depth = 1
+        for end in range(start, len(src)):
+            if src[end] == "(":
+                depth += 1
+            elif src[end] == ")":
+                depth -= 1
+                if depth == 0:
+                    yield src[start:end]
+                    break
+        else:
+            raise SystemExit("FAIL settingsorder  unterminated SettingInfo factory")
+
+
 declared = []
-for m in re.finditer(r"SettingInfo::(?:Toggle|Enum|Value|String|DynamicString)\((.*?)\),\n(?=\s*(?://|Setting|\}|#|$))",
-                     list_src, re.S):
-    b = m.group(1)
+for b in setting_calls(list_src):
     if "STR_CAT_SYSTEM" not in b:
         continue
     key = re.findall(r'"([^"]+)"', b)
     ids = re.findall(r"StrId::(STR_\w+)", b)
     val = re.findall(r"&CrossPointSettings::(\w+)", b)
     declared.append({"id": ids[0], "key": key[-1] if key else "", "val": val[0] if val else ""})
+
+check(len(declared) >= 7,
+      f"only modelled {len(declared)} registry System rows; the factory parser has drifted")
 
 rendered = [d for d in declared if d["val"] not in holdback]
 for m in re.finditer(r"systemSettings\.push_back\(SettingInfo::Action\(StrId::(STR_\w+), SettingAction::(\w+)",

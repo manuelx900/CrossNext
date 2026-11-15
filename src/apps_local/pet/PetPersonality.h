@@ -11,7 +11,6 @@ inline const char* companionLine(const Model& m) {
   if (age == pet::Stage::Egg) return tr(STR_PET_COMPANION_EGG);
   if (pet::need(p) != pet::Need::None) return nullptr;
   if (m.clockKnown && m.today > 0 && !m.historyChanged) {
-    if (m.todaySeconds >= int(pet::GOALS[p.goalIndex]) * 60) return tr(STR_PET_COMPANION_GOAL);
     if (m.todaySeconds > 0) return tr(STR_PET_COMPANION_READING);
     if (p.lastPetDay == m.today) return tr(STR_PET_COMPANION_PETTED);
   }

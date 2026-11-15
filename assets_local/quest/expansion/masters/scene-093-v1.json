@@ -1,0 +1,12 @@
+{
+  "id": "S093",
+  "master": "scene-093-v1.png",
+  "sha256": "686fbdaab3300b2c157596c79dbce0144b0dd25eb882aae4496e24dcb12e196c",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The last page. Chapter: The keeper's childhood. Illustrate this already-authored event faithfully, without inventing another object or plot: The palace reveals Aren learning to read with his mother. He dreamed of a library where no one would be excluded, long before he sought power. Context only, do not try to draw all of it: The inner palace holds a memory from Aren's childhood. You seek it to complete the person behind the crown, not to find a childhood that could excuse every later choice.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

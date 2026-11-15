@@ -645,7 +645,24 @@ void runPages() {
 
 }  // namespace
 
+void alignment() {
+  char line[256], scratch[256];
+  for (int align = 0; align < 4; ++align) {
+    Recorder drawn;
+    study::drawWrappedMarked(drawn, 1, 0, 110, "one two three four", 0, 3, false, line, sizeof(line), scratch, 0,
+                             INT_MAX, nullptr, 400, nullptr, uint8_t(align));
+    check(!drawn.texts.empty(), "aligned text remains visible");
+    check(drawn.texts.front().x == (align == 1 ? 360 : align == 2 ? 375 : 345), "line alignment origin");
+    check(drawn.rules.size() == 1 && drawn.rules.front().x == drawn.texts.front().x, "aligned emphasis follows text");
+    if (align == 3) {
+      check(drawn.texts.size() >= 3, "justification draws separate words");
+      const auto& last = drawn.texts[1];
+      check(last.x + fakeWidth(last.text.c_str()) == 455, "justification reaches right edge");
+    }
+  }
+}
 int main() {
+  alignment();
   std::printf("StudyText\n");
   run();
   runPages();

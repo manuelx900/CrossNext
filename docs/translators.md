@@ -9,6 +9,31 @@ language list.
 
 If you'd like to add your name to this list, please open a PR adding yourself and your Github link. Thank you!
 
+Translations completed with assistance still need native editorial review. Key
+coverage, valid format arguments and fitting text do not establish linguistic
+accuracy. Review terms in their actual screen: a chess bishop, a petting action,
+a ship class and an avatar's gender need their own context.
+
+See [translation meaning and review](translation-context.md) for game-specific
+terms, source comments, rule fidelity and the recurring false interpretations.
+
+Keep the YAML catalogues complete, in NFC, and preserve printf arguments in
+their original order. `tools_local/language_packs.py bundle` validates the source
+key set and includes only strings referenced by this firmware in the SD packs.
+The CSV compiler validates inactive translations too before excluding them from
+the runtime pack. The 8,192-entry limit and the binary pack format are unchanged.
+
+Fit translated interface labels by measuring the actual font and available
+rectangle. Prefer natural concise copy, additional lines and sufficient space;
+do not remove the end of a message to hide an overflow. Loading-message dots
+are punctuation and are distinct from automatic truncation. Book titles, file
+names and other user content may still exceed a finite control's capacity.
+
+The real-font host checks in `host-tests/locale-ui/README.md` cover PET,
+system-message bounds and language-pack/web delivery. The separate Quest check
+covers Reading Adventure. These checks supplement physical-device and native
+speaker review; they do not replace either.
+
 ## French
 - [Spigaw](https://github.com/Spigaw)
 - [CaptainFrito](https://github.com/CaptainFrito)
@@ -66,32 +91,28 @@ If you'd like to add your name to this list, please open a PR adding yourself an
 ## Danish
 - [hajisan](https://github.com/hajisan)
 
-## Some strings cannot wrap, and have a hard pixel budget
+## Measure the control, not the character count
 
-A number of screens draw a string through `renderer.drawCenteredText`, which
-renders ONE line and does not wrap. On those keys a translation that is longer
-than the panel is wide does not spill onto a second line -- it runs off the
-edge and the reader never sees the end of it.
+Some remaining calls to `renderer.drawCenteredText` still draw a single line.
+A translated label must fit its actual control after bezel margins, icons,
+clock, buttons and orientation are accounted for. The portrait panel width is
+not the width available to every label. Fonts are proportional and scripts can
+select SD fallback faces; character count alone cannot establish a fit.
 
-**The panel is 480px.** The budget is pixels, not characters: the face is
-proportional, so "iiiii" and "WWWWW" differ by about threefold, and the bold
-face is roughly 5% wider again.
+Use the real-font locale checks described above. `host-tests/i18nwidth/run.sh`
+is a supplementary survey of direct single-line calls. It gates English only
+and cannot certify scripts missing from its built-in face. Recovery, cache and
+sync prompts now reserve wrapped bounds where appropriate; update their
+contract probe when changing that geometry.
 
-Measure before you commit a translation:
+Browser messages with arguments use complete `STR_WEB_MSG_*` templates. Keep
+all `{named}` markers, including repeated occurrences, but reorder them as the
+language requires. They produce plain text via `uiFormat`, assigned with
+`textContent` or shown in a native confirmation. The pack compiler validates
+marker names; runtime formatting falls back to the English template if a
+third-party pack changes them. Do not translate filenames, note contents or
+other argument values, and do not interpolate the result as HTML.
 
-```bash
-tools_local/i18n/measure_string.py "your translated string"
-host-tests/i18nwidth/run.sh --all-languages
-```
-
-`host-tests/i18nwidth/run.sh` gates ENGLISH only. It is not a statement about
-your language. When this was written, **25 of the 32 translations had at least
-one overflowing unwrapped string** -- worst cases on the recovery and sync
-screens, some more than 250px past the edge. English happens to be one of the
-few that fit, which is exactly why its green must not be read as "it fits
-everywhere".
-
-The keys most affected are the hints: `STR_RECOVERY_MODE_HINT`,
-`STR_POWER_ON_HINT`, `STR_SYNC_READY`, `STR_CLEAR_CACHE_WARNING_1`. If yours is
-over, prefer a shorter sentence that keeps the ACTION over a faithful
-translation that keeps the explanation. The reader needs to know what to do.
+Keep English context comments when editing short commands: image Fill and
+Invert, document Notes, file Upload/Download and the software extension runner
+must not acquire unrelated meanings.

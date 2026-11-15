@@ -39,17 +39,18 @@ inline void styleHome(freeink::ui::ListProps& props) {
   props.sidePadding = 18;
   props.rowPaddingY = 8;
   props.textGap = 18;
-  props.labelText.font = 0;
+  props.labelText.font = 1;
   props.labelText.bold = false;
-  props.labelText.maxLines = 1;
-  props.subtitleText.font = 3;
-  props.subtitleText.maxLines = 1;
+  props.labelText.maxLines = 2;
+  props.subtitleText.font = pixelui::uppercaseLabels ? 4 : 3;
+  props.subtitleText.bold = false;
+  props.subtitleText.maxLines = 2;
   props.rowStyles.normal.borderWidth = 1;
   if (chrome::lightHeader) {
     props.rowHeight = 78;
     props.iconSize = 32;
-    props.labelText.font = 0;
-    props.subtitleText.font = 3;
+    props.labelText.font = 1;
+    props.subtitleText.font = pixelui::uppercaseLabels ? 4 : 3;
     props.rowPaddingY = 4;
     props.rowStyles.normal.borderWidth = 0;
   }
@@ -72,23 +73,25 @@ inline void styleThemeChoices(freeink::ui::ListProps& p, bool wide) {
   p.rowHeight = wide ? 50 : 108;
   p.iconSize = wide ? 30 : 72;
   p.labelText.font = wide ? 0 : 1;
-  p.labelText.maxLines = 1;
+  p.labelText.maxLines = 2;
   p.subtitleText.font = 4;
-  p.subtitleText.maxLines = 1;
+  p.subtitleText.maxLines = 2;
   p.rowPaddingY = wide ? 4 : 8;
 }
 struct AppearanceActions {
-  freeink::ui::Rect themes, recent, font;
+  freeink::ui::Rect themes, recent, font, covers;
 };
 inline AppearanceActions appearanceActions(freeink::ui::Rect body, int themeBottom, bool wide) {
-  const int height = wide ? 44 : 56, gap = 12;
+  const int gap = 8;
+  const int available = wide ? body.height : body.bottom() - themeBottom - gap;
+  const int height = std::clamp((available - 3 * gap) / 4, 44, 64);
   const int left = wide ? body.x + (body.width - 16) * 3 / 5 + 16 : body.x;
   const int width = body.right() - left;
-  const int top = wide ? body.y + std::max(0, (themeBottom - body.y - 3 * height - 2 * gap) / 2)
-                       : std::max(themeBottom + gap, body.bottom() - 3 * height - 2 * gap);
+  const int top = wide ? body.y : themeBottom + gap;
   return {freeink::ui::makeRect(left, top, width, height),
           freeink::ui::makeRect(left, top + height + gap, width, height),
-          freeink::ui::makeRect(left, top + 2 * (height + gap), width, height)};
+          freeink::ui::makeRect(left, top + 2 * (height + gap), width, height),
+          freeink::ui::makeRect(left, top + 3 * (height + gap), width, height)};
 }
 template <typename Screen>
 void appearanceList(Screen& screen, freeink::ui::ListProps& props) {

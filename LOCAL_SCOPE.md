@@ -73,8 +73,14 @@ these small definition screens and block boundaries remain explicit. The shared
 into the existing 64 KiB output budget, including synonym and sampled-index
 boundary cases. It does not assume their data offsets are contiguous.
 
-The X4 Pro resource profile retains Noto Serif as the built-in reader family,
-the small UI fonts, and English/Spanish hyphenation tables. Its narrow seams are
+The X4 Pro resource profile loads the full Noto Serif reader family from
+Resources `.cpfont` files, retaining Ubuntu as a resident fallback, the compact
+UI fonts (including Noto Serif), and English/Spanish hyphenation tables. The
+SD font system owns the four fixed content sizes separately from the selected
+optional family, preserving the IDs used by vocabulary and study screens.
+Only font metadata and bounded page glyph caches are resident; bitmap data
+stays on the card. Missing resources preserve the user's intended family and size.
+Its narrow seams are
 `src/main.cpp` (font registration), `CrossPointSettings` and the Reader font
 selectors (retired built-in family fallback while preserving SD font names),
 `UiSliderDialog.h` and `apps_local/wikipedia` (existing font references), and
@@ -84,6 +90,38 @@ and `Section.cpp` (layout-cache version).
 See [SD card fonts](docs/sd-card-fonts.md) for user-visible behavior.
 
 ### The upstream files we own
+
+Resource reuse also adds a resource-specific HAL revision beside the general
+content revision. Canonical reading-state writes and explicit derived thumbnail
+tails/Library packs preserve source caches; unknown writes remain conservative.
+Shared seams are `HalStorage`, `ZipFile`, `LibraryIndexFile`, `ImageBlock` and
+the existing cover owners. `ParsedText`/`WordWidthCache` memoize exact paragraph
+gaps, `Section` accepts a cooperative idle time budget, and `Page`/`TextBlock`
+provide bounded retained-size estimates. `EpubReaderActivity` owns current-page
+reuse through `apps_local/reader/PageReuse`; `RenderLock` exposes ownership for
+release before child setup. Library packs live in `apps_local/library/ScenePack`
+and reuse Home's art arena and the existing idle worker. No task, setting,
+framebuffer, book format or visual-quality change is added. The disposable pack
+format and resource budgets are documented in [reader speed](docs/reader-speed.md).
+
+Reader speed work extends the existing idle Page prefetch to budgeted image
+metadata, cancellable JPEG/PNG cache-only preparation and small glyph batches.
+Epub extraction and RenderConfig carry the continuation through the existing
+render owner. ImageBlock retains up to three 96 KiB PSRAM pixel resources across
+redraws, releasing them on exit, child transitions and memory pressure, with
+the chunked/no-cache fallback preserved. SdCardFontSystem
+can retain one previous main TTF size with shared sources and bounded cache
+capacities; FontCacheManager distinguishes transient reader retention from an
+explicit reset and keeps memory-pressure eviction. LibraryListActivity enables
+the existing bounded browse cache and shares Home's existing art-scene arena for
+complete cover grids and disposable on-card packs. No new task, setting or
+framebuffer is added. See [reader and library resource reuse](docs/reader-speed.md).
+
+LibraryCoverPrefetch owns one optional 128 KiB next-page BMP byte arena on the
+existing non-painting render-worker idle path. LibraryIndexFile can transfer one
+unchanged snapshot of up to 512 KiB across Library exits, retaining no SD handle
+and requiring 2 MiB of PSRAM headroom. Both paths preserve ordinary file-backed
+fallbacks; no thumbnail conversion, second framebuffer or new task is added.
 
 The idle-wait optimization owns the main-loop wait policy, HAL input
 wake semaphore and `InputManager::nextServiceDelayMs`. Activity deadlines are
@@ -167,6 +205,7 @@ immediate/waiting requests.
 | `src/activities/library/LibraryListActivity.{h,cpp}` | Reuse the existing decoded row window for selection-only repaints; invalidate on data/view changes or failed reads | scalar cache identity |
 | `src/activities/reader/ReaderToolbarUi.cpp` | Filled style checkboxes with a contrasting tick | one list-style flag |
 | `src/activities/util/KeyboardEntryActivity.cpp` | Shared text/search entry uses the existing black pixel header and back target | one header renderer call |
+| `freeink-sdk/libs/ui/FreeInkUI/include/components/keyboard/keyboard.h` | Reuse the configured small hint font when a primary or control label exceeds its actual key width | per-key font fit; shared by full-screen and embedded keyboards |
 | `lib/GfxRenderer/FontCacheManager.{cpp,h}`, `src/activities/reader/EpubReaderActivity.cpp` | Retain already bounded TrueType glyphs/kerning across reader pages; keep transient/explicit cleanup | scope policy |
 | `lib/EpdFont/TtfEpdFont.{cpp,h}` | Retry a face containing failed glyphs at reader page boundaries; retain successful glyphs and valid whitespace | per-face retry flag |
 | `lib/GfxRenderer/Bitmap.{cpp,h}` | Batched headers, borrowed row read-ahead and normalized packed 1-bit rows for local Home sampling; other decoders unchanged | borrowed scratch |
@@ -181,6 +220,7 @@ immediate/waiting requests.
 | `test/library_builder/stubs/HalStorage.h` | Include `<cstdint>` directly so the storage test stub compiles on GCC 15 and newer | 1 include |
 | `src/activities/home/HomeActivity.{cpp,h}`                                                                                                                                                                                                                                                | The shelf seam: Games and Apps as rows on Home, plus the `upstreamMenuRows()` count                                                                                                                                                                                                                                                                                                                                      | 4 hooks + 1 method                                                        |
 | `src/components/themes/BaseTheme.h`                                                                                                                                                                                                                                                       | Two values appended to the `UIIcon` palette: Games, Apps                                                                                                                                                                                                                                                                                                                                                                 | 1 block, appended                                                         |
+| `src/components/themes/BaseTheme.cpp` | Loading owns a complete uniform backdrop and clears stale header geometry before publishing its popup | one loading method; no extra framebuffer |
 | `src/components/themes/lyra/LyraTheme.cpp`                                                                                                                                                                                                                                                | Two cases mapping them to bitmaps                                                                                                                                                                                                                                                                                                                                                                                        | 4 lines                                                                   |
 | `src/activities/ActivityManager.cpp`                                                                                                                                                                                                                                                      | `Frontlight.present()` guard on the light-panel gesture (the stack `#ifndef` seam retired: upstream adopted it in 1.6.0rc); plus `noteSurfaceBuilt()` around the render dispatch, so no screen can forget to stamp its play surface                                                                                                                                                                                      | 1 guard + 1 line                                                          |
 | `src/MappedInputManager.{h,cpp}`                                                                                                                                                                                                                                                          | `swallowCurrentTouch()`: one-line wrapper over the SDK suppression latch, for apps that time their own holds (Minesweeper's flag)                                                                                                                                                                                                                                                                                        | 1 method                                                                  |
@@ -197,7 +237,9 @@ immediate/waiting requests.
 | `lib/PngToBmpConverter/PngToBmpConverter.*`                                                                                                                                                                                                                                               | `...FitWithin()`: contain, not cover, for bounding downloaded images                                                                                                                                                                                                                                                                                                                                                     | 1 method                                                                  |
 | `lib/KOReaderSync/KOReaderCredentialStore.cpp`                                                                                                                                                                                                                                            | A comment saying out loud that sync stays on upstream's server, and why                                                                                                                                                                                                                                                                                                                                                  | comment only                                                              |
 | `src/components/UITheme.cpp`                                                                                                                                                                                                                                                              | `getScreenSafeArea()` starts from the bezel's viewable insets, so upstream screens stop drawing under the glass; see `docs/bezel-insets.md`                                                                                                                                                                                                                                                                              | 1 block                                                                   |
+| Reader I/O seams: `Serialization/ReadBuffer.h`, `Epub/Page`, `blocks/{TextBlock,ImageBlock}`, `Section`, `LayoutCacheOrder`, `SdCardFont`, `ParsedText`, `WordWidthCache`, `ChapterHtmlSlimParser`, `GfxRenderer`, `TtfEpdFont`, `ZipFile`, `ZipEntryReader`, `Epub`, `LibraryIndexFile`, `LibraryListActivity`, `EpubReaderActivity`, `Activity`, `ActivityManager` | Bounded PSRAM read/metrics/catalog/image reuse, resident Library entry and read-in-place layout profiles; no new persistent formats or tasks. See [reader I/O](docs/reader-page-write-performance.md#sequential-reads-and-bounded-reuse). | Existing parser, renderer, HAL and Activity ownership |
 | `lib/Epub/Epub/Section.{h,cpp}` | A second constructor for a standalone document (an HTML file on the card, a cache directory, the anchors that start fresh pages, no Epub), and `!epub` guards at the six places `startBuild` asked the Epub; the Wikipedia app lays out an article through it. Also makes `Section` constructible with no zip at all | 1 constructor + 6 guards |
+| `lib/Epub/Epub/Section.{h,cpp}`, `src/SdCardFontSystem.{h,cpp}` | Whole-card font preparation: explicit named layout caches outside the four reader slots, reader reuse of matching prepared layouts, and one transient font load without changing saved settings | existing section serializer and font-loader budgets |
 | `lib/Epub/Epub/parsers/ChapterHtmlSlimParser.{h,cpp}` | `setCaptureFootnotes(false)`: every internal link was also recorded as a footnote entry (288 bytes a page) for the reader's popup; a document with no popup keeps only its link rectangles | 1 setter + 1 condition |
 | `lib/Epub/Epub/Page.h` | `MAX_LINKS_PER_PAGE` 32 to 96: a Wikipedia lead runs one link per five words and a link past the cap silently became plain text. Serialized as a count, so older caches still load | 1 constant |
 | `src/main.cpp`, `src/CrossPointSettings.h`, `src/SettingsList.h`, `src/activities/settings/OtaUpdateActivity.cpp`, `src/activities/settings/SdFirmwareUpdateActivity.cpp`, `src/network/HttpDownloader.cpp`, `src/apps_local/bridge/BridgeHttp.cpp`, `src/apps_local/study/StudySync.cpp` | The device report's hooks: `devreport::begin()` after the settings load, one settings field and its row, the install attempt/failure notes on both install screens (the SD one is the OTA one's twin), and `devreport::headersFor()`/`delivered()` around each request in the three transports that reach CrossPlay's own hosts; the module itself is `src/network/DeviceReport*.{h,cpp}`. The device header and event implementation lives in `src/network/DeviceReport*.{h,cpp}`. | 1 call + 1 field + 1 row + the notes on 2 screens + 2 calls per transport |
@@ -614,3 +656,151 @@ The cover-focused Home layouts extend `HomeScreen`, `HomeDashboardUi` and the ex
 Picco and Licorice additionally own the FreeInkUI renderer adapter's gray rounded-stroke seam. `FreeInkUIStroke.h` emits bounded border spans; `FreeInkUIGfxRenderer.h` draws them through existing dither fills without repainting the interior or allocating a buffer. Control palettes remain in `src/apps_local/ui/LightUi.h`; the SDK helper carries geometry only.
 
 Library presentation is owned by `src/apps_local/library/LibraryControls.h` and `LibraryPreferences.h`, with its existing activity hosting both the book list and its settings view. `CrossPointSettings` persists the validated presentation bytes. The optional finished-book filter reuses `ReadingCompletionIndex` and the local journal; `KOReaderDocumentId` exposes a borrowed-scratch overload so a library pass reuses one 1 KiB hash buffer. These paths add no network task or framebuffer. They do not change books or reading-history records.
+
+The OPDS compatibility seam uses the SDK's `OpdsFeedParser` / `OpdsSearchTemplate` through the existing catalog browser and HTTP transport. It sniffs Atom XML or OPDS 2.0 JSON without buffering the whole feed, retains the SDK's bounded entry counts, and keeps existing catalog network ownership. Direct unprotected EPUB acquisition, grouped navigation, search and pagination are supported. Purchase, indirect-publication and LCP-license entries are omitted rather than saving those documents as EPUBs. No login protocol, DRM flow, task or persistent store is added. `HttpDownloader`'s stream overload accepts optional request headers so catalog requests can advertise both feed formats.
+
+Dictionary recursion is hosted in `DictionaryDefinitionActivity` and uses the dictionary already owned by its retained lookup parent. A fixed sixteen-entry query history replaces nested viewer payloads, and current definitions retain their existing 64 KiB lookup / 16 KiB styled-layout limits. `ReaderTextSheetImpl` displays chapter labels without added Roman ordinals. The EPUB image setting adds an optional monochrome-dither mode; the render-scoped flag restores the previous renderer state and does not allocate another framebuffer.
+
+
+Optional language input extends `KeyboardEntryActivity` through `LanguageKeyboard`
+and `PinyinInput`. One bounded PSRAM block owns the selected keyboard descriptors
+and payload; an activity-owned HAL file reads at most six Chinese candidates per
+page. Kana and Latin/Vietnamese names normalize before the existing byte limits.
+PET/Quest retain their field sizes and tag Unicode names with protected save
+versions so an older firmware cannot overwrite an unreadable profile.
+
+Optional Wordle banks live in `/languages/wordle`. `NativeWordle` owns one HAL
+file, a fixed six-guess workspace and two bounded 1 KiB save slots per language.
+The existing Wordle activity retains English/Spanish compatibility and opens the
+embedded keyboard for Unicode guesses. PET and Quest reuse this controller within their name views; only these input surfaces allocate the bounded 80-key hit table in PSRAM, leaving other apps at 24 interactions. Build-time segmentation stores validated
+character boundaries in the SD records; no ICU dependency, full vocabulary heap,
+network lifetime, task or framebuffer is added. Source licenses accompany the
+resources. See [Wordle](docs/apps/wordle.md).
+
+
+CrossPoint 2.0 plugin compatibility extends the existing CatalogActivity,
+PluginLocations, PluginHttp and browser host. Manifests and catalog responses
+retain bounded parsing; no device JavaScript interpreter is added. Native details
+reuse PublicationPage and the dictionary viewer. Plugin bundles are staged and
+quarantined during replacement. The global enable flag gates existing event and
+web endpoints; no idle network task is created.
+
+CrossInk statistics import is owned by `src/apps_local/reading/CrossInkStatsImport`.
+The existing ReadingStatsSyncActivity hosts this offline mode. Separate verified
+snapshot slots reuse the statistics codec and bounded projection, with explicit
+source selection so cloud and CrossInk baselines are never blindly summed. The
+local authoritative journal remains unchanged; no historical session or goal
+completion is fabricated. See [import details](docs/crossink-statistics-import.md).
+
+
+Library collections are owned by `src/apps_local/library/CollectionStore`, `CollectionFolder`,
+`CollectionScreens` and `CollectionsActivity`. The shared Library adds a third tab and retains its
+optional browse caches across the child activity, releasing them when Library exits. Files adds
+long-press entry points. A reusable bounded folder scanner updates checkbox states between input
+passes without scanning subtrees during rendering. Collection membership, stars and the smart favorites list have separate two-generation files under
+`/.crosspoint/collections/`; the retired default finished collection is removed without modifying completion records. A bounded PSRAM
+lookup and SD-backed draft serve selection across folders. No source book, reading journal,
+background task or framebuffer is added or rewritten. See [collection behavior and limits](docs/cover-themes-library.md#library).
+
+The collection membership picker reuses Files' ListNav vertical viewport and
+filename fonts. CollectionFolder owns the reusable 128 KiB ordinal buffer and
+two optional 32 KiB directory-name snapshots; CollectionFolderStates owns a
+bounded edit-session PSRAM memo of exact paths and checkbox summaries. Selection
+owns an optional 8 KiB add-only prefix filter to skip unrelated unselected
+folders; false positives and allocation failure retain exact inspection. The
+existing render worker performs cancellable inspection in small idle jobs.
+Directory returns restore the viewport and known returning checks in the first
+parent frame, while unknown states remain on cancellable idle work; saved collection formats, source books and the journal are
+unchanged. See [collection behavior](docs/cover-themes-library.md#library).
+
+Reader text preferences are scoped by `apps_local/readertext/BookTextPreferences`.
+`ReaderActivity` owns entry/exit and font restoration; `CrossPointSettings::toJson`
+serializes captured general text defaults during that scope, so unrelated saves
+cannot promote a book's format to global settings. The per-book records live in
+the existing movable book cache. `TextSettingsActivity` reuses `ReaderTextSheet`
+on touch hardware; `ReaderFontSizes` supplies the compact four-step catalog.
+
+Status batteries share the SDK's `paintBatteryIndicator` drawing entry point.
+The existing framed component delegates to it; PixelMenu, compact Home, card
+headers and Quick Settings use the same glyph dimensions and charging artwork.
+`BaseTheme::applyHeaderStatus` supplies those dimensions to passive headers.
+
+Native Library cover preparation is owned by `apps_local/library/PreparedCoverCache`.
+Home, Library and explicit batch preparation each own and release a checked 32 KiB
+PSRAM workspace while active. The optional bounded trailer extends generated BMP
+thumbnails without changing their original prefix or the library index. Packed
+region copies live in `GfxRenderer`; preparation restores the single framebuffer
+under its render lock and adds no display refresh or task. Recently opened uses
+resident records and revision-bound positive presence checks, avoiding index-body
+loading and repeated path probes on entry. See [reader speed](docs/reader-speed.md).
+
+Shared typing key styling and number/symbol pages live in `apps_local/ui/KeyboardStyle`
+and `KeyboardSymbols`. `KeyboardAlternates` is an activity-owned bounded modal
+surface, reusing the published key interactions and single framebuffer. It adds
+no worker or persistent format; EmbeddedKeyboard keeps its workspace in the
+existing checked PSRAM allocation. SDK keyboard styling options are opt-in and
+leave other consumers' defaults intact. Settings row silhouettes are generated
+from vendored reference SVGs. See [input behavior and verification](docs/keyboard-input.md).
+
+The Settings owner presents its existing XTC cover-rotation and page-direction
+registry rows in a two-row Manga sublist under Reading. Its bounded vector is
+reserved once during settings-list rebuild, and the same owner retains the
+parent viewport. Registry categories/keys and persistence remain unchanged.
+Settings option rows explicitly request section frames in both header themes;
+other menus retain their theme defaults.
+Reader performance instrumentation uses an optional development-only fixed
+aggregate and the existing render owner. PixelCache batches exact packed rows
+within its existing band. ChapterEventCache may transfer one at-most-256-KiB
+PSRAM replay between parser lifetimes during an EPUB reader session, retaining
+CRC validation and streaming fallback. No worker, framebuffer, waveform or
+persistent format is added. See [reader performance](docs/reader-performance-instrumentation.md).
+
+Library cover reuse shares bounded source-validation metadata between native loads and prefetch. HalStorage exposes conservative boot-local mutation/media revisions; Home/Library share the same three art snapshots with retention of the most recent other-screen view. No cache format, framebuffer or waveform changes. See [cover reuse](docs/library-cover-fast-open.md).
+
+### Library presentation and shared battery icon
+
+Library entry paints its header and a translated loading notice before opening
+or rebuilding the index. Cover-grid pages first try a complete resident scene;
+on a miss, the page presents placeholders and a loading-covers window before
+opening thumbnails. The next render uses the unchanged native/BMP renderer;
+missing thumbnails finish through the existing render-worker generation queue.
+Already prepared native tiles in the prefetch arena are copied immediately;
+a fully resident native page skips the cover notice, while raw BMP decoding
+and SD reads stay deferred.
+No extra pixel arena, framebuffer, background task, or lower-quality image path
+is introduced. Cold entry adds intermediate panel refreshes to show progress;
+this changes time to visible feedback, not the panel's physical refresh speed.
+
+Status battery icons share the Framed/Carousel painter, including the charging
+bolt, in Home, Files/shared headers, quick settings and the reader footer. The
+small footer scales the same drawing to its existing slot. The SDK keeps its
+default painter for other clients and its bar styles.
+
+The local OpdsParser library manifest selects only the Arduino Stream adapter
+used by the catalog browser. The explicit SDK Opds dependency owns feed parsing;
+the legacy local parser implementation is excluded to avoid duplicate symbols.
+LibraryLoadingNotice reuses components/PopupLayout for the black loading window
+and white frame/text used by the Carousel 2 / Shelf presentation.
+
+
+### Home and EPUB work reuse
+
+Home resolves cover geometry before composing, prepares missing thumbnails through the existing idle worker, and keeps Shelf progress badges outside its art snapshots. Its flat covers share Library's validated native raster path. Bounded source-stamped progress/reading summaries survive activity recreation; HalStorage owns exact canonical state revisions under its existing mutex.
+
+Reader opening can use prepared layouts in place. Parser-owned exact prefix/break memos and a bounded reader-session plain-paragraph input arena avoid repeated analysis while retaining the ordinary compositor and all complex-content fallbacks. No new task, framebuffer, panel waveform or persistent format is introduced. See [Home and EPUB work reuse](docs/home-epub-speed.md) for bounds, ownership, cancellation limits and device checks.
+
+### Cooperative EPUB format changes
+
+The EPUB reader reuses normalized paragraph input, reader-session metrics and valid resident CSS across formatting changes. One optional 256 KiB PSRAM spool holds exact serialized pages until the target is presented, then flushes through the existing idle worker. It adds no task, framebuffer, persistent format or visual-quality mode. See [EPUB formatting work reuse](docs/epub-format-speed.md) for bounds, cancellation, conservative invalidation and device checks.
+### Configurable reading bars
+
+`apps_local/readerbars` owns fixed-capacity bar configuration, JSON validation, rendering and a session-only scalar pace estimate. Narrow seams in CrossPointSettings, UITheme, StatusBarSettingsActivity and the EPUB/XTC readers persist and present the bars; the two book-preparation entry points reserve the same viewport. ActivityManager notifies a covered reader through Activity::pauseReadingPace so menu time cannot train the estimate. The legacy reader path remains selected until personalization. No parser, cache format, task or framebuffer is added. See [reading bars](docs/reader-bars.md).
+
+Navigation silhouettes are local SVG sources and flash masks owned by
+`apps_local/ui/NavigationIcons.h`. The narrow shared seams are `UiAppHelpers.h`
+(file-list icons), the legacy `components/icons/` alias headers (the existing
+rotated drawIcon format), CoverGridHomeUi’s Statistics tab selection, and
+NetworkModeSelection’s icon-only row table.
+Home, Shelf, Reading settings and Statistics retain their existing layout and
+input owners. No runtime image parser, storage read, allocation or task is added.
+See [navigation icons](docs/navigation-icons.md).

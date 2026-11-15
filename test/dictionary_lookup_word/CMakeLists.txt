@@ -1,0 +1,4 @@
+add_executable(DictionaryLookupWordTest DictionaryLookupWordTest.cpp ${REPO_ROOT}/src/util/DictionaryLookupWord.cpp)
+target_include_directories(DictionaryLookupWordTest PRIVATE ${REPO_ROOT}/src)
+target_link_libraries(DictionaryLookupWordTest PRIVATE crosspoint_test_common GTest::gtest_main)
+gtest_discover_tests(DictionaryLookupWordTest)

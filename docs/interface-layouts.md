@@ -54,11 +54,13 @@ The reader Font family picker uses the same prose typeface as Contents, natural-
 family names and 56-pixel selectable rows (option 1). Its Normal and Bold Aa samples are touch choices that update
 the same font-weight setting and the Weight row; the selected sample is outlined. The family list remains paginated in both orientations.
 
-The root folders apps, fonts, dictionaries and licenses are reserved SD resources.
-Files and Library omit them regardless of Show hidden files; identically named
-subfolders inside a user's Books folder remain ordinary content. An older Library
-index is rebuilt once with the current visibility policy, preserving arrival history
-through normal reconciliation. Resource files and reading progress are unchanged.
+Root app-resource folders remain excluded from Library. Files hides them, root
+notes, dot folders and custom hidden folders while Show hidden files is off;
+enabling that setting reveals them in Files. Holding a custom folder offers
+Hide/Show without renaming it or changing app access. See
+[Hidden folders](hidden-folders.txt). Identically named subfolders inside a user's
+Books folder remain ordinary content unless explicitly hidden. The Library
+inventory policy and reading progress are unchanged.
 
 Games and Apps use a larger footer page selector: 64-pixel arrow controls and the
 body type size for the page numbers. Their list and footer reserve the same space
@@ -68,11 +70,27 @@ In the landscape Font panel, Weight sits above the Normal/Bold samples. Family a
 Size share the other column. The sample boxes no longer have a vertical divider.
 All reader-sheet sections leave padding above their separator rules and use
 12-pixel gaps between rows or footer controls, except the compact landscape Contents panel, which uses 8-pixel gaps. The portrait sheet uses 76% of the
-safe height in Contents, Font, Layout and More; this preserves two-line chapter
-titles and the Aa preview while adding space. The font-family rows remain 56 pixels.
+safe height in Framed/Carousel and 73% in Carousel 2/Bookshelf, keeping the book
+visible above the controls. Landscape uses 94% and 84%, respectively, capped by
+the reading sample's lower edge in Settings. Font-family rows use 56 pixels in
+Framed/Carousel and 50 pixels in Carousel 2/Bookshelf. Chapter-title padding
+contracts as needed to keep two full text lines inside each row.
 Layout uses 96-pixel stepper rows. In landscape, Line spacing and Margins sit in
 two columns above Alignment; portrait stacks them vertically. The chapter/menu
 pager has 44-pixel arrow targets.
+
+Text settings keep a fixed preview/panel boundary while the sample responds to
+font and spacing changes. The redundant font caption and scope footer are omitted.
+More contains the style checkboxes and the persistent Use as default checkbox.
+It isolates book-specific changes while enabled; disabling it shares subsequent
+text changes across books. Alignment uses five icon controls.
+
+Collection book lists use the Files row metrics: at most two title lines, ellipsis
+for longer filenames and the format at the trailing edge. Finished books rebuilds
+membership from the reading journal and the available recent/library paths, then
+stores a disposable membership cache under `/.crosspoint/collections/`. Journal
+and library revisions plus the membership generation validate reuse. A missing or
+damaged cache is rebuilt; the source books and reading history are unchanged.
 
 ## Landscape on Xteink X4 Pro
 
@@ -85,7 +103,7 @@ single shared dividers, with a continuous filled selection. Wallpaper previews
 fit and center the complete image in the current orientation without upscaling;
 notices reserve separate space for their actions.
 Home gives covers more height and uses smaller title/author cuts. Landscape Carousel omits the resume bar and arrow buttons; tapping the central cover opens the book, and swipes or the neighboring covers change books. Library and
-Wallpapers use four larger thumbnails per page. Contents shows four chapters
+Wallpapers use four larger thumbnails per page. Contents shows two chapters
 per page with compact chrome and the same chapter selection and page controls.
 Reading statistics reserve enough height for streak values, and Chess centers
 its side panels against the board. Word deletion places its explanation and
@@ -161,3 +179,41 @@ On the device, check both rotations, page through all habits and decks, open the
 last item on each page, and rotate while on a later page. Check Picross clue and
 cell alignment, Go intersections, Battleship placement and firing, Wordle keys,
 and the final Pomodoro stage page. The painted targets must match touch input.
+
+## Extensions
+
+The plugin picker, catalog lists and Plugin Hub installer use the shared menu
+header, including the active interface font, clock and battery. Framed and
+Carousel show joined square boxes with one separator per row; Carousel 2 and
+Bookshelf show outlined rounded cards. Plugin titles are larger than their
+regular descriptions. Touch does not leave the first row highlighted.
+
+The existing catalog viewport, vertical swipes, long-press actions, downloads
+and sign-in flows retain their input owners. Check an empty picker, the Hub
+entry, installed plugins, and a scrollable catalog in both orientations and
+English/Spanish. Back and Search must match their painted hit areas.
+
+Reader Layout groups paragraph spacing, indentation, word spacing and character
+spacing on its second page. Shorter Settings previews retain pagination when
+needed to preserve touch targets. Style rows align labels and checkboxes within
+one outline, with a visible border for hardware-button focus. Dictionary and
+translator actions use the open dictionary icon rather than the refresh icon.
+
+
+Text settings uses the same Font, Layout and More controls as the reader.
+“Use as default” is a persistent checkbox, enabled for existing and new saves.
+While enabled, settings edited here are the common defaults, and changes made
+inside a book remain private to that book. Disable it to share subsequent
+in-book text changes across books. Existing private records remain stored and
+are used again when the option is enabled; the current open book keeps its
+visible layout when changing this option. Manage fonts is no longer listed in
+Reading settings; installed fonts remain available in the font picker.
+
+Keyboard layouts lists the ten built-in layouts and the optional layouts found
+under /languages/keyboards on the microSD. Fixed pages, arrow controls and vertical
+swipes use the same row capacity. The active interface language is always enabled,
+and at least one Latin layout remains available for credentials. The language key
+cycles enabled layouts, loading only the current optional keyboard. Wordle keeps
+its own game-language keyboard. Missing or invalid optional layouts fall back to
+the built-in choices. Check Arabic names, Japanese/Thai selection, the last page,
+and saved selections after restarting in both orientations.

@@ -28,6 +28,11 @@ bool historyBit(const Header& h, const uint8_t* mask, int day) {
 const char* slotPath(int slot) {
   return slot == 0 ? "/.crosspoint/reading-history/sync-a.bin" : "/.crosspoint/reading-history/sync-b.bin";
 }
+const char* snapshotPath(SnapshotKind kind, int slot) {
+  return kind == SnapshotKind::Cloud ? slotPath(slot)
+         : slot == 0                 ? "/.crosspoint/reading-history/crossink-a.bin"
+                                     : "/.crosspoint/reading-history/crossink-b.bin";
+}
 void encodeHeader(const Header& h, uint8_t* p) {
   std::memset(p, 0, kHeaderBytes);
   std::memcpy(p, "CSI1", 4);
@@ -49,6 +54,7 @@ void encodeHeader(const Header& h, uint8_t* p) {
   put(p + 80, h.localIdentity, 8);
   put(p + 88, h.localLength, 8);
   put(p + 96, h.localHash, 8);
+  put(p + 104, h.unattributedCompleted, 4);
   for (int n = 0; n < kHistoryDays; ++n) put(p + 128 + 4 * n, h.summary.dailySeconds[n], 4);
   std::memcpy(p + 3048, h.active, 92);
   std::memcpy(p + 3140, h.known, 92);
@@ -75,6 +81,7 @@ bool decodeHeader(const uint8_t* p, Header& h) {
   h.localIdentity = get(p + 80, 8);
   h.localLength = get(p + 88, 8);
   h.localHash = get(p + 96, 8);
+  h.unattributedCompleted = get(p + 104, 4);
   if (!h.localLength) h.localLength = 16;
   for (int n = 0; n < kHistoryDays; ++n) h.summary.dailySeconds[n] = get(p + 128 + 4 * n, 4);
   std::memcpy(h.active, p + 3048, 92);
@@ -100,6 +107,8 @@ void encodeBook(const Book& b, uint8_t* p) {
   put(p + 305, b.lastDay, 4);
   put(p + 309, b.progressBp, 2);
   p[311] = b.completed;
+  put(p + 312, b.finishedDay, 4);
+  put(p + 316, b.firstDay, 4);
   put(p + kBookBytes - 4, checksum(p, kBookBytes - 4), 4);
 }
 bool decodeBook(const uint8_t* p, Book& b) {
@@ -121,7 +130,11 @@ bool decodeBook(const uint8_t* p, Book& b) {
   b.lastDay = get(p + 305, 4);
   b.progressBp = get(p + 309, 2);
   b.completed = p[311];
-  return validDocument(b.document) && b.progressBp <= 10000;
+  b.finishedDay = get(p + 312, 4);
+  b.firstDay = get(p + 316, 4);
+  return validDocument(b.document) && b.progressBp <= 10000 &&
+         (!b.finishedDay || (b.finishedDay >= 10957 && b.finishedDay <= 47481)) &&
+         (!b.firstDay || (b.firstDay >= 10957 && b.firstDay <= 47481));
 }
 bool Reader::validate(HalFile& candidate, uint8_t* raw) {
   if (candidate.read(raw, kHeaderBytes) != kHeaderBytes || !decodeHeader(raw, header) ||
@@ -152,7 +165,7 @@ bool Reader::validate(HalFile& candidate, uint8_t* raw) {
   }
   return true;
 }
-Result Reader::open() {
+Result Reader::open(SnapshotKind kind) {
   close();
   // One bounded decode buffer, released after slot selection; no whole-file allocation.
   auto raw = makeUniqueNoThrow<uint8_t[]>(kHeaderBytes);
@@ -163,9 +176,9 @@ Result Reader::open() {
   uint32_t generation = 0;
   bool present = false, future = false;
   for (int n = 0; n < 2; ++n) {
-    present |= Storage.exists(slotPath(n));
+    present |= Storage.exists(snapshotPath(kind, n));
     HalFile candidate;
-    if (!Storage.openFileForRead("STATS-SYNC", slotPath(n), candidate)) continue;
+    if (!Storage.openFileForRead("STATS-SYNC", snapshotPath(kind, n), candidate)) continue;
     if (candidate.read(raw.get(), 4) == 4 && !std::memcmp(raw.get(), "CSI", 3) && raw[3] > '1') future = true;
     if (candidate.seek(0) && validate(candidate, raw.get()) && header.generation > generation) {
       generation = header.generation;
@@ -181,7 +194,7 @@ Result Reader::open() {
     header = {};
     return present ? Result::StorageError : Result::Empty;
   }
-  if (!Storage.openFileForRead("STATS-SYNC", slotPath(slot), file) ||
+  if (!Storage.openFileForRead("STATS-SYNC", snapshotPath(kind, slot), file) ||
       file.read(raw.get(), kHeaderBytes) != kHeaderBytes || !decodeHeader(raw.get(), header)) {
     close();
     return Result::StorageError;

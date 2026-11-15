@@ -1,0 +1,18 @@
+{
+  "id": "K117",
+  "key": "Cierre",
+  "file": "K117.png",
+  "sample": {
+    "es": "Cierre del archivo nocturno",
+    "en": "Night archive clasp"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Night archive clasp.",
+  "requests": [
+    239
+  ],
+  "sha256": "61c52b45e5b1567f75fb28c2b879232cfe86f5df39bcdeb13d5692c6759f6c67",
+  "source": "exec-9966999b-b2ad-440f-aed6-61e432845c8c.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

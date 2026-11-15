@@ -22,20 +22,26 @@ class ReadingStatsActivity final : public Activity {
     std::snprintf(detail.title, sizeof(detail.title), "%s", title);
     std::snprintf(detail.author, sizeof(detail.author), "%s", author);
   }
+  enum class History { Automatic, Local, CrossInk, Cloud };
+  void useHistory(History value) { history = value; }
   void onEnter() override;
   void onExit() override;
   void loop() override;
   void render(RenderLock&&) override;
 
  private:
+  History history = History::Automatic;
   OptionPopup goalPopup;
+  void syncHistory();
   bool goalCalendarVisible = false;
+  bool goalSaveFailed = false;
   int goalMonth = 0;
-  enum class Load { Anchor, Summary, Day, Period, Streak, Books, Detail, Cloud, Ready, Failed };
+  enum class Load { Anchor, Summary, Day, Period, Annual, Streak, Books, Detail, Cloud, Ready, Failed };
   void scan();
   bool beginScan(bool reverse = false);
   void loadPage(int page);
   void loadPeriod(readingstats::Period next, int day);
+  void loadAnnual(int year);
   void action(freeink::ui::ActionId action, int value);
   void back();
   void importHistory();
@@ -48,6 +54,10 @@ class ReadingStatsActivity final : public Activity {
   // Fixed workspaces; no container grows with the journal or library.
   readingstats::Summary summary;
   readingstats::PeriodStats dayStats, periodStats;
+  readingstats::PeriodStats annualStats;
+  readingstats::RecordedYears recordedYears;
+  readingui::StatsScope statsScope = readingui::StatsScope::Year;
+  bool annualKnown = true, annualReady = false;
   readingstats::Repository repository;
   HalMemory::PsramBuffer completionMemory;
   readingstats::CompletionIndex completionIndex;

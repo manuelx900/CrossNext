@@ -1,13 +1,19 @@
 #pragma once
 #include <cstdio>
+#include <string>
 
 #include "LightUi.h"
 namespace lightui {
 struct ChoiceMenu {
   const char *title = nullptr, *headline = nullptr, *message = nullptr;
   const freeink::ui::DialogOption* options = nullptr;
+  const std::string* labels = nullptr;
   int count = 0, current = 0, focus = 0;
+  int messageMaxLines = 3;
   freeink::ui::ActionId guard = 2, pageAction = 3;
+  freeink::ui::ActionId optionAction = 1;
+  static constexpr int MAX_VISIBLE = 7;
+  const char* label(int index) const { return labels ? labels[index].c_str() : options[index].label; }
 };
 struct ChoiceLayout {
   freeink::ui::Rect panel{}, rows{}, footer{};
@@ -29,8 +35,13 @@ inline ChoiceLayout choiceLayout(const fui::DrawTarget& t, fui::Rect screen, con
   screen.y += header;
   screen.height -= header;
   ChoiceLayout g;
+  g.lines[2] = std::clamp(m.messageMaxLines, 1, 32);
   const int width = std::min(600, int(screen.width) * 4 / 5), padding = 18;
-  const int row = std::max(48, int(t.lineHeight(0)) + 18);
+  int row = std::max(48, int(t.lineHeight(0)) + 18);
+  if (m.count > ChoiceMenu::MAX_VISIBLE)
+    row = std::max(row, 2 * int(t.lineHeight(0)) + 18);
+  else
+    for (int i = 0; i < m.count; ++i) row = std::max(row, textHeight(t, m.label(i), width - padding * 2 - 20, 2) + 6);
   const char* text[] = {m.title, m.headline, m.message};
   auto headerHeight = [&]() {
     int total = 0;
@@ -42,8 +53,8 @@ inline ChoiceLayout choiceLayout(const fui::DrawTarget& t, fui::Rect screen, con
     while (g.lines[n] > 1 && headerHeight() > headerBudget) --g.lines[n];
   const int top = headerHeight();
   const int available = std::max(row, int(screen.height) - 48 - 2 * padding - top);
-  g.capacity = std::max(1, available / row);
-  if (m.count > g.capacity) g.capacity = std::max(1, (available - 44) / row);
+  g.capacity = std::clamp(available / row, 1, ChoiceMenu::MAX_VISIBLE);
+  if (m.count > g.capacity) g.capacity = std::clamp((available - 44) / row, 1, ChoiceMenu::MAX_VISIBLE);
   g.pages = (m.count + g.capacity - 1) / g.capacity;
   const int height = padding * 2 + top + std::min(m.count, g.capacity) * row + (g.pages > 1 ? 44 : 0);
   g.panel = fui::centeredRect(screen, {int16_t(width), int16_t(height)});
@@ -55,7 +66,7 @@ inline ChoiceLayout choiceLayout(const fui::DrawTarget& t, fui::Rect screen, con
 }
 template <typename Frame>
 void choiceMenu(Frame& frame, fui::Rect screen, const ChoiceMenu& m) {
-  if (!m.options || m.count <= 0) return;
+  if ((!m.options && !m.labels) || m.count <= 0) return;
   auto& t = frame.target();
   const auto g = choiceLayout(t, screen, m);
   shade(t, screen);
@@ -78,16 +89,17 @@ void choiceMenu(Frame& frame, fui::Rect screen, const ChoiceMenu& m) {
   }
   style.bold = false;
   const int height = g.rows.height / std::min(m.count, g.capacity);
-  style.maxLines = 1;
+  style.maxLines = 2;
   for (int n = g.first; n < std::min(m.count, g.first + g.capacity); ++n) {
     const auto r = fui::makeRect(g.rows.x, g.rows.y + (n - g.first) * height, g.rows.width, height);
     const bool selected = n == m.focus;
     if (selected) t.fill(r, ink, 4);
     style.color = selected ? fui::Color::White : fui::Color::Black;
-    t.text(fui::makeRect(r.x + 10, r.y, r.width - 20, r.height), m.options[n].label, style);
-    if (!selected && n + 1 != m.focus) separator(t, r);
+    t.text(fui::makeRect(r.x + 10, r.y, r.width - 20, r.height), m.label(n), style);
+    if (!selected && n + 1 != m.focus && !(m.count == 2 && n == m.count - 1)) separator(t, r);
 
-    frame.hit(r, m.options[n].action, m.options[n].value, fui::InputTouch);
+    frame.hit(r, m.labels ? m.optionAction : m.options[n].action,
+              m.labels ? static_cast<int16_t>(n) : m.options[n].value, fui::InputTouch);
   }
   if (g.pages <= 1) return;
   char count[24];

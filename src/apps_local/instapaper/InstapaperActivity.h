@@ -40,6 +40,7 @@
 
 class InstapaperActivity final : public Activity {
  public:
+  bool allowsRemoteControl() const override { return false; }
   InstapaperActivity(GfxRenderer& renderer, MappedInputManager& mappedInput)
       : Activity("Instapaper", renderer, mappedInput) {}
   ~InstapaperActivity() override = default;

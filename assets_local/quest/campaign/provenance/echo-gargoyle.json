@@ -1,0 +1,8 @@
+{
+  "name": "echo-gargoyle",
+  "source": "exec-2959eff1-c088-4e9b-a822-35cf11a274eb.png",
+  "prompt": "Use case: illustration-story. Production asset for Reading Adventure e-reader game. ONE horizontal atlas of exactly THREE FULL-BODY poses of the SAME enemy, one row of three equal cells with generous genuine transparent gutters. Style reference image1: reproduce its smooth confident thick BLACK outlines, white and three flat grayscale cel-shaded fills, rounded illustrated volume and clean readable silhouettes. Match the approved grayscale PET world, but this enemy must be threatening, angry and hostile, NEVER smiling, cute, happy, friendly or baby-like. Subject: a hostile ram-headed mountain gargoyle, swept stone horns, folded broad jagged bat wings, heavy clawed feet and squat rock torso. Left cell: standing prepared, aggressive narrow eyes. Middle cell: visibly weakened, hunched and unsteady, same anatomy/clothes, no smiling. Right cell: fully defeated, kneeling/collapsed head lowered and claws/sword down; lower silhouette because it is slumped, same physical scale as the standing poses. All heads, hands, tails, wings, feet and weapons fully inside their cell with safe margins; completely separated characters. Keep baseline consistent and view front three-quarter facing left. No blood, gore, floor shadow, backdrop, aura, fog cloud, detached particles, lettering, UI, numbers, grid lines, photographic textures, gradients or 3D. Use broad flat gray shapes readable at 248x280 px per state.",
+  "tool": "built-in image_gen",
+  "transparent": true,
+  "sha256": "a24e6e61de59d208d403599e57c0956615730ca04341d5055b7949410904669a"
+}

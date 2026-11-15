@@ -1,3 +1,0 @@
-- [x] Elegir el destino
-- [ ] Reservar el tren
-- [ ] Preparar la mochila

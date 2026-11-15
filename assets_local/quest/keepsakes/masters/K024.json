@@ -1,0 +1,29 @@
+{
+  "id": "K024",
+  "key": "Medalla",
+  "file": "K024.png",
+  "sample": {
+    "es": "Medalla del bosque",
+    "en": "Forest medal"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Forest medal.",
+  "requests": [
+    24,
+    49,
+    74,
+    99,
+    124,
+    149,
+    174,
+    199,
+    224,
+    249,
+    274,
+    299
+  ],
+  "sha256": "f1533fc22a52fdb92975dd2aa5c17d2c5a345e6e7c2cb42cbf7b5ecd509d6248",
+  "source": "exec-2811e66f-edcb-4627-971a-c2b57337e131.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

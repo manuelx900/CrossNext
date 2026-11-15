@@ -1,0 +1,20 @@
+{
+  "id": "S091",
+  "kind": "scene",
+  "master": "scene-091-v2.png",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-11-5-v2.png",
+  "transparent": false,
+  "prompt": "Use case: illustration-story. ONE complete landscape 3:2 narrative illustration for the monochrome e-ink game Aventura lectora. Clean expressive chibi storybook art, thick smooth PURE BLACK contours, white and sparse flat light-gray fills. No color, gradients, crosshatching, collage, lettering, captions, UI or watermark. Large clear clues readable at480x320. Player hero and PET are OFF CAMERA. Depict only people actually physically present in the described event; a person mentioned in a letter or record does NOT appear alive beside its reader. The attached portraits are IDENTITY references, NOT additional cast: match face, age, hairstyle, clothing and distinctive accessories exactly for any named person present. Do not invent another person or clue. Fill the scene to its edges, keep all important faces and objects in frame. AREN AS KING: the imposing horned black-armored king in the reference, heavy helmet/crown, layered gray-black armor. A memory of young Aren is a child without that armor. Do not draw the king when he is merely mentioned in documents. Region: The last page. Chapter: The road to the throne. Draw exactly this already-known moment (Spanish is authoritative): Los primeros documentos pertenecían a personas que habías ayudado durante el viaje. Sus testimonios mostraban a quién debía volver cada historia encerrada en la fortaleza. Context only: Entraste en la fortaleza con la llave completa y la página de Elia. La campanilla respondió a las voces de los relatos recuperados, que ahora sus familias podían reconocer. MANDATORY PHYSICAL SETTING: the fortress's first book-built gates and their captive accounts. Do not anthropomorphize books, pages or objects. No invented smiling ghosts. No person replaces a written record. EXHAUSTIVE VISIBLE CAST (do not add anyone else): no people, key and books may be held by off-camera gloved hands. The reference is STYLE ONLY for any person not explicitly in this cast.",
+  "references": [
+    "assets_local/quest/campaign/path-art/masters/path-11-5-v2.png"
+  ],
+  "chapter": 110,
+  "beat": "discovery",
+  "eventEs": "Los primeros documentos pertenecían a personas que habías ayudado durante el viaje. Sus testimonios mostraban a quién debía volver cada historia encerrada en la fortaleza.",
+  "sha256": "ed79bc906b0c58f4b3732ddecd7b7bba21d1e019f19ac79364eab307265f248b",
+  "tool": "built-in image_gen",
+  "source": "exec-f9ada6c1-8b63-4e48-beaf-3a945805f4a3.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

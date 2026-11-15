@@ -1,0 +1,17 @@
+{
+  "id": 112,
+  "saga": 11,
+  "step": 2,
+  "title": {
+    "en": "The captive books",
+    "es": "Los libros prisioneros"
+  },
+  "enemy": "Night sentinel",
+  "guardian": 68,
+  "master": "path-112.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The Last Page. Path episode: The captive books. Story action, which the scene must directly support: Books are locked inside large crates. A guardian is about to destroy them.\nEnemy identity, MUST match this exact anatomy: a towering blank-book golem with slablike page arms and a severe crown-shaped mask. Wide diagonal perspective with the blocked crossing clear in the middle, creature in front of it. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-f9e801fc-a980-417f-958a-121379b0e3d1.png",
+  "sha256": "4998b4de7611e99feb1b94d9780279e5a72f1ade2f54b731eddf31ef52263480"
+}

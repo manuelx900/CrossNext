@@ -12,6 +12,7 @@
 #include "../Shelf.h"
 #include "../ui/Dashboard.h"
 #include "../ui/MenuFontScreen.h"
+#include "../ui/NavigationIcons.h"
 #include "../ui/PixelMenuTheme.h"
 #include "../ui/SettingsArt.h"
 #include "../ui/SettingsHome.h"
@@ -29,7 +30,9 @@ constexpr StrId formats[] = {StrId::STR_FORMAT_EPUB, StrId::STR_FORMAT_TXT, StrI
 int PresentationSettingsActivity::listCount() const {
   switch (kind) {
     case Kind::Theme:
-      return CrossPointSettings::HOME_LAYOUT_COUNT + 3;
+      return CrossPointSettings::HOME_LAYOUT_COUNT + 4;
+    case Kind::CoverLoading:
+      return CrossPointSettings::HOME_LAYOUT_COUNT;
     case Kind::ReadingFormats:
       return sizeof(formats) / sizeof(formats[0]);
     case Kind::FontOverview:
@@ -45,6 +48,8 @@ const char* PresentationSettingsActivity::screenTitle() const {
   switch (kind) {
     case Kind::Theme:
       return tr(STR_SETTINGS_APPEARANCE);
+    case Kind::CoverLoading:
+      return tr(STR_HOME_COVER_LOADING_NOTICE);
     case Kind::ReadingFormats:
       return tr(STR_READING_FORMATS);
     case Kind::FontOverview:
@@ -123,15 +128,6 @@ void PresentationSettingsActivity::buildScreen(UiScreen& screen) {
     }
     return;
   }
-  if (kind == Kind::Theme) {
-    const auto body = screen.body();
-    fui::TextStyle label;
-    label.font = 4;
-    screen.target().text(fui::makeRect(body.x + 8, body.y + 8, body.width - 16, 32), tr(STR_HOME_THEME_LABEL), label);
-    screen.setContentMarginAbsolute(fui::Insets{static_cast<int16_t>(body.y + 52),
-                                                static_cast<int16_t>(screen.device().width - body.right()),
-                                                static_cast<int16_t>(screen.device().height - body.bottom()), body.x});
-  }
   pixelui::Header h;
   h.back = true;
   h.title = screenTitle();
@@ -142,7 +138,7 @@ void PresentationSettingsActivity::buildScreen(UiScreen& screen) {
     auto& item = items[n];
     item = {};
     item.actionValue = n;
-    const auto id = kind == Kind::Theme ? themes[n] : formats[n];
+    const auto id = kind == Kind::Theme || kind == Kind::CoverLoading ? themes[n] : formats[n];
     pixelui::copyNatural(labels[n], sizeof(labels[n]), I18N.get(id), pixelui::LabelCase::Preserve);
     item.label = labels[n];
     if (kind == Kind::Theme) {
@@ -157,13 +153,16 @@ void PresentationSettingsActivity::buildScreen(UiScreen& screen) {
     }
     if (kind == Kind::Theme && screen.device().width > screen.device().height) item.subtitle = nullptr;
     item.toggle = true;
-    item.toggleChecked = kind == Kind::Theme ? SETTINGS.homeLayout == n : bool(SETTINGS.readingFormats & masks[n]);
+    item.toggleChecked = kind == Kind::Theme          ? SETTINGS.homeLayout == n
+                         : kind == Kind::CoverLoading ? SETTINGS.homeCoverNotice(uint8_t(n))
+                                                      : bool(SETTINGS.readingFormats & masks[n]);
   }
   fui::ListProps p;
   p.items = items;
   p.count = rows;
   p.action = ACTION_ROW;
   p.selectedIndex = activeNav().selected;
+  if (kind == Kind::CoverLoading) p.toggleCheckbox = true;
   settingsui::styleRows(p);
   if (kind == Kind::Theme) settingsui::styleAppearance(p);
   if (kind != Kind::Theme) syncListViewport(screen, p);
@@ -204,10 +203,15 @@ void PresentationSettingsActivity::buildScreen(UiScreen& screen) {
       pixelui::copyCaps(labels[CrossPointSettings::HOME_LAYOUT_COUNT + 1],
                         sizeof(labels[CrossPointSettings::HOME_LAYOUT_COUNT + 1]), tr(STR_MENU_FONT));
     const auto font = actions.font;
-    dashboard::action(screen.target(), font, labels[CrossPointSettings::HOME_LAYOUT_COUNT + 1], &icon_file_text_32,
+    dashboard::action(screen.target(), font, labels[CrossPointSettings::HOME_LAYOUT_COUNT + 1], &navicons::Text32,
                       focused(fontAction), 0);
     if (!chrome::lightHeader) screen.target().stroke(font, dashboard::ink, pixelui::kBorder);
     screen.frame().hit(font, ACTION_ROW, fontAction, fui::InputTouch);
+    const int coverAction = themeAction + 3;
+    dashboard::action(screen.target(), actions.covers, tr(STR_HOME_COVER_LOADING_NOTICE), &navicons::Library32,
+                      focused(coverAction), 0);
+    if (!chrome::lightHeader) screen.target().stroke(actions.covers, dashboard::ink, pixelui::kBorder);
+    screen.frame().hit(actions.covers, ACTION_ROW, coverAction, fui::InputTouch);
     activeNav().top = 0;
     activeNav().followPending = false;
     p.topIndex = 0;
@@ -222,7 +226,28 @@ void PresentationSettingsActivity::activateIndex(int n) {
   if (n < 0 || n >= listCount()) return;
   app.clearTapFlash();
   switch (kind) {
+    case Kind::CoverLoading: {
+      const auto previous = SETTINGS.homeCoverLoadingMask;
+      SETTINGS.homeCoverLoadingMask ^= uint8_t(1u << n);
+      saveFailed = !SETTINGS.saveToFile();
+      if (saveFailed) SETTINGS.homeCoverLoadingMask = previous;
+      resetUi();
+      requestUpdate();
+      return;
+    }
     case Kind::Theme:
+      if (n == CrossPointSettings::HOME_LAYOUT_COUNT + 3) {
+        auto picker = makeUniqueNoThrow<PresentationSettingsActivity>(renderer, mappedInput, Kind::CoverLoading);
+        if (!picker) {
+          LOG_ERR("SET", "OOM: Home cover notice settings");
+          return;
+        }
+        startActivityForResult(std::move(picker), [this](const ActivityResult&) {
+          resetUi();
+          requestUpdate();
+        });
+        return;
+      }
       if (n == CrossPointSettings::HOME_LAYOUT_COUNT) {
         auto picker = makeUniqueNoThrow<PresentationSettingsActivity>(renderer, mappedInput, Kind::ThemeOverview);
         if (!picker) {
@@ -316,16 +341,16 @@ void PresentationSettingsActivity::activateIndex(int n) {
         return;
       }
       const bool general = kind == Kind::FontOverview && n == 0;
-      const int count = general ? 3 : 4;
+      const int count = general ? int(menufont::Style::Count) : int(menufont::Override::Count);
       const auto current =
           general ? uint8_t(menufont::normalized(fontChoice(n))) : uint8_t(menufont::normalizedOverride(fontChoice(n)));
-      const int selected = general ? int(current) - 1 : current ? int(current) - 1 : 0;
-      const char* names[4];
+      const int selected = int(current);
+      const char* names[int(menufont::Override::Count)];
       if (!general) names[0] = contentFonts() && n ? tr(STR_MENU_FONT_INHERIT_MENU) : tr(STR_MENU_FONT_INHERIT);
-      for (int j = general ? 0 : 1; j < count; ++j) names[j] = menufontui::choiceName(uint8_t(j + (general ? 2 : 1)));
-      optionPopup.show(fontTargetName(n), names, count, selected, [this, n, general](int selected) {
+      for (int j = general ? 0 : 1; j < count; ++j) names[j] = menufontui::choiceName(uint8_t(j + (general ? 1 : 0)));
+      optionPopup.show(fontTargetName(n), names, count, selected, [this, n](int selected) {
         auto& choice = fontChoice(n);
-        const auto value = uint8_t(general ? selected + 1 : selected ? selected + 1 : 0);
+        const auto value = uint8_t(selected);
         if (choice == value) return;
         const auto previous = choice;
         choice = value;

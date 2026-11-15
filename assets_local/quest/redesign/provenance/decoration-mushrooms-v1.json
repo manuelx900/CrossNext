@@ -1,0 +1,8 @@
+{
+  "id": "mushrooms",
+  "path": "exec-c88015f1-1e58-4218-a9d0-59f6e8ae1dd6.png",
+  "prompt": "Production decoration sprite for Aventura lectora, ONE isolated object. Match the reference pets: thick clean pure black rounded outlines, white and soft flat gray shading, cute storybook cartoon, simple readable silhouette for 112x144 pixels, no fine texture. Full object centered with transparent margin, truly transparent RGBA background. No aura, no glow, no scenery, no letters, no frame, no other subjects. Subject: A cluster of two round spotted forest mushrooms and a single curled leaf, on a tiny patch of grass",
+  "tool": "built-in image_gen",
+  "sha256": "a3678fc2ef9aed79855e78411c5c4873b43589a253cb0d6908f9376ae1e13a73",
+  "name": "decoration-mushrooms-v1"
+}

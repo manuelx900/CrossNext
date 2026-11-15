@@ -6,6 +6,7 @@
 #include "PetCatalog.h"
 
 namespace pet {
+inline constexpr unsigned FOOD_CHOICE_COUNT = 9;
 enum class Species : uint8_t { Silva, Nox, Ember };
 enum class Stage : uint8_t { Egg, Newborn, Baby, Juvenile, Adult };
 enum class Mode : uint8_t { Relaxed, Normal, Hard, Extreme };
@@ -43,7 +44,7 @@ enum class View : uint8_t {
   SettingsConfirm
 };
 enum class Game : uint8_t { Pairs, Sequence, Puzzle };
-enum class GamePhase : uint8_t { Playing, Memorize, RoundComplete, Finished };
+enum class GamePhase : uint8_t { Playing, Memorize, RoundComplete, Finished, RoundFailed };
 inline constexpr unsigned STATE_BYTES = 640, LEGACY_STATE_BYTES = 256, EXTRA_OWNED_BYTES = (OBJECT_COUNT - 16) / 8;
 enum class Moment : uint8_t {
   Hatching,
@@ -73,7 +74,6 @@ enum class Moment : uint8_t {
 enum class MomentPose : uint8_t { Normal, Happy, Hungry, Tired, Sick, Sleeping };
 inline constexpr unsigned MOMENT_COUNT = unsigned(Moment::Treatments20) + 1, LEGACY_MOMENT_COUNT = 11,
                           MOMENTS_VERSION_OFFSET = 205;
-inline constexpr uint8_t GOALS[] = {5, 10, 20, 30};
 inline constexpr unsigned NAME_LIMIT = 12, NAME_BYTES = NAME_LIMIT * 2 + 1;
 unsigned nameLength(const char*);
 bool validName(const char*, bool emptyAllowed = true);
@@ -107,8 +107,8 @@ struct Profile {
   uint16_t sharedDays = 0, streak = 0;
   Species species = Species::Silva;
   Mode mode = Mode::Relaxed;
-  uint8_t goalIndex = 1, saciety = 70, joy = 70, energy = 100;
-  uint8_t project = 5, equipped[SLOT_COUNT] = {255, 255, 255, 255};
+  uint8_t saciety = 70, joy = 70, energy = 100;
+  uint8_t project = 4, equipped[SLOT_COUNT] = {255, 255, 255, 255};
   uint8_t gamesToday = 0, foodChoice = 0;
   Stage noticedStage = Stage::Egg;
   bool created = false, resting = false, deathAcknowledged = false;
@@ -160,7 +160,7 @@ uint32_t checksum(const uint8_t*, size_t);
 struct GameState {
   Game kind = Game::Pairs;
   GamePhase phase = GamePhase::Playing;
-  uint8_t cards[6]{}, sequence[7]{}, picked = 255, second = 255;
+  uint8_t cards[6]{}, sequence[7]{}, sequenceInput[7]{}, picked = 255, second = 255;
   uint8_t matched = 0, step = 0, rounds = 0;
   uint8_t puzzle[9]{}, initialPuzzle[9]{};
   uint16_t mistakes = 0, moves = 0;

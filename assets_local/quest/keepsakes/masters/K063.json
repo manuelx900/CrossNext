@@ -1,0 +1,21 @@
+{
+  "id": "K063",
+  "key": "Funda",
+  "file": "K063.png",
+  "sample": {
+    "es": "Funda de página seca",
+    "en": "Dry page sleeve"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Dry page sleeve.",
+  "requests": [
+    88,
+    167,
+    260,
+    298
+  ],
+  "sha256": "0f315016f47a804182558bd91e6cfb30c16cbc8f6d23a14f631dca3e69decc90",
+  "source": "exec-1e66e4e0-ca8a-4394-8a57-db5599d7d23b.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

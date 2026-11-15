@@ -2,11 +2,11 @@
 #include "../../../lib/GfxRenderer/ChromeRegion.h"
 #include "PixelMenu.h"
 namespace settingsui {
-inline void styleRows(freeink::ui::ListProps& p) {
+inline void styleRows(freeink::ui::ListProps& p, bool boxed = false) {
   pixelui::styleList(p, true);
   p.rowHeight = 60;
   p.rowPaddingY = 4;
-  p.iconSize = 42;
+  p.iconSize = 52;
   p.textGap = 16;
   p.sidePadding = 18;
   p.labelText.font = 0;
@@ -15,6 +15,7 @@ inline void styleRows(freeink::ui::ListProps& p) {
   p.subtitleText.font = 3;
   p.subtitleText.maxLines = 3;
   p.valueText.font = 0;
+  p.valueText.maxLines = 3;
   p.headerText.font = 0;
   p.headerText.bold = true;
   p.headerUnderline = false;
@@ -23,11 +24,19 @@ inline void styleRows(freeink::ui::ListProps& p) {
   p.rowStyles.normal.borderWidth = 1;
   p.trailingCentered = true;
   p.checkboxCheckmark = true;
-  if (chrome::lightHeader) {
+  if (boxed) {
+    p.toggleCheckbox = true;
+    p.toggleWidth = p.toggleHeight = 38;
+    p.rowStyles = toybox::rowStyles();
+    p.rowStyles.normal.borderWidth = 1;
+    p.rowStyles.focused = p.rowStyles.active = p.rowStyles.selected;
+    p.selectionMarker = freeink::ui::SelectionMarker::None;
+    p.separatorPaint = freeink::ui::Paint::solid(freeink::ui::Color::Transparent);
+  } else if (chrome::lightHeader) {
     p.labelText.font = 0;
-    p.labelText.maxLines = 2;
+    p.labelText.maxLines = 3;
     p.subtitleText.font = 4;
-    p.subtitleText.maxLines = 2;
+    p.subtitleText.maxLines = 3;
     p.valueText.font = 0;
     p.rowHeight = 70;
     p.rowPaddingY = 10;
@@ -41,5 +50,12 @@ inline void styleRows(freeink::ui::ListProps& p) {
     p.markerThickness = 1;
     p.markerPaint = lightui::rule;
   }
+}
+template <typename Screen>
+void drawRows(Screen& screen, freeink::ui::ListProps& props, bool home) {
+  if (home && chrome::lightHeader)
+    freeink::ui::list(screen.frame(), screen.body(), props);
+  else
+    pixelui::list(screen, props, false, true, pixelui::kBorder, true, !home);
 }
 }  // namespace settingsui

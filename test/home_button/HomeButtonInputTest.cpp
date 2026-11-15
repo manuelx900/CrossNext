@@ -4,6 +4,16 @@
 
 #include "util/HomeButtonInput.h"
 
+TEST(HomeButtonInput, LockedTouchAlwaysAllowsLongHomeToUnlock) {
+  using A = HomeButtonAction;
+  for (auto action : {A::Ignore, A::Home, A::ReaderMenu, A::ToggleFrontlight}) {
+    HomeButtonInput input;
+    EXPECT_EQ(input.update(1000, false, true, false, false, A::Home, A::Ignore, action, true), A::ToggleTouchscreen);
+    EXPECT_EQ(input.update(1100, false, false, false, false, A::Home, A::Ignore, action, true), A::Ignore);
+    EXPECT_EQ(input.update(2000, false, true, false, false, A::Home, A::Ignore, action, false), action);
+  }
+}
+
 TEST(HomeButtonInput, RecognizesConfiguredGestures) {
   using A = HomeButtonAction;
   HomeButtonInput input;

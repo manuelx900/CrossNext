@@ -1,0 +1,17 @@
+{
+  "id": 88,
+  "saga": 8,
+  "step": 8,
+  "title": {
+    "en": "The first seal",
+    "es": "El primer sello"
+  },
+  "enemy": "Seal keeper",
+  "guardian": 51,
+  "master": "path-088.png",
+  "prompt": "Use case: illustration-story. Create ONE finished ORIGINAL landscape 3:2 illustration for Aventura Lectora, a monochrome e-ink fantasy videogame. Full scene reaches all edges. Polished storybook art: smooth thick pure-BLACK rounded contours, bold readable creature silhouette, white and two flat gray tones, clean cel shading. Slightly chibi proportions but serious hostile enemies, not smiling or baby-cute. No pencil, hatching, pixel art, photorealism, gradients or heavy dark background. Readable at 480x320. No text, lettering, captions, UI, borders, watermark. The playable hero and PET are OFF CAMERA: first-person explorer viewpoint, works with any gender/outfit. No villagers, NPCs, librarian, companions, bell, songbook, letter from Ada or old plot relics. The only figure is the enemy described (monstrous armored knights are allowed). Do NOT add a random wolf when another creature is specified. Exactly one complete scene, NOT a sprite sheet or collage. Current region: The Garden of the Gods. Path episode: The first seal. Story action, which the scene must directly support: You see the seal's symbol on the statue. A stone guardian wakes and stands before you.\nEnemy identity, MUST match this exact anatomy: a tall thorn mantis with broad leaf blade forearms and a seedpod shield. Eye-level view toward the last gate, enemy occupying the left half and the passage the right half. Show its surroundings and the specific obstacle from this episode, NOT the generic regional backdrop. Its exact enemy design takes precedence over vague words such as guardian/beast in the story. Do not show the monster already defeated. No gore. Do not add objects from earlier plots.",
+  "tool": "built-in image_gen",
+  "generated": true,
+  "generatedPath": "exec-7630fdb9-7d99-462a-be27-8ce3c15fb959.png",
+  "sha256": "a32914c09a6a8f224d0c8ba52c5cc9b191904c1d42650b6d9cd63623164c8886"
+}

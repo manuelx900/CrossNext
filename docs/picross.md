@@ -11,7 +11,7 @@ tool used by taps and physical-button activation.
 
 Select puzzle shows numbered pages within the chosen size, with completion and
 in-progress marks. Tap a number to open that puzzle. Every one of the 450 puzzles
-is selectable immediately. Size shows grid cards and cell totals. Select a card and Apply to change the group; Back discards the choice without deleting a save.
+is selectable immediately. Size shows grid cards and cell totals. Selecting a card applies and saves the size immediately. Only its checkbox is filled, with a white checkmark. Back returns to the menu; changing size preserves the saved puzzle. The one-byte preference is stored separately at `/.crosspoint/picross-size.cfg`; a missing or invalid preference uses the saved puzzle or next unsolved size.
 Changing to a different puzzle replaces the single in-progress board after saving
 the current one; completed puzzles stay recorded. Returning to the same puzzle
 keeps its current board. How to play has four illustrated pages covering clue runs, gaps, Fill/Mark/Selection and the completed diamond. It uses the shared bottom page selector.

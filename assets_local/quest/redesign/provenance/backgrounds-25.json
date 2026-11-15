@@ -1,0 +1,13 @@
+{
+  "name": "backgrounds-25",
+  "kind": "backgrounds",
+  "first": 25,
+  "count": 6,
+  "columns": 3,
+  "rows": 2,
+  "prompt": "Use case: illustration-story. Asset type: a production environment atlas for Reading Adventure.\nSTYLE REFERENCE image1 is the user-approved forest background. Preserve its organic smooth BLACK outlines, gentle grayscale cel shading, white highlights, rounded illustrated forms, friendly hand-drawn quality and clear storybook depth. Same illustrator, same world. This is NOT pixel art and NOT sterile vector icon art.\nLAYOUT: ONE landscape atlas of SIX distinct landscape scenes, exactly THREE columns by TWO rows. Every scene fills its own equal cell all the way to its edges; no gutters, borders, labels, dividers, text or numbering. The overall atlas aspect ratio is 9:4, each scene is 3:2. Use generous resolution.\nSHARED CAMERA IN ALL SIX: a wide flat foreground ground plane occupying bottom35%, completely clear in the middle70% for a hero and a pet. Horizon at60% of each cell's height; the two characters' future feet will be at90%. Scene content stays at outer edges and distant background; center above foreground remains mostly white and airy so faces stay readable. No step or ledge under the landing area. No humans, animals, pets or auras anywhere.\nAll scenes use black fine contours and gray filled shadows with clean WHITE surfaces. Keep backgrounds light, no large black masses, no dark skies. Complexity appears in distant architecture and edge framing, NEVER clutter the foreground. Richness follows scene descriptions but keep details broad and readable at480x320. No ground oval shadow. No grain, dithering, hatch, blur, gradient wash, photorealism or 3D. No lettering or readable symbols. Each scene must be different and exactly follow its description.\nSCENES IN ROW-MAJOR ORDER:\n1. Ember citadel: pale volcanic fortress in distance, broad rounded rock edges and stylized white lava channels.\n2. Star conservatory: elegant glass dome ribs at outer edges, broad leaf plants, tiny restrained star-shaped flowers.\n3. Rune gate: massive rounded carved arch framing distant hills, four simple invented glyph shapes on pillars.\n4. Dragon library: great dragon-shaped carved arch with no living dragon, heavy side shelves and clean stone floor.\n5. Phoenix court: symmetrical feather-shaped carved pillars at edges, warm-looking pale stone and distant rising sun.\n6. Astral harbor: quiet floating stone dock, distant pale airships and two low elegant side moorings.",
+  "tool": "built-in image_gen",
+  "source": "exec-0303d268-1c91-4bd9-a19c-e1d331f594d2.png",
+  "date": "2026-11-05",
+  "sha256": "c829bf91854e909427c2f112adbaf49a56400a83adab5a30bcdf32bf8a96297a"
+}

@@ -1,0 +1,12 @@
+{
+  "id": "C000",
+  "master": "crown-outfit-v1.png",
+  "sha256": "bfa29d23f449bd747b99e8076f779f08982841c75ec723b3d7cf157870b28b70",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE transparent character sprite sheet with exactly TWO full-body chibi HEROES side by side, equal scale and baseline. Reference is IDENTITY and art style: LEFT use the dark-haired male hero from top-left; RIGHT use the dark-haired female hero from bottom-left. They wear matching newly unlocked DEMON KING ARMOR: broad pale segmented breastplate, black horn-shaped pauldrons, a dark royal cape, armored gloves and boots, and a small horned circlet; keep both friendly faces and distinctive male/female hair visible. Neutral standing forward three-quarter pose, hands down, feet and horns fully in frame, clear transparent gutter. Very thick BLACK contours and black/white/flat-gray fills. No weapons held, no book, no PET, no scenery, text, UI or frame.",
+  "reference": "assets_local/quest/redesign/masters/heroes-approved.png",
+  "transparent": true,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGBA"
+}

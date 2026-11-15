@@ -1,0 +1,8 @@
+{
+  "name": "fallen-colossus",
+  "source": "exec-8f7617a1-dd1f-4ab4-b350-f6096268757f.png",
+  "prompt": "Use case: illustration-story. Production asset for Reading Adventure e-reader game. ONE horizontal atlas of exactly THREE FULL-BODY poses of the SAME enemy, one row of three equal cells with generous genuine transparent gutters. Style reference image1: reproduce its smooth confident thick BLACK outlines, white and three flat grayscale cel-shaded fills, rounded illustrated volume and clean readable silhouettes. Match the approved grayscale PET world, but this enemy must be threatening, angry and hostile, NEVER smiling, cute, happy, friendly or baby-like. Subject: a threatening fallen divine colossus, cracked angular porcelain mask with narrow angry eyes, powerful stone armor, compact broken feather-shaped wings integrated into the shoulders, large clenched fists. Left cell: standing prepared, aggressive narrow eyes. Middle cell: visibly weakened, hunched and unsteady, same anatomy/clothes, no smiling. Right cell: fully defeated, kneeling/collapsed head lowered and claws/sword down; lower silhouette because it is slumped, same physical scale as the standing poses. All heads, hands, tails, wings, feet and weapons fully inside their cell with safe margins; completely separated characters. Keep baseline consistent and view front three-quarter facing left. No blood, gore, floor shadow, backdrop, aura, fog cloud, detached particles, lettering, UI, numbers, grid lines, photographic textures, gradients or 3D. Use broad flat gray shapes readable at 248x280 px per state.",
+  "tool": "built-in image_gen",
+  "transparent": true,
+  "sha256": "b3dba2f258db3167bc7cfc2ae5b0ceba72a1a7f9e4a568364bd4ee046bd1213e"
+}

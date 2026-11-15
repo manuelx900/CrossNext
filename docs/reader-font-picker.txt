@@ -1,0 +1,14 @@
+READER FONT PICKER
+
+In the bottom reading panel, open Font > Font family.
+Swipe left for the next page and right for the previous page, or use the pager arrows.
+Carousel 2 and Bookshelf show six families per page at X4 Pro screen sizes:
+six rows in portrait, or three rows in two columns in landscape.
+Framed and Carousel keep their existing density. The UI font and reading font remain independent.
+Swiping beyond the first or last page leaves the picker unchanged without starting a display refresh.
+
+DEVICE CHECK
+Install at least seven reading font families on the microSD. Open an EPUB and the picker.
+Check six choices, page once left, return right, and select a font on the second page.
+Repeat in Spanish and English, portrait and landscape, with Carousel 2 and Bookshelf.
+The book must not turn a page when swiping inside this picker. Downward dismissal remains available.

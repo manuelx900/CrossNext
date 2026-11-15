@@ -11,10 +11,44 @@
 #include "LibraryText.h"
 
 namespace library {
+namespace {
+// Accessed only by the serialized Library lifecycle, never by a background task.
+HalMemory::PsramBuffer retainedCache;
+char retainedBackingPath[64] = {};
+ClixHeader retainedHeader{};
+uint64_t retainedPath = 0;
+uint32_t retainedRevision = 0;
+uint32_t retainedStorageRevision = 0;
+uint32_t retainedMediaRevision = 0;
+constexpr size_t RETAINED_HEADROOM = 2 * 1024 * 1024;
+}  // namespace
 
 LibraryIndexFile::~LibraryIndexFile() { close(); }
 
 bool LibraryIndexFile::open(const char* path) { return openImpl(path, false); }
+
+bool LibraryIndexFile::openRetained(const char* path, uint32_t contentRevision) {
+  close();
+  if (!contentRevision || !retainedCache || retainedRevision != contentRevision ||
+      retainedPath != clixPathHash(path, std::strlen(path)) || !retainedBackingPath[0] ||
+      std::strcmp(retainedBackingPath, path) || !retainedStorageRevision ||
+      retainedStorageRevision != Storage.resourceRevision() || !retainedMediaRevision ||
+      retainedMediaRevision != Storage.mediaRevision())
+    return false;
+  browseStorageRevision = retainedStorageRevision;
+  browseMediaRevision = retainedMediaRevision;
+  head = retainedHeader;
+  if (validateHeader(head, head.selfSize) != ClixValidity::Ok) return false;
+  pathHash = retainedPath;
+  std::memcpy(backingPath, retainedBackingPath, sizeof(backingPath));
+  browseCache = std::move(retainedCache);
+  browseRevision = contentRevision;
+  cacheAttempted = true;
+  opened = true;
+  readFailed = false;
+  lastValidity = ClixValidity::Ok;
+  return true;
+}
 
 bool LibraryIndexFile::openForReconciliation(const char* path) { return openImpl(path, true); }
 
@@ -40,21 +74,41 @@ bool LibraryIndexFile::openImpl(const char* path, const bool acceptStaleFold) {
     file.close();
     return false;
   }
+  // Production index paths fit this fixed key. Longer caller paths keep the
+  // file-backed reader and simply do not opt into retained snapshots.
+  const size_t pathBytes = std::strlen(path) + 1;
+  if (pathBytes <= sizeof(backingPath)) std::memcpy(backingPath, path, pathBytes);
   opened = true;
+  pathHash = clixPathHash(path, std::strlen(path));
   return true;
 }
 
 void LibraryIndexFile::close() {
   browseCache.reset();
   cacheAttempted = false;
+  browseRevision = 0;
+  browseStorageRevision = browseMediaRevision = 0;
+  backingPath[0] = 0;
   if (file.isOpen()) file.close();
   opened = false;
 }
 
-bool LibraryIndexFile::cacheForBrowsing(void (*cooperate)()) {
+bool LibraryIndexFile::cacheForBrowsing(void (*cooperate)(), uint32_t contentRevision) {
   if (browseCache) return true;
   if (!opened || cacheAttempted) return false;
   cacheAttempted = true;
+  if (contentRevision && retainedCache) {
+    if (canReuseBrowseCache(contentRevision)) {
+      browseStorageRevision = retainedStorageRevision;
+      browseMediaRevision = retainedMediaRevision;
+      std::memcpy(backingPath, retainedBackingPath, sizeof(backingPath));
+      browseCache = std::move(retainedCache);
+      browseRevision = contentRevision;
+      LOG_DBG("LIBIDX", "reused browse snapshot: %u bytes", unsigned(head.selfSize));
+      return true;
+    }
+    releaseRetainedBrowseCache();
+  }
   if (!head.selfSize || head.selfSize > BROWSE_CACHE_LIMIT) return false;
   // At most 2 MiB, once per open index; PSRAM keeps metadata off the task stack
   // and internal heap. The file path remains available when PSRAM is exhausted.
@@ -63,14 +117,65 @@ bool LibraryIndexFile::cacheForBrowsing(void (*cooperate)()) {
     LOG_ERR("LIBIDX", "PSRAM browse cache unavailable: %u bytes", unsigned(head.selfSize));
     return false;
   }
+  const auto sourceContent = Storage.resourceRevision(), sourceMedia = Storage.mediaRevision();
   constexpr size_t CHUNK = 32 * 1024;
   for (size_t offset = 0; offset < head.selfSize; offset += CHUNK) {
     if (cooperate) cooperate();
     const size_t size = std::min(CHUNK, size_t(head.selfSize) - offset);
     if (!readAt(offset, buffer.get() + offset, size)) return false;
   }
+  if (std::memcmp(buffer.get(), &head, sizeof(head))) return false;
+  browseStorageRevision = sourceContent == Storage.resourceRevision() ? sourceContent : 0;
+  browseMediaRevision = sourceMedia == Storage.mediaRevision() ? sourceMedia : 0;
   browseCache = std::move(buffer);
+  browseRevision = contentRevision;
   return true;
+}
+
+bool LibraryIndexFile::canReuseBrowseCache(uint32_t contentRevision) const {
+  return opened && contentRevision && retainedCache && retainedRevision == contentRevision && retainedStorageRevision &&
+         retainedStorageRevision == Storage.resourceRevision() && retainedMediaRevision &&
+         retainedMediaRevision == Storage.mediaRevision() && retainedPath == pathHash && backingPath[0] &&
+         retainedBackingPath[0] && !std::strcmp(backingPath, retainedBackingPath) &&
+         std::memcmp(&retainedHeader, &head, sizeof(head)) == 0;
+}
+
+void LibraryIndexFile::retainBrowseCache(uint32_t contentRevision) {
+  if (!opened || readFailed || !backingPath[0] || !browseCache || !contentRevision ||
+      browseRevision != contentRevision || !browseStorageRevision ||
+      browseStorageRevision != Storage.resourceRevision() || !browseMediaRevision ||
+      browseMediaRevision != Storage.mediaRevision() || head.selfSize > RETAINED_CACHE_LIMIT ||
+      HalMemory::getPsramHeap().freeBytes < RETAINED_HEADROOM)
+    return;
+  // Reuse the existing allocation; no SD handle or duplicate index survives exit.
+  retainedStorageRevision = browseStorageRevision;
+  retainedMediaRevision = browseMediaRevision;
+  retainedHeader = head;
+  retainedPath = pathHash;
+  retainedRevision = contentRevision;
+  std::memcpy(retainedBackingPath, backingPath, sizeof(retainedBackingPath));
+  retainedCache = std::move(browseCache);
+}
+
+void LibraryIndexFile::dropBrowseCache() {
+  if (browseCache && !file.isOpen()) {
+    ClixHeader current{};
+    if (!backingPath[0] || !Storage.openFileForRead("LIBIDX", backingPath, file) ||
+        file.read(&current, sizeof(current)) != static_cast<int>(sizeof(current)) ||
+        std::memcmp(&current, &head, sizeof(head))) {
+      readFailed = true;
+      if (file.isOpen()) file.close();
+      LOG_ERR("LIBIDX", "Resident index backing file unavailable or changed");
+    }
+  }
+  browseCache.reset();
+  cacheAttempted = true;
+}
+
+void LibraryIndexFile::releaseRetainedBrowseCache() {
+  retainedCache.reset();
+  retainedBackingPath[0] = 0;
+  retainedRevision = 0;
 }
 
 bool LibraryIndexFile::readAt(const uint32_t offset, void* dst, const size_t len) {
@@ -86,7 +191,7 @@ bool LibraryIndexFile::readAt(const uint32_t offset, void* dst, const size_t len
   // Every offset handed to this function comes from the header, and the header
   // was validated against the real file size, so a short read means the card
   // changed under us rather than a bad computation.
-  if (!file.seekSet(offset) || file.read(dst, len) != static_cast<int>(len)) {
+  if (!file.isOpen() || !file.seekSet(offset) || file.read(dst, len) != static_cast<int>(len)) {
     readFailed = true;
     return false;
   }

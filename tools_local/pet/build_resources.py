@@ -140,7 +140,11 @@ if __name__ == "__main__":
     parser.add_argument("--home", action="store_true", help="Build the optional Home pose pack")
     args = parser.parse_args()
     output = args.output.with_name("home.bin") if args.home and args.output.name == "graphics.bin" else args.output
-    build(output, args.source, args.home)
+    from gray_assets import available, build as build_gray
+    if available() and args.source.resolve() == (ROOT / "assets_local/pet/png").resolve():
+        build_gray("home" if args.home else "graphics", output)
+    else:
+        build(output, args.source, args.home)
     readme = ROOT / "assets_local/pet/README.md"
     if readme.resolve() != (output.parent / "README.md").resolve():
         shutil.copy2(readme, output.parent / "README.md")

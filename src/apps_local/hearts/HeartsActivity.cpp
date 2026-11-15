@@ -715,7 +715,7 @@ void HeartsActivity::render(RenderLock&&) {
     model.status = statusLine();
     model.subStatus = subStatusLine();
     model.showConfirm = game.phase == Phase::Passing;
-    model.confirmLabel = tr(STR_UI_PASS_BD564D);
+    model.confirmLabel = tr(STR_HEARTS_PASS_CARDS);
     model.confirmEnabled = pickedCount == kPassCount;
     ui::buildBoard(screen, model, layout);
   }

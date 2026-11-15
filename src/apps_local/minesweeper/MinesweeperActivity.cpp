@@ -42,8 +42,13 @@ void MinesweeperActivity::onEnter() {
   loadHistory();
   HalFile config;
   if (Storage.openFileForRead("MINE", "/.crosspoint/mines-size.cfg", config)) {
-    uint8_t size = 0;
-    if (config.size() == 1 && config.read(&size, 1) == 1 && (size == 10 || size == 15 || size == 20)) boardSize = size;
+    uint8_t values[2]{};
+    const int bytes = config.read(values, sizeof(values));
+    if ((bytes == 1 || bytes == 2) && (values[0] == 10 || values[0] == 15 || values[0] == 20)) {
+      boardSize = values[0];
+      mineCount = bytes == 2 ? std::clamp(int(values[1]), 1, ms::maxMines(boardSize, boardSize))
+                             : boardSize * boardSize * 15 / 100;
+    }
   }
   requestUpdate();
 }
@@ -125,7 +130,7 @@ void MinesweeperActivity::beginGame() {
   // millis() is the only entropy that differs between two boots, and it enters
   // here and nowhere deeper: the core takes a seed and never reaches for a
   // clock, which is what keeps a board replayable from its seed.
-  ms::start(game, static_cast<uint32_t>(millis()) * 2654435761u + 1u, boardSize, boardSize);
+  ms::start(game, static_cast<uint32_t>(millis()) * 2654435761u + 1u, boardSize, boardSize, mineCount);
   holdColumn = -1;
   holdRow = -1;
   holdFired = false;
@@ -309,22 +314,35 @@ void MinesweeperActivity::loop() {
     case mineui::ActionSettings:
       settingsReturn = screen;
       pendingSize = boardSize;
+      pendingMines = mineCount;
       settings = true;
       goTo(ms::Screen::Menu);
       return;
     case mineui::ActionBoardSize:
       if (settings && (event.value == 10 || event.value == 15 || event.value == 20)) {
         pendingSize = event.value;
+        pendingMines = std::clamp(pendingMines, 1, ms::maxMines(pendingSize, pendingSize));
         requestUpdate();
+      }
+      return;
+    case mineui::ActionMineCount:
+      if (settings && (event.value == -5 || event.value == -1 || event.value == 1 || event.value == 5)) {
+        const int next = std::clamp(pendingMines + event.value, 1, ms::maxMines(pendingSize, pendingSize));
+        if (pendingMines != next) {
+          pendingMines = next;
+          requestUpdate();
+        }
       }
       return;
     case mineui::ActionSaveSize:
       if (!settings) return;
-      if (boardSize != pendingSize) {
+      if (boardSize != pendingSize || mineCount != pendingMines) {
         boardSize = pendingSize;
+        mineCount = pendingMines;
         HalFile config;
-        const uint8_t size = boardSize;
-        if (!Storage.openFileForWrite("MINE", "/.crosspoint/mines-size.cfg", config) || config.write(&size, 1) != 1)
+        const uint8_t values[] = {uint8_t(boardSize), uint8_t(mineCount)};
+        if (!Storage.openFileForWrite("MINE", "/.crosspoint/mines-size.cfg", config) ||
+            config.write(values, sizeof(values)) != sizeof(values))
           LOG_ERR("MINE", "Could not save board size");
       }
       settings = false;
@@ -411,6 +429,7 @@ void MinesweeperActivity::render(RenderLock&&) {
       model = {};
       model.settings = settings;
       model.size = settings ? pendingSize : boardSize;
+      model.mines = settings ? pendingMines : mineCount;
       model.selected = menuSelected;
       model.hasHistory = hasHistory;
       model.lastBoard = lastBoard;

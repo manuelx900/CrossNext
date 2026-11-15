@@ -17,32 +17,10 @@ inline void panelLabel(char* out, size_t length, const char* label) {
   else
     pixelui::copyCaps(out, length, label);
 }
-inline void chapterNumber(int number, char* out, size_t size) {
-  struct Roman {
-    int value;
-    const char* text;
-  };
-  static constexpr Roman romans[] = {{1000, "M"}, {900, "CM"}, {500, "D"}, {400, "CD"}, {100, "C"},
-                                     {90, "XC"},  {50, "L"},   {40, "XL"}, {10, "X"},   {9, "IX"},
-                                     {5, "V"},    {4, "IV"},   {1, "I"}};
-  if (number > 3999) {
-    std::snprintf(out, size, "%d", number);
-    return;
-  }
-  size_t used = 0;
-  if (size) out[0] = 0;
-  for (const auto& entry : romans)
-    while (number >= entry.value) {
-      number -= entry.value;
-      for (const char* ch = entry.text; *ch && used + 1 < size; ++ch) out[used++] = *ch;
-      if (size) out[used] = 0;
-    }
-}
-inline fui::Rect sheetRect(const fui::DeviceContext& device, bool) {
+inline fui::Rect sheetRect(const fui::DeviceContext& device, bool, int minTop) {
   const auto safe = device.safeRect();
-  const int height =
-      safe.height * (device.width > device.height ? (chrome::lightHeader ? 84 : 94) : (chrome::lightHeader ? 68 : 76)) /
-      100;
+  const int percent = device.width > device.height ? 94 : 76;
+  const int height = std::max(1, std::min(safe.height * percent / 100, int(safe.bottom()) - minTop));
   return fui::makeRect(safe.x, safe.bottom() - height, safe.width, height);
 }
 
@@ -99,19 +77,72 @@ void row(Screen& screen, Work&, fui::Rect box, const char* label, const char* va
       pixelui::text(screen.target(), valueBox, value, 3, fui::Color::Black, fui::TextAlign::Right);
     }
   }
+  if (fui::hasState(screen.frame().stateFor(6, control), fui::StateFocused)) screen.target().stroke(box, ink, 3);
   screen.frame().hit(box, 6, control, fui::InputTouch);
+}
+template <typename Screen>
+void styleToggle(Screen& screen, fui::Rect box, const char* label, int control, bool checked, bool outlined = true) {
+  const auto ink = fui::Paint::solid(fui::Color::Black);
+  const int radius = chrome::lightHeader ? lightui::kControlRadius : 0;
+  if (outlined)
+    screen.target().stroke(box, ink, chrome::lightHeader ? 1 : 2, radius);
+  else
+    screen.target().fill(fui::makeRect(box.x, box.bottom() - 2, box.width, 2), ink);
+  const auto square = fui::makeRect(box.right() - 42, box.y + (box.height - 26) / 2, 26, 26);
+  screen.target().stroke(square, ink, 2, radius);
+  if (checked) {
+    screen.target().fill(square, ink, radius);
+    const auto white = fui::Paint::solid(fui::Color::White);
+    screen.target().line({int16_t(square.x + 5), int16_t(square.y + 13)},
+                         {int16_t(square.x + 11), int16_t(square.y + 19)}, 3, white);
+    screen.target().line({int16_t(square.x + 11), int16_t(square.y + 19)},
+                         {int16_t(square.x + 22), int16_t(square.y + 6)}, 3, white);
+  }
+  fui::TextStyle style;
+  style.font = pixelui::kSmall;
+  style.maxLines = 2;
+  const int textInset = control == Paragraphs ? (chrome::lightHeader ? 14 : 4) : 16;
+  const bool defaults = control == CopyDefaults;
+  const auto info = fui::makeRect(box.right() - 88, box.y, 44, box.height);
+  const auto text = fui::makeRect(box.x + textInset, box.y + 8, (defaults ? info.x : square.x) - box.x - textInset - 12,
+                                  box.height - 16);
+  screen.target().text(toybox::inkCentred(screen.target(), text, style), label, style);
+  if (fui::hasState(screen.frame().stateFor(6, control), fui::StateFocused))
+    screen.target().stroke(box, ink, 3, radius);
+  if (defaults) {
+    const auto circle = fui::makeRect(info.x + 9, info.y + (info.height - 26) / 2, 26, 26);
+    screen.target().stroke(circle, ink, 2, 13);
+    screen.target().fill(fui::makeRect(circle.x + 12, circle.y + 5, 3, 10), ink);
+    screen.target().fill(fui::makeRect(circle.x + 12, circle.y + 18, 3, 3), ink);
+    screen.frame().hit(fui::makeRect(box.x, box.y, info.x - box.x, box.height), 6, control, fui::InputTouch);
+    screen.frame().hit(fui::makeRect(box.right() - 44, box.y, 44, box.height), 6, control, fui::InputTouch);
+    screen.frame().hit(info, 6, DefaultsInfo, fui::InputTouch);
+  } else {
+    screen.frame().hit(box, 6, control, fui::InputTouch);
+  }
 }
 template <typename Screen>
 void stepper(Screen& screen, Work& work, fui::Rect box, const char* label, const char* value, int current, int count,
              int down, int up) {
   const auto ink = fui::Paint::solid(fui::Color::Black);
   const int pad = chrome::lightHeader ? 10 : 0;
-  pixelui::text(screen.target(), fui::makeRect(box.x + pad + 4, box.y + (pad ? 4 : 0), box.width * 2 / 3 - pad, 32),
+  if (box.height < 80) {
+    const int y = box.y + (box.height - 44) / 2;
+    button(screen, work, fui::makeRect(box.x, y, 44, 44), "-", down, current > 0);
+    button(screen, work, fui::makeRect(box.right() - 44, y, 44, 44), "+", up, current < count - 1);
+    pixelui::text(screen.target(), fui::makeRect(box.x + 50, box.y, box.width - 100, box.height / 2), label, 3,
+                  fui::Color::Black, fui::TextAlign::Center);
+    pixelui::text(screen.target(), fui::makeRect(box.x + 50, box.y + box.height / 2, box.width - 100, box.height / 2),
+                  value, 3, fui::Color::Black, fui::TextAlign::Center);
+    return;
+  }
+  pixelui::text(screen.target(), fui::makeRect(box.x + pad + 4, box.y + (pad ? 4 : 0), box.width * 2 / 3 - pad, 28),
                 label, pixelui::kSmall);
   pixelui::text(screen.target(),
-                fui::makeRect(box.x + box.width * 2 / 3, box.y + (pad ? 4 : 0), box.width / 3 - pad - 4, 32), value, 3,
+                fui::makeRect(box.x + box.width * 2 / 3, box.y + (pad ? 4 : 0), box.width / 3 - pad - 4, 28), value, 3,
                 fui::Color::Black, fui::TextAlign::Right);
-  const int y = box.y + 36;
+  const int bottomPadding = std::max(chrome::lightHeader ? 8 : 6, std::min(16, int(box.height) - 80));
+  const int y = box.bottom() - 44 - bottomPadding;
   button(screen, work, fui::makeRect(box.x + pad, y, 44, 44), "-", down, current > 0);
   button(screen, work, fui::makeRect(box.right() - 44 - pad, y, 44, 44), "+", up, current < count - 1);
   const int bars = std::max(1, std::min(15, count)), width = (box.width - 112 - pad * 2) / bars;
@@ -128,6 +159,44 @@ void stepper(Screen& screen, Work& work, fui::Rect box, const char* label, const
     screen.target().fill(fui::makeRect(box.x, box.bottom() - 2, box.width, 2), fui::Paint::solid(fui::Color::Black));
 }
 template <typename Screen>
+void alignment(Screen& screen, Work& work, fui::Rect box, int current, const char* value) {
+  const auto ink = fui::Paint::solid(fui::Color::Black);
+  const bool compact = box.height < 100;
+  const int optionGap = compact ? 6 : 8;
+  const int side = compact ? 44 : std::min({72, (box.width - 20 - 4 * optionGap) / 5, box.height - 52});
+  const int optionTop = compact ? box.y + (box.height - side) / 2 : box.y + 40 + (box.height - 40 - side) / 2;
+  const int groupWidth = 5 * side + 4 * optionGap;
+  pixelui::text(
+      screen.target(),
+      fui::makeRect(box.x + 10, box.y + 4, compact ? box.width - 264 : box.width / 2, compact ? box.height - 8 : 30),
+      tr(STR_ALIGNMENT), pixelui::kSmall);
+  if (!compact)
+    pixelui::text(screen.target(), fui::makeRect(box.x + box.width / 2, box.y + 4, box.width / 2 - 10, 34), value,
+                  pixelui::kSmall, fui::Color::Black, fui::TextAlign::Right);
+  static constexpr int actions[] = {AlignmentJustify, AlignmentLeft, AlignmentCenter, AlignmentRight, AlignmentBook};
+  const int start = compact ? box.right() - groupWidth - 6 : box.x + (box.width - groupWidth) / 2;
+  for (int n = 0; n < 5; ++n) {
+    const auto option = fui::makeRect(start + n * (side + optionGap), optionTop, side, side);
+    button(screen, work, option, "", actions[n]);
+    if (n == current) screen.target().fill(option, ink, chrome::lightHeader ? lightui::kControlRadius : 0);
+    const auto color = fui::Paint::solid(n == current ? fui::Color::White : fui::Color::Black);
+    if (n == 4) {
+      screen.target().bitmap(option.inset({8, 8, 8, 8}), fui::bitmapFromIcon(icon_book_32), fui::BitmapMode::Contain,
+                             color);
+    } else {
+      const int step = std::max(7, side * 7 / 44);
+      const int stroke = side >= 64 ? 4 : 3;
+      const int glyphTop = (side - 3 * step - stroke) / 2;
+      for (int line = 0; line < 4; ++line) {
+        const int width = n == 0 || line % 2 == 0 ? side - 18 : side - 26;
+        const int x = option.x + (n == 2 ? (side - width) / 2 : n == 3 ? side - 9 - width : 9);
+        screen.target().fill(fui::makeRect(x, option.y + glyphTop + line * step, width, stroke), color);
+      }
+    }
+  }
+  screen.target().stroke(box, ink, chrome::lightHeader ? 1 : 2, chrome::lightHeader ? lightui::kControlRadius : 0);
+}
+template <typename Screen>
 void compactPager(Screen& screen, fui::Rect band, int page, int pages, fui::ActionId previous, int previousValue,
                   fui::ActionId next, int nextValue) {
   const auto g = pageui::layout(band);
@@ -136,6 +205,8 @@ void compactPager(Screen& screen, fui::Rect band, int page, int pages, fui::Acti
     for (auto box : {g.before, g.count, g.after}) screen.target().stroke(box, ink, 2);
   for (int n = 0; n < 2; ++n) {
     const auto box = n ? g.after : g.before;
+    if (fui::hasState(screen.frame().stateFor(n ? next : previous, n ? nextValue : previousValue), fui::StateFocused))
+      screen.target().stroke(box, ink, 3);
     const int x = box.x + box.width / 2, y = box.y + box.height / 2, sign = n ? 1 : -1;
     screen.target().line({int16_t(x - sign * 3), int16_t(y - 6)}, {int16_t(x + sign * 3), int16_t(y)}, 2, ink);
     screen.target().line({int16_t(x + sign * 3), int16_t(y)}, {int16_t(x - sign * 3), int16_t(y + 6)}, 2, ink);
@@ -147,11 +218,28 @@ void compactPager(Screen& screen, fui::Rect band, int page, int pages, fui::Acti
   if (page < pages) screen.frame().hit(g.after, next, nextValue, fui::InputTouch);
 }
 
+inline int layoutCapacity(const fui::DeviceContext& device, int minTop = 0, bool standalone = false) {
+  const bool wide = device.width > device.height;
+  const int grip = standalone && wide ? 0 : chrome::lightHeader ? (wide ? 24 : 36) : wide ? 32 : 44;
+  const int tabs = chrome::lightHeader || wide ? 44 : 52;
+  const int tabGap = wide ? 8 : chrome::lightHeader ? 12 : 10;
+  const int done = chrome::lightHeader || wide ? 44 : 56;
+  const int available =
+      sheetRect(device, false, minTop).height - 12 - grip - tabs - tabGap - done - (wide ? 8 : 12) - 44 - 8;
+  // The first advanced control is a compact checkbox row, not a stepper.
+  if (!wide && available >= 56 + 3 * (88 + 8)) return 4;
+  const int rows = std::max(1, (available + 8) / 92);
+  return std::min(4, rows * (wide ? 2 : 1));
+}
+inline int layoutPageCount(const fui::DeviceContext& device, int minTop = 0, bool standalone = false) {
+  const int capacity = layoutCapacity(device, minTop, standalone);
+  return (3 + capacity - 1) / capacity + (4 + capacity - 1) / capacity;
+}
 template <typename Screen>
 void build(Screen& screen, const Model& model, Work& work) {
   const bool compactLandscape = screen.device().width > screen.device().height;
   const int sectionGap = compactLandscape ? 8 : kSectionGap;
-  const auto rect = sheetRect(screen.device(), model.fixed);
+  const auto rect = sheetRect(screen.device(), model.fixed, model.minTop);
   fui::SheetProps sheet;
   sheet.anchor = fui::SheetEdge::Bottom;
   sheet.radius = chrome::lightHeader ? 18 : 0;
@@ -160,7 +248,10 @@ void build(Screen& screen, const Model& model, Work& work) {
   sheet.dismissAction = 1;
   screen.sheet(sheet, rect.height);
   screen.insetContent(fui::Insets{4, 10, 8, 10});
-  const auto grip = screen.takeTop(chrome::lightHeader ? (compactLandscape ? 24 : 36) : compactLandscape ? 32 : 44);
+  const auto grip = screen.takeTop(model.standalone && compactLandscape ? 0
+                                   : chrome::lightHeader                ? (compactLandscape ? 24 : 36)
+                                   : compactLandscape                   ? 32
+                                                                        : 44);
   const int cx = grip.x + grip.width / 2, cy = grip.y + grip.height / 2;
   const auto ink = fui::Paint::solid(fui::Color::Black);
   if (chrome::lightHeader)
@@ -169,7 +260,7 @@ void build(Screen& screen, const Model& model, Work& work) {
     screen.target().line({int16_t(cx - 16), int16_t(cy + 4)}, {int16_t(cx), int16_t(cy - 4)}, 3, ink);
     screen.target().line({int16_t(cx), int16_t(cy - 4)}, {int16_t(cx + 16), int16_t(cy + 4)}, 3, ink);
   }
-  screen.frame().hit(grip, 1, 0, fui::InputTouch);
+  if (!grip.empty()) screen.frame().hit(grip, 1, 0, fui::InputTouch);
   if (model.view == SheetView::Families && !model.fixed) {
     const auto heading = screen.takeTop(52, kSectionGap);
     button(screen, work, fui::makeRect(heading.x, heading.y, 48, heading.height), "", FontBack);
@@ -189,7 +280,7 @@ void build(Screen& screen, const Model& model, Work& work) {
     work.button.minTouchSize = 0;
     screen.button(work.button, close);
     const auto pager = screen.takeBottom(44, kSectionGap);
-    const int capacity = fontRowsPerPage(screen.device());
+    const int capacity = fontRowsPerPage(screen.device(), model.minTop);
     const int pages = std::max(1, (model.fontCount + capacity - 1) / capacity);
     compactPager(screen, pager, model.fontPage + 1, pages, 6, FontPrevious, 6, FontNext);
     const auto list = screen.body();
@@ -251,28 +342,32 @@ void build(Screen& screen, const Model& model, Work& work) {
   p.minTouchSize = 0;
   screen.button(p, done);
   if (!model.fixed && model.tab == 3 && model.view == SheetView::Style) {
-    const auto heading = screen.takeTop(44, kSectionGap);
-    button(screen, work, fui::makeRect(heading.x, heading.y, 48, heading.height), "", StyleBack);
-    const int ax = heading.x + 14, ay = heading.y + heading.height / 2;
-    screen.target().line({int16_t(ax), int16_t(ay)}, {int16_t(ax + 22), int16_t(ay)}, 3, ink);
-    screen.target().line({int16_t(ax), int16_t(ay)}, {int16_t(ax + 10), int16_t(ay - 10)}, 3, ink);
-    screen.target().line({int16_t(ax), int16_t(ay)}, {int16_t(ax + 10), int16_t(ay + 10)}, 3, ink);
-    pixelui::text(screen.target(), fui::makeRect(heading.x + 60, heading.y, heading.width - 60, heading.height),
-                  tr(STR_STYLE), pixelui::kSmall);
+    if (model.standalone) {
+      const auto copy = screen.takeBottom(64, sectionGap);
+      styleToggle(screen, copy, tr(STR_TEXT_COPY_DEFAULTS), CopyDefaults, model.useDefaults);
+    } else {
+      const auto heading = screen.takeTop(44, kSectionGap);
+      button(screen, work, fui::makeRect(heading.x, heading.y, 48, heading.height), "", StyleBack);
+      const int ax = heading.x + 14, ay = heading.y + heading.height / 2;
+      screen.target().line({int16_t(ax), int16_t(ay)}, {int16_t(ax + 22), int16_t(ay)}, 3, ink);
+      screen.target().line({int16_t(ax), int16_t(ay)}, {int16_t(ax + 10), int16_t(ay - 10)}, 3, ink);
+      screen.target().line({int16_t(ax), int16_t(ay)}, {int16_t(ax + 10), int16_t(ay + 10)}, 3, ink);
+      pixelui::text(screen.target(), fui::makeRect(heading.x + 60, heading.y, heading.width - 60, heading.height),
+                    tr(STR_STYLE), pixelui::kSmall);
+    }
     const auto area = screen.body();
     const int cols = screen.device().width > screen.device().height ? 2 : 1;
     const int rows = 4 / cols;
     const int width = (area.width - (cols - 1) * kSectionGap) / cols;
-    const int height = (area.height - (rows - 1) * kSectionGap) / rows;
+    const int height = std::min(88, (area.height - (rows - 1) * kSectionGap) / rows);
     static constexpr StrId labels[] = {StrId::STR_FOCUS_READING, StrId::STR_HYPHENATION, StrId::STR_EMBEDDED_STYLE,
                                        StrId::STR_TEXT_AA};
     const bool checks[] = {model.focus, model.hyphenation, model.embedded, model.antialiasing};
     for (int n = 0; n < 4; ++n) {
       const auto option = fui::makeRect(area.x + n % cols * (width + kSectionGap),
                                         area.y + n / cols * (height + kSectionGap), width, height);
-      if (!chrome::lightHeader) screen.target().stroke(option, ink, 2);
       panelLabel(work.label, sizeof(work.label), I18N.get(labels[n]));
-      row(screen, work, option, work.label, "", Focus + n, true, checks[n]);
+      styleToggle(screen, option, work.label, Focus + n, checks[n]);
     }
     return;
   }
@@ -282,9 +377,13 @@ void build(Screen& screen, const Model& model, Work& work) {
     const int page = std::clamp(model.listPage, 0, pages - 1);
     if (model.tab == 2 || pages > 1) {
       const auto band = screen.takeBottom(44, sectionGap);
+      const int allWidth = model.tab == 2 ? 72 : 0;
       compactPager(screen, band, page + 1, pages, 6, SheetPrevious, 6, SheetNext);
+      if (allWidth)
+        button(screen, work, fui::makeRect(band.right() - allWidth, band.y, allWidth, band.height),
+               tr(STR_READER_ALL_CHAPTERS), AllChapters);
     }
-    if (model.tab == 2 && !chrome::lightHeader) {
+    if (model.tab == 2) {
       const auto heading = screen.takeTop(compactLandscape ? 28 : 34, sectionGap);
       pixelui::text(screen.target(), fui::makeRect(heading.x, heading.y, heading.width * 2 / 3, heading.height),
                     tr(STR_SELECT_CHAPTER), pixelui::kSmall);
@@ -320,23 +419,13 @@ void build(Screen& screen, const Model& model, Work& work) {
       const int control = (model.tab == 2 ? ChapterPick : MorePick) + index;
       screen.frame().hit(box, 6, control, fui::InputTouch);
       if (model.tab == 2) {
-        const int side = std::min(68, int(box.width) / 7);
-        chapterNumber(index + 1, work.value, sizeof(work.value));
-        const auto numberBox = fui::makeRect(box.x + 4, box.y, side - 8, h);
-        fui::TextStyle numberStyle;
-        numberStyle.font = pixelui::kSmall;
-        numberStyle.color = fg;
-        numberStyle.align = fui::TextAlign::Center;
-        pixelui::fitLabel(screen.target(), work.value, numberBox.width, numberStyle);
-        screen.target().text(toybox::inkCentred(screen.target(), numberBox, numberStyle), work.value, numberStyle);
-        if (!chrome::lightHeader) screen.target().fill(fui::makeRect(box.x + side, box.y + 8, 2, h - 16), paint);
-        const int padding = chrome::lightHeader ? 4 : 6;
-        const auto title = fui::makeRect(box.x + side + 12, box.y + padding, box.width - side - 24, h - 2 * padding);
         fui::TextStyle chapterStyle;
         chapterStyle.font = 4;
         chapterStyle.color = fg;
-        if (chrome::lightHeader && title.height < 2 * screen.target().lineHeight(chapterStyle.font))
-          chapterStyle.font = 0;
+        if (chrome::lightHeader && h < 2 * screen.target().lineHeight(chapterStyle.font)) chapterStyle.font = 0;
+        const int padding = std::min(chrome::lightHeader ? 8 : 10,
+                                     std::max(0, (h - 2 * screen.target().lineHeight(chapterStyle.font)) / 2));
+        const auto title = fui::makeRect(box.x + 12, box.y + padding, box.width - 24, h - 2 * padding);
         chapterStyle.maxLines = 2;
         int count = 0;
         fui::layoutText(screen.target(), title, work.label, chapterStyle, [&](const char*, fui::Rect) { ++count; });
@@ -353,8 +442,9 @@ void build(Screen& screen, const Model& model, Work& work) {
         const freeink::Icon* icons[] = {&icon_reader_text_24, &extra_carnivoro_search_32,
                                         &icon_bookmark_32,    &icon_book_32,
                                         &icon_file_32,        &extra_chart_64,
-                                        &icon_check_32,       &icon_refresh_cw_32};
-        const auto& mark = *icons[std::clamp(index, 0, 7)];
+                                        &icon_check_32,       &extra_dictionary_32,
+                                        &icon_refresh_cw_32};
+        const auto& mark = *icons[std::clamp(index, 0, 8)];
         const int side = std::min(36, h - 12);
         screen.target().bitmap(fui::makeRect(box.x + 16, box.y + (h - side) / 2, side, side), fui::bitmapFromIcon(mark),
                                fui::BitmapMode::Contain, paint);
@@ -388,29 +478,20 @@ void build(Screen& screen, const Model& model, Work& work) {
       row(screen, work, box(1, 70), tr(STR_REFRESH_FREQ), model.refresh, Refresh);
     }
   } else if (model.tab == 0) {
-    auto family = box(0, chrome::lightHeader ? 48 : wide ? 70 : 56);
-    const int controlHeight = 96, controlGap = chrome::lightHeader ? 8 : 16;
+    auto family = box(0, wide ? 70 : 56);
+    const int controlHeight = 96, controlGap = 16;
     auto size = box(1, controlHeight);
     auto weight = box(2, controlHeight);
     auto samples = box(3, 80);
     if (!wide) {
-      size.y = content.y + (chrome::lightHeader ? 54 : 66);
+      size.y = content.y + 66;
       weight.y = size.bottom() + controlGap;
       const int sampleY = weight.bottom() + controlGap;
       samples = fui::makeRect(content.x, sampleY, content.width, std::max(0, int(content.bottom()) - sampleY));
     } else {
-      weight = box(1, controlHeight);
-      size = box(2, controlHeight);
-      size.y = content.y + controlHeight + controlGap;
-      samples.y = size.y;
-      samples.height = controlHeight;
-    }
-    if (chrome::lightHeader && !wide) {
-      family.height = 60;
-      size.y = family.bottom() + 10;
-      size.height = 100;
-      weight.y = size.bottom() + 10;
-      weight.height = 100;
+      family = fui::makeRect(content.x, content.y, content.width, 48);
+      size = fui::makeRect(content.x, content.y + 56, (content.width - 12) / 2, controlHeight);
+      weight = fui::makeRect(size.right() + 12, size.y, size.width, controlHeight);
     }
     row(screen, work, family, tr(STR_TEXT_FONT_FAMILY), model.family, Family);
     std::snprintf(work.label, sizeof(work.label), "%d pt", model.size);
@@ -418,19 +499,20 @@ void build(Screen& screen, const Model& model, Work& work) {
     stepper(screen, work, weight, tr(STR_TEXT_FONT_WEIGHT),
             model.bold ? tr(STR_TEXT_WEIGHT_BOLD) : tr(STR_TEXT_WEIGHT_REGULAR), model.bold ? 1 : 0, 2, WeightDown,
             WeightUp);
-    if (chrome::lightHeader) return;
+    if (wide) return;
     const int half = samples.width / 2;
     const int labelHeight = 22;
+    if (samples.height < 44) return;
     const int sampleHeight = std::max(0, samples.height - labelHeight);
     for (int n = 0; n < 2; ++n) {
       const auto sample = fui::makeRect(samples.x + n * half, samples.y, half, sampleHeight);
       const auto choice = fui::makeRect(sample.x + 4, samples.y, half - 8, samples.height);
       screen.frame().hit(choice, 6, n == 0 ? WeightDown : WeightUp, fui::InputTouch);
       if (model.bold == (n == 1)) {
-        screen.target().stroke(choice, ink, 2);
+        screen.target().stroke(choice, ink, 2, chrome::lightHeader ? lightui::kControlRadius : 0);
       }
       fui::TextStyle style;
-      style.font = chrome::lightHeader ? pixelui::kBody : pixelui::kTitle;
+      style.font = pixelui::kTitle;
       style.bold = n == 1;
       style.align = fui::TextAlign::Center;
       style.maxLines = 1;
@@ -440,46 +522,69 @@ void build(Screen& screen, const Model& model, Work& work) {
                     fui::TextAlign::Center);
     }
   } else if (model.tab == 1) {
-    const int h = 96;
-    const int columnWidth = wide ? (content.width - kSectionGap) / 2 : content.width;
-    auto spacing = fui::makeRect(content.x, content.y, columnWidth, h);
-    stepper(screen, work, spacing, tr(STR_LINE_SPACING), model.spacingLabel, model.spacing, 4, SpacingDown, SpacingUp);
-    std::snprintf(work.value, sizeof(work.value), "%d", model.margin);
-    const auto margin = wide ? fui::makeRect(content.x + columnWidth + kSectionGap, content.y, columnWidth, h)
-                             : fui::makeRect(content.x, content.y + h + kSectionGap, content.width, h);
-    stepper(screen, work, margin, tr(STR_SCREEN_MARGIN), work.value, model.marginIndex, model.marginCount, MarginDown,
-            MarginUp);
-    const int alignmentY = content.y + (wide ? 1 : 2) * (h + kSectionGap);
-    const auto a = fui::makeRect(content.x, alignmentY, content.width, 78);
-    const int side = std::min(48, int(a.height) - 28);
-    pixelui::text(screen.target(),
-                  fui::makeRect(a.x + (chrome::lightHeader ? 12 : 4), a.y,
-                                a.width - 3 * (side + 10) - (chrome::lightHeader ? 16 : 4),
-                                chrome::lightHeader ? a.height : a.height - 12),
-                  tr(STR_ALIGNMENT), pixelui::kSmall);
-    for (int n = 0; n < 3; ++n) {
-      const int align = n == 0 ? 1 : n == 1 ? 2 : 0;
-      const auto r = fui::makeRect(a.right() - 3 * (side + 10) + n * (side + 10),
-                                   a.y + (a.height - (chrome::lightHeader ? 0 : 12) - side) / 2, side, side);
-      const bool active = model.alignmentIndex == align;
-      if (active && chrome::lightHeader)
-        screen.target().stroke(r, ink, 2, 4);
-      else if (active)
-        screen.target().fill(r, ink);
-      else
-        screen.target().stroke(r, ink, chrome::lightHeader ? 1 : 2, chrome::lightHeader ? lightui::kControlRadius : 0);
-      const auto stroke = fui::Paint::solid(active && !chrome::lightHeader ? fui::Color::White : fui::Color::Black);
-      for (int y = 0; y < 4; ++y) {
-        const int w = (n == 2 || y % 2 == 0) ? side - 16 : side - 24;
-        const int x = r.x + 8 + (n == 1 ? (side - 16 - w) / 2 : 0);
-        screen.target().fill(fui::makeRect(x, r.y + 12 + y * 7, w, 3), stroke);
+    const int pagerHeight = 44, gap = 8;
+    const int capacity = layoutCapacity(screen.device(), model.minTop, model.standalone);
+    const int firstPages = (3 + capacity - 1) / capacity;
+    const int pages = layoutPageCount(screen.device(), model.minTop, model.standalone);
+    const int page = std::clamp(model.layoutPage, 0, pages - 1);
+    const bool advanced = page >= firstPages;
+    const int first = (advanced ? page - firstPages : page) * capacity;
+    const int count = std::min(capacity, (advanced ? 4 : 3) - first);
+    const int columns = wide && count > 1 ? 2 : 1;
+    const int rows = (count + columns - 1) / columns;
+    const bool compactParagraph = advanced && first == 0 && !wide;
+    const int paragraphHeight = 56;
+    const int height =
+        compactParagraph && count > 1
+            ? std::min(104,
+                       std::max(1, (int(content.height) - pagerHeight - gap * rows - paragraphHeight) / (rows - 1)))
+            : std::min(96, std::max(1, (int(content.height) - pagerHeight - gap * rows) / rows));
+    const int width = (content.width - (columns - 1) * gap) / columns;
+    const auto pager = fui::makeRect(content.x, content.bottom() - pagerHeight, content.width, pagerHeight);
+    compactPager(screen, pager, page + 1, pages, 6, LayoutPrevious, 6, LayoutNext);
+    for (int n = 0; n < count; ++n) {
+      const int y = compactParagraph && n > 0 ? content.y + paragraphHeight + gap + (n - 1) * (height + gap)
+                                              : content.y + n / columns * (height + gap);
+      auto control = fui::makeRect(content.x + n % columns * (width + gap), y, width,
+                                   compactParagraph && n == 0 ? paragraphHeight : height);
+      static constexpr int advancedOrder[] = {5, 6, 3, 4};
+      switch (advanced ? advancedOrder[first + n] : first + n) {
+        case 0:
+          stepper(screen, work, control, tr(STR_LINE_SPACING), model.spacingLabel, model.spacing, model.spacingCount,
+                  SpacingDown, SpacingUp);
+          break;
+        case 1:
+          std::snprintf(work.value, sizeof(work.value), "%d", model.margin);
+          stepper(screen, work, control, tr(STR_SCREEN_MARGIN), work.value, model.marginIndex, model.marginCount,
+                  MarginDown, MarginUp);
+          break;
+        case 2:
+          if (n + 1 == count) {
+            if (n % columns == 0) control.width = content.width;
+            control.height = std::max(int(control.height), int(pager.y - gap - control.y));
+          }
+          alignment(screen, work, control, model.alignmentIndex, model.alignment);
+          break;
+        case 3:
+          std::snprintf(work.value, sizeof(work.value), "%d%%", model.wordSpacing);
+          stepper(screen, work, control, tr(STR_WORD_SPACING), work.value, (model.wordSpacing - 50) / 25, 7, WordDown,
+                  WordUp);
+          break;
+        case 4:
+          std::snprintf(work.value, sizeof(work.value), "%+d", model.characterSpacing - 2);
+          stepper(screen, work, control, tr(STR_CHARACTER_SPACING), work.value, model.characterSpacing, 5,
+                  CharacterDown, CharacterUp);
+          break;
+        case 5:
+          styleToggle(screen, control, tr(STR_EXTRA_SPACING), Paragraphs, model.paragraphs, chrome::lightHeader);
+          break;
+        case 6:
+          std::snprintf(work.value, sizeof(work.value), "%d", model.indent);
+          stepper(screen, work, control, tr(STR_PARAGRAPH_INDENTATION), model.indent ? work.value : tr(STR_STATE_OFF),
+                  model.indent, 6, IndentDown, IndentUp);
+          break;
       }
-      screen.frame().hit(r, 6, AlignmentLeft + n, fui::InputTouch);
     }
-    if (chrome::lightHeader)
-      screen.target().stroke(a, ink, 1, lightui::kControlRadius);
-    else
-      screen.target().fill(fui::makeRect(a.x, a.bottom() - 1, a.width, 1), ink);
   }
 }
 }  // namespace readertext

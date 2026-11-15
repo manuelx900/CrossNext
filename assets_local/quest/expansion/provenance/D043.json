@@ -1,0 +1,12 @@
+{
+  "id": "D043",
+  "master": "decor-043-v1.png",
+  "sha256": "2b124297f101de0dc23a3df8084c11d4632a22f2b20e6af4646ed40c2797b15d",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original collectible decoration sprite for the e-ink fantasy reading app Aventura lectora. Reference fairy is STYLE ONLY. Friendly chibi storybook proportions, white and pale-gray flat fills, VERY THICK solid pure-BLACK outer contours (20-26px at1024px), strong black inner lines, simple broad shapes readable at112x144. Whole subject visible, centered with transparent padding. Genuine transparent background. No scenery, frame, UI, text, lettering, watermark, fine hatching or gray outlines. Do not include the player hero or PET. Subject: a cheerful small cloud-like genie emerging from a broad old lamp, curled smoke tail and a little turban. An airborne or hanging ornament; no ground base.",
+  "reference": "assets_local/quest/redesign/masters/decoration-fairy-v1.png",
+  "transparent": true,
+  "width": 1199,
+  "height": 1312,
+  "mode": "RGBA"
+}

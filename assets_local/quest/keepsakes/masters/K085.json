@@ -1,0 +1,18 @@
+{
+  "id": "K085",
+  "key": "Estaca",
+  "file": "K085.png",
+  "sample": {
+    "es": "Estaca del campamento",
+    "en": "Camp stake"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: Camp stake.",
+  "requests": [
+    142
+  ],
+  "sha256": "92b7fba4c4f65b54baa71b300ba2c8b7d2ee772cad8ccc1213f57b3fcdd809b8",
+  "source": "exec-cdc421a7-c140-40b0-b06d-83bddfc8254a.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

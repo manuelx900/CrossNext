@@ -1,0 +1,18 @@
+{
+  "id": "K096",
+  "key": "Aguja-Clock",
+  "file": "K096.png",
+  "sample": {
+    "es": "Aguja del minuto",
+    "en": "Minute hand"
+  },
+  "prompt": "Use case: illustration-story. One isolated tangible fantasy RPG inventory keepsake, charming hand inked black-and-white storybook / cozy chibi fantasy game prop. A fully illustrated recognizable crafted object, not a geometric line icon. Chunky dark black outer contours, large clean white surfaces and solid black accents, only minimal flat pale gray shading. No color, no crosshatching, no tiny filigree, no text, no lettering, no numbers, no labels, no frame, no scene or ground. Complete centered object, square composition, generous true transparent padding, no cropping. Must remain recognizable at 64 by 64 pixels on a monochrome e-ink reading adventure. Subject: a single ornate loose clock hand with a round mounting hole at its base, thick dark pointed tip, a crafted clockmaker keepsake.",
+  "requests": [
+    160
+  ],
+  "sha256": "1523d06d7bee96f94e69096f16af269dc24835eeec025550e9add5d9c89e5288",
+  "source": "exec-21904877-c08a-43c2-b557-8c4947360e15.png",
+  "tool": "built-in image_gen",
+  "width": 1254,
+  "height": 1254
+}

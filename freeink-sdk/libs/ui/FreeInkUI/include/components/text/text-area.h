@@ -36,11 +36,55 @@ struct TextAreaLine {
   bool hardBreak;
 };
 
+namespace detail {
+inline uint32_t textAreaScalarEnd(const char* text, uint32_t at, uint32_t& cp) {
+  const auto first = static_cast<uint8_t>(text[at]);
+  const unsigned length = first < 0x80                     ? 1
+                          : first >= 0xc2 && first < 0xe0  ? 2
+                          : first >= 0xe0 && first < 0xf0  ? 3
+                          : first >= 0xf0 && first <= 0xf4 ? 4
+                                                           : 1;
+  cp = first & (length == 1 ? 0xff : (1u << (7 - length)) - 1);
+  for (unsigned n = 1; n < length; ++n) {
+    const auto byte = static_cast<uint8_t>(text[at + n]);
+    if ((byte & 0xc0) != 0x80) {
+      cp = first;
+      return at + 1;
+    }
+    cp = (cp << 6) | (byte & 0x3f);
+  }
+  return at + length;
+}
+// Keep common combining marks and Thai vowel clusters on the same bounded line.
+inline bool textAreaAttached(uint32_t left, uint32_t right) {
+  return (right >= 0x0300 && right <= 0x036f) || (right >= 0x0591 && right <= 0x05bd) || right == 0x05bf ||
+         (right >= 0x05c1 && right <= 0x05c2) || (right >= 0x05c4 && right <= 0x05c5) ||
+         (right >= 0x0610 && right <= 0x061a) || (right >= 0x064b && right <= 0x065f) || right == 0x0670 ||
+         (right >= 0x06d6 && right <= 0x06ed) || (right >= 0x1dc0 && right <= 0x1dff) ||
+         (right >= 0x20d0 && right <= 0x20ff) || (right >= 0xfe20 && right <= 0xfe2f) ||
+         (right >= 0xfe00 && right <= 0xfe0f) || right == 0x3099 || right == 0x309a ||
+         (right >= 0x0e30 && right <= 0x0e3a) || right == 0x0e45 || (right >= 0x0e47 && right <= 0x0e4e) ||
+         (left >= 0x0e40 && left <= 0x0e44 && right >= 0x0e01 && right <= 0x0e5b);
+}
+inline uint32_t textAreaClusterEnd(const char* text, uint32_t at) {
+  uint32_t left;
+  uint32_t end = textAreaScalarEnd(text, at, left);
+  while (text[end] && text[end] != '\n') {
+    uint32_t right;
+    const uint32_t next = textAreaScalarEnd(text, end, right);
+    if (next - at > 220 || !textAreaAttached(left, right)) break;
+    left = right;
+    end = next;
+  }
+  return end;
+}
+}  // namespace detail
+
 // Walks `text` wrapped to `width`, calling emit(index, TextAreaLine) for each
 // visual line in order; returns the total visual-line count. Empty text yields
 // one empty line; a trailing '\n' yields a final empty line (so the caret has a
 // line to sit on). Greedy word wrap, breaking after the last space that fits, or
-// mid-word (codepoint-aligned) for words wider than the rect.
+// mid-word (keeping supported combining and Thai clusters together) for words wider than the rect.
 template <typename Emit>
 inline uint32_t textAreaWalk(const DrawTarget& target, int16_t width, const char* text, const TextStyle& style,
                              Emit&& emit) {
@@ -48,7 +92,8 @@ inline uint32_t textAreaWalk(const DrawTarget& target, int16_t width, const char
   if (width < 1) width = 1;
   char buf[224];
   const auto fits = [&](uint32_t start, uint32_t len) -> bool {
-    uint32_t n = len < 220 ? len : 220;
+    if (len > 220) return false;
+    const uint32_t n = len;
     memcpy(buf, text + start, n);
     buf[n] = '\0';
     return target.measureText(style.font, buf, style).width <= width;
@@ -60,13 +105,13 @@ inline uint32_t textAreaWalk(const DrawTarget& target, int16_t width, const char
     uint32_t lastBreak = lineStart;  // byte after the last fitting space
     bool haveBreak = false;
     while (text[i] != '\0' && text[i] != '\n') {
-      const uint32_t candidate = i + 1 - lineStart;
-      if (candidate > 1 && !fits(lineStart, candidate)) break;  // would overflow
+      const uint32_t next = detail::textAreaClusterEnd(text, i);
+      if (i > lineStart && !fits(lineStart, next - lineStart)) break;
       if (text[i] == ' ') {
-        lastBreak = i + 1;
+        lastBreak = next;
         haveBreak = true;
       }
-      ++i;
+      i = next;
     }
     uint32_t lineEnd;
     uint32_t nextStart;
@@ -82,10 +127,8 @@ inline uint32_t textAreaWalk(const DrawTarget& target, int16_t width, const char
       lineEnd = lastBreak;  // soft wrap after a space
       nextStart = lastBreak;
     } else {
-      uint32_t brk = i > lineStart ? i : lineStart + 1;  // word wider than rect: char break
-      while (brk > lineStart + 1 && (text[brk] & 0xC0) == 0x80) --brk;  // keep codepoints whole
-      lineEnd = brk;
-      nextStart = brk;
+      lineEnd = i;
+      nextStart = i;
     }
     emit(total, TextAreaLine{lineStart, static_cast<uint16_t>(lineEnd - lineStart), hard});
     ++total;

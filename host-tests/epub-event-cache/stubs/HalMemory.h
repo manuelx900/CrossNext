@@ -6,8 +6,10 @@ class HalMemory {
  public:
   inline static bool fail = false, absent = false;
   inline static int active = 0;
+  inline static size_t available = 8388608;
   struct Stats {
     size_t totalBytes;
+    size_t freeBytes = available;
   };
   struct PsramDeleter {
     void operator()(uint8_t* p) const {

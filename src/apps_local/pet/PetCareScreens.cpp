@@ -103,7 +103,7 @@ void careDetails(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
       healthAction(s, m, w, rect(actions.x, actions.y + height + GAP, actions.width, height), true, true);
       const auto footer = rect(r.x, r.bottom() - 54, r.width, 54);
       healthHelpButton(s, w, cell(footer, 0, 2));
-      button(s, w, cell(footer, 1, 2), tr(STR_PET_BACK_CARE), Back, 0, true);
+      button(s, w, cell(footer, 1, 2), tr(STR_PET_BACK_PET), Back, 0, true);
       return;
     }
     const auto status = rect(r.x, r.y + 51, r.width, 84);
@@ -127,10 +127,10 @@ void careDetails(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
     const auto footer = rect(r.x, r.bottom() - 54, r.width, 54);
     if (wide) {
       healthHelpButton(s, w, cell(footer, 0, 2));
-      button(s, w, cell(footer, 1, 2), tr(STR_PET_BACK_CARE), Back, 0, true);
+      button(s, w, cell(footer, 1, 2), tr(STR_PET_BACK_PET), Back, 0, true);
     } else {
       healthHelpButton(s, w, rect(r.x, actions.bottom() + GAP, r.width, helpH));
-      button(s, w, footer, tr(STR_PET_BACK_CARE), Back, 0, true);
+      button(s, w, footer, tr(STR_PET_BACK_PET), Back, 0, true);
     }
     return;
   }

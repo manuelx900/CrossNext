@@ -1,0 +1,12 @@
+{
+  "id": "S046",
+  "master": "scene-046-v1.png",
+  "sha256": "52436190518b7d05399b38d46185294a441c830387a05c8f1c3bd45137c2bce3",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The desert of names. Chapter: Ada's compass. Illustrate this already-authored event faithfully, without inventing another object or plot: You recover the compass and Ada's instructions. Its needle follows a memory she deliberately left far from home, allowing another traveler to continue her search. You test it against her dated route before trusting it. Context only, do not try to draw all of it: The caravan's trade records still list Ada's compass. Nadir helps trace the object through the people who carried it after her. It may preserve a direction that her copied map cannot show.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

@@ -32,6 +32,7 @@ struct Book {
   bool completed = false;
   bool manuallyUnfinished = false;
   int finishedDay = 0;
+  int firstDay = 0;
 };
 struct Record {
   Book book;
@@ -42,6 +43,14 @@ struct Record {
   bool firstCompletion = false;
   RecordKind kind = RecordKind::Session;
   int reversedCompletionDay = 0;
+};
+struct RecordedYears {
+  static constexpr int firstYear = 1970, lastYear = 2199;
+  uint64_t bits[4]{};
+  void addDay(int day);
+  void add(const Record& record);
+  int count() const;
+  int at(int index) const;
 };
 struct Summary {
   uint64_t seconds = 0, pages = 0;
@@ -74,6 +83,8 @@ struct PeriodStats {
   uint32_t pendingReversals = 0, annualReversals[12]{};
   bool annual = false;
   int daysReadThrough(int day) const;
+  uint32_t currentStreak(int today) const;
+  uint32_t longestStreakThrough(int day) const;
   Streak consistency;
   void add(const Record& record);
 };

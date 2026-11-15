@@ -67,9 +67,14 @@ def run(compiler, wasm=False):
         save = card / ".crosspoint/reading-quest-v5.dat"
         save.parent.mkdir(parents=True, exist_ok=True)
         save.write_bytes(b"Existing user progress: do not replace")
+        current_save = card / ".crosspoint/reading-adventure-v2/reading-quest-v10.dat"
+        current_save.parent.mkdir(parents=True, exist_ok=True)
+        current_save.write_bytes(b"Generation 2 user progress: do not replace")
+        current_before = current_save.read_bytes()
         before = save.read_bytes()
         zipped.extractall(card)
         assert save.read_bytes() == before
+        assert current_save.read_bytes() == current_before
         assert (card / "apps/reading-adventure/graphics.bin").read_bytes() == original
         assert len(list((ROOT / "resources/fonts").rglob("*.ttf"))) == 32
         assert len(list((ROOT / "resources/fonts").glob("*/OFL"))) == 8

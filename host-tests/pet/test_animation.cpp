@@ -2,10 +2,35 @@
 #include <cstdio>
 #include <initializer_list>
 
+#include "../../src/apps_local/pet/PetFloating.h"
 #include "../../src/apps_local/pet/PetPendingTap.h"
 #include "../../src/apps_local/pet/PetSleepAnimation.h"
 
 int main() {
+  pet::Profile ghost;
+  ghost.created = true;
+  ghost.lifeStatus = pet::LifeStatus::Lost;
+  assert(petfarewell::floating(ghost, pet::View::Dashboard));
+  assert(petfarewell::floating(ghost, pet::View::Death));
+  for (auto view :
+       {pet::View::Home, pet::View::Album, pet::View::Memory, pet::View::LifeDetail, pet::View::Lives, pet::View::New})
+    assert(!petfarewell::floating(ghost, view));
+  for (auto status : {pet::LifeStatus::Active, pet::LifeStatus::Retired}) {
+    ghost.lifeStatus = status;
+    assert(!petfarewell::floating(ghost, pet::View::Dashboard));
+  }
+  ghost.lifeStatus = pet::LifeStatus::Lost;
+  ghost.created = false;
+  assert(!petfarewell::floating(ghost, pet::View::Dashboard));
+  petsleep::Clock floating;
+  floating.restart(UINT32_MAX - 100);
+  assert(!floating.update(648, true, petfarewell::FRAME_MS));
+  assert(floating.update(649, true, petfarewell::FRAME_MS));
+  assert(petfarewell::offset(floating.step()) == -6);
+  assert(floating.update(1399, true, petfarewell::FRAME_MS) && petfarewell::offset(floating.step()) == 0);
+  assert(floating.update(2149, true, petfarewell::FRAME_MS) && petfarewell::offset(floating.step()) == 6);
+  assert(floating.update(2899, true, petfarewell::FRAME_MS) && petfarewell::offset(floating.step()) == 0);
+  assert(!floating.update(3000, false, petfarewell::FRAME_MS) && floating.step() == 0);
   petsleep::Clock clock;
   assert(!clock.update(100, false));
   assert(clock.update(100, true));
@@ -27,11 +52,18 @@ int main() {
   p.created = true;
   p.readingSeconds = pet::stageStart(pet::Stage::Newborn);
   p.resting = true;
+  assert(petsleep::frameInterval(p) == 600);
+  petsleep::Clock sleepingClock;
+  sleepingClock.restart(100);
+  assert(!sleepingClock.update(699, true, petsleep::frameInterval(p)));
+  assert(sleepingClock.update(700, true, petsleep::frameInterval(p)) && sleepingClock.step() == 1);
+  assert(sleepingClock.update(1300, true, petsleep::frameInterval(p)) && sleepingClock.step() == 2);
   assert(petsleep::enabled(p, pet::View::Home));
   assert(petsleep::enabled(p, pet::View::Dashboard));
   assert(petsleep::enabled(p, pet::View::Reward));
   assert(!petsleep::enabled(p, pet::View::Care));
   p.resting = false;
+  assert(petsleep::frameInterval(p) == petsleep::MOOD_FRAME_MS);
   assert(!petsleep::enabled(p, pet::View::Home));
   p.resting = true;
   p.illness = pet::Illness::Cold;
@@ -77,6 +109,19 @@ int main() {
   p.readingSeconds = 0;
   assert(petsleep::breathing(p, pet::View::Home));
   assert(!petsleep::moodVisible(p, pet::View::Home));
+  for (unsigned orientation = 0; orientation < 4; ++orientation) {
+    petsleep::Clock overlay;
+    overlay.restart(0);
+    unsigned refreshes = 0;
+    const bool animated = petsleep::roomMotionVisible(pet::View::Home) && petsleep::breathing(p, pet::View::Home);
+    for (uint32_t now = 0; now < 10000; now += 50)
+      refreshes += overlay.update(now, animated, petsleep::frameInterval(p));
+    assert(refreshes == 0);
+    assert(petsleep::roomMotionVisible(pet::View::Dashboard));
+    overlay.restart(10000);
+    assert(!overlay.update(10749, true));
+    assert(overlay.update(10750, true));
+  }
   for (unsigned species = 0; species < 3; ++species)
     for (unsigned step = 0; step < 4; ++step) {
       const auto id = petsleep::eggIndex(species, step);
@@ -133,7 +178,7 @@ int main() {
   pet::Profile grown;
   grown.readingSeconds = pet::stageStart(pet::Stage::Newborn);
   assert(petsleep::frameInterval(egg) == 750);
-  assert(petsleep::frameInterval(grown) == 3000);
+  assert(petsleep::frameInterval(grown) == 1500);
   petsleep::Clock eggClock, moodClock;
   eggClock.restart(100);
   moodClock.restart(100);
@@ -142,14 +187,14 @@ int main() {
     eggPaints += eggClock.update(now, true, petsleep::frameInterval(egg));
     moodPaints += moodClock.update(now, true, petsleep::frameInterval(grown));
   }
-  assert(eggPaints == 16 && moodPaints == 4);
+  assert(eggPaints == 16 && moodPaints == 8);
   moodClock.restart(20000);
-  assert(!moodClock.update(22999, true, petsleep::MOOD_FRAME_MS));
-  assert(moodClock.update(23000, true, petsleep::MOOD_FRAME_MS) && moodClock.step() == 1);
-  assert(moodClock.update(29000, true, petsleep::MOOD_FRAME_MS) && moodClock.step() == 3);
-  assert(!moodClock.update(29001, false, petsleep::MOOD_FRAME_MS) && moodClock.step() == 0);
+  assert(!moodClock.update(21499, true, petsleep::MOOD_FRAME_MS));
+  assert(moodClock.update(21500, true, petsleep::MOOD_FRAME_MS) && moodClock.step() == 1);
+  assert(moodClock.update(24500, true, petsleep::MOOD_FRAME_MS) && moodClock.step() == 3);
+  assert(!moodClock.update(24501, false, petsleep::MOOD_FRAME_MS) && moodClock.step() == 0);
   assert(moodClock.update(UINT32_MAX - 100, true, petsleep::MOOD_FRAME_MS));
-  assert(!moodClock.update(2898, true, petsleep::MOOD_FRAME_MS));
-  assert(moodClock.update(2899, true, petsleep::MOOD_FRAME_MS) && moodClock.step() == 1);
+  assert(!moodClock.update(1398, true, petsleep::MOOD_FRAME_MS));
+  assert(moodClock.update(1399, true, petsleep::MOOD_FRAME_MS) && moodClock.step() == 1);
   std::puts("PET animation: PASS (independent egg/mood timing, navigation rebase, catch-up, wrap, poses, pending tap)");
 }

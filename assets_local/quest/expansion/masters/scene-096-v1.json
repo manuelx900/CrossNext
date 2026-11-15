@@ -1,0 +1,12 @@
+{
+  "id": "S096",
+  "master": "scene-096-v1.png",
+  "sha256": "9c02af0a889762e840ac0d113b30bde64bc25b6d98acc447020ee7c507c1ed0b",
+  "tool": "built-in image_gen",
+  "prompt": "Create ONE original complete narrative illustration for the monochrome e-ink reading RPG Aventura lectora. Landscape3:2, filled scene reaching every edge, large readable foreground subjects and clear depth. Match reference STYLE ONLY: bold smooth BLACK contours, expressive chibi fantasy people, white and flat pale-gray fills, strong object silhouettes, no sketch texture, crosshatching, color, UI, text, letters, captions, or watermark. Player hero and PET stay OFF CAMERA; named people are NPCs. Draw one coherent instant, never a collage. Important clues must read at480x320. Do not add the reference wolf unless this scene specifically needs it. Region: The last page. Chapter: Everyone's bell. Illustrate this already-authored event faithfully, without inventing another object or plot: Aren blackened an original account before you could free it. Its recovered copy remained legible beside you. Liora's letters named the families keeping further copies outside the fortress; the king could no longer erase that story by destroying one book. Context only, do not try to draw all of it: The king claims no one outside his fortress can keep memories safe. You ring Ada's handbell beside the restored accounts. It carries the echoes of voices returned along the route, not souls taken from their owners.",
+  "reference": "assets_local/quest/campaign/path-art/masters/path-00-0-v1.png",
+  "transparent": false,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGB"
+}

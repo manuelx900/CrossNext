@@ -1,12 +1,14 @@
 #include <gtest/gtest.h>
 
 #include <cstdlib>
+#include <cstring>
 #include <map>
 #include <new>
 
 #include "FontCacheManager.h"
 #include "FontDecompressor.h"
 #include "SdCardFont.h"
+#include "TtfEpdFont.h"
 
 namespace {
 
@@ -145,3 +147,92 @@ TEST(FontCacheManagerTest, IncrementalPrewarmRequestsAccumulation) {
   ASSERT_EQ(1, font.prewarmCallCount);
   EXPECT_TRUE(font.prewarmCalls[0].accumulate);
 }
+
+TEST(FontCacheManagerTest, ReaderScopeAccumulatesSdFontsButTransientScopeReplaces) {
+  SdCardFont font;
+  const std::map<int, EpdFontFamily> noBuiltinFonts;
+  const std::map<int, SdCardFont*> sdFonts{{7, &font}};
+  FontCacheManager manager(noBuiltinFonts, sdFonts, kNoTtfFonts);
+  {
+    auto scope = manager.createPrewarmScope(FontCacheManager::ScopeCache::Reader);
+    manager.recordText("AB", 7, EpdFontFamily::BOLD);
+    scope.endScanAndPrewarm();
+  }
+  ASSERT_EQ(1, font.prewarmCallCount);
+  EXPECT_EQ(2, font.prewarmCalls[0].styleMask);
+  EXPECT_TRUE(font.prewarmCalls[0].accumulate);
+  {
+    auto scope = manager.createPrewarmScope();
+    manager.recordText("CD", 7, EpdFontFamily::REGULAR);
+    scope.endScanAndPrewarm();
+  }
+  ASSERT_EQ(2, font.prewarmCallCount);
+  EXPECT_FALSE(font.prewarmCalls[1].accumulate);
+}
+#ifdef FCM_TEST_VECTOR
+TEST(FontCacheManagerTest, ReaderSizedFontsSurviveTransientScopesAndExplicitResetStillClears) {
+  TtfEpdFont reader, transient;
+  reader.readerCached = true;
+  const std::map<int, EpdFontFamily> families;
+  const std::map<int, SdCardFont*> sd;
+  const std::map<int, TtfEpdFont*> vector{{10, &reader}, {20, &transient}};
+  FontCacheManager manager(families, sd, vector);
+  {
+    auto scope = manager.createPrewarmScope();
+    manager.recordText("Reader", 10, EpdFontFamily::REGULAR);
+    scope.endScanAndPrewarm();
+    EXPECT_TRUE(reader.retained);
+    EXPECT_EQ(reader.clears, 0u);
+    EXPECT_EQ(transient.clears, 1u);
+  }
+  EXPECT_EQ(reader.clears, 0u);
+  manager.clearCache();
+  EXPECT_EQ(reader.clears, 1u);
+}
+
+TEST(FontCacheManagerTest, SpeculativePrewarmStopsBetweenSmallGlyphBatches) {
+  TtfEpdFont font;
+  const std::map<int, EpdFontFamily> families;
+  const std::map<int, SdCardFont*> sd;
+  const std::map<int, TtfEpdFont*> vector{{10, &font}};
+  FontCacheManager manager(families, sd, vector);
+  unsigned calls = 0;
+  {
+    auto scope = manager.createPrewarmScope(FontCacheManager::ScopeCache::Reader);
+    manager.recordText("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 10, EpdFontFamily::REGULAR);
+    scope.endScanAndPrewarm([](void* ctx) { return ++*static_cast<unsigned*>(ctx) < 3; }, &calls);
+    EXPECT_EQ(font.additions, 1u);
+    EXPECT_EQ(std::strlen(font.prepared), 16u);
+  }
+  EXPECT_EQ(font.additions, 1u);
+}
+
+TEST(FontCacheManagerTest, ThaiClustersSurviveScanDeduplication) {
+  TtfEpdFont font;
+  EpdFontData data;
+  const std::map<int, EpdFontFamily> families{{10, EpdFontFamily(&data, &data, &data, &data)}};
+  const std::map<int, SdCardFont*> sd;
+  const std::map<int, TtfEpdFont*> vector{{10, &font}};
+  FontCacheManager manager(families, sd, vector);
+  auto scope = manager.createPrewarmScope(FontCacheManager::ScopeCache::Reader);
+  manager.recordText("กิ่กิ่", 10, EpdFontFamily::BOLD);
+  scope.endScanAndPrewarm();
+  EXPECT_STREQ(font.prepared, "\xee\x80\x81");
+}
+
+TEST(FontCacheManagerTest, ReaderPrewarmsOnlyRequestedVectorStylesAtEachSize) {
+  TtfEpdFont body, heading;
+  const std::map<int, EpdFontFamily> builtin;
+  const std::map<int, SdCardFont*> sd;
+  const std::map<int, TtfEpdFont*> vector{{10, &body}, {20, &heading}};
+  FontCacheManager manager(builtin, sd, vector);
+  auto scope = manager.createPrewarmScope(FontCacheManager::ScopeCache::Reader);
+  manager.recordText("body", 10, EpdFontFamily::ITALIC);
+  manager.recordText("Heading", 20, EpdFontFamily::BOLD);
+  scope.endScanAndPrewarm();
+  EXPECT_EQ(body.mask, 4);
+  EXPECT_EQ(heading.mask, 2);
+  EXPECT_TRUE(body.retained);
+  EXPECT_TRUE(heading.retained);
+}
+#endif

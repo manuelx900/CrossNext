@@ -195,7 +195,11 @@ void CalibreConnectActivity::render(RenderLock&&) {
   const auto top = (pageHeight - height) / 2;
 
   if (state == CalibreConnectState::SERVER_STARTING) {
-    renderer.drawCenteredText(UI_12_FONT_ID, top, tr(STR_CALIBRE_STARTING));
+    UITheme::drawCenteredWrappedText(renderer,
+                                     Rect{metrics.contentSidePadding, top, pageWidth - 2 * metrics.contentSidePadding,
+                                          2 * renderer.getLineHeight(UI_12_FONT_ID)},
+                                     UI_12_FONT_ID, tr(STR_CALIBRE_STARTING), 2, true, EpdFontFamily::REGULAR,
+                                     UITheme::TextVerticalAlignment::TOP);
   } else if (state == CalibreConnectState::ERROR) {
     renderer.drawCenteredText(UI_12_FONT_ID, top, tr(STR_CONNECTION_FAILED), true, EpdFontFamily::BOLD);
   } else if (state == CalibreConnectState::SERVER_RUNNING) {

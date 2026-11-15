@@ -208,6 +208,21 @@ TEST(SdCardFontTest, CompletePagesReplaceEarlierGlyphs) {
   }
 }
 
+TEST(SdCardFontTest, GlyphRunsBatchReadsWithoutChangingReverseOrderedBitmaps) {
+  makeFont();
+  SdCardFont font;
+  ASSERT_TRUE(font.load("fixture"));
+  sdFontTestReads = 0;
+  ASSERT_EQ(0, font.prewarm(page(FIRST, 100).c_str(), 1, false, false, false));
+  std::printf("Font grouped reads: %zu for 101 glyphs including replacement\n", sdFontTestReads);
+#ifdef READER_IO_BASELINE
+  EXPECT_GT(sdFontTestReads, 100u);
+#else
+  EXPECT_LT(sdFontTestReads, 24u);
+#endif
+  expectPageBitmaps(font, FIRST, 100);
+}
+
 TEST(SdCardFontTest, IncrementalUiStringsStillAccumulate) {
   makeFont();
   SdCardFont font;
@@ -380,6 +395,40 @@ TEST(SdCardFontTest, LigatureRequestsServedFromAKernFreeMiniGetLigatures) {
   EXPECT_EQ(static_cast<uint32_t>('A'), font.getEpdFont()->getLigature('E', 'F'));
 }
 
+TEST(SdCardFontTest, ExtendedLigatureCountKeepsPairsBeyond255) {
+  makeKerningFont(0, 0, 2, true);
+  constexpr uint16_t COUNT = 300;
+  constexpr size_t LIGATURE_OFFSET = 64 + 24 + 7 * sizeof(EpdGlyph);
+  sdFontTestFile.insert(sdFontTestFile.begin() + LIGATURE_OFFSET + sizeof(EpdLigaturePair),
+                        (COUNT - 1) * sizeof(EpdLigaturePair), 0);
+  put16(8, CPFONT_EXTENDED_LIGATURE_VERSION);
+  sdFontTestFile[55] = 0;
+  put16(60, COUNT);
+  for (uint16_t i = 0; i < COUNT; ++i) {
+    const bool last = i == COUNT - 1;
+    put32(LIGATURE_OFFSET + i * sizeof(EpdLigaturePair), last ? ('E' << 16 | 'F') : ('A' << 16 | (0x100 + i)));
+    put32(LIGATURE_OFFSET + i * sizeof(EpdLigaturePair) + 4, 'A');
+  }
+  SdCardFont font;
+  ASSERT_TRUE(font.load("fixture"));
+  ASSERT_EQ(0, font.prewarm("EF", 1, false, true, false));
+  EXPECT_EQ(static_cast<uint32_t>('A'), font.getEpdFont()->getLigature('E', 'F'));
+  int width = 0, height = 0;
+  font.getEpdFont()->getTextDimensions("EF", &width, &height);
+  EXPECT_EQ(32, width);
+  font.releaseResidentCaches();
+  ASSERT_EQ(0, font.prewarm("EF", 1, false, true, false));
+  EXPECT_EQ(static_cast<uint32_t>('A'), font.getEpdFont()->getLigature('E', 'F'));
+}
+
+TEST(SdCardFontTest, RejectsExcessiveExtendedLigatureCount) {
+  makeKerningFont(0, 0, 2, true);
+  put16(8, CPFONT_EXTENDED_LIGATURE_VERSION);
+  put16(60, 4097);
+  SdCardFont font;
+  EXPECT_FALSE(font.load("fixture"));
+}
+
 TEST(SdCardFontTest, RedrawingAPrewarmedPageReadsNothing) {
   makeKerningFont();
   SdCardFont font;
@@ -392,6 +441,45 @@ TEST(SdCardFontTest, RedrawingAPrewarmedPageReadsNothing) {
     ASSERT_EQ(0, font.prewarm(text, 1, false, true, false));
     EXPECT_EQ(0U, sdFontTestReads) << text;
   }
+}
+
+TEST(SdCardFontTest, ResidentUiTextNeedsNeitherScratchAllocationNorReads) {
+  makeKerningFont();
+  SdCardFont font;
+  ASSERT_TRUE(font.load("fixture"));
+  ASSERT_EQ(0, font.prewarm("ABCDEF", 1, false, false, false));
+  sdFontTestReads = 0;
+  failNextArraySize = 512 * sizeof(uint32_t);
+  EXPECT_EQ(0, font.prewarm("ABCD", 1, false, false, true));
+  EXPECT_EQ(512 * sizeof(uint32_t), failNextArraySize);
+  EXPECT_EQ(0U, sdFontTestReads);
+  failNextArraySize = 0;
+}
+
+TEST(SdCardFontTest, MeasuringANewUiLabelKeepsItsBitmapsForDrawing) {
+  makeKerningFont();
+  SdCardFont font;
+  ASSERT_TRUE(font.load("fixture"));
+  ASSERT_EQ(0, font.prewarm("AB", 1, false, false, false));
+  ASSERT_EQ(0, font.prewarm("CD", 1, false, false, true));
+  sdFontTestReads = 0;
+  ASSERT_EQ(0, font.prewarm("CD", 1, false, false, false));
+  EXPECT_EQ(0U, sdFontTestReads);
+  const auto* glyph = font.getEpdFont()->getGlyph('C');
+  ASSERT_NE(nullptr, glyph);
+  EXPECT_NE(nullptr, font.getEpdFont()->data->bitmap);
+}
+
+TEST(SdCardFontTest, LigaturesUseAdjacentCharactersRatherThanTheTextAlphabet) {
+  makeKerningFont(0, 0, 2, true);
+  SdCardFont font;
+  ASSERT_TRUE(font.load("fixture"));
+  ASSERT_EQ(0, font.prewarm("EBF", 1, false, true, false));
+  // E and F occur in the string but do not form the E+F ligature.
+  EXPECT_EQ(3U, font.getEpdFont()->data->intervalCount);
+  ASSERT_EQ(0, font.prewarm("EF", 1, false, true, false));
+  EXPECT_NE(nullptr, font.getEpdFont()->data->bitmap);
+  EXPECT_EQ(static_cast<uint32_t>('A'), font.getEpdFont()->getLigature('E', 'F'));
 }
 
 TEST(SdCardFontTest, LaterPagesReadOnlyTheKernClassBlocksTheyUse) {
@@ -466,4 +554,20 @@ TEST(SdCardFontTest, AnEmptyOrFailedAdvanceBuildLeavesNoTable) {
   EXPECT_FALSE(font.hasAdvanceTable());
   ASSERT_EQ(0, font.buildAdvanceTable(page(FIRST, 10).c_str(), 1));
   EXPECT_TRUE(font.hasAdvanceTable());
+}
+
+TEST(SdCardFontTest, ReaderPagesConvergeOnTheRetainedGlyphSet) {
+  makeKerningFont();
+  SdCardFont font;
+  ASSERT_TRUE(font.load("test"));
+  for (const char* text : {"AB", "CD", "EF"}) {
+    ASSERT_EQ(0, font.prewarm(text, 1, false, true, true));
+    font.clearCache();
+  }
+  sdFontTestReads = 0;
+  for (const char* text : {"AB", "CD", "EF", "ACE", "BDF"}) {
+    ASSERT_EQ(0, font.prewarm(text, 1, false, true, true));
+    font.clearCache();
+  }
+  EXPECT_EQ(0U, sdFontTestReads);
 }

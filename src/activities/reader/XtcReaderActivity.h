@@ -11,6 +11,8 @@
 class XtcReaderActivity final : public ReaderActivity {
   std::shared_ptr<Xtc> xtc;
   uint32_t currentPage = 0;
+  char barBookTitle[64]{};
+  bool barBookTitleLoaded = false;
   mutable uint32_t lastSavedPage = UINT32_MAX;
   std::unique_ptr<ReaderToolbarUi> pageSettings;
   ReaderToolbarUi::Model overlayModel;
@@ -25,6 +27,7 @@ class XtcReaderActivity final : public ReaderActivity {
   };
 
   void renderPage();
+  void renderConfiguredBars();
   void openChapterSelection();
   void restoreContentsPosition(ContentsPosition position) override;
   ContentsPosition contentsPagePosition() const override { return {0, currentPage}; }
@@ -39,6 +42,7 @@ class XtcReaderActivity final : public ReaderActivity {
   std::string getBookAuthor() const override { return xtc ? xtc->getAuthor() : ""; }
   std::string getBookThumbBmpPath() const override { return xtc ? xtc->getThumbBmpPath() : ""; }
   bool handleFormatInput() override;
+  bool hasReadingOverlay() const override { return pageSettings || ReaderActivity::hasReadingOverlay(); }
   void renderBook() override;
   void applyInitialOrientation() override;
 

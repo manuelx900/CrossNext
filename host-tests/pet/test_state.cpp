@@ -215,6 +215,26 @@ static void testMilestones() {
 
 int main() {
   {
+    pet::Profile source, decoded;
+    uint8_t bytes[pet::STATE_BYTES];
+    for (unsigned food = 0; food <= pet::FOOD_CHOICE_COUNT; ++food) {
+      source.foodChoice = uint8_t(food);
+      pet::encode(source, bytes);
+      const bool valid = pet::decode(bytes, decoded);
+      assert(valid == (food < pet::FOOD_CHOICE_COUNT));
+      if (valid) {
+        assert(decoded.foodChoice == food);
+        assert(bytes[3] == (food < 6 ? '7' : '8'));
+        if (food >= 6) {
+          bytes[3] = '7';
+          const auto crc = pet::checksum(bytes, pet::STATE_BYTES - 4);
+          for (unsigned i = 0; i < 4; ++i) bytes[pet::STATE_BYTES - 4 + i] = uint8_t(crc >> (i * 8));
+          assert(!pet::decode(bytes, decoded));
+        }
+      }
+    }
+  }
+  {
     const unsigned increments[] = {10, 15, 20, 30, 45, 60};
     uint64_t previous = 0;
     for (unsigned n = 0; n < pet::OBJECT_COUNT; ++n) {
@@ -227,6 +247,13 @@ int main() {
     assert(pet::addReading(egg, 600));
     assert(pet::ownedCount(egg) == 0 && !pet::homeUnlocked(egg));
     assert(pet::addReading(egg, 1200));
+    assert(!pet::owns(egg, egg.project) && pet::projectRemaining(egg) == 0);
+    uint8_t pending[pet::STATE_BYTES];
+    pet::encode(egg, pending);
+    pet::Profile resumed;
+    assert(pet::decode(pending, resumed) && !pet::owns(resumed, resumed.project));
+    assert(pet::chooseProject(resumed, resumed.project) && pet::owns(resumed, resumed.project));
+    assert(pet::chooseProject(egg, egg.project));
     assert(pet::owns(egg, egg.project) && pet::ownedCount(egg) == 1);
     pet::Profile returning;
     returning.created = true;
@@ -241,14 +268,22 @@ int main() {
       assert(pet::addReading(returning, returning.readingSeconds + 3599) && !pet::owns(returning, n));
       assert(pet::projectProgressSeconds(returning) == 3599 && pet::projectRemaining(returning) == 1);
       assert(pet::addReading(returning, returning.readingSeconds + 1));
-      assert(pet::owns(returning, n) && pet::ownedCount(returning) == n + 1);
+      assert(!pet::owns(returning, n) && pet::projectRemaining(returning) == 0);
+      assert(pet::chooseProject(returning, n));
+      assert(pet::owns(returning, n) && pet::ownedCount(returning) == n);
       assert(pet::projectReading(returning) == credit + 3600 && pet::food(returning) == foodBefore);
     }
-    for (unsigned n = 0; n < 12; ++n) assert(pet::owns(returning, n));
+    for (unsigned n = 0; n < 12; ++n) assert(pet::owns(returning, n) == pet::objectAvailable(n));
     pet::Profile imported, roundTrip;
     imported.created = true;
     imported.readingSeconds = 10440ULL * 60;
-    for (unsigned n = 0; n < 180; ++n) pet::own(imported, n);
+    // Historical acquisition bits also include IDs retired from the current catalogue.
+    for (unsigned n = 0; n < 180; ++n) {
+      if (n < 16)
+        imported.owned |= uint16_t(1u << n);
+      else
+        imported.ownedExtra[(n - 16) / 8] |= uint8_t(1u << ((n - 16) % 8));
+    }
     assert(pet::chooseProject(imported, 180));
     assert(pet::projectProgressSeconds(imported) == 0 && pet::projectRemaining(imported) == 3600);
     uint8_t saved[pet::STATE_BYTES];
@@ -280,7 +315,7 @@ int main() {
   for (char c : {'L', 'U', 'N', 'A', ' '}) assert(pet::typeName(name, c));
   assert(!pet::typeName(name, ' ') && pet::finishName(name) && !std::strcmp(name, "LUNA"));
   assert(!pet::validName(" luna") && !pet::validName("LUNA ") && !pet::validName("LUNA  SOL"));
-  assert(!pet::validName("ABCDEFGHIJKLM") && !pet::validName("A1") && !pet::validName("A\nB"));
+  assert(!pet::validName("ABCDEFGHIJKLM") && pet::validName("A1") && !pet::validName("A\nB"));
   assert(pet::validName("LUNA SOL", false));
   pet::Profile p;
   p.created = true;
@@ -295,6 +330,8 @@ int main() {
   assert(!pet::feed(p));
   assert(pet::addReading(p, 6200));
   assert(pet::stage(p.readingSeconds) == pet::Stage::Newborn);
+  assert(!pet::owns(p, p.project));
+  assert(pet::chooseProject(p, p.project));
   p.earnedFood = 3;
   assert(pet::feed(p) && p.saciety == 95 && pet::food(p) == 2);
   assert(pet::feed(p) && p.saciety == 100 && pet::food(p) == 1);
@@ -316,6 +353,8 @@ int main() {
   assert(pet::chooseProject(p, 0));
   assert(p.readingSeconds == seconds);
   assert(pet::addReading(p, p.baselineSeconds + p.readingSeconds + pet::projectRemaining(p)));
+  assert(!pet::owns(p, 0) && p.equipped[0] != 0);
+  assert(pet::chooseProject(p, 0));
   assert(p.owned & 1);
   assert(p.equipped[0] == 0);
   assert(pet::projectThreshold(0) == 600 && pet::projectThreshold(1) == 1500);
@@ -325,12 +364,23 @@ int main() {
   std::strcpy(p.name, "LUNA SOL");
   p.sequence = 49;
   p.mode = pet::Mode::Hard;
-  p.goalIndex = 3;
   p.noticedSeconds = 1200;
   uint8_t bytes[pet::STATE_BYTES];
   pet::encode(p, bytes);
   pet::Profile decoded;
   assert(testDecode(bytes, decoded));
+  // All retired daily-goal preferences load without changing the companion.
+  for (unsigned reserved : {0u, 1u, 2u, 3u, 4u, 255u}) {
+    bytes[62] = uint8_t(reserved);
+    const auto sum = pet::checksum(bytes, pet::STATE_BYTES - 4);
+    for (unsigned n = 0; n < 4; ++n) bytes[pet::STATE_BYTES - 4 + n] = uint8_t(sum >> (n * 8));
+    assert(testDecode(bytes, decoded));
+    assert(decoded.readingSeconds == p.readingSeconds && decoded.mode == p.mode);
+    assert(decoded.owned == p.owned && !std::strcmp(decoded.name, p.name));
+    pet::encode(decoded, bytes);
+    assert(bytes[62] == 0 && testDecode(bytes, decoded));
+  }
+
   {
     pet::Profile catalog = p, roundTrip;
     bool visited[pet::OBJECT_COUNT]{};
@@ -340,15 +390,19 @@ int main() {
         assert(id < pet::OBJECT_COUNT && !visited[id] && pet::objectSlot(id) == slot);
         visited[id] = true;
         pet::own(catalog, id);
+        if (!pet::objectAvailable(id)) {
+          assert(!pet::owns(catalog, id) && !pet::equip(catalog, id));
+          continue;
+        }
         assert(pet::owns(catalog, id));
         if (catalog.equipped[slot] != id) assert(pet::equip(catalog, id));
         assert(catalog.equipped[slot] == id);
       }
     }
-    assert(pet::ownedCount(catalog) == 240 && !pet::owns(catalog, 240) && !pet::equip(catalog, 255));
+    assert(pet::ownedCount(catalog) == pet::CATALOG_COUNT && !pet::owns(catalog, 240) && !pet::equip(catalog, 255));
     pet::encode(catalog, bytes);
     assert(!std::memcmp(bytes, "PET7", 4) && testDecode(bytes, roundTrip));
-    assert(pet::ownedCount(roundTrip) == 240 && roundTrip.equipped[3] == 239);
+    assert(pet::ownedCount(roundTrip) == pet::CATALOG_COUNT && roundTrip.equipped[3] == 239);
     bytes[67] = 239;
     auto hash = pet::checksum(bytes, saveLength(bytes) - 4);
     for (unsigned i = 0; i < 4; ++i) bytes[saveLength(bytes) - 4 + i] = uint8_t(hash >> (8 * i));
@@ -390,7 +444,11 @@ int main() {
   game.begin(pet::Game::Sequence, 123);
   game.advance();
   game.select((game.sequence[0] + 1) % 3);
-  assert(game.showing() && game.step == 0 && game.mistakes == 1);
+  assert(game.phase == pet::GamePhase::Playing && game.step == 1 && game.mistakes == 0);
+  for (unsigned i = 1; i < game.sequenceLength(); ++i) game.select(game.sequence[i]);
+  assert(game.phase == pet::GamePhase::RoundFailed && game.step == 5 && game.mistakes == 1);
+  game.advance();
+  assert(game.showing() && game.step == 0);
   game.begin(pet::Game::Puzzle, 99);
   assert(!game.finished() && !game.puzzleSolved());
   pet::Profile health;
@@ -403,6 +461,28 @@ int main() {
   assert(health.hygiene == 20 && health.illness != pet::Illness::Healthy);
   assert(pet::clean(health) && health.hygiene == 100 && !pet::clean(health));
   assert(health.illness != pet::Illness::Healthy);
+  {
+    auto sleeping = health;
+    sleeping.resting = true;
+    sleeping.restAt = sleeping.careAt;
+    sleeping.hygiene = 44;
+    sleeping.energy = 30;
+    uint8_t before[pet::STATE_BYTES], after[pet::STATE_BYTES];
+    pet::encode(sleeping, before);
+    assert(!pet::feed(sleeping) && !pet::petOnce(sleeping, 30000) && !pet::clean(sleeping) && !pet::cure(sleeping));
+    pet::encode(sleeping, after);
+    assert(!std::memcmp(before, after, sizeof(before)));
+    sleeping.resting = false;
+    sleeping.restAt = 0;
+    assert(pet::clean(sleeping));
+    assert(!sleeping.resting && sleeping.restAt == 0 && sleeping.energy == 30);
+    uint8_t saved[pet::STATE_BYTES];
+    pet::encode(sleeping, saved);
+    pet::Profile restored;
+    assert(pet::decode(saved, restored) && !restored.resting && restored.restAt == 0);
+    assert(pet::advanceCare(restored, sleeping.careAt + 7200));
+    assert(restored.energy == 40);
+  }
   auto remedies = pet::medicine(health);
   assert(pet::cure(health) && pet::medicine(health) == remedies - 1 && !pet::cure(health));
   health.stories = 1;
@@ -554,7 +634,7 @@ int main() {
   complete.created = true;
   assert(pet::collectionComplete(complete));
   complete.ownedExtra[sizeof(complete.ownedExtra) - 1] &= 127;
-  assert(pet::ownedCount(complete) == 239 && !pet::collectionComplete(complete));
+  assert(pet::ownedCount(complete) == pet::CATALOG_COUNT - 1 && !pet::collectionComplete(complete));
   pet::own(complete, 239);
   assert(pet::collectionComplete(complete));
   pet::Profile affectionate;

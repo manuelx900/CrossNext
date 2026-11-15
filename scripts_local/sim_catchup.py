@@ -109,6 +109,45 @@ def require_all_applied():
     raise SystemExit("\n".join(lines))
 
 
+def patch_storage_revisions(src):
+    # Host files can change outside this HAL. Zero conservatively disables reuse.
+    patch(src / "HalStorage.h", "  bool begin();",
+          "  bool begin();\n"
+          "  uint32_t contentRevision() const { return 0; }\n"
+          "  uint32_t mediaRevision() const { return 0; }",
+          "HalStorage conservative host cache revisions", marker="contentRevision() const")
+    patch(src / "HalStorage.h", "  bool begin();",
+          "  bool begin();\n  uint32_t resourceRevision() const { return 0; }",
+          "HalStorage conservative host resource revision", marker="resourceRevision() const")
+
+    patch(src / "HalStorage.h", "  bool begin();",
+          "  bool begin();\n  uint32_t stateFileRevision(const char *) { return 0; }",
+          "HalStorage conservative host state revision", marker="stateFileRevision(")
+
+
+def patch_derived_storage(src):
+    # Host revisions are always zero, so derived writes use ordinary file I/O.
+    patch(src / "HalStorage.h", "  bool begin();",
+          "  bool begin();\n"
+          "  bool openDerivedCacheForWrite(const char *moduleName, const char *path, HalFile &file);\n"
+          "  bool openDerivedCoverForUpdate(const char *moduleName, const char *path, size_t sourceBytes, HalFile &file);",
+          "HalStorage host derived writes (header)", marker="openDerivedCacheForWrite(")
+    patch(src / "HalStorage.cpp", "bool HalStorage::begin() {",
+          "bool HalStorage::openDerivedCacheForWrite(const char *moduleName, const char *path, HalFile &file) {\n"
+          "  return openFileForWrite(moduleName, path, file);\n}\n"
+          "bool HalStorage::openDerivedCoverForUpdate(const char *moduleName, const char *path, size_t sourceBytes, HalFile &file) {\n"
+          "  (void)sourceBytes;\n  return openFileForUpdate(moduleName, path, file);\n}\n"
+          "bool HalStorage::begin() {",
+          "HalStorage host derived writes (implementation)", marker="HalStorage::openDerivedCacheForWrite(")
+
+    patch(src / "HalStorage.h", "  bool begin();",
+          "  bool begin();\n"
+          "  bool removeDerivedCache(const char *p) { return remove(p); }\n"
+          "  bool renameDerivedCache(const char *a, const char *b) { return rename(a, b); }\n"
+          "  bool replaceDerivedCache(const char *a, const char *b) { return replaceFile(a, b); }",
+          "HalStorage host EPUB cache operations", marker="removeDerivedCache(")
+
+
 def patch_checked_enumeration(src):
     patch(
         src / "HalStorage.h",
@@ -194,6 +233,39 @@ def patch_notification_drain(src):
           "simulator task notification coalescing", marker="pendingNotifications")
 
 
+def patch_effective_http_url(src):
+    """Keep the host transport's catalog base after curl follows a redirect."""
+    patch(src / "SimHttpFetch.h", "  std::string body;",
+          "  std::string body;\n  std::string effectiveUrl;",
+          "HTTP response URL", marker="std::string effectiveUrl;")
+    patch(src / "SimHttpFetch.h", " -w '%{http_code}'", " -w '%{http_code}\\n%{url_effective}'",
+          "curl response URL", marker="%{url_effective}")
+    patch(src / "SimHttpFetch.h", "  out.statusCode = std::atoi(statusText.c_str());",
+          "  out.statusCode = std::atoi(statusText.c_str());\n"
+          "  const auto urlStart = statusText.find('\\n');\n"
+          "  if (urlStart != std::string::npos) out.effectiveUrl = statusText.substr(urlStart + 1);",
+          "parse response URL", marker="const auto urlStart")
+    patch(src / "HTTPClient.h", "  bool responseComplete() const { return responseComplete_; }",
+          "  bool responseComplete() const { return responseComplete_; }\n"
+          "  const std::string& effectiveUrl() const { return url_; }",
+          "HTTP response URL accessor", marker="effectiveUrl() const")
+    patch(src / "HTTPClient.h", "    responseBody_ = response.body;",
+          "    responseBody_ = response.body;\n"
+          "    if (!response.effectiveUrl.empty()) url_ = response.effectiveUrl;",
+          "retain response URL", marker="response.effectiveUrl.empty()")
+    patch(src / "SecureHttpClient.h", "  bool aborted() const { return aborted_; }",
+          "  bool aborted() const { return aborted_; }\n"
+          "  const std::string& effectiveUrl() const { return http_.effectiveUrl(); }",
+          "secure response URL accessor", marker="effectiveUrl() const")
+    patch(src / "ResumableFetch.h", "  bool redirectToHttp = false;",
+          "  bool redirectToHttp = false;\n  std::string* effectiveUrl = nullptr;",
+          "fetch response URL output", marker="std::string* effectiveUrl")
+    patch(src / "ResumableFetch.h", "  result.complete = true;",
+          "  result.complete = true;\n"
+          "  if (options.effectiveUrl) *options.effectiveUrl = http.effectiveUrl();",
+          "fetch response URL assignment", marker="if (options.effectiveUrl)")
+
+
 def main(env):
     src = (
         pathlib.Path(env.subst("$PROJECT_LIBDEPS_DIR"))
@@ -205,6 +277,7 @@ def main(env):
     patch_file_lifetime(src)
     patch_mutex_timing(src)
     patch_notification_drain(src)
+    patch_effective_http_url(src)
 
     # HalStorage has no way to add to an existing file: openFileForWrite carries
     # O_TRUNC on both the device and here. lib/hal gained openFileForAppend for the
@@ -581,6 +654,24 @@ def main(env):
         marker="Absolute, Direct",
     )
 
+    patch(
+        src / "HalDisplay.h",
+        "  void displayWindow(int x, int y, int w, int h);",
+        "  bool displayWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool turnOffScreen = false);",
+        "HalDisplay window result contract (header)",
+        marker="bool displayWindow(uint16_t",
+    )
+    patch(
+        src / "HalDisplay.cpp",
+        "void HalDisplay::displayWindow(int, int, int, int) {\n  refreshDisplay(RefreshMode::FAST_REFRESH, false);\n}",
+        "bool HalDisplay::displayWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool turnOffScreen) {\n"
+        "  if (!w || !h || x % 8 || w % 8 || uint32_t(x) + w > getDisplayWidth() ||\n"
+        "      uint32_t(y) + h > getDisplayHeight()) return false;\n"
+        "  refreshDisplay(RefreshMode::FAST_REFRESH, turnOffScreen);\n  return true;\n}",
+        "HalDisplay window result contract (implementation)",
+        marker="bool HalDisplay::displayWindow(uint16_t",
+    )
+
     # The 2026-09-19 SDK bump added UsbMassStorage::hostSuspended(), and lib/hal
     # exposes it as HalStorage::usbDriveHostSuspended(). It needs its OWN patch
     # rather than a line in the USB Drive block above, because that block is
@@ -921,6 +1012,8 @@ def main(env):
     # -- the seam, checked rather than remembered -------------------------------
     #
     patch_checked_enumeration(src)
+    patch_storage_revisions(src)
+    patch_derived_storage(src)
 
     # lib/hal/HalStorage.h declares one surface; the simulator ships a SECOND
     # implementation of the same class, and platformio.sim.ini's `lib_ignore = hal`

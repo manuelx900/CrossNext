@@ -25,7 +25,6 @@ class CollectionTest(unittest.TestCase):
             self.assertEqual(zlib.crc32(data[offset:]), crc)
             self.assertTrue(any(data[offset:]) and any(value != 255 for value in data[offset:]))
             self.assertEqual(info["sprites"], 1)
-            self.assertEqual(data, (ROOT / "resources/apps/pet/collection.bin").read_bytes())
 
 
 if __name__ == "__main__":

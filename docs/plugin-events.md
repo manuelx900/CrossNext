@@ -249,3 +249,17 @@ saved network for a few seconds, POSTs
 the compact active-session summary to the plugin's server, shows
 "Synced", and goes to sleep. Nothing was tapped, no browser was involved, and
 the firmware contains no mention of the service.
+
+## CrossNext plugin-system controls
+
+Opening **Settings → Connectivity → Plugins** enables event dispatch and runtime
+discovery. There is no separate enable switch on the device. The saved enable
+state and settings API retain their existing gating behavior. A folder containing
+`.installing` is quarantined until installation finishes successfully.
+The original session timing and event fields above remain the CrossNext contract.
+
+A handler may set `require_meta` to one metadata-sidecar key. The event is queued
+only when the book's `<path>.meta.json` contains a nonempty string or whole number
+under that key. A missing book, unreadable sidecar, or other value type does not
+match. The sidecar is read when the event fires; write it before opening the book.
+A non-string filter is rejected rather than treated as an unfiltered handler.

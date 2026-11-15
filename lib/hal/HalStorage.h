@@ -8,6 +8,10 @@
 #include <string>
 #include <vector>
 
+#include "StateFileRevisions.h"
+#include "StorageMutation.h"
+#include "StorageRevision.h"
+
 class HalFile;
 
 enum class UsbDriveState : uint8_t {
@@ -24,6 +28,12 @@ class HalStorage {
   HalStorage();
   bool begin();
   bool ready() const;
+  // Boot-local cache stamps; zero means reuse must be disabled. No SD I/O.
+  uint32_t contentRevision() const { return contentRevision_.get(); }
+  uint32_t resourceRevision() const { return resourceRevision_.get(); }
+  uint32_t mediaRevision() const { return mediaRevision_.get(); }
+  // No SD I/O. Zero disables reuse for unsupported paths or an exhausted counter.
+  uint32_t stateFileRevision(const char* path);
   // Stop the SD card for deep sleep: unmount, stop the SDMMC host, and release
   // the bus pads (no-op on SPI boards). Call only after all file users have
   // stopped; open HalFiles become invalid. A deep-sleep wake resets the MCU and
@@ -96,6 +106,14 @@ class HalStorage {
   // openFileForAppend sends every write to the end on hosts where it maps to
   // O_APPEND, which silently made the header land at EOF.
   bool openFileForUpdate(const char* moduleName, const char* path, HalFile& file);
+  // Exact disposable cache paths; ordinary callers retain resource invalidation.
+  bool removeDerivedCache(const char* path);
+  bool renameDerivedCache(const char* from, const char* to);
+  bool replaceDerivedCache(const char* from, const char* to);
+  bool openDerivedCacheForWrite(const char* moduleName, const char* path, HalFile& file);
+  // Only bytes at/after sourceBytes are derived. An earlier write or truncation
+  // automatically restores normal resource invalidation for the handle.
+  bool openDerivedCoverForUpdate(const char* moduleName, const char* path, size_t sourceBytes, HalFile& file);
   bool removeDir(const char* path);
 
   static HalStorage& getInstance() { return instance; }
@@ -103,9 +121,24 @@ class HalStorage {
   class StorageLock;  // private class, used internally
 
  private:
+  friend class HalFile;
   static HalStorage instance;
+  StorageRevision contentRevision_;
+  StorageRevision resourceRevision_;
+  StorageRevision mediaRevision_;
+  StateFileRevisions stateFiles;
+  void invalidateContent(StorageMutation mutation = StorageMutation::Resources, StorageStateKey state = {}) {
+    contentRevision_.bump();
+    if (mutation == StorageMutation::Resources) resourceRevision_.bump();
+    if (mutation == StorageMutation::ReadingState) stateFiles.revision(state, true);
+  }
+  void invalidateMedia() {
+    mediaRevision_.bump();
+    invalidateContent();
+  }
 
   bool initialized = false;
+  bool openDerived(const char* moduleName, const char* path, oflag_t flags, size_t sourceBytes, HalFile& file);
   SemaphoreHandle_t storageMutex = nullptr;
 };
 

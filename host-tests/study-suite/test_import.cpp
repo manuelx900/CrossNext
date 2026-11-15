@@ -1,3 +1,5 @@
+#include <I18n.h>
+
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
@@ -226,6 +228,19 @@ int main(int argc, char** argv) {
     CHECK(tasks.entries()[0].name == "Empty" && tasks.entries()[0].total == 0);
     prose.scan();
     CHECK(prose.count() == 1 && prose.entries()[0].name == "Diary");
+    for (const auto language : {Language::EN, Language::ES}) {
+      I18N.setLanguage(language);
+      CHECK(!all.create("..", message));
+      CHECK(message == (language == Language::ES ? "Elige otro nombre." : "Choose a different name."));
+      CHECK(!all.create("Shopping", message));
+      CHECK(message == (language == Language::ES ? "Este nombre ya está en uso." : "This name is already in use."));
+      testStorage.available = false;
+      CHECK(!all.save("Shopping", "new text", message));
+      CHECK(message == tr(STR_TOOLS_SAVE_FAILED));
+      testStorage.available = true;
+      CHECK(testStorage.files["/notes/Shopping.md"] == saved);
+    }
+    I18N.setLanguage(Language::EN);
   }
   tools::State tool;
   bool writable;
@@ -264,8 +279,8 @@ int main(int argc, char** argv) {
   CHECK(quest::load(profile, writable, questWork) && !quest::hasLevelUp(profile));
   CHECK(quest::coins(profile) == beforeAcknowledgement);
   {
-    testStorage.files.erase("/.crosspoint/reading-quest-v5.dat");
-    auto& legacy = testStorage.files["/.crosspoint/reading-quest.dat"];
+    testStorage.files.erase("/.crosspoint/reading-adventure-v2/reading-quest-v5.dat");
+    auto& legacy = testStorage.files["/.crosspoint/reading-adventure-v2/reading-quest.dat"];
     legacy.assign(128, 0);
     const auto put = [](uint8_t* p, uint64_t value, int bytes) {
       for (int n = 0; n < bytes; ++n) p[n] = uint8_t(value >> (n * 8));
@@ -289,21 +304,21 @@ int main(int argc, char** argv) {
     testStorage.writeLimit = 20;
     CHECK(!quest::save(p2, writable, questWork));
     testStorage.writeLimit = -1;
-    CHECK(!Storage.exists("/.crosspoint/reading-quest-v5.dat"));
+    CHECK(!Storage.exists("/.crosspoint/reading-adventure-v2/reading-quest-v5.dat"));
     CHECK(quest::load(p2, writable, questWork) && p2.sequence == 101 && p2.xp == 8880);
     CHECK(quest::save(p2, writable, questWork) && p2.sequence == 1);
-    CHECK(testStorage.files["/.crosspoint/reading-quest.dat"] == original);
+    CHECK(testStorage.files["/.crosspoint/reading-adventure-v2/reading-quest.dat"] == original);
     p2.gender = quest::Gender::Feminine;
     CHECK(quest::save(p2, writable, questWork) && p2.sequence == 2);
     CHECK(quest::load(profile, writable, questWork) && profile.gender == quest::Gender::Feminine && profile.xp == 8880);
-    testStorage.files["/.crosspoint/reading-quest-v5.dat"][3] = '9';
-    const auto future = testStorage.files["/.crosspoint/reading-quest-v5.dat"];
+    testStorage.files["/.crosspoint/reading-adventure-v2/reading-quest-v5.dat"][3] = '9';
+    const auto future = testStorage.files["/.crosspoint/reading-adventure-v2/reading-quest-v5.dat"];
     CHECK(!quest::load(profile, writable, questWork) && !writable);
     CHECK(!quest::save(profile, writable, questWork));
-    CHECK(testStorage.files["/.crosspoint/reading-quest-v5.dat"] == future);
+    CHECK(testStorage.files["/.crosspoint/reading-adventure-v2/reading-quest-v5.dat"] == future);
   }
   {
-    testStorage.files.erase("/.crosspoint/reading-quest-v5.dat");
+    testStorage.files.erase("/.crosspoint/reading-adventure-v2/reading-quest-v5.dat");
     quest::Profile old;
     old.xp = 10000;
     old.spent = 300;
@@ -317,7 +332,7 @@ int main(int argc, char** argv) {
     bytes[252] = 0;
     const auto crc = readingstats::checksum(bytes, 316);
     for (int n = 0; n < 4; ++n) bytes[316 + n] = crc >> (8 * n);
-    auto& v4 = testStorage.files["/.crosspoint/reading-quest-v4.dat"];
+    auto& v4 = testStorage.files["/.crosspoint/reading-adventure-v2/reading-quest-v4.dat"];
     v4.assign(bytes, bytes + sizeof(bytes));
     const auto original = v4;
     CHECK(quest::load(p2, writable, questWork) && writable);
@@ -328,11 +343,11 @@ int main(int argc, char** argv) {
     CHECK(quest::save(p2, writable, questWork));
     CHECK(v4 == original);
     CHECK(quest::load(profile, writable, questWork) && !quest::hasLevelUp(profile));
-    testStorage.files.erase("/.crosspoint/reading-quest-v4.dat");
+    testStorage.files.erase("/.crosspoint/reading-adventure-v2/reading-quest-v4.dat");
   }
   {
     // Revalued historical reading can grant new levels once on migration.
-    testStorage.files.erase("/.crosspoint/reading-quest-v5.dat");
+    testStorage.files.erase("/.crosspoint/reading-adventure-v2/reading-quest-v5.dat");
     quest::Profile old;
     old.xp = 75;
     uint8_t bytes[quest::kProfileBytes]{};
@@ -341,7 +356,7 @@ int main(int argc, char** argv) {
     bytes[252] = 0;
     const auto crc = readingstats::checksum(bytes, 316);
     for (int n = 0; n < 4; ++n) bytes[316 + n] = crc >> (8 * n);
-    auto& v4 = testStorage.files["/.crosspoint/reading-quest-v4.dat"];
+    auto& v4 = testStorage.files["/.crosspoint/reading-adventure-v2/reading-quest-v4.dat"];
     v4.assign(bytes, bytes + sizeof(bytes));
     CHECK(quest::load(p2, writable, questWork) && !quest::hasLevelUp(p2));
     readingstats::Summary history;
@@ -356,11 +371,11 @@ int main(int argc, char** argv) {
     CHECK(quest::load(p2, writable, questWork) && !quest::hasLevelUp(p2));
     quest::refresh(p2, history);
     CHECK(!quest::hasLevelUp(p2) && quest::coins(p2) == balance);
-    testStorage.files.erase("/.crosspoint/reading-quest-v4.dat");
+    testStorage.files.erase("/.crosspoint/reading-adventure-v2/reading-quest-v4.dat");
   }
   for (int version : {2, 3}) {
-    testStorage.files.erase("/.crosspoint/reading-quest-v5.dat");
-    testStorage.files.erase("/.crosspoint/reading-quest-v3.dat");
+    testStorage.files.erase("/.crosspoint/reading-adventure-v2/reading-quest-v5.dat");
+    testStorage.files.erase("/.crosspoint/reading-adventure-v2/reading-quest-v3.dat");
     uint8_t encoded[quest::kProfileBytes]{};
     const auto putOld = [&](int at, uint64_t value, int bytes) {
       for (int n = 0; n < bytes; ++n) encoded[at + n] = uint8_t(value >> (n * 8));
@@ -381,7 +396,8 @@ int main(int argc, char** argv) {
     if (version == 3) encoded[277] = 8;
     const int checksumAt = version == 3 ? 316 : 252;
     putOld(checksumAt, readingstats::checksum(encoded, checksumAt), 4);
-    const char* oldPath = version == 3 ? "/.crosspoint/reading-quest-v3.dat" : "/.crosspoint/reading-quest-v2.dat";
+    const char* oldPath = version == 3 ? "/.crosspoint/reading-adventure-v2/reading-quest-v3.dat"
+                                       : "/.crosspoint/reading-adventure-v2/reading-quest-v2.dat";
     auto& oldFile = testStorage.files[oldPath];
     oldFile.assign(encoded, encoded + (version == 3 ? quest::kProfileBytes : quest::kV2ProfileBytes));
     const auto original = oldFile;
@@ -407,7 +423,7 @@ int main(int argc, char** argv) {
     CHECK(quest::save(p2, writable, questWork) && p2.sequence == 1);
     CHECK(quest::load(profile, writable, questWork) && quest::isClaimed(profile, 999));
     CHECK(oldFile == original);
-    testStorage.files.erase("/.crosspoint/reading-quest-v5.dat");
+    testStorage.files.erase("/.crosspoint/reading-adventure-v2/reading-quest-v5.dat");
     oldFile[checksumAt - 1] ^= 1;
     CHECK(!quest::load(profile, writable, questWork) && !writable);
   }

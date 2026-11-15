@@ -2,6 +2,7 @@
 
 #include <ContentProtection.h>
 #include <Print.h>
+#include <ZipFile.h>
 
 #include <memory>
 #include <optional>
@@ -32,6 +33,7 @@ class Epub {
   std::string tocNavItem;
   // where is the EPUBfile?
   std::string filepath;
+  mutable ZipFile::Catalog zipCatalog{filepath};
   // the base path for items in the EPUB file
   std::string contentBasePath;
   // Uniq cache key based on filepath
@@ -79,6 +81,7 @@ class Epub {
   std::string getThumbBmpPath() const;
   std::string getThumbBmpPath(int height) const;
   bool generateThumbBmp(int height) const;
+  bool hasSupportedThumbnailSource() const;
   // Locate the cover without building spine, TOC, or reading caches.
   bool generateThumbBmpFromSource(int height);
   uint8_t* readItemContentsToBytes(const std::string& itemHref, size_t* size = nullptr,
@@ -88,7 +91,8 @@ class Epub {
   // Incremental ZIP access; converted text and encrypted entries use other readers.
   bool openItemReader(const std::string& itemHref, ZipEntryReader& reader) const;
   // Extract an item to a file on SD. On failure the partial file is removed.
-  bool extractItemToFile(const std::string& itemHref, const std::string& destPath) const;
+  bool extractItemToFile(const std::string& itemHref, const std::string& destPath,
+                         bool (*continueWork)(void*) = nullptr, void* workContext = nullptr) const;
   bool getItemSize(const std::string& itemHref, size_t* size) const;
   BookMetadataCache::SpineEntry getSpineItem(int spineIndex) const;
   BookMetadataCache::TocEntry getTocItem(int tocIndex) const;
