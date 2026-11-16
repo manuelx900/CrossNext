@@ -14,6 +14,9 @@ mkdir -p "$BUILD_DIR"
 SRC=../../src/apps_local/go
 MICHI=$SRC/michi
 
+"${CC:-cc}" -std=c99 -Wall -Wextra -Werror -O2 -I$MICHI test_diagonal_neighbors.c -o "$BUILD_DIR/test_diagonal_neighbors"
+"$BUILD_DIR/test_diagonal_neighbors"
+
 # Somebody else's engine, built on its own terms. -Wall -Wextra -Werror here
 # would be a demand that upstream write to this fork's standards, and the answer
 # to a warning in vendored code is a patch nobody wants to carry across a sync.

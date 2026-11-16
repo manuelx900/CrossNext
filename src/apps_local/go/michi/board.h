@@ -204,8 +204,9 @@ __INLINE__ int   point_nlibs(Position *pos, Point pt)
 #define FORALL_POINTS(pos,i) for(Point i=BOARD_IMIN ; i<BOARD_IMAX ; i++)
 #define FORALL_NEIGHBORS(pos, pt, k, n) \
     for(k=0,n=pt+delta[0] ; k<4 ; n=pt+delta[++k])
+// FORK CHANGE: test the bound before reading a diagonal offset.
 #define FORALL_DIAGONAL_NEIGHBORS(pos, pt, k, n) \
-    for(k=4,n=pt+delta[4] ; k<8 ; n=pt+delta[++k])
+    for(k=4 ; k<8 && (n=pt+delta[k], 1) ; ++k)
 #define FORALL_IN_SLIST(l, item) \
     for(int _k=1,_n=l[0],item=l[1] ; _k<=_n ; item=l[++_k])
 #define SWAP(T, u, v) {T _t = u; u = v; v = _t;}

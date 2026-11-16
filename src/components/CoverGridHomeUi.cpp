@@ -33,13 +33,7 @@
 #include "UiAppHelpers.h"
 #include "apps_local/library/LibraryLoadingNotice.h"
 #include "apps_local/ui/StatusBattery.h"
-#include "icons/blocks.h"
 #include "icons/book.h"
-#include "icons/folder.h"
-#include "icons/library.h"
-#include "icons/settings2.h"
-#include "icons/shelfIcons.h"  // fork-local seam
-#include "icons/transfer.h"
 #include "util/BookProgress.h"
 #include "util/ReadingTimeMemo.h"
 
@@ -644,45 +638,9 @@ void CoverGridHomeUi::drawTabs(UiScreen& screen, fui::Rect rect) {
       target.bitmap(iconRect, fui::bitmapFromIcon(*item->icon), fui::BitmapMode::Contain);
       return true;
     }
-    const uint8_t* icon = LibraryIcon;
-    switch (homemenu::at(homemenu::config(), index, self.hasOpds)) {
-      case homemenu::Id::Files:
-        icon = FolderIcon;
-        break;
-      case homemenu::Id::Recent:
-        icon = LibraryIcon;
-        break;
-      case homemenu::Id::Stats:
-        icon = navicons::StatsLegacy32Bits;
-        break;
-      case homemenu::Id::Settings:
-        icon = Settings2Icon;
-        break;
-      case homemenu::Id::Games:
-        icon = ShelfGamesIcon;
-        break;
-      case homemenu::Id::Apps:
-        icon = ShelfAppsIcon;
-        break;
-      case homemenu::Id::Transfer:
-        icon = TransferIcon;
-        break;
-      case homemenu::Id::Services:
-        icon = BlocksIcon;
-        break;
-      case homemenu::Id::Count:
-        return false;
-      case homemenu::Id::Shortcut0:
-      case homemenu::Id::Shortcut1:
-      case homemenu::Id::Shortcut2:
-      case homemenu::Id::Shortcut3:
-      case homemenu::Id::Shortcut4:
-        icon = homemenu::icon(homemenu::at(homemenu::config(), index, self.hasOpds)) == homeui::Icon::Games
-                   ? ShelfGamesIcon
-                   : ShelfAppsIcon;
-        break;
-    }
-    self.renderer.drawIcon(icon, iconRect.x, iconRect.y, iconRect.width);
+    const auto id = homemenu::at(homemenu::config(), index, self.hasOpds);
+    if (id == homemenu::Id::Count) return false;
+    homeui::drawIcon(target, iconRect, homemenu::icon(id));
     return true;
   };
   tabs.tabStyles.normal.background = fui::Paint::solid(fui::Color::White);

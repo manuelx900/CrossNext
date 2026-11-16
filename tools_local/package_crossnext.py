@@ -1,13 +1,22 @@
 """Give release copies CrossNext names without changing PlatformIO/OTA filenames."""
 from pathlib import Path
 import argparse
+import configparser
 import hashlib
 import json
 import shutil
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-FIRMWARE_VERSION = "2.0.0"
+
+
+def firmware_version():
+    config = configparser.ConfigParser(interpolation=None)
+    config.read(ROOT / "platformio.ini", encoding="utf-8")
+    return config.get("crossplay", "version")
+
+
+FIRMWARE_VERSION = firmware_version()
 OTA_ASSET = "CrossNext-X4PRO-OTA.bin"
 
 

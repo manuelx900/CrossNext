@@ -8,7 +8,7 @@
 #include <cstring>
 
 #include "../../components/icons/blocks.h"
-#include "../ui/NavigationIcons.h"
+#include "../ui/HomeIcons.h"
 #include "../ui/PixelText.h"
 #include "../ui/StatusBattery.h"
 #include "../ui/ToyboxTokens.h"
@@ -38,30 +38,32 @@ void icon(fui::DrawTarget& target, const fui::Rect rect, Icon kind, bool inverte
   fui::BitmapRef bitmap;
   switch (kind) {
     case Icon::Files:
-      bitmap = fui::bitmapFromIcon(navicons::Folder32);
+      bitmap = fui::bitmapFromIcon(homeicons::Folder32);
       break;
     case Icon::Library:
-      bitmap = fui::bitmapFromIcon(navicons::Library32);
+      bitmap = fui::bitmapFromIcon(homeicons::Library32);
       break;
     case Icon::Stats:
-      bitmap = fui::bitmapFromIcon(navicons::Stats32);
+      bitmap = fui::bitmapFromIcon(homeicons::Stats32);
       break;
     case Icon::Transfer:
-      bitmap = fui::bitmapFromIcon(navicons::Send32);
+      bitmap = fui::bitmapFromIcon(homeicons::Send32);
       break;
     case Icon::Settings:
+      bitmap = fui::bitmapFromIcon(homeicons::Settings32);
+      break;
     case Icon::Gear:
-      bitmap = fui::bitmapFromIcon(navicons::Gear32);
+      bitmap = fui::bitmapFromIcon(homeicons::Gear32);
       break;
     case Icon::Games: {
       const int width = (rect.width * 5 + 3) / 4, height = (rect.height * 5 + 3) / 4;
       const auto art =
           fui::makeRect(rect.x - (width - rect.width) / 2, rect.y - (height - rect.height) / 2, width, height);
-      target.bitmap(art, fui::bitmapFromIcon(navicons::Games64), fui::BitmapMode::Contain, inverted ? white : black);
+      target.bitmap(art, fui::bitmapFromIcon(homeicons::Games64), fui::BitmapMode::Contain, inverted ? white : black);
       return;
     }
     case Icon::Apps:
-      bitmap = fui::bitmapFromIcon(navicons::Apps32);
+      bitmap = fui::bitmapFromIcon(homeicons::Apps32);
       break;
     case Icon::Plugins:
       bitmap = {BlocksIcon, 32, 32, fui::BitmapFormat::Mask1};

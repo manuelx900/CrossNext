@@ -496,12 +496,18 @@ int main(int argc, char** argv) {
   for (int n = 0; n < homeui::kPiccoActions; ++n) CHECK(homeui::piccoIndex(homeui::piccoAction(n)) == n);
   CHECK(homeui::piccoIndex(static_cast<homeui::QuickAction>(-1)) == -1);
   chrome::lightHeader = false;
+  chrome::beginFrame();
   CHECK(!chrome::invertHeaderForOutput(false));
   CHECK(chrome::invertHeaderForOutput(true));
   chrome::lightHeader = true;
+  // Output polarity belongs to the captured frame until the next one starts.
+  CHECK(!chrome::invertHeaderForOutput(false));
+  CHECK(chrome::invertHeaderForOutput(true));
+  chrome::beginFrame();
   CHECK(chrome::invertHeaderForOutput(false));
   CHECK(!chrome::invertHeaderForOutput(true));
   chrome::lightHeader = false;
+  chrome::beginFrame();
   model.style = homeui::Style::Framed;
   for (int month = 1; month <= 12; ++month) {
     char date[20];

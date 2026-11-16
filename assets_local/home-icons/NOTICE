@@ -1,0 +1,11 @@
+The seven Home menu silhouettes reproduce the user's supplied reference,
+2-Foto-2.jpg. REFERENCE.json records the SHA-256 and crop regions.
+No screenshot or local user path is required to regenerate the masks.
+
+The Gear silhouette retains assets_local/navigation-icons/Gear.svg for
+Carousel2. Other menus keep their existing navigation icons.
+
+tools_local/navigation_art/trace_home.py imports the reference silhouettes.
+tools_local/navigation_art/generate_home.py generates HomeIcons.h from the
+committed SVGs. The firmware draws constexpr one-bit masks without loading SVGs
+or allocating image buffers at runtime.

@@ -76,6 +76,11 @@ void ShelfFolderActivity::onEnter() {
   requestUpdate();
 }
 
+void ShelfFolderActivity::onExit() {
+  shelf::flushPendingState();
+  Activity::onExit();
+}
+
 void ShelfFolderActivity::setChoosing(const bool on) {
   if (choosing == on) return;
   // The table on the panel belongs to the mode that drew it, and every action
@@ -126,6 +131,12 @@ void ShelfFolderActivity::loop() {
   if (!navigation.capture(mappedInput, millis())) LOG_ERR("SHELF", "Navigation queue full");
   RenderLock lock(RenderLock::Mode::Try);
   if (!lock.ownsLock()) return;
+  // Keep state writes on the input task so shortcuts and touch snapshots cannot
+  // race persistence. The render lock is released only after presentation.
+  if (interactionsReady && saveAfterPresentation) {
+    saveAfterPresentation = false;
+    shelf::flushPendingState();
+  }
 
   const auto swipe = mappedInput.wasSwipe();
   int touchX = 0, touchY = 0;

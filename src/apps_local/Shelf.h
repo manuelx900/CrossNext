@@ -83,6 +83,8 @@ int folderCount();
 
 // Open folder `index` from Home. Out of range is a no-op and logged.
 void openFolder(int index, GfxRenderer& renderer, MappedInputManager& mappedInput);
+// Input-task callers hold RenderLock; flush after presentation or on exit.
+void flushPendingState();
 
 // Open item `item` of folder `folder`, and remember which folder it came from
 // so leave() can undo it. False if the item could not be created, in which case

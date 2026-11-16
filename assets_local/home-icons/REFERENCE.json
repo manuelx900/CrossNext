@@ -1,0 +1,74 @@
+{
+  "file": "2-Foto-2.jpg",
+  "sha256": "051bb3e2dba53b8805cb3727ae3d1d142d3f10a4a18820525c2a21b257d9effd",
+  "size": [
+    767,
+    1280
+  ],
+  "regions": {
+    "Folder": [
+      [
+        42,
+        580,
+        122,
+        650
+      ],
+      true
+    ],
+    "Library": [
+      [
+        42,
+        680,
+        122,
+        750
+      ],
+      false
+    ],
+    "Send": [
+      [
+        42,
+        780,
+        122,
+        850
+      ],
+      false
+    ],
+    "Stats": [
+      [
+        42,
+        880,
+        122,
+        950
+      ],
+      false
+    ],
+    "Games": [
+      [
+        38,
+        980,
+        125,
+        1050
+      ],
+      false
+    ],
+    "Apps": [
+      [
+        42,
+        1080,
+        122,
+        1150
+      ],
+      false
+    ],
+    "Settings": [
+      [
+        42,
+        1180,
+        122,
+        1250
+      ],
+      false
+    ]
+  },
+  "gear": "assets_local/navigation-icons/Gear.svg"
+}

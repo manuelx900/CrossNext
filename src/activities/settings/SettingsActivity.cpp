@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <optional>
 
 #include "AboutActivity.h"
 #include "BleSettingsActivity.h"
@@ -160,6 +161,8 @@ SettingsActivity::SettingsActivity(GfxRenderer& renderer, MappedInputManager& ma
 }
 
 void SettingsActivity::rebuildSettingsLists() {
+  std::optional<RenderLock> lock;
+  if (!RenderLock::heldByCurrentTask()) lock.emplace();
   const bool mangaOpen = currentSettings == &mangaSettings;
   displaySettings.clear();
   readerSettings.clear();
@@ -178,20 +181,21 @@ void SettingsActivity::rebuildSettingsLists() {
   deviceSettings.reserve(16);
   mangaSettings.reserve(2);
 
-  // Pick up any fonts uploaded/deleted over the web server since the last
-  // reader activity ran — otherwise the font-family picker shows stale list.
-  sdFontSystem.refreshIfDirty();
-
-  // Rescan /dictionaries on every rebuild: cheap (one directory listing) and
-  // picks up dictionaries copied to the SD card since the last visit.
+  // Only Reading needs resource discovery; the category menu is independent
+  // of the installed SD fonts and dictionaries.
+  readingResourcesReady = !categoryHome && selectedCategoryIndex == 1;
   std::vector<DictionaryEntry> dictionaries;
-  DictionaryRegistry::discover(dictionaries);
+  if (readingResourcesReady) {
+    sdFontSystem.refreshIfDirty();
+    DictionaryRegistry::discover(dictionaries);
+  }
 
   // Filled by the loop, drained after the action rows below.
   std::vector<SettingInfo> forkSystemSettings;
   forkSystemSettings.reserve(2);
 
-  for (auto& setting : getSettingsList(&sdFontSystem.registry(), &dictionaries)) {
+  for (auto& setting : getSettingsList(readingResourcesReady ? &sdFontSystem.registry() : nullptr,
+                                       readingResourcesReady ? &dictionaries : nullptr)) {
     if (setting.nameId == StrId::STR_DEVICE_REPORT) continue;
     if (setting.valuePtr == &CrossPointSettings::xtcCoverRotation ||
         setting.valuePtr == &CrossPointSettings::xtcInvertPageDirection) {
@@ -326,6 +330,7 @@ void SettingsActivity::rebuildSettingsLists() {
     readerSettings.erase(it);
     break;
   }
+  settingsListsReady = true;
   if (categoryHome)
     showCategoryHome();
   else if (mangaOpen) {
@@ -347,12 +352,18 @@ void SettingsActivity::onEnter() {
   quickResumeTimeoutAutoEnabled = false;
   syncQuickResumeTimeoutForSleepScreen(/*sleepScreenChanged=*/true, /*quickResumeTimeoutChanged=*/false);
 
-  rebuildSettingsLists();
+  showCategoryHome();
 }
 
 void SettingsActivity::selectCategory(const int categoryIndex) {
+  std::optional<RenderLock> lock;
+  if (!RenderLock::heldByCurrentTask()) lock.emplace();
   selectedCategoryIndex = categoryIndex;
   categoryHome = false;
+  if (!settingsListsReady || (categoryIndex == 1 && !readingResourcesReady)) {
+    rebuildSettingsLists();
+    return;
+  }
   const std::vector<SettingInfo>* categories[] = {&displaySettings, &readerSettings,       &controlsSettings,
                                                   &librarySettings, &connectivitySettings, &systemSettings,
                                                   &deviceSettings};

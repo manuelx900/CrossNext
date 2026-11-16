@@ -310,7 +310,11 @@ void loadState() {
 #endif
 }
 
-void saveState() {
+bool stateDirty = false;
+
+void saveState(const bool defer = false) {
+  stateDirty = true;
+  if (defer) return;
 #if defined(ARDUINO_ARCH_ESP32) || defined(SIMULATOR)
   char line[96];
   const size_t used = shelf::formatState(state, kFolderCount, line, sizeof(line));
@@ -318,7 +322,7 @@ void saveState() {
     LOG_ERR("SHELF", "State line did not fit %d bytes", static_cast<int>(sizeof(line)));
     return;
   }
-  Storage.writeFile(kStatePath, String(line));
+  if (Storage.writeFile(kStatePath, String(line))) stateDirty = false;
 #endif
 }
 
@@ -357,27 +361,26 @@ void saveHiddenItems() {
 #endif
 }
 
-// Only when something actually changed. Opening a folder happens on every Back,
-// and SPIFFS sectors have a finite erase count, so an unconditional write here
-// would be a write per navigation for no gain.
-void saveIfChanged(const int folder, const int row) {
+// Reopening an unchanged folder should not serialize or write the SD state.
+void saveIfChanged(const int folder, const int row, const bool defer = false) {
   ensureLoaded();
   if (state.lastFolder == folder && (folder < 0 || state.resumeRow[folder] == row)) return;
   state.lastFolder = folder;
   if (folder >= 0) state.resumeRow[folder] = row;
-  saveState();
+  saveState(defer);
 }
 
 // The item wake should reopen, or none. Kept separate from saveIfChanged
 // because the two facts change on different events: the position changes as you
 // navigate, this changes when an item opens, closes, or is left behind.
-void setOpenTitle(const char* title, shelf::LaunchOrigin origin = shelf::LaunchOrigin::Folder) {
+void setOpenTitle(const char* title, shelf::LaunchOrigin origin = shelf::LaunchOrigin::Folder,
+                  const bool defer = false) {
   ensureLoaded();
   const char* wanted = title == nullptr ? "" : title;
   if (strcmp(state.openTitle, wanted) == 0 && state.origin == origin) return;
   snprintf(state.openTitle, sizeof(state.openTitle), "%s", wanted);
   state.origin = origin;
-  saveState();
+  saveState(defer);
 }
 
 // Replaces the running activity, or logs and stays put. Every launch in this
@@ -445,15 +448,24 @@ void openFolder(const int index, GfxRenderer& renderer, MappedInputManager& mapp
     LOG_ERR("SHELF", "Bad folder index: %d", index);
     return;
   }
+  auto next = ShelfFolderActivity::create(renderer, mappedInput, index);
+  if (!next) {
+    LOG_ERR("SHELF", "OOM opening %s", kFolders[index].title);
+    return;
+  }
   // Opening a folder means nothing below it is open any more. Clearing here
   // rather than in leave() keeps the fact true even when a folder is reached by
   // some route that did not go through leave().
   openFolderIndex = -1;
   homeReturn = true;
   ensureLoaded();
-  saveIfChanged(index, state.resumeRow[index]);
-  setOpenTitle(nullptr);
-  replaceWith(ShelfFolderActivity::create(renderer, mappedInput, index), kFolders[index].title);
+  saveIfChanged(index, state.resumeRow[index], true);
+  setOpenTitle(nullptr, LaunchOrigin::Folder, true);
+  replaceWith(std::move(next), kFolders[index].title);
+}
+
+void flushPendingState() {
+  if (stateDirty) saveState();
 }
 
 bool openItem(const int folder, const int item, GfxRenderer& renderer, MappedInputManager& mappedInput,

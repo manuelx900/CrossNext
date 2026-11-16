@@ -183,6 +183,8 @@ struct SettingInfo {
 
 class SettingsActivity final : public UiTabListActivity {
   bool categoryHome = true;
+  bool settingsListsReady = false;
+  bool readingResourcesReady = false;
   int selectedCategoryIndex = 0;  // Currently selected category
   int settingsCount = 0;
 

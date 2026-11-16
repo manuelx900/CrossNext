@@ -1,4 +1,4 @@
-# CrossNext 2.0.0
+# CrossNext 2.0.1
 
 [English](README.md) · [Instalación](docs/install.md) · [Descargas](https://github.com/manuelx900/CrossNext/releases)
 
@@ -6,19 +6,23 @@
 
 CrossNext es un firmware de código abierto para **Xteink X4 Pro (ESP32-S3)**.
 Reúne lectura EPUB, biblioteca, estadísticas, herramientas de estudio, apps y juegos.
-**CrossNext 2.0.0 está basado en [CrossPoint 2.0.0](https://github.com/crosspoint-reader/crosspoint-reader/releases/tag/2.0.0)**, con la base de apps y juegos heredada de [CrossPlay 1.14.2](https://github.com/ma-r-s/crossplay/releases/tag/v1.14.2).
+**CrossNext 2.0.1 está basado en [CrossPoint 2.0.0](https://github.com/crosspoint-reader/crosspoint-reader/releases/tag/2.0.0)**, con la base de apps y juegos heredada de [CrossPlay 1.14.2](https://github.com/ma-r-s/crossplay/releases/tag/v1.14.2).
 Estos paquetes son para X4 Pro: no los instales en X4 ni X3.
 
 ## Instalar o actualizar
 
-Descarga el firmware X4 Pro y sus recursos desde
-[GitHub Releases](https://github.com/manuelx900/CrossNext/releases).
-Consulta [todas las novedades desde 1.4.0](docs/releases/2.0.0.md) y descarga los adjuntos de 2.0.0.
+Descarga el firmware X4 Pro desde [GitHub Releases](https://github.com/manuelx900/CrossNext/releases).
+Consulta las [notas del parche 2.0.1](docs/releases/2.0.1.md) o [todas las novedades desde 1.4.0](docs/releases/2.0.0.md).
+La versión 2.0.1 incorpora iconos de inicio más finos y reduce el trabajo previo a mostrar Juegos, Apps y Configuración.
+
+**Si actualizas desde 2.0.0:** instala solo el firmware nuevo; conserva tus Resources y Book Preparer.
+Para una instalación nueva o una actualización desde una versión anterior, descarga también los recursos de
+la [versión 2.0.0](https://github.com/manuelx900/CrossNext/releases/tag/2.0.0) y sigue los pasos de abajo.
 Guarda una copia de la microSD, incluida la carpeta oculta `/.crosspoint/`, donde están tus partidas y progreso.
 
-1. Si ya tienes una instalación compatible, copia `CrossNext-X4PRO-Firmware-v2.0.0.bin`
+1. Si ya tienes una instalación compatible, copia `CrossNext-X4PRO-Firmware-v2.0.1.bin`
    a la tarjeta. Abre **Configuración → Dispositivo → Actualizar firmware**, selecciónalo y confirma.
-2. Guarda tus fuentes, diccionarios e imágenes personalizados y reemplaza las
+2. Si todavía no has instalado los Resources de 2.0.0, guarda tus fuentes, diccionarios e imágenes personalizados y reemplaza las
    carpetas de recursos antiguas por las de `CrossNext-Resources.zip` en la raíz
    de la microSD. No mezcles paquetes antiguos y nuevos. Conserva los libros,
    las licencias y tus datos de `/.crosspoint/`; reinicia al terminar.
@@ -90,7 +94,9 @@ Batalla naval, Solitario, Corazones, Murdle, Carnívoro, Cuatro en raya, Sudoku 
 ## Preparar libros en el ordenador
 
 **CrossNext Book Preparer 2.0.0** es el programa complementario y opcional para
-**Windows y macOS**. Prepara la microSD en el ordenador antes de volver al lector,
+**Windows y macOS**, compatible con el firmware 2.0.1. Descarga sus instaladores de
+la [versión 2.0.0](https://github.com/manuelx900/CrossNext/releases/tag/2.0.0).
+Prepara la microSD en el ordenador antes de volver al lector,
 para que CrossNext pueda reutilizar los resultados y evitar hacer ese trabajo en
 el dispositivo. Tus libros se procesan localmente: no se suben a Internet.
 
