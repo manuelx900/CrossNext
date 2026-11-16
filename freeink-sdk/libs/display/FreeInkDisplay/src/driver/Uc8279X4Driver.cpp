@@ -721,10 +721,14 @@ void Uc8279X4Driver::displayGray(EpdBus& bus, const uint8_t* fb, bool turnOff, c
     bus.data(_cfg.psr0);
     bus.data(_cfg.psr1);
     bus.cmd(CMD_DISPLAY_REFRESH);
+    // The charge bookkeeping for the next page only reads the two planes that
+    // were just uploaded. Do it while the waveform runs (about 360 ms of
+    // waiting) instead of after it; a refresh that fails below still discards
+    // the result through invalidate().
+    _textAa.finish(15, -2, -2, -20);
     bus.waitRefreshComplete("UC8279 one-pass text AA");
     if (bus.isBusy()) { _textAa.invalidate(); _needFullClear = true; return; }
     _grayRefreshedOnce = true;
-    _textAa.finish(15, -2, -2, -20);
     bus.cmd(CMD_PLL);
     bus.data(_cfg.pll);
     _needFullClear = false;
