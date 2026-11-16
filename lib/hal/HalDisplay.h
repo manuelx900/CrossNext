@@ -121,6 +121,9 @@ class HalDisplay {
   // displayBuffer(): a separate B/W refresh first makes the gray pass re-drive
   // the whole text body (a visible flash).
   bool combinesGrayscaleBase() const;
+  // True while a book text page is presented. Panels with a one-pass text
+  // waveform (X4 Pro UC8279) then report a combined grayscale base; others ignore it.
+  void setReaderRefresh(bool reading);
 
   // Runtime geometry passthrough
   uint16_t getDisplayWidth() const;
