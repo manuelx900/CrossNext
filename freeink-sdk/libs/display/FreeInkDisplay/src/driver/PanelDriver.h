@@ -193,6 +193,8 @@ class PanelDriver {
 
   // --- optional, controller-specific hooks (no-op by default) ---
   virtual void requestResync(uint8_t settlePasses) { (void)settlePasses; }
+  // True while the host presents book pages; drivers with a reading waveform use it.
+  virtual void setReaderRefresh(bool reading) { (void)reading; }
   virtual void skipInitialResync() {}
   // Content-polarity hint: true while the facade is rendering inverted (dark
   // background) frames. Differential drivers idle unchanged pixels, so on a

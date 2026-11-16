@@ -1,4 +1,5 @@
 #include "Uc8279X4Driver.h"
+#include "../lut/X4ProTextAaLuts.h"
 
 #include <Arduino.h>
 #include <BoardConfig.h>
@@ -284,6 +285,7 @@ void Uc8279X4Driver::initController(EpdBus& bus) {
 }
 
 void Uc8279X4Driver::begin(EpdBus& bus) {
+  _textAa.allocate(BoardConfig::ACTIVE.board == BoardConfig::Board::XteinkX4Pro && _w == 800 && _h == 480);
   _directGrayOnPanel = false;
   _grayImagePass = false;
   _absoluteInput = false;
@@ -392,6 +394,7 @@ void Uc8279X4Driver::powerOnIfNeeded(EpdBus& bus, const char* tag) {
 }
 
 bool Uc8279X4Driver::displayStart(EpdBus& bus, const uint8_t* fb, const uint8_t* prev, RefreshMode mode, bool turnOff) {
+  _textAa.invalidate();
   const bool paintDestination = _directGrayOnPanel;
   _directGrayOnPanel = false;
   _grayImagePass = false;
@@ -530,6 +533,7 @@ void Uc8279X4Driver::displayFinish(EpdBus& bus, const uint8_t* fb) {
 }
 
 void Uc8279X4Driver::requestResync(uint8_t settlePasses) {
+  _textAa.invalidate();
   _grayImagePass = false;
   _absoluteInput = false;
   _directGrayPass = false;
@@ -540,6 +544,7 @@ void Uc8279X4Driver::requestResync(uint8_t settlePasses) {
 void Uc8279X4Driver::skipInitialResync() { _needFullClear = false; }
 
 void Uc8279X4Driver::deepSleep(EpdBus& bus) {
+  _textAa.invalidate();
   _directGrayOnPanel = false;
   _grayImagePass = false;
   _absoluteInput = false;
@@ -566,6 +571,9 @@ GrayscaleCapabilities Uc8279X4Driver::grayscaleCapabilities(GrayscaleMode mode) 
   // Report unsupported so callers render B/W instead of driving it with
   // another vendor's waveform.
   if (BoardConfig::ACTIVE.displayControllerVariant == 0x67) return {};
+  // Book text pages: base and gray masks go out together in one waveform.
+  if (mode == GrayscaleMode::Overlay && _readerRefresh && _textAa.ready())
+    return {GrayscaleEncoding::OverlayMasks, GrayscaleBase::Combined, true, false, false};
   if (mode == GrayscaleMode::Absolute || mode == GrayscaleMode::Direct)
     return {GrayscaleEncoding::AbsolutePlanes,
             mode == GrayscaleMode::Direct ? GrayscaleBase::Combined : GrayscaleBase::Separate, false, false, false};
@@ -575,6 +583,14 @@ GrayscaleCapabilities Uc8279X4Driver::grayscaleCapabilities(GrayscaleMode mode) 
 
 void Uc8279X4Driver::beginGrayscale(EpdBus& bus, const uint8_t* fb, GrayscaleMode mode, RefreshMode fallback,
                                     bool turnOff) {
+  if (mode == GrayscaleMode::Overlay && _readerRefresh && _textAa.ready() &&
+      BoardConfig::ACTIVE.displayControllerVariant != 0x67) {
+    if (fallback != RefreshMode::Fast || _needFullClear) display(bus, fb, nullptr, fallback, false);
+    _absoluteInput = false;
+    _textAa.begin(fb);
+    return;
+  }
+  _textAa.invalidate();
   _grayImagePass = false;
   _absoluteInput = false;
   _directGrayPass = false;
@@ -593,6 +609,7 @@ void Uc8279X4Driver::beginGrayscale(EpdBus& bus, const uint8_t* fb, GrayscaleMod
 }
 
 void Uc8279X4Driver::copyGrayscaleLsb(EpdBus& bus, const uint8_t* lsb) {
+  if (_textAa.active()) { _textAa.stage(0, lsb, 0, _h); return; }
   if (!lsb) return;
   if (_absoluteInput) {
     bus.waitBusy(" absolute plane");
@@ -621,6 +638,7 @@ void Uc8279X4Driver::copyGrayscaleLsb(EpdBus& bus, const uint8_t* lsb) {
 #endif
 
 void Uc8279X4Driver::copyGrayscaleMsb(EpdBus& bus, const uint8_t* msb) {
+  if (_textAa.active()) { _textAa.stage(1, msb, 0, _h); return; }
   if (!msb) return;
   if (_absoluteInput) {
     bus.waitBusy(" absolute plane");
@@ -647,8 +665,79 @@ void Uc8279X4Driver::copyGrayscaleMsb(EpdBus& bus, const uint8_t* msb) {
   }
 }
 
+// Strips of a gray plane. During a one-pass text page they are only staged;
+// otherwise a completed plane is forwarded to the ordinary two-step upload, so
+// callers that write strips outside a text page keep today's behaviour.
+void Uc8279X4Driver::writeGrayscalePlaneStrip(EpdBus& bus, GrayPlane plane, const uint8_t* rows,
+                                              uint16_t yStart, uint16_t numRows) {
+  _textAa.stage(plane == GrayPlane::Msb, rows, yStart, numRows);
+  if (!_textAa.active() && _textAa.planeComplete(plane == GrayPlane::Msb)) {
+    if (plane == GrayPlane::Lsb) copyGrayscaleLsb(bus, _textAa.low());
+    else copyGrayscaleMsb(bus, _textAa.high());
+  }
+}
+
 void Uc8279X4Driver::displayGray(EpdBus& bus, const uint8_t* fb, bool turnOff, const unsigned char* lut,
                                  bool factoryMode) {
+  if (_textAa.active()) {
+    // One-pass text anti-aliasing, ported from upstream freeink-sdk (e020bd5,
+    // with the panel-setting value of bde5bc5): compose base + masks into two
+    // planes, load the text tables, one refresh.
+    if (!_textAa.compose()) { _textAa.invalidate(); _needFullClear = true; return; }
+    bus.waitBusy("8279 text ready");
+    const uint8_t variant = BoardConfig::ACTIVE.displayControllerVariant;
+    if (variant == 2 || variant == 3) {
+      bus.cmd(0x01);
+      const uint8_t volts[] = {0x43, 0, 0x78, 0x78, 0x17};
+      bus.data(volts, sizeof(volts));
+      bus.cmd(0x82);
+      bus.data(0x26);
+    }
+    bus.cmd(CMD_PANEL_SETTING);
+    bus.data(_cfg.psr0);
+    bus.data(_cfg.psr1);
+    bus.cmd(CMD_PFS);
+    bus.data(0x20);
+    bus.cmd(CMD_GATE_SCAN);
+    bus.data(2);
+    bus.cmd(0x30);
+    bus.data(0x0F);
+    bus.cmd(0x2A);
+    const uint8_t zero[3] = {};
+    bus.data(zero, sizeof(zero));
+    const auto* bank = variant >= 0x67 && variant <= 0x69 ? kX4ProTextUc8279Zhx : kX4ProTextUc8279;
+    for (unsigned i = 0; i < 5; ++i) {
+      bus.cmd(0x20 + i);
+      bus.data(bank + i * 49, 49);
+    }
+    bus.cmd(CMD_VCOM_DATA_INTERVAL);
+    bus.data(0xD7);
+    streamPlane(bus, CMD_DTM1, _textAa.low());
+    bus.cmd(0x11);
+    streamPlane(bus, CMD_DTM2, _textAa.high());
+    bus.cmd(0x11);
+    powerOnIfNeeded(bus, "8279 text power");
+    bus.cmd(CMD_PANEL_SETTING);
+    bus.data(_cfg.psr0);
+    bus.data(_cfg.psr1);
+    bus.cmd(CMD_DISPLAY_REFRESH);
+    bus.waitRefreshComplete("UC8279 one-pass text AA");
+    if (bus.isBusy()) { _textAa.invalidate(); _needFullClear = true; return; }
+    _grayRefreshedOnce = true;
+    _textAa.finish(15, -2, -2, -20);
+    bus.cmd(CMD_PLL);
+    bus.data(_cfg.pll);
+    _needFullClear = false;
+    _oldPlaneValid = false;
+    _redriveAfterGray = true;
+    if (turnOff) {
+      bus.cmd(CMD_POWER_OFF);
+      bus.waitBusy("text AA power off");
+      _isScreenOn = false;
+    }
+    return;
+  }
+
   (void)lut;
 
   // Vendor AA sequence: PSR (REG=1) -> [planes already in RAM via
@@ -735,6 +824,7 @@ void Uc8279X4Driver::displayGrayscaleBase(EpdBus& bus, const uint8_t* fb, Refres
 
 void Uc8279X4Driver::transitionGrayscaleBase(EpdBus& bus, const uint8_t* fb, bool turnOff) {
   if (!fb) return;
+  _textAa.invalidate();
   // Snapshot the new B/W base for the AA fold that follows.
   _grayBaseValid = false;
   _absoluteGrayPlanes = false;
@@ -809,6 +899,18 @@ void Uc8279X4Driver::runGrayscalePrecondition(EpdBus& bus) {
 }
 
 void Uc8279X4Driver::cleanupGrayscaleBuffers(EpdBus& bus, const uint8_t* bw) {
+  if (_textAa.active()) {
+    // A skipped AA pass still owes the caller its deferred B/W page.
+    display(bus, bw ? bw : _textAa.base(), nullptr, RefreshMode::Fast, true);
+    return;
+  }
+  if (_textAa.onPanel()) {
+    streamPlane(bus, CMD_DTM1, _textAa.high());
+    streamPlane(bus, CMD_DTM2, _textAa.high());
+    _oldPlaneValid = true;
+    return;
+  }
+
   _grayImagePass = false;
   _absoluteInput = false;
   _directGrayPass = false;

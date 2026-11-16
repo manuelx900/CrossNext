@@ -51,6 +51,7 @@
 #include "QrDisplayActivity.h"
 #include "ReaderActivity.h"
 #include "ReaderFontSizes.h"
+#include "ReaderRefreshScope.h"
 #include "ReaderToolbarUi.h"
 #include "ReaderUtils.h"
 #include "RecentBooksStore.h"
@@ -2563,6 +2564,10 @@ void EpubReaderActivity::renderContents(Page& content, const int orientedMarginT
   const bool cleanImageBasePending = manualRefreshPending || pagesUntilFullRefresh <= 1;
   const bool needsTextGrayscale = SETTINGS.textAntiAliasing;
   const bool needsAnyGrayscale = needsTextGrayscale || (pageHasImages && !ditherImages);
+  // Anti-aliased text pages without images: let the panel take its one-pass
+  // text waveform. Must be set before the capability query below, and stays on
+  // until this render returns so the gray pass and its cleanup see it.
+  ReaderRefreshScope readerRefresh(renderer, needsTextGrayscale && !pageHasImages);
   const bool absoluteImageGrayscale = pageHasImages && !ditherImages && !gpio.deviceIsX3() &&
                                       display.getController() == HalDisplay::Controller::UC8279 &&
                                       renderer.grayscaleCapabilities(HalDisplay::GrayscaleMode::Absolute).supported();
