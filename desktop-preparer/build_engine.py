@@ -136,7 +136,7 @@ original_translate = base.translate
 def translate(args, obj, is_c):
     flags = original_translate(args, obj, is_c)
     if not is_c:
-        flags[1:1] = ['-include', str(ROOT / 'src/compatibility.h'), '-include', 'Memory.h',
+        flags[1:1] = ['-include', str(ROOT / 'src/compatibility.h'), '-include', str(REPO / 'lib/Memory/Memory.h'),
                       '-I' + str(BUILD), '-I' + str(REPO / 'lib/Performance'),
                       '-I' + str(BUILD / 'device-sources/Xtc'), '-I' + str(BUILD / 'device-sources/Epub')]
     # Desktop CPU budget: keep the same algorithms and ABI, optimize them for throughput.
