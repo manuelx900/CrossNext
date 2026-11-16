@@ -56,6 +56,34 @@ and follow the [comparison guide](docs/epub-engine-comparison.md).
 Both [the comparison book](docs/downloads/CrossNext-EPUB-Comparison.epub) and [the reader showcase](docs/downloads/CrossNext-Reader-Showcase.epub) contain only English. They include numbered passages, typography and PNG/JPEG patterns;
 test the same book and layout on your reader, separating cold and warm openings.
 
+## Reading, study and play
+
+Statistics show time, pages, sessions, streaks, calendar and finished books.
+
+![Reading statistics](docs/images/statistics.png)
+
+PET grows through reading, with care, decoration, memories and previous generations.
+
+![PET](docs/images/pet.png)
+
+Reading Quest adds a campaign, repeatable Hunts, equipment and a shop extending
+through level 150. Every battle has its own reading objective: extra minutes are
+recorded in statistics and do not prepay the next battle. Repeat Hunts award EXP
+and coins; unique outfits and other objects are obtained once.
+
+![Reading Quest](docs/images/quest.png)
+
+Study with Flashcards and saved Words. Small tools include Habits, Tasks, Notes,
+Pomodoro, Wallpapers, Quotes, Calendar, Clock, Counter, Focus and Calculator.
+
+![Flashcards and Words](docs/images/study.png)
+![Apps](docs/images/apps.png)
+
+Games include Chess, Checkers, Go, Minesweeper, Picross, Wordle, 2048, The Intercept,
+Battleship, Solitaire, Hearts, Murdle, Carnivore, Connect four, Sudoku and Othello.
+
+![Games](docs/images/games.png)
+
 ## Prepare books on your computer
 
 **CrossNext Book Preparer 2.0.0** is the optional companion application for
@@ -94,46 +122,6 @@ physical refresh time.
 See [Book Preparer instructions](docs/desktop-book-preparer.md) and
 [on-reader preparation](docs/book-preparation.md). macOS packages are unsigned and
 not Apple-notarized. The DMGs are created and verified on macOS; Windows packaging includes the same preparation-engine revision.
-
-## Reading, study and play
-
-Statistics show time, pages, sessions, streaks, calendar and finished books.
-
-![Reading statistics](docs/images/statistics.png)
-
-PET grows through reading, with care, decoration, memories and previous generations.
-
-![PET](docs/images/pet.png)
-
-Reading Quest adds a campaign, repeatable Hunts, equipment and a shop extending
-through level 150. Every battle has its own reading objective: extra minutes are
-recorded in statistics and do not prepay the next battle. Repeat Hunts award EXP
-and coins; unique outfits and other objects are obtained once.
-
-![Reading Quest](docs/images/quest.png)
-
-Study with Flashcards and saved Words. Small tools include Habits, Tasks, Notes,
-Pomodoro, Wallpapers, Quotes, Calendar, Clock, Counter, Focus and Calculator.
-
-![Flashcards and Words](docs/images/study.png)
-![Apps](docs/images/apps.png)
-
-Games include Chess, Checkers, Go, Minesweeper, Picross, Wordle, 2048, The Intercept,
-Battleship, Solitaire, Hearts, Murdle, Carnivore, Connect four, Sudoku and Othello.
-
-![Games](docs/images/games.png)
-
-## Simulator and development
-
-The showcase starts in English and offers a language selector, sample books and
-synthetic app/game progress. Its data is separate from the reader's card.
-See [simulator setup](docs/simulator-windows.md) and [showcase controls](docs/simulator-showcase.md).
-Browser rendering does not reproduce physical e-ink refresh, sleep or SD timing.
-
-Develop in an isolated worktree. Run `./scripts_local/check.sh` and
-`./scripts_local/sim-shot.sh` there; format C/C++ with `./bin/clang-format-fix -g`.
-The device environment is `gh_release_x4pro`/`x4pro`; the upstream `default`
-environment targets another chip. Device testing remains required before publishing.
 
 ## Credits and licence
 

@@ -56,6 +56,34 @@ y sigue la [guía](docs/epub-engine-comparison.md). Incluye texto largo en ingl�
 tipografía y patrones PNG/JPEG idénticos para ambos motores. Compara con los mismos
 ajustes y distingue la primera apertura de las siguientes.
 
+## Lectura, estudio y juegos
+
+Las estadísticas muestran tiempo, páginas, sesiones, rachas, calendario y libros terminados.
+
+![Estadísticas](docs/images/statistics.png)
+
+PET crece con tu lectura e incluye cuidados, decoración, recuerdos y generaciones anteriores.
+
+![PET](docs/images/pet.png)
+
+Aventura lectora incluye campaña, cacerías repetibles, equipo y una tienda con
+desbloqueos hasta el nivel 150. Cada batalla tiene su propio objetivo: los minutos
+sobrantes quedan en las estadísticas y no adelantan otra batalla. Repetir una
+cacería da experiencia y monedas; atuendos y demás objetos únicos se obtienen una vez.
+
+![Aventura lectora](docs/images/quest.png)
+
+Estudia con Flashcards y Palabras guardadas. También tienes Hábitos, Tareas, Notas,
+Pomodoro, Fondos, Citas, Calendario, Reloj, Contador, Focus y Calculadora.
+
+![Flashcards y Palabras](docs/images/study.png)
+![Apps](docs/images/apps.png)
+
+Los juegos incluyen Ajedrez, Damas, Go, Buscaminas, Picross, Wordle, 2048, The Intercept,
+Batalla naval, Solitario, Corazones, Murdle, Carnívoro, Cuatro en raya, Sudoku y Othello.
+
+![Juegos](docs/images/games.png)
+
 ## Preparar libros en el ordenador
 
 **CrossNext Book Preparer 2.0.0** es el programa complementario y opcional para
@@ -95,46 +123,6 @@ tiempo físico de refresco de la pantalla.
 Consulta las [instrucciones del preparador](docs/desktop-book-preparer.md) y la
 [preparación desde el lector](docs/book-preparation.md).
 Los DMG se generan y verifican en macOS. Las apps no tienen notarización de Apple; pueden aparecer avisos de seguridad.
-
-## Lectura, estudio y juegos
-
-Las estadísticas muestran tiempo, páginas, sesiones, rachas, calendario y libros terminados.
-
-![Estadísticas](docs/images/statistics.png)
-
-PET crece con tu lectura e incluye cuidados, decoración, recuerdos y generaciones anteriores.
-
-![PET](docs/images/pet.png)
-
-Aventura lectora incluye campaña, cacerías repetibles, equipo y una tienda con
-desbloqueos hasta el nivel 150. Cada batalla tiene su propio objetivo: los minutos
-sobrantes quedan en las estadísticas y no adelantan otra batalla. Repetir una
-cacería da experiencia y monedas; atuendos y demás objetos únicos se obtienen una vez.
-
-![Aventura lectora](docs/images/quest.png)
-
-Estudia con Flashcards y Palabras guardadas. También tienes Hábitos, Tareas, Notas,
-Pomodoro, Fondos, Citas, Calendario, Reloj, Contador, Focus y Calculadora.
-
-![Flashcards y Palabras](docs/images/study.png)
-![Apps](docs/images/apps.png)
-
-Los juegos incluyen Ajedrez, Damas, Go, Buscaminas, Picross, Wordle, 2048, The Intercept,
-Batalla naval, Solitario, Corazones, Murdle, Carnívoro, Cuatro en raya, Sudoku y Othello.
-
-![Juegos](docs/images/games.png)
-
-## Simulador y desarrollo
-
-El simulador de muestra empieza en inglés e incluye selector de idioma, libros
-y progreso ficticio de apps y juegos. Sus datos están separados de tu tarjeta real.
-Consulta la [instalación](docs/simulator-windows.md) y los [controles](docs/simulator-showcase.md).
-El navegador no reproduce los tiempos físicos de pantalla, suspensión o tarjeta SD.
-
-Trabaja en un worktree aislado y ejecuta allí `./scripts_local/check.sh` y
-`./scripts_local/sim-shot.sh`. Formatea C/C++ con `./bin/clang-format-fix -g`.
-El entorno físico es `gh_release_x4pro`/`x4pro`; el `default` heredado corresponde
-a otro chip. Antes de publicar hay que probar el X4 Pro físico.
 
 ## Créditos y licencias
 
