@@ -58,23 +58,39 @@ test the same book and layout on your reader, separating cold and warm openings.
 
 ## Prepare books on your computer
 
-**CrossNext Book Preparer 2.0.0** prepares metadata, page layouts, processed images
-and the cover sizes used by the firmware. Its engine is compiled from the real
-firmware pipeline. Preparation moves that work to the computer; it cannot remove
-the display's physical refresh time or prepare every future layout automatically.
+**CrossNext Book Preparer 2.0.0** is the optional companion application for
+**Windows and macOS**. It prepares your microSD on the computer before you return
+to the reader, so CrossNext can reuse the results instead of doing that work on
+the device. Your books stay on your computer and card; they are not uploaded.
+
+![CrossNext Book Preparer 2.0.0: card selection, formats, reading fonts, text sizes and EPUB engine](docs/images/book-preparer.png)
+
+Using the real firmware preparation engine, it generates:
+
+- **Book data:** metadata and cache indexes that the reader can reuse.
+- **EPUB pages:** chapter pagination and processed images for your selected
+  engine, fonts, sizes and reading layout.
+- **Covers:** the image sizes used by the four home appearances and Library,
+  for supported EPUB, XTC and XTCH books.
 
 1. Close the book on the reader and safely remove the microSD. Connect it to the computer.
 2. Windows: open `CrossNext-Book-Preparer-Windows-v2.0.0.exe`.
    macOS: open the matching arm64 (Apple Silicon) or x64 (Intel) `.dmg` and drag the application to Applications.
 3. Select the **card root**, not the books folder. The program detects saved reading
    settings and installed fonts from `/fonts` and `/.fonts`.
-4. Choose the same EPUB engine as the reader, formats, fonts and sizes. Start preparation.
+4. Choose formats, fonts and sizes. Match the EPUB engine: **Modern** in the program
+   corresponds to **New** on the reader; **Classic** corresponds to **Classic (1.4)**.
+   Click **Prepare library**.
    Large libraries and many font/size combinations can take hours and use card space.
 5. Cancel preserves completed outputs. Run again to continue, then safely eject the card.
 
 The program writes generated cache files under `/.crosspoint/` and preserves books,
 settings, progress and statistics. Changing engine, font, size, orientation or layout
 can require new pages. It reuses compatible caches rather than deleting the library.
+The prepared options must match those used on the reader. Preparing a book does
+not lock its typography: you can still change it, and the reader will generate
+any missing layout. Preparation does not change visual quality or the display's
+physical refresh time.
 See [Book Preparer instructions](docs/desktop-book-preparer.md) and
 [on-reader preparation](docs/book-preparation.md). macOS packages are unsigned and
 not Apple-notarized. The DMGs are created and verified on macOS; Windows packaging includes the same preparation-engine revision.

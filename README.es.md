@@ -58,17 +58,29 @@ ajustes y distingue la primera apertura de las siguientes.
 
 ## Preparar libros en el ordenador
 
-**CrossNext Book Preparer 2.0.0** prepara metadatos, paginación, imágenes procesadas
-y los tamaños de portada del firmware. Utiliza el motor real del firmware compilado
-para ordenador. Adelanta ese trabajo; no elimina el tiempo físico de refresco de
-la pantalla ni prepara automáticamente todos los ajustes que elijas en el futuro.
+**CrossNext Book Preparer 2.0.0** es el programa complementario y opcional para
+**Windows y macOS**. Prepara la microSD en el ordenador antes de volver al lector,
+para que CrossNext pueda reutilizar los resultados y evitar hacer ese trabajo en
+el dispositivo. Tus libros se procesan localmente: no se suben a Internet.
+
+![CrossNext Book Preparer 2.0.0: selección de tarjeta, formatos, fuentes, tamaños y motor EPUB](docs/images/book-preparer.png)
+
+Utiliza el motor real del firmware para generar:
+
+- **Datos de los libros:** metadatos e índices de caché que el lector puede reutilizar.
+- **Páginas EPUB:** paginación de capítulos e imágenes procesadas con el motor,
+  las fuentes, los tamaños y el diseño de lectura seleccionados.
+- **Portadas:** las imágenes con los tamaños que usan las cuatro apariencias de
+  inicio y Biblioteca, para libros compatibles EPUB, XTC y XTCH.
 
 1. Cierra el libro, retira la microSD de forma segura y conéctala al ordenador.
 2. En Windows abre `CrossNext-Book-Preparer-Windows-v2.0.0.exe`.
    En macOS abre el DMG arm64 (Apple Silicon) o x64 (Intel) y arrastra la app a Aplicaciones.
 3. Selecciona la **raíz de la tarjeta**, no la carpeta de libros. El programa lee
    los ajustes del lector y detecta las fuentes de `/fonts` y `/.fonts`.
-4. Elige el mismo motor EPUB del lector, formatos, fuentes y tamaños. Inicia la preparación.
+4. Elige formatos, fuentes y tamaños. Usa el mismo motor EPUB: **Nuevo** en el
+   programa (**Modern** en inglés) corresponde a **Nuevo** en el lector; **Clásico**
+   corresponde a **Clásico (1.4)**. Pulsa **Preparar biblioteca**.
    Muchas fuentes y tamaños o una biblioteca grande pueden tardar horas y ocupar espacio.
 5. Cancelar conserva los resultados terminados. Puedes continuar después y expulsar
    la tarjeta de forma segura al finalizar.
@@ -76,6 +88,10 @@ la pantalla ni prepara automáticamente todos los ajustes que elijas en el futur
 El programa escribe caché generada dentro de `/.crosspoint/` y conserva libros,
 ajustes, progreso y estadísticas. Cambiar motor, fuente, tamaño, orientación o diseño
 puede necesitar otra paginación. Reutiliza las cachés compatibles.
+Los ajustes preparados deben coincidir con los que uses en el lector. Puedes
+seguir cambiando la tipografía del libro: el firmware generará cualquier diseño
+que falte. El programa adelanta trabajo sin cambiar la calidad visual ni el
+tiempo físico de refresco de la pantalla.
 Consulta las [instrucciones del preparador](docs/desktop-book-preparer.md) y la
 [preparación desde el lector](docs/book-preparation.md).
 Los DMG se generan y verifican en macOS. Las apps no tienen notarización de Apple; pueden aparecer avisos de seguridad.
