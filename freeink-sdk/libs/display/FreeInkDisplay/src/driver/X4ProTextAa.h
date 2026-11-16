@@ -21,9 +21,11 @@ public:
   void allocate(bool enabled) {
     _enabled = enabled;
 #if defined(BOARD_HAS_PSRAM)
+    // Planes: base, low, high, ink, 8 x charge, then the "charged" mask that
+    // finish() derives for the next compose().
     if (enabled && !_storage)
       _storage = static_cast<uint8_t *>(
-          heap_caps_malloc(SIZE * 12, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT));
+          heap_caps_malloc(SIZE * 13, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT));
 #else
     (void)enabled;
 #endif
@@ -71,18 +73,17 @@ public:
     auto *lo = _storage + SIZE;
     auto *hi = _storage + SIZE * 2;
     const auto *ink = _storage + SIZE * 3;
-    const auto *charge = reinterpret_cast<const int8_t *>(_storage + SIZE * 4);
-    const int threshold =
-        _median + 11; // ceil(10 * 1024 / 998), stock threshold mask.
+    // Pixels whose charge exceeds the stock threshold: one bit per pixel,
+    // prepared by finish() while the previous waveform was running, so this
+    // loop is plain byte work (it used to test 384,000 charges, about 40 ms
+    // on an ESP32-S3, between the page being ready and the refresh starting).
+    const auto *charged = _storage + SIZE * 12;
     for (uint32_t i = 0; i < SIZE; ++i) {
       const uint8_t gray = lo[i] | hi[i];
       const uint8_t white = _storage[i] & ~gray;
       uint8_t hold = _history ? static_cast<uint8_t>(white & ~ink[i]) : 0;
-      if (_chargeValid) {
-        for (unsigned bit = 0; bit < 8; ++bit)
-          if (charge[i * 8 + bit] > threshold)
-            hold &= static_cast<uint8_t>(~(0x80 >> bit));
-      }
+      if (_chargeValid)
+        hold &= static_cast<uint8_t>(~charged[i]);
       lo[i] = gray | (white & ~hold);
       hi[i] = white;
     }
@@ -117,6 +118,19 @@ public:
         _median = i - 128;
         break;
       }
+    }
+    // The next compose() holds back white pixels except where the charge is
+    // above the median by the stock margin. Charges and median are final here,
+    // so build that mask now rather than in compose().
+    auto *charged = _storage + SIZE * 12;
+    const int threshold =
+        _median + 11; // ceil(10 * 1024 / 998), stock threshold mask.
+    for (uint32_t i = 0; i < SIZE; ++i) {
+      uint8_t mask = 0;
+      for (unsigned bit = 0; bit < 8; ++bit)
+        if (charge[i * 8 + bit] > threshold)
+          mask |= static_cast<uint8_t>(0x80 >> bit);
+      charged[i] = mask;
     }
     _active = false;
     _history = _chargeValid = _onPanel = true;
