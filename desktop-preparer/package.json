@@ -53,6 +53,7 @@
       "icon": "shell/assets/icon.icns",
       "category": "public.app-category.books",
       "identity": "-",
+      "hardenedRuntime": false,
       "artifactName": "CrossNext-Book-Preparer-macOS-${arch}-v${version}.${ext}",
       "extendInfo": {
         "NSHumanReadableCopyright": "CrossNext contributors"

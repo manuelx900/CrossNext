@@ -74,6 +74,12 @@ jobs:
             echo "$architecture"
             if [ "$architecture" = "$(uname -m)" ]; then
               ELECTRON_RUN_AS_NODE=1 "$executable" -p 'process.platform + ":" + process.arch'
+              (
+                cd desktop-preparer
+                CROSSNEXT_PACKAGED_EXECUTABLE="$executable" \
+                CROSSNEXT_PACKAGED_RUNTIME="$app/Contents/Resources/runtime" \
+                CROSSNEXT_TEST_PYTHON=python3 node tests/packaged.cjs
+              )
             fi
             hdiutil detach "$mount"
           done
