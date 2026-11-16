@@ -18,8 +18,11 @@ Guarda una copia de la microSD, incluida la carpeta oculta `/.crosspoint/`, dond
 
 1. Si ya tienes una instalación compatible, copia `CrossNext-X4PRO-Firmware-v2.0.0.bin`
    a la tarjeta. Abre **Configuración → Dispositivo → Actualizar firmware**, selecciónalo y confirma.
-2. Extrae `CrossNext-Resources.zip` en la raíz de la microSD y combina sus carpetas.
-   Conserva las licencias y tus datos. Reinicia después de actualizar los recursos.
+2. Guarda tus fuentes, diccionarios e imágenes personalizados y reemplaza las
+   carpetas de recursos antiguas por las de `CrossNext-Resources.zip` en la raíz
+   de la microSD. No mezcles paquetes antiguos y nuevos. Conserva los libros,
+   las licencias y tus datos de `/.crosspoint/`; reinicia al terminar.
+   Consulta el aviso de reemplazo de Resources en las notas de la versión.
 3. Copia tus libros a una carpeta como `/books` y entra en **Archivos** o **Biblioteca**.
    Una configuración nueva empieza en inglés; puedes cambiar el idioma en Configuración.
 

@@ -203,10 +203,11 @@ def assemble(output, dictionaries, staging, dictionary_cache=None):
         else "Includes a custom StarDict dictionary collection selected by the package builder.\n")
     (staging / "README.txt").write_text(
         "CROSSNEXT - MICROSD RESOURCES\n\n"
-        "Extract this ZIP and copy apps, fonts, languages and dictionaries to the ROOT of your microSD.\n"
+        "Extract this ZIP and copy apps, fonts, languages, images and dictionaries to the ROOT of your microSD.\n"
         "Select microSD UI languages in Settings > System > Language; see languages/README.txt.\n"
-        "Merge apps, fonts and languages with existing folders. Replace the ten bundled dictionary folders\n"
-        "with these complete copies; keep other custom dictionaries. This removes stale .dict/.qidx/.sidx files.\n"
+        "Back up custom fonts, dictionaries and images before updating. Replace the old bundled resource\n"
+        "folders with these complete copies; do not merge old and new packs. Keep books and /.crosspoint/\n"
+        "reading/app data. Restore custom resources separately without restoring old bundled packs.\n"
         "Do not copy the resources parent folder or format the card.\n"
         "Power off before removing the card; restart the reader after installing resources.\n\n"
         "Includes PET, The Intercept and Reading Adventure artwork, plus 14 font families:\n"

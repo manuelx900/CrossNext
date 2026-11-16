@@ -1,6 +1,6 @@
-BLUETOOTH REMOTE CONTROLS - CrossNext test firmware
+BLUETOOTH REMOTE CONTROLS - CrossNext 2.0.0
 
-Bluetooth must already be paired and connected. Configure it in Settings > System > Bluetooth.
+Bluetooth must already be paired and connected. Configure it in Settings > Connectivity > Bluetooth.
 Map buttons: select an action and press a remote button; a tap and a hold can have separate assignments. Hold a row to clear its mapping. Each remote retains up to eight button/gesture assignments.
 Left/right side button: follows the current physical side-button assignment. With Navigation selected it navigates normally; a reassigned side button performs only that action.
 Power button: performs the configured short-press Power action. Bluetooth is stopped in deep sleep, so a remote cannot wake a deeply sleeping reader.

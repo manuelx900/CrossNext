@@ -72,8 +72,12 @@ same version or an older version must not be offered as an update.
 
 ## Required app contents
 
-Install the matching `CrossNext-Resources.zip` alongside this firmware. Extract
-its folders to the microSD root and keep the bundled licences. It includes the
+Install the matching `CrossNext-Resources.zip` alongside this firmware. Back up
+custom fonts, dictionaries and images first. Replace the old bundled `apps`,
+`fonts`, `languages`, `images` and `dictionaries` folders with the new package at
+the microSD root; do not merge old and new packs. Keep books, `/.crosspoint/`
+data and the bundled licences. Restore custom resources separately if needed,
+without restoring old bundled packs. The package includes the
 reader fonts/dictionaries and `/apps/reading-adventure/`, `/apps/pet/`, `/apps/intercept/`.
 PET needs all six of its content packs; The Intercept needs `graphics.bin`.
 Missing or incompatible contents show an installation notice instead of the app.

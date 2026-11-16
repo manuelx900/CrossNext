@@ -18,8 +18,10 @@ Back up the microSD, including the hidden `/.crosspoint/` folder containing save
 
 1. For an existing compatible installation, copy `CrossNext-X4PRO-Firmware-v2.0.0.bin`
    to the card. Open **Settings → Device → Update firmware**, select it and confirm.
-2. Extract `CrossNext-Resources.zip` into the microSD root, merging its folders.
-   Keep the licences and your existing saves. Restart after updating resources.
+2. Back up custom fonts, dictionaries and images, then replace the old bundled
+   resource folders with `CrossNext-Resources.zip` at the microSD root. Do not
+   merge old and new resource packs. Keep your books, licences and `/.crosspoint/`
+   saves; restart after installation. See the resource-replacement notice in the release notes.
 3. Put books in a normal card folder such as `/books`, then open **Files** or **Library**.
    Fresh settings use English. Change the interface language in Settings.
 
