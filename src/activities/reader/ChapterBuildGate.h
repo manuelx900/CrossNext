@@ -2,12 +2,22 @@
 
 #include <BlePageTurner.h>
 
-// Whether a chapter build may run next to the page turner's radio. A radio that did not stop in
-// time, is still stopping, or is still starting holds or is taking the heap the build needs, and
-// a build that runs out of memory aborts the firmware (no exceptions). A radio refused for memory
-// holds nothing.
+// PSRAM-backed S3 chapter parsing can coexist with a stable radio. Stack startup
+// and teardown remain exclusive; devices without PSRAM keep their stop-before-build policy.
 inline bool chapterBuildMayRun(const bleturner::Status& radio) {
+#if defined(BOARD_HAS_PSRAM) && defined(FREEINK_BLE_STACK_IN_PSRAM)
+  return !radio.stopping && !radio.starting;
+#else
   return !radio.running && !radio.stopping && !radio.starting;
+#endif
+}
+
+inline bool chapterBackgroundBuildMayRun() {
+#if defined(BOARD_HAS_PSRAM) && defined(FREEINK_BLE_STACK_IN_PSRAM)
+  return chapterBuildMayRun(bleturner::status());
+#else
+  return !bleturner::holdsHeap();
+#endif
 }
 
 // Asks `ready` until it says yes, sleeping stepMs between asks, and gives up once waitMs has

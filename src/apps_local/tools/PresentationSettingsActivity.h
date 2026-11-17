@@ -8,6 +8,7 @@ class PresentationSettingsActivity final : public UiListActivity {
   PresentationSettingsActivity(GfxRenderer& r, MappedInputManager& i, Kind k)
       : UiListActivity("PresentationSettings", r, i), kind(k) {}
 
+  void onEnter() override;
   void loop() override;
   void render(RenderLock&&) override;
 
@@ -16,6 +17,7 @@ class PresentationSettingsActivity final : public UiListActivity {
   OptionPopup optionPopup;
   bool saveFailed = false;
   bool buttonFocus = false;
+  bool showingCoverHelp = false;
   void navigateButtons() override;
   freeink::ui::ListItem items[menufont::kSectionCount]{};
   char labels[menufont::kSectionCount][64]{};
@@ -33,5 +35,5 @@ class PresentationSettingsActivity final : public UiListActivity {
   const char* screenTitle() const;
   void buildScreen(UiScreen&) override;
   void activateIndex(int) override;
-  void onBackButton() override { finish(); }
+  void onBackButton() override;
 };

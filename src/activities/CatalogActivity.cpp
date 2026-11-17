@@ -212,11 +212,10 @@ void CatalogActivity::screenHeader(UiScreen& screen, const char* title) {
                       search ? ACTION_SEARCH : freeink::ui::NO_ACTION);
 }
 
-bool CatalogActivity::buildStatusScreen(UiScreen& screen, const bool boldError, const bool showDownloadTotal) {
+bool CatalogActivity::buildStatusScreen(UiScreen& screen, const bool boldError) {
   switch (state) {
     case State::DOWNLOADING:
-      catalogDownloadScreen(screen, statusMessage.c_str(), downloadProgress, showDownloadTotal ? downloadTotal : 0,
-                            ACTION_CANCEL);
+      catalogDownloadScreen(screen, statusMessage.c_str(), downloadProgress, downloadTotal, ACTION_CANCEL);
       break;
     case State::ERROR:
       if (mappedInput.hasTouch()) {

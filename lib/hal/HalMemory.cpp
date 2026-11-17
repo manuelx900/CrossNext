@@ -24,3 +24,7 @@ HalMemory::PsramBuffer HalMemory::allocatePsram(size_t bytes) {
   // the owning handle releases this block through the matching heap API.
   return PsramBuffer(static_cast<uint8_t*>(heap_caps_malloc(bytes, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT)));
 }
+
+void* HalMemory::reallocatePsram(void* buffer, size_t bytes) {
+  return heap_caps_realloc(buffer, bytes, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+}

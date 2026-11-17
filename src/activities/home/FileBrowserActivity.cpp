@@ -101,12 +101,12 @@ FileBrowserActivity::FileBrowserActivity(GfxRenderer& renderer, MappedInputManag
   if (mode == Mode::Books) setInterfaceFontSection(menufont::Section::Files);
 }
 
-void FileBrowserActivity::loadFiles() {
+void FileBrowserActivity::loadFiles(HalFile* directory) {
   files.clear();
   unicodeNames = std::any_of(basepath.begin(), basepath.end(), [](unsigned char ch) { return ch >= 0x80; });
   prewarmedStart = -1;  // new folder contents: re-prewarm the visible window
 
-  auto root = Storage.open(basepath.c_str());
+  auto root = directory ? std::move(*directory) : Storage.open(basepath.c_str());
   if (!root || !root.isDirectory()) {
     return;
   }
@@ -124,11 +124,17 @@ void FileBrowserActivity::loadFiles() {
   // count-only pass reads no names, so filtered-out entries just over-reserve
   // by a few slots.
   size_t entryCount = 0;
-  for (auto file = root.openNextFile(); file; file = root.openNextFile()) ++entryCount;
+  HalFile file;
+  bool ioError = false;
+  while (root.openNextFile(file, ioError)) ++entryCount;
+  if (ioError) {
+    LOG_ERR("FileBrowser", "Directory count failed");
+    return;
+  }
   root.rewindDirectory();
   files.reserve(entryCount);
 
-  for (auto file = root.openNextFile(); file; file = root.openNextFile()) {
+  while (root.openNextFile(file, ioError)) {
     file.getName(fileNameBuffer.get(), NAME_BUFFER_SIZE);
     const bool isDirectory = file.isDirectory();
     if ((!SETTINGS.showHiddenFiles && fileNameBuffer[0] == '.') ||
@@ -154,7 +160,11 @@ void FileBrowserActivity::loadFiles() {
       }
     }
   }
-  root.close();
+  if (ioError) {
+    LOG_ERR("FileBrowser", "Directory enumeration failed");
+    files.clear();
+    return;
+  }
   FsHelpers::sortFileList(files);
   for (const auto& entry : files) {
     for (const unsigned char ch : entry) unicodeNames |= ch >= 0x80;
@@ -248,7 +258,7 @@ void FileBrowserActivity::onEnter() {
     // The first screen build pulls the viewport to it (ListNav follow-on-build).
     nav.selected = static_cast<int>(findEntry(fileName));
   } else {
-    loadFiles();
+    loadFiles(&root);
   }
 }
 
@@ -749,7 +759,7 @@ void FileBrowserActivity::drawChrome() {
                            : chrome::lightHeader      ? tr(STR_BROWSE_FILES)
                            : basepath == "/"          ? tr(STR_SD_CARD)
                                                       : basepath.c_str() + basepath.rfind('/') + 1;
-  pixelui::drawHeader(renderer, folderName, unicodeNames || I18N.getLanguage() != Language::EN);
+  pixelui::drawHeader(renderer, folderName, unicodeNames || I18N.getLanguage() != Language::EN, nullptr, false, true);
 }
 
 void FileBrowserActivity::drawFooter() {

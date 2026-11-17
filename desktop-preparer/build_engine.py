@@ -1,6 +1,6 @@
 """Build the real firmware preparation engine as a 32-bit portable WASM worker."""
 from pathlib import Path
-import argparse, concurrent.futures, hashlib, importlib.util, json, os, re, shlex, subprocess, sys
+import argparse, configparser, concurrent.futures, hashlib, importlib.util, json, os, re, shlex, subprocess, sys
 from device_profile import BOARD_HEADER, write_header
 
 ROOT = Path(__file__).resolve().parent
@@ -27,6 +27,7 @@ def source_hashes():
              if p.suffix in ('.cpp', '.h')]
     files += [REPO / name for name in ['compile_commands.json', '.pio/libdeps/simulator_x4_pro/simulator/src/HalStorage.h', '.pio/libdeps/simulator_x4_pro/simulator/src/HalStorage.cpp', 'platformio.ini', 'src/CrossPointSettings.cpp', 'src/CrossPointSettings.h',
               'src/ReaderFontSizes.cpp', 'src/ReaderFontSizes.h', 'src/SdCardFontSystem.cpp',
+              'lib/hal/HalMemory.h', 'lib/hal/HalMemory.cpp',
               'src/util/ParagraphIndentMigration.h', BOARD_HEADER]]
     hashes = {p.relative_to(REPO).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
     for name in ['device_profile.py', 'src/engine.cpp', 'src/compatibility.h', 'build_engine.py']:
@@ -108,6 +109,8 @@ def sources():
         'src/apps_local/home/CoverBitmapPainter.cpp',
         'src/apps_local/library/PreparedCoverCache.cpp',
     }
+    # Use the firmware's allocation API with the simulator's heap implementation.
+    (BUILD / 'HalMemory.h').write_bytes((REPO / 'lib/hal/HalMemory.h').read_bytes())
     jobs = []
     for entry in entries:
         p = Path(entry['file']); p = p if p.is_absolute() else REPO / p
@@ -117,6 +120,8 @@ def sources():
         if p.name in ('simulator_main.cpp', 'HttpDownloader.cpp'): continue
         args = base.split_command(entry['command']) if 'command' in entry else entry['arguments']
         if p == storage_path: p = BUILD / 'HalStorage.cpp'
+        if rel == '.pio/libdeps/simulator_x4_pro/simulator/src/HalMemory.cpp':
+            p = REPO / 'lib/hal/HalMemory.cpp'
         if rel.startswith(('lib/Epub/', 'lib/Xtc/')):
             p = BUILD / 'device-sources' / Path(rel).relative_to('lib')
         jobs.append((p, args))
@@ -140,7 +145,11 @@ def translate(args, obj, is_c):
                       '-I' + str(BUILD), '-I' + str(REPO / 'lib/Performance'),
                       '-I' + str(BUILD / 'device-sources/Xtc'), '-I' + str(BUILD / 'device-sources/Epub')]
     # Desktop CPU budget: keep the same algorithms and ABI, optimize them for throughput.
-    return [f for f in flags if f not in ('-Oz', '-Os', '-Og')] + ['-O2', '-ffile-prefix-map=' + str(REPO) + '=/crossnext']
+    prefixes = {str(REPO): '/crossnext', REPO.as_posix(): '/crossnext',
+                str(Path.home()): '/builder', Path.home().as_posix(): '/builder'}
+    maps = ['-ffile-prefix-map=' + local + '=' + public
+            for local, public in sorted(prefixes.items(), key=lambda item: -len(item[0]))]
+    return [f for f in flags if f not in ('-Oz', '-Os', '-Og')] + ['-O2', *maps]
 base.translate = translate
 
 if __name__ == '__main__':
@@ -187,5 +196,7 @@ if __name__ == '__main__':
         for source, name in [(REPO / 'LICENSE', 'CROSSNEXT-LICENSE.txt'), (REPO / 'THIRD-PARTY-NOTICES.md', 'THIRD-PARTY-NOTICES.txt')]:
             shutil.copy2(source, OUT / name)
             license_files[name] = {'source': source.relative_to(REPO).as_posix(), 'sha256': hashlib.sha256(source.read_bytes()).hexdigest()}
-        (OUT/'engine-build.json').write_text(json.dumps({'firmwareVersion': '2.0.0', 'applicationVersion':json.loads((ROOT/'package.json').read_text())['version'], 'cacheVersion':version,'sourceHashes':inputs,'licenseFiles':license_files},indent=2),encoding='utf-8')
+        config = configparser.ConfigParser(interpolation=None)
+        config.read(REPO / 'platformio.ini', encoding='utf8')
+        (OUT/'engine-build.json').write_text(json.dumps({'firmwareVersion': config.get('crossplay', 'version'), 'applicationVersion':json.loads((ROOT/'package.json').read_text())['version'], 'cacheVersion':version,'sourceHashes':inputs,'licenseFiles':license_files},indent=2),encoding='utf-8')
     print(r.stderr[-7000:]); sys.exit(r.returncode)

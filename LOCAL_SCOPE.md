@@ -1,5 +1,11 @@
 # CrossNext scope
 
+The EPUB/Bluetooth coexistence seam places chapter XML and word-text working
+allocations in PSRAM through HalMemory. The S3 chapter-build gate preserves a
+stable radio and permits bounded background indexing; legacy profiles keep
+their exclusive-build policy. No page-format, visual-quality, cache-capacity,
+task or framebuffer change is introduced. See [EPUB indexing with Bluetooth](docs/reader-bluetooth-memory.md).
+
 CrossNext builds on [CrossPlay](https://github.com/ma-r-s/crossplay) and
 [CrossPoint Reader](https://github.com/crosspoint-reader/crosspoint-reader).
 This release targets **Xteink X4 Pro** (ESP32-S3, 16 MB flash, 8 MB PSRAM,
@@ -88,6 +94,35 @@ selectors (retired built-in family fallback while preserving SD font names),
 `Hyphenator.cpp` (emergency apostrophe-word wrapping without a language table),
 and `Section.cpp` (layout-cache version).
 See [SD card fonts](docs/sd-card-fonts.md) for user-visible behavior.
+
+Radio startup also shares the font metadata allocation seam:
+`lib/EpdFont/FontAllocation.h` keeps dynamic SD/vector font objects in PSRAM
+on PSRAM boards, preserving existing owners and the no-internal-fallback
+contract. `CrossPointWebServer` checks the actual HTTP listener before reporting
+running. Bluetooth settings, File Transfer and Plugin HUB write bounded failure
+diagnostics through `apps_local/network/RadioFailureReport`. The Go engine's
+fixed lookup tables are generated from its original builders into flash rather
+than occupying internal RAM while closed. See [radio startup](docs/radio-startup.md)
+for the memory contract, regeneration checks and device test plan.
+
+Bluetooth connection presentation and button-first assignment use bounded
+helpers in `apps_local/ui`, the existing BLE settings activity and quick sheet.
+Activity transitions separate preserving a radio link from consuming its input;
+the binding format uses reserved bits for direct host commands without growing
+records. See [Bluetooth device controls](docs/bluetooth-device-controls.md).
+
+Connectivity presentation and remote shortcut choices live in `apps_local/ui`
+and `apps_local/plugins`. Their narrow shared seams are `CatalogScreens`,
+`DetailsActivity`, the Wi-Fi/Plugin/HomeButton settings activities, `PluginLocations`,
+`main.cpp` remote dispatch and the shared web plugin host. Plugin eligibility is
+enforced by native catalog pagination, bundle/fetch installation and web status
+metadata. See [connectivity interface](docs/connectivity-interface.md) and
+[plugin compatibility](docs/plugin-compatibility.md). The shared `PixelMenu` frame
+uses the SDK's existing layout cache; Shelf measures its uniform row height once.
+Menu-return work owns the two reserved Shelf navigation-state paths and the
+Settings save-retry flag. File Transfer retains fonts until a network mode is
+committed and scans subscriptions only after an HTTP session. See
+[menu returns](docs/menu-return-speed.md).
 
 ### The upstream files we own
 
@@ -794,6 +829,11 @@ Reader opening can use prepared layouts in place. Parser-owned exact prefix/brea
 The EPUB reader reuses normalized paragraph input, reader-session metrics and valid resident CSS across formatting changes. One optional 256 KiB PSRAM spool holds exact serialized pages until the target is presented, then flushes through the existing idle worker. It adds no task, framebuffer, persistent format or visual-quality mode. See [EPUB formatting work reuse](docs/epub-format-speed.md) for bounds, cancellation, conservative invalidation and device checks.
 ### Configurable reading bars
 
+`EpubReaderActivity` also presents its existing indexing notice before a blocking
+chapter build lends the framebuffer. It does not refresh notices from a buffer
+returned white by a loan, and adds no allocation, task or persistent format.
+See [indexing over the reading page](docs/reader-indexing-notice.md).
+
 `apps_local/readerbars` owns fixed-capacity bar configuration, JSON validation, rendering and a session-only scalar pace estimate. Narrow seams in CrossPointSettings, UITheme, StatusBarSettingsActivity and the EPUB/XTC readers persist and present the bars; the two book-preparation entry points reserve the same viewport. ActivityManager notifies a covered reader through Activity::pauseReadingPace so menu time cannot train the estimate. The legacy reader path remains selected until personalization. No parser, cache format, task or framebuffer is added. See [reading bars](docs/reader-bars.md).
 
 Navigation silhouettes are local SVG sources and flash masks owned by
@@ -804,3 +844,36 @@ NetworkModeSelection’s icon-only row table.
 Home, Shelf, Reading settings and Statistics retain their existing layout and
 input owners. No runtime image parser, storage read, allocation or task is added.
 See [navigation icons](docs/navigation-icons.md).
+
+Bluetooth device controls reuse the existing confirmation activity, preserving
+the link during delete/forget prompts. The quick-sheet status opens Bluetooth
+Settings. `ActivityManager` owns a bounded page-intent ring and atomically cancels
+cooperative reader idle work before navigation waits on rendering; the original
+Home gesture recognizer and EPUB working-set placement remain unchanged. See
+[Bluetooth device controls](docs/bluetooth-device-controls.md).
+
+
+Wake/Files uses a HAL-owned reusable directory entry and lazy vector-family
+inspection through the existing font registry. Unrequested families keep no
+per-face arrays; active reader fonts are still prepared at startup. Files
+retains exact list reservation and folder visibility rules. No waveform,
+framebuffer or radio policy changes. See [wake/Files diagnosis](docs/wake-files-2026-11.md).
+
+
+Sleep wake and statistics pagination keep bounded activity-owned workspaces.
+The reader's active face remains loaded at startup; unrelated bundled sizes
+and language fallback faces resolve on demand through the existing font provider.
+Bundled metadata hashes retain the prior four-size order, preserving EPUB cache
+identity. Fixed content-ID consumers request their original font ladder before
+measurement. See [wake and paginated statistics](docs/wake-stats-pages.md).
+Statistics creates two disposable SD sort files per active list, reuses its
+existing ten Book slots and 3 KiB read-ahead buffer, and removes the files on
+exit. StorageMutation classifies only those exact four cache paths as derived,
+so their writes cannot invalidate library/EPUB resources. No reading journal,
+settings schema, new task, framebuffer or history-sized RAM index is added.
+The UC8279 X4 plane-upload seam adapts CrossNext PR31 in
+`freeink-sdk/libs/display/FreeInkDisplay/src/driver/Uc8279X4Driver.cpp`: only
+untransformed visible bytes are sent in larger pieces, with unchanged padding,
+waveform and HAL ownership. Cover-notice explanatory UI stays under
+`src/apps_local/` in the existing presentation-settings activity. It adds no
+background task or saved setting. See [display uploads and help](docs/display-upload-cover-help.md).

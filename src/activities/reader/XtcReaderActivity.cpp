@@ -21,6 +21,7 @@
 #include "util/BookProgress.h"
 
 void XtcReaderActivity::openTextSettings() {
+  ensureCompletionStatus();
   if (!xtc || isAtEndOfBook() || pageSettings) return;
   RenderLock lock;
   readingPace.pause();

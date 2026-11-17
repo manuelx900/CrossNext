@@ -134,17 +134,19 @@ void ActivityManager::renderTaskLoop() {
     // holding the lock is time the user spends staring at the old page, and
     // measuring from inside the lock would report that wait as zero.
     const unsigned long repaintStartMs = millis();
+    renderInFlight.store(true);
     const bool repaint = repaintNotified.exchange(false);
     const uint32_t requestedAtMs = repaint ? updateRequestedAtMs.exchange(0) : 0;
     RenderLock lock;
     if (!repaint) {
       Activity* owner = idleWorkOwner.load();
-      if (owner && currentActivity.get() == owner) {
+      if (owner && currentActivity.get() == owner && !idleWorkCancelled.load()) {
         HalPowerManager::Lock powerLock;
         owner->runIdleWork();
         idleWorkOwner.compare_exchange_strong(owner, nullptr);
         reportStackHeadroom(currentActivity->name.c_str());
       }
+      renderInFlight.store(false);
       continue;
     }
     idleWorkOwner.store(nullptr);
@@ -168,6 +170,7 @@ void ActivityManager::renderTaskLoop() {
       reportRepaint(currentActivity->name.c_str(), requestedAtMs, repaintStartMs);
       reportStackHeadroom(currentActivity->name.c_str());
     }
+    renderInFlight.store(false);
     // Notify any task blocked in requestUpdateAndWait() that the render is done.
     TaskHandle_t waiter = nullptr;
     taskENTER_CRITICAL(&activityManagerSpinlock);
@@ -255,6 +258,8 @@ void ActivityManager::loop() {
       return;
     }
 
+    stepRemoteTurns();
+
     // Note: do not hold a lock here, the loop() method must be responsible for acquire one if needed
     currentActivity->loop();
   }
@@ -264,8 +269,7 @@ void ActivityManager::loop() {
     const Activity* next = pendingActivity            ? pendingActivity.get()
                            : !stackActivities.empty() ? stackActivities.back().get()
                                                       : nullptr;
-    const bool keepRadio =
-        next && (next->isReaderActivity() || next->allowsRemoteControl()) && !next->requiresExclusiveStorageLoop();
+    const bool keepRadio = next && next->preservesRemoteConnection() && !next->requiresExclusiveStorageLoop();
     if (!sleeping && !bleturner::beforeScreenChange(0, keepRadio)) {
       return;
     }
@@ -374,6 +378,8 @@ void ActivityManager::loop() {
 // assignment to currentActivity exists outside this function.
 void ActivityManager::setCurrentActivity(std::unique_ptr<Activity>&& next) {
   idleWorkOwner.store(nullptr);
+  pendingRemoteTurns.clear();
+  idleWorkCancelled.store(false);
   ++screenVisit;
   mappedInput.resetRemoteInput();
   mappedInput.setReaderTextContext(false);
@@ -398,6 +404,9 @@ void ActivityManager::exitActivity(const RenderLock& lock) {
 }
 
 void ActivityManager::replaceActivity(std::unique_ptr<Activity>&& newActivity) {
+  idleWorkCancelled.store(true);
+  idleWorkOwner.store(nullptr);
+  pendingRemoteTurns.clear();
   if (newActivity) performance::begin(performance::Operation::Navigation, newActivity.get());
   if (newActivity && currentActivity) newActivity->interfaceFontContext.inherit(currentActivity->interfaceFontContext);
   mappedInput.resetHomeButtonInput();
@@ -526,6 +535,9 @@ void ActivityManager::goHome(HomeMenuItem initialMenuItem, bool cleanInitialRefr
 void ActivityManager::goToCrashReport() { replaceActivity(std::make_unique<CrashActivity>(renderer, mappedInput)); }
 
 void ActivityManager::pushActivity(std::unique_ptr<Activity>&& activity) {
+  idleWorkCancelled.store(true);
+  idleWorkOwner.store(nullptr);
+  pendingRemoteTurns.clear();
   if (activity) performance::begin(performance::Operation::Navigation, activity.get());
   if (activity && currentActivity) activity->interfaceFontContext.inherit(currentActivity->interfaceFontContext);
   mappedInput.resetHomeButtonInput();
@@ -539,6 +551,9 @@ void ActivityManager::pushActivity(std::unique_ptr<Activity>&& activity) {
 }
 
 void ActivityManager::popActivity() {
+  idleWorkCancelled.store(true);
+  idleWorkOwner.store(nullptr);
+  pendingRemoteTurns.clear();
   performance::begin(performance::Operation::Navigation,
                      stackActivities.empty() ? nullptr : stackActivities.back().get());
   mappedInput.resetHomeButtonInput();
@@ -606,6 +621,7 @@ bool ActivityManager::remoteRadioReady() const {
 }
 
 bool ActivityManager::remoteClick(const RemoteButton button) {
+  cancelPendingRemoteTurns();
   if (!isRemoteControlShown()) return false;
   return mappedInput.injectRemoteClick(button);
 }
@@ -616,7 +632,8 @@ bool ActivityManager::isForegroundHomeShown() const {
 }
 
 bool ActivityManager::remoteShortcut(const bool readerMenu) {
-  if (!isForegroundReader() || requestedUpdate.load() || repaintNotified.load()) return false;
+  cancelPendingRemoteTurns();
+  if (!isForegroundReader() || requestedUpdate.load() || repaintNotified.load() || renderInFlight.load()) return false;
   auto* reader = static_cast<ReaderActivity*>(currentActivity.get());
   if (!remoteTurnAccepted(reader->pageRendered.load(std::memory_order_acquire), RenderLock::peek(),
                           reader->inputOverPage())) {
@@ -625,8 +642,45 @@ bool ActivityManager::remoteShortcut(const bool readerMenu) {
   return reader->remoteShortcut(readerMenu);
 }
 
+void ActivityManager::stepRemoteTurns() {
+  if (pendingRemoteTurns.empty()) return;
+  if (!isForegroundReader() || !bleturner::status().connected) {
+    cancelPendingRemoteTurns();
+    return;
+  }
+  if (requestedUpdate.load() || repaintNotified.load() || renderInFlight.load() || RenderLock::peek()) return;
+  auto* reader = static_cast<ReaderActivity*>(currentActivity.get());
+  if (reader->inputOverPage()) {
+    cancelPendingRemoteTurns();
+    return;
+  }
+  if (!reader->pageRendered.load(std::memory_order_acquire)) return;
+  const bool forward = pendingRemoteTurns.pop();
+  if (pendingRemoteTurns.empty()) idleWorkCancelled.store(false);
+  const bool turned = reader->pageTurn(forward);
+  reader->notePageTurn(forward, turned);
+  if (turned)
+    requestUpdate();
+  else
+    cancelPendingRemoteTurns();
+}
+
 bool ActivityManager::remoteTurn(const bool forward, const bool chapter) {
-  if (!isRemoteControlShown() || mappedInput.hasRemoteClick() || requestedUpdate.load() || repaintNotified.load())
+  if (!chapter && isRemoteControlShown() && isForegroundReader()) {
+    auto* reader = static_cast<ReaderActivity*>(currentActivity.get());
+    if (!reader->inputOverPage()) {
+      if (!pendingRemoteTurns.push(forward)) {
+        LOG_ERR("ACT", "Remote page queue full (%u)", unsigned(PendingPageTurns::CAPACITY));
+        return false;
+      }
+      idleWorkCancelled.store(true);
+      idleWorkOwner.store(nullptr);
+      return true;
+    }
+  }
+
+  if (!isRemoteControlShown() || mappedInput.hasRemoteClick() || requestedUpdate.load() || repaintNotified.load() ||
+      renderInFlight.load())
     return false;
   auto* reader = isForegroundReader() ? static_cast<ReaderActivity*>(currentActivity.get()) : nullptr;
   if (!reader || reader->inputOverPage()) {
@@ -688,7 +742,9 @@ void ActivityManager::notifyRepaint() {
 }
 
 void ActivityManager::requestIdleWork(Activity& owner) {
-  if (!renderTaskHandle || currentActivity.get() != &owner || requestedUpdate.load() || repaintNotified.load()) return;
+  if (!renderTaskHandle || currentActivity.get() != &owner || idleWorkCancelled.load() || requestedUpdate.load() ||
+      repaintNotified.load())
+    return;
   idleWorkOwner.store(&owner);
   xTaskNotify(renderTaskHandle, 1, eIncrement);
 }

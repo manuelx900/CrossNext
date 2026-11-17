@@ -22,8 +22,8 @@ inline Geometry layout(fui::Rect band, int maxHeight = 48) {
              fui::makeRect(x + h + 2 * gap + count, y, h, h)};
   return g;
 }
-inline Geometry draw(fui::DrawTarget& target, fui::Rect band, int page, int pages, fui::FontId font = pixelui::kSmall,
-                     int maxHeight = 48) {
+inline Geometry drawLabel(fui::DrawTarget& target, fui::Rect band, const char* label,
+                          fui::FontId font = pixelui::kSmall, int maxHeight = 48) {
   const auto g = layout(band, maxHeight);
   const int h = g.before.height;
   const auto ink = fui::Paint::solid(fui::Color::Black);
@@ -42,10 +42,14 @@ inline Geometry draw(fui::DrawTarget& target, fui::Rect band, int page, int page
     target.line({int16_t(cx + sign * d / 2), int16_t(cy)}, {int16_t(cx - sign * d / 2), int16_t(cy + d)},
                 pixelui::kBorder, ink);
   }
-  char label[32];
-  std::snprintf(label, sizeof(label), "%d / %d", std::clamp(page, 1, std::max(1, pages)), std::max(1, pages));
   pixelui::text(target, g.count, label, font, fui::Color::Black, fui::TextAlign::Center);
   return g;
+}
+inline Geometry draw(fui::DrawTarget& target, fui::Rect band, int page, int pages, fui::FontId font = pixelui::kSmall,
+                     int maxHeight = 48) {
+  char label[32];
+  std::snprintf(label, sizeof(label), "%d / %d", std::clamp(page, 1, std::max(1, pages)), std::max(1, pages));
+  return drawLabel(target, band, label, font, maxHeight);
 }
 template <class Screen>
 void build(Screen& screen, fui::Rect band, int page, int pages, fui::ActionId previous, int previousValue,

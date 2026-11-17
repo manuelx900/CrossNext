@@ -3,7 +3,7 @@ from pathlib import Path
 from struct import unpack_from
 
 ROOT = Path(__file__).resolve().parents[2]
-PACKS = ROOT / "resources/apps/reading-adventure"
+PACKS = ROOT / "resources/apps/reading-adventure-v2"
 OUTPUT = ROOT / "src/apps_local/quest/QuestHuntBounds.h"
 WIDTH, HEIGHT = 248, 280
 

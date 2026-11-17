@@ -1,4 +1,4 @@
-# CrossNext 2.0.1
+# CrossNext 2.0.2
 
 [Español](README.es.md) · [Installation](docs/install.md) · [Releases](https://github.com/manuelx900/CrossNext/releases)
 
@@ -6,23 +6,22 @@
 
 CrossNext is open-source e-reader firmware for **Xteink X4 Pro (ESP32-S3)**.
 It combines EPUB reading, a library, reading statistics, study tools, small apps
-and games. **CrossNext 2.0.1 is based on [CrossPoint 2.0.0](https://github.com/crosspoint-reader/crosspoint-reader/releases/tag/2.0.0)**, with the app/game foundation inherited from [CrossPlay 1.14.2](https://github.com/ma-r-s/crossplay/releases/tag/v1.14.2).
+and games. **CrossNext 2.0.2 is based on [CrossPoint 2.0.0](https://github.com/crosspoint-reader/crosspoint-reader/releases/tag/2.0.0)**, with the app/game foundation inherited from [CrossPlay 1.14.2](https://github.com/ma-r-s/crossplay/releases/tag/v1.14.2).
 The packages described here target X4 Pro; do not install them on X4 or X3.
 
 ## Install or update
 
 Download the X4 Pro firmware from [GitHub Releases](https://github.com/manuelx900/CrossNext/releases).
-Read the [2.0.1 patch notes](docs/releases/2.0.1.md) or the [full changes from 1.4.0](docs/releases/2.0.0.md).
-Version 2.0.1 brings lighter Home icons and less work before Games, Apps and Settings appear.
+Read the [2.0.2 additions](docs/releases/2.0.2.md) and the [full changes from 1.4.0](docs/releases/2.0.0.md).
+Version 2.0.2 includes the Bluetooth controls, reading statistics and interface updates described there.
 
-**Updating from 2.0.0:** install only the new firmware; keep your existing Resources and Book Preparer.
-For a first installation or an update from an older release, also download the resource pack from
-[release 2.0.0](https://github.com/manuelx900/CrossNext/releases/tag/2.0.0) and follow the steps below.
+Download firmware, the complete resource pack and the optional Book Preparer from the same 2.0.2 release.
+Install the matching resources even if you tried an earlier preview; PET and Reading Adventure now use versioned artwork folders.
 Back up the microSD, including the hidden `/.crosspoint/` folder containing saves.
 
-1. For an existing compatible installation, copy `CrossNext-X4PRO-Firmware-v2.0.1.bin`
+1. For an existing compatible installation, copy `CrossNext-X4PRO-Firmware-v2.0.2.bin`
    to the card. Open **Settings → Device → Update firmware**, select it and confirm.
-2. If you have not installed the 2.0.0 Resources, back up custom fonts, dictionaries and images, then replace the old bundled
+2. Back up custom fonts and dictionaries, then replace the old bundled
    resource folders with `CrossNext-Resources.zip` at the microSD root. Do not
    merge old and new resource packs. Keep your books, licences and `/.crosspoint/`
    saves; restart after installation. See the resource-replacement notice in the release notes.
@@ -92,14 +91,14 @@ Battleship, Solitaire, Hearts, Murdle, Carnivore, Connect four, Sudoku and Othel
 
 ## Prepare books on your computer
 
-**CrossNext Book Preparer 2.0.0** is the optional companion application for
-**Windows and macOS**, compatible with firmware 2.0.1. Get its installers from
-[release 2.0.0](https://github.com/manuelx900/CrossNext/releases/tag/2.0.0).
+**CrossNext Book Preparer 2.0.2** is the optional companion application for
+**Windows and macOS**, compatible with firmware 2.0.2. Get its installers from
+[release 2.0.2](https://github.com/manuelx900/CrossNext/releases/tag/2.0.2).
 It prepares your microSD on the computer before you return
 to the reader, so CrossNext can reuse the results instead of doing that work on
 the device. Your books stay on your computer and card; they are not uploaded.
 
-![CrossNext Book Preparer 2.0.0: card selection, formats, reading fonts, text sizes and EPUB engine](docs/images/book-preparer.png)
+![CrossNext Book Preparer 2.0.2: card selection, formats, reading fonts, text sizes and EPUB engine](docs/images/book-preparer.png)
 
 Using the real firmware preparation engine, it generates:
 
@@ -110,7 +109,7 @@ Using the real firmware preparation engine, it generates:
   for supported EPUB, XTC and XTCH books.
 
 1. Close the book on the reader and safely remove the microSD. Connect it to the computer.
-2. Windows: open `CrossNext-Book-Preparer-Windows-v2.0.0.exe`.
+2. Windows: open `CrossNext-Book-Preparer-Windows-v2.0.2.exe`.
    macOS: open the matching arm64 (Apple Silicon) or x64 (Intel) `.dmg` and drag the application to Applications.
 3. Select the **card root**, not the books folder. The program detects saved reading
    settings and installed fonts from `/fonts` and `/.fonts`.

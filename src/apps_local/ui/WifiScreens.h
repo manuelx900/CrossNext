@@ -6,16 +6,16 @@
 #include "PixelMenu.h"
 namespace wifiscreens {
 namespace fui = freeink::ui;
-inline void text(fui::DrawTarget& target, fui::Rect r, const char* value, bool bold = false, int font = 0) {
+inline void text(fui::DrawTarget& target, fui::Rect r, const char* value, bool = false, int font = 0) {
   fui::TextStyle style;
   style.font = font;
-  style.bold = bold && !chrome::lightHeader;
+  style.bold = false;
   style.maxLines = 2;
   target.text(r, value, style);
 }
 inline void check(fui::DrawTarget& target, fui::Rect r, bool checked) {
   const auto black = fui::Paint::solid(fui::Color::Black);
-  target.stroke(r, black, 2);
+  target.stroke(r, black, 1);
   if (!checked) return;
   target.fill(r, black);
   const auto white = fui::Paint::solid(fui::Color::White);
@@ -49,10 +49,11 @@ void button(Screen& screen, fui::ButtonProps& props, fui::Rect box, const char* 
   props.action = action;
   props.value = value;
   props.text.font = 0;
-  props.text.bold = !chrome::lightHeader;
+  props.text.bold = false;
   props.text.align = fui::TextAlign::Center;
   props.styles = pixelui::buttonStyles();
-  props.styles.normal.borderWidth = 2;
+  props.styles.normal.borderWidth = 1;
+  props.styles.selected.borderWidth = props.styles.focused.borderWidth = props.styles.active.borderWidth = 1;
   props.minTouchSize = 0;
   if (primary) props.state = fui::StateSelected;
   screen.button(props, box);
@@ -61,7 +62,7 @@ inline void detail(fui::DrawTarget& target, fui::Rect box, const char* title, co
   if (chrome::lightHeader)
     lightui::separator(target, box);
   else
-    target.stroke(box, fui::Paint::solid(fui::Color::Black), 2);
+    target.stroke(box, fui::Paint::solid(fui::Color::Black), 1);
   text(target, fui::makeRect(box.x + 14, box.y + 10, box.width - 28, 34), title, true);
   text(target, fui::makeRect(box.x + 14, box.y + 44, box.width - 28, box.height - 48), value, false, 4);
 }

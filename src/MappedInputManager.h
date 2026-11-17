@@ -98,6 +98,7 @@ class MappedInputManager {
   void setPowerConfirmClickFrame(const bool clicked) { powerConfirmClickFrame = clicked; }
 #endif
   bool injectRemoteClick(RemoteButton button);
+  bool claimRemoteCommand();
   bool injectRemoteAction(SideButtonAction action);
   bool remotePowerClick() const { return remoteInput.button == RemoteButton::Power; }
   bool hasRemoteClick() const { return remoteInput.used; }
@@ -221,6 +222,7 @@ class MappedInputManager {
   [[nodiscard]] bool isNavDirectionSwapped() const;
 
  private:
+  bool remoteInputAvailable() const;
   bool edgeBackEnabled = true;
   mutable SideButtonEvent sideEvent{};
   mutable SideButtonEvent deferredSideEvent{};

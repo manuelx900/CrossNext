@@ -42,11 +42,14 @@ class FontScope {
   fui::GfxRendererTarget& target;
 };
 
-inline void drawHeader(GfxRenderer& renderer, const char* title, bool unicode = false, const char* subtitle = nullptr) {
+inline void drawHeader(GfxRenderer& renderer, const char* title, bool unicode = false, const char* subtitle = nullptr,
+                       bool regularTitle = false, bool homeBattery = false) {
   auto target = toybox::makeTarget(renderer);
   bindFonts(target, renderer, unicode);
   Header model;
   model.title = title;
+  model.regularTitle = regularTitle;
+  model.homeBattery = homeBattery && !chrome::lightHeader;
   model.rightLabel = subtitle;
   model.back = BoardConfig::hasTouch();
   // Reuse GUI's battery visibility/charging contract without its version slot.

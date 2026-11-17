@@ -4,13 +4,31 @@
 #include <Logging.h>
 #include <ObfuscationUtils.h>
 
+#include <algorithm>
 #include <cstring>
 #include <limits>
 
-bool PersistableStoreBase::writeDocToFile(const char* path, const JsonDocument& doc) {
-  Storage.mkdir("/.crosspoint");
+bool PersistableStoreBase::writeDocToFile(const char* path, const JsonDocument& doc, const bool onlyIfChanged) {
   String json;
   serializeJson(doc, json);
+  if (onlyIfChanged && (doc.overflowed() || json.length() != measureJson(doc))) {
+    LOG_ERR("PERSIST", "Failed to serialize %s", path);
+    return false;
+  }
+  if (onlyIfChanged) {
+    HalFile file;
+    if (Storage.openFileForRead("PERSIST", path, file) && file.fileSize() == json.length()) {
+      char bytes[128];
+      size_t at = 0;
+      while (at < json.length()) {
+        const size_t count = std::min(sizeof(bytes), json.length() - at);
+        if (file.read(bytes, count) != static_cast<int>(count) || std::memcmp(bytes, json.c_str() + at, count)) break;
+        at += count;
+      }
+      if (at == json.length()) return true;
+    }
+  }
+  Storage.mkdir("/.crosspoint");
   if (!Storage.writeFile(path, json)) {
     LOG_ERR("PERSIST", "Failed to write %s", path);
     return false;

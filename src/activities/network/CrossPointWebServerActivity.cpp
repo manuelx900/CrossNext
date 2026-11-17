@@ -16,6 +16,7 @@
 #include "SilentRestart.h"
 #include "WifiSelectionActivity.h"
 #include "activities/network/CalibreConnectActivity.h"
+#include "apps_local/network/RadioFailureReport.h"
 #include "apps_local/ui/NetworkLandscape.h"
 #include "apps_local/ui/PixelMenuTheme.h"
 #include "components/UITheme.h"
@@ -80,16 +81,6 @@ void CrossPointWebServerActivity::onEnter() {
 
   LOG_DBG("WEBACT", "Free heap at onEnter: %d bytes", ESP.getFreeHeap());
 
-  // Heap-critical transition: WiFi (~45KB) plus the web server have to fit in
-  // what's left of the ~380KB parts. SD-font caches retained for the CJK UI
-  // fallback (mini glyph/kern arenas, ligature tables) are rebuildable on
-  // demand — release them up front instead of aborting in startWebServer()
-  // when the heap comes up short (observed on X3 with a Korean SD font).
-  if (auto* fcm = renderer.getFontCacheManager()) {
-    fcm->releaseSdFontCaches();
-    LOG_DBG("WEBACT", "Free heap after SD font cache release: %d bytes", ESP.getFreeHeap());
-  }
-
   // Reset state
   state = WebServerActivityState::MODE_SELECTION;
   networkMode = NetworkMode::JOIN_NETWORK;
@@ -127,6 +118,7 @@ void CrossPointWebServerActivity::onExit() {
   state = WebServerActivityState::SHUTTING_DOWN;
   // Closes the listening socket and any queued client connections; they must go
   // before the radio teardown below frees the netif they hang off.
+  const bool hadServer = bool(webServer);
   webServer.reset();
   stopDnsServer();
   MDNS.end();
@@ -134,7 +126,7 @@ void CrossPointWebServerActivity::onExit() {
   // Web uploads may have installed or removed plugins. Non-touch devices
   // reboot below (setup() re-reads everything), but touch devices end the
   // session in place, so re-read event subscriptions here.
-  pluginevents::refreshSubscriptions();
+  if (hadServer) pluginevents::refreshSubscriptions();
 
   // Skip reboot if WiFi was never activated (e.g. user backed out of mode selection).
   //
@@ -194,6 +186,10 @@ void CrossPointWebServerActivity::onNetworkModeSelected(const NetworkMode mode) 
     return;
   }
 #endif
+
+  // Release rebuildable glyphs before starting the radio, after the user commits
+  // to a mode. Cancelling the picker retains the warm menu fonts.
+  if (auto* fcm = renderer.getFontCacheManager()) fcm->releaseSdFontCaches();
 
   networkMode = mode;
   isApMode = (mode == NetworkMode::CREATE_HOTSPOT);
@@ -272,6 +268,12 @@ void CrossPointWebServerActivity::startAccessPoint() {
 
   // Configure and start the AP
   WiFi.mode(WIFI_AP);
+  if (WiFi.getMode() != WIFI_AP) {
+    LOG_ERR("WEBACT", "Unable to enable WiFi AP mode");
+    radiofailure::write("wifi-ap-mode", -1);
+    onGoHome();
+    return;
+  }
   delay(100);
 
   // Start soft AP
@@ -285,6 +287,7 @@ void CrossPointWebServerActivity::startAccessPoint() {
 
   if (!apStarted) {
     LOG_ERR("WEBACT", "ERROR: Failed to start Access Point!");
+    radiofailure::write("wifi-softap", -1);
     onGoHome();
     return;
   }

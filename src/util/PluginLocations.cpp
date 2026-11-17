@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #include "CrossPointSettings.h"
+#include "apps_local/plugins/PluginCompatibility.h"
 
 namespace PluginLocations {
 
@@ -42,7 +43,8 @@ std::vector<Entry> scanPlugins() {
   auto plugins = scanPluginsOnDisk();
   plugins.erase(std::remove_if(plugins.begin(), plugins.end(),
                                [](const Entry& entry) {
-                                 return !isDiscoverableEntry(isPluginQuarantined(entry.dir), entry.hasPluginJs,
+                                 return plugincompat::blocked(entry.name) ||
+                                        !isDiscoverableEntry(isPluginQuarantined(entry.dir), entry.hasPluginJs,
                                                              entry.hasDevice, entry.hasManifest);
                                }),
                 plugins.end());

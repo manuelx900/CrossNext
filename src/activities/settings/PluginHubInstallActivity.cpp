@@ -9,6 +9,7 @@
 
 #include "DevMode.h"
 #include "activities/util/ConfirmationActivity.h"
+#include "apps_local/network/RadioFailureReport.h"
 #include "apps_local/plugins/PluginCatalogScreen.h"
 #include "apps_local/ui/PixelMenuTheme.h"
 #include "components/CatalogScreens.h"
@@ -18,7 +19,7 @@ namespace {
 constexpr const char* PLUGIN_HUB_BASE_URL = "https://pluginhub.crosspointreader.com/";
 constexpr const char* PLUGIN_HUB_DIR = "/.crosspoint/plugins/pluginhub";
 constexpr const char* PLUGIN_HUB_INSTALL_MARKER = "/.crosspoint/plugins/pluginhub/.installing";
-constexpr const char* PLUGIN_HUB_FILES[] = {"manifest.json", "device.json", "plugin.js", "README.md"};
+constexpr const char* PLUGIN_HUB_FILES[] = {"manifest.json", "device.json", "plugin.js", "README.md", "DETAILS.md"};
 
 std::string pluginHubPath(const char* filename) { return std::string(PLUGIN_HUB_DIR) + "/" + filename; }
 }  // namespace
@@ -67,7 +68,10 @@ void PluginHubInstallActivity::onEnter() {
 void PluginHubInstallActivity::startBrowse() {
   beginDownload(tr(STR_INSTALL_PLUGIN_HUB));
   requestUpdateAndWait();
-  finishDownload(installPluginHub());
+  const auto result = installPluginHub();
+  if (result != HttpDownloader::OK && result != HttpDownloader::ABORTED)
+    radiofailure::write("pluginhub-install", static_cast<int>(result), HttpDownloader::lastStatus());
+  finishDownload(result);
 }
 
 HttpDownloader::DownloadError PluginHubInstallActivity::installPluginHub() {
@@ -163,7 +167,7 @@ void PluginHubInstallActivity::onBackButton() { finish(); }
 void PluginHubInstallActivity::buildScreen(UiScreen& screen) {
   pixelui::FontScope fonts(uiTarget, renderer);
   pluginui::header(screen, tr(STR_INSTALL_PLUGIN_HUB), toybox::headerStatus(renderer));
-  if (buildStatusScreen(screen, true, true)) return;
+  if (buildStatusScreen(screen)) return;
 
   if (state == State::DONE) {
     catalogCenteredBlock(screen, {{tr(STR_PLUGIN_HUB_INSTALLED), true}, {tr(STR_PLUGIN_HUB_INSTALLED_HINT)}});

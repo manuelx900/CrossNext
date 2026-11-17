@@ -541,6 +541,75 @@ void SdCardFont::computeStyleFileOffsets(PerStyle& s, uint32_t baseOffset) {
 
 // --- Load ---
 
+bool SdCardFont::readContentHash(const char* path, uint32_t& hash) {
+  HalFile file;
+  if (!Storage.openFileForRead("SDCF", path, file)) return false;
+  uint8_t bytes[32];
+  static_assert(HEADER_SIZE <= sizeof(bytes) && STYLE_TOC_ENTRY_SIZE <= sizeof(bytes));
+  if (file.read(bytes, HEADER_SIZE) != HEADER_SIZE || std::memcmp(bytes, CPFONT_MAGIC, 8)) {
+    LOG_ERR("SDCF", "Invalid font metadata header: %s", path);
+    return false;
+  }
+  const auto version = readU16(bytes + 8);
+  const unsigned count = bytes[12];
+  if ((version != CPFONT_VERSION && version != CPFONT_EXTENDED_LIGATURE_VERSION) || !count || count > MAX_STYLES) {
+    LOG_ERR("SDCF", "Unsupported font metadata: %s", path);
+    return false;
+  }
+  hash = fnv1a(bytes, HEADER_SIZE);
+  for (unsigned n = 0; n < count; ++n) {
+    if (file.read(bytes, STYLE_TOC_ENTRY_SIZE) != STYLE_TOC_ENTRY_SIZE) {
+      LOG_ERR("SDCF", "Incomplete font metadata: %s", path);
+      return false;
+    }
+    hash = fnv1a(bytes, STYLE_TOC_ENTRY_SIZE, hash);
+    const uint32_t intervals = readU32(bytes + 4), glyphs = readU32(bytes + 8);
+    const uint16_t left = readU16(bytes + 17), right = readU16(bytes + 19);
+    const uint16_t ligatures = version == CPFONT_EXTENDED_LIGATURE_VERSION ? readU16(bytes + 28) : bytes[23];
+    const uint32_t offset = readU32(bytes + 24);
+    const uint64_t glyphOffset = uint64_t(offset) + uint64_t(intervals) * sizeof(EpdUnicodeInterval);
+    const uint64_t end = glyphOffset + uint64_t(glyphs) * sizeof(EpdGlyph) +
+                         uint64_t(left + right) * sizeof(EpdKernClassEntry) + uint64_t(bytes[21]) * bytes[22] +
+                         uint64_t(ligatures) * sizeof(EpdLigaturePair);
+    EpdGlyph tail{};
+    if (bytes[0] >= MAX_STYLES || intervals > 4096 || glyphs > 65536 || left > 4096 || right > 4096 ||
+        ligatures > 4096 || offset < HEADER_SIZE + count * STYLE_TOC_ENTRY_SIZE || end > file.size() ||
+        (glyphs && (!file.seekSet(glyphOffset + (glyphs - 1) * sizeof(EpdGlyph)) ||
+                    file.read(reinterpret_cast<uint8_t*>(&tail), sizeof(tail)) != sizeof(tail) ||
+                    end + tail.dataOffset + tail.dataLength > file.size())) ||
+        !file.seekSet(offset)) {
+      LOG_ERR("SDCF", "Invalid font metadata ranges: %s", path);
+      return false;
+    }
+    // Validate deferred coverage without retaining its tables or glyph arenas.
+    EpdUnicodeInterval block[8];
+    uint32_t expected = 0, previous = 0;
+    for (uint32_t i = 0; i < intervals; ++i) {
+      if (i % std::size(block) == 0) {
+        const size_t length = std::min<uint32_t>(std::size(block), intervals - i) * sizeof(block[0]);
+        if (file.read(reinterpret_cast<uint8_t*>(block), length) != static_cast<int>(length)) {
+          LOG_ERR("SDCF", "Incomplete font intervals: %s", path);
+          return false;
+        }
+      }
+      const auto& interval = block[i % std::size(block)];
+      const uint64_t span = uint64_t(interval.last) - interval.first + 1;
+      if (interval.first > interval.last || (i && interval.first <= previous) || span > glyphs ||
+          interval.offset != expected || interval.offset > glyphs - span) {
+        LOG_ERR("SDCF", "Invalid font intervals: %s", path);
+        return false;
+      }
+      expected += span;
+      previous = interval.last;
+    }
+    if (!file.seekSet(HEADER_SIZE + (n + 1) * STYLE_TOC_ENTRY_SIZE)) {
+      LOG_ERR("SDCF", "Failed to resume font metadata: %s", path);
+      return false;
+    }
+  }
+  return true;
+}
+
 bool SdCardFont::load(const char* path) {
   freeAll();
   if (strlen(path) >= sizeof(filePath_)) {

@@ -52,6 +52,8 @@
 #include "apps_local/power/PowerButtonPolicy.h"
 #include "apps_local/power/PowerMenuActivity.h"
 #include "apps_local/powerprobe/PowerProbe.h"
+#include "apps_local/ui/RemoteBindingActions.h"
+#include "apps_local/ui/RemoteShortcutChoices.h"
 #include "apps_local/words/DictionaryDefaults.h"
 
 // How long the device sleeps before waking itself, in microseconds. 0 means
@@ -391,6 +393,57 @@ bool releaseCaches() {
   return true;
 }
 
+bool dispatchShortcut(const uint8_t action, const char* title = "") {
+  if (!activityManager.isRemoteControlShown()) return false;
+  if (!remoteshortcuts::choice(action)) return false;
+  if (action == uint8_t(SideButtonAction::Navigation))
+    return activityManager.isReaderActivity() ? activityManager.remoteTurn(true, false)
+                                              : activityManager.remoteClick(RemoteButton::Next);
+  if (action == uint8_t(remoteshortcuts::Extra::Previous))
+    return activityManager.isReaderActivity() ? activityManager.remoteTurn(false, false)
+                                              : activityManager.remoteClick(RemoteButton::Previous);
+  if (RenderLock::peek()) return false;
+  activityManager.cancelPendingRemoteTurns();
+  if (action == uint8_t(SideButtonAction::ReaderMenu)) return activityManager.remoteShortcut(true);
+  if (action >= uint8_t(remoteshortcuts::Extra::Previous)) {
+    using Extra = remoteshortcuts::Extra;
+    switch (static_cast<Extra>(action)) {
+      case Extra::Previous:
+        return activityManager.isReaderActivity() ? activityManager.remoteTurn(false, false)
+                                                  : activityManager.remoteClick(RemoteButton::Previous);
+      case Extra::Back:
+        return activityManager.remoteClick(RemoteButton::Back);
+      case Extra::Library:
+        if (!mappedInputManager.claimRemoteCommand()) return false;
+        activityManager.goToLibrary();
+        return true;
+      case Extra::Files:
+        if (!mappedInputManager.claimRemoteCommand()) return false;
+        activityManager.goToFileBrowser("/");
+        return true;
+      case Extra::Settings:
+        if (!mappedInputManager.claimRemoteCommand()) return false;
+        activityManager.goToSettings();
+        return true;
+      case Extra::BrightnessUp:
+      case Extra::BrightnessDown:
+        if (!Frontlight.present()) return false;
+        if (!mappedInputManager.claimRemoteCommand()) return false;
+        applyEdgeLight({edgelight::Action::Brightness,
+                        static_cast<int8_t>(static_cast<Extra>(action) == Extra::BrightnessUp ? 5 : -5)});
+        return true;
+    }
+    return false;
+  }
+  const auto target = static_cast<SideButtonAction>(action);
+  if (!mappedInputManager.injectRemoteAction(target)) return false;
+  if (target == SideButtonAction::OpenShortcut) {
+    mappedInputManager.resetHomeButtonInput();
+    return openShelfShortcut(title);
+  }
+  return true;
+}
+
 bool dispatch(const bleturner::Action action) {
   switch (action) {
     case bleturner::Action::NextPage:
@@ -418,18 +471,29 @@ bool dispatch(const bleturner::Action action) {
       const auto* table = bleturner::tableFor(SETTINGS.ble.remotes, SETTINGS.ble.remoteCount, peer.addr, peer.name);
       if (!table) return false;
       const auto& shortcut = table->shortcuts[action == bleturner::Action::Shortcut1 ? 0 : 1];
-      const auto target = static_cast<SideButtonAction>(shortcut.action);
-      if (!mappedInputManager.injectRemoteAction(target)) return false;
-      if (target == SideButtonAction::OpenShortcut) {
-        mappedInputManager.resetHomeButtonInput();
-        return openShelfShortcut(shortcut.title);
-      }
-      return true;
+      return dispatchShortcut(shortcut.action, shortcut.title);
     }
     case bleturner::Action::ReaderMenu:
       return activityManager.remoteShortcut(true);
     case bleturner::Action::SaveQuote:
       return activityManager.remoteShortcut(false);
+    case bleturner::Action::Advance:
+    case bleturner::Action::Previous:
+    case bleturner::Action::Bookmark:
+    case bleturner::Action::Sync:
+    case bleturner::Action::ToggleFrontlight:
+    case bleturner::Action::ToggleWarmth:
+    case bleturner::Action::Refresh:
+    case bleturner::Action::Home:
+    case bleturner::Action::Library:
+    case bleturner::Action::Files:
+    case bleturner::Action::Settings:
+    case bleturner::Action::BrightnessUp:
+    case bleturner::Action::BrightnessDown:
+    case bleturner::Action::Sleep:
+    case bleturner::Action::Touch:
+    case bleturner::Action::Disabled:
+      return dispatchShortcut(remotebindings::hostAction(action));
     case bleturner::Action::None:
       return false;
   }
@@ -1141,6 +1205,7 @@ void loop() {
   scene.storageBusy = activityManager.requiresExclusiveStorageLoop();
   scene.localKey = gpio.wasAnyPressed() || gpio.wasAnyReleased() || gpio.wasTouchActivity();
   scene.wifiOn = WiFi.getMode() != WIFI_MODE_NULL;
+  if (scene.localKey) activityManager.cancelPendingRemoteTurns();
   const bool remoteActed = bleturner::tick(scene);
 
   if (activityManager.requiresExclusiveStorageLoop()) {

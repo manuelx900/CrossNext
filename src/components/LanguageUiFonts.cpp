@@ -22,47 +22,53 @@ LanguageUiFonts::LanguageUiFonts() = default;
 LanguageUiFonts::~LanguageUiFonts() = default;
 
 void LanguageUiFonts::begin(GfxRenderer& renderer) {
+  attempted = 0;
+  for (size_t n = 0; n < std::size(POINTS); ++n)
+    renderer.setLanguageFallbackFont(PRIMARY[n], LANGUAGE_FONT_BASE + POINTS[n]);
+}
+bool LanguageUiFonts::load(GfxRenderer& renderer, int fontId) {
+  size_t index = 0;
+  while (index < std::size(POINTS) && fontId != LANGUAGE_FONT_BASE + POINTS[index]) ++index;
+  if (index == std::size(POINTS)) return false;
+  if (fonts[index]) return true;
+  if (attempted & (1u << index)) return false;
+  attempted |= 1u << index;
   struct RegionalFace {
     Language language;
     const char* suffix;
   };
   static constexpr RegionalFace REGIONS[] = {{Language::ZH_CN, "_SC"}, {Language::ZH_TW, "_TC"}};
   const char* variant = "";
-  for (const auto& region : REGIONS) {
+  for (const auto& region : REGIONS)
     if (I18N.getLanguage() == region.language) variant = region.suffix;
+  auto font = makeUniqueNoThrow<SdCardFont>();
+  if (!font) {
+    LOG_ERR("I18N", "OOM: language UI font");
+    return false;
   }
-  for (size_t i = 0; i < 3; ++i) {
-    const int id = LANGUAGE_FONT_BASE + POINTS[i];
-    if (!fonts[i]) {
-      auto font = makeUniqueNoThrow<SdCardFont>();
-      if (!font) {
-        LOG_ERR("I18N", "OOM: language UI font");
-        continue;
-      }
-      char path[64];
-      snprintf(path, sizeof(path), "/languages/fonts/Interface%s_%u.cpfont", variant, POINTS[i]);
-      if (!font->load(path)) {
-        if (!variant[0]) continue;
-        snprintf(path, sizeof(path), "/languages/fonts/Interface_%u.cpfont", POINTS[i]);
-        if (!font->load(path)) continue;
-      }
-      if (!font->getEpdFont(0)) {
-        LOG_ERR("I18N", "Language UI font has no regular face: %s", path);
-        continue;
-      }
-      fonts[i] = std::move(font);
-      EpdFontFamily family(fonts[i]->getEpdFont(0), fonts[i]->getEpdFont(1));
-      renderer.insertFont(id, family);
-      renderer.registerSdCardFont(id, fonts[i].get());
-    }
-    renderer.setLanguageFallbackFont(PRIMARY[i], id);
+  char path[64];
+  snprintf(path, sizeof(path), "/languages/fonts/Interface%s_%u.cpfont", variant, POINTS[index]);
+  if (!font->load(path)) {
+    if (!variant[0]) return false;
+    snprintf(path, sizeof(path), "/languages/fonts/Interface_%u.cpfont", POINTS[index]);
+    if (!font->load(path)) return false;
   }
+  if (!font->getEpdFont(0)) {
+    LOG_ERR("I18N", "Language UI font has no regular face: %s", path);
+    return false;
+  }
+  fonts[index] = std::move(font);
+  EpdFontFamily family(fonts[index]->getEpdFont(0), fonts[index]->getEpdFont(1));
+  renderer.insertFont(fontId, family);
+  renderer.registerSdCardFont(fontId, fonts[index].get());
+  return true;
 }
 
 bool LanguageUiFonts::supportsText(const GfxRenderer& renderer, const char* text, uint8_t points) {
   if (!text || !*text) return false;
   const auto& fonts = renderer.getFontMap();
   const auto supports = [&](int id) {
+    if (!fonts.count(id) && !renderer.ensureFontLoaded(id)) return false;
     const auto font = fonts.find(id);
     if (font == fonts.end()) return false;
     const auto* cursor = reinterpret_cast<const uint8_t*>(text);

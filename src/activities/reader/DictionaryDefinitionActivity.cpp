@@ -5,6 +5,7 @@
 #include <GfxRenderer.h>
 #include <I18n.h>
 #include <Logging.h>
+#include <SdCardFontSystem.h>
 #include <Utf8.h>
 
 #include <algorithm>
@@ -21,6 +22,8 @@
 #include "util/DictHtmlPages.h"
 #include "util/DictionaryLookupWord.h"
 #include "util/HtmlToPlainText.h"
+
+extern SdCardFontSystem sdFontSystem;
 
 namespace {
 
@@ -108,6 +111,7 @@ void DictionaryDefinitionActivity::offerVocabulary(std::unique_ptr<vocabulary::C
 }
 
 void DictionaryDefinitionActivity::onEnter() {
+  sdFontSystem.ensureBundledFonts(renderer);
   Activity::onEnter();
   resetUi();
   app.setScreen(&DictionaryDefinitionActivity::noticeScreen, this);

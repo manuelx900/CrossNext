@@ -182,6 +182,8 @@ struct SettingInfo {
 };
 
 class SettingsActivity final : public UiTabListActivity {
+  bool settingsSavePending = false;
+  void persistSettings();
   bool categoryHome = true;
   bool settingsListsReady = false;
   bool readingResourcesReady = false;

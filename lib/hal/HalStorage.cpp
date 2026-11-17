@@ -487,6 +487,28 @@ HalFile HalFile::openNextFile(bool& ioError) {
   return HalFile(std::move(next));
 }
 bool HalFile::isOpen() const { return impl != nullptr && impl->file.isOpen(); }  // already thread-safe, no need to wrap
+bool HalFile::openNextFile(HalFile& entry, bool& ioError) {
+  HalStorage::StorageLock lock;
+  ioError = false;
+  if (this == &entry || !impl || !impl->file.isDirectory() || (entry.impl && entry.impl->writable)) {
+    LOG_ERR("STORAGE", "Invalid reusable directory handle");
+    ioError = true;
+    return false;
+  }
+  if (!entry.impl) {
+    // The opaque native file cannot live on the caller's stack. One Impl is
+    // retained by entry for the whole traversal instead of one per record.
+    entry.impl = makeUniqueNoThrow<Impl>(FsFile{});
+    if (!entry.impl) {
+      LOG_ERR("STORAGE", "OOM: reusable directory entry");
+      ioError = true;
+      return false;
+    }
+  }
+  const bool opened = entry.impl->file.openNext(&impl->file, O_RDONLY);
+  ioError = impl->file.getError() != 0;
+  return opened && !ioError;
+}
 HalFile::operator bool() const { return isOpen(); }
 
 uint32_t HalStorage::stateFileRevision(const char* path) {

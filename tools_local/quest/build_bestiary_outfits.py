@@ -97,5 +97,5 @@ def build(output):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output', type=Path, default=ROOT / 'resources/apps/reading-adventure')
+    parser.add_argument('--output', type=Path, default=ROOT / 'resources/apps/reading-adventure-v2')
     build(parser.parse_args().output)

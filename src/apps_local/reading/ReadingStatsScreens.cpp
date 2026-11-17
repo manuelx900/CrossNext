@@ -13,6 +13,7 @@
 #include "../ui/PageIndicator.h"
 #include "../ui/PixelMenu.h"
 #include "../ui/StatisticsArt.h"
+#include "../ui/StatisticsIcons.h"
 #include "../ui/ToolsDigits.h"
 #include "../ui/ToyboxIcons.h"
 #include "ReadingGoalScreens.h"
@@ -64,7 +65,8 @@ void text(Context& s, fui::Rect r, const char* value, fui::FontId font = pixelui
   }
 }
 void button(Context& s, fui::Rect r, const char* label, fui::ActionId action, int value = 0, bool selected = false) {
-  const bool back = action == BackToCalendar || action == BackToBooks || action == BackToData;
+  const bool back = action == BackToCalendar || action == BackToBooks || action == BackToData ||
+                    action == PeriodBooksBack || action == BookDaysBack;
   auto& p = s.work.button;
   p = {};
   pixelui::copyCaps(s.work.buttonLabel, sizeof(s.work.buttonLabel), label);
@@ -157,6 +159,12 @@ void arrow(Context& s, fui::Rect r, fui::ActionId action, int value) {
   dashboard::chevron(s.target(), r, false, value < 0);
   dashboard::hit(s.screen, r, action, value);
 }
+void bookAccess(Context& s, fui::Rect box, fui::ActionId action = PeriodBooks) {
+  frame(s, box, 2);
+  art(s, fui::makeRect(box.x + 8, box.y + 7, box.width - 16, box.height - 14),
+      action == BookDays ? statsart::calendar : statsart::book);
+  dashboard::hit(s.screen, box, action);
+}
 // Digits share an ink height; translated units sit on their baseline.
 void timeValue(Context& s, fui::Rect r, uint64_t seconds, bool precise = false, int maxInkHeight = 52) {
   char first[24], second[8];
@@ -190,16 +198,24 @@ void timeValue(Context& s, fui::Rect r, uint64_t seconds, bool precise = false, 
   prose(s, fui::makeRect(x + w2 + gap, top + h - unitH + 4, u2 + 2, unitH), unit2, fui::TextAlign::Left, font);
 }
 void timePanel(Context& s, fui::Rect r, const char* label, uint64_t seconds, bool today = false,
-               bool labelAbove = false, int labelLines = 1) {
+               bool labelAbove = false, int labelLines = 1, bool bookTop = false, bool bookBottom = false) {
   frame(s, r, 2);
+  if (bookTop || bookBottom) {
+    bookAccess(s, fui::makeRect(r.right() - 52, bookTop ? r.y + 8 : r.bottom() - 52, 44, 44));
+  }
   const auto safe = s.device().safeRect();
   const bool wide = safe.width > safe.height;
   const int valueHeight = wide ? 40 : 52;
   if (r.height < 140) {
     const int valueH = std::max(12, int(r.height) - 38), icon = std::min(32, valueH);
     art(s, fui::makeRect(r.x + 12, r.y + 6 + (valueH - icon) / 2, icon, icon), statsart::clock);
-    timeValue(s, fui::makeRect(r.x + icon + 24, r.y + 6, r.width - icon - 36, valueH), seconds, false, valueHeight);
-    text(s, fui::makeRect(r.x + 8, r.bottom() - 28, r.width - 16, 24), label, 3);
+    const int inset = icon + 24;
+    timeValue(
+        s,
+        fui::makeRect(r.x + inset, r.y + 6, bookTop || bookBottom ? r.width - 2 * inset : r.width - icon - 36, valueH),
+        seconds, false, valueHeight);
+    const int labelInset = bookBottom ? 58 : 8;
+    text(s, fui::makeRect(r.x + labelInset, r.bottom() - 28, r.width - 2 * labelInset, 24), label, 3);
     return;
   }
   if (labelAbove && wide && r.height >= 190) {
@@ -253,11 +269,16 @@ void numberMetric(Context& s, fui::Rect r, const char* label, uint64_t value, co
   metric(s, r, label, labelValue, icon, vertical, outlined);
 }
 void timeMetric(Context& s, fui::Rect r, const char* label, uint64_t seconds, bool precise = false,
-                bool outlined = true) {
+                bool outlined = true, bool dates = false) {
   if (outlined) frame(s, r, 2);
+  if (dates) {
+    bookAccess(s, fui::makeRect(r.right() - 52, r.y + 8, 44, 44), BookDays);
+  }
   const int side = std::min(38, r.height / 2);
   art(s, fui::makeRect(r.x + 12, r.y + std::max(4, (r.height - 28 - side) / 2), side, side), statsart::clock);
-  const auto value = fui::makeRect(r.x + side + 22, r.y + 10, r.width - side - 34, std::max(16, r.height - 45));
+  const int inset = side + 22;
+  const auto value = fui::makeRect(r.x + inset, r.y + 10, dates ? r.width - 2 * inset : r.width - side - 34,
+                                   std::max(16, r.height - 45));
   timeValue(s, value, seconds, precise, s.device().width > s.device().height ? 40 : 52);
   text(s, fui::makeRect(r.x + 6, r.bottom() - 28, r.width - 12, 24), label, 3);
 }
@@ -282,7 +303,7 @@ void summary(Context& s, fui::Rect r, const Model& m) {
     text(s, fui::makeRect(main.x + 8, main.y + 52, main.width - 16, main.height - 60), s.work.buttonLabel, 0,
          fui::TextAlign::Center, fui::Color::Black, 2);
   } else
-    timePanel(s, main, s.work.buttonLabel, seconds, false, true, wide ? 2 : 1);
+    timePanel(s, main, s.work.buttonLabel, seconds, false, true, wide ? 2 : 1, false, annual);
   if (m.today >= readingstats::dayIndex({2020, 1, 1})) {
     const auto action = fui::makeRect(main.right() - 54, main.y + 6, 46, 40);
     frame(s, action, 2);
@@ -294,6 +315,7 @@ void summary(Context& s, fui::Rect r, const Model& m) {
   art(s, fui::makeRect(scope.x + 8, scope.y + 5, 30, 30), fui::bitmapFromIcon(navicons::ListBox32));
   dashboard::hit(s.screen, scope, ChooseStatsScope);
   if (annual && !m.annualKnown) {
+    bookAccess(s, fui::makeRect(main.right() - 52, main.bottom() - 52, 44, 44));
     const auto message =
         wide ? fui::makeRect(main.right() + 24, r.y + 20, r.right() - main.right() - 36, r.height - 32)
              : fui::makeRect(r.x + 12, main.bottom() + 20, r.width - 24, r.bottom() - main.bottom() - 32);
@@ -369,7 +391,8 @@ void today(Context& s, fui::Rect r, const Model& m) {
   r.y += 60;
   r.height -= 60;
   if (m.source == readingstats::Source::Unified && !m.dailyKnown) {
-    prose(s, fui::makeRect(r.x + 12, r.y + 16, r.width - 24, r.height / 2), tr(STR_READING_SYNC_NO_DAILY));
+    bookAccess(s, fui::makeRect(r.right() - 44, r.y, 44, 44));
+    prose(s, fui::makeRect(r.x + 12, r.y + 16, r.width - 84, r.height / 2), tr(STR_READING_SYNC_NO_DAILY));
     prose(s, fui::makeRect(r.x + 12, r.y + r.height * 2 / 3 + 8, r.width - 24, r.height / 3 - 8),
           tr(STR_READING_SYNC_DETAILS));
     return;
@@ -377,7 +400,7 @@ void today(Context& s, fui::Rect r, const Model& m) {
   const auto main =
       fui::makeRect(r.x, r.y, wide ? r.width * 38 / 100 - 6 : r.width, wide ? r.height : r.height * 37 / 100);
   const uint64_t seconds = m.periodStats ? m.periodStats->seconds : 0;
-  timePanel(s, main, tr(STR_STATS_READING_MINUTES), seconds, m.displayedDay == m.today, true);
+  timePanel(s, main, tr(STR_STATS_READING_MINUTES), seconds, m.displayedDay == m.today, true, 1, m.today != 0);
   const auto rest = wide ? fui::makeRect(main.right() + 12, r.y, r.right() - main.right() - 12, r.height)
                          : fui::makeRect(r.x, main.bottom() + 10, r.width, r.bottom() - main.bottom() - 10);
   const int metricH = rest.height * (wide ? 30 : 39) / 100;
@@ -610,9 +633,12 @@ void periodDetails(Context& s, fui::Rect r, const Model& m) {
     r.y += 52;
     r.height -= 52;
     if (m.dailyKnown)
-      timePanel(s, fui::makeRect(r.x, r.y, r.width, r.height * 2 / 3), tr(STR_READING_TOTAL), v.seconds);
-    else
-      prose(s, fui::makeRect(r.x + 12, r.y + 20, r.width - 24, r.height / 2), tr(STR_READING_SYNC_NO_DAILY));
+      timePanel(s, fui::makeRect(r.x, r.y, r.width, r.height * 2 / 3), tr(STR_READING_TOTAL), v.seconds, false, false,
+                1, true);
+    else {
+      bookAccess(s, fui::makeRect(r.right() - 52, r.y + 8, 44, 44));
+      prose(s, fui::makeRect(r.x + 12, r.y + 20, r.width - 84, r.height / 2), tr(STR_READING_SYNC_NO_DAILY));
+    }
     prose(s, fui::makeRect(r.x + 12, r.y + r.height * 2 / 3 + 8, r.width - 24, r.height / 3 - 8),
           tr(STR_READING_SYNC_DETAILS));
     return;
@@ -666,7 +692,8 @@ void periodDetails(Context& s, fui::Rect r, const Model& m) {
       wide ? fui::makeRect(r.x, r.y, r.width / 2 - 6, r.height)
            : fui::makeRect(r.x, r.y, r.width, r.height * (m.period == readingstats::Period::Month ? 62 : 66) / 100);
   const int mainH = metrics.height * (wide ? 35 : 51) / 100, gap = 10;
-  timePanel(s, fui::makeRect(metrics.x, metrics.y, metrics.width, mainH), tr(STR_READING_TIME), v.seconds);
+  timePanel(s, fui::makeRect(metrics.x, metrics.y, metrics.width, mainH), tr(STR_READING_TIME), v.seconds, false, false,
+            1, true);
   const auto cards = fui::makeRect(metrics.x, metrics.y + mainH + gap, metrics.width, metrics.height - mainH - gap);
   const int w = (cards.width - gap) / 2, h = (cards.height - gap) / 2;
   numberMetric(s, fui::makeRect(cards.x, cards.y, w, h), tr(STR_READING_SESSIONS), v.sessions, statsart::sessions);
@@ -731,7 +758,7 @@ void bookDetails(Context& s, fui::Rect r, const Model& m) {
   const auto whole = r;
   if (wide) r.width = r.width * 38 / 100;
   const int side = wide ? 54 : 80, titleH = wide ? 72 : 88;
-  art(s, fui::makeRect(r.x + 8, r.y + 2, side, side), statsart::openBook);
+  art(s, fui::makeRect(r.x + 8, r.y + 2, side, side), fui::bitmapFromIcon(statisticsicons::Book(side)));
   text(s, fui::makeRect(r.x + side + 20, r.y, r.width - side - 24, titleH - 34), b.title, wide ? 0 : 1,
        fui::TextAlign::Left, fui::Color::Black, 2, true, true);
   const auto chip = fui::makeRect(r.x + side + 20, r.y + titleH - 32, std::min(136, r.width - side - 24), 28);
@@ -752,7 +779,8 @@ void bookDetails(Context& s, fui::Rect r, const Model& m) {
   const auto metrics = wide ? fui::makeRect(r.right() + 12, whole.y, whole.right() - r.right() - 12, whole.height)
                             : fui::makeRect(r.x, r.y, r.width, r.height * 65 / 100);
   const int mainH = metrics.height * 40 / 100, gap = 10;
-  timeMetric(s, fui::makeRect(metrics.x, metrics.y, metrics.width, mainH), tr(STR_READING_TOTAL), b.seconds);
+  timeMetric(s, fui::makeRect(metrics.x, metrics.y, metrics.width, mainH), tr(STR_READING_TOTAL), b.seconds, false,
+             true, true);
   const auto cards = fui::makeRect(metrics.x, metrics.y + mainH + gap, metrics.width, metrics.height - mainH - gap);
   const int h = (cards.height - gap) / 2, w = (cards.width - gap) / 2;
   numberMetric(s, fui::makeRect(cards.x, cards.y, w, h), tr(STR_READING_SESSIONS), b.sessions, statsart::sessions);
@@ -800,11 +828,18 @@ void bookMinutes(Context& s, fui::Rect r, uint64_t seconds) {
   number(s, fui::makeRect(r.x, y, r.width, digitH), label);
   prose(s, fui::makeRect(r.x, y + digitH + 2, r.width, unitH), tr(STR_STATS_UNIT_MIN), fui::TextAlign::Center, 3);
 }
+void periodPagination(Context& s, fui::Rect band, int page, int total, int capacity,
+                      fui::ActionId action = PeriodBooksPage) {
+  pageui::build(s, band, page + 1, std::max(1, (total + capacity - 1) / capacity), action, -1, action, 1);
+}
 void books(Context& s, fui::Rect r, const Model& m) {
+  const bool periodList = m.periodBooks || m.bookDays;
   const bool finished = m.filter == readingstats::BookFilter::Finished, wide = r.width > r.height;
   const int half = r.width / 2, filterH = wide ? 42 : 48;
   const auto filters = fui::makeRect(r.x, r.y, r.width, filterH);
-  if (chrome::lightHeader) {
+  if (periodList) {
+    button(s, filters, tr(STR_QUEST_BACK), m.bookDays ? BookDaysBack : PeriodBooksBack);
+  } else if (chrome::lightHeader) {
     dashboard::segment(s.screen, filters, 0, 2, tr(STR_STATS_FINISHED_FILTER), Filter, 0, finished);
     dashboard::segment(
         s.screen, filters, 1, 2,
@@ -818,7 +853,39 @@ void books(Context& s, fui::Rect r, const Model& m) {
   }
   r.y += filterH + 14;
   r.height -= filterH + 14;
-  if (!wide) {
+  if (m.bookDays) {
+    fui::TextStyle title;
+    title.font = 0;
+    title.maxLines = wide ? 1 : 2;
+    const int titleHeight = s.target().lineHeight(title.font) * title.maxLines;
+    const int iconSize = std::min(32, titleHeight);
+    art(s, fui::makeRect(r.x + 8, r.y + (titleHeight - iconSize) / 2, iconSize, iconSize),
+        fui::bitmapFromIcon(navicons::Library32));
+    s.target().text(fui::makeRect(r.x + iconSize + 20, r.y, r.width - iconSize - 28, titleHeight), m.detail->title,
+                    title);
+    r.y += titleHeight + 12;
+    r.height -= titleHeight + 12;
+    if (m.source == readingstats::Source::Unified) {
+      text(s, fui::makeRect(r.x, r.y, r.width, 24), tr(STR_CROSSINK_LOCAL), 3);
+      r.y += 26;
+      r.height -= 26;
+    }
+  } else if (periodList) {
+    char from[32], through[32], label[80];
+    const auto first = readingstats::dateFromDay(m.periodBookFirst), last = readingstats::dateFromDay(m.periodBookLast);
+    dashboard::date(from, sizeof(from), first.year, first.month, first.day);
+    dashboard::date(through, sizeof(through), last.year, last.month, last.day);
+    std::snprintf(label, sizeof(label), "%s%s%s", from, m.periodBookFirst == m.periodBookLast ? "" : " - ",
+                  m.periodBookFirst == m.periodBookLast ? "" : through);
+    text(s, fui::makeRect(r.x, r.y, r.width, 28), label, 0);
+    if (m.source == readingstats::Source::Unified) {
+      text(s, fui::makeRect(r.x, r.y + 30, r.width, 24), tr(STR_CROSSINK_LOCAL), 3);
+      r.y += 26;
+      r.height -= 26;
+    }
+    r.y += 40;
+    r.height -= 40;
+  } else if (!wide) {
     text(s, fui::makeRect(r.x, r.y, r.width - 48, 32),
          finished                                    ? tr(STR_STATS_FINISHED_BOOKS)
          : m.source == readingstats::Source::Unified ? tr(STR_READING_SYNC_UNFINISHED)
@@ -829,40 +896,79 @@ void books(Context& s, fui::Rect r, const Model& m) {
     r.y += 50;
     r.height -= 50;
   }
-  if (!m.count) {
+  const int bookCount = m.bookDays ? m.bookDays->count : m.periodBooks ? m.periodBookCount : m.count;
+  const int footerH = 44, footerInset = 12;
+  const auto pagerBand = fui::makeRect(r.x, r.bottom() - footerH - footerInset, r.width, footerH);
+  if (!bookCount) {
     art(s, fui::makeRect(r.x + (r.width - 80) / 2, r.y + 20, 80, 80), statsart::sparkBook);
     prose(s, fui::makeRect(r.x + 12, r.y + 120, r.width - 24, 70),
-          finished ? tr(STR_STATS_NO_BOOKS) : tr(STR_STATS_NO_RECENT));
+          periodList ? tr(STR_STATS_NO_READING)
+          : finished ? tr(STR_STATS_NO_BOOKS)
+                     : tr(STR_STATS_NO_RECENT));
+    if (periodList)
+      periodPagination(s, pagerBand, m.bookDays ? m.bookDays->page : m.periodBookPage,
+                       m.bookDays ? m.bookDays->total : m.periodBookTotal,
+                       m.bookDays ? m.bookDays->capacity : m.pageSize, m.bookDays ? BookDaysPage : PeriodBooksPage);
     return;
   }
-  const int columns = 1, rows = wide ? 3 : 5, gap = 10, footerH = 44;
-  const int rowH = std::min(108, (r.height - footerH - 16) / rows), rowW = (r.width - (columns - 1) * gap) / columns;
-  for (int n = 0; n < m.count; ++n) {
+  const int columns = 1, rows = wide ? (periodList ? 2 : 3) : 5, gap = 10;
+  const int rowH = std::min(108, (r.height - footerH - footerInset - 16) / rows),
+            rowW = (r.width - (columns - 1) * gap) / columns;
+  for (int n = 0; n < bookCount; ++n) {
     const auto row =
         fui::makeRect(r.x + (n % columns) * (rowW + gap), r.y + (n / columns) * rowH, rowW, rowH - (wide ? 8 : 10));
     const auto& b = m.books[n];
     frame(s, row, 2);
-    dashboard::hit(s.screen, row, OpenBook, n);
-    const int side = wide ? 24 : 32, timeW = wide ? 110 : 120, divider = row.right() - timeW;
-    art(s, fui::makeRect(row.x + 14, row.y + (row.height - side) / 2, side, side), statsart::closedBook);
+    if (!m.bookDays) dashboard::hit(s.screen, row, OpenBook, n);
+    const auto seconds = m.bookDays ? m.bookDays->entries[n].seconds : b.seconds;
+    int digits = 1;
+    for (uint64_t value = seconds / 60; value >= 10; value /= 10) ++digits;
+    const int side = wide ? 24 : 32;
+    const int timeW = periodList ? std::max(wide ? 110 : 120, std::min(int(row.width) * 2 / 5, digits * 14 + 34))
+                      : wide     ? 110
+                                 : 120;
+    const int divider = row.right() - timeW;
+    art(s, fui::makeRect(row.x + 14, row.y + (row.height - side) / 2, side, side),
+        m.bookDays ? statsart::calendar : statsart::closedBook);
     const int x = row.x + side + 28, width = divider - x - 10;
-    const int titleY = wide ? row.y + (row.height - 38) / 2 : row.y + 8;
-    text(s, fui::makeRect(x, titleY, width, wide ? 18 : row.height / 2 - 8), b.title, wide ? 3 : 0,
-         fui::TextAlign::Left, fui::Color::Black, 1, false);
-    char label[48], dateValue[32];
-    bookDate(finished ? b.finishedEpoch : b.lastEpoch, finished ? b.finishedDay : 0, dateValue, sizeof(dateValue));
-    if (finished)
-      std::snprintf(label, sizeof(label), "%s", dateValue);
-    else
-      std::snprintf(label, sizeof(label), tr(STR_STATS_LAST_READ_DATE), dateValue);
-    prose(s, fui::makeRect(x, wide ? titleY + 20 : row.y + row.height / 2, width, wide ? 18 : row.height / 2 - 6),
-          label, fui::TextAlign::Left, 3);
+    if (m.bookDays) {
+      char label[32];
+      const auto day = readingstats::dateFromDay(m.bookDays->entries[n].day);
+      dashboard::date(label, sizeof(label), day.year, day.month, day.day);
+      prose(s, fui::makeRect(x, row.y + 6, width, row.height - 12), label, fui::TextAlign::Left, 0);
+    } else if (periodList) {
+      char label[128];
+      pixelui::copyCaps(label, sizeof(label), b.title);
+      fui::TextStyle title;
+      title.font = 0;
+      title.align = fui::TextAlign::Left;
+      title.maxLines = 2;
+      s.target().text(fui::makeRect(x, row.y + 6, width, row.height - 12), label, title);
+    } else {
+      const int titleY = wide ? row.y + (row.height - 38) / 2 : row.y + 8;
+      text(s, fui::makeRect(x, titleY, width, wide ? 18 : row.height / 2 - 8), b.title, wide ? 3 : 0,
+           fui::TextAlign::Left, fui::Color::Black, 1, false);
+      char label[48], dateValue[32];
+      bookDate(finished ? b.finishedEpoch : b.lastEpoch, finished ? b.finishedDay : 0, dateValue, sizeof(dateValue));
+      if (finished)
+        std::snprintf(label, sizeof(label), "%s", dateValue);
+      else
+        std::snprintf(label, sizeof(label), tr(STR_STATS_LAST_READ_DATE), dateValue);
+      prose(s, fui::makeRect(x, wide ? titleY + 20 : row.y + row.height / 2, width, wide ? 18 : row.height / 2 - 6),
+            label, fui::TextAlign::Left, 3);
+    }
     s.target().line({int16_t(divider), int16_t(row.y + 12)}, {int16_t(divider), int16_t(row.bottom() - 12)}, 2, black);
-    bookMinutes(s, fui::makeRect(divider + 5, row.y, timeW - 30, row.height), b.seconds);
+    bookMinutes(s, fui::makeRect(divider + 5, row.y, timeW - 30, row.height), seconds);
     const auto arrow = fui::makeRect(row.right() - 27, row.y + (row.height - 30) / 2, 22, 30);
     const bool focused = !s.screen.device().hasTouch && n == m.selected;
     if (focused) lightui::surface(s.target(), arrow, black);
-    dashboard::chevron(s.target(), arrow, focused);
+    if (!m.bookDays) dashboard::chevron(s.target(), arrow, focused);
+  }
+  if (periodList) {
+    periodPagination(s, pagerBand, m.bookDays ? m.bookDays->page : m.periodBookPage,
+                     m.bookDays ? m.bookDays->total : m.periodBookTotal, m.bookDays ? m.bookDays->capacity : m.pageSize,
+                     m.bookDays ? BookDaysPage : PeriodBooksPage);
+    return;
   }
   pageui::build(s, fui::makeRect(r.x, r.bottom() - footerH - 12, r.width, footerH), m.page + 1,
                 std::max(1, (m.bookTotal + m.pageSize - 1) / m.pageSize), Page, -1, Page, 1);
@@ -940,6 +1046,14 @@ void build(toybox::Screen& screen, const Model& m, Work& work) {
   if (m.loading || m.failed) {
     text(s, body, (m.failed ? tr(STR_READING_STORAGE_ERROR) : tr(STR_READING_LOADING)), pixelui::kBody,
          fui::TextAlign::Center, fui::Color::Black, 3);
+    return;
+  }
+  if (m.bookDays || (m.periodBooks && !m.detail)) {
+    books(s, body, m);
+    return;
+  }
+  if (m.bookOnly && !m.detail) {
+    text(s, body, tr(STR_STATS_NO_READING), pixelui::kSmall);
     return;
   }
   if (m.goalCalendarVisible) {

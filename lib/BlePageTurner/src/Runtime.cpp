@@ -130,6 +130,7 @@ bool beginOwned() {
 
   const Heap before = host->heap();
   if (radioVerdict(heapInputs(Phase::BeforeStart, before, host->radioReserved())) == Why::StorageBusy) {
+    startRefusal.store(Why::StorageBusy, std::memory_order_relaxed);
     logSkipped("filetransfer-active", before);
     return false;
   }
@@ -202,6 +203,7 @@ bool startSync() {
   readerStartDeferred.store(false, std::memory_order_relaxed);
   bool expected = false;
   if (!attemptInFlight.compare_exchange_strong(expected, true, std::memory_order_acq_rel)) return false;
+  startRefusal.store(Why::Ok, std::memory_order_relaxed);
   attemptCancelled.store(false, std::memory_order_release);
   host->holdFullSpeed(true);
   const bool started = beginOwned();
@@ -323,6 +325,7 @@ bool startAsync() {
   readerStartDeferred.store(false, std::memory_order_relaxed);
   bool expected = false;
   if (!attemptInFlight.compare_exchange_strong(expected, true, std::memory_order_acq_rel)) return false;
+  startRefusal.store(Why::Ok, std::memory_order_relaxed);
   if (port::stopping() || port::running()) {
     const bool running = port::running();
     attemptInFlight.store(false, std::memory_order_release);
@@ -600,6 +603,8 @@ BuildRelease beforeChapterBuild() {
     return BuildRelease::NotHeld;
   settleStart();
   if (attemptInFlight.load(std::memory_order_acquire)) return BuildRelease::NotHeld;
+  // S3 chapter work uses PSRAM; retaining the stack avoids a fragmented-heap restart.
+  if (activeProfile().homeStartLargest != 0) return BuildRelease::NotHeld;
   heldForBuild.store(true, std::memory_order_relaxed);
   readerStartDeferred.store(false, std::memory_order_relaxed);
   const Heap heap = host->heap();
@@ -651,6 +656,8 @@ Why why() {
 }
 
 LinkNote linkNote() { return linkNoteNow.load(std::memory_order_relaxed); }
+
+Why lastStartRefusal() { return startRefusal.load(std::memory_order_relaxed); }
 
 void acknowledgeLinkNote() { stepLinkNote(false, true); }
 

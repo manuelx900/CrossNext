@@ -43,6 +43,6 @@ verify only Back/Volver exits; no Play or restart is available. Install the
 complete folder, re-enter and verify the menu, every story branch and About
 pages in both orientations. Re-enter with an existing save and confirm that
 its chapter remains. Missing/corrupt PET packs should show the corresponding
-`/apps/pet/` notice. Watch serial output for SDART read/CRC errors and confirm
+`/apps/pet-v2/` notice. Watch serial output for SDART read/CRC errors and confirm
 heap/PSRAM returns after leaving either app. Hardware verification is required
 before release.

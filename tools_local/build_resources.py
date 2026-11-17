@@ -203,9 +203,9 @@ def assemble(output, dictionaries, staging, dictionary_cache=None):
         else "Includes a custom StarDict dictionary collection selected by the package builder.\n")
     (staging / "README.txt").write_text(
         "CROSSNEXT - MICROSD RESOURCES\n\n"
-        "Extract this ZIP and copy apps, fonts, languages, images and dictionaries to the ROOT of your microSD.\n"
+        "Extract this ZIP and copy apps, fonts, languages and dictionaries to the ROOT of your microSD.\n"
         "Select microSD UI languages in Settings > System > Language; see languages/README.txt.\n"
-        "Back up custom fonts, dictionaries and images before updating. Replace the old bundled resource\n"
+        "Back up custom fonts and dictionaries before updating. Leave your images folder unchanged. Replace the old bundled resource\n"
         "folders with these complete copies; do not merge old and new packs. Keep books and /.crosspoint/\n"
         "reading/app data. Restore custom resources separately without restoring old bundled packs.\n"
         "Do not copy the resources parent folder or format the card.\n"
@@ -233,7 +233,7 @@ def assemble(output, dictionaries, staging, dictionary_cache=None):
         "This improves the conversion and known errors; it does not certify every source entry as error-free.\n"
         "Web styles and pronunciation/etymology metadata are omitted.\n"
         "Manual dictionary selections, including None, take precedence.\n"
-        "App resources: apps/reading-adventure, apps/pet and apps/intercept.\n"
+        "App resources: apps/reading-adventure-v2, apps/pet-v2 and apps/intercept.\n"
         "Install compatible firmware for your device separately. This ZIP contains no firmware.\n"
         "These apps need their complete resource folders to work. If resources are unavailable,\n"
         "replace the indicated app folder with the complete folder from this ZIP.\n"
@@ -245,6 +245,8 @@ def assemble(output, dictionaries, staging, dictionary_cache=None):
         "See CUSTOMIZATION.txt to customize artwork or add fonts and dictionaries.\n",
         encoding="utf-8")
     files = [p for p in sorted(staging.rglob("*")) if p.is_file() and p != staging / "MANIFEST.json"]
+    if any(path.relative_to(staging).parts[0] == "images" for path in files):
+        raise ValueError("The images folder is user-owned and must not be distributed")
     if any(".crosspoint" in path.relative_to(staging).parts for path in files):
         raise ValueError("Saved state must never be included in a resource package")
     manifest = {"formatVersion": 1, "apps": {name: "included" for name in apps.APPS},

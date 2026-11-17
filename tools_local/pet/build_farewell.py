@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "assets_local/pet/farewell"
 
 
-def build(output=ROOT / "resources/apps/pet/farewell.bin"):
+def build(output=ROOT / "resources/apps/pet-v2/farewell.bin"):
     spec = importlib.util.spec_from_file_location("pet_farewell_masks", Path(__file__).with_name("build_habitat.py"))
     tools = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(tools)
@@ -51,10 +51,12 @@ def build(output=ROOT / "resources/apps/pet/farewell.bin"):
 
 if __name__ == "__main__":
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output",type=Path,default=ROOT / "resources/apps/pet/farewell.bin")
-    from gray_assets import available, build as build_gray
-    output = parser.parse_args().output
-    if available():
-        build_gray("farewell", output)
+    parser.add_argument("--output",type=Path,default=ROOT / "resources/apps/pet-v2/farewell.bin")
+    parser.add_argument("--legacy", action="store_true", help="Build old monochrome compatibility artwork")
+    from gray_assets import require_current, build as build_gray
+    args = parser.parse_args()
+    if args.legacy:
+        build(args.output)
     else:
-        build(output)
+        require_current()
+        build_gray("farewell", args.output)

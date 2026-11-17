@@ -44,11 +44,18 @@ bool Pack::fail(const char* reason) {
 }
 bool Pack::read(void* out, size_t bytes) { return file.read(out, bytes) == int(bytes) || fail("Short resource read"); }
 bool Pack::open(const char* path, uint32_t expectedCount, size_t pixelCacheBytes) {
+  return openImpl(path, expectedCount, pixelCacheBytes, false);
+}
+bool Pack::openGrayscale(const char* path, uint32_t expectedCount, size_t pixelCacheBytes) {
+  return openImpl(path, expectedCount, pixelCacheBytes, true);
+}
+bool Pack::openImpl(const char* path, uint32_t expectedCount, size_t pixelCacheBytes, bool grayscaleOnly) {
   close();
   if (!Storage.openFileForRead("SDART", path, file)) return fail("Resource pack missing");
   uint8_t header[HEADER_BYTES];
   if (!read(header, sizeof(header))) return false;
   grayPixels = std::memcmp(header, "CNART003", 8) == 0;
+  if (grayscaleOnly && !grayPixels) return fail("Current grayscale resources required");
   perImageChecksums = grayPixels || std::memcmp(header, "CNART002", 8) == 0;
   recordBytes = perImageChecksums ? 16 : RECORD_BYTES;
   if ((!perImageChecksums && std::memcmp(header, "CNART001", 8)) || le32(header + 8) != expectedCount ||

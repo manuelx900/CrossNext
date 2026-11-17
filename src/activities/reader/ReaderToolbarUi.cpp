@@ -3,6 +3,7 @@
 #include <FreeInkUIIcon.h>
 #include <GfxRenderer.h>
 #include <I18n.h>
+#include <SdCardFontSystem.h>
 
 #include <algorithm>
 #include <cstdio>
@@ -13,6 +14,8 @@
 #include "ReaderPanelRows.h"
 #include "components/UITheme.h"
 #include "components/icons/readerToolbarIcons.h"
+
+extern SdCardFontSystem sdFontSystem;
 
 namespace fui = freeink::ui;
 
@@ -93,6 +96,7 @@ void ReaderToolbarUi::onAction(const fui::ActionEvent& event, void* user) {
 void ReaderToolbarUi::screenFn(UiScreen& screen, void* user) {
   auto* self = static_cast<ReaderToolbarUi*>(user);
   if (self->model_.textSheet) {
+    sdFontSystem.ensureBundledFonts(self->renderer_);
     pixelui::FontScope fonts(self->uiTarget, self->renderer_, I18N.getLanguage() != Language::EN);
     self->uiTarget.setFont(pixelui::kTitle, NOTOSERIF_18_FONT_ID);
     self->uiTarget.setFont(4, toybox::kBookListFontId);

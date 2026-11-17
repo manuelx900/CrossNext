@@ -24,7 +24,7 @@ input[type=file]{display:none}
 </style>
 <!--#include file="shared/UiText.html.inc" -->
 </head>
-<body>
+<body data-standalone>
 <header data-ui>Add a wallpaper</header>
 <main>
 <p class="dim" data-ui>Pick a photo. It is cropped and dithered here on your phone, then sent to the reader. Nothing leaves your network.</p>
@@ -60,20 +60,6 @@ pick.addEventListener("change", async () => {
     // will be, because the reader cannot hold a public certificate.
     img = await createImageBitmap(file);
     render();
-    // Paint the DITHERED result back, so the preview is what the reader will
-    // actually show rather than a greyscale approximation of it.
-    const out = ctx.createImageData(WALL_W, WALL_H);
-    const rowBytes = (WALL_W + 31) >> 5 << 2;
-    const data = bmp.subarray(bmp.length - rowBytes * WALL_H);
-    for (let y = 0; y < WALL_H; y++) {
-      const row = (WALL_H - 1 - y) * rowBytes;
-      for (let x = 0; x < WALL_W; x++) {
-        const on = (data[row + (x >> 3)] >> (7 - (x & 7))) & 1;
-        const v = on ? 255 : 0, i = (y * WALL_W + x) * 4;
-        out.data[i] = out.data[i + 1] = out.data[i + 2] = v; out.data[i + 3] = 255;
-      }
-    }
-    ctx.putImageData(out, 0, 0);
   } catch (e) {
     say(uiText("Could not read that picture. Try another one."));
   }
@@ -136,5 +122,6 @@ send.addEventListener("click", async () => {
   }
 });
 </script>
+<!--#include file="shared/WebShell.html.inc" -->
 </body>
 </html>

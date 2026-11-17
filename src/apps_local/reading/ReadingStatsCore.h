@@ -7,6 +7,7 @@ namespace readingstats {
 constexpr size_t kRecordBytes = 384;
 constexpr int kHistoryDays = 730;
 constexpr int kBooksPerPage = 5;
+constexpr uint64_t kMinimumVisibleSeconds = 60;
 constexpr int kRecentBooks = 10;
 enum class Period { Calendar, Day, Week, Month, Year };
 enum class BookFilter { Finished, Recent };

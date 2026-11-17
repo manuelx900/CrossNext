@@ -32,6 +32,11 @@ class ReaderActivity : public Activity {
   void drawConfiguredBars(const readerbars::Data& data);
   std::atomic<bool> pageRendered{false};
   bool bookRemembered = false;
+  char cachedDocument[33]{};
+  uint32_t documentResources = 0, documentMedia = 0;
+  const char* documentId();
+  bool completionStatusPending = true;
+  void ensureCompletionStatus();
   std::atomic<bool> bookFinished{false};
   std::atomic<bool> endRenderedPending{false};
   bool endCompletionAttempted = false;

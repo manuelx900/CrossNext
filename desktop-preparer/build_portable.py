@@ -27,7 +27,7 @@ shutil.copy2(REPO / 'THIRD-PARTY-NOTICES.md', RUNTIME / 'THIRD-PARTY-NOTICES.txt
 shutil.copy2(REPO / 'Resources/fonts/Ubuntu/UFL.txt', RUNTIME / 'UBUNTU-FONT-LICENSE.txt')
 shutil.copy2(REPO / 'Resources/fonts/Noto Serif/OFL.txt', RUNTIME / 'NOTO-FONT-LICENSE.txt')
 engine_build = json.loads((RUNTIME/'engine-build.json').read_text(encoding='utf-8'))
-manifest = {'product':'CrossNext Book Preparer', 'channel':'2.0.0 preview', 'architecture':'Windows x64',
+manifest = {'product':'CrossNext Book Preparer', 'channel':json.loads((ROOT/'package.json').read_text(encoding='utf8'))['version'], 'architecture':'Windows x64',
             'firmwareCommit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=REPO,text=True).strip(),
             'cacheVersion':engine_build['cacheVersion'], 'files':{}}
 for p in sorted(RUNTIME.glob('*')):

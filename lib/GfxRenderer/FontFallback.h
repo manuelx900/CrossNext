@@ -6,8 +6,8 @@
 
 namespace fontfallback {
 inline int resolve(const std::map<int, EpdFontFamily>& fonts, const std::map<int, int>& fallbacks, int fontId,
-                   const char* text, EpdFontFamily::Style style,
-                   const std::map<int, int>* languageFallbacks = nullptr) {
+                   const char* text, EpdFontFamily::Style style, const std::map<int, int>* languageFallbacks = nullptr,
+                   void* context = nullptr, bool (*load)(void*, int) = nullptr) {
   if (!text || !*text || (fallbacks.empty() && (!languageFallbacks || languageFallbacks->empty()))) return fontId;
   const auto base = fonts.find(fontId);
   if (base == fonts.end()) return fontId;
@@ -39,6 +39,7 @@ inline int resolve(const std::map<int, EpdFontFamily>& fonts, const std::map<int
       }
       if (next == edge) break;
       edge = next;
+      if (fonts.find(edge) == fonts.end() && load) load(context, edge);
       const auto primary = fonts.find(resolved), candidate = fonts.find(edge);
       if (primary == fonts.end() || candidate == fonts.end()) continue;
       const char* cursor = text;

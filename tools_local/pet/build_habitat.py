@@ -46,7 +46,7 @@ def bits(image, mask=False):
     return (image if mask else ImageOps.invert(image.convert('L')).convert('1')).tobytes()
 
 
-def build(output=ROOT / 'resources/apps/pet/habitat.bin', metadata=ROOT / 'src/apps_local/pet/PetHabitatData.h'):
+def build(output=ROOT / 'resources/apps/pet-v2/habitat.bin', metadata=ROOT / 'src/apps_local/pet/PetHabitatData.h'):
     spec = importlib.util.spec_from_file_location('pet_original_resources', Path(__file__).with_name('build_resources.py'))
     original = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(original)
@@ -150,11 +150,13 @@ inline constexpr PetArt PET_ART[] = {
 
 if __name__ == '__main__':
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output',type=Path,default=ROOT/'resources/apps/pet/habitat.bin')
+    parser.add_argument('--output',type=Path,default=ROOT/'resources/apps/pet-v2/habitat.bin')
     parser.add_argument('--metadata',type=Path,default=ROOT/'src/apps_local/pet/PetHabitatData.h')
+    parser.add_argument('--legacy',action='store_true',help='Build old monochrome compatibility artwork')
     args=parser.parse_args()
-    from gray_assets import available, build as build_gray
-    if available():
-        build_gray("habitat", args.output)
-    else:
+    from gray_assets import require_current, build as build_gray
+    if args.legacy:
         build(args.output,args.metadata)
+    else:
+        require_current()
+        build_gray("habitat", args.output)

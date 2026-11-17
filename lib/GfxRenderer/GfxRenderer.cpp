@@ -311,7 +311,9 @@ bool GfxRenderer::replaceBuiltinFont(const int fontId, EpdFontFamily font) {
 }
 
 int GfxRenderer::resolveTextFontId(const int fontId, const char* text, const EpdFontFamily::Style style) const {
-  return fontfallback::resolve(fontMap, fallbackFontMap_, fontId, text, style, &languageFallbackFontMap_);
+  return fontfallback::resolve(
+      fontMap, fallbackFontMap_, fontId, text, style, &languageFallbackFontMap_, const_cast<GfxRenderer*>(this),
+      [](void* context, int id) { return static_cast<GfxRenderer*>(context)->ensureFontLoaded(id); });
 }
 
 void GfxRenderer::prewarmFallbackText(const int fontId, const TextGetter getter, const void* ctx,

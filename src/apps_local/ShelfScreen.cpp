@@ -190,8 +190,21 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
     props.selectionMarker = fui::SelectionMarker::Underline;
     props.markerThickness = 1;
     fui::list(screen.frame(), screen.body(), props);
-  } else
-    pixelui::list(screen, props);
+  } else {
+    // Shelf rows contain one label and one fixed-size icon. Measure their
+    // shared height once; the SDK still owns drawing and interaction.
+    props = screen.resolveListProps(props);
+    fui::ListItem sample;
+    Rows::provide(&source, 0, sample);
+    const auto rowHeight =
+        fui::measureListRow(screen.target(), screen.frame().assets(), screen.body().width, props, sample).height;
+    fui::list(screen.frame(), screen.body(), props);
+    const auto body = screen.body();
+    const int rows = std::min(model.count, int(body.height) / std::max(1, int(rowHeight)));
+    if (rows)
+      screen.target().stroke(fui::makeRect(body.x, body.y, body.width, rows * rowHeight),
+                             fui::Paint::solid(fui::Color::Black), pixelui::kBorder);
+  }
   if (choosing && model.icons) {
     const auto body = screen.body();
     for (int n = 0; n < model.count; ++n)

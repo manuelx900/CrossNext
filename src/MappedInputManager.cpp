@@ -468,11 +468,20 @@ bool MappedInputManager::wasPowerConfirmClick() const {
 }
 #endif
 
+bool MappedInputManager::remoteInputAvailable() const {
+  return !remoteInput.used && !gpio.wasAnyPressed() && !gpio.wasAnyReleased() && !gpio.wasTouchActivity() &&
+         homeAction == HomeButtonAction::Ignore && sideEvent.action == SideButtonAction::Navigation &&
+         !isPressed(Button::Confirm) && !isPressed(Button::Back);
+}
+
+bool MappedInputManager::claimRemoteCommand() {
+  if (!remoteInputAvailable()) return false;
+  remoteInput.used = true;
+  return true;
+}
+
 bool MappedInputManager::injectRemoteClick(const RemoteButton button) {
-  if (gpio.wasAnyPressed() || gpio.wasAnyReleased() || gpio.wasTouchActivity() ||
-      homeAction != HomeButtonAction::Ignore || sideEvent.action != SideButtonAction::Navigation ||
-      isPressed(Button::Confirm) || isPressed(Button::Back))
-    return false;
+  if (!remoteInputAvailable()) return false;
   if (!remoteInput.click(button)) return false;
   if (button == RemoteButton::SideLeft || button == RemoteButton::SideRight) {
     const bool left = button == RemoteButton::SideLeft;

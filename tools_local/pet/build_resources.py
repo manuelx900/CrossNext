@@ -134,14 +134,16 @@ def build(output, source=None, home=False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, default=ROOT / "resources/apps/pet/graphics.bin")
+    parser.add_argument("--output", type=Path, default=ROOT / "resources/apps/pet-v2/graphics.bin")
     parser.add_argument("--source", type=Path, default=ROOT / "assets_local/pet/png",
                         help="Folder of final 1-bit PNG artwork (default: supplied PET artwork)")
     parser.add_argument("--home", action="store_true", help="Build the optional Home pose pack")
+    parser.add_argument("--legacy", action="store_true", help="Build the old monochrome compatibility artwork")
     args = parser.parse_args()
     output = args.output.with_name("home.bin") if args.home and args.output.name == "graphics.bin" else args.output
-    from gray_assets import available, build as build_gray
-    if available() and args.source.resolve() == (ROOT / "assets_local/pet/png").resolve():
+    from gray_assets import require_current, build as build_gray
+    if not args.legacy and args.source.resolve() == (ROOT / "assets_local/pet/png").resolve():
+        require_current()
         build_gray("home" if args.home else "graphics", output)
     else:
         build(output, args.source, args.home)

@@ -333,20 +333,30 @@ void Uc8279X4Driver::streamPlane(EpdBus& bus, uint8_t ramCmd, const uint8_t* fb,
   // + reversed bits) exist for future panel sub-variants whose scan differs.
   // AA planes are sent bitwise-inverted per the vendor reference.
   static const uint8_t kBitRev[16] = {0x0, 0x8, 0x4, 0xC, 0x2, 0xA, 0x6, 0xE, 0x1, 0x9, 0x5, 0xD, 0x3, 0xB, 0x7, 0xF};
-  for (uint16_t n = 0; n < _h; n++) {
-    const uint16_t y = FREEINK_UC8279X4_ROWREV ? static_cast<uint16_t>(_h - 1 - n) : n;
-    const uint8_t* src = fb + static_cast<uint32_t>(y) * _wb;
-    for (uint16_t i = 0; i < wb; i++) {
-      uint8_t b;
-      if (FREEINK_UC8279X4_XMIRROR) {
-        const uint8_t m = src[wb - 1 - i];
-        b = static_cast<uint8_t>((kBitRev[m & 0x0F] << 4) | kBitRev[m >> 4]);
-      } else {
-        b = src[i];
-      }
-      row[i] = invert ? static_cast<uint8_t>(~b) : b;
+  if (!invert && !FREEINK_UC8279X4_ROWREV && !FREEINK_UC8279X4_XMIRROR && _wb == wb) {
+    // The untransformed visible plane is already contiguous in the caller's buffer.
+    constexpr uint32_t PIECE = 32000;  // rawWriteBytes has a 16-bit length.
+    const uint32_t total = static_cast<uint32_t>(_h) * _wb;
+    for (uint32_t sent = 0; sent < total; sent += PIECE) {
+      const uint32_t count = total - sent < PIECE ? total - sent : PIECE;
+      bus.rawWriteBytes(fb + sent, static_cast<uint16_t>(count));
     }
-    bus.rawWriteBytes(row, wb);
+  } else {
+    for (uint16_t n = 0; n < _h; n++) {
+      const uint16_t y = FREEINK_UC8279X4_ROWREV ? static_cast<uint16_t>(_h - 1 - n) : n;
+      const uint8_t* src = fb + static_cast<uint32_t>(y) * _wb;
+      for (uint16_t i = 0; i < wb; i++) {
+        uint8_t b;
+        if (FREEINK_UC8279X4_XMIRROR) {
+          const uint8_t m = src[wb - 1 - i];
+          b = static_cast<uint8_t>((kBitRev[m & 0x0F] << 4) | kBitRev[m >> 4]);
+        } else {
+          b = src[i];
+        }
+        row[i] = invert ? static_cast<uint8_t>(~b) : b;
+      }
+      bus.rawWriteBytes(row, wb);
+    }
   }
   // Gates after the visible window: white, up to the addressed gate count.
   memset(row, 0xFF, wb);

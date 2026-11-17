@@ -5,7 +5,7 @@
 
 #include "EpubCachePath.h"
 
-enum class StorageMutation : uint8_t { Resources, ReadingState, DerivedCache };
+enum class StorageMutation : uint8_t { Resources, ReadingState, DerivedCache, NavigationState };
 
 struct StorageStateKey {
   enum class Kind : uint8_t { None, EpubProgress, XtcProgress, ReadingJournal };
@@ -79,10 +79,15 @@ inline bool isPreparedCover(const char* path) {
   return true;
 }
 
-// Only the reserved progress files in a canonical book-cache directory qualify.
+// Navigation and reading state cannot alter book or cover resources.
 inline StorageMutation storageMutation(const char* path) {
   if (!path) return StorageMutation::Resources;
   std::string_view value(path);
+  if (value == "/.crosspoint/stats-period-a.tmp" || value == "/.crosspoint/stats-period-b.tmp" ||
+      value == "/.crosspoint/stats-days-a.tmp" || value == "/.crosspoint/stats-days-b.tmp")
+    return StorageMutation::DerivedCache;
+  if (value == "/.crosspoint/shelf.cfg" || value == "/.crosspoint/shelf-hidden.cfg")
+    return StorageMutation::NavigationState;
   if (value == "/.crosspoint/state.json" || storageStateKey(path).valid() || isBookTextPreferences(path))
     return StorageMutation::ReadingState;
   constexpr std::string_view root = "/.crosspoint/";
@@ -101,7 +106,8 @@ inline StorageMutation storageMutation(const char* path) {
 }
 
 inline StorageMutation storageMutation(const char* from, const char* to) {
-  return storageMutation(from) == StorageMutation::ReadingState && storageMutation(to) == StorageMutation::ReadingState
-             ? StorageMutation::ReadingState
-             : StorageMutation::Resources;
+  const auto source = storageMutation(from), destination = storageMutation(to);
+  if (source == destination && (source == StorageMutation::ReadingState || source == StorageMutation::NavigationState))
+    return source;
+  return StorageMutation::Resources;
 }

@@ -65,54 +65,29 @@ void PetActivity::onEnter() {
   requestUpdate();
 }
 bool PetActivity::openResources() {
-  if (Storage.exists(petui::ART_PATH)) {
-    pettingHandAvailable = art.open(petui::ART_PATH, petui::ART_COUNT, ART_PIXEL_CACHE_BYTES);
-    if (!pettingHandAvailable) art.open(petui::ART_PATH, petui::LEGACY_ART_COUNT, ART_PIXEL_CACHE_BYTES);
-  }
-  portraitBackgroundsAvailable = false;
-  fullRoomBackgroundsAvailable = false;
-  if (Storage.exists(petui::HOME_ART_PATH)) {
-    fullRoomBackgroundsAvailable =
-        homeArt.open(petui::HOME_ART_PATH, petui::HOME_BACKGROUNDS_COUNT, ROOM_PIXEL_CACHE_BYTES);
-    portraitBackgroundsAvailable =
-        fullRoomBackgroundsAvailable ||
-        homeArt.open(petui::HOME_ART_PATH, petui::LEGACY_HOME_BACKGROUNDS_COUNT, ART_PIXEL_CACHE_BYTES);
-    if (!portraitBackgroundsAvailable) homeArt.open(petui::HOME_ART_PATH, petui::HOME_ART_COUNT, ART_PIXEL_CACHE_BYTES);
-  }
-  if (Storage.exists(petui::HABITAT_ART_PATH))
-    habitatArt.open(petui::HABITAT_ART_PATH, petui::HABITAT_ART_COUNT, ART_PIXEL_CACHE_BYTES);
-  restArtAvailable = false;
-  feedingArt = petfeed::Art::Legacy;
-  curiosityAvailable = false;
-  reactionArt = petreact::Art::None;
-  if (Storage.exists(petsleep::ART_PATH)) {
-    if (sleepArt.open(petsleep::ART_PATH, petrest::ART_COUNT, ART_PIXEL_CACHE_BYTES)) {
-      restArtAvailable = true;
-      reactionArt = petreact::Art::Registered;
-      feedingArt = petfeed::Art::Extended;
-    } else if (sleepArt.open(petsleep::ART_PATH, petart::ART_COUNT, ART_PIXEL_CACHE_BYTES)) {
-      reactionArt = petreact::Art::Registered;
-      feedingArt = petfeed::Art::Extended;
-    } else if (sleepArt.open(petsleep::ART_PATH, petreact::ART_COUNT, ART_PIXEL_CACHE_BYTES))
-      reactionArt = petreact::Art::Registered;
-    else if (sleepArt.open(petsleep::ART_PATH, petreact::LEGACY_ART_COUNT, ART_PIXEL_CACHE_BYTES))
-      reactionArt = petreact::Art::Legacy;
-    curiosityAvailable = reactionArt != petreact::Art::None ||
-                         sleepArt.open(petsleep::ART_PATH, petcurious::ART_COUNT, ART_PIXEL_CACHE_BYTES);
-    if (feedingArt != petfeed::Art::Extended) {
-      if (curiosityAvailable || sleepArt.open(petsleep::ART_PATH, petfeed::ART_COUNT, ART_PIXEL_CACHE_BYTES))
-        feedingArt = petfeed::Art::Progressive;
-      else if (sleepArt.open(petsleep::ART_PATH, petfeed::SIMPLE_ART_COUNT, ART_PIXEL_CACHE_BYTES))
-        feedingArt = petfeed::Art::Simple;
-      else
-        sleepArt.open(petsleep::ART_PATH, petsleep::ART_COUNT, ART_PIXEL_CACHE_BYTES);
-    }
-  }
-  const bool farewellReady = farewellArt.open(petui::FAREWELL_ART_PATH, petui::FAREWELL_ART_COUNT);
+  const bool mainReady =
+      art.openGrayscale(petui::ART_PATH, petui::ART_COUNT, ART_PIXEL_CACHE_BYTES) &&
+      homeArt.openGrayscale(petui::HOME_ART_PATH, petui::HOME_BACKGROUNDS_COUNT, ROOM_PIXEL_CACHE_BYTES) &&
+      habitatArt.openGrayscale(petui::HABITAT_ART_PATH, petui::HABITAT_ART_COUNT, ART_PIXEL_CACHE_BYTES) &&
+      sleepArt.openGrayscale(petsleep::ART_PATH, petrest::ART_COUNT, ART_PIXEL_CACHE_BYTES);
+  const bool farewellReady =
+      mainReady && farewellArt.openGrayscale(petui::FAREWELL_ART_PATH, petui::FAREWELL_ART_COUNT);
   farewellArt.close();
-  const bool collectionReady = collectionArt.open(petui::COLLECTION_ART_PATH, petui::COLLECTION_ART_COUNT);
+  const bool collectionReady =
+      farewellReady && collectionArt.openGrayscale(petui::COLLECTION_ART_PATH, petui::COLLECTION_ART_COUNT);
   collectionArt.close();
-  return art.ready() && homeArt.ready() && habitatArt.ready() && sleepArt.ready() && farewellReady && collectionReady;
+  const bool available = mainReady && farewellReady && collectionReady;
+  pettingHandAvailable = portraitBackgroundsAvailable = fullRoomBackgroundsAvailable = restArtAvailable =
+      curiosityAvailable = available;
+  feedingArt = available ? petfeed::Art::Extended : petfeed::Art::Legacy;
+  reactionArt = available ? petreact::Art::Registered : petreact::Art::None;
+  if (!available) {
+    sleepArt.close();
+    habitatArt.close();
+    homeArt.close();
+    art.close();
+  }
+  return available;
 }
 bool PetActivity::resourcesReady() const {
   return contentsAvailable && art.ready() && homeArt.ready() && habitatArt.ready() && sleepArt.ready() &&
@@ -211,7 +186,7 @@ void PetActivity::syncCollectionArt() {
   if (collectionArtTried) return;
   collectionArtTried = true;
   if (Storage.exists(petui::COLLECTION_ART_PATH))
-    collectionArt.open(petui::COLLECTION_ART_PATH, petui::COLLECTION_ART_COUNT, COLLECTION_PIXEL_CACHE_BYTES);
+    collectionArt.openGrayscale(petui::COLLECTION_ART_PATH, petui::COLLECTION_ART_COUNT, COLLECTION_PIXEL_CACHE_BYTES);
 }
 void PetActivity::syncFarewellArt() {
   if (!profile.created || profile.lifeStatus != pet::LifeStatus::Lost) {
@@ -222,7 +197,7 @@ void PetActivity::syncFarewellArt() {
   if (farewellArtTried) return;
   farewellArtTried = true;
   if (Storage.exists(petui::FAREWELL_ART_PATH))
-    farewellArt.open(petui::FAREWELL_ART_PATH, petui::FAREWELL_ART_COUNT, ART_PIXEL_CACHE_BYTES);
+    farewellArt.openGrayscale(petui::FAREWELL_ART_PATH, petui::FAREWELL_ART_COUNT, ART_PIXEL_CACHE_BYTES);
 }
 void PetActivity::acknowledgeDeath(bool openHistory) {
   if (view != pet::View::Death || !pet::deathPending(profile)) return;

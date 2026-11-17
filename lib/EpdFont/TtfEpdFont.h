@@ -52,8 +52,9 @@
 #include "EpdFont.h"
 #include "EpdFontData.h"
 #include "EpdFontFamily.h"
+#include "FontAllocation.h"
 
-class TtfEpdFont {
+class TtfEpdFont : public FontAllocation {
  public:
   // Style roles for source slots.
   enum Style : uint8_t { Regular = 0, Bold = 1, Italic = 2, BoldItalic = 3 };

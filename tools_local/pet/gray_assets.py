@@ -5,6 +5,7 @@ from collections import deque
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import struct
 import zlib
@@ -12,7 +13,7 @@ import zlib
 from PIL import Image, ImageFilter, ImageOps
 
 ROOT = Path(__file__).resolve().parents[2]
-MASTERS = ROOT / "REDISEÑOS/PET/assets/v2"
+MASTERS = Path(os.environ.get("CROSSNEXT_PET_MASTERS", ROOT / "REDISEÑOS/PET/assets/v2"))
 ORIGINAL = ROOT / "assets_local/pet"
 SPECIES = ("silva", "nox", "ember")
 AGES = ("newborn", "baby", "juvenile", "adult")
@@ -23,6 +24,14 @@ OBJECTS = ("bed", "hammock", "shelter", "plant", "lamp", "leaf-mobile", "ball", 
 
 def available():
     return (MASTERS / "provenance.json").is_file()
+
+
+def require_current():
+    if not available():
+        raise FileNotFoundError(
+            "Current PET masters are missing: " + str(MASTERS) +
+            ". Set CROSSNEXT_PET_MASTERS to the current v2 master folder. "
+            "Use --legacy only to build the old compatibility fixtures.")
 
 
 @lru_cache(maxsize=24)
@@ -546,8 +555,9 @@ def build(kind, output):
 
 if __name__ == "__main__":
     import sys
+    require_current()
     if sys.argv[1:] == ['--update-registration']:
         update_registration()
         sys.exit(0)
     for resource in ("graphics", "home", "habitat", "breathing", "farewell", "collection"):
-        build(resource, ROOT / "resources/apps/pet" / (resource + ".bin"))
+        build(resource, ROOT / "resources/apps/pet-v2" / (resource + ".bin"))

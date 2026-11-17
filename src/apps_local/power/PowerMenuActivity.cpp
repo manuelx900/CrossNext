@@ -25,8 +25,9 @@ void PowerMenuActivity::buildScreen(UiScreen& s) {
   p.action = ACTION_ROW;
   powermenu::place(s, p);
   syncListViewport(s, p);
+  powermenu::style(p);
   rows.bind(p, s.target(), s.body());
-  pixelui::list(s, p);
+  powermenu::draw(s, p);
 }
 void PowerMenuActivity::activateIndex(int n) {
   if (n < 0 || n > 2) return;

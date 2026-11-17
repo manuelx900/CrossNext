@@ -31,6 +31,7 @@
 #include "activities/util/ConfirmationActivity.h"
 #include "activities/util/DetailsActivity.h"
 #include "apps_local/plugins/PluginCatalogScreen.h"
+#include "apps_local/plugins/PluginCompatibility.h"
 #include "apps_local/ui/PixelMenuTheme.h"
 #include "components/CatalogScreens.h"
 #include "components/UITheme.h"
@@ -42,7 +43,6 @@
 #include "util/PluginEvents.h"
 #include "util/PluginHttp.h"
 #include "util/PluginLocations.h"
-#include "util/PluginPickerLayout.h"
 #include "util/QrUtils.h"
 #include "util/StringUtils.h"
 #include "util/UrlUtils.h"
@@ -914,7 +914,7 @@ bool PluginCatalogActivity::parseBrowseResponse() {
   // so incompatible plugins cannot create empty or misleading pages.
   std::vector<int> compatibleRows;
   bool rawHasMore = false;
-  if (manifest.filtersCompatibility()) {
+  if (manifest.filtersCompatibility() || manifest.tracksInstalls()) {
     compatibleRows.reserve(manifest.pageSize);
     int rowIndex = 0;
     plugincatalogpaging::PageWindow compatibleWindow(pageOffset, manifest.pageSize);
@@ -923,7 +923,8 @@ bool PluginCatalogActivity::parseBrowseResponse() {
       const int thisRow = rowIndex++;
       const bool shown =
           !row.field[JsonListParser::F_TITLE].empty() &&
-          catalogEntryCompatible(row.field[COMPAT_FAMILY], row.field[COMPAT_API_MIN], row.field[COMPAT_REQUIRES]);
+          catalogEntryCompatible(row.field[COMPAT_FAMILY], row.field[COMPAT_API_MIN], row.field[COMPAT_REQUIRES]) &&
+          (!manifest.tracksInstalls() || !plugincompat::blocked(row.field[JsonListParser::F_BASE]));
       if (compatibleWindow.take(plugincatalogpaging::countsTowardPage(paging, shown)) && shown) {
         compatibleRows.push_back(thisRow);
       }
@@ -934,6 +935,7 @@ bool PluginCatalogActivity::parseBrowseResponse() {
     compatibilityFields[COMPAT_FAMILY] = &manifest.compatFamilyPath;
     compatibilityFields[COMPAT_API_MIN] = &manifest.compatApiMinPath;
     compatibilityFields[COMPAT_REQUIRES] = &manifest.compatRequiresPath;
+    compatibilityFields[JsonListParser::F_BASE] = &manifest.idPath;
     auto compatibilityParser = makeUniqueNoThrow<JsonListParser>(
         manifest.itemsPath, compatibilityFields, unused,
         [](void* context, JsonListParser::Row& row) { (*static_cast<decltype(selectCompatible)*>(context))(row); },
@@ -953,7 +955,7 @@ bool PluginCatalogActivity::parseBrowseResponse() {
   plugincatalogpaging::PageWindow visibleWindow(pageOffset, manifest.pageSize);
   auto append = [&](JsonListParser::Row& row) {
     const int thisRow = rowIndex++;
-    if (manifest.filtersCompatibility()) {
+    if (manifest.filtersCompatibility() || manifest.tracksInstalls()) {
       if (compatibleIndex >= compatibleRows.size() || compatibleRows[compatibleIndex] != thisRow) return;
       compatibleIndex++;
     } else if (!visibleWindow.take(
@@ -982,7 +984,7 @@ bool PluginCatalogActivity::parseBrowseResponse() {
     fail(StrId::STR_PARSE_FEED_FAILED);
     return false;
   }
-  hasMore = manifest.filtersCompatibility() ? rawHasMore : visibleWindow.hasMore(paging);
+  hasMore = manifest.filtersCompatibility() || manifest.tracksInstalls() ? rawHasMore : visibleWindow.hasMore(paging);
   computeInstallStatus();
   return true;
 }
@@ -1089,6 +1091,11 @@ void PluginCatalogActivity::downloadItem(const int itemIndex) {
   Item item;
   {
     RenderLock lock;
+    if (manifest.isBundle() && PluginLocations::isPluginRoot(downloadDir()) &&
+        plugincompat::blocked(items[itemIndex].id)) {
+      fail(StrId::STR_PLUGIN_UNSUPPORTED);
+      return;
+    }
     item = std::move(items[itemIndex]);
     beginDownload(item.title);
     releaseRows();
@@ -1121,6 +1128,10 @@ HttpDownloader::DownloadError PluginCatalogActivity::downloadBundle(const Item& 
   }
   std::string root = downloadDir();
   while (!root.empty() && root.back() == '/') root.pop_back();
+  if (PluginLocations::isPluginRoot(root) && plugincompat::blocked(subdir)) {
+    LOG_ERR("PCAT", "Unsupported plugin bundle: %s", subdir.c_str());
+    return HttpDownloader::FILE_ERROR;
+  }
   std::string dir;
   if (PluginLocations::shouldReuseInstalledBundleDir(root, subdir)) {
     dir = PluginLocations::findPluginDirOnDisk(subdir.c_str());
@@ -1607,7 +1618,7 @@ void PluginCatalogActivity::showItemDetails(const int itemIndex) {
     spec.metadata += fact;
   };
   if (!item.version.empty()) addFact(std::string(tr(STR_VERSION)) + " " + item.version);
-  addFact(item.status);
+  if (item.version.empty() || (item.status != item.version && item.status != "v" + item.version)) addFact(item.status);
 
   const bool updateAvailable = item.status == tr(STR_UPDATE_AVAILABLE);
   spec.actionLabel = updateAvailable ? tr(STR_UPDATE) : (manifest.tracksInstalls() ? tr(STR_INSTALL) : tr(STR_FETCH));
@@ -1766,9 +1777,6 @@ void PluginCatalogActivity::buildBrowsingScreen(UiScreen& screen) {
   props.rtl =
       (I18N.getLanguage() == Language::AR || I18N.getLanguage() == Language::FA || I18N.getLanguage() == Language::HE);
   syncListViewport(screen, props);
-  if (state == State::PLUGIN_PICKER) {
-    fitPluginSubtitleToViewport(screen.target(), screen.body().height, props);
-  }
   pluginui::list(screen, props);
 }
 

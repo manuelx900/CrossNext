@@ -67,7 +67,7 @@ class CatalogActivity : public UiListActivity {
                                              const std::string& user = {}, const std::string& password = {},
                                              const std::vector<HttpDownloader::Header>& headers = {});
   void screenHeader(UiScreen& screen, const char* title);
-  bool buildStatusScreen(UiScreen& screen, bool boldError = true, bool showDownloadTotal = false);
+  bool buildStatusScreen(UiScreen& screen, bool boldError = true);
 
  private:
   static void onSearchEvent(const freeink::ui::ActionEvent&, void* user);

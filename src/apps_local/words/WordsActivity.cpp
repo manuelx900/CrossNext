@@ -4,6 +4,7 @@
 #include <I18n.h>
 #include <Logging.h>
 #include <Memory.h>
+#include <SdCardFontSystem.h>
 #include <Utf8.h>
 
 #include <algorithm>
@@ -24,6 +25,8 @@
 #include "activities/reader/EpubReaderActivity.h"
 #include "components/HeaderBackTapTarget.h"
 #include "components/SideButtonNavigation.h"
+
+extern SdCardFontSystem sdFontSystem;
 
 namespace fui = freeink::ui;
 namespace {
@@ -48,6 +51,7 @@ std::unique_ptr<Activity> WordsActivity::create(GfxRenderer& r, MappedInputManag
   return app;
 }
 void WordsActivity::onEnter() {
+  sdFontSystem.ensureBundledFonts(renderer);
   Activity::onEnter();
   resetUi();
   app.setScreen(&WordsActivity::screen, this);

@@ -2,7 +2,7 @@ name: CrossNext desktop packages
 
 on:
   push:
-    branches: [codex/release-crossnext-2.0.0]
+    branches: [codex/release-crossnext-2.0.2]
   workflow_dispatch:
 
 permissions:
@@ -66,7 +66,7 @@ jobs:
             hdiutil attach -readonly -nobrowse -mountpoint "$mount" "$disk"
             app=$(find "$mount" -maxdepth 1 -name '*.app' -print -quit)
             test -n "$app"
-            test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$app/Contents/Info.plist")" = '2.0.0'
+            test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$app/Contents/Info.plist")" = "$(node -p "require('./desktop-preparer/package.json').version")"
             test -f "$app/Contents/Resources/runtime/engine.wasm"
             cmp "$app/Contents/Resources/runtime/engine.wasm" desktop-preparer/dist/runtime/engine.wasm
             executable="$app/Contents/MacOS/CrossNext Book Preparer"
@@ -85,7 +85,7 @@ jobs:
           done
       - uses: actions/upload-artifact@v4
         with:
-          name: CrossNext-Book-Preparer-macOS-2.0.0
+          name: CrossNext-Book-Preparer-macOS-2.0.2
           path: desktop-preparer/dist/desktop/*.dmg
           if-no-files-found: error
           retention-days: 14

@@ -183,6 +183,9 @@ class HalFile : public Print {
   HalFile openNextFile();
   // Checked enumeration distinguishes end-of-directory from an SD read failure.
   HalFile openNextFile(bool& ioError);
+  // Reuse one read-only entry handle across a directory traversal. False is
+  // EOF unless ioError is set; the storage lock is released between entries.
+  bool openNextFile(HalFile& entry, bool& ioError);
   bool isOpen() const;
   operator bool() const;
 };

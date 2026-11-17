@@ -295,7 +295,7 @@ void build(toybox::Screen& s, const Model& m, Work& w, Palette* palette, bool li
     simple::navigation(s, m, w, title, actions, uppercaseHeader);
   }
   if (!m.resourcesReady) {
-    requiredresources::build(s, "/apps/pet/", Back, w.button);
+    requiredresources::build(s, "/apps/pet-v2/", Back, w.button);
     return;
   }
   if (m.view == pet::View::New || m.view == pet::View::Info || m.view == pet::View::Rules) tabs(s, w, m);

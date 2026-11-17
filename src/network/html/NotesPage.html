@@ -66,7 +66,7 @@ li .drop{flex:0 0 auto;font-family:var(--mono);font-size:.8rem;letter-spacing:.1
 </style>
 <!--#include file="shared/UiText.html.inc" -->
 </head>
-<body>
+<body data-standalone>
 <div class="band"><span id="name">Notes</span><span class="band-note" id="state" data-ui>Loading</span></div>
 <div class="band-rule"></div>
 <main>
@@ -246,5 +246,6 @@ saveEl.addEventListener('click', function () {
 load();
 })();
 </script>
+<!--#include file="shared/WebShell.html.inc" -->
 </body>
 </html>

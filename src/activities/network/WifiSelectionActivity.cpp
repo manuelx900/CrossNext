@@ -997,7 +997,7 @@ void WifiSelectionActivity::render(RenderLock&&) {
   renderer.clearScreen();
   if (state == WifiSelectionState::NETWORK_LIST || state == WifiSelectionState::PASSWORD_REVIEW ||
       state == WifiSelectionState::NETWORK_DETAILS) {
-    pixelui::drawHeader(renderer, tr(STR_SR_WIFI_TITLE), I18N.getLanguage() != Language::EN);
+    pixelui::drawHeader(renderer, tr(STR_SR_WIFI_TITLE), I18N.getLanguage() != Language::EN, nullptr, true);
     renderUi();
     const auto labels = mappedInput.mapLabels(tr(STR_BACK), tr(STR_SELECT), tr(STR_DIR_UP), tr(STR_DIR_DOWN));
     GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);
@@ -1017,8 +1017,7 @@ void WifiSelectionActivity::render(RenderLock&&) {
   // fork-local seam: the header and the sub-band below it span the panel, as
   // every other screen's do; clipped to the bezel's safe area their rules
   // stopped 3px short of both edges.
-  pixelui::drawHeader(renderer, tr(STR_WIFI_NETWORKS), I18N.getLanguage() != Language::EN,
-                      chrome::lightHeader ? nullptr : countStr);
+  pixelui::drawHeader(renderer, countStr, I18N.getLanguage() != Language::EN, nullptr, true);
   // Why the remembered network failed, on the screen the user is actually
   // handed. Auto-connect returns to the list rather than to CONNECTION_FAILED,
   // so this line is the only place the reason is ever visible -- the log line
@@ -1030,9 +1029,7 @@ void WifiSelectionActivity::render(RenderLock&&) {
                     Rect{0, pixelui::geometry(toybox::makeTarget(renderer).deviceContext()).header.bottom() + 4,
                          renderer.getScreenWidth(), metrics.tabBarHeight},
                     showingAutoConnectError ? autoConnectError.c_str() : cachedMacAddress.c_str(),
-                    showingAutoConnectError ? cachedMacAddress.c_str()
-                    : chrome::lightHeader   ? countStr
-                                            : nullptr);
+                    showingAutoConnectError ? cachedMacAddress.c_str() : nullptr);
 
   switch (state) {
     case WifiSelectionState::AUTO_CONNECTING:
@@ -1184,7 +1181,7 @@ void WifiSelectionActivity::buildReferenceScreen(UiScreen& screen) {
   };
   if (state == WifiSelectionState::PASSWORD_REVIEW) {
     const auto card = screen.body();
-    screen.target().stroke(card, ink, 2);
+    screen.target().stroke(card, ink, 1);
     screen.insetContent(fui::Insets{18, 18, 18, 18});
     std::snprintf(referenceText, sizeof(referenceText), tr(STR_SR_WIFI_TO), selectedSSID.c_str());
     ws::text(screen.target(), screen.takeTop(wide ? 38 : 72, wide ? 6 : 14), referenceText, true);
@@ -1200,7 +1197,7 @@ void WifiSelectionActivity::buildReferenceScreen(UiScreen& screen) {
          tr(STR_CONNECT), Connect, true);
     ws::text(screen.target(), screen.takeTop(32, 4), tr(STR_PASSWORD), true, 4);
     const auto field = screen.takeTop(wide ? 48 : 54, wide ? 6 : 14);
-    screen.target().stroke(field, ink, 2);
+    screen.target().stroke(field, ink, 1);
     std::snprintf(referenceText, sizeof(referenceText), "%s", passwordVisible ? enteredPassword.c_str() : "");
     if (!passwordVisible) {
       const size_t count = std::min(enteredPassword.size(), sizeof(referenceText) - 1);
@@ -1259,7 +1256,7 @@ void WifiSelectionActivity::buildReferenceScreen(UiScreen& screen) {
   if (chrome::lightHeader)
     lightui::separator(screen.target(), toggle);
   else
-    screen.target().stroke(toggle, ink, 2);
+    screen.target().stroke(toggle, ink, 1);
   if (!chrome::lightHeader)
     ws::text(screen.target(), fui::makeRect(toggle.x + 16, toggle.y + 8, toggle.width - 86, 34), tr(STR_SR_WIFI_TITLE),
              true);
@@ -1286,7 +1283,7 @@ void WifiSelectionActivity::buildReferenceScreen(UiScreen& screen) {
     if (chrome::lightHeader)
       lightui::separator(screen.target(), row);
     else
-      screen.target().stroke(row, ink, 2);
+      screen.target().stroke(row, ink, 1);
     ws::check(screen.target(), fui::makeRect(row.x + 14, row.y + 18, 28, 28), true);
     ws::text(screen.target(), fui::makeRect(row.x + 56, row.y + 10, row.width - 160, 34), currentSSID.c_str(), true);
     ws::text(screen.target(), fui::makeRect(row.x + 56, row.y + 42, row.width - 160, 32), tr(STR_SR_WIFI_CONNECTED),
@@ -1296,7 +1293,7 @@ void WifiSelectionActivity::buildReferenceScreen(UiScreen& screen) {
     screen.frame().hit(row, ACTION_REFERENCE, Current, fui::InputTouch);
   }
   if (!wifiEnabled) return;
-  ws::text(screen.target(), screen.takeTop(34, 8), tr(STR_SR_WIFI_AVAILABLE), true);
+  ws::text(screen.target(), screen.takeTop(34, 8), tr(STR_SR_WIFI_AVAILABLE));
   const auto area = screen.body();
   const int height = wide ? 60 : 86;
   static fui::ListProps measure;
@@ -1310,8 +1307,14 @@ void WifiSelectionActivity::buildReferenceScreen(UiScreen& screen) {
     const auto row = fui::makeRect(area.x, area.y + drawn * height, area.width, height);
     if (chrome::lightHeader)
       lightui::separator(screen.target(), row);
-    else
-      screen.target().stroke(row, ink, 2);
+    else {
+      const auto rightEdge = static_cast<int16_t>(row.right() - 1);
+      const auto bottomEdge = static_cast<int16_t>(row.bottom() - 1);
+      screen.target().line({row.x, row.y}, {row.x, row.bottom()}, 1, ink);
+      screen.target().line({rightEdge, row.y}, {rightEdge, row.bottom()}, 1, ink);
+      if (drawn == 0) screen.target().line({row.x, row.y}, {row.right(), row.y}, 1, ink);
+      screen.target().line({row.x, bottomEdge}, {row.right(), bottomEdge}, 1, ink);
+    }
     const char* name = network.isHiddenPlaceholder ? tr(STR_ADD_HIDDEN_NETWORK) : network.ssid.c_str();
     ws::text(screen.target(), fui::makeRect(row.x + 14, row.y + 10, row.width - 116, 34), name, true);
     if (!network.isHiddenPlaceholder) {

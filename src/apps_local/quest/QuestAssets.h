@@ -3,14 +3,14 @@
 #include "../ui/SdBitmapPack.h"
 
 namespace questassets {
-inline constexpr const char* CELEBRATIONS_PATH = "/apps/reading-adventure/celebrations.bin";
+inline constexpr const char* CELEBRATIONS_PATH = "/apps/reading-adventure-v2/celebrations.bin";
 inline constexpr unsigned CELEBRATIONS_COUNT = 6;
-inline constexpr char PATH[] = "/apps/reading-adventure/graphics.bin";
-inline constexpr char STORY_PATH[] = "/apps/reading-adventure/story.bin";
+inline constexpr char PATH[] = "/apps/reading-adventure-v2/graphics.bin";
+inline constexpr char STORY_PATH[] = "/apps/reading-adventure-v2/story.bin";
 inline constexpr uint32_t STORY_SCENES = 120, STORY_COUNT = STORY_SCENES * 2;
-inline constexpr char REWARDS_PATH[] = "/apps/reading-adventure/rewards.bin";
-inline constexpr char GUARDIANS_PATH[] = "/apps/reading-adventure/guardians.bin";
-inline constexpr char BESTIARY_OUTFITS_PATH[] = "/apps/reading-adventure/bestiary-outfits.bin";
+inline constexpr char REWARDS_PATH[] = "/apps/reading-adventure-v2/rewards.bin";
+inline constexpr char GUARDIANS_PATH[] = "/apps/reading-adventure-v2/guardians.bin";
+inline constexpr char BESTIARY_OUTFITS_PATH[] = "/apps/reading-adventure-v2/bestiary-outfits.bin";
 inline constexpr uint32_t BESTIARY_OUTFITS_COUNT = 224, BESTIARY_OUTFIT_FIGURES = 0, BESTIARY_OUTFIT_MASKS = 112;
 inline constexpr uint32_t REWARDS_COUNT = 593, GUARDIANS_COUNT = 360;
 inline constexpr uint32_t EXTRA_DECOR = 0, EXTRA_DECOR_MASKS = 101, KING_FIGURES = 202, KING_FIGURE_MASKS = 204;

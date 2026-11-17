@@ -66,7 +66,11 @@ typedef struct {
 } Score;
 
 // -------------------------------- Global Data -------------------------------
+#ifdef MICHI_GENERATE_TABLES
 extern Byte         pat3set[8192];
+#else
+extern const Byte   pat3set[8192];
+#endif
 extern int          npat3;
 extern Byte*        pat3set_p[15];
 extern Mark*        already_suggested;
@@ -81,7 +85,11 @@ extern float        start_playouts_sec, stop_playouts_sec;
 extern int          nplayouts_real;
 extern float        saved_time_left;
 extern float        best2, bestr, bestwr;
+#ifdef MICHI_GENERATE_TABLES
 extern ZobristHash  zobrist_hashdata[ZOBRIST_HASH_SIZE][4];
+#else
+extern const ZobristHash zobrist_hashdata[ZOBRIST_HASH_SIZE][4];
+#endif
 //================================== Code =====================================
 //------------------------- Functions in control.c ----------------------------
 void   compute_all_status(Position *pos, int owner_map[BOARDSIZE],

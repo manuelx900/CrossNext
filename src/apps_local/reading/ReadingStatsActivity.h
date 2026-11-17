@@ -5,11 +5,14 @@
 #include "../../activities/Activity.h"
 #include "../ui/SectionNavigation.h"
 #include "../ui/ToyboxScreen.h"
+#include "BookDayPage.h"
+#include "PeriodBookPage.h"
 #include "ReadingCompletionIndex.h"
 #include "ReadingStatsCloud.h"
 #include "ReadingStatsProjection.h"
 #include "ReadingStatsScreens.h"
 #include "ReadingStatsStore.h"
+#include "ReadingStatsView.h"
 #include "components/OptionPopup.h"
 
 class ReadingStatsActivity final : public Activity {
@@ -28,6 +31,7 @@ class ReadingStatsActivity final : public Activity {
   void onExit() override;
   void loop() override;
   void render(RenderLock&&) override;
+  bool skipLoopDelay() override;
 
  private:
   History history = History::Automatic;
@@ -36,17 +40,43 @@ class ReadingStatsActivity final : public Activity {
   bool goalCalendarVisible = false;
   bool goalSaveFailed = false;
   int goalMonth = 0;
-  enum class Load { Anchor, Summary, Day, Period, Annual, Streak, Books, Detail, Cloud, Ready, Failed };
+  enum class Load {
+    Anchor,
+    Summary,
+    Day,
+    Period,
+    Annual,
+    Streak,
+    Books,
+    PeriodBooks,
+    BookDays,
+    Detail,
+    Cloud,
+    CloudBooks,
+    Ready,
+    Failed
+  };
   void scan();
   bool beginScan(bool reverse = false);
   void loadPage(int page);
   void loadPeriod(readingstats::Period next, int day);
   void loadAnnual(int year);
+  void loadPeriodBooks(int direction = 0);
+  readingstats::PeriodBookPage periodBooks;
+  bool periodBooksVisible = false;
+  enum class DetailPage { Summary, Days };
+  DetailPage detailPage = DetailPage::Summary;
+  readingstats::BookDayPage bookDays;
+  readingstats::PagedView periodView, daysView;
+  bool showPreparedPage();
+  void loadBookDays(int direction = 0);
   void action(freeink::ui::ActionId action, int value);
   void back();
   void importHistory();
   void loadCloud();
   int bookTotal() const;
+  uint32_t listedFinished = 0, listedCloudFinished = 0, listedCloudRecent = 0, cloudBookOrdinal = 0;
+  bool cloudListedKnown = false;
   readingstats::Source source = readingstats::Source::Local;
   std::unique_ptr<readingstats::cloud::Reader> cloud;
   std::unique_ptr<readingstats::cloud::Projection> combined;

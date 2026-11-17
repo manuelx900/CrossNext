@@ -12,6 +12,7 @@
 #include "../ui/PixelText.h"
 #include "../ui/StatusBattery.h"
 #include "../ui/ToyboxTokens.h"
+#include "HomeLoadingPlaceholders.h"
 
 namespace homeui {
 namespace {
@@ -38,32 +39,28 @@ void icon(fui::DrawTarget& target, const fui::Rect rect, Icon kind, bool inverte
   fui::BitmapRef bitmap;
   switch (kind) {
     case Icon::Files:
-      bitmap = fui::bitmapFromIcon(homeicons::Folder32);
+      bitmap = fui::bitmapFromIcon(homeicons::Folder(rect.width));
       break;
     case Icon::Library:
-      bitmap = fui::bitmapFromIcon(homeicons::Library32);
+      bitmap = fui::bitmapFromIcon(homeicons::Library(rect.width));
       break;
     case Icon::Stats:
-      bitmap = fui::bitmapFromIcon(homeicons::Stats32);
+      bitmap = fui::bitmapFromIcon(homeicons::Stats(rect.width));
       break;
     case Icon::Transfer:
-      bitmap = fui::bitmapFromIcon(homeicons::Send32);
+      bitmap = fui::bitmapFromIcon(homeicons::Send(rect.width));
       break;
     case Icon::Settings:
-      bitmap = fui::bitmapFromIcon(homeicons::Settings32);
+      bitmap = fui::bitmapFromIcon(homeicons::Settings(rect.width));
       break;
     case Icon::Gear:
-      bitmap = fui::bitmapFromIcon(homeicons::Gear32);
+      bitmap = fui::bitmapFromIcon(homeicons::Gear(rect.width));
       break;
-    case Icon::Games: {
-      const int width = (rect.width * 5 + 3) / 4, height = (rect.height * 5 + 3) / 4;
-      const auto art =
-          fui::makeRect(rect.x - (width - rect.width) / 2, rect.y - (height - rect.height) / 2, width, height);
-      target.bitmap(art, fui::bitmapFromIcon(homeicons::Games64), fui::BitmapMode::Contain, inverted ? white : black);
-      return;
-    }
+    case Icon::Games:
+      bitmap = fui::bitmapFromIcon(homeicons::Games(rect.width));
+      break;
     case Icon::Apps:
-      bitmap = fui::bitmapFromIcon(homeicons::Apps32);
+      bitmap = fui::bitmapFromIcon(homeicons::Apps(rect.width));
       break;
     case Icon::Plugins:
       bitmap = {BlocksIcon, 32, 32, fui::BitmapFormat::Mask1};
@@ -292,11 +289,16 @@ void drawBoox(fui::DrawTarget& target, const Model& model, const Layout& g) {
     char value[12];
     std::snprintf(value, sizeof(value), "%d%%", std::max(0, model.progress));
     text(target, g.progress, value, pixelui::uppercaseLabels ? 1 : 2, 1, fui::Color::Black, fui::TextAlign::Center);
-  } else if (!model.loadingShell) {
+  } else if (model.loadingShell) {
+    loading::metadata(target, g.title, g.author, fui::TextAlign::Center);
+    char value[8];
+    std::snprintf(value, sizeof(value), "%d%%", 0);
+    text(target, g.progress, value, pixelui::uppercaseLabels ? 1 : 2, 1, fui::Color::Black, fui::TextAlign::Center);
+  } else {
     text(target, g.coverRegion, model.emptyHelp, kSmall, 3, fui::Color::Black, fui::TextAlign::Center);
   }
   target.fill(g.bookProgress, fui::Paint::dither(fui::Color::LightGray));
-  const int filled = g.bookProgress.width * std::clamp(model.progress, 0, 100) / 100;
+  const int filled = model.loadingShell ? 0 : g.bookProgress.width * std::clamp(model.progress, 0, 100) / 100;
   target.fill(fui::makeRect(g.bookProgress.x, g.bookProgress.y, filled, g.bookProgress.height), black);
   target.fill(fui::makeRect(g.bookProgress.x + std::clamp(filled - 3, 0, std::max(0, int(g.bookProgress.width) - 6)),
                             g.bookProgress.y - 2, 6, 8),
@@ -323,7 +325,7 @@ void draw(fui::DrawTarget& target, const Model& model, const Layout& geometry) {
   target.fill(geometry.header, black);
   const int headerY = geometry.header.bottom() - 72;
   const int right = geometry.menu.right() - 12;
-  const auto battery = fui::makeRect(right - 34, headerY + 27, 30, 19);
+  const auto battery = statusbattery::headerIcon(right, headerY);
   statusbattery::draw(target, battery, model.battery, model.charging, fui::Color::White);
   const int third = geometry.header.width / 3;
   text(target, fui::makeRect(geometry.card.x + 8, headerY + 4, third - 16, 64), model.date, kBody, 1,
@@ -333,11 +335,11 @@ void draw(fui::DrawTarget& target, const Model& model, const Layout& geometry) {
   if (model.showPercent) {
     char label[8];
     std::snprintf(label, sizeof(label), "%d%%", std::clamp(model.battery, 0, 100));
-    text(target, fui::makeRect(battery.x - 70, headerY + 8, 66, 56), label, kSmall, 1, fui::Color::White,
+    text(target, statusbattery::headerPercent(battery, headerY), label, kSmall, 1, fui::Color::White,
          fui::TextAlign::Right);
   }
   if (model.style != Style::Carousel) target.stroke(geometry.card, black, kBorder);
-  if (model.hasBook) {
+  if (model.hasBook || model.loadingShell) {
     if (!geometry.badge.empty()) {
       target.fill(geometry.badge, black);
       fui::TextStyle resume;
@@ -372,16 +374,21 @@ void draw(fui::DrawTarget& target, const Model& model, const Layout& geometry) {
                     kBorder, ink);
       }
     }
-    const bool hasAuthor = model.author[std::strspn(model.author, " \t\r\n")] != '\0';
+    const bool hasAuthor = model.loadingShell || model.author[std::strspn(model.author, " \t\r\n")] != '\0';
     auto title = geometry.title;
     if (!hasAuthor) title.height = geometry.author.bottom() - title.y;
     const bool wide = geometry.menu.x > geometry.card.x;
-    text(target, title, model.title,
-         wide                             ? kSmall
-         : model.style == Style::Carousel ? kCarouselTitle
-                                          : kBody,
-         hasAuthor ? (model.style == Style::Carousel ? 2 : 3) : 6, fui::Color::Black,
-         model.style == Style::Framed && !wide ? fui::TextAlign::Left : fui::TextAlign::Center, wide);
+    if (model.loadingShell) {
+      loading::metadata(target, title, geometry.author,
+                        model.style == Style::Framed && !wide ? fui::TextAlign::Left : fui::TextAlign::Center);
+    } else {
+      text(target, title, model.title,
+           wide                             ? kSmall
+           : model.style == Style::Carousel ? kCarouselTitle
+                                            : kBody,
+           hasAuthor ? (model.style == Style::Carousel ? 2 : 3) : 6, fui::Color::Black,
+           model.style == Style::Framed && !wide ? fui::TextAlign::Left : fui::TextAlign::Center, wide);
+    }
     if (model.style != Style::Framed) {
       const int dots = std::min(10, model.recentCount), unit = 14;
       const int left = geometry.coverRegion.x + (geometry.coverRegion.width - dots * unit) / 2;
@@ -393,7 +400,7 @@ void draw(fui::DrawTarget& target, const Model& model, const Layout& geometry) {
           target.stroke(dot, black, 1);
       }
       if (model.style == Style::Carousel) {
-        const int progress = std::clamp(model.progress, 0, 100);
+        const int progress = model.loadingShell ? 0 : std::clamp(model.progress, 0, 100);
         char percentage[8];
         std::snprintf(percentage, sizeof(percentage), "%d%%", progress);
         fui::TextStyle percentageStyle;
@@ -407,7 +414,7 @@ void draw(fui::DrawTarget& target, const Model& model, const Layout& geometry) {
         text(target, fui::makeRect(bar.right() + 6, geometry.progress.y, labelWidth, 24), percentage, 3);
       }
     }
-    if (hasAuthor)
+    if (hasAuthor && !model.loadingShell)
       text(target, geometry.author, model.author, wide ? fui::FontId{3} : kSmall, 1, fui::Color::Black,
            model.style == Style::Framed && !wide ? fui::TextAlign::Left : fui::TextAlign::Center, wide);
     target.stroke(geometry.cover, black, 1);

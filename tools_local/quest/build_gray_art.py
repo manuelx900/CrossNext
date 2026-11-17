@@ -210,5 +210,5 @@ def build(output):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, default=ROOT / "resources/apps/reading-adventure/graphics.bin")
+    parser.add_argument("--output", type=Path, default=ROOT / "resources/apps/reading-adventure-v2/graphics.bin")
     build(parser.parse_args().output)

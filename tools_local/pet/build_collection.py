@@ -11,7 +11,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def build(output=ROOT / "resources/apps/pet/collection.bin"):
+def build(output=ROOT / "resources/apps/pet-v2/collection.bin"):
     source = ROOT / "assets_local/pet/collection/trophy-laurels.png"
     with Image.open(source) as image:
         image = image.convert("L").resize((280, 210), Image.Resampling.NEAREST)
@@ -33,10 +33,12 @@ def build(output=ROOT / "resources/apps/pet/collection.bin"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, default=ROOT / "resources/apps/pet/collection.bin")
-    from gray_assets import available, build as build_gray
-    output = parser.parse_args().output
-    if available():
-        build_gray("collection", output)
+    parser.add_argument("--output", type=Path, default=ROOT / "resources/apps/pet-v2/collection.bin")
+    parser.add_argument("--legacy", action="store_true", help="Build old monochrome compatibility artwork")
+    from gray_assets import require_current, build as build_gray
+    args = parser.parse_args()
+    if args.legacy:
+        build(args.output)
     else:
-        build(output)
+        require_current()
+        build_gray("collection", args.output)

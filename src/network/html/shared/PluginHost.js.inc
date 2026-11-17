@@ -14,6 +14,34 @@ window.CrossPoint = window.CrossPoint || {
   _actionBusy: false,
   _actionTimer: null,
   _pendingCompletion: null,
+  _blockedPlugins: new Set(),
+  async _loadCompatibility() {
+    const response = await fetch('/api/status');
+    if (!response.ok) throw new Error('firmware status unavailable');
+    const status = await response.json();
+    if (!Array.isArray(status.unsupportedPlugins)) throw new Error('plugin compatibility unavailable');
+    this._blockedPlugins = new Set(status.unsupportedPlugins.filter(id => typeof id === 'string').map(id => id.toLowerCase()));
+    // Repair only Plugin Hub's cached catalog JSON. Tokens, settings and
+    // installed bundles have their own keys and remain outside this prefix.
+    for (let n = 0; n < localStorage.length; n++) {
+      const key = localStorage.key(n);
+      if (!key || !key.startsWith('pluginhub.remote:')) continue;
+      try {
+        const entry = JSON.parse(localStorage.getItem(key));
+        const body = this._filterCatalog(entry.body);
+        if (body !== entry.body) { entry.body = body; localStorage.setItem(key, JSON.stringify(entry)); }
+      } catch (_) {}
+    }
+  },
+  _filterCatalog(body) {
+    if (typeof body !== 'string' || !this._blockedPlugins.size) return body;
+    try {
+      const catalog = JSON.parse(body);
+      if (!catalog || !Array.isArray(catalog.plugins)) return body;
+      catalog.plugins = catalog.plugins.filter(plugin => plugin && typeof plugin.name === 'string' && !this._blockedPlugins.has(plugin.name.toLowerCase()));
+      return JSON.stringify(catalog);
+    } catch (_) { return body; }
+  },
   registerAction(pluginName, action, fn) {
     (this._actions[pluginName] = this._actions[pluginName] || {})[action] = fn;
     if (!this._actionTimer) this._actionTimer = setInterval(() => this._pollJobs(), 2500);
@@ -86,7 +114,8 @@ window.CrossPoint = window.CrossPoint || {
     // code units, so re-decode the UTF-8 header JSON.
     const raw = r.headers.get('X-Relay-Headers') || '[]';
     const list = JSON.parse(new TextDecoder().decode(Uint8Array.from(raw, (c) => c.charCodeAt(0))));
-    return { status: Number(r.headers.get('X-Relay-Status')), headers: list, body: await r.text() };
+    const text = await r.text();
+    return { status: Number(r.headers.get('X-Relay-Status')), headers: list, body: plugin === 'pluginhub' ? this._filterCatalog(text) : text };
   },
   crypto(op, fields) { return this._post('/api/crypto', Object.assign({ op }, fields || {})); },
   async writeFile(plugin, path, dataB64) {
@@ -142,6 +171,11 @@ async function loadPlugins(mount, beforeLoad) {
   let list;
   try { list = await (await fetch('/api/plugins')).json(); } catch (e) { return false; }
   if (!Array.isArray(list)) return false;  // e.g. {"error":"out of memory"}
+  if (list.length) {
+    try { await CrossPoint._loadCompatibility(); }
+    catch (_) { host.textContent = uiText('Could not check plugin compatibility. Reload this page.'); return false; }
+    list = list.filter(plugin => plugin && typeof plugin.name === 'string' && !CrossPoint._blockedPlugins.has(plugin.name.toLowerCase()));
+  }
   for (const p of list) {
     // A null mount loads everything: the headless runner page hosts all
     // plugins so any registered action can execute there.
@@ -163,7 +197,7 @@ async function loadPlugins(mount, beforeLoad) {
         document.body.appendChild(s);
       });
       if (typeof CrossPoint._pending === 'function') {
-        CrossPoint._pending(container, {
+        await CrossPoint._pending(container, {
           name: p.name,
           dir: p.dir,
           relay: (m, u, h, b) => CrossPoint.relay(p.name, m, u, h, b),

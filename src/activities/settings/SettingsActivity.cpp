@@ -350,7 +350,9 @@ void SettingsActivity::onEnter() {
   preserveQuickResumeTimeoutOn =
       SETTINGS.quickResumeSleepScreen == CrossPointSettings::QUICK_RESUME_SLEEP_SCREEN::QUICK_RESUME_AFTER_TIMEOUT;
   quickResumeTimeoutAutoEnabled = false;
+  const auto previousTimeout = SETTINGS.quickResumeSleepScreen;
   syncQuickResumeTimeoutForSleepScreen(/*sleepScreenChanged=*/true, /*quickResumeTimeoutChanged=*/false);
+  settingsSavePending = settingsSavePending || previousTimeout != SETTINGS.quickResumeSleepScreen;
 
   showCategoryHome();
 }
@@ -489,6 +491,7 @@ void SettingsActivity::activateIndex(const int index) {
   if (optionPopup.isActive()) return;
   if (categoryHome) {
     if (index == categoryCount) {
+      settingsSavePending = true;
       auto next = makeUniqueNoThrow<PresentationSettingsActivity>(renderer, mappedInput,
                                                                   PresentationSettingsActivity::Kind::Theme);
       if (next)
@@ -525,10 +528,11 @@ void SettingsActivity::activateIndex(const int index) {
   }
 }
 
-void SettingsActivity::onExit() {
-  Activity::onExit();
+void SettingsActivity::persistSettings() { settingsSavePending = !SETTINGS.saveToFile(); }
 
-  UITheme::getInstance().reload();  // Re-apply theme in case it was changed
+void SettingsActivity::onExit() {
+  if (settingsSavePending) persistSettings();
+  Activity::onExit();
 }
 
 void SettingsActivity::applyUiSettingChange(uint8_t CrossPointSettings::* valuePtr) {
@@ -593,7 +597,6 @@ bool SettingsActivity::handleButtons() {
       showCategoryHome();
       requestUpdate();
     } else {
-      SETTINGS.saveToFile();
       onGoHome();
     }
     return true;
@@ -609,6 +612,8 @@ void SettingsActivity::toggleCurrentSetting() {
     return;
   }
 
+  // Child editors keep the exit-save fallback; immediate successful saves clear it.
+  settingsSavePending = true;
   const auto& setting = (*currentSettings)[selectedSetting];
   const auto changedValue = setting.valuePtr;
   const bool sleepScreenChanged = setting.valuePtr == &CrossPointSettings::sleepScreen;
@@ -651,7 +656,7 @@ void SettingsActivity::toggleCurrentSetting() {
       SETTINGS.pluginsEnabled = !SETTINGS.pluginsEnabled;
       SETTINGS.pluginHubPromptHidden = 0;
       pluginevents::refreshSubscriptions();
-      SETTINGS.saveToFile();
+      persistSettings();
       rebuildRowItems();
       requestUpdate();
       return;
@@ -669,7 +674,7 @@ void SettingsActivity::toggleCurrentSetting() {
                        [this, valuePtr, sleepScreenChanged, quickResumeTimeoutChanged](int idx) {
                          SETTINGS.*valuePtr = idx;
                          syncQuickResumeTimeoutForSleepScreen(sleepScreenChanged, quickResumeTimeoutChanged);
-                         SETTINGS.saveToFile();
+                         persistSettings();
                          rebuildSettingsLists();
                          applyUiSettingChange(valuePtr);
                        });
@@ -696,7 +701,7 @@ void SettingsActivity::toggleCurrentSetting() {
       auto onSelect = [this, valueSetter, sleepScreenChanged, quickResumeTimeoutChanged](int idx) {
         valueSetter(idx);
         syncQuickResumeTimeoutForSleepScreen(sleepScreenChanged, quickResumeTimeoutChanged);
-        SETTINGS.saveToFile();
+        persistSettings();
         rebuildSettingsLists();
       };
       if (!setting.enumStringValues.empty()) {
@@ -718,7 +723,7 @@ void SettingsActivity::toggleCurrentSetting() {
       SETTINGS.*(setting.valuePtr) = currentValue + setting.valueRange.step;
     }
   } else if (setting.type == SettingType::ACTION) {
-    auto resultHandler = [this](const ActivityResult&) { SETTINGS.saveToFile(); };
+    auto resultHandler = [this](const ActivityResult&) { persistSettings(); };
 
     switch (setting.action) {
       case SettingAction::Manga:
@@ -818,7 +823,7 @@ void SettingsActivity::toggleCurrentSetting() {
           break;
         }
         startActivityForResult(std::move(fonts), [this](const ActivityResult&) {
-          SETTINGS.saveToFile();
+          persistSettings();
           rebuildSettingsLists();
         });
         break;
@@ -853,7 +858,7 @@ void SettingsActivity::toggleCurrentSetting() {
         if (!SETTINGS.pluginsEnabled || SETTINGS.pluginHubPromptHidden) {
           SETTINGS.pluginsEnabled = 1;
           SETTINGS.pluginHubPromptHidden = 0;
-          SETTINGS.saveToFile();
+          persistSettings();
           pluginevents::refreshSubscriptions();
         }
         if (auto activity = makeUniqueNoThrow<PluginCatalogActivity>(renderer, mappedInput))
@@ -897,7 +902,7 @@ void SettingsActivity::toggleCurrentSetting() {
   }
 
   syncQuickResumeTimeoutForSleepScreen(sleepScreenChanged, quickResumeTimeoutChanged);
-  SETTINGS.saveToFile();
+  persistSettings();
   rebuildSettingsLists();
   applyUiSettingChange(changedValue);
   activeNav().selected = std::min(ringPos(), settingsCount);
@@ -935,7 +940,7 @@ void SettingsActivity::openSleepTimeoutPicker() {
       [this](const ActivityResult& result) {
         if (!result.isCancelled) {
           SETTINGS.sleepTimeoutMinutes = static_cast<uint8_t>(std::get<IntervalResult>(result.data).value);
-          SETTINGS.saveToFile();
+          persistSettings();
         }
         requestUpdate();
       });

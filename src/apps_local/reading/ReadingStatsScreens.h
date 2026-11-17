@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../ui/ToyboxScreen.h"
+#include "BookDayPage.h"
 #include "ReadingStatsCore.h"
 
 namespace readingui {
@@ -32,7 +33,13 @@ enum : freeink::ui::ActionId {
   GoalMonth,
   GoalBack,
   GoalReset,
-  ChooseStatsScope
+  ChooseStatsScope,
+  PeriodBooks,
+  PeriodBooksPage,
+  PeriodBooksBack,
+  BookDays,
+  BookDaysPage,
+  BookDaysBack
 };
 enum class StatsScope { Year, AllTime };
 struct Model {
@@ -53,6 +60,10 @@ struct Model {
   bool charging = false, showPercent = true;
   bool loading = false, failed = false, damaged = false;
   bool bookOnly = false;
+  const readingstats::BookDayPage* bookDays = nullptr;
+  bool periodBooks = false, periodBookNext = false;
+  int periodBookFirst = 0, periodBookLast = 0, periodBookPage = 0, periodBookCount = 0;
+  int periodBookTotal = 0;
   unsigned goalMinutes = 0;
   int goalStartDay = 0;
   bool goalLegacyHistory = false;

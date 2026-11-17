@@ -9,22 +9,35 @@ namespace {
 // that immediately follow a chunk allocation, instead of evicting to an exact
 // fit and failing on the very next allocation.
 constexpr size_t RECLAIM_HEADROOM = 8 * 1024;
+#ifdef BOARD_HAS_PSRAM
+constexpr auto CHUNK_POOL = freeink::MemPool::Psram;
+#else
+constexpr auto CHUNK_POOL = freeink::MemPool::Default;
+#endif
+}  // namespace
 
 // Nothrow allocation with one evict-and-retry pass. ensureFree() asks the
 // registered cache sinks (SD-font mini data, render glyph cache) to release
 // rebuildable memory; only when even that cannot satisfy the request does the
 // caller's drop/fail path run.
-std::unique_ptr<char[]> allocWithReclaim(const size_t bytes) {
-  auto data = makeUniqueNoThrow<char[]>(bytes);
+WordStore::Buffer WordStore::allocWithReclaim(const size_t bytes) {
+  const auto allocate = [bytes]() -> Buffer {
+#ifdef BOARD_HAS_PSRAM
+    // Existing 2 KiB word chunks remain fallible and never consume radio RAM.
+    return Buffer(reinterpret_cast<char*>(HalMemory::allocatePsram(bytes).release()));
+#else
+    return makeUniqueNoThrow<char[]>(bytes);
+#endif
+  };
+  auto data = allocate();
   if (data) return data;
-  freeink::MemoryManager::instance().ensureFree(bytes + RECLAIM_HEADROOM);
-  data = makeUniqueNoThrow<char[]>(bytes);
+  freeink::MemoryManager::instance().ensureFree(bytes + RECLAIM_HEADROOM, CHUNK_POOL);
+  data = allocate();
   if (data) {
     LOG_DBG("WST", "Cache eviction rescued a %u-byte chunk allocation", static_cast<unsigned>(bytes));
   }
   return data;
 }
-}  // namespace
 
 bool WordStore::ensureChunkSlot() {
   if (chunkCount_ < chunkCapacity_) return true;

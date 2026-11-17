@@ -8,6 +8,8 @@
 #include "apps_local/ui/PixelMenu.h"
 #include "components/OptionPopup.h"
 
+class HalFile;
+
 class FileBrowserActivity final : public UiListActivity {
  public:
   // Books = standard reader browser; PickFirmware = filter to .bin only and return path via ActivityResult.
@@ -68,7 +70,7 @@ class FileBrowserActivity final : public UiListActivity {
   void activateSelected();
 
   // Data loading
-  void loadFiles();
+  void loadFiles(HalFile* directory = nullptr);
   size_t findEntry(const std::string& name) const;
 
  public:

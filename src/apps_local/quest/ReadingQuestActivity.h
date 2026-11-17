@@ -64,7 +64,8 @@ class ReadingQuestActivity final : public Activity {
   void enterName();
   void showCampaign(questui::CampaignTab);
   bool artReady() const {
-    return assets.ready() && storyAssets.ready() && rewardAssets.ready() && enemyAssets.ready() && outfitAssets.ready();
+    return assets.ready() && storyAssets.ready() && rewardAssets.ready() && enemyAssets.ready() &&
+           outfitAssets.ready() && celebrationAssets.ready();
   }
   void leaveEnding(int reward);
   void dismissReadingReport();

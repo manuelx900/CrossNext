@@ -8,7 +8,6 @@ inline freeink::ui::Rect coverLoadingNoticeArea(freeink::ui::Rect safe, freeink:
   if (!framed) return safe;
   cover.x = safe.x;
   cover.width = safe.width;
-  cover.height = std::min<int>(cover.height, 96);
   return cover;
 }
 }  // namespace homeui

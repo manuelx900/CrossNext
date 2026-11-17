@@ -6,6 +6,7 @@
 
 #include "EpdFont.h"
 #include "EpdFontData.h"
+#include "FontAllocation.h"
 
 // On-disk binary format version for .cpfont files. Defined as a preprocessor
 // macro (rather than a constexpr) so it can be stringified into the SD-fonts
@@ -19,7 +20,7 @@
 #define CPFONT_VERSION 4
 #define CPFONT_EXTENDED_LIGATURE_VERSION 5
 
-class SdCardFont {
+class SdCardFont : public FontAllocation {
  public:
   static constexpr uint16_t MAX_PAGE_GLYPHS = 512;
   // prewarmStyle: the bitmap arena did not fit the largest free block.
@@ -144,6 +145,7 @@ class SdCardFont {
   // Content hash of the file header + style TOC entries (computed during load).
   // Used to generate deterministic font IDs for section cache invalidation.
   uint32_t contentHash() const { return contentHash_; }
+  static bool readContentHash(const char* path, uint32_t& hash);
 
  private:
   // Per-style metadata (parsed from file header/TOC)

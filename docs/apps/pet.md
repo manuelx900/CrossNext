@@ -14,8 +14,9 @@ PET uses smooth grayscale illustrations, preserving Silva, Nox and Ember and
 their existing life stages. Masters and generation provenance live in
 `REDISEÑOS/PET/assets/v2/`; the resource builders select them by default. The
 six CNART003 packs retain stable IDs and placement dimensions. The shared SD
-loader also accepts legacy CNART001/002 monochrome packs. Two complete room
-backgrounds extend Home to 52 records, with 45/39-record compatibility retained.
+loader retains a legacy decoder for other callers, but PET requires CNART003
+and the current image counts. Home has 52 records; 45/39-record packs are not
+accepted by this app.
 The two corrected Silva illustrations omit the stray dot above the mouth; the
 adult tired pose also has a repaired, coherent sleepy expression.
 The source illustrations use a fine black outside contour while retaining clean gray
@@ -222,15 +223,14 @@ reading days, best streak, life stages, illustrated memories and previous
 generations. Needs stay locked until the egg hatches. The bottom button shows
 the remaining absence grace period and returns to reading. Relaxed mode instead
 states that absence cannot cause death; an unknown clock never invents a countdown.
-With the 1,182-record motion pack, a healthy awake companion greets entry
+With the current motion pack, a healthy awake companion greets entry
 with two newly drawn greeting poses, then returns to normal. Feeding and care
 reactions take priority. In the browser preview, sitting follows calm inactivity;
 waking queues a stretch on both targets.
-The original curiosity head tilt and blink remain available with legacy 630-,
-822- and 1,014-record packs when there is no urgent need. Those curiosity poses
+The original curiosity head tilt and blink remain available when there is no
+urgent need. Those curiosity poses
 wait for completed refreshes before dwelling (500 ms looking and 300 ms blinking
-on X4 Pro; 1.8 seconds and 1 second in the browser). Navigation cancels either animation. Legacy 630-record packs also
-reuse curiosity for petting; newer packs have dedicated care poses. These
+on X4 Pro; 1.8 seconds and 1 second in the browser). Navigation cancels either animation. The current pack has dedicated care poses. These
 visual reactions add no reward or persisted animation field.
 Mood badges keep a fixed size and position on both targets; their expression
 updates with the companion's state or interaction. The browser preview retains
@@ -418,7 +418,7 @@ laurels and sparkles, a ribbon title, prominent count and corner decorations.
 The current artwork and generation provenance live in `REDISEÑOS/PET/assets/v2/`;
 `assets_local/pet/collection/` retains the legacy illustration.
 `tools_local/pet/build_collection.py` converts it to the required
-`/apps/pet/collection.bin` SD pack (one 280 x 210 CNART003 two-bit record; 14,740 bytes).
+`/apps/pet-v2/collection.bin` SD pack (one 280 x 210 CNART003 two-bit record; 14,740 bytes).
 The activity validates it on entry, then opens it on the complete-collection window and on completed PET/Home
 panels after hatching. Once opened, the pack and cache remain available until
 activity exit. The existing fixed pack scratch is 1,094 bytes plus handle/metadata;
@@ -521,10 +521,10 @@ without an age show “Age not recorded”; no age is inferred from their readin
 Retries preserve an already recorded age for the same ending timestamp, including
 after a timezone change.
 
-Copy `resources/apps/pet/` to `/apps/pet/` on the microSD. The original
-`graphics.bin` has 64 stable slots: 63 creature/object illustrations and the supplied hand. Required `home.bin` has 39
-state-pose slots followed by six landscape halves; it also accepts the earlier
-39-record pack, which uses the original backgrounds. A missing or invalid pack
+Copy `resources/apps/pet-v2/` to `/apps/pet-v2/` on the microSD. The original
+`graphics.bin` has 64 stable slots: 63 creature/object illustrations and the supplied hand. Required `home.bin` has 52
+records: 39 state-pose slots, six landscape halves and seven native-resolution
+room tiles. Earlier pack sizes are incompatible. A missing or invalid pack
 shows the resource-installation notice.
 The legacy pixel collection fills all 102 slots (87 distinct illustrations plus
 15 exact aliases). Source PNGs remain in `assets_local/pet/png/`; explicit legacy encoder calls can still rebuild those files; the default build now uses the grayscale masters. The X4 Pro
@@ -544,11 +544,12 @@ The generated layout metadata and PNG derivatives come from
 `tools_local/pet/build_habitat.py`; the supplied originals remain unchanged.
 
 The activity owns its configured pack handles and releases them on exit. The Home pack
-adds a bounded 4,928-byte optional PSRAM index/read cache (4,816 for the 45-record pack) (4,720 for the legacy
-39-record pack); the pack's fixed scratch
+adds a bounded 4,928-byte optional PSRAM index/read cache; the pack's fixed scratch
 buffers and bounded life records are activity members. The habitat pack adds
 13,056 bytes of optional PSRAM cache and one set of fixed pack scratch buffers.
-The required `/apps/pet/breathing.bin` holds 216 registered frames covering all
+The required `/apps/pet-v2/breathing.bin` contains 1,278 CNART003 records.
+The smaller packs below describe historical slot additions and are not accepted
+by the current app. The initial atlas held 216 registered frames covering all
 three species, four hatched ages and six poses: normal, happy, hungry, tired,
 sick and resting. Twelve static head crops and nine egg wobble frames complete the pack (474
 legacy records). The current pack appends 60 mask/ink records for three foods
@@ -620,7 +621,7 @@ framebuffer, timer task or per-frame dynamic collection. State saves occur only
 on changes; elapsed care is checked once a minute and saved at hourly/state
 boundaries, plus explicit care/settings/reward actions.
 
-The required `/apps/pet/farewell.bin` contains three ghost illustrations, each
+The required `/apps/pet-v2/farewell.bin` contains three ghost illustrations, each
 with an opaque silhouette and ink layer (six records). Source PNGs and
 provenance live in `REDISEÑOS/PET/assets/v2/`; the legacy masters remain in
 `assets_local/pet/farewell/`. Silva uses the corrected halo-and-wisp illustration. Rebuild using `tools_local/pet/build_farewell.py`. After validation on entry, the activity
@@ -817,7 +818,8 @@ The supplied petting-hand image is preserved in assets_local/pet/ui/ and packed
 as graphics record 63. The existing 0–62 IDs retain their artwork and order. The
 builder thresholds/crops/scales only this new UI source; original creature PNGs
 remain unchanged. The 64-record graphics pack lives on the microSD. Older
-63-record packs remain loadable and use the code-native hand fallback.
+63-record packs used the code-native hand fallback in older firmware; they
+are rejected by the current app.
 
 On the host renderer, Profile is 624 bytes. The four resident Profile copies
 add 128 fixed bytes for the provision ledger; the timeline adds 56 fixed bytes,
@@ -877,8 +879,8 @@ exported at native resolution as four portrait tiles (IDs 45–48) and three
 landscape tiles (IDs 49–51). The compatible panorama halves remain at IDs
 39–44. Pose IDs 0–38 and all placement dimensions remain stable.
 
-The activity first opens the 52-record home pack, then the 45-record pack and falls back to the older
-39-record pack. Separate flags gate full-room tiles and legacy panoramas; no saved state,
+The activity requires the 52-record grayscale Home pack. It does not retry
+45/39-record packs. Existing flags gate full-room tiles and panoramas; no saved state,
 extra pack/handle or framebuffer is added. The existing optional PSRAM index
 grows by 112 bytes from the 45-record pack (208 from the 39-record pack), and the same read-ahead buffer and small-read
 fallback remain in use. A failed background draw clears that panorama to white
@@ -959,7 +961,7 @@ allocated illustration area.
 
 ### Required microSD contents
 
-PET requires the complete `/apps/pet/` folder from `CrossNext-Resources.zip`:
+PET requires the complete `/apps/pet-v2/` folder from `CrossNext-Resources.zip`:
 `graphics.bin`, `home.bin`, `habitat.bin`, `breathing.bin`, `farewell.bin` and
 `collection.bin`. Extract the ZIP to the card root, merge folders, and restart
 with the card inserted. If a file is missing, incompatible or unreadable, PET
@@ -1231,7 +1233,7 @@ pagination; the repeated stock line and normal result/cost preview are removed.
 Blocked food choices retain a short explanation.
 
 The food-stock card uses the existing kibble illustration from the extended
-food pack, while Feed uses the sandwich; legacy packs retain the generic food fallback. Pet uses
+food pack, while Feed uses the sandwich. Pet uses
 the exact paw symbol of the main Care button. No new artwork pack is introduced.
 
 ### Sleep feedback, header actions and simulator history
@@ -1304,8 +1306,8 @@ Navigation cancels the visual journey and displays the already-saved state;
 re-entering does not replay an old walk. Direct pet touches are suppressed while
 a journey runs. Save failures never start a journey. Timed two-hour waking and
 all food, mood, health and rest rewards keep their existing rules. No animation
-field or format change is persisted. Legacy packs still open: 1,182 records keep
-the centered two-frame wake stretch, and older packs keep their existing poses.
+field or format change is persisted. The current app requires the complete
+1,278-record grayscale pack; earlier packs show the installation notice.
 
 
 ### Shared PET surface spacing

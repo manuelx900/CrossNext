@@ -25,18 +25,18 @@ void header(Screen& screen, const char* title, const toybox::HeaderStatus& statu
 
 inline void styleRows(fui::ListProps& props, bool picker) {
   pixelui::styleList(props);
-  props.labelText.font = pixelui::kBody;
+  props.labelText.font = pixelui::kSmall;
   props.labelText.bold = false;
   props.labelText.maxLines = 2;
-  props.subtitleText.font = pixelui::kSmall;
+  props.subtitleText.font = 4;
   props.subtitleText.bold = false;
-  props.subtitleText.maxLines = picker ? 2 : 3;
-  props.valueText.font = pixelui::kSmall;
+  props.subtitleText.maxLines = 2;
+  props.valueText.font = 4;
   props.valueText.bold = false;
-  props.rowHeight = picker ? 88 : 72;
-  props.rowPaddingY = 12;
-  props.textGap = 8;
-  props.trailingCentered = true;
+  props.rowHeight = picker ? 84 : 80;
+  props.rowPaddingY = 10;
+  props.textGap = 6;
+  props.trailingCentered = false;
   props.partialTrailingRow = false;
   props.selectionMarker = fui::SelectionMarker::None;
   if (chrome::lightHeader) {

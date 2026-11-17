@@ -34,6 +34,8 @@ class SdCardFontSystem {
   SdCardFontSystem& operator=(const SdCardFontSystem&) = delete;
   /// Discover SD card fonts and load user's saved selection. Call once during setup.
   void begin(GfxRenderer& renderer);
+  // Load the legacy content-size ladder before a tool uses its fixed font IDs.
+  void ensureBundledFonts(GfxRenderer& renderer);
 
   /// Ensure the correct SD font family is loaded for the current settings.
   /// Call before entering the reader or after settings change.
@@ -72,11 +74,12 @@ class SdCardFontSystem {
  private:
   // Four bounded content sizes share the SD loader with stable app font IDs.
   // Bitmaps stay on the card; page glyph caches use the existing PSRAM arenas.
-  void loadReaderDefaults(GfxRenderer& renderer);
+  void loadReaderDefaults(GfxRenderer& renderer, uint8_t requestedSize = 0);
   bool refreshRegistry(GfxRenderer& renderer);
   SdCardFontManager readerDefaults_;
   LanguageUiFonts languageUiFonts_;
   bool readerDefaultsReady_ = false;
+  uint32_t readerDefaultsHash_ = 0;
   std::atomic<bool> registryReloadPending_{false};
   // Load the active SD family at the built-in UI point sizes and register each
   // as a size-matched script fallback for the corresponding UI font, so book

@@ -4,7 +4,7 @@ import hashlib, json, struct, zlib
 from PIL import Image
 ROOT = Path(__file__).resolve().parents[2]
 MASTERS = ROOT / 'assets_local/quest/milestones'
-OUT = ROOT / 'resources/apps/reading-adventure'
+OUT = ROOT / 'resources/apps/reading-adventure-v2'
 
 def build(output=OUT):
     records = bytearray()

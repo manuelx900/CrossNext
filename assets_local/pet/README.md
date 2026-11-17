@@ -1,8 +1,8 @@
 # PET — recursos para microSD
 
-Cierra PET y reemplaza la carpeta completa `/apps/pet/` de la microSD con
-`resources/apps/pet/` o con `apps/pet/` del ZIP de instalación. No borres
-`/.crosspoint/pet/`: contiene la partida, nombre, inventario e historial.
+Cierra PET y reemplaza la carpeta completa `/apps/pet-v2/` de la microSD con
+`resources/apps/pet-v2/` o con `apps/pet-v2/` del ZIP de instalación. No borres
+`/.crosspoint/pet/` ni `/.crosspoint/pet-v2/`: contiene la partida, nombre, inventario e historial.
 Vuelve a abrir PET para recargar las ilustraciones. Los seis paquetes son
 necesarios; si falta alguno o falla su checksum, PET conserva la partida y
 muestra las instrucciones para instalar los contenidos.
@@ -25,14 +25,13 @@ tristeza ni lengua exagerada. Se mantienen los IDs, tamaños y demás estados.
   conservan la resolución de pantalla y evitan ampliar una miniatura.
 - `habitat.bin`: 560 registros; fondo compatible, 240 muebles y máscaras/tinta
   para las poses de Hogar. Se conservan las dimensiones y apoyos existentes.
-- `breathing.bin`: 1014 registros; 216 fotogramas de cuerpo, doce cabezas y
+- `breathing.bin`: 1278 registros; 216 fotogramas de cuerpo, doce cabezas y
   nueve fotogramas de huevo, todos con sus máscaras. Los cuerpos nacidos
   permanecen estáticos fuera de las reacciones breves de curiosidad, cuidados, juego y comida; el reloj actual anima huevos e indicadores de ánimo.
   Los 60 registros nuevos añaden tres alimentos enteros/mordidos y dos poses
   comiendo para cada especie y edad, con sus máscaras. Los maestros y prompts
-  están en `REDISEÑOS/PET/assets/v3/feeding/`. Un paquete anterior de 474
-  registros sigue funcionando con la mascota estática y un icono de comida.
-  Se conservan también los paquetes de 534 y 582 registros. Otros 48 registros
+  están en `REDISEÑOS/PET/assets/v3/feeding/`. Los paquetes de 474, 534 y 582
+  registros son históricos y no son compatibles con la app actual. Otros 48 registros
   incorporan seis alimentos (bayas, bizcocho, fruta nocturna, hamburguesa, pizza
   y sándwich) enteros, con dos porciones sucesivamente menores y plato vacío.
   Cada comida completa cuesta una provisión, aunque tenga tres mordidas.
@@ -44,13 +43,24 @@ tristeza ni lengua exagerada. Se mantienen los IDs, tamaños y demás estados.
 
 Los paquetes actuales usan CNART003: cobertura de tinta de dos bits y cuatro
 tonos, índices estables y checksums por imagen. Los manifiestos describen las
-dimensiones y SHA-256 de cada paquete. El firmware conserva compatibilidad con
-los formatos monocromos anteriores y los paquetes Home de 45 o 39 registros.
+dimensiones y SHA-256 de cada paquete. PET exige CNART003 y los tamaños actuales
+indicados arriba; los formatos monocromos y Home de 45 o 39 registros muestran
+el aviso de instalación. El decodificador genérico los conserva para otros usos.
 Las ilustraciones se leen de la tarjeta; no se incluyen en el binario de firmware.
 
 ## Reconstrucción
 
-Desde la raíz del repositorio:
+Desde la raíz del repositorio. Si los maestros están fuera del worktree,
+configura `CROSSNEXT_PET_MASTERS` con la ruta absoluta a `assets/v2/`, conservando
+sus carpetas hermanas v3, v4 y siguientes. Los comandos requieren su archivo de procedencia
+y fallan si faltan; nunca exportan el arte antiguo silenciosamente. `--legacy`
+es una opción explícita de compatibilidad para pruebas, no para distribuir.
+
+Desde PowerShell, por ejemplo:
+
+    $env:CROSSNEXT_PET_MASTERS = 'C:/ruta/REDISEÑOS/PET/assets/v2'
+
+Después:
 
     python tools_local/pet/build_resources.py
     python tools_local/pet/build_resources.py --home
@@ -90,19 +100,20 @@ profiles or image packs.
 La reacción de curiosidad utiliza dos atlas nuevos en
 `REDISEÑOS/PET/assets/v7/curiosidad/`: mirada con cabeza inclinada y parpadeo.
 El empaquetador añade sus máscaras y dibujos en las ranuras 582–629 de
-`breathing.bin`; las 582 anteriores conservan sus ID. Los paquetes previos
-siguen funcionando sin esta reacción. Se reutiliza la caché de imágenes de PET.
+`breathing.bin`; las 582 anteriores conservan sus ID. Las versiones previas
+del firmware admitían paquetes pequeños sin esta reacción; la app actual exige
+el paquete completo de 1278 registros. Se reutiliza la caché de imágenes de PET.
 
 Las reacciones de acariciar, limpiar, curar y jugar tienen dos ilustraciones
 nuevas por especie y edad en `REDISEÑOS/PET/assets/v8/acciones/`. Los ocho atlas
 incluyen maestros transparentes, prompts y procedencia. Sus 192 registros se
 añaden en las ranuras 630–821; los anteriores conservan ID y dimensiones. Los
-paquetes de 630, 582, 534 y 474 registros siguen admitidos con poses anteriores.
+paquetes de 630, 582, 534 y 474 registros solo se admitían en firmware anterior.
 
 Las ranuras 822–1013 añaden las mismas reacciones con escala corporal y apoyo
 registrados; las 822 anteriores se conservan. La espuma, gotas y trazos de
-movimiento ya no reducen el personaje al ajustar la imagen. Un paquete anterior
-de 822 registros sigue admitido con su colocación anterior. Para actualizar
+movimiento ya no reducen el personaje al ajustar la imagen. El paquete de
+822 registros conservaba la colocación anterior en versiones previas del firmware. Para actualizar
 maestros, ejecutar primero `python tools_local/pet/gray_assets.py --update-registration`
 y después regenerar `breathing.bin`. El encabezado
 generado se valida durante el empaquetado y debe estar actualizado antes de
@@ -123,4 +134,4 @@ hatched stages. The current breathing.bin has 1278 records, preserving 0-1181
 and adding walk mask/ink pairs in 1182-1277. Masters and prompts are under
 `REDISEÑOS/PET/assets/v11/rest/`. Run `gray_assets.py --update-registration`
 then `build_breathing.py`, and update the firmware and SD pack together. Earlier
-packs remain accepted by the new firmware with their earlier rest behavior.
+packs are historical inputs; PET requires all 1278 records in the current grayscale format.

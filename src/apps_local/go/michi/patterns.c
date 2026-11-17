@@ -44,7 +44,12 @@
 // the routines that modify the board put_stone() and remove_stone()
 //
 Byte bit[8]={1,2,4,8,16,32,64,128};
-Byte pat3set[8192];     // Set of the pat3 patterns (defined in pat3src below)
+#ifdef MICHI_GENERATE_TABLES
+Byte pat3set[8192];
+#else
+// FORK CHANGE: immutable lookup data stays in flash, including while Go is closed.
+#include "MichiTables.inc"
+#endif
 int  npat3;             // Number of patterns in pat3src
 
 // A set of 3x3 patterns is defined by an array of ASCII strings (of length 10) 
@@ -161,7 +166,9 @@ void pat_wildexp(char *src, int i)
         env8 = compute_code(src);
         nb++;
         int q = env8 >> 3, r = env8 & 7;
+#ifdef MICHI_GENERATE_TABLES
         pat3set[q] |= bit[r];              // set the bit corresponding to env8
+#endif
         return;
     }
     if (src[i] == '?') {
@@ -264,11 +271,13 @@ void make_pat3set(void)
         fprintf(stderr,"Error npat3 too big (%d)\n", npat3);
         exit(-1);
     }
+#ifdef MICHI_GENERATE_TABLES
     memset(pat3set,0,8192);
     for(int p=0 ; strcmp(pat3src[p], "#########") != 0 ; p++) {
         pat = p;
         pat_enumerate(pat3src[p]);
     }
+#endif
 }
 
 // =============================== Large patterns =============================
@@ -346,7 +355,9 @@ int primes[32]={5,      11,    37,   103,   293,   991, 2903,  9931,
 
 static char buf[512];
 int         color[256];
+#ifdef MICHI_GENERATE_TABLES
 ZobristHash zobrist_hashdata[ZOBRIST_HASH_SIZE][4];
+#endif
 LargePat*   patterns;
 float*      probs;
 long long   nsearchs=0;
@@ -419,6 +430,7 @@ void init_stone_color(void)
 
 void init_zobrist_hashdata(void)
 {
+#ifdef MICHI_GENERATE_TABLES
     int idum_save = idum;
     idum = 55555; // make sure zobrist_hashdata does not depend on user input
                   // 55555 seems to work reasonably well
@@ -430,6 +442,7 @@ void init_zobrist_hashdata(void)
         }
     }
     idum = idum_save;
+#endif
 }
   
 ZobristHash zobrist_hash(char *pat)

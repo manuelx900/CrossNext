@@ -16,6 +16,15 @@ The Focus home puts the navigation options first and Start focus at the bottom, 
 
 The timer groups its countdown, stage progress, accumulated study time and planned focus time. The chart button to the left of settings opens statistics for that focus only: all-time recorded study time, completed sessions, skipped focus stages, and today's 24 hourly study buckets. Breaks are excluded. Leaving the timer pauses it; opening its statistics keeps it running. Restart and Skip pause first and ask for confirmation. Cancel leaves the current stage paused. Confirmed Restart restores that stage's full duration; confirmed Skip moves to the next paused stage without earning a completed session. Both preserve already recorded study time.
 
+On the timer, a short press of either navigation button starts or pauses the
+current phase, matching Pomodoro. Confirm does the same when no other control
+has button focus. Compatible Bluetooth page turners can use Turn page / move
+forward, Previous page / move back or Select / activate. List navigation and
+the Restart/Skip confirmations keep their own controls. Commands received
+during a repaint stay in the existing bounded navigation queue; coalesced
+short presses preserve their odd/even toggle result. Holds do not toggle the
+timer repeatedly. No new input queue or timer workspace is allocated.
+
 Statistics cover the last seven days, including today. Sessions and time sum that same period. Consistency is the percentage of those seven days with recorded focus time; partial sessions count as activity. The chart uses actual weekday initials, underlines today and scales its time axis to the recorded values. The message below it reports active days, with a separate invitation before the first session. Month/year filters and comparisons with previous weeks are unavailable because the existing save retains only seven daily records.
 
 Settings shares its compact duration panel with Pomodoro, with outlined stepper controls and minute/session units. Delete completed tasks appears in its own section and opens the scope selector before confirmation. Done returns to the previous screen.

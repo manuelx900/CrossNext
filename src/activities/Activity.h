@@ -78,6 +78,8 @@ class Activity {
   virtual bool isReaderActivity() const { return false; }
   virtual bool acceptsRemoteInput() const { return false; }
   virtual bool allowsRemoteControl() const { return remoteControlEnabled || acceptsRemoteInput() || isHomeActivity(); }
+  // Configuration may retain the link while consuming raw buttons instead of executing them.
+  virtual bool preservesRemoteConnection() const { return isReaderActivity() || allowsRemoteControl(); }
   void setRemoteControlEnabled() { remoteControlEnabled = true; }
   // Reading-context screens need not own a document or its settings.
   virtual bool handleReaderTextSettingsGesture() { return false; }

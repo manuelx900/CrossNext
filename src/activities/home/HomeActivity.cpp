@@ -841,7 +841,7 @@ void HomeActivity::render(RenderLock&&) {
     }
     auto target = toybox::makeTarget(renderer);
     const auto noticeArea = homeui::coverLoadingNoticeArea(
-        target.deviceContext().safeRect(), coverGridUi ? coverGridUi->coverArea(0) : dashboard.geometry().card,
+        target.deviceContext().safeRect(), coverGridUi ? coverGridUi->coverArea(0) : dashboard.geometry().cover,
         SETTINGS.homeLayout == CrossPointSettings::HOME_FRAMED);
     libraryui::loadingNotice(target, noticeArea, tr(STR_LIBRARY_LOADING_COVERS));
     renderer.displayBuffer(cleanInitialRefresh ? HalDisplay::HALF_REFRESH : HalDisplay::FAST_REFRESH);

@@ -259,6 +259,7 @@ EpubReaderActivity::~EpubReaderActivity() {
 }
 
 bool EpubReaderActivity::loadBook() {
+  pageBufferStale = true;
   performance::Scope metadata(performance::Stage::Metadata);
   ChapterEventCache::retainReaderReplay(true);
   ParagraphInputCache::retainReader(true);
@@ -378,6 +379,7 @@ int EpubReaderActivity::bookPercentFor(const ChapterPosition& position) const {
 }
 
 void EpubReaderActivity::openReaderMenu() {
+  ensureCompletionStatus();
   releasePageReuse();
   pendingManualTurn = 0;
   if (usesToolbarMenu()) {
@@ -425,11 +427,11 @@ bool EpubReaderActivity::buildTickHeapGate() {
   return !buildHeapPaused;
 }
 
-void EpubReaderActivity::showBuildPopup(GfxRenderer& renderer, int& pagesUntilFullRefresh) {
-  if (!buildPopupPending || !renderer.hasFrameBuffer()) return;
+void EpubReaderActivity::showIndexingPopup(const uint32_t pageLoans) {
+  // A loan clears the page bytes; the panel itself still holds the book.
+  if (pageBufferStale || !renderer.hasFrameBuffer() || renderer.frameBufferLoanCount() != pageLoans) return;
   GUI.drawPopup(renderer, tr(STR_INDEXING));
   pagesUntilFullRefresh = 1;
-  buildPopupPending = false;
 }
 
 void EpubReaderActivity::openDictionaryWordSelect() {
@@ -674,6 +676,7 @@ bool EpubReaderActivity::readerMenuTapAllowed(int x, int y) const {
   return !EpubReaderUtils::linkAtPoint(currentPageLinks, x, y, currentPageLinkMarginLeft, currentPageLinkMarginTop);
 }
 void EpubReaderActivity::openTextSettings() {
+  ensureCompletionStatus();
   if (!epub || loadFailurePopup.isActive() || isAtEndOfBook()) return;
   {
     RenderLock lock;
@@ -719,7 +722,8 @@ void EpubReaderActivity::loop() {
   {
     RenderLock lock(RenderLock::Mode::Try);
     if (lock.ownsLock() && !formatReflowPending && overlay == Overlay::None && section && !section->isBuilding() &&
-        section->isPartial() && buildViewportWidth > 0 && !partialRebuildStartFailed && !bleturner::holdsHeap() &&
+        section->isPartial() && buildViewportWidth > 0 && !partialRebuildStartFailed &&
+        chapterBackgroundBuildMayRun() &&
         section->currentPage + PARTIAL_REBUILD_START_MARGIN >= static_cast<int>(section->pageCount)) {
       const ReaderRenderSpec buildSpec = SETTINGS.readerRenderSpec(buildViewportWidth, buildViewportHeight);
       if (!section->startBuild(buildSpec)) {
@@ -1477,7 +1481,7 @@ void EpubReaderActivity::applyInitialOrientation() {
 
 void EpubReaderActivity::applyOrientation(const uint8_t orientation) {
   // Also runs when SETTINGS already holds the new value but this layout was
-  // built for the old one — that is what an external change looks like here.
+  // built for the old one â€” that is what an external change looks like here.
   if (SETTINGS.orientation == orientation && appliedOrientation == orientation) {
     return;
   }
@@ -1674,10 +1678,8 @@ bool EpubReaderActivity::remoteShortcut(const bool readerMenu) {
   automaticPageTurnActive = false;
   if (!readerMenu) {
     startClipSelection();
-  } else if (usesToolbarMenu()) {
-    openOverlay(Overlay::Toolbar);
   } else {
-    openReaderMenu();
+    openTextSettings();
   }
   return true;
 }
@@ -1693,7 +1695,7 @@ void EpubReaderActivity::onReturnFromEndOfBook() {
 }
 
 bool EpubReaderActivity::backgroundBuildWanted() const {
-  return section && section->isBuilding() && !bleturner::holdsHeap() &&
+  return section && section->isBuilding() && chapterBackgroundBuildMayRun() &&
          (section->isPartial() || static_cast<int>(section->pageCount) < section->currentPage + BUILD_WINDOW_AHEAD);
 }
 
@@ -1745,6 +1747,7 @@ void EpubReaderActivity::resetSection() {
 }
 
 void EpubReaderActivity::prepareForChild() {
+  pageBufferStale = true;
   residentPage.clear();
   clearPrefetchedPage();
   ImageBlock::releaseRenderCache();
@@ -2028,6 +2031,7 @@ void EpubReaderActivity::renderBook() {
   // Runs under the render task's RenderLock; catches every requestUpdate()
   // exit from the overlay while its deferred chrome refresh is still pending.
   settleOverlayRefresh();
+  const uint32_t pageLoans = renderer.frameBufferLoanCount();
 
   const auto showPendingSyncSaveError = [this]() {
     if (!pendingSyncSaveError) return;
@@ -2037,6 +2041,7 @@ void EpubReaderActivity::renderBook() {
 
   const auto showBuildError = [this]() {
     readingPace.pause();
+    pageBufferStale = true;
     renderer.clearScreen();
     const auto labels = mappedInput.mapLabels(tr(STR_BACK), "", "", "");
     GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);
@@ -2127,13 +2132,9 @@ void EpubReaderActivity::renderBook() {
           showBuildError();
           return;
         }
-        GUI.drawPopup(renderer, tr(STR_INDEXING));
-        pagesUntilFullRefresh = 1;
-        const auto popupFn = [this]() {
-          if (renderer.hasFrameBuffer()) GUI.drawPopup(renderer, tr(STR_INDEXING));
-        };
+        showIndexingPopup(pageLoans);
         GfxRenderer::FrameBufferLoan loan(renderer);
-        if (!section->createSectionFile(renderSpec, popupFn)) {
+        if (!section->createSectionFile(renderSpec)) {
           LOG_ERR("ERS", "Failed to persist page data to SD");
           resetSection();
           loan.end();
@@ -2152,40 +2153,21 @@ void EpubReaderActivity::renderBook() {
         if (section->isPartial() && cachedTargetAvailable) {
           LOG_DBG("ERS", "Partial covers target %d of %d; deferring extension build", target, section->pageCount);
         } else {
-          const size_t spineBytes =
-              epub->getCumulativeSpineItemSize(currentSpineIndex) -
-              (currentSpineIndex > 0 ? epub->getCumulativeSpineItemSize(currentSpineIndex - 1) : 0);
-          const bool willInflate = !section->hasHtmlCache();
-          bool showPopup;
-          if (anchorJump) {
-            showPopup = willInflate && !section->findAnchor(pendingAnchor).has_value() &&
-                        spineBytes > BUILD_POPUP_BYTE_THRESHOLD;
-          } else {
-            const bool targetAvailable = target < static_cast<int>(section->pageCount);
-            showPopup = willInflate && !targetAvailable &&
-                        (spineBytes > BUILD_POPUP_BYTE_THRESHOLD || target > BUILD_POPUP_PAGE_THRESHOLD);
-          }
-          if (showPopup) {
-            GUI.drawPopup(renderer, tr(STR_INDEXING));
-            pagesUntilFullRefresh = 1;
-          }
-          buildPopupPending = !showPopup;
           LOG_DBG("ERS", "Heap before section build: %u (max block %u)", (unsigned)ESP.getFreeHeap(),
                   (unsigned)ESP.getMaxAllocHeap());
           if (!makeRoomForChapterBuild()) {
             showBuildError();
             return;
           }
-          const unsigned long buildStartMs = millis();
+          showIndexingPopup(pageLoans);
           bool started;
           {
             GfxRenderer::FrameBufferLoan loan(renderer);
-            started = section->startBuild(renderSpec, [this] { showBuildPopup(renderer, pagesUntilFullRefresh); });
+            started = section->startBuild(renderSpec);
           }
           if (!started) {
             LOG_ERR("ERS", "Failed to start section build");
             resetSection();
-            buildPopupPending = false;
             showBuildError();
             return;
           }
@@ -2193,18 +2175,13 @@ void EpubReaderActivity::renderBook() {
                  (anchorJump               ? !section->findAnchor(pendingAnchor)
                   : offsetJump.has_value() ? !section->buildReachedVisibleTextOffset(*offsetJump)
                                            : static_cast<int>(section->pageCount) <= target)) {
-            if (buildPopupPending && millis() - buildStartMs >= BUILD_POPUP_DEADLINE_MS) {
-              showBuildPopup(renderer, pagesUntilFullRefresh);
-            }
             if (!section->buildSomeMore(offsetJump.has_value() ? 1 : BUILD_PAGES_PER_CHUNK)) {
               LOG_ERR("ERS", "Failed during incremental section build");
               resetSection();
-              buildPopupPending = false;
               showBuildError();
               return;
             }
           }
-          buildPopupPending = false;
         }
       }
     } else {
@@ -2248,8 +2225,7 @@ void EpubReaderActivity::renderBook() {
   }
 
   if (section->isPartial() && section->currentPage >= static_cast<int>(section->pageCount)) {
-    GUI.drawPopup(renderer, tr(STR_INDEXING));
-    pagesUntilFullRefresh = 1;
+    showIndexingPopup(pageLoans);
   }
   while (section->isPartial() && !section->layoutFinished() &&
          section->currentPage >= static_cast<int>(section->pageCount)) {
@@ -2286,6 +2262,7 @@ void EpubReaderActivity::renderBook() {
 
   applyDeferredReposition();
 
+  pageBufferStale = true;
   renderer.clearScreen();
 
   if (section->pageCount == 0) {
@@ -2571,7 +2548,7 @@ void EpubReaderActivity::renderContents(Page& content, const int orientedMarginT
   const bool tiledGrayscale = needsAnyGrayscale && grayscale.stripUploads;
   // Paper Mono only (no other panel combines): defer the B/W base activation so
   // the gray planes join it in a single waveform. Displaying the base
-  // separately makes the gray pass re-drive the whole text body — a visible
+  // separately makes the gray pass re-drive the whole text body â€” a visible
   // flash on every AA page.
   const bool combinedGrayscaleBase =
       tiledGrayscale && !pageHasImages && grayscale.base == HalDisplay::GrayscaleBase::Combined;
@@ -4183,7 +4160,7 @@ void EpubReaderActivity::activateMoreRow(int row) {
   if (action == MA::GO_TO_PERCENT && overlayPageStored) {
     // The percent dialog is a popup over the current frame: wipe the toolbar
     // chrome back to the clean page first so the dialog draws over the page,
-    // not the sheet. No refresh push — the dialog's first frame carries it.
+    // not the sheet. No refresh push â€” the dialog's first frame carries it.
     RenderLock lock;
     settleOverlayRefresh();
     renderer.restoreBwBuffer(/*resyncPanelBaseline=*/false);

@@ -195,16 +195,23 @@ void ReadingQuestActivity::onEnter() {
   navigation.begin(mappedInput.isPressed(MappedInputManager::Button::NavNext) ||
                    mappedInput.isPressed(MappedInputManager::Button::NavPrevious));
   toybox::ensureFonts(renderer);
-  if (!assets.open(questassets::PATH, questassets::COUNT, ART_CACHE) ||
-      !storyAssets.open(questassets::STORY_PATH, questassets::STORY_COUNT, STORY_CACHE) ||
-      !rewardAssets.open(questassets::REWARDS_PATH, questassets::REWARDS_COUNT, MONSTER_CACHE) ||
-      !enemyAssets.open(questassets::GUARDIANS_PATH, questassets::GUARDIANS_COUNT, MONSTER_CACHE) ||
-      !outfitAssets.open(questassets::BESTIARY_OUTFITS_PATH, questassets::BESTIARY_OUTFITS_COUNT, OUTFIT_CACHE)) {
+  if (!assets.openGrayscale(questassets::PATH, questassets::COUNT, ART_CACHE) ||
+      !storyAssets.openGrayscale(questassets::STORY_PATH, questassets::STORY_COUNT, STORY_CACHE) ||
+      !rewardAssets.openGrayscale(questassets::REWARDS_PATH, questassets::REWARDS_COUNT, MONSTER_CACHE) ||
+      !enemyAssets.openGrayscale(questassets::GUARDIANS_PATH, questassets::GUARDIANS_COUNT, MONSTER_CACHE) ||
+      !outfitAssets.openGrayscale(questassets::BESTIARY_OUTFITS_PATH, questassets::BESTIARY_OUTFITS_COUNT,
+                                  OUTFIT_CACHE) ||
+      !celebrationAssets.openGrayscale(questassets::CELEBRATIONS_PATH, questassets::CELEBRATIONS_COUNT)) {
+    celebrationAssets.close();
+    outfitAssets.close();
+    enemyAssets.close();
+    rewardAssets.close();
+    storyAssets.close();
+    assets.close();
     loading = false;
     requestUpdate();
     return;
   }
-  celebrationAssets.open(questassets::CELEBRATIONS_PATH, questassets::CELEBRATIONS_COUNT);
   today = readingstats::today();
   summary.anchorDay = today;
   bool found = false;
@@ -1284,7 +1291,7 @@ void ReadingQuestActivity::render(RenderLock&&) {
   model.recalling = view == questui::View::Lore && infoReturn == questui::View::Recap;
   model.readingReturn = &readingReturn;
   model.returnPanel = returnPanel;
-  model.celebrationAssets = celebrationAssets.ready() ? &celebrationAssets : nullptr;
+  model.celebrationAssets = &celebrationAssets;
   model.attackPhase = readingClock.phase();
   const auto draw = [&](fui::DrawTarget& surface) {
     toybox::Frame frame(surface, target.deviceContext(), input, interactions, nullptr, status);

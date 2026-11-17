@@ -10,6 +10,8 @@
 
 #include "MappedInputManager.h"
 #include "activities/reader/DictionaryDefinitionActivity.h"
+#include "apps_local/plugins/PluginDetailsScreen.h"
+#include "apps_local/ui/PixelMenuTheme.h"
 #include "components/CatalogScreens.h"
 #include "components/UITheme.h"
 #include "util/HtmlToPlainText.h"
@@ -89,53 +91,10 @@ void DetailsActivity::detailsScreen(UiScreen& screen, void* user) {
 }
 
 void DetailsActivity::buildScreen(UiScreen& screen) {
-  catalogScreenHeader(screen, renderer, spec.header.c_str());
-  const auto& theme = screen.theme();
-  const auto asPtr = [](const std::string& s) { return s.empty() ? nullptr : s.c_str(); };
-  const int16_t line = uiTarget.lineHeight(theme.bodyText.font);
-
-  fui::PublicationPageProps& props = pageProps;
-  props.book.title = asPtr(spec.title);
-  props.book.author = asPtr(spec.author);
-  props.book.series = asPtr(spec.source);  // the series slot is just a hero line
-  props.book.titleText = theme.bodyText;
-  props.book.detailText = theme.bodyText;
-  props.book.seriesLines = 1;
-  props.book.coverSize = fui::Size{0, 0};
-  props.book.titleLines = 2;
-  props.book.authorLines = 1;
-  const int lines = 2 + !spec.author.empty() + !spec.source.empty();
-  props.heroHeight = static_cast<int16_t>(lines * line + 2 * props.book.titleGap);
-  props.metadata = asPtr(spec.metadata);
-  props.metadataLines = 3;
-  props.description = asPtr(summary);
-  props.headingText = theme.bodyText;
-  props.bodyText = theme.bodyText;
-
-  // Same outlined themed button as the OPDS publication page.
-  const auto styleButton = [&theme](fui::ButtonProps& button) {
-    button.styles = theme.button;
-    button.styles.normal.border = fui::Paint::solid(fui::Color::Black);
-    button.styles.normal.borderWidth = 1;
-    button.text = theme.bodyText;
-    button.radius = theme.controlRadius;
-    button.minTouchSize = theme.minTouchSize;
-  };
-  props.primary.label = asPtr(spec.actionLabel);
-  props.primary.action = ACTION_PRIMARY;
-  styleButton(props.primary);
-  if (!spec.description.empty()) {
-    props.more.label = tr(STR_DETAILS);
-    props.more.action = ACTION_MORE;
-    styleButton(props.more);
-  } else {
-    props.more.label = nullptr;  // the HTML fallback can leave the description empty
-  }
-  props.actionHeight = theme.rowHeight;
-
-  fui::publicationPage(screen.frame(), screen.body(), props);
+  pixelui::FontScope fonts(uiTarget, renderer);
+  pluginui::details(screen, spec, summary.c_str(), pageProps, toybox::headerStatus(renderer), ACTION_PRIMARY,
+                    ACTION_MORE);
 }
-
 void DetailsActivity::render(RenderLock&&) {
   renderer.clearScreen();
   renderUi();

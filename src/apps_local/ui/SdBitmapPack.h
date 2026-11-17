@@ -19,6 +19,7 @@ struct Image {
 class Pack {
  public:
   bool open(const char* path, uint32_t expectedCount, size_t pixelCacheBytes = 0);
+  bool openGrayscale(const char* path, uint32_t expectedCount, size_t pixelCacheBytes = 0);
   void close();
   bool ready() const { return valid; }
   Image image(uint32_t index);
@@ -43,6 +44,7 @@ class Pack {
   bool grayPixels = false;
   uint8_t verified[4096 / 8]{};
   bool valid = false;
+  bool openImpl(const char*, uint32_t expectedCount, size_t pixelCacheBytes, bool grayscaleOnly);
   bool read(void*, size_t);
   bool fail(const char* reason);
   Image decodeRecord(const uint8_t* record);

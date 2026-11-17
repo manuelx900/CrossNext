@@ -1,59 +1,47 @@
 #pragma once
-
 #include <BlePageTurner.h>
-#include <GfxRenderer.h>
 
 #include <string>
 #include <vector>
 
 #include "activities/UiListActivity.h"
 
-class MappedInputManager;
-
-// Bluetooth page turner: switch it on, scan, pair a remote, forget one, and map page/chapter buttons.
-// The radio and the remote belong to lib/BlePageTurner; this screen only asks it.
 class BleSettingsActivity final : public UiListActivity {
  public:
-  explicit BleSettingsActivity(GfxRenderer& renderer, MappedInputManager& mappedInput)
-      : UiListActivity("BleSettings", renderer, mappedInput, true, true) {}
-
+  explicit BleSettingsActivity(GfxRenderer& renderer, MappedInputManager& input)
+      : UiListActivity("BleSettings", renderer, input, false, true) {}
   void onEnter() override;
   void loop() override;
   bool allowsRemoteControl() const override { return false; }
+  bool preservesRemoteConnection() const override { return true; }
 
  private:
-  int listCount() const override { return static_cast<int>(rows.size()); }
-  void buildScreen(UiScreen& screen) override;
-  void activateIndex(int index) override;
-  const char* headerTitle() const override;
-
-  enum class View { Menu, Scan, Paired, Mapping };
+  enum class View : uint8_t { Menu, Scan, Paired, Bindings, Capture, Actions, Apps, Help };
   View view = View::Menu;
+  int listCount() const override;
+  const char* headerTitle() const override;
+  void buildScreen(UiScreen&) override;
+  void activateIndex(int) override;
   void onBackButton() override;
-  void showView(View target);
-  uint32_t signature() const;
+  void showView(View);
   void refresh();
-  // Button mapping reads the linked remote's button edges and stores them in its table.
-  void startLearning(int index);
-  void stepLearning();
-  void keepLearned(bool hold);
-  void onRowLongPress(int index) override;
-  void clearMapping(int index);
-
-  // Written on the main loop under the render lock, read by buildScreen on the render task.
+  void provideRow(uint16_t, freeink::ui::ListItem&);
+  uint32_t signature() const;
+  void startCapture();
+  void stepCapture();
+  bool saveBinding(bleturner::Action, const char* title = nullptr);
+  void restoreButton();
+  void confirmRemoval(int index);
+  void removeBinding(const char* address, uint32_t code, bool held);
+  void buildBindings(UiScreen&, freeink::ui::ListProps&);
+  const char* actionLabel(const bleturner::RemoteTable&, bleturner::Action) const;
   std::vector<freeink::ui::ListItem> rows;
   std::vector<std::string> labels;
-  std::string status;
-  char pairingCode[96]{};
-  bool pairingCodeVisible = false;
-  uint32_t shownSignature = 0;
-  uint32_t radioVisit = 0;
-  unsigned long lastPollMs = 0;
-  bleturner::Action learnAction = bleturner::Action::None;
-  char learnAddr[18]{};
-  char mappingValues[13][24]{};
-  uint32_t learnCode = 0;     // the pressed button, kept until its release
-  uint32_t learnPressMs = 0;  // when it went down (the remote's clock), to tell a hold from a tap
-  unsigned long learnSinceMs = 0;
-  const char* learnNote = nullptr;
+  char status[80]{}, pairingCode[96]{}, learnAddr[18]{};
+  char buttonLabels[bleturner::kMaxBindings][16]{};
+  const char* note = nullptr;
+  uint32_t shownSignature = 0, radioVisit = 0;
+  unsigned long lastPollMs = 0, learnSinceMs = 0;
+  uint32_t learnCode = 0, learnPressMs = 0;
+  bool hold = false, pairingCodeVisible = false;
 };

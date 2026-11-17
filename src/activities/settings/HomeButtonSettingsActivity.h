@@ -3,6 +3,7 @@
 #include "HomeButtonSettings.h"
 #include "SideButtonSettings.h"
 #include "activities/UiListActivity.h"
+#include "apps_local/ui/RemoteShortcutChoices.h"
 
 class HomeButtonSettingsActivity final : public UiListActivity {
  public:
@@ -19,8 +20,8 @@ class HomeButtonSettingsActivity final : public UiListActivity {
   enum class Page : uint8_t { Gestures, Actions, Apps, Timing };
   static constexpr int GESTURE_COUNT = 3;
   static constexpr int HOME_ACTION_COUNT = int(HomeButtonAction::OpenShortcut) + 1;
-  static constexpr int ROW_COUNT = int(SideButtonAction::Count) > HOME_ACTION_COUNT ? int(SideButtonAction::Count)
-                                                                                    : HOME_ACTION_COUNT;
+  static constexpr int ROW_COUNT = remoteshortcuts::COUNT > int(SideButtonAction::Count) ? remoteshortcuts::COUNT
+                                                                                         : int(SideButtonAction::Count);
   freeink::ui::ListItem rows[ROW_COUNT]{};
   Binding binding;
   Page page;

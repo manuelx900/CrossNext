@@ -4,6 +4,7 @@
 #include <I18n.h>
 #include <Logging.h>
 #include <Memory.h>
+#include <SdCardFontSystem.h>
 
 #include <algorithm>
 #include <cstdio>
@@ -18,6 +19,8 @@
 #include "FlashSettingsActivity.h"
 #include "components/SideButtonNavigation.h"
 #include "components/icons/listIcons.h"
+extern SdCardFontSystem sdFontSystem;
+
 namespace fui = freeink::ui;
 namespace {
 bool supported(std::string_view name) {
@@ -33,6 +36,7 @@ std::unique_ptr<Activity> FlashcardsActivity::create(GfxRenderer& r, MappedInput
   return app;
 }
 void FlashcardsActivity::onEnter() {
+  sdFontSystem.ensureBundledFonts(renderer);
   Activity::onEnter();
   if (!Storage.exists("/FLASHCARDS") && Storage.exists("/flashcards")) path = "/flashcards";
   path.reserve(512);

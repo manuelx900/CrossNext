@@ -13,6 +13,7 @@
 
 #include "GfxRenderer.h"
 #include "MappedInputManager.h"
+#include "apps_local/ui/PendingPageTurns.h"
 #include "util/MenuFontStyle.h"
 #include "util/ScreenshotInfo.h"
 
@@ -59,6 +60,10 @@ class ActivityManager {
   // see the definition, and util/ButtonReleaseGate.h for the seam.
   void setCurrentActivity(std::unique_ptr<Activity>&& next);
 
+  PendingPageTurns pendingRemoteTurns;
+  std::atomic<bool> idleWorkCancelled{false};
+  void stepRemoteTurns();
+
   uint32_t screenVisit = 0;
   std::atomic<uint32_t> paintedVisit{0};
 
@@ -87,6 +92,7 @@ class ActivityManager {
   // it when they notify the render task. Later requests still queue a new frame.
   std::atomic<bool> requestedUpdate{false};
   std::atomic<bool> repaintNotified{false};
+  std::atomic<bool> renderInFlight{false};
   std::atomic<Activity*> idleWorkOwner{nullptr};
   void notifyRepaint();
 
@@ -174,6 +180,10 @@ class ActivityManager {
   bool remoteRadioReady() const;
   bool remoteClick(RemoteButton button);
   bool remoteShortcut(bool readerMenu);
+  void cancelPendingRemoteTurns() {
+    pendingRemoteTurns.clear();
+    if (pendingAction == PendingAction::None) idleWorkCancelled.store(false);
+  }
   bool remoteTurn(bool forward, bool chapter);
   uint32_t visit() const { return screenVisit; }
 
@@ -196,7 +206,9 @@ class ActivityManager {
   void requestUpdate(bool immediate = false);
   // Caller holds RenderLock; switching activity or requesting a repaint cancels this work.
   void requestIdleWork(Activity& owner);
-  bool idleWorkIsCurrent(const Activity& owner) const { return idleWorkOwner.load() == &owner; }
+  bool idleWorkIsCurrent(const Activity& owner) const {
+    return !idleWorkCancelled.load() && idleWorkOwner.load() == &owner;
+  }
 
   // Trigger a render and block until it completes.
   // Must NOT be called from the render task or while holding a RenderLock.

@@ -5343,26 +5343,26 @@ STR_DICT_RECURSIVE_HINT: "Mantén una palabra para consultarla"
 STR_DICT_HISTORY_FULL: "Vuelve atrás antes de abrir otra definición"
 
 STR_BT_CONNECTION_FAILED: "No se pudo conectar. Vuelve a emparejar."
-STR_BT_CONNECT_REMOTE: "Conecta primero un mando"
+STR_BT_CONNECT_REMOTE: "Conecta primero un dispositivo"
 STR_BT_HOLD: "larga"
 STR_BT_KEYS_NOT_SAVED: "No se pudo guardar la asignación de botones"
 STR_BT_MAPPING_CLEARED: "Asignación borrada"
 STR_BT_MAPPING_SAVED: "Asignación de botones guardada"
 STR_BT_MAP_BUTTONS: "Asignar botones"
 STR_BT_NEXT_CHAPTER: "Capítulo siguiente"
-STR_BT_NO_DEVICES: "No se encontraron mandos"
+STR_BT_NO_DEVICES: "No se encontraron dispositivos"
 STR_BT_NO_KEY: "No se ha pulsado ningún botón"
-STR_BT_NO_REMOTES: "No hay mandos vinculados"
+STR_BT_NO_REMOTES: "No hay dispositivos vinculados"
 STR_BT_PAGE_TURNER: "Bluetooth"
-STR_BT_PAIRED_REMOTES: "Mandos vinculados"
-STR_BT_PRESS_REMOTE: "Pulse el botón del mando (15 segundos)"
+STR_BT_PAIRED_REMOTES: "Dispositivos vinculados"
+STR_BT_PRESS_REMOTE: "Pulsa el botón del dispositivo (15 segundos)"
 STR_BT_PREV_CHAPTER: "Capítulo anterior"
-STR_BT_SCAN: "Buscar mandos"
+STR_BT_SCAN: "Buscar dispositivos"
 STR_BT_START_FAILED: "No se pudo iniciar Bluetooth"
 STR_BT_STOP_SCAN: "Detener búsqueda"
 STR_BT_SHORT_NAME: "Bluetooth"
-STR_BT_SETTINGS_HELP: "Mando para pasar páginas"
-STR_BT_PAIRING_CODE: "Escribe %06lu en el mando y pulsa Intro."
+STR_BT_SETTINGS_HELP: "Dispositivo para pasar páginas"
+STR_BT_PAIRING_CODE: "Escribe %06lu en el dispositivo y pulsa Intro."
 STR_BT_WIFI_BUSY: "Desactiva Wi-Fi y Modo desarrollador para usar Bluetooth"
 
 STR_LANGUAGE_BUILT_IN: "Integrado"
@@ -5385,10 +5385,10 @@ STR_PET_HEALTH_STATUS_SICK: "Enferma"
 STR_PET_FULLNESS: "Saciedad"
 STR_PET_FULLNESS_PREVIEW: "Saciedad %u a %u · 1 comida"
 
-STR_BT_SHORTCUT_1: "Atajo del mando 1"
-STR_BT_SHORTCUT_2: "Atajo del mando 2"
-STR_BT_CONFIGURE_SHORTCUT_1: "Configurar atajo del mando 1"
-STR_BT_CONFIGURE_SHORTCUT_2: "Configurar atajo del mando 2"
+STR_BT_SHORTCUT_1: "Atajo del dispositivo 1"
+STR_BT_SHORTCUT_2: "Atajo del dispositivo 2"
+STR_BT_CONFIGURE_SHORTCUT_1: "Configurar atajo del dispositivo 1"
+STR_BT_CONFIGURE_SHORTCUT_2: "Configurar atajo del dispositivo 2"
 
 STR_PET_CARE_FOOD_GAIN: "+%u saciedad"
 
@@ -8907,3 +8907,170 @@ STR_QUEST_HUNT_REWARDS_OBTAINED: "Recompensas obtenidas"
 
 STR_READER_TRIGGER_BOTTOM_TAP: "Tocar borde inferior"
 STR_READER_TRIGGER_TOP_TAP: "Tocar borde superior"
+
+STR_WEB_LIBRARY: "Biblioteca"
+STR_WEB_FILE_ACTIONS: "Acciones del archivo"
+STR_WEB_SELECT_FILES: "Seleccionar"
+STR_WEB_SELECT_ALL: "Seleccionar todo"
+STR_WEB_ADD_FILES: "Añadir archivos"
+STR_WEB_CLOSE: "Cerrar"
+STR_WEB_EMPTY_FOLDER: "Esta carpeta está vacía"
+STR_WEB_LOAD_FILES_FAILED: "No se pudieron cargar los archivos"
+STR_WEB_FOLDER_SINGULAR: "carpeta"
+STR_WEB_FOLDER_PLURAL: "carpetas"
+STR_WEB_FILE_SINGULAR: "archivo"
+STR_WEB_FILE_PLURAL: "archivos"
+
+STR_REMOTE_ADVANCE: "Pasar página / avanzar"
+STR_REMOTE_ADVANCE_HELP: "En libros pasa a la página siguiente. En menús y apps avanza como el botón lateral."
+STR_REMOTE_PREVIOUS: "Página anterior / retroceder"
+STR_REMOTE_PREVIOUS_HELP: "En libros pasa a la página anterior. En menús y apps retrocede."
+STR_REMOTE_CONFIRM: "Aceptar / activar"
+STR_REMOTE_CONFIRM_HELP: "Activa la opción seleccionada o el control de la app abierta."
+STR_REMOTE_BACK: "Volver a la pantalla anterior"
+STR_REMOTE_BACK_HELP: "Cierra la pantalla actual, como la flecha de volver del lector."
+STR_REMOTE_READER_PAGE: "Página siguiente (solo libros)"
+STR_REMOTE_NAVIGATION: "Navegación"
+STR_REMOTE_READING: "Lectura"
+STR_REMOTE_DISPLAY: "Luz y pantalla"
+STR_REMOTE_OPEN: "Abrir una pantalla"
+STR_REMOTE_DEVICE: "Dispositivo"
+STR_REMOTE_BOOKMARK_HELP: "Añade o quita un marcador en la página actual del libro."
+STR_REMOTE_MENU_HELP: "Abre los controles del libro que estás leyendo."
+STR_REMOTE_SYNC_HELP: "Sincroniza el progreso del libro con el servidor configurado."
+STR_REMOTE_LIGHT_HELP: "Enciende o apaga la luz de la pantalla."
+STR_REMOTE_BRIGHTNESS_UP: "Subir brillo"
+STR_REMOTE_BRIGHTNESS_DOWN: "Bajar brillo"
+STR_REMOTE_BRIGHTNESS_HELP: "Cambia el brillo 5 puntos por pulsación."
+STR_REMOTE_WARMTH_HELP: "Cada pulsación alterna entre luz fría y tu ajuste de calidez guardado."
+STR_REMOTE_REFRESH_HELP: "Refresca la pantalla para quitar restos de la imagen anterior."
+STR_REMOTE_HOME: "Ir a Inicio"
+STR_REMOTE_HOME_HELP: "Vuelve al menú principal."
+STR_REMOTE_LIBRARY_HELP: "Abre la biblioteca de libros."
+STR_REMOTE_FILES_HELP: "Abre las carpetas de la tarjeta microSD."
+STR_REMOTE_SETTINGS_HELP: "Abre las categorías de ajustes."
+STR_REMOTE_APP_HELP: "Elige la app o juego que quieres abrir con este atajo."
+STR_REMOTE_SLEEP_HELP: "Suspende el lector con la pantalla de reposo configurada."
+STR_REMOTE_TOUCH_HELP: "Bloquea o desbloquea el táctil; el mando sigue funcionando."
+STR_REMOTE_NOTHING: "No hacer nada"
+STR_REMOTE_NOTHING_HELP: "Deja este atajo sin ninguna acción asignada."
+STR_REMOTE_SHORTCUT_HELP: "Elige la acción de este atajo. Después asígnalo a un botón en los ajustes de Bluetooth."
+
+STR_WEB_PLUGIN_COMPATIBILITY_UNAVAILABLE: "No se pudo comprobar la compatibilidad de los plugins. Recarga esta página."
+
+STR_PLUGIN_UNSUPPORTED: "Este plugin necesita funciones que este firmware no admite."
+
+STR_BT_STATUS_OFF: "Bluetooth apagado"
+
+STR_BT_STATUS_CONNECTED: "Conectado al dispositivo"
+
+STR_BT_STATUS_STARTING: "Iniciando Bluetooth…"
+
+STR_BT_STATUS_STOPPING: "Desconectando…"
+
+STR_BT_STATUS_PAUSED_WIFI: "Pausado mientras usas Wi-Fi o USB"
+
+STR_BT_STATUS_PAUSED_MEMORY: "Pausado por falta de memoria"
+
+STR_BT_STATUS_IDLE: "Sin conexión · búsqueda detenida"
+
+STR_BT_STATUS_UNPAIRED: "Ningún dispositivo emparejado"
+
+STR_BT_STATUS_DISCONNECTED: "Sin dispositivo conectado"
+
+STR_BT_NOT_AVAILABLE: "Bluetooth no disponible"
+
+STR_BT_STATUS_HINT: "Este es el estado actual de la conexión."
+
+STR_BT_ALLOW_CONNECTION: "Permitir conexión Bluetooth"
+
+STR_BT_CONFIGURE_BUTTONS: "Configurar botones del dispositivo"
+
+STR_BT_CONFIGURE_HINT: "Pulsa un botón y elige qué hace."
+
+STR_BT_HELP_TITLE: "Cómo funciona Bluetooth"
+
+STR_BT_HELP_CONNECTION: "Activado permite conectar un dispositivo. Conectado indica que hay un dispositivo conectado ahora."
+
+STR_BT_HELP_HOME: "Al volver a Inicio, el dispositivo sigue conectado. Abrir estos ajustes también conserva la conexión."
+
+STR_BT_HELP_PAUSE: "Wi-Fi, las transferencias USB o la suspensión pueden pausar Bluetooth para proteger la memoria y la batería."
+
+STR_BT_HELP_IDLE: "Sin un dispositivo conectado, Bluetooth deja de buscar tras 30 segundos sin actividad de conexión. Para volver a conectar, abre Bluetooth y busca el dispositivo."
+
+STR_BT_HELP_BUTTONS: "Para asignar un botón, púlsalo y elige una acción. Un toque y una pulsación mantenida pueden hacer cosas distintas."
+
+STR_BT_HELP_QUICK: "La franja de estado abre estos ajustes. El botón Bluetooth de accesos rápidos activa o desactiva la conexión."
+
+STR_BT_CAPTURE_WAIT: "Pulsa un botón del dispositivo"
+
+STR_BT_CAPTURE_BUTTON: "Configurar otro botón"
+
+STR_BT_CAPTURE_HINT: "Pulsa y suelta antes de 15 segundos. Mantén el botón pulsado para configurar una pulsación larga."
+
+STR_BT_BUTTON_NUMBER: "Botón %u"
+
+STR_BT_TAP: "Toque"
+
+STR_BT_RESTORE_BUTTON: "Restaurar acción predeterminada"
+
+STR_BT_RESTORE_HELP: "Quita esta asignación y usa el comportamiento predeterminado."
+
+STR_BT_CAPTURE_DISCONNECTED: "El dispositivo se desconectó. Conéctalo y vuelve a intentarlo."
+
+STR_BT_SAVED_NEXT: "Guardado. Pulsa otro botón para configurarlo."
+
+STR_BT_APP_LIMIT: "Ya usas accesos a dos apps distintas. Sustituye uno para elegir otra app."
+
+STR_BT_BINDING_LIMIT: "Ya hay 8 pulsaciones configuradas. Edita una asignación existente."
+
+STR_BT_QUICK_CONNECTED: "Conectado"
+
+STR_BT_QUICK_DISCONNECTED: "Sin conexión"
+
+STR_BT_QUICK_PAUSED: "En pausa"
+
+STR_BT_QUICK_UNPAIRED: "Sin vincular"
+
+STR_BT_QUICK_OFF: "Apagado"
+
+STR_BT_QUICK_STARTING: "Iniciando"
+
+STR_BT_QUICK_IDLE: "Sin búsqueda"
+
+STR_BT_CHOOSE_ACTION: "Elige qué hace este botón"
+
+STR_BT_BUTTONS_TITLE: "Botones del dispositivo"
+
+STR_BT_HELP_BUTTON: "Cómo funciona Bluetooth"
+
+STR_BT_COMPATIBILITY_TITLE: "Dispositivos compatibles"
+
+STR_BT_COMPATIBILITY_HELP: "Dispositivos Bluetooth LE (BLE) con botones HID compatibles. No todos los modelos funcionan. Aparecer en la búsqueda no garantiza compatibilidad."
+
+STR_BT_HELP_STATE_TITLE: "Activado y conectado"
+
+STR_BT_HELP_HOME_TITLE: "La conexión continúa"
+
+STR_BT_HELP_PAUSE_TITLE: "Pausas temporales"
+
+STR_BT_HELP_IDLE_TITLE: "Ahorro de batería"
+
+STR_BT_HELP_QUICK_TITLE: "Ajustes rápidos"
+
+STR_BT_PHYSICAL_BUTTON_HELP: "Hace lo mismo que pulsar este botón físico del lector."
+
+STR_BT_BANNER_WIFI: "En pausa · Wi-Fi o USB"
+STR_BT_BANNER_MEMORY: "En pausa · poca memoria"
+STR_BT_BANNER_FAILED: "No conecta · revisa ajustes"
+
+STR_BT_DELETE_BINDING_CONFIRM: "¿Eliminar esta asignación? Podrás configurar de nuevo esta pulsación."
+
+STR_BT_FORGET_CONFIRM: "¿Olvidar este dispositivo y sus botones configurados? Tendrás que vincularlo de nuevo."
+
+STR_BT_RESTORE_CONFIRM: "¿Restaurar el comportamiento predeterminado de esta pulsación?"
+STR_HOME_COVER_NOTICE_WHY: "¿Por qué activarlo?"
+STR_HOME_COVER_NOTICE_BENEFIT: "Al volver a Inicio, el menú se muestra antes de que terminen de cargar las portadas."
+STR_HOME_COVER_NOTICE_DURING: "Mientras se cargan, verás portadas provisionales y el aviso de carga. Cuando estén listas, aparecerán automáticamente."
+STR_HOME_COVER_NOTICE_DISABLED: "Si lo desactivas, el lector carga las portadas antes de mostrar Inicio, por lo que volver al menú puede tardar más."
+STR_HOME_COVER_NOTICE_ADVANTAGE: "Así esperas menos al salir de un libro o de otra sección y regresas al menú de Inicio más rápido, sin esperar a que las portadas estén listas."

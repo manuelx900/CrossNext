@@ -46,6 +46,7 @@
 #include "sudoku/SudokuActivity.h"
 #include "tools/ToolsActivity.h"
 #include "toybattle/ToyBattleActivity.h"
+#include "ui/GameMenuIcons.h"
 #include "ui/NavigationIcons.h"
 #include "wallpapers/WallpapersActivity.h"
 #include "wikipedia/WikipediaActivity.h"
@@ -55,23 +56,23 @@
 
 namespace {
 
-// Shelf silhouettes share the navigation reference family and upright SDK layout.
+// Menu artwork uses upright flash masks; game boards own their own art.
 constexpr shelf::Item kGames[] = {
-    {"CHESS", &navicons::Chess32, &ChessActivity::create},
-    {"CHECKERS", &navicons::Checkers32, &DraughtsActivity::create},
-    {"GO", &navicons::Go32, &GoActivity::create},
-    {"MINESWEEPER", &navicons::Bomb32, &MinesweeperActivity::create},
-    {"PICROSS", &navicons::Image32, &PicrossActivity::create},
-    {"WORDLE", &navicons::Wordle32, &WordleActivity::create},
-    {"2048", &navicons::Grid32, &Game2048Activity::create},
-    {"THE INTERCEPT", &navicons::Skull32, &InterceptActivity::create},
-    {"BATTLESHIP", &navicons::Ship32, &BattleshipActivity::create},
-    {"SOLITAIRE", &navicons::Spade32, &SolitaireActivity::create},
-    {"HEARTS", &navicons::Heart32, &HeartsActivity::create},
-    {"MURDLE", &navicons::Footprints32, &MurdleActivity::create},
-    {"CARNIVORO", &navicons::PawSolid32, &CarnivoroActivity::create},
-    {"CONNECT FOUR", &navicons::ConnectFour32, &ConnectFourActivity::create},
-    {"SUDOKU", &navicons::Hash32, &SudokuActivity::create},
+    {"CHESS", &gameicons::Chess40, &ChessActivity::create},
+    {"CHECKERS", &gameicons::Checkers40, &DraughtsActivity::create},
+    {"GO", &gameicons::Go40, &GoActivity::create},
+    {"MINESWEEPER", &gameicons::Minesweeper40, &MinesweeperActivity::create},
+    {"PICROSS", &gameicons::Picross40, &PicrossActivity::create},
+    {"WORDLE", &gameicons::Wordle40, &WordleActivity::create},
+    {"2048", &gameicons::Game204840, &Game2048Activity::create},
+    {"THE INTERCEPT", &gameicons::Intercept40, &InterceptActivity::create},
+    {"BATTLESHIP", &gameicons::Battleship40, &BattleshipActivity::create},
+    {"SOLITAIRE", &gameicons::Solitaire40, &SolitaireActivity::create},
+    {"HEARTS", &gameicons::Hearts40, &HeartsActivity::create},
+    {"MURDLE", &gameicons::Murdle40, &MurdleActivity::create},
+    {"CARNIVORO", &gameicons::Carnivoro40, &CarnivoroActivity::create},
+    {"CONNECT FOUR", &gameicons::ConnectFour40, &ConnectFourActivity::create},
+    {"SUDOKU", &gameicons::Sudoku40, &SudokuActivity::create},
     {"OTHELLO", &navicons::Othello32, &PocketGamesActivity::createOthello},
 };
 constexpr shelf::Item kApps[] = {

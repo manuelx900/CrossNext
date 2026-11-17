@@ -133,10 +133,9 @@ class EpubReaderActivity final : public ReaderActivity {
   // overlay, letting panel->toolbar steps restore the page without a full
   // re-render. Discarded on close / whenever the page under the overlay changes.
   bool overlayPageStored = false;
-  // A background build step lent the framebuffer: it came back white while the panel still shows the
-  // page. Until renderBook() redraws, nothing may be painted straight onto it. Set by the loop task,
-  // cleared by the render task.
-  std::atomic<bool> pageBufferStale{false};
+  // No reading page is available yet, a child screen owns the pixels, or a background build returned
+  // the framebuffer white. Section resets alone retain valid page pixels. Cleared by the render task.
+  std::atomic<bool> pageBufferStale{true};
   // True while a deferred overlay chrome refresh (pushOverlayRefresh) may still
   // be running on the panel. settleOverlayRefresh() must run before the
   // framebuffer is touched or another differential refresh is pushed.
@@ -186,11 +185,7 @@ class EpubReaderActivity final : public ReaderActivity {
   static constexpr size_t RENDER_MIN_FREE_HEAP = 24 * 1024;
   static constexpr int BUILD_WINDOW_AHEAD = 5;
   static constexpr int PARTIAL_REBUILD_START_MARGIN = 15;
-  static constexpr int BUILD_POPUP_PAGE_THRESHOLD = 20;
-  static constexpr size_t BUILD_POPUP_BYTE_THRESHOLD = 96 * 1024;
-  static constexpr unsigned long BUILD_POPUP_DEADLINE_MS = 1000;
-  bool buildPopupPending = false;
-  void showBuildPopup(GfxRenderer& renderer, int& pagesUntilFullRefresh);
+  void showIndexingPopup(uint32_t pageLoans);
   bool applyDeferredReposition();
   void clearDeferredReposition();
   void rememberCurrentContentOffset();

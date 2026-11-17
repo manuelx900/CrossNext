@@ -37,7 +37,8 @@ struct SdCardFontFamilyInfo {
   // one entry per style role, each with its filename in `name` and pointSize 0
   // (size-free). false = a directory of pre-rasterized .cpfont files.
   bool vector = false;
-  bool loose = false;  // vector file directly under `root`, no family directory
+  bool loose = false;         // vector file directly under `root`, no family directory
+  bool stylesRefined = true;  // false: vector family names discovered, faces not retained yet
 
   // Writes the file's SD path, e.g. "/.fonts/NotoSansCJK/NotoSansCJK_14.cpfont".
   // Returns false when `outSize` is too small; `out` is then truncated.
@@ -73,7 +74,7 @@ class SdCardFontRegistry {
   // obtained from getFamilies()/findFamily(). Returns true if any families found.
   bool discover();
 
-  const std::vector<SdCardFontFamilyInfo>& getFamilies() const { return families_; }
+  const std::vector<SdCardFontFamilyInfo>& getFamilies() const;
   const SdCardFontFamilyInfo* findFamily(const std::string& name) const;
   int getFamilyIndex(const std::string& name) const;
   int getFamilyCount() const { return static_cast<int>(families_.size()); }
@@ -86,7 +87,8 @@ class SdCardFontRegistry {
 #endif
 
  private:
-  std::vector<SdCardFontFamilyInfo> families_;  // sorted alphabetically
+  mutable std::vector<SdCardFontFamilyInfo> families_;  // sorted alphabetically; lazy face metadata
+  static void refineFamily(SdCardFontFamilyInfo& family);
 
   static bool parseFilename(const char* filename, uint8_t& size, uint8_t& style);
   // True when `filename` is exactly "<family>_<size>.cpfont", the name
@@ -104,7 +106,7 @@ class SdCardFontRegistry {
   // filename-derived role when the face can't be read. Then dedup by role.
   static void refineVectorStyles(const char* dirPath, std::vector<SdCardFontFileInfo>& files);
 #endif
-  static void scanDirectory(const char* dirPath, SdCardFontFamilyInfo& family);
+  static void scanDirectory(const char* dirPath, SdCardFontFamilyInfo& family, bool inspectVector = false);
   // Scan one root (e.g. "/.fonts"), append families to `out`, dedup by name.
   static void scanRoot(const char* rootPath, std::vector<SdCardFontFamilyInfo>& out);
 };

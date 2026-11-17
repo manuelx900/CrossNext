@@ -287,8 +287,11 @@ void buildBoard(toybox::Screen& s, const BoardModel& m) {
   const int turnW = wide ? c.width * 46 / 100 : c.width;
   const auto turn = fui::makeRect(c.x, wide ? groupY + 148 : c.y + 68, turnW, wide ? 56 : 36);
   lightui::surface(s.target(), turn, ink);
-  fittext::draw(s.target(), turn.inset({4, 6, 4, 6}), m.review ? tr(STR_MATCH_BOARD) : label, wide ? 0 : 1,
-                wide ? 2 : 1, fui::TextAlign::Center, fui::Color::White);
+  fui::TextStyle turnStyle;
+  turnStyle.font = wide ? 0 : 1;
+  turnStyle.align = fui::TextAlign::Center;
+  turnStyle.color = fui::Color::White;
+  fittext::draw(s.target(), turn.inset({4, 6, 4, 6}), m.review ? tr(STR_MATCH_BOARD) : label, turnStyle, wide ? 2 : 1);
   gameBoard(s, m.game, false);
   if (!m.review && m.yourTurn && m.aimed >= 0 && m.aimed < m.game.points() && m.game.at(m.aimed) == go::kEmpty) {
     int16_t x, y;

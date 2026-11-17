@@ -3,6 +3,7 @@
 #include <I18n.h>
 #include <Logging.h>
 #include <Memory.h>
+#include <SdCardFontSystem.h>
 #include <WiFi.h>
 #include <esp_sntp.h>
 
@@ -37,6 +38,8 @@
 #include "components/SideButtonNavigation.h"
 #include "components/UiAppHelpers.h"
 #include "fontIds.h"
+
+extern SdCardFontSystem sdFontSystem;
 
 namespace {
 
@@ -150,6 +153,7 @@ std::unique_ptr<Activity> StudyActivity::openInstalled(GfxRenderer& renderer, Ma
 }
 
 void StudyActivity::onEnter() {
+  sdFontSystem.ensureBundledFonts(renderer);
   Activity::onEnter();
   toybox::ensureFonts(renderer);
 

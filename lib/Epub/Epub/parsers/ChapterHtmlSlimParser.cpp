@@ -1,5 +1,6 @@
 #include "ChapterHtmlSlimParser.h"
 
+#include <ChapterXmlParser.h>
 #include <FsHelpers.h>
 #include <GfxRenderer.h>
 #include <HalStorage.h>
@@ -2845,7 +2846,7 @@ bool ChapterHtmlSlimParser::beginParse() {
     return true;
   }
 
-  xmlParser_ = XML_ParserCreate(nullptr);
+  xmlParser_ = createChapterXmlParser();
   if (!xmlParser_) {
     LOG_ERR("EHP", "Couldn't allocate memory for parser");
     return false;

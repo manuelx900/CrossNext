@@ -60,6 +60,8 @@ void ReadingStatsActivity::onEnter() {
   requestUpdate();
 }
 void ReadingStatsActivity::onExit() {
+  periodView.close();
+  daysView.close();
   repository.close();
   completionIndex.reset();
   completionMemory.reset();
@@ -68,6 +70,27 @@ void ReadingStatsActivity::onExit() {
   Activity::onExit();
 }
 void ReadingStatsActivity::back() {
+  for (auto* view : {&periodView, &daysView})
+    if (view->state() != readingstats::PagedView::State::Ready) view->close();
+  if (detailPage == DetailPage::Days) {
+    detailPage = DetailPage::Summary;
+    loading = Load::Ready;
+    repository.close();
+    ready = false;
+    requestUpdate();
+    return;
+  }
+  if (periodBooksVisible) {
+    if (details)
+      details = false;
+    else
+      periodBooksVisible = false;
+    loading = Load::Ready;
+    repository.close();
+    ready = false;
+    requestUpdate();
+    return;
+  }
   if (goalCalendarVisible) {
     goalCalendarVisible = false;
     requestUpdate();
@@ -121,13 +144,17 @@ void ReadingStatsActivity::loadPage(int next) {
   repository.close();
   if (source == readingstats::Source::Unified) {
     const int total = bookTotal();
-    page = std::clamp(page, 0, std::max(0, (total - 1) / pageSize));
-    loading =
-        !cloudAvailable || combined->page(filter, page, finishedBooks, pageSize, count) ? Load::Ready : Load::Failed;
+    page = cloudListedKnown ? std::clamp(page, 0, std::max(0, (total - 1) / pageSize)) : 0;
+    cloudBookOrdinal = 0;
+    if (!cloudListedKnown) listedCloudFinished = listedCloudRecent = 0;
+    loading = cloudAvailable ? Load::CloudBooks : Load::Failed;
     requestUpdate();
     return;
   }
-  if (filter == readingstats::BookFilter::Recent || (finishedPage == page && finishedCapacity == pageSize)) {
+  if (filter == readingstats::BookFilter::Recent && recentCount < 0) {
+    page = recentCount = 0;
+    loading = beginScan() ? Load::Books : Load::Failed;
+  } else if (filter == readingstats::BookFilter::Recent || (finishedPage == page && finishedCapacity == pageSize)) {
     if (filter == readingstats::BookFilter::Recent) {
       page = std::clamp(page, 0, std::max(0, (recentCount - 1) / pageSize));
       count = std::min(pageSize, recentCount - page * pageSize);
@@ -187,8 +214,113 @@ void ReadingStatsActivity::loadAnnual(int year) {
     loading = beginScan() ? Load::Annual : Load::Failed;
   requestUpdate();
 }
+bool ReadingStatsActivity::skipLoopDelay() { return loading != Load::Ready && loading != Load::Failed; }
+bool ReadingStatsActivity::showPreparedPage() {
+  const bool dates = loading == Load::BookDays;
+  auto& view = dates ? daysView : periodView;
+  int visible = 0;
+  const int current = dates ? bookDays.page : periodBooks.page;
+  const int slots = dates ? bookDays.capacity : pageSize;
+  if (!view.readPage(current, slots, dates ? books : finishedBooks, visible)) return false;
+  if (dates) {
+    bookDays.count = visible;
+    bookDays.total = view.count();
+    bookDays.hasNext = int64_t(current + 1) * slots < view.count();
+    for (int n = 0; n < visible; ++n) bookDays.entries[n] = {books[n].seconds, books[n].lastDay};
+  } else {
+    periodBooks.count = visible;
+    periodBooks.hasNext = int64_t(current + 1) * slots < view.count();
+  }
+  return true;
+}
+void ReadingStatsActivity::loadPeriodBooks(int direction) {
+  const auto& range = tab == 0 ? dayStats : (tab == 1 && !periodFromPicker ? annualStats : periodStats);
+  const int first = direction ? periodBooks.first : range.first;
+  const int last = direction ? periodBooks.last : range.last;
+  if (first <= 0 || last < first) return;
+  pageSize = renderer.getScreenWidth() > renderer.getScreenHeight() ? 2 : readingstats::kBooksPerPage;
+  periodBooks.first = first;
+  periodBooks.last = last;
+  periodBooks.page = direction ? std::max(0, periodBooks.page + (direction > 0 ? 1 : -1)) : 0;
+  recentCount = -1;
+  finishedPage = -1;
+  selected = 0;
+  periodBooksVisible = true;
+  details = false;
+  ready = false;
+  repository.close();
+  loading = Load::PeriodBooks;
+  if (periodView.matches(readingstats::PagedView::Kind::Period, first, last))
+    loading = showPreparedPage() ? Load::Ready : Load::Failed;
+  else if (!periodView.begin(readingstats::PagedView::Kind::Period, books, readAhead, first, last) || !beginScan(true))
+    loading = Load::Failed;
+  requestUpdate();
+}
+void ReadingStatsActivity::loadBookDays(int direction) {
+  const int slots = renderer.getScreenWidth() > renderer.getScreenHeight() ? 2 : readingstats::kBooksPerPage;
+  bookDays.capacity = slots;
+  bookDays.page = direction ? std::max(0, bookDays.page + (direction > 0 ? 1 : -1)) : 0;
+  detailPage = DetailPage::Days;
+  recentCount = -1;
+  ready = false;
+  repository.close();
+  loading = Load::BookDays;
+  if (daysView.matches(readingstats::PagedView::Kind::Days, 0, 0, detail.document))
+    loading = showPreparedPage() ? Load::Ready : Load::Failed;
+  else if (!daysView.begin(readingstats::PagedView::Kind::Days, books, readAhead, 0, 0, detail.document) ||
+           !beginScan(true))
+    loading = Load::Failed;
+  requestUpdate();
+}
+
 void ReadingStatsActivity::scan() {
+  auto* view = loading == Load::PeriodBooks ? &periodView : loading == Load::BookDays ? &daysView : nullptr;
+  if (view && view->state() != readingstats::PagedView::State::Collecting) {
+    view->step();
+    if (view->state() == readingstats::PagedView::State::Ready) {
+      loading = showPreparedPage() ? Load::Ready : Load::Failed;
+      requestUpdate();
+    } else if (view->state() == readingstats::PagedView::State::Failed) {
+      loading = Load::Failed;
+      requestUpdate();
+    }
+    return;
+  }
+  if (loading == Load::CloudBooks) {
+    for (int n = 0; n < 32; ++n) {
+      if (cloudBookOrdinal == combined->count() || (cloudListedKnown && count == pageSize)) {
+        cloudListedKnown = true;
+        loading = Load::Ready;
+        requestUpdate();
+        return;
+      }
+      if (!combined->bookAt(cloudBookOrdinal++, record.book)) {
+        loading = Load::Failed;
+        requestUpdate();
+        return;
+      }
+      if (record.book.seconds < readingstats::kMinimumVisibleSeconds) continue;
+      if (!cloudListedKnown) {
+        if (record.book.completed)
+          ++listedCloudFinished;
+        else
+          ++listedCloudRecent;
+      }
+      if (record.book.completed != (filter == readingstats::BookFilter::Finished)) continue;
+      if (skipped++ >= page * pageSize && count < pageSize) finishedBooks[count++] = record.book;
+    }
+    return;
+  }
   for (int n = 0; n < 32; ++n) {
+    if (view && view->pending()) {
+      if (!view->drain()) {
+        repository.close();
+        loading = Load::Failed;
+        requestUpdate();
+        return;
+      }
+      continue;
+    }
     const auto status = repository.next(record);
     if (status == readingstats::ScanResult::Error) {
       loading = Load::Failed;
@@ -199,6 +331,13 @@ void ReadingStatsActivity::scan() {
     if (status == readingstats::ScanResult::Finished) {
       damaged |= repository.hadDamage();
       repository.close();
+      if (view) {
+        if (!view->finishInput()) {
+          loading = Load::Failed;
+          requestUpdate();
+        }
+        return;
+      }
       const auto& streak = periodStats.consistency;
       if ((loading == Load::Period || loading == Load::Streak) && period == readingstats::Period::Month &&
           streak.first < streakPassFirst && streak.first > streak.minimumDay) {
@@ -219,15 +358,21 @@ void ReadingStatsActivity::scan() {
       else if (loading == Load::Day)
         dayReady = true;
       else if (loading == Load::Books) {
-        finishedPage = page;
-        finishedCount = count;
+        if (filter == readingstats::BookFilter::Recent) {
+          count = std::min(pageSize, recentCount - page * pageSize);
+        } else {
+          finishedPage = page;
+          finishedCount = count;
+        }
       }
       loading = Load::Ready;
       requestUpdate();
       return;
     }
     if (status != readingstats::ScanResult::Record) continue;
-    if (loading == Load::Summary && (record.firstCompletion || record.kind == readingstats::RecordKind::Reopen)) {
+    if (loading == Load::Summary &&
+        (record.firstCompletion || record.kind == readingstats::RecordKind::Reopen ||
+         (record.book.completed && record.book.seconds >= readingstats::kMinimumVisibleSeconds))) {
       if (!completionMemory) {
         const auto slots = readingstats::CompletionIndex::slotsFor(repository.recordCount());
         completionMemory = HalMemory::allocatePsram(slots * sizeof(readingstats::CompletionIndex::Entry));
@@ -236,15 +381,20 @@ void ReadingStatsActivity::scan() {
         else
           LOG_ERR("STATS", "OOM: completion-event index");
       }
-      if (!completionMemory || !completionIndex.apply(record, repository.recordOffset())) {
+      const bool previouslyListed = completionIndex.completed(record.book.document);
+      if (!completionMemory || !completionIndex.apply(record, repository.recordOffset(), /*visibleOnly=*/true)) {
         LOG_ERR("STATS", "Completion-event index unavailable or full");
         repository.close();
         loading = Load::Failed;
         requestUpdate();
         return;
       }
+      const bool nowListed = completionIndex.completed(record.book.document);
+      if (nowListed && !previouslyListed) ++listedFinished;
+      if (!nowListed && previouslyListed && listedFinished) --listedFinished;
     }
-    const bool currentCompletion = loading == Load::Books && completionIndex.current(record, repository.recordOffset());
+    const bool currentCompletion =
+        loading == Load::Books && completionIndex.current(record, repository.recordOffset(), /*visibleOnly=*/true);
     switch (loading) {
       case Load::Anchor: {
         currentDay =
@@ -264,7 +414,8 @@ void ReadingStatsActivity::scan() {
         annualStats.add(record);
         recordedYears.add(record);
         if (clockKnown) dayStats.add(record);
-        readingstats::addRecent(books, recentCount, record.book);
+        if (record.book.seconds >= readingstats::kMinimumVisibleSeconds)
+          readingstats::addRecent(books, recentCount, record.book);
         break;
       case Load::Day:
         dayStats.add(record);
@@ -280,7 +431,8 @@ void ReadingStatsActivity::scan() {
         break;
       case Load::Books:
         if (filter == readingstats::BookFilter::Recent) {
-          readingstats::addRecent(books, recentCount, record.book);
+          if (record.book.seconds >= readingstats::kMinimumVisibleSeconds)
+            readingstats::addRecent(books, recentCount, record.book);
         } else if (currentCompletion && skipped++ >= page * pageSize) {
           finishedBooks[count++] = record.book;
           if (count == pageSize) {
@@ -292,6 +444,22 @@ void ReadingStatsActivity::scan() {
             requestUpdate();
             return;
           }
+        }
+        break;
+      case Load::BookDays:
+        if (!view->add(record)) {
+          loading = Load::Failed;
+          repository.close();
+          requestUpdate();
+          return;
+        }
+        break;
+      case Load::PeriodBooks:
+        if (!view->add(record)) {
+          loading = Load::Failed;
+          repository.close();
+          requestUpdate();
+          return;
         }
         break;
       case Load::Detail:
@@ -307,6 +475,7 @@ void ReadingStatsActivity::scan() {
       case Load::Ready:
       case Load::Failed:
       case Load::Cloud:
+      case Load::CloudBooks:
         return;
     }
   }
@@ -316,6 +485,28 @@ void ReadingStatsActivity::action(fui::ActionId action, int value) {
       action != readingui::Tab)
     return;
   switch (action) {
+    case readingui::BookDays:
+      if (details && loading == Load::Ready && readingstats::validDocument(detail.document)) loadBookDays();
+      return;
+    case readingui::BookDaysPage:
+      if (detailPage != DetailPage::Days || loading != Load::Ready) return;
+      if ((value < 0 && bookDays.page > 0) || (value > 0 && bookDays.hasNext)) loadBookDays(value);
+      return;
+    case readingui::BookDaysBack:
+      back();
+      return;
+    case readingui::PeriodBooks:
+      if (loading != Load::Ready || details || pickerVisible || goalCalendarVisible) return;
+      if (tab == 1 && !periodFromPicker && statsScope != readingui::StatsScope::Year) return;
+      loadPeriodBooks();
+      return;
+    case readingui::PeriodBooksPage:
+      if (!periodBooksVisible || details || loading != Load::Ready) return;
+      if ((value < 0 && periodBooks.page > 0) || (value > 0 && periodBooks.hasNext)) loadPeriodBooks(value);
+      return;
+    case readingui::PeriodBooksBack:
+      back();
+      return;
     case readingui::GoalChoose: {
       if (SETTINGS.readingDailyGoal && !goalCalendarVisible) return;
       std::vector<std::string> options;
@@ -479,6 +670,8 @@ void ReadingStatsActivity::action(fui::ActionId action, int value) {
       if (value == tab && !details && !pickerVisible && !goalCalendarVisible &&
           period == readingstats::Period::Calendar)
         return;
+      detailPage = DetailPage::Summary;
+      periodBooksVisible = false;
       goalCalendarVisible = false;
       repository.close();
       loading = Load::Ready;
@@ -523,7 +716,16 @@ void ReadingStatsActivity::action(fui::ActionId action, int value) {
       }
       return;
     case readingui::OpenBook:
-      if (value < 0 || value >= count) return;
+      detailPage = DetailPage::Summary;
+      if (value < 0 || value >= (periodBooksVisible ? periodBooks.count : count)) return;
+      if (periodBooksVisible) {
+        detail = finishedBooks[value];
+        details = true;
+        ready = false;
+        loading = beginScan(true) ? Load::Detail : Load::Failed;
+        requestUpdate();
+        return;
+      }
       detail = source == readingstats::Source::Unified      ? finishedBooks[value]
                : filter == readingstats::BookFilter::Recent ? books[value + page * pageSize]
                                                             : finishedBooks[value];
@@ -609,6 +811,24 @@ void ReadingStatsActivity::loop() {
         action(readingui::GoalMonth, command.amount);
       continue;
     }
+    if (detailPage == DetailPage::Days) {
+      if (ready && loading == Load::Ready &&
+          (command.kind == sectionnav::Input::Kind::Step || command.kind == sectionnav::Input::Kind::Section)) {
+        action(readingui::BookDaysPage, command.amount);
+        navigated = true;
+      }
+      continue;
+    }
+    if (periodBooksVisible && !details) {
+      if (ready && loading == Load::Ready) {
+        if (command.kind == sectionnav::Input::Kind::Confirm)
+          action(readingui::OpenBook, selected);
+        else if (command.kind == sectionnav::Input::Kind::Step || command.kind == sectionnav::Input::Kind::Section)
+          action(readingui::PeriodBooksPage, command.amount);
+        navigated = true;
+      }
+      continue;
+    }
     if (*initialBook || details || pickerVisible) continue;
     if (command.kind == sectionnav::Input::Kind::Step) {
       const int from = queuedTab >= 0 ? queuedTab : tab;
@@ -625,13 +845,23 @@ void ReadingStatsActivity::loop() {
     }
   }
   if (navigated) return;
-  if (tab == 3 && !details) {
+  if (detailPage == DetailPage::Days &&
+      bookDays.capacity != (renderer.getScreenWidth() > renderer.getScreenHeight() ? 2 : readingstats::kBooksPerPage)) {
+    loadBookDays();
+    return;
+  }
+  if ((tab == 3 || periodBooksVisible) && !details) {
     auto target = toybox::makeTarget(renderer);
-    const int capacity = readingui::capacity(target.deviceContext());
+    const int capacity = periodBooksVisible && renderer.getScreenWidth() > renderer.getScreenHeight()
+                             ? 2
+                             : readingui::capacity(target.deviceContext());
     if (pageSize != capacity) {
       const int first = page * pageSize;
       pageSize = capacity;
-      loadPage(first / pageSize);
+      if (periodBooksVisible)
+        loadPeriodBooks();
+      else
+        loadPage(first / pageSize);
       return;
     }
   }
@@ -659,9 +889,38 @@ void ReadingStatsActivity::loop() {
     }
     return;
   }
+  if (detailPage == DetailPage::Days) {
+    if (!ready) return;
+    if (const int direction = sidebuttons::horizontalStep(mappedInput)) {
+      action(readingui::BookDaysPage, direction);
+      return;
+    }
+    if (mappedInput.wasReleased(MappedInputManager::Button::Left) ||
+        mappedInput.wasReleased(MappedInputManager::Button::Up)) {
+      action(readingui::BookDaysPage, -1);
+      return;
+    }
+    if (mappedInput.wasReleased(MappedInputManager::Button::Right) ||
+        mappedInput.wasReleased(MappedInputManager::Button::Down)) {
+      action(readingui::BookDaysPage, 1);
+      return;
+    }
+    int x = 0, y = 0;
+    if (mappedInput.wasScreenTapped(x, y)) {
+      fui::InputSnapshot input{};
+      input.touchReleased = true;
+      input.touchX = x;
+      input.touchY = y;
+      const auto event = interactions.route(input);
+      action(event.action, event.value);
+    }
+    return;
+  }
   if (ready && !details) {
     if (const int direction = sidebuttons::horizontalStep(mappedInput)) {
-      if (goalCalendarVisible)
+      if (periodBooksVisible)
+        action(readingui::PeriodBooksPage, direction);
+      else if (goalCalendarVisible)
         action(readingui::GoalMonth, direction);
       else if (pickerVisible)
         action(readingui::PickerYear, direction);
@@ -682,13 +941,18 @@ void ReadingStatsActivity::loop() {
     action(goalCalendarVisible ? readingui::GoalMonth : readingui::Tab, goalCalendarVisible ? 1 : (tab + 1) % 4);
     return;
   }
-  if (tab == 3 && !details) {
+  if (detailPage == DetailPage::Days &&
+      bookDays.capacity != (renderer.getScreenWidth() > renderer.getScreenHeight() ? 2 : readingstats::kBooksPerPage)) {
+    loadBookDays();
+    return;
+  }
+  if ((tab == 3 || periodBooksVisible) && !details) {
     if (mappedInput.wasReleased(MappedInputManager::Button::Down)) {
-      if (selected + 1 < count) {
+      if (selected + 1 < (periodBooksVisible ? periodBooks.count : count)) {
         ++selected;
         requestUpdate();
       } else
-        action(readingui::Page, 1);
+        action(periodBooksVisible ? readingui::PeriodBooksPage : readingui::Page, 1);
       return;
     }
     if (mappedInput.wasReleased(MappedInputManager::Button::Up)) {
@@ -696,7 +960,7 @@ void ReadingStatsActivity::loop() {
         --selected;
         requestUpdate();
       } else
-        action(readingui::Page, -1);
+        action(periodBooksVisible ? readingui::PeriodBooksPage : readingui::Page, -1);
       return;
     }
     if (mappedInput.wasReleased(MappedInputManager::Button::Confirm)) {
@@ -756,7 +1020,16 @@ void ReadingStatsActivity::render(RenderLock&&) {
   model.books = source == readingstats::Source::Unified      ? finishedBooks
                 : filter == readingstats::BookFilter::Recent ? books + page * pageSize
                                                              : finishedBooks;
-  model.detail = details ? &detail : nullptr;
+  if (periodBooksVisible) model.books = finishedBooks;
+  model.periodBooks = periodBooksVisible;
+  model.periodBookFirst = periodBooks.first;
+  model.periodBookLast = periodBooks.last;
+  model.periodBookPage = periodBooks.page;
+  model.periodBookCount = periodBooks.count;
+  model.periodBookTotal = periodView.count();
+  model.periodBookNext = periodBooks.hasNext;
+  model.bookDays = detailPage == DetailPage::Days ? &bookDays : nullptr;
+  model.detail = details && detail.seconds >= readingstats::kMinimumVisibleSeconds ? &detail : nullptr;
   model.bookOnly = *initialBook;
   model.periodFromPicker = periodFromPicker;
   model.pickerVisible = pickerVisible;
@@ -792,10 +1065,9 @@ void ReadingStatsActivity::render(RenderLock&&) {
 int ReadingStatsActivity::bookTotal() const {
   if (source == readingstats::Source::Unified) {
     if (!cloudAvailable) return 0;
-    const auto& h = combined->data();
-    return filter == readingstats::BookFilter::Finished ? h.finished : h.books - h.finished;
+    return filter == readingstats::BookFilter::Finished ? listedCloudFinished : listedCloudRecent;
   }
-  return filter == readingstats::BookFilter::Recent ? recentCount : summary.completed;
+  return filter == readingstats::BookFilter::Recent ? recentCount : listedFinished;
 }
 void ReadingStatsActivity::importHistory() {
   if (!readingstats::crossink::installed()) {

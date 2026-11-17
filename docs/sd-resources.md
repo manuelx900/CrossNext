@@ -1,27 +1,42 @@
 # MicroSD resource package
 
 Install the firmware for your device, then extract `CrossNext-Resources.zip` and
-copy its **contents** to the root of the microSD card. Merge existing folders.
+copy its **contents** to the root of the microSD card. Replace the bundled resource folders; keep books and saves.
+This package does not contain or replace an `images` folder.
 Do not add an extra `resources` directory around them. Power off before removing
 the card and restart the reader after copying.
+
+PET and Reading Adventure load artwork only from `/apps/pet-v2/` and
+`/apps/reading-adventure-v2/`. The unversioned folders from older releases are
+ignored. Install the matching ZIP; renaming an old folder is insufficient:
+all six packs must use the current grayscale format and expected image counts.
+Missing, mixed or incompatible contents show the existing installation notice.
+No directory scans, new cache or background task are needed for this check.
+
+Saved progress stays at its existing paths under `/.crosspoint/`, including
+`/.crosspoint/pet-v2/` and `/.crosspoint/reading-adventure-v2/`. These are save
+directories, separate from the artwork under `/apps/`. Never replace or remove
+`/.crosspoint/` when installing resources. Old artwork folders may stay on the
+card; this firmware does not read them.
 
 The card layout is:
 
 ```
-/apps/reading-adventure/graphics.bin
-/apps/reading-adventure/manifest.json
-/apps/reading-adventure/story.bin
-/apps/reading-adventure/story-manifest.json
-/apps/reading-adventure/rewards.bin
-/apps/reading-adventure/guardians.bin
-/apps/reading-adventure/bestiary-outfits.bin
-/apps/reading-adventure/expansion-manifest.json
-/apps/pet/graphics.bin
-/apps/pet/home.bin
-/apps/pet/habitat.bin
-/apps/pet/breathing.bin
-/apps/pet/farewell.bin
-/apps/pet/collection.bin
+/apps/reading-adventure-v2/graphics.bin
+/apps/reading-adventure-v2/manifest.json
+/apps/reading-adventure-v2/story.bin
+/apps/reading-adventure-v2/story-manifest.json
+/apps/reading-adventure-v2/rewards.bin
+/apps/reading-adventure-v2/guardians.bin
+/apps/reading-adventure-v2/bestiary-outfits.bin
+/apps/reading-adventure-v2/expansion-manifest.json
+/apps/reading-adventure-v2/celebrations.bin
+/apps/pet-v2/graphics.bin
+/apps/pet-v2/home.bin
+/apps/pet-v2/habitat.bin
+/apps/pet-v2/breathing.bin
+/apps/pet-v2/farewell.bin
+/apps/pet-v2/collection.bin
 /apps/intercept/graphics.bin
 /apps/intercept/manifest.json
 /fonts/Bitter/...
@@ -77,9 +92,9 @@ Other interface languages receive no new automatic monolingual default.
 Reading Adventure checks the artwork package before loading or changing its
 profile. Missing, incompatible, truncated or checksum-invalid resources display
 instructions instead of starting the game. Back returns to the launch location.
-Replace `/apps/reading-adventure/` with the folder from the matching resource ZIP
-and reopen the app. The old `moments.bin` is no longer distributed or used; remove
-`/apps/reading-adventure/moments.bin` from an older card when merging the update.
+Replace `/apps/reading-adventure-v2/` with the folder from the matching resource ZIP
+and reopen the app. The old unversioned `moments.bin` is no longer distributed
+or used. Installing artwork does not start a new save generation.
 If the card becomes unreadable while drawing, the same notice
 appears and further game actions are blocked.
 
@@ -87,7 +102,7 @@ Reading Adventure progress uses `/.crosspoint/reading-adventure-v2/reading-quest
 uses `/.crosspoint/pet-v2/`. These redesigned apps start a separate [save generation](apps/save-generation-v2.md),
 leaving earlier game files intact without importing them. Intercept retains its existing store.
 Binary profile formats and equipment identifiers are unchanged. The ZIP contains no
-`.crosspoint` directory or saved profiles. Updating the package merges resources;
+`.crosspoint` directory or saved profiles. Updating the package replaces the distributed resource folders;
 it does not require formatting the card or deleting books, settings or saves.
 
 ## Building the package

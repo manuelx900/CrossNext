@@ -125,9 +125,11 @@ void UiListActivity::useCompactSettingsRows() {
   uiTarget.setFont(4, pixel ? UI_10_FONT_ID : toybox::kLibraryFontId);
 }
 
-void UiListActivity::syncListViewport(UiScreen& screen, fui::ListProps& props, const int selectionOffset) {
+void UiListActivity::syncListViewport(UiScreen& screen, fui::ListProps& props, const int selectionOffset,
+                                      const bool reserveTrailing) {
   if (pixelChrome) pixelui::styleList(props);
   if (compactSettingsRows) settingsui::styleRows(props);
+  if (reserveTrailing) props.trailingCentered = false;
   props.toggleCheckbox = true;
   props.toggleWidth = props.checkboxCheckmark ? 34 : 28;
   props.toggleHeight = props.toggleWidth;

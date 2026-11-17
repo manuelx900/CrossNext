@@ -53,7 +53,7 @@ void OpdsBookBrowserActivity::activateIndex(const int index) {
 
 void OpdsBookBrowserActivity::buildScreen(UiScreen& screen) {
   screenHeader(screen, server.name.empty() ? tr(STR_OPDS_BROWSER) : server.name.c_str());
-  if (!buildStatusScreen(screen, /*boldError=*/false, /*showDownloadTotal=*/true)) buildBrowsingScreen(screen);
+  if (!buildStatusScreen(screen, /*boldError=*/false)) buildBrowsingScreen(screen);
 }
 
 void OpdsBookBrowserActivity::buildBrowsingScreen(UiScreen& screen) {

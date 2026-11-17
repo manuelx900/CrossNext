@@ -5388,7 +5388,7 @@ STR_DICT_RECURSIVE_HINT: "Hold a word to look it up"
 STR_DICT_HISTORY_FULL: "Go back before opening another definition"
 
 STR_BT_CONNECTION_FAILED: "Unable to connect. Try pairing again."
-STR_BT_CONNECT_REMOTE: "Connect a remote first"
+STR_BT_CONNECT_REMOTE: "Connect a device first"
 STR_BT_HOLD: "hold"
 STR_BT_KEYS_NOT_SAVED: "Could not save the button mapping"
 STR_BT_MAPPING_CLEARED: "Mapping cleared"
@@ -5400,14 +5400,14 @@ STR_BT_NO_KEY: "No button pressed"
 STR_BT_NO_REMOTES: "No paired remotes"
 STR_BT_PAGE_TURNER: "Bluetooth"
 STR_BT_PAIRED_REMOTES: "Paired remotes"
-STR_BT_PRESS_REMOTE: "Press the remote button (15 seconds)"
+STR_BT_PRESS_REMOTE: "Press the device button (15 seconds)"
 STR_BT_PREV_CHAPTER: "Previous Chapter"
 STR_BT_SCAN: "Scan for remotes"
 STR_BT_START_FAILED: "Could not start Bluetooth"
 STR_BT_STOP_SCAN: "Stop Scan"
 STR_BT_SHORT_NAME: "Bluetooth"
-STR_BT_SETTINGS_HELP: "Page-turning remote"
-STR_BT_PAIRING_CODE: "Enter %06lu on the remote, then press Enter."
+STR_BT_SETTINGS_HELP: "Page-turning device"
+STR_BT_PAIRING_CODE: "Enter %06lu on the device, then press Enter."
 STR_BT_WIFI_BUSY: "Turn off Wi-Fi and Developer Mode to use Bluetooth"
 
 STR_LANGUAGE_BUILT_IN: "Built in"
@@ -5430,10 +5430,10 @@ STR_PET_HEALTH_STATUS_SICK: "Ill"
 STR_PET_FULLNESS: "Fullness"
 STR_PET_FULLNESS_PREVIEW: "Fullness %u to %u · 1 food"
 
-STR_BT_SHORTCUT_1: "Remote shortcut 1"
-STR_BT_SHORTCUT_2: "Remote shortcut 2"
-STR_BT_CONFIGURE_SHORTCUT_1: "Configure remote shortcut 1"
-STR_BT_CONFIGURE_SHORTCUT_2: "Configure remote shortcut 2"
+STR_BT_SHORTCUT_1: "Device shortcut 1"
+STR_BT_SHORTCUT_2: "Device shortcut 2"
+STR_BT_CONFIGURE_SHORTCUT_1: "Configure device shortcut 1"
+STR_BT_CONFIGURE_SHORTCUT_2: "Configure device shortcut 2"
 
 STR_PET_CARE_FOOD_GAIN: "+%u fullness"
 
@@ -8965,3 +8965,170 @@ STR_QUEST_HUNT_REWARDS_OBTAINED: "Rewards obtained"
 
 STR_READER_TRIGGER_BOTTOM_TAP: "Tap bottom edge"
 STR_READER_TRIGGER_TOP_TAP: "Tap top edge"
+
+STR_WEB_LIBRARY: "Library"
+STR_WEB_FILE_ACTIONS: "File actions"
+STR_WEB_SELECT_FILES: "Select files"
+STR_WEB_SELECT_ALL: "Select all"
+STR_WEB_ADD_FILES: "Add files"
+STR_WEB_CLOSE: "Close"
+STR_WEB_EMPTY_FOLDER: "This folder is empty"
+STR_WEB_LOAD_FILES_FAILED: "An error occurred while loading the files"
+STR_WEB_FOLDER_SINGULAR: "folder"
+STR_WEB_FOLDER_PLURAL: "folders"
+STR_WEB_FILE_SINGULAR: "file"
+STR_WEB_FILE_PLURAL: "files"
+
+STR_REMOTE_ADVANCE: "Turn page / move forward"
+STR_REMOTE_ADVANCE_HELP: "Next page in a book; next item or page in menus and apps, like the side navigation button."
+STR_REMOTE_PREVIOUS: "Previous page / move back"
+STR_REMOTE_PREVIOUS_HELP: "Previous page in a book; previous item or page in menus and apps."
+STR_REMOTE_CONFIRM: "Select / activate"
+STR_REMOTE_CONFIRM_HELP: "Activate the selected item or the current app control."
+STR_REMOTE_BACK: "Back to previous screen"
+STR_REMOTE_BACK_HELP: "Close the current screen, just like Back on the reader."
+STR_REMOTE_READER_PAGE: "Next page (books only)"
+STR_REMOTE_NAVIGATION: "Navigation"
+STR_REMOTE_READING: "Reading"
+STR_REMOTE_DISPLAY: "Light and screen"
+STR_REMOTE_OPEN: "Open a screen"
+STR_REMOTE_DEVICE: "Device"
+STR_REMOTE_BOOKMARK_HELP: "Add or remove a bookmark on the current book page."
+STR_REMOTE_MENU_HELP: "Open the controls for the current book."
+STR_REMOTE_SYNC_HELP: "Synchronize the current book with your configured progress server."
+STR_REMOTE_LIGHT_HELP: "Switch the frontlight on or off."
+STR_REMOTE_BRIGHTNESS_UP: "Increase brightness"
+STR_REMOTE_BRIGHTNESS_DOWN: "Decrease brightness"
+STR_REMOTE_BRIGHTNESS_HELP: "Adjust brightness by 5 percentage points per press."
+STR_REMOTE_WARMTH_HELP: "Each press switches between cool light and your saved warmth setting."
+STR_REMOTE_REFRESH_HELP: "Refresh the screen to remove traces of the previous image."
+STR_REMOTE_HOME: "Go to Home"
+STR_REMOTE_HOME_HELP: "Return to the main menu."
+STR_REMOTE_LIBRARY_HELP: "Open the book library."
+STR_REMOTE_FILES_HELP: "Browse the folders on the microSD card."
+STR_REMOTE_SETTINGS_HELP: "Open the settings categories."
+STR_REMOTE_APP_HELP: "Choose an app or game to open with this shortcut."
+STR_REMOTE_SLEEP_HELP: "Put the reader to sleep using your configured sleep screen."
+STR_REMOTE_TOUCH_HELP: "Lock or unlock touch input; the remote keeps working."
+STR_REMOTE_NOTHING: "Do nothing"
+STR_REMOTE_NOTHING_HELP: "Keep this shortcut without an assigned action."
+STR_REMOTE_SHORTCUT_HELP: "Choose an action for this shortcut. Then assign it to a button in Bluetooth settings."
+
+STR_WEB_PLUGIN_COMPATIBILITY_UNAVAILABLE: "Could not check plugin compatibility. Reload this page."
+
+STR_PLUGIN_UNSUPPORTED: "This plugin needs features that this firmware does not support."
+
+STR_BT_STATUS_OFF: "Bluetooth off"
+
+STR_BT_STATUS_CONNECTED: "Connected to device"
+
+STR_BT_STATUS_STARTING: "Starting Bluetooth…"
+
+STR_BT_STATUS_STOPPING: "Disconnecting…"
+
+STR_BT_STATUS_PAUSED_WIFI: "Paused while Wi-Fi or USB is in use"
+
+STR_BT_STATUS_PAUSED_MEMORY: "Paused: not enough memory"
+
+STR_BT_STATUS_IDLE: "Disconnected · search stopped"
+
+STR_BT_STATUS_UNPAIRED: "No device paired"
+
+STR_BT_STATUS_DISCONNECTED: "No device connected"
+
+STR_BT_NOT_AVAILABLE: "Bluetooth unavailable"
+
+STR_BT_STATUS_HINT: "This is the current connection status."
+
+STR_BT_ALLOW_CONNECTION: "Allow Bluetooth connection"
+
+STR_BT_CONFIGURE_BUTTONS: "Configure device buttons"
+
+STR_BT_CONFIGURE_HINT: "Press a button, then choose what it does."
+
+STR_BT_HELP_TITLE: "How Bluetooth works"
+
+STR_BT_HELP_CONNECTION: "Enabled lets a device connect. Connected means a device is connected now."
+
+STR_BT_HELP_HOME: "Returning to the Home screen keeps the device connected. Opening these settings also preserves the connection."
+
+STR_BT_HELP_PAUSE: "Wi-Fi, USB transfers or sleep can pause Bluetooth to protect memory and battery."
+
+STR_BT_HELP_IDLE: "With no device connected, Bluetooth stops searching after 30 seconds without connection activity. To reconnect, open Bluetooth and search for the device."
+
+STR_BT_HELP_BUTTONS: "To assign a button, press it and choose an action. A short press and a hold can do different things."
+
+STR_BT_HELP_QUICK: "The status banner opens these settings. The Bluetooth shortcut button turns the connection on or off."
+
+STR_BT_CAPTURE_WAIT: "Press a device button"
+
+STR_BT_CAPTURE_BUTTON: "Configure another button"
+
+STR_BT_CAPTURE_HINT: "Press and release within 15 seconds. Hold the button to configure a long press."
+
+STR_BT_BUTTON_NUMBER: "Button %u"
+
+STR_BT_TAP: "Tap"
+
+STR_BT_RESTORE_BUTTON: "Restore default action"
+
+STR_BT_RESTORE_HELP: "Remove its custom assignment and use the default behavior."
+
+STR_BT_CAPTURE_DISCONNECTED: "Device disconnected. Connect it and try again."
+
+STR_BT_SAVED_NEXT: "Saved. Press another button to configure it."
+
+STR_BT_APP_LIMIT: "Two different app shortcuts are already in use. Replace one to choose another app."
+
+STR_BT_BINDING_LIMIT: "All 8 button-press actions are assigned. Edit an existing assignment."
+
+STR_BT_QUICK_CONNECTED: "Connected"
+
+STR_BT_QUICK_DISCONNECTED: "No connection"
+
+STR_BT_QUICK_PAUSED: "Paused"
+
+STR_BT_QUICK_UNPAIRED: "Not paired"
+
+STR_BT_QUICK_OFF: "Off"
+
+STR_BT_QUICK_STARTING: "Starting"
+
+STR_BT_QUICK_IDLE: "Search stopped"
+
+STR_BT_CHOOSE_ACTION: "Choose what this button does"
+
+STR_BT_BUTTONS_TITLE: "Device buttons"
+
+STR_BT_HELP_BUTTON: "How Bluetooth works"
+
+STR_BT_COMPATIBILITY_TITLE: "Compatible devices"
+
+STR_BT_COMPATIBILITY_HELP: "Compatible Bluetooth LE (BLE) devices with HID buttons. Not all models work. Appearing in search does not guarantee compatibility."
+
+STR_BT_HELP_STATE_TITLE: "Enabled and connected"
+
+STR_BT_HELP_HOME_TITLE: "The connection stays active"
+
+STR_BT_HELP_PAUSE_TITLE: "Temporary pauses"
+
+STR_BT_HELP_IDLE_TITLE: "Battery saving"
+
+STR_BT_HELP_QUICK_TITLE: "Quick settings"
+
+STR_BT_PHYSICAL_BUTTON_HELP: "Does the same as pressing this physical button on the reader."
+
+STR_BT_BANNER_WIFI: "Paused · Wi-Fi or USB"
+STR_BT_BANNER_MEMORY: "Paused · low memory"
+STR_BT_BANNER_FAILED: "Cannot connect · check settings"
+
+STR_BT_DELETE_BINDING_CONFIRM: "Delete this assignment? You can configure this press again."
+
+STR_BT_FORGET_CONFIRM: "Forget this device and its configured buttons? You will need to pair it again."
+
+STR_BT_RESTORE_CONFIRM: "Restore the default behavior for this press?"
+STR_HOME_COVER_NOTICE_WHY: "Why enable it?"
+STR_HOME_COVER_NOTICE_BENEFIT: "When you return to Home, the menu appears before the book covers finish loading."
+STR_HOME_COVER_NOTICE_DURING: "While they load, you see temporary covers and the loading notice. The covers appear automatically when ready."
+STR_HOME_COVER_NOTICE_DISABLED: "If you turn this off, the reader loads the covers before showing Home, so returning to the menu may take longer."
+STR_HOME_COVER_NOTICE_ADVANTAGE: "This means less waiting when you leave a book or another section: you return to Home faster, without waiting for the covers to be ready."

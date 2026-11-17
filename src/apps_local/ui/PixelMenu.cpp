@@ -123,20 +123,30 @@ static fui::Rect paintHeader(fui::DrawTarget& target, const fui::DeviceContext& 
   const int top = geometry.header.bottom() - 72;
   chrome::headerHeight = geometry.header.height;
   target.fill(geometry.header, black);
-  int right = safe.right() - 14;
+  int right = safe.right() - (model.homeBattery ? 20 : 14);
   if (model.battery >= 0) {
-    const auto icon = fui::makeRect(right - 34, top + 27, 30, 19);
+    const auto icon = statusbattery::headerIcon(right, top);
     const int percent = std::clamp(model.battery, 0, 100);
     statusbattery::draw(target, icon, percent, model.charging, fui::Color::White);
     right = icon.x - 8;
     if (model.showPercent) {
       char percentLabel[8];
       std::snprintf(percentLabel, sizeof(percentLabel), "%d%%", percent);
-      const auto font = model.compactBattery ? 3 : kSmall;
+      const auto font = model.compactBattery && !model.homeBattery ? 3 : kSmall;
       const int width = model.compactPercent ? target.measureText(font, percentLabel, {}).width : 62;
-      text(target, fui::makeRect(right - width, top, width, 72), percentLabel, font, fui::Color::White,
-           fui::TextAlign::Right);
-      right -= width + 10;
+      const auto label =
+          model.homeBattery ? statusbattery::headerPercent(icon, top) : fui::makeRect(right - width, top, width, 72);
+      if (model.homeBattery) {
+        fui::TextStyle style;
+        style.font = kSmall;
+        style.color = fui::Color::White;
+        style.align = fui::TextAlign::Right;
+        style.maxLines = 1;
+        target.text(label, percentLabel, style);
+      } else {
+        text(target, label, percentLabel, font, fui::Color::White, fui::TextAlign::Right);
+      }
+      right = model.homeBattery ? label.x - 10 : right - width - 10;
     }
   }
   if (model.trailingLabel) {
@@ -184,7 +194,7 @@ static fui::Rect paintHeader(fui::DrawTarget& target, const fui::DeviceContext& 
   right -= model.titleReserve;
   fui::TextStyle titleStyle;
   titleStyle.font = kBody;
-  titleStyle.bold = !chrome::lightHeader;
+  titleStyle.bold = !chrome::lightHeader && !model.regularTitle;
   char title[192];
   copyNatural(title, sizeof(title), model.title, model.titleCase);
   const int titleEnd = left + target.measureText(titleStyle.font, title, titleStyle).width + 14;
@@ -197,12 +207,8 @@ static fui::Rect paintHeader(fui::DrawTarget& target, const fui::DeviceContext& 
     target.text(clock, model.clockText, clockStyle);
     right = clock.x - 14;
   }
-  if (chrome::lightHeader) {
-    titleStyle.color = fui::Color::White;
-    fittext::draw(target, fui::makeRect(left, top, std::max(0, right - left), 72), title, titleStyle, 2);
-  } else
-    text(target, fui::makeRect(left, top, std::max(0, right - left), 72), model.title, kBody, fui::Color::White,
-         fui::TextAlign::Left, true, model.titleCase);
+  titleStyle.color = fui::Color::White;
+  fittext::draw(target, fui::makeRect(left, top, std::max(0, right - left), 72), title, titleStyle, 2);
   return mark;
 }
 

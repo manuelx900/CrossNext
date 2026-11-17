@@ -23,7 +23,7 @@ inline constexpr uint32_t kWaitMs = 15000;
 // hold should use the same number and pin it with a static_assert.
 inline constexpr uint32_t kHoldMs = 700;
 
-// Stored by value in settings.json (bits 28-31 of a slot): new actions go last, and the
+// Stored by value in settings.json (bits 28-31 plus extension bits 26-27): new actions go last, and the
 // numbers never change (a test pins them). The four moves are the remote's own;
 // ReaderMenu and SaveQuote are handed to the host, which runs its own action of that name.
 enum class Action : uint8_t {
@@ -40,17 +40,35 @@ enum class Action : uint8_t {
   SideRight,
   Power,
   Shortcut1,
-  Shortcut2
+  Shortcut2,
+  Advance,
+  Previous,
+  Bookmark,
+  Sync,
+  ToggleFrontlight,
+  ToggleWarmth,
+  Refresh,
+  Home,
+  Library,
+  Files,
+  Settings,
+  BrightnessUp,
+  BrightnessDown,
+  Sleep,
+  Touch,
+  Disabled
 };
 
 // One slot: bits 0-23 the button code (value | byte index << 8 | report id << 16),
 // bit 24 "hold", bit 25 "any report id" (built-in defaults only, since that remote's
-// report id has not been measured), bits 28-31 the action.
+// report id has not been measured), bits 28-31 the low action bits, bits 26-27 its high bits.
 using Binding = uint32_t;
 inline constexpr uint32_t kCodeMask = 0x00FFFFFFu;
 inline constexpr uint32_t kHoldBit = 1u << 24;
 inline constexpr uint32_t kAnyReportBit = 1u << 25;
 inline constexpr uint8_t kActionShift = 28;
+// The two formerly reserved bits extend actions without enlarging a saved binding.
+inline constexpr uint32_t kActionExtensionMask = 3u << 26;
 
 inline constexpr uint8_t kMaxBindings = 8;  // 4 buttons x tap/hold
 inline constexpr uint8_t kMaxRemotes = 4;   // = BleKeyboardHost::kMaxBonds
@@ -67,16 +85,19 @@ struct RemoteTable {
 };
 
 constexpr Binding makeBinding(const uint32_t code, const bool hold, const Action action) {
-  return (code & kCodeMask) | (hold ? kHoldBit : 0u) | static_cast<uint32_t>(action) << kActionShift;
+  const auto id = static_cast<uint32_t>(action);
+  return (code & kCodeMask) | (hold ? kHoldBit : 0u) | ((id & 15u) << kActionShift) | ((id >> 4) << 26);
 }
-constexpr Action actionOf(const Binding b) { return static_cast<Action>(b >> kActionShift); }
+constexpr Action actionOf(const Binding b) {
+  return static_cast<Action>((b >> kActionShift) | (((b & kActionExtensionMask) >> 26) << 4));
+}
 
 // A slot read from the card is kept only when every bit means something: an action
 // in range, a non-zero value, no unknown bit. Garbage is dropped rather than turned
 // into a button that does something odd.
 constexpr bool valid(const Binding b) {
-  return (b & ~(kCodeMask | kHoldBit | kAnyReportBit | 0xF0000000u)) == 0 && (b & 0xFFu) != 0 &&
-         actionOf(b) != Action::None && static_cast<uint8_t>(actionOf(b)) <= static_cast<uint8_t>(Action::Shortcut2);
+  return (b & 0xFFu) != 0 && actionOf(b) != Action::None &&
+         static_cast<uint8_t>(actionOf(b)) <= static_cast<uint8_t>(Action::Disabled);
 }
 
 constexpr bool matches(const Binding b, const uint32_t code, const bool hold) {
@@ -103,11 +124,14 @@ inline bool find(const RemoteTable& t, const Action action, Binding& out) {
 }
 
 inline const char* actionName(const Action action) {
-  static const char* const kNames[] = {"none",        "next",       "prev",       "next_chapter", "prev_chapter",
-                                       "reader_menu", "save_quote", "confirm",    "back",         "side_left",
-                                       "side_right",  "power",      "shortcut_1", "shortcut_2"};
-  return kNames[static_cast<uint8_t>(action) <= static_cast<uint8_t>(Action::Shortcut2) ? static_cast<uint8_t>(action)
-                                                                                        : 0];
+  static constexpr const char* kNames[] = {
+      "none",    "next",     "prev",      "next_chapter", "prev_chapter",  "reader_menu",     "save_quote",
+      "confirm", "back",     "side_left", "side_right",   "power",         "shortcut_1",      "shortcut_2",
+      "advance", "previous", "bookmark",  "sync",         "light",         "warmth",          "refresh",
+      "home",    "library",  "files",     "settings",     "brightness_up", "brightness_down", "sleep",
+      "touch",   "disabled"};
+  return kNames[static_cast<uint8_t>(action) <= static_cast<uint8_t>(Action::Disabled) ? static_cast<uint8_t>(action)
+                                                                                       : 0];
 }
 
 // "3:1=02" (report id 3, byte 1, value 0x02); "1=02" for an any-report default slot;

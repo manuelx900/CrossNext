@@ -2,6 +2,10 @@
 
 #include <Memory.h>
 
+#ifdef BOARD_HAS_PSRAM
+#include <HalMemory.h>
+#endif
+
 #include <cstdint>
 #include <cstring>
 #include <string_view>
@@ -53,8 +57,17 @@ class WordStore {
   size_t chunkUsed(size_t i) const { return chunks_[i].used; }
 
  private:
+#ifdef BOARD_HAS_PSRAM
+  struct BufferDeleter {
+    void operator()(char* buffer) const { HalMemory::PsramDeleter{}(reinterpret_cast<uint8_t*>(buffer)); }
+  };
+  using Buffer = std::unique_ptr<char[], BufferDeleter>;
+#else
+  using Buffer = std::unique_ptr<char[]>;
+#endif
+  static Buffer allocWithReclaim(size_t bytes);
   struct Chunk {
-    std::unique_ptr<char[]> data;
+    Buffer data;
     uint16_t capacity = 0;
     uint16_t used = 0;
     uint16_t live = 0;

@@ -5,6 +5,12 @@
 
 namespace statusbattery {
 inline constexpr int width = 30, height = 19, terminal = 4;
+inline freeink::ui::Rect headerIcon(int right, int top) {
+  return freeink::ui::makeRect(right - 34, top + 27, width, height);
+}
+inline freeink::ui::Rect headerPercent(freeink::ui::Rect icon, int top) {
+  return freeink::ui::makeRect(icon.x - 70, top + 8, 66, 56);
+}
 inline void paintIcon(freeink::ui::DrawTarget& target, freeink::ui::Rect body,
                       const freeink::ui::BatteryIndicatorProps& props) {
   namespace fui = freeink::ui;

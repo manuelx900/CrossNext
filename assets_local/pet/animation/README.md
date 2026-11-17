@@ -1,4 +1,10 @@
-# PET: respiración de todas las poses
+# PET: referencia histórica del atlas de respiración
+
+La app actual requiere `/apps/pet-v2/breathing.bin` con **1278 registros CNART003**
+y los otros cinco paquetes actuales. Instala el conjunto completo indicado en
+[el README de PET](../README.md). Los apartados siguientes conservan la descripción
+del atlas original de 474 registros y sus primeros IDs; no son un paquete
+alternativo compatible con el firmware actual.
 
 Los 19 atlas se editaron con la herramienta integrada `image_gen`, usando las
 poses existentes como objetivos. Tres atlas cubren descanso y quince cubren
@@ -12,7 +18,7 @@ columnas, registra las siluetas por su borde izquierdo y apoyo inferior y aplica
 una escala común a las fases de cada pose. La conversión a 1 bit y las máscaras
 se preparan fuera del dispositivo. El lector no genera ni deforma imágenes.
 
-`/apps/pet/breathing.bin` tiene 474 registros CNART002:
+El paquete histórico tenía 474 registros CNART002:
 
 - 0–71: doce poses dormidas × tres fases × máscara/tinta.
 - 72–95: doce cabezas estáticas × máscara/tinta para refugios cerrados.
@@ -24,9 +30,9 @@ se preparan fuera del dispositivo. El lector no genera ni deforma imágenes.
   derecha) con máscara/tinta. Se alinean por el centro y la base de apoyo.
 
 Las 72 poses aportan 216 fotogramas, además de los nueve fotogramas de huevo. `breathing-manifest.json` documenta cada ID,
-procedencia, tamaño y CRC. Se conservan los primeros 96 ID; reemplaza firmware y
-paquete juntos, porque el firmware nuevo requiere 474 registros. Un paquete
-anterior o dañado activa el respaldo estático.
+procedencia, tamaño y CRC. Se conservan los primeros 96 ID. El firmware actual
+requiere los 1278 registros completos en CNART003; un paquete antiguo, incompleto
+o incompatible muestra el aviso de instalación, sin cargar la partida.
 
 El ciclo 0→1→2→1 avanza cada 1,5 segundos mientras el pet activo
 está visible en PET, Hogar, Recompensa o Evolución. Enfermas y cansadas conservan
@@ -41,7 +47,9 @@ alegría, tristeza, hambre, cansancio y enfermedad sin usar caracteres emoji del
 sistema. Las Z llevan un halo blanco bajo cada trazo negro.
 
 No hay tareas adicionales ni cambios de formato de partida. Se reutiliza el
-lector HAL y su caché PSRAM (474 × 16 + 4096 = 11680 bytes), liberado al salir,
+lector HAL y su índice/lectura anticipada en PSRAM
+(1278 × 16 + 4096 = 24544 bytes), más la caché opcional acotada de sprites,
+liberados al salir,
 con lecturas pequeñas de respaldo si no se puede asignar. No se añade un
 framebuffer ni asignaciones por fotograma. Sigue usándose el refresco completo
 actual; velocidad, parpadeo, consumo y rastros requieren prueba física.

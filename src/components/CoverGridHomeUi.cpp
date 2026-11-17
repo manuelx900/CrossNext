@@ -21,6 +21,7 @@
 #include "../apps_local/Shelf.h"  // fork-local seam
 #include "../apps_local/home/CoverLoadingNotice.h"
 #include "../apps_local/home/CoverSceneCache.h"
+#include "../apps_local/home/HomeLoadingPlaceholders.h"
 #include "../apps_local/home/HomeMenuIntegration.h"
 #include "../apps_local/home/HomeScreen.h"
 #include "../apps_local/home/LicoriceLayout.h"
@@ -232,7 +233,6 @@ void CoverGridHomeUi::draw(UiScreen& screen) {
     drawLicorice(screen);
     return;
   }
-  coverCache.prepare();
   const auto& theme = screen.theme();
   const auto geometry = coverGeometry(renderer, theme, screen.target());
   const auto body = geometry.body;
@@ -248,6 +248,11 @@ void CoverGridHomeUi::draw(UiScreen& screen) {
         fui::makeRect(featured.x + COVER_CELL_INSET, featured.y + (featured.height - height) / 2, width, height);
     coverAreas[0] = hero;
     GUI.drawCoverPlaceholder(renderer, Rect{hero.x, hero.y, hero.width, hero.height});
+    const int copyX = hero.right() + theme.spaceLg + theme.spaceSm;
+    const int titleH = std::min(32, int(hero.height) / 2), authorH = std::min(24, int(hero.height) / 3);
+    const int copyY = hero.y + (hero.height - titleH - authorH - 6) / 2;
+    homeui::loading::metadata(screen.target(), fui::makeRect(copyX, copyY, featured.right() - copyX - 6, titleH),
+                              fui::makeRect(copyX, copyY + titleH + 6, featured.right() - copyX - 6, authorH));
     const auto rest = screen.body();
     const int rowHeight = height + 2 * COVER_CELL_INSET;
     const int step = std::max(0, (rest.width - 2 * COVER_CELL_INSET - width) / (GRID_COLUMNS - 1));
@@ -261,6 +266,7 @@ void CoverGridHomeUi::draw(UiScreen& screen) {
     drawHeaderBand();
     return;
   }
+  coverCache.prepare();
   if (books->empty()) {
     drawTabs(screen, tabRect.inset(fui::Insets{0, COVER_CELL_INSET, 0, COVER_CELL_INSET}));
     drawEmpty(screen);
@@ -340,12 +346,18 @@ void CoverGridHomeUi::drawLicorice(UiScreen& screen) {
       const auto art = fui::makeRect(x + (cellWidth - artHeight * 2 / 3) / 2, y, artHeight * 2 / 3, artHeight);
       GUI.drawCoverPlaceholder(renderer, Rect{art.x, art.y, art.width, art.height});
       softCoverOutline(target, art);
+      homeui::loading::bar(target, fui::makeRect(x, art.bottom() + 4, cellWidth, 26), 74, fui::TextAlign::Center);
     }
     target.fill(fui::makeRect(0, footer.y, screen.device().width, 4), fui::Paint::dither(fui::Color::DarkGray));
     const int height = footer.height + 8;
     const auto art = fui::makeRect(footer.x + 2, footer.y - 18, height * 2 / 3, height);
     GUI.drawCoverPlaceholder(renderer, Rect{art.x, art.y, art.width, art.height});
     softCoverOutline(target, art);
+    const int copyX = art.right() + 14, copyY = footer.y + (footer.height - 100) / 2;
+    homeui::loading::metadata(target, fui::makeRect(copyX, copyY, footer.right() - copyX, 30),
+                              fui::makeRect(copyX, copyY + 34, footer.right() - copyX, 24));
+    target.fill(fui::makeRect(copyX, footer.bottom() - 16, footer.right() - copyX, 3),
+                fui::Paint::dither(fui::Color::LightGray));
     return;
   }
   noteThumbHeight(artHeight);

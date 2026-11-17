@@ -34,19 +34,33 @@ namespace {
 // reachability rules are freestanding and host-testable. This is the seam where
 // the mirror is checked: a value that moves upstream fails the build here
 // rather than silently teaching the picker to say the wrong sentence.
-static_assert(wallpapers::kSleepDark == CrossPointSettings::SLEEP_SCREEN_MODE::DARK, "sleep mode mirror drifted");
-static_assert(wallpapers::kSleepLight == CrossPointSettings::SLEEP_SCREEN_MODE::LIGHT, "sleep mode mirror drifted");
-static_assert(wallpapers::kSleepCustom == CrossPointSettings::SLEEP_SCREEN_MODE::CUSTOM, "sleep mode mirror drifted");
-static_assert(wallpapers::kSleepCover == CrossPointSettings::SLEEP_SCREEN_MODE::COVER, "sleep mode mirror drifted");
-static_assert(wallpapers::kSleepCoverCustom == CrossPointSettings::SLEEP_SCREEN_MODE::COVER_CUSTOM,
+static_assert(static_cast<int>(wallpapers::kSleepDark) == static_cast<int>(CrossPointSettings::SLEEP_SCREEN_MODE::DARK),
               "sleep mode mirror drifted");
-static_assert(wallpapers::kSleepBlank == CrossPointSettings::SLEEP_SCREEN_MODE::BLANK, "sleep mode mirror drifted");
-static_assert(wallpapers::kSleepQuickResume == CrossPointSettings::SLEEP_SCREEN_MODE::QUICK_RESUME,
+static_assert(static_cast<int>(wallpapers::kSleepLight) ==
+                  static_cast<int>(CrossPointSettings::SLEEP_SCREEN_MODE::LIGHT),
               "sleep mode mirror drifted");
-static_assert(wallpapers::kSleepTransparentCustom == CrossPointSettings::SLEEP_SCREEN_MODE::TRANSPARENT_CUSTOM,
+static_assert(static_cast<int>(wallpapers::kSleepCustom) ==
+                  static_cast<int>(CrossPointSettings::SLEEP_SCREEN_MODE::CUSTOM),
               "sleep mode mirror drifted");
-static_assert(wallpapers::kSleepNote == CrossPointSettings::SLEEP_SCREEN_MODE::NOTE, "sleep mode mirror drifted");
-static_assert(wallpapers::kSleepModeCount == CrossPointSettings::SLEEP_SCREEN_MODE::SLEEP_SCREEN_MODE_COUNT,
+static_assert(static_cast<int>(wallpapers::kSleepCover) ==
+                  static_cast<int>(CrossPointSettings::SLEEP_SCREEN_MODE::COVER),
+              "sleep mode mirror drifted");
+static_assert(static_cast<int>(wallpapers::kSleepCoverCustom) ==
+                  static_cast<int>(CrossPointSettings::SLEEP_SCREEN_MODE::COVER_CUSTOM),
+              "sleep mode mirror drifted");
+static_assert(static_cast<int>(wallpapers::kSleepBlank) ==
+                  static_cast<int>(CrossPointSettings::SLEEP_SCREEN_MODE::BLANK),
+              "sleep mode mirror drifted");
+static_assert(static_cast<int>(wallpapers::kSleepQuickResume) ==
+                  static_cast<int>(CrossPointSettings::SLEEP_SCREEN_MODE::QUICK_RESUME),
+              "sleep mode mirror drifted");
+static_assert(static_cast<int>(wallpapers::kSleepTransparentCustom) ==
+                  static_cast<int>(CrossPointSettings::SLEEP_SCREEN_MODE::TRANSPARENT_CUSTOM),
+              "sleep mode mirror drifted");
+static_assert(static_cast<int>(wallpapers::kSleepNote) == static_cast<int>(CrossPointSettings::SLEEP_SCREEN_MODE::NOTE),
+              "sleep mode mirror drifted");
+static_assert(static_cast<int>(wallpapers::kSleepModeCount) ==
+                  static_cast<int>(CrossPointSettings::SLEEP_SCREEN_MODE::SLEEP_SCREEN_MODE_COUNT),
               "a sleep screen mode was added upstream; WallpapersCore's mirror and its rules must be updated");
 
 constexpr int kMaxLibrary = 256;

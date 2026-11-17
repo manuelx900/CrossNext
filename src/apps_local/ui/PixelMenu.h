@@ -43,6 +43,8 @@ struct Header {
   uint16_t actionInputMask = fui::InputTouch;
   bool compactPercent = false;
   LabelCase titleCase = LabelCase::Sentence;
+  bool regularTitle = false;
+  bool homeBattery = false;
 };
 void header(toybox::Screen& screen, Header model);
 void header(fui::DrawTarget& target, const fui::DeviceContext& device, const Header& model);
@@ -141,7 +143,7 @@ void list(Screen& screen, fui::ListProps& props, bool fillFrame = false, bool fr
     const int prefix = heading ? headingHeight + props.rowGap : 0;
     const int rowHeight =
         item.isHeader ? headingHeight
-                      : fui::measureListRow(screen.target(), screen.frame().assets(), rows.width, props, item).height;
+                      : fui::cachedListRow(screen.target(), screen.frame().assets(), rows.width, props, item).height;
     const int next = sectionGap + prefix + rowHeight;
     if (height + next > band.height) {
       if (!frameSections || !trailingPreview || band.height - height - sectionGap < props.partialTrailingMinHeight)

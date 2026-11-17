@@ -2047,8 +2047,8 @@ void build(toybox::Screen& s, const Model& m, Work& w) {
   navigation(s, m, w);
   if ((m.assets && !m.assets->ready()) || (m.storyAssets && !m.storyAssets->ready()) ||
       (m.rewardAssets && !m.rewardAssets->ready()) || (m.enemyAssets && !m.enemyAssets->ready()) ||
-      (m.outfitAssets && !m.outfitAssets->ready())) {
-    requiredresources::build(s, "/apps/reading-adventure/", Back, w.button);
+      (m.outfitAssets && !m.outfitAssets->ready()) || (m.celebrationAssets && !m.celebrationAssets->ready())) {
+    requiredresources::build(s, "/apps/reading-adventure-v2/", Back, w.button);
     return;
   }
   if (m.loading) {

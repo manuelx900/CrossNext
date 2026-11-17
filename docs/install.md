@@ -5,7 +5,7 @@ Other inherited board environments are outside this release's verification.
 
 | Model | Package | Application image | Factory image |
 | --- | --- | --- | --- |
-| X4 Pro | `CrossNext-X4PRO-Firmware-v2.0.1.zip` | `CrossNext-X4PRO-Firmware-v2.0.1.bin` | `CrossNext-X4PRO-Firmware-v2.0.1-factory.bin` |
+| X4 Pro | `CrossNext-X4PRO-Firmware-v2.0.2.zip` | `CrossNext-X4PRO-Firmware-v2.0.2.bin` | `CrossNext-X4PRO-Firmware-v2.0.2-factory.bin` |
 
 Packages are generated in `dist/`; raw images are in `dist/CrossNext/`.
 Check the package's `SHA256SUMS.txt` before installation. Back up the microSD.
@@ -32,7 +32,7 @@ table and application. For example, with esptool installed and the device in
 download mode, use the matching model's command:
 
 ```sh
-esptool.py --chip esp32s3 --baud 921600 write_flash 0x0 CrossNext-X4PRO-Firmware-v2.0.1-factory.bin
+esptool.py --chip esp32s3 --baud 921600 write_flash 0x0 CrossNext-X4PRO-Firmware-v2.0.2-factory.bin
 ```
 
 An application-only image belongs at `0x10000` when deliberately writing an
@@ -51,7 +51,7 @@ wait for the release check. The firmware queries only
 It compares the latest stable tag with the installed version and asks before
 installing. It does not query the CrossPlay proxy or CrossPoint releases.
 
-For each public GitHub Release, use a semantic tag such as `2.0.1` and attach
+For each public GitHub Release, use a semantic tag such as `2.0.2` and attach
 `CrossNext-X4PRO-OTA.bin` directly to the release. The packaging tool creates this
 stable application-only alias alongside the versioned application and factory
 images. Its bytes match the versioned application. The updater deliberately
@@ -66,26 +66,27 @@ OTA asset exist, there is no online firmware to install. A GitHub/API connection
 failure is reported on the device; it never falls back to upstream firmware.
 
 Maintainers: publish the firmware ZIP, `CrossNext-X4PRO-OTA.bin` and checksums as
-Release attachments. Version 2.0.1 reuses the resource pack and Book Preparer from
-[release 2.0.0](https://github.com/manuelx900/CrossNext/releases/tag/2.0.0).
+Release attachments. Distribute the matching resource pack and Book Preparer from
+[release 2.0.2](https://github.com/manuelx900/CrossNext/releases/tag/2.0.2).
 Source commits remain separate. To test this patch's OTA check, keep the reader on
-`2.0.0` and use the newer `2.0.1` build/tag; the same or an older version must not
+`2.0.0` and use the newer `2.0.2` build/tag; the same or an older version must not
 be offered as an update.
 
 ## Required app contents
 
-**Updating from 2.0.0 to 2.0.1:** keep the installed Resources; no replacement is required.
-Book Preparer 2.0.0 and its existing prepared books remain compatible.
+**Updating to 2.0.2, including from an earlier preview:** install the complete 2.0.2 resource pack.
+PET and Reading Adventure require the new versioned artwork folders. Use Book Preparer 2.0.2
+for new preparation; existing compatible book caches can still be reused.
 
 For a new installation or an update from an older release, install the resource
-pack from [release 2.0.0](https://github.com/manuelx900/CrossNext/releases/tag/2.0.0).
+pack from [release 2.0.2](https://github.com/manuelx900/CrossNext/releases/tag/2.0.2).
 Back up
-custom fonts, dictionaries and images first. Replace the old bundled `apps`,
-`fonts`, `languages`, `images` and `dictionaries` folders with the new package at
+custom fonts and dictionaries first. Leave your `images` folder intact. Replace the old bundled `apps`,
+`fonts`, `languages` and `dictionaries` folders with the new package at
 the microSD root; do not merge old and new packs. Keep books, `/.crosspoint/`
 data and the bundled licences. Restore custom resources separately if needed,
 without restoring old bundled packs. The package includes the
-reader fonts/dictionaries and `/apps/reading-adventure/`, `/apps/pet/`, `/apps/intercept/`.
+reader fonts/dictionaries and `/apps/reading-adventure-v2/`, `/apps/pet-v2/`, `/apps/intercept/`.
 PET needs all six of its content packs; The Intercept needs `graphics.bin`.
 Missing or incompatible contents show an installation notice instead of the app.
 

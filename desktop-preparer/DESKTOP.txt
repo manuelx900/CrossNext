@@ -1,10 +1,10 @@
-CrossNext Book Preparer 2.0.0
+CrossNext Book Preparer 2.0.2
 
-This coordinated 2.0.0 release retains the desktop UI from the previous development builds and rebuilds the real preparation engine against the matching firmware source. Application version numbers and cache-format versions are independent. engine-build.json records firmware version, preparation ABI and source SHA256 hashes.
+This coordinated 2.0.2 release retains the desktop UI from the previous development builds and rebuilds the real preparation engine against the matching firmware source. Application version numbers and cache-format versions are independent. engine-build.json records firmware version, preparation ABI and source SHA256 hashes.
 
 Run preparation again after installing this release to update outdated caches. Valid matching combinations are reused. Books, settings and reading progress are preserved. Font sizes come from the current firmware's actual supported font catalog.
 
-Windows: open CrossNext-Book-Preparer-Windows-v2.0.0.exe.
+Windows: open CrossNext-Book-Preparer-Windows-v2.0.2.exe.
 macOS: open the arm64 (Apple Silicon) or x64 (Intel) DMG, then drag the app to Applications. Close an older copy with Command-Q first. Disk images are built on macOS, mounted read-only and verified against the matching WASM engine. They are not notarized with an Apple Developer certificate; ordinary platform security prompts may apply.
 
 CI builds a shared 32-bit WASM engine from this firmware revision, then packages it on macOS. This is independent of the computer CPU architecture and preserves the device cache ABI. Workflow artifacts are build outputs, not published Releases.

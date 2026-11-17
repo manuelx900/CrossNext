@@ -16,7 +16,7 @@ inline constexpr unsigned POSES = 12, FRAMES = 3, HEAD_OFFSET = POSES * FRAMES *
 enum class Pose : uint8_t { Normal, Happy, Hungry, Tired, Sick };
 inline constexpr unsigned BODY_POSES = 5, EGG_OFFSET = BODY_OFFSET + POSES * BODY_POSES * FRAMES * 2;
 inline constexpr unsigned ART_COUNT = EGG_OFFSET + 3 * FRAMES * 2;
-inline constexpr char ART_PATH[] = "/apps/pet/breathing.bin";
+inline constexpr char ART_PATH[] = "/apps/pet-v2/breathing.bin";
 
 inline bool enabled(const pet::Profile& p, pet::View view) {
   return (view == pet::View::Home || view == pet::View::Dashboard || view == pet::View::Reward) && p.created &&

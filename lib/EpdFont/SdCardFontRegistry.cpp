@@ -9,6 +9,7 @@
 #include <strings.h>  // strcasecmp
 
 #include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
@@ -291,7 +292,7 @@ void SdCardFontRegistry::refineVectorStyles(const char* dirPath, std::vector<SdC
 
 #endif  // CROSSPOINT_VECTOR_FONTS
 
-void SdCardFontRegistry::scanDirectory(const char* dirPath, SdCardFontFamilyInfo& family) {
+void SdCardFontRegistry::scanDirectory(const char* dirPath, SdCardFontFamilyInfo& family, bool inspectVector) {
   HalFile dir = Storage.open(dirPath);
   if (!dir || !dir.isDirectory()) return;
 
@@ -301,11 +302,12 @@ void SdCardFontRegistry::scanDirectory(const char* dirPath, SdCardFontFamilyInfo
   // bitmap family is the more specific artifact.
   std::vector<SdCardFontFileInfo> cpfontFiles;
   std::vector<SdCardFontFileInfo> vectorFiles;
+  bool vectorFound = false;
 
   char nameBuffer[128];
-  while (true) {
-    HalFile entry = dir.openNextFile();
-    if (!entry) break;
+  HalFile entry;
+  bool ioError = false;
+  while (dir.openNextFile(entry, ioError)) {
     if (entry.isDirectory()) {
       entry.close();
       continue;
@@ -350,6 +352,9 @@ void SdCardFontRegistry::scanDirectory(const char* dirPath, SdCardFontFamilyInfo
 #if CROSSPOINT_VECTOR_FONTS
     size_t baseLen = 0;
     if (parseVectorFontName(nameBuffer, baseLen)) {
+      if (std::strlen(dirPath) + 1 + std::strlen(nameBuffer) >= SdCardFontFamilyInfo::PATH_BUFFER_SIZE) continue;
+      vectorFound = true;
+      if (!inspectVector) continue;
       // Vector file in a family folder: seed the style role from the filename
       // (e.g. Merriweather/Merriweather-Italic.ttf → italic); refineVectorStyles
       // upgrades it from the face's own metadata and dedups by role afterwards.
@@ -367,15 +372,23 @@ void SdCardFontRegistry::scanDirectory(const char* dirPath, SdCardFontFamilyInfo
 #endif
   }
 
+  if (ioError) {
+    LOG_ERR("SDREG", "Font directory enumeration failed: %s", dirPath);
+    return;
+  }
   if (!cpfontFiles.empty()) {
     family.vector = false;
+    family.stylesRefined = true;
     family.files = std::move(cpfontFiles);
   }
 #if CROSSPOINT_VECTOR_FONTS
-  else if (!vectorFiles.empty()) {
-    refineVectorStyles(dirPath, vectorFiles);
+  else if (vectorFound) {
     family.vector = true;
-    family.files = std::move(vectorFiles);
+    family.stylesRefined = inspectVector;
+    if (inspectVector) {
+      refineVectorStyles(dirPath, vectorFiles);
+      family.files = std::move(vectorFiles);
+    }
   }
 #endif
 }
@@ -395,9 +408,9 @@ void SdCardFontRegistry::scanRoot(const char* rootPath, std::vector<SdCardFontFa
   }
 
   char nameBuffer[128];
-  while (true) {
-    HalFile entry = root.openNextFile();
-    if (!entry) break;
+  HalFile entry;
+  bool ioError = false;
+  while (root.openNextFile(entry, ioError)) {
     if (entry.isDirectory()) {
       entry.getName(nameBuffer, sizeof(nameBuffer));
       entry.close();
@@ -421,7 +434,7 @@ void SdCardFontRegistry::scanRoot(const char* rootPath, std::vector<SdCardFontFa
       std::string subDirPath = std::string(rootPath) + "/" + nameBuffer;
       SdCardFontRegistry::scanDirectory(subDirPath.c_str(), family);
 
-      if (!family.files.empty()) {
+      if (!family.files.empty() || family.vector) {
         out.push_back(std::move(family));
         LOG_DBG("SDREG", "Found family: %s (%d files) in %s", out.back().name.c_str(),
                 static_cast<int>(out.back().files.size()), rootPath);
@@ -510,9 +523,27 @@ const char* SdCardFontRegistry::defaultWriteRoot() {
   return FONTS_DIR_HIDDEN;
 }
 
+void SdCardFontRegistry::refineFamily(SdCardFontFamilyInfo& family) {
+#if CROSSPOINT_VECTOR_FONTS
+  if (!family.stylesRefined) {
+    char path[SdCardFontFamilyInfo::PATH_BUFFER_SIZE];
+    std::snprintf(path, sizeof(path), "%s/%s", family.root, family.name.c_str());
+    scanDirectory(path, family, true);
+  }
+#endif
+}
+
+const std::vector<SdCardFontFamilyInfo>& SdCardFontRegistry::getFamilies() const {
+  for (auto& family : families_) refineFamily(family);
+  return families_;
+}
+
 const SdCardFontFamilyInfo* SdCardFontRegistry::findFamily(const std::string& name) const {
-  for (const auto& f : families_) {
-    if (f.name == name) return &f;
+  for (auto& f : families_) {
+    if (f.name == name) {
+      refineFamily(f);
+      return &f;
+    }
   }
   return nullptr;
 }

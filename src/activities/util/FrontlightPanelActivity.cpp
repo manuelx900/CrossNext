@@ -21,6 +21,7 @@
 #include "../reader/ReaderUtils.h"
 #include "CrossPointSettings.h"
 #include "MappedInputManager.h"
+#include "activities/settings/BleSettingsActivity.h"
 #include "apps_local/power/PowerMenuActivity.h"
 #include "apps_local/ui/PixelMenuTheme.h"
 #include "apps_local/ui/QuickSettingsDirtyRegion.h"
@@ -63,6 +64,7 @@ void FrontlightPanelActivity::onEnter() {
   lightOnChanged = false;
   backdropPainted = false;
   lastClockPoll = millis();
+  bluetoothState = bluetoothui::current(SETTINGS.ble);
 
   resetUi();
   app.on(ACTION_BRIGHTNESS, &FrontlightPanelActivity::onBrightnessEvent, this);
@@ -70,6 +72,20 @@ void FrontlightPanelActivity::onEnter() {
   app.on(ACTION_BRIGHTNESS_STEP, &FrontlightPanelActivity::onBrightnessStepEvent, this);
   app.on(ACTION_WARMTH_STEP, &FrontlightPanelActivity::onWarmthStepEvent, this);
   app.on(ACTION_TILE, &FrontlightPanelActivity::onTileEvent, this);
+  app.on(
+      quickui::BluetoothSettings,
+      [](const fui::ActionEvent&, void* user) {
+        auto* self = static_cast<FrontlightPanelActivity*>(user);
+        self->app.clearTapFlash();
+        self->persistLightSettings();
+        auto next = makeUniqueNoThrow<BleSettingsActivity>(self->renderer, self->mappedInput);
+        if (!next) {
+          LOG_ERR("QUICK", "OOM: Bluetooth settings");
+          return;
+        }
+        self->startActivityForResult(std::move(next), [self](const ActivityResult&) { self->close(); });
+      },
+      this);
   app.setScreen(&FrontlightPanelActivity::panelScreen, this);
   requestUpdate();
 }
@@ -195,9 +211,21 @@ void FrontlightPanelActivity::runTile(const int idx) {
       break;
     case quickui::Shortcut::Bluetooth:
       SETTINGS.ble.enabled = SETTINGS.ble.enabled ? 0 : 1;
-      if (!SETTINGS.ble.enabled) bleturner::switchOff();
+      if (!SETTINGS.ble.enabled)
+        bleturner::switchOff();
+      else
+        bleturner::requestConnect();
       SETTINGS.saveToFile();
-      close();
+      if (!SETTINGS.ble.enabled) {
+        // The parent restores its page when the expanded sheet closes.
+        close();
+        return;
+      }
+      {
+        RenderLock lock;
+        syncBluetoothState(bluetoothui::current(SETTINGS.ble));
+      }
+      requestUpdate();
       return;
     case quickui::Shortcut::Wifi:
       persistLightSettings();
@@ -300,12 +328,25 @@ void FrontlightPanelActivity::toggleWarmth() {
 }
 void FrontlightPanelActivity::close() { finish(); }
 
+void FrontlightPanelActivity::syncBluetoothState(const bluetoothui::State state) {
+  if (quickui::hasBluetoothStatus(bluetoothState) != quickui::hasBluetoothStatus(state)) resetUi();
+  bluetoothState = state;
+}
+
 bool FrontlightPanelActivity::handleHomeGesture() {
   close();
   return true;
 }
 
 void FrontlightPanelActivity::loop() {
+  const auto bluetooth = bluetoothui::current(SETTINGS.ble);
+  {
+    RenderLock lock(RenderLock::Mode::Try);
+    if (lock.ownsLock() && bluetoothState != bluetooth) {
+      syncBluetoothState(bluetooth);
+      requestUpdate();
+    }
+  }
   if (brightness != std::max(MIN_BRIGHTNESS, Frontlight.brightness()) || warmth != Frontlight.warmth() ||
       lightOn != Frontlight.isOn()) {
     RenderLock lock;
@@ -412,7 +453,7 @@ void FrontlightPanelActivity::preparePanelModel() {
     shownMinute = -1;
   }
   std::copy(std::begin(SETTINGS.quickActions), std::end(SETTINGS.quickActions), model.shortcuts);
-  model.bluetoothOn = SETTINGS.ble.enabled != 0;
+  model.bluetooth = bluetoothState;
   model.wifiConnected = WiFi.status() == WL_CONNECTED;
   model.brightness = lightOn ? brightness : 0;
   model.warmth = lightOn ? warmth : 0;
@@ -431,13 +472,15 @@ void FrontlightPanelActivity::preparePanelModel() {
 void FrontlightPanelActivity::buildPanelScreen(UiScreen& screen) {
   chrome::headerHeight = 0;
   pixelui::FontScope fonts(uiTarget, renderer, I18N.getLanguage() != Language::EN);
+  uiTarget.setFont(fui::HEADER_CLOCK_FONT, UI_10_FONT_ID);
   quickui::build(screen, panelModel, panelWork);
 }
 
 void FrontlightPanelActivity::render(RenderLock&&) {
   preparePanelModel();
   const auto device = uiTarget.deviceContext();
-  const auto layout = quickui::layout(device, panelModel.light, panelModel.temperature, panelModel.touch);
+  const auto layout = quickui::layout(device, panelModel.light, panelModel.temperature, panelModel.touch,
+                                      quickui::hasBluetoothStatus(panelModel.bluetooth));
   const bool full = !backdropPainted || cleanRefreshPending || paintedWidth != device.width ||
                     paintedHeight != device.height || paintedOrientation != uint8_t(renderer.getOrientation()) ||
                     paintedLightHeader != chrome::lightHeader || panelBottom != layout.bottom;

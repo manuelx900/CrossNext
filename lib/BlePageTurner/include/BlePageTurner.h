@@ -165,15 +165,15 @@ bool beforeSleep(uint32_t timeoutMs);
 // first, at most 3 s, so the stack and the page never take the heap at once. A start still waiting
 // for the render lock gives up its turn instead. Any task but the start's.
 void settleStart();
-// A chapter build ran out of heap. Released: the radio stopped until afterPaint(), build
-// again. StillUp: it was asked to stop and did not within 3 s. NotHeld: the radio is not
-// the module's to give (off, idle, or a start still settling).
+// Memory-constrained profiles release the radio until afterPaint(). PSRAM-backed
+// S3 builds keep it. StillUp: a requested stop did not finish within 3 s.
+// NotHeld: no release was needed, or a start is still settling.
 enum class BuildRelease : uint8_t { NotHeld, Released, StillUp };
 BuildRelease beforeChapterBuild();
 // Call once, when the page of a build that got Released or StillUp is on screen: the radio
 // stopped for it may start again.
 void afterPaint();
-// The radio holds the heap or is asking for it: the book defers its background work.
+// The radio owns memory or is asking for it; reader policy decides which work can coexist.
 bool holdsHeap();
 
 struct Status {
@@ -190,6 +190,8 @@ struct Status {
 Status status();
 // Why the radio may not be on at the last tick (Ok: it may), from radioVerdict.
 Why why();
+// Policy refusal from the most recent start; Ok means no policy refusal was recorded.
+Why lastStartRefusal();
 
 // What the book's status bar says about the remote in place of its title. Connecting from the
 // moment a book is entered until a remote links; Failed when the radio was refused for this

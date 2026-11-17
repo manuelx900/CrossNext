@@ -437,6 +437,16 @@ void FocusActivity::loop() {
       back();
       return;
     }
+    if (ready && view == focusui::View::Timer) {
+      if (command.kind == sectionnav::Input::Kind::Step) {
+        if (std::abs(int(command.amount)) & 1) action(focusui::Toggle, 0);
+        return;
+      }
+      if (command.kind == sectionnav::Input::Kind::Confirm && !interactions.hasButtonFocus()) {
+        action(focusui::Toggle, 0);
+        return;
+      }
+    }
     if (ready &&
         (view == focusui::View::Today || view == focusui::View::AllTasks || view == focusui::View::Projects ||
          view == focusui::View::Tasks) &&

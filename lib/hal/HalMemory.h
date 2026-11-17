@@ -19,6 +19,8 @@ class HalMemory {
   using PsramBuffer = std::unique_ptr<uint8_t[], PsramDeleter>;
   // Never falls back to internal RAM. Null on allocation failure or absent PSRAM.
   static PsramBuffer allocatePsram(size_t bytes);
+  // C allocators may resize a PSRAM block. Failure preserves the original block.
+  static void* reallocatePsram(void* buffer, size_t bytes);
 
   // Default-capability memory includes PSRAM when registered with the allocator.
   static HeapStats getDefaultHeap();

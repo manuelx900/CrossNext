@@ -29,6 +29,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <string_view>
@@ -48,6 +49,8 @@
 #include "WebDAVHandler.h"
 #include "WifiCredentialStore.h"
 #include "WifiPowerSaveGuard.h"
+#include "apps_local/network/RadioFailureReport.h"
+#include "apps_local/plugins/PluginCompatibility.h"
 #include "apps_local/ui/WebUiScript.h"
 #include "apps_local/wallpapers/WallpapersCore.h"
 #include "html/FilesPageHtml.generated.h"
@@ -79,6 +82,14 @@ namespace {
 class CrossPointHttpServer final : public WebServer {
  public:
   explicit CrossPointHttpServer(uint16_t port) : WebServer(port) {}
+
+  bool listening() {
+#ifdef SIMULATOR
+    return isListening();
+#else
+    return static_cast<bool>(_server);
+#endif
+  }
 
   void releaseRequestArguments() {
     if (_currentArgs) {
@@ -195,7 +206,12 @@ void CrossPointWebServer::begin() {
   LOG_DBG("WEB", "Network mode: %s", apMode ? "AP" : "STA");
 
   LOG_DBG("WEB", "Creating web server on port %d...", port);
-  server.reset(new CrossPointHttpServer(port));
+  server = makeUniqueNoThrow<CrossPointHttpServer>(port);
+  if (!server) {
+    LOG_ERR("WEB", "No memory for HTTP server");
+    radiofailure::write("http-allocation", ENOMEM);
+    return;
+  }
 
   // Disable WiFi sleep to improve responsiveness and prevent 'unreachable' errors.
   // This is critical for reliable web server operation on ESP32.
@@ -380,13 +396,30 @@ void CrossPointWebServer::begin() {
   }
 
   server->begin();
+  if (!static_cast<CrossPointHttpServer*>(server.get())->listening()) {
+    const int socketError = errno;
+    server->stop();
+    server.reset();
+    const auto heap = HalMemory::getInternalHeap();
+    LOG_ERR("WEB", "HTTP listen failed: port=%u errno=%d internal=%u largest=%u", port, socketError,
+            static_cast<unsigned>(heap.freeBytes), static_cast<unsigned>(heap.largestBlockBytes));
+    radiofailure::write("http-listen", socketError, port);
+    return;
+  }
 
   if (isFull()) {
     // Fast binary uploads for the file manager. Dev mode uploads over plain
     // HTTP instead, which is one fewer listening port for the surface that
     // stays up the longest.
     LOG_DBG("WEB", "Starting WebSocket server on port %d...", wsPort);
-    wsServer.reset(new WebSocketsServer(wsPort));
+    wsServer = makeUniqueNoThrow<WebSocketsServer>(wsPort);
+    if (!wsServer) {
+      LOG_ERR("WEB", "No memory for WebSocket server");
+      server->stop();
+      server.reset();
+      radiofailure::write("websocket-allocation", ENOMEM);
+      return;
+    }
     wsInstance = const_cast<CrossPointWebServer*>(this);
     wsServer->begin();
     wsServer->onEvent(wsEventCallback);
@@ -641,6 +674,8 @@ void CrossPointWebServer::handleStatus() const {
   doc["firmwareFamily"] = firmwareidentity::FAMILY;
   doc["pluginApi"] = firmwareidentity::PLUGIN_API_VERSION;
   doc["pluginCapabilities"] = firmwareidentity::PLUGIN_CAPABILITIES;
+  auto unsupportedPlugins = doc["unsupportedPlugins"].to<JsonArray>();
+  for (const auto name : plugincompat::BLOCKED) unsupportedPlugins.add(name.data());
   doc["pluginsEnabled"] = bool(SETTINGS.pluginsEnabled);
   auto ui = doc["pluginUi"].to<JsonObject>();
   ui["title"] = tr(STR_PLUGINS);
@@ -2279,6 +2314,14 @@ void CrossPointWebServer::handleFetch() {
   if (!readJsonBody(req)) return;
   const std::string url = req["url"] | "";
   const std::string dest = req["dest"] | "";
+  if (plugincompat::blockedDestination(dest)) {
+    req.clear();
+    req["error"] = tr(STR_PLUGIN_UNSUPPORTED);
+    String error;
+    serializeJson(req, error);
+    server->send(422, "application/json", error);
+    return;
+  }
   const size_t requestedOffset = req["offset"] | 0;
   size_t segmentLimit = req["maxBytes"] | 0;
   static constexpr size_t FETCH_MAX_SEGMENT_SIZE = 4 * 1024 * 1024;
@@ -3270,6 +3313,8 @@ void CrossPointWebServer::handleDevPair() {
   doc["firmwareFamily"] = firmwareidentity::FAMILY;
   doc["pluginApi"] = firmwareidentity::PLUGIN_API_VERSION;
   doc["pluginCapabilities"] = firmwareidentity::PLUGIN_CAPABILITIES;
+  auto unsupportedPlugins = doc["unsupportedPlugins"].to<JsonArray>();
+  for (const auto name : plugincompat::BLOCKED) unsupportedPlugins.add(name.data());
   doc["pluginsEnabled"] = bool(SETTINGS.pluginsEnabled);
   String out;
   serializeJson(doc, out);
@@ -3329,6 +3374,8 @@ void CrossPointWebServer::handleDevCrash() {
   doc["firmwareFamily"] = firmwareidentity::FAMILY;
   doc["pluginApi"] = firmwareidentity::PLUGIN_API_VERSION;
   doc["pluginCapabilities"] = firmwareidentity::PLUGIN_CAPABILITIES;
+  auto unsupportedPlugins = doc["unsupportedPlugins"].to<JsonArray>();
+  for (const auto name : plugincompat::BLOCKED) unsupportedPlugins.add(name.data());
   doc["pluginsEnabled"] = bool(SETTINGS.pluginsEnabled);
 
   String out;

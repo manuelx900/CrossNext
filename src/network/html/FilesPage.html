@@ -1650,6 +1650,7 @@
   <div class="action-buttons">
     <button class="action-btn upload-action-btn" onclick="openUploadModal()" data-ui>📤 Upload</button>
     <button class="action-btn folder-action-btn" onclick="openFolderModal()" data-ui>📁 New Folder</button>
+    <button class="action-btn selection-btn" id="selectFilesButton" onclick="toggleFileSelection()" aria-pressed="false" data-ui>Select files</button>
     <button class="action-btn delete-action-btn" onclick="openDeleteSelectedModal()" data-ui>🗑️ Delete Selected</button>
   </div>
 </div>
@@ -1664,7 +1665,7 @@
   <button class="retry-all-btn" onclick="retryAllFailedUploads()" data-ui>Retry All Failed Uploads</button>
 </div>
 
-<div class="card">
+<div class="card files-card">
   <div class="contents-header">
     <div class="breadcrumb-inline" id="directory-breadcrumbs"></div>
     <span class="summary-inline" id="folder-summary"></span>
@@ -1679,7 +1680,7 @@
 
 <div id="plugin-container"></div>
 
-<div class="card">
+<div class="card web-footer">
   <p style="text-align: center; color: #95a5a6; margin: 0;">
     CrossNext • a fork of CrossPlay and CrossPoint • Open Source
   </p>
@@ -2118,9 +2119,9 @@
     };
 
     if (segments.length === 0) {
-      appendCurrent('🏠 Home');
+      appendCurrent(uiText('Library'));
     } else {
-      appendLink('🏠 Home', '/files');
+      appendLink(uiText('Library'), '/files');
       segments.forEach(function(segment, index) {
         appendSep();
         if (index === segments.length - 1) {
@@ -2141,7 +2142,7 @@
       files = await response.json();
     } catch (e) {
       console.error(e);
-      fileTable.innerHTML = '<div class="no-files">An error occurred while loading the files</div>';
+      fileTable.innerHTML = '<div class="no-files">' + uiHtml("An error occurred while loading the files") + '</div>';
       return;
     }
 
@@ -2155,16 +2156,13 @@
     const fileCount = files.length - folderCount;
     const folderLabel = folderCount === 1 ? 'folder' : 'folders';
     const fileLabel = fileCount === 1 ? 'file' : 'files';
-    document.getElementById('folder-summary').innerHTML = `${folderCount} ${folderLabel}, ${fileCount} ${fileLabel}, ${formatFileSize(totalSize)}`;
+    const folderWord = uiText(folderLabel), fileWord = uiText(fileLabel);
+    document.getElementById('folder-summary').textContent = `${folderCount} ${folderWord}, ${fileCount} ${fileWord} · ${formatFileSize(totalSize)}`;
 
     if (files.length === 0) {
-      fileTable.innerHTML = '<div class="no-files">This folder is empty</div>';
+      fileTable.innerHTML = '<div class="no-files">' + uiHtml("This folder is empty") + '</div>';
     } else {
-      let fileTableContent = '<table class="file-table">';
-
-				// Add select-all checkbox column
-      fileTableContent += '<tr><th style="width:40px"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)"></th><th>Name</th><th>Type</th><th>Size</th><th class="actions-col">Actions</th></tr>';
-
+      let fileTableContent = '<label class="selection-all"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)">' + uiHtml("Select all") + '</label><div class="file-list" role="list">';
 
       const sortedFiles = files.sort((a, b) => {
         // Directories first, then epub files, then other files, alphabetically within each group
@@ -2176,47 +2174,20 @@
       });
 
       sortedFiles.forEach(file => {
-        if (file.isDirectory) {
-          let folderPath = currentPath;
-          if (!folderPath.endsWith("/")) folderPath += "/";
-          folderPath += file.name;
-
-         // Checkbox cell + folder row
-          fileTableContent += `<tr class="folder-row">`;
-          fileTableContent += `<td><input type="checkbox" class="select-item" data-path="${encodeURIComponent(folderPath)}" data-name="${escapeHtml(file.name)}" data-type="folder"></td>`;
-          fileTableContent += `<td><span class="file-icon">📁</span><a href="/files?path=${encodeURIComponent(folderPath)}" class="folder-link">${escapeHtml(file.name)}</a></td>`;
-          fileTableContent += '<td><span class="folder-badge">FOLDER</span></td>';
-          fileTableContent += '<td>-</td>';
-          fileTableContent += `<td class="actions-col"><div class="action-icon-group"><button class="delete-btn" data-action="delete" data-name="${escapeHtml(file.name)}" data-path="${escapeHtml(folderPath)}" data-folder="true" title="${uiHtml("Delete folder")}">🗑️</button></div></td>`;
-          fileTableContent += '</tr>';
-        } else {
-          let filePath = currentPath;
-          if (!filePath.endsWith("/")) filePath += "/";
-          filePath += file.name;
-
-          // Checkbox cell + file row
-          fileTableContent += `<tr class="${file.isEpub ? 'epub-file' : ''}">`;
-          fileTableContent += `<td><input type="checkbox" class="select-item" data-path="${encodeURIComponent(filePath)}" data-name="${escapeHtml(file.name)}" data-type="file"></td>`;
-          const fileIsImage = isImageFile(file.name);
-          fileTableContent += `<td><span class="file-icon">${file.isEpub ? '📗' : (fileIsImage ? '🖼️' : '📄')}</span>`;
-          if (fileIsImage) {
-            fileTableContent += `<a href="${downloadUrl(filePath)}" class="file-link image-preview-link">${escapeHtml(file.name)}</a>`;
-          } else {
-            fileTableContent += `<a rel="noopener noreferrer" target="_blank" href="${downloadUrl(filePath)}" class="file-link">${escapeHtml(file.name)}</a>`;
-          }
-          fileTableContent += '</td>';
-          fileTableContent += file.isEpub ? '<td><span class="epub-badge">EPUB</span></td>' : `<td>${escapeHtml(file.name.split('.').pop().toUpperCase())}</td>`;
-          fileTableContent += `<td>${formatFileSize(file.size)}</td>`;
-          fileTableContent += `<td class="actions-col"><div class="action-icon-group">`;
-          fileTableContent += `<button class="move-btn" data-action="move" data-name="${escapeHtml(file.name)}" data-path="${escapeHtml(filePath)}" title="${uiHtml("Move file")}">📂</button>`;
-          fileTableContent += `<button class="rename-btn" data-action="rename" data-name="${escapeHtml(file.name)}" data-path="${escapeHtml(filePath)}" title="${uiHtml("Rename file")}">✏️</button>`;
-          fileTableContent += `<button class="delete-btn" data-action="delete" data-name="${escapeHtml(file.name)}" data-path="${escapeHtml(filePath)}" data-folder="false" title="${uiHtml("Delete file")}">🗑️</button>`;
-          fileTableContent += `</div></td>`;
-          fileTableContent += '</tr>';
-        }
+        const path = currentPath.replace(/\/$/, '') + '/' + file.name;
+        const name = escapeHtml(file.name);
+        const folder = file.isDirectory;
+        const size = folder ? '' : formatFileSize(file.size);
+        const href = folder ? '/files?path=' + encodeURIComponent(path) : downloadUrl(path);
+        const image = !folder && isImageFile(file.name);
+        fileTableContent += `<div class="file-row ${folder ? 'folder-row' : ''}" role="listitem">`;
+        fileTableContent += `<input type="checkbox" class="select-item" data-path="${encodeURIComponent(path)}" data-name="${name}" data-type="${folder ? 'folder' : 'file'}" aria-label="${uiHtml("Select files")}: ${name}">`;
+        fileTableContent += `<a href="${href}" class="file-name ${image ? 'image-preview-link' : ''}" title="${name}">${fileManagerIcon(folder ? 'folder' : file.isEpub ? 'book' : 'file')}<span>${name}</span></a>`;
+        fileTableContent += `<span class="file-size">${size}</span>`;
+        fileTableContent += `<button class="file-more" type="button" data-action="more" data-name="${name}" data-path="${escapeHtml(path)}" data-folder="${folder}" data-size="${size}" aria-label="${uiHtml("File actions")}: ${name}">${fileManagerIcon('more')}</button></div>`;
       });
 
-      fileTableContent += '</table>';
+      fileTableContent += '</div>';
       fileTable.innerHTML = fileTableContent;
     }
   }
@@ -3119,7 +3090,9 @@
       if (!btn) return;
       const name = btn.dataset.name;
       const path = btn.dataset.path;
-      if (btn.dataset.action === 'move') {
+      if (btn.dataset.action === 'more') {
+        showFileActions(btn);
+      } else if (btn.dataset.action === 'move') {
         openMoveModal(name, path);
       } else if (btn.dataset.action === 'rename') {
         openRenameModal(name, path);
@@ -6327,5 +6300,7 @@ function retryAllFailedUploads() {
 <!--#include file="shared/PluginHost.js.inc" -->
   hydrate();
 </script>
+<!--#include file="shared/WebShell.html.inc" -->
+<!--#include file="shared/FileManager.html.inc" -->
 </body>
 </html>

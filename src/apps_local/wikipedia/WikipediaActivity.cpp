@@ -7,6 +7,7 @@
 #include <I18n.h>
 #include <Logging.h>
 #include <Memory.h>
+#include <SdCardFontSystem.h>
 
 #include <algorithm>
 #include <cstdio>
@@ -23,6 +24,8 @@
 #include "../Shelf.h"
 #include "../ui/ToyboxTheme.h"
 #include "components/SideButtonNavigation.h"
+
+extern SdCardFontSystem sdFontSystem;
 
 namespace fui = freeink::ui;
 
@@ -114,6 +117,7 @@ std::unique_ptr<Activity> WikipediaActivity::create(GfxRenderer& renderer, Mappe
 WikipediaActivity::~WikipediaActivity() = default;
 
 void WikipediaActivity::onEnter() {
+  sdFontSystem.ensureBundledFonts(renderer);
   Activity::onEnter();
   // The shelf registers the toybox faces on the way in, but the restart after
   // a storage handoff (and a wake) lands here directly: on the panel every

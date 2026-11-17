@@ -106,7 +106,7 @@ def append_egg_frames(tools, sprites, records, provenance):
                                     width=image.width, height=image.height, source_bounds=bounds[phase]))
 
 
-def build(output=ROOT / "resources/apps/pet/breathing.bin"):
+def build(output=ROOT / "resources/apps/pet-v2/breathing.bin"):
     tools = helpers()
     sprites, records, provenance, heads = [], [], [], []
     for species in SPECIES:
@@ -178,10 +178,12 @@ def build(output=ROOT / "resources/apps/pet/breathing.bin"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, default=ROOT / "resources/apps/pet/breathing.bin")
-    from gray_assets import available, build as build_gray
-    output = parser.parse_args().output
-    if available():
-        build_gray("breathing", output)
+    parser.add_argument("--output", type=Path, default=ROOT / "resources/apps/pet-v2/breathing.bin")
+    parser.add_argument("--legacy", action="store_true", help="Build old monochrome compatibility artwork")
+    from gray_assets import require_current, build as build_gray
+    args = parser.parse_args()
+    if args.legacy:
+        build(args.output)
     else:
-        build(output)
+        require_current()
+        build_gray("breathing", args.output)

@@ -50,6 +50,7 @@ class FrontlightPanelActivity final : public Activity, private UiAppHost {
   int paintedWidth = 0, paintedHeight = 0;
   uint8_t paintedOrientation = 0;
   bool paintedLightHeader = false;
+  bluetoothui::State bluetoothState = bluetoothui::State::Off;
   freeink::ui::HeaderProps status;
 
   static void panelScreen(UiScreen& screen, void* user);
@@ -67,6 +68,7 @@ class FrontlightPanelActivity final : public Activity, private UiAppHost {
   void toggleWarmth();
   void runTile(int idx);
   void syncLightState(bool useSavedWarmth = false);
+  void syncBluetoothState(bluetoothui::State state);
   // Copy the panel's live brightness/warmth/lightOn into SETTINGS and save if
   // anything actually changed. onExit() runs it on every way out.
   void persistLightSettings();
@@ -85,4 +87,5 @@ class FrontlightPanelActivity final : public Activity, private UiAppHost {
   void loop() override;
   void render(RenderLock&&) override;
   bool handleHomeGesture() override;
+  bool allowsRemoteControl() const override { return true; }
 };
