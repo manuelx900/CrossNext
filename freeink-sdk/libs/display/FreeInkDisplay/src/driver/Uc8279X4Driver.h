@@ -72,6 +72,8 @@ class Uc8279X4Driver : public PanelDriver {
   PanelGeometry geometry() const override;
 
   void setReaderRefresh(bool reading) override { _readerRefresh = reading; }
+  // A waveform phase holds at most 63 frames.
+  void setQuickRefresh(uint8_t frames) override { _quickFrames = frames > 0x3F ? 0x3F : frames; }
   void begin(EpdBus& bus) override;
   void deepSleep(EpdBus& bus) override;
 
@@ -123,6 +125,21 @@ class Uc8279X4Driver : public PanelDriver {
   bool _readerRefresh = false;
   void initController(EpdBus& bus);
   void startBwRefresh(EpdBus& bus, bool fast);
+  // Differential refresh through short external tables (see setQuickRefresh):
+  // DTM1 holds the displayed frame, DTM2 the new one, and only the pixels that
+  // change are driven, for _quickFrames frames. Starts the waveform and returns.
+  void startQuickRefresh(EpdBus& bus);
+  uint8_t _quickFrames = 0;
+  // Quick refreshes stop short of full density, so the driver keeps a copy of
+  // the frame on the panel and the set of pixels that quick frames have changed
+  // since the last ordinary refresh; that refresh then drives them fully
+  // (see displayStart). Two framebuffer-sized PSRAM buffers, X4 Pro only;
+  // without them quick refreshes are simply not used.
+  uint8_t* _quickShown = nullptr;
+  uint8_t* _quickTouched = nullptr;
+  bool _quickShownValid = false;
+  bool _quickDebt = false;
+  void noteShown(const uint8_t* fb);
   // Stream a framebuffer into a RAM plane: 0xFF padding for gates before the
   // visible offset, visible rows in the stock convention (forward order, bytes
   // as-is; FREEINK_UC8279X4_ROWREV/XMIRROR can flip either axis for future

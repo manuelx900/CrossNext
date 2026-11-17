@@ -977,6 +977,10 @@ void FreeInkDisplay::setReaderRefresh(const bool reading) {
   if (_driver) _driver->setReaderRefresh(reading);
 }
 
+void FreeInkDisplay::setQuickRefresh(const uint8_t frames) {
+  if (_driver) _driver->setQuickRefresh(frames);
+}
+
 void FreeInkDisplay::skipInitialResync() {
   if (_driver) _driver->skipInitialResync();
 }

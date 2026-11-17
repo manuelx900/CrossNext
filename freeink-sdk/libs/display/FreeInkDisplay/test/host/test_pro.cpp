@@ -565,6 +565,174 @@ static void testUc8279X4WaveformSelection() {
   free(driver._grayBase);
 }
 
+// A quick refresh is a differential update through short external tables, for
+// frames that follow a finger. Same framing as stock's base transition (partial
+// window, REG=1, five 42-byte tables), with only the two changing transitions
+// driven, for the requested number of frames.
+static void testUc8279X4QuickRefresh() {
+  const auto visible = [](const Bytes& plane) { return Bytes(plane.begin() + 120 * 100, plane.begin() + 600 * 100); };
+  const auto tables = [](const EpdBus& bus) {
+    std::vector<Bytes> rows(5);
+    for (const auto& w : bus.writes)
+      if (w.command >= 0x20 && w.command <= 0x24) rows[w.command - 0x20] = w.bytes;
+    return rows;
+  };
+  const auto indexOf = [](const EpdBus& bus, uint8_t command, bool last) {
+    int found = -1;
+    for (size_t i = 0; i < bus.writes.size(); ++i)
+      if (bus.writes[i].command == command && (found < 0 || last)) found = static_cast<int>(i);
+    return found;
+  };
+  const auto count = [](const EpdBus& bus, uint8_t command) {
+    return std::count_if(bus.writes.begin(), bus.writes.end(), [&](const auto& w) { return w.command == command; });
+  };
+  const auto a = frame(5), b = frame(71);
+
+  {
+    Uc8279X4Driver d;
+    EpdBus bus;
+    d.begin(bus);
+    d.display(bus, a.data(), nullptr, RefreshMode::Half, false);  // establishes the baseline
+    d.setQuickRefresh(12);
+    bus.clear();
+    d.display(bus, b.data(), nullptr, RefreshMode::Fast, false);
+
+    const auto rows = tables(bus);
+    const uint8_t expected[5] = {0x0C, 0x0C, 0x8C, 0x4C, 0x0C};  // idle, idle, to black, to white, idle
+    for (unsigned i = 0; i < 5; ++i) {
+      assert(rows[i].size() == 42);
+      Bytes want(42, 0);
+      want[0] = 0x01;
+      want[1] = expected[i];
+      want[5] = want[6] = 0x01;
+      assert(rows[i] == want);
+    }
+    assert(count(bus, 0x12) == 1);
+    // The frame rate is set explicitly: a built-in refresh before this one
+    // leaves the controller on a slower rate (256 ms measured instead of 185).
+    assert(indexOf(bus, 0x30, false) >= 0 && indexOf(bus, 0x30, false) < indexOf(bus, 0x12, false));
+    assert(lastRegister(bus, 0x30) == d._cfg.pll);
+    // External tables: REG stays set on every panel-setting write of this refresh.
+    for (const auto& w : bus.writes)
+      if (w.command == 0x00) assert(w.bytes == Bytes({d._cfg.psr0, d._cfg.psr1}));
+    assert(count(bus, 0x00) >= 1);
+    // New frame in, refresh inside a partial window, then the baseline follows.
+    const int target = indexOf(bus, 0x13, false), refresh = indexOf(bus, 0x12, false);
+    const int partialIn = indexOf(bus, 0x91, false), partialOut = indexOf(bus, 0x92, false);
+    const int baseline = indexOf(bus, 0x10, true);
+    assert(target >= 0 && target < refresh && partialIn >= 0 && partialIn < refresh);
+    assert(partialOut > refresh && baseline > partialOut);
+    assert(count(bus, 0x10) == 1);  // the old plane is not touched before the refresh
+    assert(visible(bus.writes[target].bytes) == b);
+    assert(visible(bus.writes[baseline].bytes) == b);
+    assert(d._oldPlaneValid && !d._needFullClear);
+
+    // Back to the ordinary fast waveform: built-in tables, none uploaded.
+    d.setQuickRefresh(0);
+    bus.clear();
+    d.display(bus, a.data(), nullptr, RefreshMode::Fast, false);
+    assert(count(bus, 0x22) == 0 && count(bus, 0x12) == 1);
+    assert(lastRegister(bus, 0x00) == (d._cfg.psr0 & 0xDF));
+  }
+  {
+    // No valid baseline: a quick refresh cannot be differential, so the
+    // ordinary clearing refresh runs instead.
+    Uc8279X4Driver d;
+    EpdBus bus;
+    d.begin(bus);
+    d.setQuickRefresh(12);
+    bus.clear();
+    d.display(bus, b.data(), nullptr, RefreshMode::Fast, false);
+    assert(count(bus, 0x22) == 0 && count(bus, 0x12) == 1);
+    assert(lastRegister(bus, 0x00) == (d._cfg.psr0 & 0xDF));
+  }
+  {
+    // Only Fast requests are shortened; a Half clean keeps its waveform.
+    Uc8279X4Driver d;
+    EpdBus bus;
+    d.begin(bus);
+    d.display(bus, a.data(), nullptr, RefreshMode::Half, false);
+    d.setQuickRefresh(12);
+    bus.clear();
+    d.display(bus, b.data(), nullptr, RefreshMode::Half, false);
+    assert(count(bus, 0x22) == 0);
+  }
+  {
+    // Right after a grayscale page the stock base transition still comes first.
+    Uc8279X4Driver d;
+    EpdBus bus;
+    d.begin(bus);
+    d.display(bus, a.data(), nullptr, RefreshMode::Half, false);
+    d._grayRefreshedOnce = true;
+    d._redriveAfterGray = true;
+    d.setQuickRefresh(12);
+    bus.clear();
+    d.display(bus, b.data(), nullptr, RefreshMode::Fast, false);
+    assert(tables(bus)[2][1] == 0x86);  // stock's own transition table
+    bus.clear();
+    d.display(bus, a.data(), nullptr, RefreshMode::Fast, false);
+    assert(tables(bus)[2][1] == 0x8C);  // then quick refreshes apply
+  }
+  {
+    // Quick frames leave the pixels they touched under-driven. The next ordinary
+    // Fast refresh must drive every one of them to its target again: for those
+    // pixels the old plane is sent as the inverse of the new frame, and as the
+    // displayed frame everywhere else.
+    Uc8279X4Driver d;
+    EpdBus bus;
+    d.begin(bus);
+    const auto c = frame(140), e = frame(203);
+    d.display(bus, a.data(), nullptr, RefreshMode::Half, false);
+    d.setQuickRefresh(9);
+    d.display(bus, b.data(), nullptr, RefreshMode::Fast, false);
+    d.display(bus, c.data(), nullptr, RefreshMode::Fast, false);
+    d.setQuickRefresh(0);
+    bus.clear();
+    d.display(bus, e.data(), nullptr, RefreshMode::Fast, false);
+    assert(count(bus, 0x22) == 0 && count(bus, 0x12) == 1);  // ordinary built-in waveform
+    const int refresh = indexOf(bus, 0x12, false);
+    const int oldPlane = indexOf(bus, 0x10, false);
+    assert(oldPlane >= 0 && oldPlane < refresh);
+    Bytes expected(48000);
+    for (size_t i = 0; i < expected.size(); ++i) {
+      const uint8_t touched = static_cast<uint8_t>((a[i] ^ b[i]) | (b[i] ^ c[i]));
+      expected[i] = static_cast<uint8_t>((c[i] & ~touched) | (~e[i] & touched));
+    }
+    assert(visible(bus.writes[oldPlane].bytes) == expected);
+    assert(visible(bus.writes[indexOf(bus, 0x10, true)].bytes) == e);  // baseline restored after
+
+    // Nothing is owed any more: the following refresh is a plain differential one.
+    bus.clear();
+    d.display(bus, a.data(), nullptr, RefreshMode::Fast, false);
+    assert(count(bus, 0x10) == 1 && indexOf(bus, 0x10, false) > indexOf(bus, 0x12, false));
+  }
+  {
+    // A clearing refresh drives every pixel anyway, so it settles the debt too.
+    Uc8279X4Driver d;
+    EpdBus bus;
+    d.begin(bus);
+    d.display(bus, a.data(), nullptr, RefreshMode::Half, false);
+    d.setQuickRefresh(9);
+    d.display(bus, b.data(), nullptr, RefreshMode::Fast, false);
+    d.setQuickRefresh(0);
+    d.display(bus, a.data(), nullptr, RefreshMode::Half, false);
+    bus.clear();
+    d.display(bus, b.data(), nullptr, RefreshMode::Fast, false);
+    assert(count(bus, 0x10) == 1 && indexOf(bus, 0x10, false) > indexOf(bus, 0x12, false));
+  }
+  {
+    // A phase holds at most 63 frames.
+    Uc8279X4Driver d;
+    EpdBus bus;
+    d.begin(bus);
+    d.display(bus, a.data(), nullptr, RefreshMode::Half, false);
+    d.setQuickRefresh(200);
+    bus.clear();
+    d.display(bus, b.data(), nullptr, RefreshMode::Fast, false);
+    assert(tables(bus)[2][1] == 0xBF && tables(bus)[3][1] == 0x7F);
+  }
+}
+
 static void testStickyAbsolute() {
   BoardConfig::ACTIVE.board = BoardConfig::Board::Sticky;
   auto& driver = static_cast<Ssd1677Driver&>(ssd1677Driver());
@@ -876,6 +1044,7 @@ int main(int argc, char** argv) {
   BoardConfig::ACTIVE.displayControllerVariant = 0x68;
   testUc8179GrayShadeSplit();
   testUc8279X4WaveformSelection();
+  testUc8279X4QuickRefresh();
   testDirectSleep<Uc8179Driver>();
   testDirectSleep<Uc8279X4Driver>();
   testUltraChipAbsolute<Uc8179Driver>(true, 0, false);
