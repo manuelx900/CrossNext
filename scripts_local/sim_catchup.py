@@ -171,6 +171,28 @@ def patch_checked_enumeration(src):
     )
 
 
+def patch_reusable_enumeration(src):
+    patch(
+        src / "HalStorage.h",
+        "  HalFile openNextFile();",
+        "  HalFile openNextFile();\n  bool openNextFile(HalFile &entry, bool &ioError);",
+        "HalFile reusable enumeration (header)",
+        marker="bool openNextFile(HalFile &entry",
+    )
+    patch(
+        src / "HalStorage.cpp",
+        "bool HalFile::isOpen() const {",
+        "bool HalFile::openNextFile(HalFile &entry, bool &ioError) {\n"
+        "  if (&entry == this) { ioError = true; return false; }\n"
+        "  entry = openNextFile(ioError);\n"
+        "  return bool(entry) && !ioError;\n"
+        "}\n"
+        "bool HalFile::isOpen() const {",
+        "HalFile reusable enumeration (implementation)",
+        marker="bool HalFile::openNextFile(HalFile &entry",
+    )
+
+
 def patch_file_lifetime(src):
     # Impl owns both descriptor kinds, including when move-assignment replaces it.
     patch(
@@ -850,6 +872,20 @@ def main(env):
         "WebServer request-argument members",
         marker="_currentArgCount",
     )
+    patch(
+        src / "WebServer.h",
+        "  HTTPUpload &upload();",
+        "  HTTPUpload &upload();\n  bool isListening() const;",
+        "WebServer listener status declaration",
+        marker="bool isListening() const",
+    )
+    patch(
+        src / "WebServer.cpp",
+        "void WebServer::handleClient() {}",
+        "bool WebServer::isListening() const { return impl_->active; }\n\nvoid WebServer::handleClient() {}",
+        "WebServer listener status implementation",
+        marker="WebServer::isListening()",
+    )
     # The plugin endpoints walk a String character by character.
     patch(
         src / "WString.h",
@@ -1012,6 +1048,7 @@ def main(env):
     # -- the seam, checked rather than remembered -------------------------------
     #
     patch_checked_enumeration(src)
+    patch_reusable_enumeration(src)
     patch_storage_revisions(src)
     patch_derived_storage(src)
 
