@@ -1,5 +1,7 @@
 # CrossNext 2.0.2
 
+[![Apoya CrossNext en Ko-fi](site/assets/support-ko-fi.svg)](https://ko-fi.com/manuelx900)
+
 [English](README.md) · [Instalación](docs/install.md) · [Descargas](https://github.com/manuelx900/CrossNext/releases)
 
 ![CrossNext: lectura, estudio y juegos](docs/images/overview.png)
@@ -139,8 +141,6 @@ y las licencias del SDK y recursos. CrossPlay aporta la base de apps y juegos;
 CrossPoint, la base de lectura. Consulta [cambios y referencias](docs/crossnext-changes.md).
 El texto original y los patrones del EPUB de prueba se ofrecen bajo CC0 1.0.
 
-[![Apoya CrossNext en Ko-fi](site/assets/support-ko-fi.svg)](https://ko-fi.com/manuelx900)
-
 ## Fuentes e idiomas editables
 
 Las fuentes completas de lectura se instalan desde Resources en `/fonts`,
@@ -162,3 +162,5 @@ Los dos EPUB adjuntos son originales y **están solo en inglés**:
 En Controles → Botones → Abrir ajustes del libro también puedes elegir tocar
 el borde inferior o el superior. El gesto predeterminado sigue siendo deslizar
 desde abajo.
+
+[![Apoya CrossNext en Ko-fi](site/assets/support-ko-fi.svg)](https://ko-fi.com/manuelx900)

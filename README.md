@@ -1,5 +1,7 @@
 # CrossNext 2.0.2
 
+[![Support CrossNext on Ko-fi](site/assets/support-ko-fi.svg)](https://ko-fi.com/manuelx900)
+
 [Español](README.es.md) · [Installation](docs/install.md) · [Releases](https://github.com/manuelx900/CrossNext/releases)
 
 ![CrossNext: reading, study and games](docs/images/overview.png)
@@ -137,8 +139,6 @@ and bundled asset licences. CrossPlay supplies the app/game shelf and implementa
 CrossPoint supplies the reading foundation. See [CrossNext changes and references](docs/crossnext-changes.md).
 The comparison book's original text and generated patterns are dedicated under CC0 1.0.
 
-[![Support CrossNext on Ko-fi](site/assets/support-ko-fi.svg)](https://ko-fi.com/manuelx900)
-
 ## Fonts and editable translations
 
 Install the matching Resources ZIP in the microSD root. Full book fonts are
@@ -153,3 +153,5 @@ wording while preserving keys and format placeholders, then compile a `.cplang`
 with `tools_local/language_packs.py`. Do not edit the binary pack as text.
 Replace the matching pack on the card and restart. Please report context and the
 language when suggesting a correction. See [language packs](docs/language-packs.md).
+
+[![Support CrossNext on Ko-fi](site/assets/support-ko-fi.svg)](https://ko-fi.com/manuelx900)
