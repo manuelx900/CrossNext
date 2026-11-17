@@ -167,6 +167,8 @@ bool HalDisplay::combinesGrayscaleBase() const { return grayscaleCapabilities().
 
 void HalDisplay::setReaderRefresh(const bool reading) { einkDisplay.setReaderRefresh(reading); }
 
+void HalDisplay::setQuickRefresh(const uint8_t frames) { einkDisplay.setQuickRefresh(frames); }
+
 uint16_t HalDisplay::getDisplayWidth() const { return einkDisplay.getDisplayWidth(); }
 
 uint16_t HalDisplay::getDisplayHeight() const { return einkDisplay.getDisplayHeight(); }

@@ -124,6 +124,10 @@ class HalDisplay {
   // True while a book text page is presented. Panels with a one-pass text
   // waveform (X4 Pro UC8279) then report a combined grayscale base; others ignore it.
   void setReaderRefresh(bool reading);
+  // Non-zero while frames follow a finger: fast refreshes may use a short
+  // waveform of about this many frames, and the next ordinary refresh restores
+  // full density. Zero restores the ordinary waveform. Other panels ignore it.
+  void setQuickRefresh(uint8_t frames);
 
   // Runtime geometry passthrough
   uint16_t getDisplayWidth() const;
