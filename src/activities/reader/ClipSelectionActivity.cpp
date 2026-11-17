@@ -15,6 +15,7 @@
 #include "ClippingStore.h"
 #include "CrossPointSettings.h"
 #include "MappedInputManager.h"
+#include "QuickRefreshScope.h"
 #include "activities/ActivityResult.h"
 #include "apps_local/words/Vocabulary.h"
 #include "clippings/ClippingText.h"
@@ -30,6 +31,11 @@ namespace {
 
 constexpr size_t FONT_PREWARM_TEXT_MAX = 2048;
 constexpr int TOUCH_DRAG_MOVEMENT_PX = 4;
+// Length, in panel frames, of the short waveform used while a finger drags the
+// selection. The X4 Pro's ordinary fast waveform runs about 32 frames (484 ms);
+// 9 frames show a lighter highlight in well under half the time, and the frame
+// drawn when the finger lifts brings it to full density.
+constexpr uint8_t TOUCH_DRAG_REFRESH_FRAMES = 6;
 constexpr unsigned long TOUCH_PAGE_ADVANCE_HOLD_MS = 1000;
 constexpr int TOUCH_PAGE_END_DWELL_SLOP_PX = 8;
 
@@ -973,6 +979,11 @@ void ClipSelectionActivity::render(RenderLock&&) {
     lastRenderedPageOffset = -1;
     return;
   }
+
+  // Frames drawn while the finger is down only move the selection: show them
+  // through the panel's short waveform. The frame that follows the release is
+  // rendered with touchDragSelecting already false, so it takes the ordinary one.
+  QuickRefreshScope quickRefresh(renderer, touchDragSelecting ? TOUCH_DRAG_REFRESH_FRAMES : 0);
 
   if (renderIncremental()) {
     return;

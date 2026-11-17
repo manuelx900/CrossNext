@@ -2841,6 +2841,10 @@ bool GfxRenderer::combinesGrayscaleBase() const {
   return grayscaleCapabilities().base == HalDisplay::GrayscaleBase::Combined;
 }
 
+void GfxRenderer::setReaderRefresh(const bool reading) const { display.setReaderRefresh(reading); }
+
+void GfxRenderer::setQuickRefresh(const uint8_t frames) const { display.setQuickRefresh(frames); }
+
 void GfxRenderer::freeBwBufferChunks() {
   for (auto& bwBufferChunk : bwBufferChunks) {
     if (bwBufferChunk) {

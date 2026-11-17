@@ -1,5 +1,7 @@
 #pragma once
 
+#include "X4ProTextAa.h"
+
 // UC8279 panel driver — Xteink X4 Pro production runs that ship an UltraChip
 // UC8279 (800x480) in place of the SSD1677. NOT the X3's UC8279d (792x528,
 // Uc8279Driver) — this variant has its own init (PSR 0x37/0x4D, stock-exact;
@@ -69,6 +71,9 @@ class Uc8279X4Driver : public PanelDriver {
   BusyPolarity busyPolarity() const override { return BusyPolarity::UcIdleHigh; }
   PanelGeometry geometry() const override;
 
+  void setReaderRefresh(bool reading) override { _readerRefresh = reading; }
+  // A waveform phase holds at most 63 frames.
+  void setQuickRefresh(uint8_t frames) override { _quickFrames = frames > 0x3F ? 0x3F : frames; }
   void begin(EpdBus& bus) override;
   void deepSleep(EpdBus& bus) override;
 
@@ -100,6 +105,8 @@ class Uc8279X4Driver : public PanelDriver {
   void beginGrayscale(EpdBus& bus, const uint8_t* fb, GrayscaleMode mode, RefreshMode fallback, bool turnOff) override;
   void copyGrayscaleLsb(EpdBus& bus, const uint8_t* lsb) override;
   void copyGrayscaleMsb(EpdBus& bus, const uint8_t* msb) override;
+  void writeGrayscalePlaneStrip(EpdBus& bus, GrayPlane plane, const uint8_t* rows,
+                                uint16_t yStart, uint16_t numRows) override;
   void displayGray(EpdBus& bus, const uint8_t* fb, bool turnOff, const unsigned char* lut, bool factoryMode) override;
   void cleanupGrayscaleBuffers(EpdBus& bus, const uint8_t* bw) override;
   // Base frame for a grayscale overlay. The periodic clean the reader asks for
@@ -111,8 +118,28 @@ class Uc8279X4Driver : public PanelDriver {
   void displayGrayscaleBase(EpdBus& bus, const uint8_t* fb, RefreshMode fallback, bool turnOff) override;
 
  private:
+  // One-pass text anti-aliasing (upstream freeink-sdk e020bd5): while the host
+  // presents book text pages, the B/W base and the gray masks are composed into
+  // two planes and shown by a single external-table waveform.
+  X4ProTextAa _textAa;
+  bool _readerRefresh = false;
   void initController(EpdBus& bus);
   void startBwRefresh(EpdBus& bus, bool fast);
+  // Differential refresh through short external tables (see setQuickRefresh):
+  // DTM1 holds the displayed frame, DTM2 the new one, and only the pixels that
+  // change are driven, for _quickFrames frames. Starts the waveform and returns.
+  void startQuickRefresh(EpdBus& bus);
+  uint8_t _quickFrames = 0;
+  // Quick refreshes stop short of full density, so the driver keeps a copy of
+  // the frame on the panel and the set of pixels that quick frames have changed
+  // since the last ordinary refresh; that refresh then drives them fully
+  // (see displayStart). Two framebuffer-sized PSRAM buffers, X4 Pro only;
+  // without them quick refreshes are simply not used.
+  uint8_t* _quickShown = nullptr;
+  uint8_t* _quickTouched = nullptr;
+  bool _quickShownValid = false;
+  bool _quickDebt = false;
+  void noteShown(const uint8_t* fb);
   // Stream a framebuffer into a RAM plane: 0xFF padding for gates before the
   // visible offset, visible rows in the stock convention (forward order, bytes
   // as-is; FREEINK_UC8279X4_ROWREV/XMIRROR can flip either axis for future

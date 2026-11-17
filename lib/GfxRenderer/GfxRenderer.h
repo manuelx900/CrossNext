@@ -440,6 +440,10 @@ class GfxRenderer {
   // Paper Mono: the base activation is deferred so base + gray planes go out
   // as one waveform. Route the base through displayGrayscaleBase() when true.
   bool combinesGrayscaleBase() const;
+  // See HalDisplay::setReaderRefresh. Use ReaderRefreshScope rather than calling this.
+  void setReaderRefresh(bool reading) const;
+  // See HalDisplay::setQuickRefresh. Use QuickRefreshScope rather than calling this.
+  void setQuickRefresh(uint8_t frames) const;
   bool storeBwBuffer();  // Returns true if buffer was stored successfully
   // Copy the snapshot back without freeing it or changing the panel baseline.
   // The owner keeps the slot until restoreBwBuffer/discardStoredBwBuffer.

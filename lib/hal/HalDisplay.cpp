@@ -165,6 +165,10 @@ bool HalDisplay::supportsStripGrayscale() const { return grayscaleCapabilities()
 
 bool HalDisplay::combinesGrayscaleBase() const { return grayscaleCapabilities().base == GrayscaleBase::Combined; }
 
+void HalDisplay::setReaderRefresh(const bool reading) { einkDisplay.setReaderRefresh(reading); }
+
+void HalDisplay::setQuickRefresh(const uint8_t frames) { einkDisplay.setQuickRefresh(frames); }
+
 uint16_t HalDisplay::getDisplayWidth() const { return einkDisplay.getDisplayWidth(); }
 
 uint16_t HalDisplay::getDisplayHeight() const { return einkDisplay.getDisplayHeight(); }
