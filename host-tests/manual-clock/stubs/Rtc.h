@@ -7,8 +7,10 @@ struct Rtc {
   };
   inline static DateTime written{2000, 1, 1, 0, 0, 0, 0};
   inline static bool accept = true;
+  inline static unsigned reads = 0;
   bool begin() { return true; }
   bool now(DateTime& out) {
+    ++reads;
     out = written;
     return true;
   }

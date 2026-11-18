@@ -9074,3 +9074,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Al volver a Inicio, el menú se muestra antes de
 STR_HOME_COVER_NOTICE_DURING: "Mientras se cargan, verás portadas provisionales y el aviso de carga. Cuando estén listas, aparecerán automáticamente."
 STR_HOME_COVER_NOTICE_DISABLED: "Si lo desactivas, el lector carga las portadas antes de mostrar Inicio, por lo que volver al menú puede tardar más."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Así esperas menos al salir de un libro o de otra sección y regresas al menú de Inicio más rápido, sin esperar a que las portadas estén listas."
+STR_WORDS_STORAGE_ERROR: "No se puede acceder a las palabras guardadas. Comprueba que la microSD esté insertada y permita escribir."
+STR_WORDS_RECORDS_SKIPPED: "Algunos registros no se pudieron leer. Se han omitido sin borrarlos."
+STR_WORDS_NOTICE_SAVE_ERROR: "No se pudo guardar tu elección. Comprueba el espacio libre y la escritura de la microSD."

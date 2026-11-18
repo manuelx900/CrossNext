@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Amikor visszatérsz a főmenübe, az már a kön
 STR_HOME_COVER_NOTICE_DURING: "Betöltés közben ideiglenes borítókat és betöltési üzenetet látsz. A borítók automatikusan megjelennek, amint elkészülnek."
 STR_HOME_COVER_NOTICE_DISABLED: "Ha kikapcsolod, az olvasó előbb betölti a borítókat, és csak utána mutatja a főmenüt, így a visszatérés tovább tarthat."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Így könyvből vagy más részből kilépve kevesebbet vársz, és a borítókra várakozás nélkül gyorsabban térsz vissza a főmenübe."
+STR_WORDS_STORAGE_ERROR: "A mentett szavak nem érhetők el. Ellenőrizd, hogy az SD-kártya be van-e helyezve és írható-e."
+STR_WORDS_RECORDS_SKIPPED: "Néhány mentett bejegyzés nem olvasható. Ezek kimaradtak, de nem törlődtek."
+STR_WORDS_NOTICE_SAVE_ERROR: "A választásodat nem sikerült menteni. Ellenőrizd az SD-kártya szabad helyét és írhatóságát."

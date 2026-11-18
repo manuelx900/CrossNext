@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Ao voltar ao início, o menu aparece antes que a
 STR_HOME_COVER_NOTICE_DURING: "Durante o carregamento, você verá capas provisórias e o aviso de carregamento. As capas aparecerão automaticamente quando estiverem prontas."
 STR_HOME_COVER_NOTICE_DISABLED: "Se desativar esta opção, o leitor carrega as capas antes de mostrar o início, e a volta ao menu pode demorar mais."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Assim, você espera menos ao sair de um livro ou de outra seção e volta ao menu inicial mais rápido, sem esperar pelas capas."
+STR_WORDS_STORAGE_ERROR: "Não foi possível acessar as palavras salvas. Verifique se o cartão SD está inserido e permite gravação."
+STR_WORDS_RECORDS_SKIPPED: "Alguns registros salvos não puderam ser lidos. Foram ignorados, sem serem apagados."
+STR_WORDS_NOTICE_SAVE_ERROR: "Não foi possível salvar sua escolha. Verifique o espaço livre e a permissão de gravação do cartão SD."

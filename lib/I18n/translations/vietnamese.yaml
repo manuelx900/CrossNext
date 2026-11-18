@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Khi bạn trở về màn hình chính, menu xu�
 STR_HOME_COVER_NOTICE_DURING: "Trong lúc tải, bạn sẽ thấy bìa tạm và thông báo đang tải. Bìa sách tự động xuất hiện khi đã sẵn sàng."
 STR_HOME_COVER_NOTICE_DISABLED: "Nếu tắt tùy chọn này, máy sẽ tải bìa trước rồi mới hiển thị màn hình chính, nên việc trở về menu có thể lâu hơn."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Nhờ vậy, khi thoát sách hoặc mục khác, bạn chờ ít hơn và trở về màn hình chính nhanh hơn mà không phải đợi bìa tải xong."
+STR_WORDS_STORAGE_ERROR: "Không thể truy cập các từ đã lưu. Kiểm tra xem thẻ SD đã được lắp và có thể ghi dữ liệu hay chưa."
+STR_WORDS_RECORDS_SKIPPED: "Không đọc được một số mục đã lưu. Các mục đó được bỏ qua, không bị xóa."
+STR_WORDS_NOTICE_SAVE_ERROR: "Không thể lưu lựa chọn của bạn. Kiểm tra dung lượng trống và quyền ghi của thẻ SD."

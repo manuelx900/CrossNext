@@ -34,7 +34,8 @@ class HalClock {
   // shows immediately.
   void setTimezone(const char* posixTz);
 
-  // Current wall-clock time in the configured timezone.
+  // Running system time seeded from the UTC RTC at boot and updated by sync.
+  // Falls back to the cached RTC only while system time is unset.
   // Returns false if RTC is not available.
   bool localTime(struct tm& out) const;
 

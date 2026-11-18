@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Quand vous revenez à l’accueil, le menu s’a
 STR_HOME_COVER_NOTICE_DURING: "Pendant ce temps, des couvertures provisoires et un message de chargement s’affichent. Les couvertures apparaissent automatiquement dès qu’elles sont prêtes."
 STR_HOME_COVER_NOTICE_DISABLED: "Si vous désactivez cette option, la liseuse charge les couvertures avant d’afficher l’accueil : le retour au menu peut donc être plus long."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Vous attendez ainsi moins en quittant un livre ou une autre rubrique et retrouvez l’accueil plus vite, sans attendre les couvertures."
+STR_WORDS_STORAGE_ERROR: "Impossible d’accéder aux mots enregistrés. Vérifiez que la carte SD est insérée et accessible en écriture."
+STR_WORDS_RECORDS_SKIPPED: "Certains enregistrements sont illisibles. Ils ont été ignorés, sans être supprimés."
+STR_WORDS_NOTICE_SAVE_ERROR: "Impossible d’enregistrer votre choix. Vérifiez l’espace libre et l’accès en écriture de la carte SD."

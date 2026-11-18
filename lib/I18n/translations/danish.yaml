@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Når du vender tilbage til startmenuen, vises de
 STR_HOME_COVER_NOTICE_DURING: "Imens ser du midlertidige omslag og en besked om indlæsningen. Omslagene vises automatisk, når de er klar."
 STR_HOME_COVER_NOTICE_DISABLED: "Slår du dette fra, indlæser læseren omslagene, før startmenuen vises, så det kan tage længere tid at vende tilbage."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Du venter dermed mindre, når du forlader en bog eller en anden sektion, og kommer hurtigere tilbage til startmenuen uden at vente på omslagene."
+STR_WORDS_STORAGE_ERROR: "Kan ikke få adgang til gemte ord. Kontrollér, at SD-kortet er indsat og kan skrives til."
+STR_WORDS_RECORDS_SKIPPED: "Nogle gemte poster kunne ikke læses. De blev sprunget over, ikke slettet."
+STR_WORDS_NOTICE_SAVE_ERROR: "Dit valg kunne ikke gemmes. Kontrollér ledig plads på SD-kortet og skriveadgang."

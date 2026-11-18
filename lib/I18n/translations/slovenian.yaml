@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Ko se vrnete v začetni meni, se ta prikaže še
 STR_HOME_COVER_NOTICE_DURING: "Med nalaganjem vidite začasne naslovnice in obvestilo o nalaganju. Pripravljene naslovnice se prikažejo samodejno."
 STR_HOME_COVER_NOTICE_DISABLED: "Če to izklopite, bralnik najprej naloži naslovnice in šele nato prikaže meni, zato lahko vrnitev traja dlje."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Tako ob izhodu iz knjige ali drugega razdelka čakate manj in se hitreje vrnete v začetni meni, ne da bi čakali na naslovnice."
+STR_WORDS_STORAGE_ERROR: "Do shranjenih besed ni mogoče dostopati. Preverite, ali je kartica SD vstavljena in omogoča pisanje."
+STR_WORDS_RECORDS_SKIPPED: "Nekaterih shranjenih zapisov ni bilo mogoče prebrati. Preskočeni so bili, ne izbrisani."
+STR_WORDS_NOTICE_SAVE_ERROR: "Vaše izbire ni bilo mogoče shraniti. Preverite prosti prostor in dovoljenje za pisanje na kartico SD."

@@ -151,7 +151,6 @@ void KeyboardEntryActivity::onEnter() {
   urlPanel = false;
   cursorMode = false;
   togglePos = false;
-  passwordVisible = false;
   selRow = 0;
   selCol = 0;
   delPressCount = 0;
@@ -693,9 +692,7 @@ void KeyboardEntryActivity::loop() {
       }
       return;
     }
-    if (result.activeChanged) {
-      requestUpdate();
-    }
+    // Commit the key before repainting instead of refreshing the press highlight first.
     if (pressedDown || tapped) {
       return;
     }
@@ -728,7 +725,6 @@ void KeyboardEntryActivity::loop() {
     downHeld = true;
     if (cursorMode) {
       togglePos = false;
-      passwordVisible = false;
       cursorMode = false;
       hintVisible = false;
       downLongHandled = true;
@@ -1162,7 +1158,7 @@ void KeyboardEntryActivity::render(RenderLock&&) {
 
 void KeyboardEntryActivity::onComplete(std::string text) {
   if (inputType == InputType::Text) text = utf8ComposeNfc(text);
-  setResult(KeyboardResult{std::move(text)});
+  setResult(KeyboardResult{std::move(text), passwordVisible});
   finish();
 }
 

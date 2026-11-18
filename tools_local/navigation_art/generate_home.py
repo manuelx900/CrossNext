@@ -29,7 +29,8 @@ def generate(source=SOURCE, output=OUTPUT, namespace='homeicons', sizes=(26, 32,
             if box is None:
                 raise ValueError('Empty icon: ' + path.name)
             image = image.crop(box)
-            image.thumbnail((size - inset, size - inset), Image.Resampling.LANCZOS)
+            padding = 0 if stem == 'Games' else inset
+            image.thumbnail((size - padding, size - padding), Image.Resampling.LANCZOS)
             canvas = Image.new('L', (size, size), 255)
             canvas.paste(image, ((size - image.width) // 2, (size - image.height) // 2))
             bits = []

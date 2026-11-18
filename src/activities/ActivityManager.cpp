@@ -16,6 +16,7 @@
 #include "CrossPointSettings.h"
 #include "HapticFeedback.h"
 #include "OpdsServerStore.h"
+#include "apps_local/Shelf.h"
 #include "apps_local/ui/ToyboxFonts.h"
 #include "boot_sleep/BootActivity.h"
 #include "boot_sleep/SleepActivity.h"
@@ -356,6 +357,11 @@ void ActivityManager::loop() {
     }
   }
 
+  if (shelf::hasPendingState() && currentActivity && paintedVisit.load(std::memory_order_acquire) == screenVisit &&
+      !requestedUpdate.load() && !renderInFlight.load()) {
+    RenderLock lock(RenderLock::Mode::Try);
+    if (lock.ownsLock()) shelf::flushPendingState(millis());
+  }
   if (requestedUpdate.exchange(false)) {
     // Using direct notification to signal the render task to update
     // Increment counter so multiple rapid calls won't be lost

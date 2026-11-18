@@ -27,6 +27,7 @@ enum Action : int {
   Delete,
   ConfirmDelete,
   Cancel,
+  DismissNotice,
   ActionCount
 };
 enum class View : uint8_t { Home, List, WordList, Detail, Review, Guide, Waiting, Delete };
@@ -40,7 +41,7 @@ constexpr int listCapacity(View view, int width, int height) {
 }
 constexpr int reviewRating(int focus) { return focus + 1; }
 struct Row {
-  char id[33]{}, label[192]{}, source[224]{};
+  char id[33]{}, label[192]{};
 };
 struct Model {
   ParagraphPages textCache;
@@ -53,12 +54,15 @@ struct Model {
   ReviewKind review = ReviewKind::DueWords;
   int count = 0, total = 0, capacity = kListCapacity, page = 0, textPage = 0, textPages = 1, focus = 0;
   int saved = 0, pending = 0, due = 0, eligible = 0, difficult = 0, guidePage = 0, reviewIndex = 0, reviewTotal = 0;
+  int skipped = 0;
   bool translation = false, readerContent = false;
   bool busy = false, answer = false, known = false, clockReady = true;
   char delays[4][32]{};
   int waitMinutes = 0;
   bool keyboardFocus = false;
   bool error = false;
+  bool noticeDismissed = false;
+  bool noticeSaveFailed = false;
   uint8_t alignment = 0;
 };
 inline void setListCapacity(Model& model, int capacity) {

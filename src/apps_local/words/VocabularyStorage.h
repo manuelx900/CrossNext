@@ -14,6 +14,7 @@ class StorageRecords final : public Records {
  public:
   Read word(const char*, Word&) override;
   Read context(const char*, Context&) override;
+  Read context(HalFile&, const char*, Context&);
   bool put(const Word&) override;
   bool put(const Context&) override;
   bool removeWord(const char*) override;

@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "返回主菜单时，无需等书籍封面加载
 STR_HOME_COVER_NOTICE_DURING: "加载过程中，你会看到临时封面和加载提示。封面准备好后会自动显示。"
 STR_HOME_COVER_NOTICE_DISABLED: "关闭此选项后，阅读器会先加载封面，再显示主菜单，因此返回菜单可能需要更长时间。"
 STR_HOME_COVER_NOTICE_ADVANTAGE: "这样，退出书籍或其他功能时等待更少，无需等封面加载完成，就能更快返回主菜单。"
+STR_WORDS_STORAGE_ERROR: "无法访问已保存的单词。请确认 SD 卡已插入并且可以写入。"
+STR_WORDS_RECORDS_SKIPPED: "部分已保存的记录无法读取，已跳过，但未删除。"
+STR_WORDS_NOTICE_SAVE_ERROR: "无法保存你的选择。请检查 SD 卡的剩余空间和写入权限。"

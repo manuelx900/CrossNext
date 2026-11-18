@@ -26,5 +26,13 @@
     observer.observe(node);
   }
   window.addEventListener('resize', schedule);
+  list.addEventListener('focusin', event => {
+    const row = event.target.closest('label');
+    if (!row) return;
+    const bounds = row.getBoundingClientRect(), area = list.getBoundingClientRect();
+    const top = area.top + list.clientTop, bottom = top + list.clientHeight;
+    if (bounds.top < top) list.scrollTop -= top - bounds.top;
+    else if (bounds.bottom > bottom) list.scrollTop += bounds.bottom - bottom;
+  });
   schedule();
 })();

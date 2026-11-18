@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Quan tornes a l’inici, el menú es mostra aban
 STR_HOME_COVER_NOTICE_DURING: "Mentre es carreguen, veuràs cobertes provisionals i l’avís de càrrega. Quan estiguen llestes, apareixeran automàticament."
 STR_HOME_COVER_NOTICE_DISABLED: "Si ho desactives, el lector carrega les cobertes abans de mostrar l’inici i tornar al menú pot tardar més."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Així esperes menys quan ixes d’un llibre o d’una altra secció i tornes abans al menú d’inici, sense esperar les cobertes."
+STR_WORDS_STORAGE_ERROR: "No es pot accedir a les paraules guardades. Comprova que la targeta SD estiga inserida i permeta escriure-hi."
+STR_WORDS_RECORDS_SKIPPED: "No s’han pogut llegir alguns registres guardats. S’han omés sense esborrar-los."
+STR_WORDS_NOTICE_SAVE_ERROR: "No s’ha pogut guardar la teua elecció. Comprova l’espai lliure i l’accés d’escriptura de la targeta SD."

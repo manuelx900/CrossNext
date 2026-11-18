@@ -12,6 +12,7 @@
 #include "../../src/apps_local/carnivoro/CarnivoroScreens.h"
 #include "../../src/apps_local/home/CoverScanline.h"
 #include "../../src/apps_local/ui/PixelMenu.h"
+#include "../../src/apps_local/ui/QuickSettingsDirtyRegion.h"
 #include "../../src/apps_local/ui/QuickSettingsScreen.h"
 #include "../../src/apps_local/ui/ToyboxScreen.h"
 #include "../../src/apps_local/ui/fonts/ui_prose_10.h"
@@ -203,6 +204,34 @@ void LegacyRaster::polygon(const int* xPoints, const int* yPoints, int numPoints
 }
 
 int main(int argc, char** argv) {
+  for (const bool light : {false, true})
+    for (auto shape : {std::pair<int, int>{480, 800}, {800, 480}})
+      for (const bool inverted : {false, true})
+        for (const auto bluetooth : {bluetoothui::State::Off, bluetoothui::State::Connected}) {
+          chrome::lightHeader = light;
+          Canvas off(shape.first, shape.second, inverted), on(shape.first, shape.second, inverted);
+          quickui::Model before, after;
+          before.bluetooth = after.bluetooth = bluetooth;
+          std::snprintf(before.time, sizeof(before.time), "23:59");
+          std::snprintf(after.time, sizeof(after.time), "23:59");
+          after.wifiConnected = true;
+          quickui::Work work;
+          quickui::build(off.screen, before, work);
+          quickui::build(on.screen, after, work);
+          CHECK(!off.has(quickui::WifiSettings));
+          CHECK(on.has(quickui::WifiSettings));
+          off.checkHits();
+          on.checkHits();
+          const auto layout = quickui::layout(on.device, true, true, true, quickui::hasBluetoothStatus(bluetooth));
+          const auto dirty = quickui::dirtyRegion(before, after, layout, shape.first);
+          CHECK(dirty.y <= layout.header.y && dirty.bottom() >= layout.header.bottom());
+          const auto gone = quickui::dirtyRegion(after, before, layout, shape.first);
+          CHECK(gone.y <= layout.header.y && gone.bottom() >= layout.header.bottom());
+          if (argc > 1 && !inverted && bluetooth == bluetoothui::State::Connected)
+            on.write(std::string(argv[1]) + "/wifi-" + (light ? "rounded-" : "framed-") + std::to_string(shape.first) +
+                     ".pbm");
+        }
+  chrome::lightHeader = false;
   int legacyStray = 0, newStray = 0;
   for (auto shape : {std::pair<int, int>{480, 800}, {800, 480}})
     for (bool inverted : {false, true}) {

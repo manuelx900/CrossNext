@@ -72,6 +72,15 @@ metadata and accepts the local Words passage-opening factory. The dictionary
 engine and FSRS remain shared; app/store/rendering code lives in
 `src/apps_local/words`. See [Words](docs/apps/words.md).
 
+Words navigation uses activity-owned disposable SD indexes. The two exact
+temporary paths are classified as derived data in `StorageMutation.h` so their
+writes do not invalidate book or cover resource caches. Canonical hashed
+vocabulary records are classified as reading state; their persistence and
+recovery formats remain unchanged. Unknown paths retain resource invalidation.
+The two exact notice batch paths and strictly validated acknowledgment marker
+paths are reading-state metadata; they never replace word or context records.
+Acknowledgment is durable before its cooperative marker maintenance begins.
+
 Dictionary presentation adapts StarDict HTML locally in
 `src/apps_local/words/DictionaryHtml`: pronunciation metadata is omitted from
 these small definition screens and block boundaries remain explicit. The shared

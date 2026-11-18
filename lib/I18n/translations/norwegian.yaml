@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Når du går tilbake til startmenyen, vises den 
 STR_HOME_COVER_NOTICE_DURING: "Mens de lastes, ser du midlertidige omslag og en lastemelding. Omslagene vises automatisk når de er klare."
 STR_HOME_COVER_NOTICE_DISABLED: "Slår du dette av, laster leseren omslagene før startmenyen vises, så det kan ta lengre tid å gå tilbake."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Dermed venter du mindre når du forlater en bok eller en annen del, og kommer raskere tilbake til startmenyen uten å vente på omslagene."
+STR_WORDS_STORAGE_ERROR: "Får ikke tilgang til lagrede ord. Kontroller at SD-kortet er satt inn og kan skrives til."
+STR_WORDS_RECORDS_SKIPPED: "Noen lagrede oppføringer kunne ikke leses. De ble hoppet over, ikke slettet."
+STR_WORDS_NOTICE_SAVE_ERROR: "Valget ditt kunne ikke lagres. Kontroller ledig plass på SD-kortet og skrivetilgang."

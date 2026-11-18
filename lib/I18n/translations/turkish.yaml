@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Ana menüye döndüğünüzde, kitap kapakları 
 STR_HOME_COVER_NOTICE_DURING: "Yükleme sırasında geçici kapakları ve yükleme bildirimini görürsünüz. Kapaklar hazır olunca otomatik olarak görünür."
 STR_HOME_COVER_NOTICE_DISABLED: "Bunu kapatırsanız, okuyucu ana menüyü göstermeden önce kapakları yükler; bu nedenle geri dönmek daha uzun sürebilir."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Böylece kitaptan veya başka bir bölümden çıkarken daha az bekler, kapakların hazır olmasını beklemeden ana menüye daha hızlı dönersiniz."
+STR_WORDS_STORAGE_ERROR: "Kayıtlı sözcüklere erişilemiyor. SD kartın takılı ve yazılabilir olduğunu kontrol edin."
+STR_WORDS_RECORDS_SKIPPED: "Bazı kayıtlar okunamadı. Bu kayıtlar silinmeden atlandı."
+STR_WORDS_NOTICE_SAVE_ERROR: "Seçiminiz kaydedilemedi. SD kartın boş alanını ve yazma iznini kontrol edin."

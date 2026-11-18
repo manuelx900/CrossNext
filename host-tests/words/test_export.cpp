@@ -117,10 +117,12 @@ int main() {
     f.add(1, 0, Purpose::Language);
     testStorage.files["/WORDS/vocabulary.tsv"] = {'o', 'l', 'd'};
     testStorage.files[std::string(kContexts) + "/" + f.context.id + ".dat"].back() ^= 1;
+    f.add(2, 0, Purpose::Language);
     CHECK(f.job.begin(Purpose::Language, "", -1, "", 1));
     f.run();
-    CHECK(!f.job.succeeded());
-    CHECK(f.result() == "old");
+    CHECK(f.job.succeeded() && f.job.skipped() == 1);
+    CHECK(f.result().find("word-2") != std::string::npos);
+    CHECK(f.result().find("word-1") == std::string::npos);
   }
   for (int stop : {0, 1, 10, 30}) {
     Fixture f;

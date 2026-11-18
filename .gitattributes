@@ -1,0 +1,2 @@
+# Keep dependency patches applicable to LF archive sources on every host.
+scripts/sdfat_patches/*.patch text eol=lf

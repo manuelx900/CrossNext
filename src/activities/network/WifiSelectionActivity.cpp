@@ -425,12 +425,16 @@ void WifiSelectionActivity::promptPasswordEntry() {
     LOG_ERR("WIFI", "OOM: password keyboard");
     return;
   }
+  keyboard->setPasswordVisible(passwordVisible);
   state = WifiSelectionState::PASSWORD_ENTRY;
   closeRouting();
   startActivityForResult(std::move(keyboard), [this](const ActivityResult& result) {
-    if (!result.isCancelled) enteredPassword = std::get<KeyboardResult>(result.data).text;
+    if (!result.isCancelled) {
+      const auto& entry = std::get<KeyboardResult>(result.data);
+      enteredPassword = entry.text;
+      passwordVisible = entry.passwordVisible;
+    }
     state = WifiSelectionState::PASSWORD_REVIEW;
-    passwordVisible = false;
     requestUpdate();
   });
 }

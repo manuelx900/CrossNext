@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Bei der Rückkehr zum Startmenü erscheint es be
 STR_HOME_COVER_NOTICE_DURING: "Währenddessen siehst du Platzhalter und den Ladehinweis. Die Cover erscheinen automatisch, sobald sie bereit sind."
 STR_HOME_COVER_NOTICE_DISABLED: "Wenn du dies ausschaltest, lädt das Lesegerät die Cover vor dem Anzeigen des Startmenüs. Die Rückkehr kann dadurch länger dauern."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "So wartest du beim Verlassen eines Buches oder eines anderen Bereichs weniger und gelangst schneller ins Startmenü, ohne auf die Cover zu warten."
+STR_WORDS_STORAGE_ERROR: "Kein Zugriff auf gespeicherte Wörter. Prüfe, ob die SD-Karte eingesetzt und beschreibbar ist."
+STR_WORDS_RECORDS_SKIPPED: "Einige gespeicherte Einträge konnten nicht gelesen werden. Sie wurden übersprungen, nicht gelöscht."
+STR_WORDS_NOTICE_SAVE_ERROR: "Deine Auswahl konnte nicht gespeichert werden. Prüfe freien Speicherplatz und Schreibzugriff auf die SD-Karte."

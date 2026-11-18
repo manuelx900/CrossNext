@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Wanneer je teruggaat naar het hoofdmenu, verschi
 STR_HOME_COVER_NOTICE_DURING: "Tijdens het laden zie je tijdelijke omslagen en de laadmelding. De omslagen verschijnen automatisch zodra ze klaar zijn."
 STR_HOME_COVER_NOTICE_DISABLED: "Schakel je dit uit, dan laadt de lezer eerst de omslagen en toont daarna het hoofdmenu. Teruggaan kan daardoor langer duren."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Zo wacht je minder wanneer je een boek of ander onderdeel verlaat en ga je sneller terug naar het hoofdmenu, zonder op de omslagen te wachten."
+STR_WORDS_STORAGE_ERROR: "Geen toegang tot opgeslagen woorden. Controleer of de SD-kaart is geplaatst en beschrijfbaar is."
+STR_WORDS_RECORDS_SKIPPED: "Sommige opgeslagen items konden niet worden gelezen. Ze zijn overgeslagen, niet verwijderd."
+STR_WORDS_NOTICE_SAVE_ERROR: "Je keuze kon niet worden opgeslagen. Controleer de vrije ruimte en schrijftoegang van de SD-kaart."

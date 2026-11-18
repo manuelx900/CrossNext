@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Při návratu do hlavní nabídky se nabídka zo
 STR_HOME_COVER_NOTICE_DURING: "Během načítání uvidíte dočasné obálky a zprávu o načítání. Hotové obálky se zobrazí automaticky."
 STR_HOME_COVER_NOTICE_DISABLED: "Pokud tuto volbu vypnete, čtečka nejprve načte obálky a až potom zobrazí hlavní nabídku, takže návrat může trvat déle."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Po opuštění knihy nebo jiné části tak čekáte méně a vracíte se do hlavní nabídky rychleji, bez čekání na obálky."
+STR_WORDS_STORAGE_ERROR: "Nelze přistupovat k uloženým slovům. Zkontrolujte, zda je SD karta vložená a umožňuje zápis."
+STR_WORDS_RECORDS_SKIPPED: "Některé uložené záznamy nelze přečíst. Byly přeskočeny, nikoli smazány."
+STR_WORDS_NOTICE_SAVE_ERROR: "Vaši volbu se nepodařilo uložit. Zkontrolujte volné místo na SD kartě a přístup pro zápis."

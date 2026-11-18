@@ -65,6 +65,7 @@ void FrontlightPanelActivity::onEnter() {
   backdropPainted = false;
   lastClockPoll = millis();
   bluetoothState = bluetoothui::current(SETTINGS.ble);
+  wifiConnected = WiFi.status() == WL_CONNECTED;
 
   resetUi();
   app.on(ACTION_BRIGHTNESS, &FrontlightPanelActivity::onBrightnessEvent, this);
@@ -72,6 +73,14 @@ void FrontlightPanelActivity::onEnter() {
   app.on(ACTION_BRIGHTNESS_STEP, &FrontlightPanelActivity::onBrightnessStepEvent, this);
   app.on(ACTION_WARMTH_STEP, &FrontlightPanelActivity::onWarmthStepEvent, this);
   app.on(ACTION_TILE, &FrontlightPanelActivity::onTileEvent, this);
+  app.on(
+      quickui::WifiSettings,
+      [](const fui::ActionEvent&, void* user) {
+        auto* self = static_cast<FrontlightPanelActivity*>(user);
+        self->app.clearTapFlash();
+        self->openWifiSettings();
+      },
+      this);
   app.on(
       quickui::BluetoothSettings,
       [](const fui::ActionEvent&, void* user) {
@@ -228,19 +237,7 @@ void FrontlightPanelActivity::runTile(const int idx) {
       requestUpdate();
       return;
     case quickui::Shortcut::Wifi:
-      persistLightSettings();
-      if (auto next =
-              makeUniqueNoThrow<WifiSelectionActivity>(renderer, mappedInput, false, WifiSelectionPurpose::Manage)) {
-        suspendedForWifi = true;
-        startActivityForResult(std::move(next), [this](const ActivityResult&) {
-          RenderLock lock;
-          syncLightState(true);
-          suspendedForWifi = false;
-          backdropPainted = false;
-          requestUpdate();
-        });
-      } else
-        LOG_ERR("QUICK", "OOM: Wi-Fi selection");
+      openWifiSettings();
       break;
     case quickui::Shortcut::Lock:
       if (!BoardConfig::hasHomeKey()) return;
@@ -333,6 +330,24 @@ void FrontlightPanelActivity::syncBluetoothState(const bluetoothui::State state)
   bluetoothState = state;
 }
 
+void FrontlightPanelActivity::openWifiSettings() {
+  persistLightSettings();
+  auto next = makeUniqueNoThrow<WifiSelectionActivity>(renderer, mappedInput, false, WifiSelectionPurpose::Manage);
+  if (!next) {
+    LOG_ERR("QUICK", "OOM: Wi-Fi selection");
+    return;
+  }
+  suspendedForWifi = true;
+  startActivityForResult(std::move(next), [this](const ActivityResult&) {
+    RenderLock lock;
+    syncLightState(true);
+    wifiConnected = WiFi.status() == WL_CONNECTED;
+    suspendedForWifi = false;
+    backdropPainted = false;
+    requestUpdate();
+  });
+}
+
 bool FrontlightPanelActivity::handleHomeGesture() {
   close();
   return true;
@@ -415,8 +430,11 @@ void FrontlightPanelActivity::loop() {
     const auto now = std::time(nullptr);
     const bool valid = (now > 0 && localtime_r(&now, &local) && local.tm_year >= 120) || halClock.localTime(local);
     const int minute = valid ? local.tm_hour * 60 + local.tm_min : -1;
-    if (minute != shownMinute) {
+    const bool connected = WiFi.status() == WL_CONNECTED;
+    RenderLock lock;
+    if (minute != shownMinute || wifiConnected != connected) {
       shownMinute = minute;
+      wifiConnected = connected;
       requestUpdate();
     }
   }
@@ -454,7 +472,7 @@ void FrontlightPanelActivity::preparePanelModel() {
   }
   std::copy(std::begin(SETTINGS.quickActions), std::end(SETTINGS.quickActions), model.shortcuts);
   model.bluetooth = bluetoothState;
-  model.wifiConnected = WiFi.status() == WL_CONNECTED;
+  model.wifiConnected = wifiConnected;
   model.brightness = lightOn ? brightness : 0;
   model.warmth = lightOn ? warmth : 0;
   model.rotateRight = SETTINGS.rotationDirection != 0;

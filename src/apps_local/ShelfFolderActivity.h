@@ -26,7 +26,6 @@ class ShelfFolderActivity final : public Activity {
   static std::unique_ptr<Activity> create(GfxRenderer& renderer, MappedInputManager& mappedInput, int folderIndex);
 
   void onEnter() override;
-  void onExit() override;
   // The folder routes right swipes to Back or paging according to its page.
   bool allowsEdgeBack() const override { return false; }
   void loop() override;
@@ -100,5 +99,4 @@ class ShelfFolderActivity final : public Activity {
 
   toybox::Interactions interactions;
   bool interactionsReady = false;
-  bool saveAfterPresentation = true;
 };

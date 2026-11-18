@@ -84,10 +84,10 @@ void button(fui::DrawTarget& t, fui::Rect box, const char* value, bool primary =
   char title[128];
   pixelui::copyCaps(title, sizeof(title), value);
   if (t.measureText(3, title, style).width > text.width) {
-    style.maxLines = 2;
+    style.maxLines = std::min(2, std::max(1, int(box.height) / std::max(1, int(t.lineHeight(3)))));
     style.align = fui::TextAlign::Center;
     style.color = primary ? fui::Color::White : fui::Color::Black;
-    t.text(text, title, style);
+    t.text(fui::makeRect(text.x, box.y, text.width, box.height), title, style);
   } else
     caps(t, text, value, 0, true, primary);
 }
@@ -116,7 +116,8 @@ void home(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g) {
     std::snprintf(number, sizeof(number), "%d", n ? m.pending : m.saved);
     numerals::draw(t, fui::makeRect(box.x + 70, box.y + 36, box.width - 78, metricH - 43), number);
   }
-  const int menuW = wide ? body.width * 53 / 100 : body.width, top = body.y + metricH + 12, rowH = wide ? 88 : 94;
+  const int menuW = wide ? body.width * 53 / 100 : body.width, top = body.y + metricH + 12;
+  const int rowH = wide ? std::min(88, (int(body.height) - metricH - 32) / 3) : 94;
   const char* titles[] = {tr(STR_WORDS_COLLECTION), tr(STR_WORDS_TRANSLATIONS), tr(STR_WORDS_GUIDE)};
   const char* helps[] = {tr(STR_WORDS_VOCABULARY_SUBTITLE), tr(STR_WORDS_LANGUAGES_SUBTITLE),
                          tr(STR_WORDS_GUIDE_SUBTITLE)};
@@ -194,8 +195,8 @@ void collection(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g) {
   g.buttons[FullList] = fui::makeRect(listX + listW - listButtonW, headingY - 2, listButtonW, 34);
   button(t, g.buttons[FullList], tr(STR_WORDS_VIEW_LIST), false, m.keyboardFocus && m.focus == -1);
   const auto list = fui::makeRect(listX, listY, listW, body.bottom() - 52 - listY);
-  if (m.busy || *m.message) {
-    prose(t, list.inset(fui::Insets{12, 12, 60, 12}), m.busy ? tr(STR_READING_LOADING) : m.message, 8, true);
+  if (*m.message) {
+    prose(t, list.inset(fui::Insets{12, 12, 60, 12}), m.message, 8, true);
     if (!m.busy) {
       g.buttons[Dismiss] = fui::makeRect(list.x, list.bottom() - 48, list.width, 44);
       button(t, g.buttons[Dismiss], tr(STR_OK_BUTTON));
@@ -209,7 +210,8 @@ void collection(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g) {
       if (n) t.line({row.x, row.y}, {row.right(), row.y}, 2, black);
       fui::TextStyle wordStyle;
       wordStyle.font = 1;
-      t.text(fui::makeRect(row.x + 16, row.y + 4, row.width - 64, row.height - 8), m.rows[n].label, wordStyle);
+      t.text(toybox::inkCentred(t, fui::makeRect(row.x + 16, row.y + 4, row.width - 64, row.height - 8), wordStyle),
+             m.rows[n].label, wordStyle);
       dashboard::chevron(t, fui::makeRect(row.right() - 34, row.y, 24, row.height));
       if (m.keyboardFocus && m.focus == n) t.stroke(row.inset(fui::Insets{3, 3, 3, 3}), black, 2);
     }
@@ -229,8 +231,8 @@ void wordList(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g) {
   std::snprintf(count, sizeof(count), tr(STR_WORDS_COLLECTION_COUNT), m.total);
   label(t, fui::makeRect(body.x + body.width * 2 / 3, body.y, body.width / 3, 34), count, 3, true);
   const auto list = fui::makeRect(body.x, body.y + 46, body.width, body.height - 100);
-  if (m.busy || *m.message) {
-    prose(t, list.inset(fui::Insets{12, 12, 60, 12}), m.busy ? tr(STR_READING_LOADING) : m.message, 8, true);
+  if (*m.message) {
+    prose(t, list.inset(fui::Insets{12, 12, 60, 12}), m.message, 8, true);
     if (!m.busy) {
       g.buttons[Dismiss] = fui::makeRect(list.x, list.bottom() - 48, list.width, 44);
       button(t, g.buttons[Dismiss], tr(STR_OK_BUTTON));
@@ -244,7 +246,8 @@ void wordList(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g) {
       if (n) t.line({row.x, row.y}, {row.right(), row.y}, 2, black);
       fui::TextStyle wordStyle;
       wordStyle.font = 1;
-      t.text(fui::makeRect(row.x + 16, row.y + 4, row.width - 64, row.height - 8), m.rows[n].label, wordStyle);
+      t.text(toybox::inkCentred(t, fui::makeRect(row.x + 16, row.y + 4, row.width - 64, row.height - 8), wordStyle),
+             m.rows[n].label, wordStyle);
       dashboard::chevron(t, fui::makeRect(row.right() - 34, row.y, 24, row.height));
       if (m.keyboardFocus && m.focus == n) t.stroke(row.inset(fui::Insets{3, 3, 3, 3}), black, 2);
     }
@@ -350,6 +353,7 @@ int layoutContent(fui::DrawTarget& t, fui::Rect text, Model& m, pagedtext::Work&
                   int* used = nullptr, uint8_t* wordBreaks = nullptr) {
   fui::TextStyle heading, body, example;
   heading.font = 2;
+  heading.bold = m.view == View::Review && m.answer;
   body.font = 4;
   if (m.view == View::Review && !m.answer) {
     heading.align = fui::TextAlign::Center;
@@ -361,7 +365,7 @@ int layoutContent(fui::DrawTarget& t, fui::Rect text, Model& m, pagedtext::Work&
   const Paragraph parts[] = {{m.term, heading},
                              {m.meaning, body},
                              {m.sentence, example, tr(STR_WORDS_EXAMPLE_LABEL), false, true},
-                             {m.book, example, tr(STR_WORDS_BOOK_LABEL), true, true}};
+                             {m.book, example, tr(STR_WORDS_BOOK_LABEL), false, true}};
   return paragraphs(t, text, parts, m.view == View::Detail ? 4 : 3, selected, work, 8, used, &m.textCache, wordBreaks,
                     m.alignment);
 }
@@ -521,12 +525,21 @@ int measureCard(fui::DrawTarget& t, fui::Rect box, Model& m, pagedtext::Work& wo
 void draw(fui::DrawTarget& t, const fui::DeviceContext& d, Model& m, Geometry& g, pagedtext::Work& work,
           fui::DrawTarget* content) {
   g = {};
-  const auto body = pixelui::geometry(d, 12).body;
+  auto body = pixelui::geometry(d, 12).body;
   if (m.error) {
-    prose(t, body.inset(fui::Insets{12, 12, 80, 12}), *m.message ? m.message : tr(STR_READING_STORAGE_ERROR), 16);
+    prose(t, body.inset(fui::Insets{12, 12, 80, 12}), *m.message ? m.message : tr(STR_WORDS_STORAGE_ERROR), 16);
     g.buttons[Back] = fui::makeRect(body.x, body.bottom() - 58, body.width, 58);
     button(t, g.buttons[Back], tr(STR_WORDS_RETURN), false, m.keyboardFocus && m.focus == 1);
     return;
+  }
+  if ((m.noticeSaveFailed || (m.skipped && !m.noticeDismissed)) && (m.view == View::Home || isList(m.view))) {
+    const int height = body.width > body.height ? 56 : 80;
+    const auto notice = fui::makeRect(body.x, body.y, body.width - 132, height - 8);
+    prose(t, notice, m.noticeSaveFailed ? tr(STR_WORDS_NOTICE_SAVE_ERROR) : tr(STR_WORDS_RECORDS_SKIPPED), 3, false, 3);
+    g.buttons[DismissNotice] = fui::makeRect(body.right() - 120, body.y + (height - 52) / 2, 120, 44);
+    button(t, g.buttons[DismissNotice], tr(STR_UI_GOT_IT_C3A894));
+    body.y += height;
+    body.height -= height;
   }
   switch (m.view) {
     case View::Home:

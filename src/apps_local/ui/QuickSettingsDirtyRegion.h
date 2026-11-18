@@ -23,7 +23,7 @@ inline fui::Rect dirtyRegion(const Model& before, const Model& after, const Layo
   if (hasBluetoothStatus(before.bluetooth) != hasBluetoothStatus(after.bluetooth))
     return fui::makeRect(0, 0, width, layout.bottom);
   if (std::strcmp(before.time, after.time) || before.battery != after.battery || before.charging != after.charging ||
-      before.bluetooth != after.bluetooth)
+      before.bluetooth != after.bluetooth || before.wifiConnected != after.wifiConnected)
     add(layout.header);
   if (before.brightness != after.brightness || before.lightOn != after.lightOn) add(layout.brightness);
   if (before.warmth != after.warmth || before.lightOn != after.lightOn) add(layout.warmth);

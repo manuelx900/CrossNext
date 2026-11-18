@@ -46,15 +46,22 @@ void build(Screen& screen, const Model& model, Work& work) {
   header.back = true;
   fui::TextStyle text;
   text.font = 0;
+  text.align = fui::TextAlign::Center;
+  char caption[128]{};
+  if (model.saveLabel) pixelui::copyNatural(caption, sizeof(caption), model.saveLabel);
   const auto safe = screen.device().safeRect();
-  const int saveWidth = model.saveLabel ? screen.target().measureText(0, model.saveLabel, text).width + 32 : 0;
+  const int saveWidth = model.saveLabel ? screen.target().measureText(0, caption, text).width + 32 : 0;
   header.titleReserve = saveWidth ? saveWidth + 12 : 0;
   pixelui::header(screen.target(), screen.device(), header);
   screen.frame().hit(pixelui::geometry(screen.device()).back, Back, 0, fui::InputTouch);
   if (model.saveLabel) {
     const auto button = fui::makeRect(safe.right() - saveWidth - 12, area.header.bottom() - 60, saveWidth, 48);
     screen.target().fill(button, fui::Paint::solid(fui::Color::White));
-    pixelui::text(screen.target(), button, model.saveLabel, 0, fui::Color::Black, fui::TextAlign::Center);
+    const auto ink = screen.target().inkBounds(0, caption, text);
+    auto label = button;
+    label.y += (button.height - ink.height) / 2 - ink.y;
+    label.height = screen.target().lineHeight(0);
+    screen.target().text(label, caption, text);
     screen.frame().hit(button, Save, 0, fui::InputTouch);
   }
   if (model.lookup) {

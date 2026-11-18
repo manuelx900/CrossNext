@@ -17,6 +17,10 @@ fs.writeFileSync(path.join(appPath, 'package.json'), JSON.stringify({name: 'cros
 fs.writeFileSync(path.join(appPath, 'bootstrap.cjs'), "require('./shell/main.cjs');");
 const card = path.join(fixture, 'Card');
 assert.equal(spawnSync(process.platform === 'win32' ? 'python' : 'python3', [path.join(__dirname, 'make_desktop_fixture.py'), card]).status, 0);
+async function startPreparation(page) {
+  await page.locator('#start').click();
+  await page.locator('#prepare-confirm').click();
+}
 let app;
 (async () => {
   // Runs on the test host: this reproduces the Mac bundle layout and the false
@@ -27,7 +31,7 @@ let app;
   await app.evaluate(({dialog}, card) => { dialog.showOpenDialog = async () => ({canceled: false, filePaths: [card]}); }, card);
   await page.locator('#browse').click();
   await page.waitForFunction(() => !document.querySelector('#start').disabled, {}, {timeout: 60000});
-  await page.locator('#start').click();
+  await startPreparation(page);
   await page.waitForFunction(() => document.querySelector('#status').textContent === 'Tu biblioteca está lista' && !document.querySelector('#start').disabled, {}, {timeout: 120000});
   assert.ok(fs.readdirSync(path.join(card, '.crosspoint')).some(name => name.startsWith('epub_')));
   await page.screenshot({path: path.join(output, 'finished.png'), scale: 'css'});

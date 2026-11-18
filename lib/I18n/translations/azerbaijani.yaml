@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Əsas menyuya qayıdanda kitab üzlükləri tam 
 STR_HOME_COVER_NOTICE_DURING: "Yüklənmə zamanı müvəqqəti üzlüklər və yüklənmə bildirişi görünür. Hazır olduqda üzlüklər avtomatik göstərilir."
 STR_HOME_COVER_NOTICE_DISABLED: "Bunu söndürsəniz, oxuyucu əsas menyunu göstərməzdən əvvəl üzlükləri yükləyir və menyuya qayıtmaq daha uzun çəkə bilər."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Beləliklə, kitabdan və ya başqa bölmədən çıxanda daha az gözləyir, üzlüklərin hazır olmasını gözləmədən əsas menyuya daha tez qayıdırsınız."
+STR_WORDS_STORAGE_ERROR: "Saxlanmış sözlərə giriş mümkün olmadı. SD kartın taxıldığını və yazmağa açıq olduğunu yoxlayın."
+STR_WORDS_RECORDS_SKIPPED: "Bəzi saxlanmış qeydlər oxunmadı. Onlar silinmədən ötürüldü."
+STR_WORDS_NOTICE_SAVE_ERROR: "Seçiminizi yadda saxlamaq mümkün olmadı. SD kartdakı boş yeri və yazma imkanını yoxlayın."

@@ -41,6 +41,7 @@ class ReviewSession {
   }
   int count() const { return count_; }
   const Entry& entry(int index) const { return entries_[index]; }
+  void skip(int index) { entries_[index].finished = true; }
   void add(const Word& word, const Context& context) {
     if (selection_ == Selection::AllSaved && std::strcmp(word.id, after_) <= 0) return;
     for (int n = 0; n < count_; ++n)

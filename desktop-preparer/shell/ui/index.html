@@ -9,6 +9,7 @@
   <script src="size-policy.js" defer></script>
   <script src="app.js" defer></script>
   <script src="font-panel.js" defer></script>
+  <script src="cache-safety.js" defer></script>
 </head>
 <body>
   <a href="#main" class="skip" data-i18n="skip">Ir al contenido</a>
@@ -23,7 +24,7 @@
         <li id="step-options"><span class="step-number">2</span><span><strong data-i18n="personalize">Ajusta la preparación</strong><small data-i18n="personalizeHint">Formatos, fuentes y tamaños</small></span></li>
         <li id="step-run"><span class="step-number">3</span><span><strong data-i18n="read">Prepara y sigue leyendo</strong><small data-i18n="readHint">Lleva la biblioteca al lector</small></span></li>
       </ol>
-      <div class="sidebar-footer">X4 Pro <span>·</span> Book Preparer 2.0.0</div>
+      <div class="sidebar-footer">X4 Pro <span>·</span> Book Preparer 2.0.3</div>
     </aside>
     <div class="workspace">
       <main id="main" tabindex="-1">
@@ -34,6 +35,7 @@
               <div class="section-heading"><span class="section-number">01</span><h2 id="card-heading" data-i18n="cardHeading">Conecta tu biblioteca</h2><span class="badge" id="card-badge" data-i18n="notConnected">Sin conectar</span></div>
               <div class="card-picker" id="card-picker"><span class="sd-icon"><svg viewBox="0 0 40 44" aria-hidden="true"><path d="M12 3h20a3 3 0 0 1 3 3v32a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V12z"/><path d="M15 4v10M21 4v10M27 4v10M13 25h14M13 31h10"/></svg></span><div class="card-location"><strong id="card-name" data-i18n="chooseCard">Selecciona tu microSD</strong><span id="card-path" tabindex="0" data-i18n="cardHint">Elige la raíz de la tarjeta, no una carpeta de libros.</span></div><button id="browse" class="button secondary" data-i18n="browse">Elegir tarjeta</button></div>
               <div class="card-meta"><span id="profile-hint" data-i18n="autoSettings">Detectaremos los ajustes de lectura automáticamente.</span><button id="refresh" class="text-button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.8 1 6.5 2.5L21 8"/><path d="M21 3v5h-5"/></svg><span data-i18n="refresh">Actualizar</span></button></div>
+              <div class="storage-row"><span id="card-space" role="status"></span><button id="cache-open" type="button" class="text-button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></svg><span data-cache-i18n="cleanup">Eliminar caché de CrossPoint</span></button></div>
             </section>
             <section class="options-section" aria-labelledby="options-heading">
               <div class="section-heading"><span class="section-number">02</span><h2 id="options-heading" data-i18n="optionsHeading">Selecciona qué preparar</h2><span class="subtle" data-i18n="readerDefaults">Ajustes del lector por defecto</span></div>
@@ -43,6 +45,7 @@
                 <div class="reading-grid"><div class="font-column"><div class="label-row"><label for="font-search" data-i18n="readingFonts">Fuentes de lectura</label><span class="subtle" id="font-count" role="status" aria-live="polite">—</span></div><input id="font-search" type="search" data-placeholder="searchFonts" placeholder="Buscar fuente…" autocomplete="off" aria-controls="font-list"><div class="font-actions"><button id="select-all-fonts" type="button" class="text-button" aria-controls="font-list" data-i18n="selectAllFonts" data-i18n-label="selectAllFontsLabel">Select all</button><button id="deselect-all-fonts" type="button" class="text-button" aria-controls="font-list" data-i18n="deselectAllFonts" data-i18n-label="deselectAllFontsLabel">Deselect all</button></div><div class="font-list" id="font-list" role="group" aria-label="Fuentes de lectura / Reading fonts"><p class="empty-fonts" data-i18n="fontsEmpty">Las fuentes de tu tarjeta aparecerán aquí.</p></div></div><div class="layout-column"><label for="sizes" data-i18n="fontSize">Tamaño de texto</label><select id="sizes" aria-describedby="size-hint"><option value="current" data-i18n="readerSize">Tamaño del lector</option></select><p class="field-hint" id="size-hint" data-i18n="sizeHint">Se utilizan solo tamaños compatibles con cada fuente.</p><button id="more-sizes" type="button" class="text-button size-disclosure" aria-expanded="false" aria-controls="sizes" data-i18n="moreSizes">Más tamaños</button><label for="engine" data-i18n="engine">Motor EPUB</label><select id="engine"><option value="0" data-i18n="modern">Nuevo</option><option value="1" data-i18n="classic">Clásico</option></select><p class="field-hint" data-i18n="engineHint">Usa el mismo motor en el lector para aprovechar las páginas preparadas.</p></div></div>
               </fieldset>
               <p id="validation" role="alert" class="validation" hidden></p>
+              <p class="cache-tip" data-cache-i18n="recommend">Para empezar, elige una fuente y un tamaño. Cada combinación EPUB guarda páginas aparte y ocupa más espacio.</p>
             </section>
           </div>
           <aside class="reading-note" aria-label="Información / Information">
@@ -61,5 +64,19 @@
       </footer>
     </div>
   </div>
+  <dialog id="prepare-warning" class="safety-dialog" aria-labelledby="prepare-warning-title" aria-describedby="prepare-warning-description">
+    <div class="dialog-body" tabindex="0"><span class="dialog-eyebrow" data-cache-i18n="beforePreparing">ANTES DE PREPARAR</span><h2 id="prepare-warning-title" data-cache-i18n="reviewSelection">Revisa el espacio que vas a utilizar</h2><p id="prepare-warning-description" data-cache-i18n="combinationWarning">Cada fuente y tamaño genera su propia paginación para cada EPUB. Elegir muchas combinaciones puede llenar la microSD.</p>
+      <div class="storage-metrics"><div><span data-cache-i18n="layoutsLabel">Combinaciones EPUB</span><strong id="prepare-layouts">—</strong></div><div><span data-cache-i18n="availableLabel">Espacio disponible</span><strong id="prepare-free">—</strong></div></div>
+      <div id="prepare-recommendation" class="safety-note"><strong data-cache-i18n="recommendedTitle">Recomendado: una fuente y un tamaño</strong><p data-cache-i18n="recommendedBody">Usa los que lees habitualmente. Puedes preparar otras combinaciones más adelante, cuando las necesites.</p></div><p class="dialog-fine" data-cache-i18n="unknownSize">El espacio final depende de tus libros y de los bloques de la tarjeta; no se puede calcular exactamente de antemano.</p><p id="prepare-space-error" class="dialog-error" role="alert" hidden></p>
+    </div><div class="dialog-actions"><button id="prepare-back" type="button" class="button secondary" autofocus data-cache-i18n="reviewOptions">Revisar selección</button><button id="prepare-reader" type="button" class="text-button" data-cache-i18n="useReader">Usar fuente y tamaño del lector</button><button id="prepare-confirm" type="button" class="button primary" data-cache-i18n="prepareNow">Preparar biblioteca</button></div>
+  </dialog>
+  <dialog id="cache-dialog" class="safety-dialog" aria-labelledby="cache-title">
+    <div class="dialog-body" tabindex="0"><span class="dialog-eyebrow" data-cache-i18n="cardMaintenance">ESPACIO DE LA TARJETA</span><h2 id="cache-title" data-cache-i18n="cleanup">Eliminar caché de CrossPoint</h2><p data-cache-i18n="preserve">Se conservan tus libros, ajustes, progreso, estadísticas, palabras y partidas.</p>
+      <fieldset id="cache-options" class="cleanup-options"><legend class="sr-only" data-cache-i18n="cleanupMode">Qué caché eliminar</legend><label class="cleanup-choice"><input type="radio" name="cache-mode" value="period" checked><span><strong data-cache-i18n="byDate">Páginas preparadas por fecha</strong><small data-cache-i18n="byDateHint">Quita las combinaciones creadas o actualizadas en el periodo elegido. Las páginas anteriores se conservan.</small></span></label><div id="cache-dates" class="date-fields"><label><span data-cache-i18n="fromDate">Desde</span><input id="cache-from" type="date" required></label><label><span data-cache-i18n="toDate">Hasta, incluido</span><input id="cache-to" type="date" required></label></div><label class="cleanup-choice"><input type="radio" name="cache-mode" value="all"><span><strong data-cache-i18n="allCache">Toda la caché de libros</strong><small data-cache-i18n="allCacheHint">Páginas, portadas, imágenes e índices generados. El lector los volverá a preparar cuando los necesite.</small></span></label></fieldset>
+      <p id="cache-date-caution" class="dialog-fine" data-cache-i18n="dateCaution">Se usa la última modificación del archivo. Esto libera espacio; no recupera versiones anteriores sobrescritas.</p>
+      <p id="cache-selection" hidden></p><div id="cache-summary" class="cache-summary" hidden><div class="storage-metrics"><div><span data-cache-i18n="recoverableLabel">Espacio estimado a liberar</span><strong id="cache-bytes">—</strong></div><div><span data-cache-i18n="filesLabel">Archivos de caché</span><strong id="cache-count">—</strong></div></div><p id="cache-validations" class="dialog-fine"></p><p class="dialog-fine" data-cache-i18n="blockHint">El espacio en disco puede superar el tamaño de los archivos porque la tarjeta reserva bloques completos.</p></div>
+      <label id="cache-consequence" class="safety-note cache-confirmation" hidden><input id="cache-understood" type="checkbox"><span data-cache-i18n="consequence">Entiendo que tendré que volver a preparar la caché eliminada y que esta acción no se puede deshacer.</span></label><p id="cache-status" role="status" aria-live="polite"></p><p id="cache-error" class="dialog-error" role="alert" hidden></p>
+    </div><div class="dialog-actions"><button id="cache-close" type="button" class="button secondary" autofocus data-cache-i18n="close">Cerrar</button><button id="cache-review" type="button" class="text-button" hidden data-cache-i18n="changePeriod">Cambiar selección</button><button id="cache-preview" type="button" class="button primary" data-cache-i18n="preview">Revisar qué se eliminará</button><button id="cache-delete" type="button" class="button destructive" hidden data-cache-i18n="deleteCache">Eliminar esta caché</button></div>
+  </dialog>
 </body>
 </html>

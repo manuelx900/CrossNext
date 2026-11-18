@@ -39,6 +39,7 @@ bool ExportJob::begin(Purpose collection, const char* path, int spine, const cha
   filterDictionary = dictionary ? dictionary : "";
   filterSpine = spine;
   prepared = 0;
+  skipped_ = 0;
   // Two slots per matching source note bounds the load factor to at most 1/2.
   if (count > (UINT32_MAX / slotBytes - 1) / 2 || !Storage.ensureDirectoryExists("/WORDS")) {
     fail();
@@ -65,9 +66,10 @@ bool ExportJob::begin(Purpose collection, const char* path, int spine, const cha
   return true;
 }
 void ExportJob::readNext() {
-  auto file = directory.openNextFile();
+  bool ioError = false;
+  auto file = directory.openNextFile(ioError);
   if (!file) {
-    if (!Storage.ready())
+    if (ioError || !Storage.ready())
       fail();
     else
       phase = Phase::Commit;
@@ -76,7 +78,10 @@ void ExportJob::readNext() {
   if (!recordId(file, kContexts, buffer)) return;
   const auto result = records.context(buffer, context);
   if (result == Read::Error) {
-    fail();
+    if (!Storage.ready())
+      fail();
+    else
+      ++skipped_;
     return;
   }
   if (result != Read::Ok || context.purpose != purpose || (*filterPath && std::strcmp(filterPath, context.path)) ||
@@ -84,7 +89,10 @@ void ExportJob::readNext() {
     return;
   const auto found = records.word(context.word, word);
   if (found == Read::Error) {
-    fail();
+    if (!Storage.ready())
+      fail();
+    else
+      ++skipped_;
     return;
   }
   if (found != Read::Ok || (*filterDictionary && std::strcmp(filterDictionary, word.dictionary))) return;

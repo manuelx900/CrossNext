@@ -11,6 +11,10 @@ const card=fs.mkdtempSync(path.join(output,'Tarjeta-日本語-'));
 const fixture=spawnSync('python',[path.join(__dirname,'make_desktop_fixture.py'),card],{encoding:'utf8'});
 assert.equal(fixture.status,0,fixture.stderr);
 const protectedFiles=['.crosspoint/settings.json','.crosspoint/reading/stats.json','books/Un capítulo — 日本語.epub'].map(name=>[path.join(card,name),fs.readFileSync(path.join(card,name))]);
+async function startPreparation(page) {
+  await page.locator('#start').click();
+  await page.locator('#prepare-confirm').click();
+}
 let app;
 const results=[];
 (async()=>{
@@ -39,17 +43,17 @@ const results=[];
   assert.equal(await page.locator('#engine').inputValue(),'1');
   await page.locator('#engine').selectOption('0');
 
-  await page.locator('#start').click();
+  await startPreparation(page);
   await page.waitForFunction(()=>document.querySelector('#status').textContent==='Preparando biblioteca…',{},{timeout:60000});
   // Cancel before screenshots/accessibility scans can outlast a fast job.
   await page.locator('#cancel').click();
   await page.waitForFunction(()=>document.querySelector('#status').textContent==='Preparación cancelada' && !document.querySelector('#start').disabled,{},{timeout:60000});
-  await page.locator('#start').click();
+  await startPreparation(page);
   await page.waitForFunction(()=>document.querySelector('#status').textContent==='Tu biblioteca está lista' && !document.querySelector('#start').disabled,{},{timeout:120000});
   await page.screenshot({path:path.join(output,'finished.png')});
   assert.ok(fs.readdirSync(path.join(card,'.crosspoint')).some(name=>name.startsWith('epub_')));
   for(const [name,contents] of protectedFiles) assert.deepEqual(fs.readFileSync(name),contents,name);
-  await page.locator('#start').click();
+  await startPreparation(page);
   await page.waitForFunction(()=>document.querySelector('#status').textContent==='Tu biblioteca está lista' && !document.querySelector('#start').disabled,{},{timeout:60000});
   assert.match(await page.locator('#status-detail').textContent(),/1 ya preparados/);
   console.log('PASS real engine, Unicode paths, cancel, resume, book/settings/progress preservation');
@@ -163,7 +167,7 @@ const results=[];
   assert.deepEqual(await page.locator('#sizes option').evaluateAll(nodes=>nodes.map(n=>n.value)),['current','24','28','32','all']);
   await page.evaluate(()=>{globalThis.workerEvents=[];window.preparer.onEvent(event=>globalThis.workerEvents.push(event));});
   await page.locator('#sizes').selectOption('28');
-  await page.locator('#start').click();
+  await startPreparation(page);
   await page.waitForFunction(()=>globalThis.workerEvents.some(event=>event.type==='error' && event.message.includes('Font is not installed')) && !document.querySelector('#browse').disabled,{},{timeout:30000});
   assert.ok(!/Font is not installed|The preparation engine stopped/.test(await page.locator('#status-detail').textContent()));
   // The synthetic family passes the shell's large-size validation and is rejected
@@ -173,7 +177,7 @@ const results=[];
     const w=BrowserWindow.getAllWindows()[0];w.webContents.send('job-event',{type:'started',mode:'inspect'});w.webContents.send('job-event',catalog);w.webContents.send('job-event',{type:'idle',okay:true,diagnostics:false});
   },vector);
   await page.waitForFunction(()=>document.querySelector('#font-list input')?.value==='Vector');
-  await page.locator('#sizes').selectOption('usual');await page.locator('#start').click();
+  await page.locator('#sizes').selectOption('usual');await startPreparation(page);
   const captured=await app.evaluate(()=>new Promise((resolve,reject)=>{
     const timer=setInterval(()=>{if(globalThis.capturedPreparation){clearInterval(timer);clearTimeout(deadline);resolve(globalThis.capturedPreparation);}},10);
     const deadline=setTimeout(()=>{clearInterval(timer);reject(Error('Missing preparation request'));},5000);

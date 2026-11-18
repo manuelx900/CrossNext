@@ -263,7 +263,6 @@ int main(int argc, char** argv) {
       Canvas c(480, 800);
       c.target.setFont(4, c.reading.font);
       c.target.setFont(2, c.readingBold.font);
-      c.target.setFont(3, c.library.font);
       wordsui::Geometry g;
       pagedtext::Work work;
       m.textPage = page;
@@ -389,6 +388,14 @@ int main(int argc, char** argv) {
           if (label.value == model.saveLabel) {
             CHECK(label.box.y >= area.header.y);
             CHECK(label.box.bottom() <= area.header.bottom());
+            fui::TextStyle style;
+            style.font = 0;
+            const auto ink = c.target.inkBounds(0, label.value.c_str(), style);
+            for (size_t n = 0; n < c.interactions.count(); ++n) {
+              const auto& action = c.interactions.data()[n];
+              if (action.action != dictionaryui::Save) continue;
+              CHECK(std::abs(2 * (label.box.y + ink.y) + ink.height - (2 * action.rect.y + action.rect.height)) <= 1);
+            }
           }
         save(c, "dictionary-chrome");
       }
@@ -450,11 +457,12 @@ int main(int argc, char** argv) {
           wordsui::Geometry g;
           pagedtext::Work work;
           m.view = view;
+          if (wordsui::isList(view)) c.target.setFont(1, c.prose.font);
           m.total = 12;
           m.count = m.capacity = wordsui::listCapacity(view, w, h);
           m.saved = 18;
           m.pending = m.due = 5;
-          m.term = "curious";
+          m.term = "Curious";
           m.meaning = "curioso";
           m.language = "EN > ES";
           m.book = "Alice in Wonderland";
@@ -472,8 +480,7 @@ int main(int argc, char** argv) {
           if (view == wordsui::View::List && variant == 1) m.total = m.count = 0;
           if (view == wordsui::View::List && variant == 2) m.message = tr(STR_WORDS_SESSION_DONE);
           for (int n = 0; n < m.capacity; ++n) {
-            std::snprintf(m.rows[n].label, sizeof(m.rows[n].label), "curious %d", n);
-            std::snprintf(m.rows[n].source, sizeof(m.rows[n].source), "curioso");
+            std::snprintf(m.rows[n].label, sizeof(m.rows[n].label), "Curious %d", n);
           }
           pixelui::Header header;
           header.title = tr(STR_WORDS_APP);
@@ -481,8 +488,7 @@ int main(int argc, char** argv) {
           pixelui::header(c.screen, header);
           if (view == wordsui::View::Detail || view == wordsui::View::Review) {
             c.target.setFont(4, c.reading.font);
-            c.target.setFont(2, c.readingBold.font);
-            c.target.setFont(3, c.library.font);
+            c.target.setFont(2, view == wordsui::View::Review && m.answer ? c.readingBold.font : c.reading.font);
           }
           wordsui::build(c.screen, m, g, work);
           if (view == wordsui::View::Waiting) {
@@ -495,19 +501,14 @@ int main(int argc, char** argv) {
             CHECK(help && c.has(wordsui::Back));
           }
           if (view == wordsui::View::Detail || view == wordsui::View::Review) {
-            bool term = false, prefix = false;
+            bool term = false;
             for (const auto& line : c.target.labels) {
               if (line.value == m.term) {
                 term = true;
-                CHECK(!line.bold);
-              }
-              if (line.value == tr(STR_WORDS_TERM_LABEL)) {
-                prefix = true;
-                CHECK(line.bold);
+                CHECK(line.bold == (view == wordsui::View::Review && m.answer));
               }
             }
             CHECK(term);
-            CHECK(prefix == (view != wordsui::View::Review || m.answer));
           }
           if (view == wordsui::View::Detail) {
             CHECK(c.has(wordsui::Passage) && c.has(wordsui::Delete) && c.has(wordsui::ReviewWord));
@@ -589,6 +590,44 @@ int main(int argc, char** argv) {
         wordsui::build(c.screen, m, g, work);
         CHECK(c.label("123"));
         save(c, "words-all-saved", answer);
+      }
+      for (auto view : {wordsui::View::Home, wordsui::View::List, wordsui::View::WordList}) {
+        Canvas c(w, h);
+        wordsui::Model m;
+        wordsui::Geometry g;
+        pagedtext::Work work;
+        m.view = view;
+        if (wordsui::isList(view)) c.target.setFont(1, c.prose.font);
+        m.skipped = 2;
+        m.saved = m.total = 12;
+        m.pending = 5;
+        m.count = m.capacity = wordsui::listCapacity(view, w, h);
+        m.filter = tr(STR_WORDS_COLLECTION);
+        for (int n = 0; n < m.count; ++n) std::snprintf(m.rows[n].label, sizeof(m.rows[n].label), "Curious %d", n);
+        pixelui::Header header;
+        header.title = tr(STR_WORDS_APP);
+        header.back = true;
+        pixelui::header(c.screen, header);
+        wordsui::build(c.screen, m, g, work);
+        CHECK(c.label(tr(STR_WORDS_RECORDS_SKIPPED)));
+        CHECK(c.has(wordsui::DismissNotice));
+        if (wordsui::isList(view)) CHECK(c.hits(wordsui::Open) == m.count);
+        save(c, view == wordsui::View::Home   ? "words-notice-home"
+                : view == wordsui::View::List ? "words-notice-list"
+                                              : "words-notice-full");
+        m.noticeDismissed = true;
+        Canvas dismissed(w, h);
+        if (wordsui::isList(view)) dismissed.target.setFont(1, dismissed.prose.font);
+        wordsui::build(dismissed.screen, m, g, work);
+        CHECK(!dismissed.has(wordsui::DismissNotice));
+        CHECK(!dismissed.label(tr(STR_WORDS_RECORDS_SKIPPED)));
+        m.noticeSaveFailed = true;
+        Canvas writeFailed(w, h);
+        wordsui::build(writeFailed.screen, m, g, work);
+        CHECK(writeFailed.has(wordsui::DismissNotice));
+        CHECK(writeFailed.label(tr(STR_WORDS_NOTICE_SAVE_ERROR)));
+        save(writeFailed,
+             view == wordsui::View::Home ? "words-notice-write-failed-home" : "words-notice-write-failed-list");
       }
       Canvas wall(w, h);
       const auto grid = wallpapersui::gridGeom(wall.device);

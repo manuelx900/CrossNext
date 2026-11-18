@@ -7,31 +7,19 @@
 #include <time.h>
 
 HalClock halClock;  // Singleton instance
+namespace {
+time_t epochFromUtc(const Rtc::DateTime& dt);
+}
 
 void HalClock::begin() {
   _available = _sdkRtc.begin();
   LOG_INF("CLK", _available ? "SDK RTC found" : "RTC not found");
 
-  // Load the hardware RTC into system time. Nothing else ever did: time()
-  // started at the 1970 epoch on every hard boot (flash, reset, battery loss)
-  // and stayed there until an NTP sync happened to run in that power cycle.
-  // The status-bar clock hid it by reading the RTC chip directly, while every
-  // consumer of time() -- Connections' today(), Study's due dates, the
-  // clock-predates-build resync check -- saw 1970. Deep-sleep wakes preserve
-  // system time, which is why the X4 Pro rarely showed it and a
-  // frequently-reflashed device always did. The RTC stores UTC (the NTP path
-  // writes it as UTC); a year before 2020 means the chip itself was never
-  // set, and epoch is no worse than garbage, so leave system time alone.
+  // RTC fields are UTC regardless of the process timezone. An unset RTC must
+  // not replace the system clock retained across a deep-sleep wake.
   Rtc::DateTime dt;
   if (_available && _sdkRtc.now(dt) && dt.year >= 2020) {
-    struct tm t = {};
-    t.tm_year = dt.year - 1900;
-    t.tm_mon = dt.month - 1;
-    t.tm_mday = dt.day;
-    t.tm_hour = dt.hour;
-    t.tm_min = dt.minute;
-    t.tm_sec = dt.second;
-    const time_t epoch = mktime(&t);  // TZ unset on device: interpreted as UTC
+    const time_t epoch = epochFromUtc(dt);
     if (epoch > 0) {
       struct timeval tv = {};
       tv.tv_sec = epoch;
@@ -66,6 +54,13 @@ void HalClock::setTimezone(const char* posixTz) {
 
 bool HalClock::localTime(struct tm& out) const {
   if (!_available) return false;
+
+  const time_t epoch = time(nullptr);
+  struct tm local{};
+  if (epoch > 0 && localtime_r(&epoch, &local) && local.tm_year >= 120) {
+    out = local;
+    return true;
+  }
 
   const unsigned long now = millis();
   if (_lastPollMs == 0 || (now - _lastPollMs) >= CLOCK_POLL_MS) {

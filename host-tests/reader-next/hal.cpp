@@ -19,6 +19,26 @@ int main() {
   CHECK(Storage.mkdir("/.crosspoint"));
   CHECK(Storage.resourceRevision() != initial);
   auto resource = Storage.resourceRevision();
+  for (const auto* path :
+       {"/.crosspoint/vocabulary/words/0123456789abcdef0123456789abcdef.dat",
+        "/.crosspoint/vocabulary/contexts/0123456789abcdef0123456789abcdef.tmp",
+        "/.crosspoint/vocabulary/contexts/0123456789abcdef0123456789abcdef.bak",
+        "/.crosspoint/vocabulary/.list-words.tmp", "/.crosspoint/vocabulary/.list-language.tmp",
+        "/.crosspoint/vocabulary/.notice-current.tmp", "/.crosspoint/vocabulary/.notice-accepted.bin",
+        "/.crosspoint/vocabulary/acknowledged/01/0123456789abcdef0123456789abcdef.ack"}) {
+    HalFile record;
+    CHECK(Storage.openFileForWrite("T", path, record));
+    CHECK(record.write(uint8_t(3)) == 1);
+    CHECK(Storage.resourceRevision() == resource);
+  }
+  for (const auto* path : {"/.crosspoint/vocabulary/words/0123456789abcdef0123456789abcdeg.dat",
+                           "/.crosspoint/vocabulary/words/0123456789abcdef0123456789abcdef.dat.other",
+                           "/.crosspoint/vocabulary/words/../font.cpfont",
+                           "/.crosspoint/vocabulary/other/0123456789abcdef0123456789abcdef.dat",
+                           "/.crosspoint/vocabulary/acknowledged/ab/0123456789abcdef0123456789abcdef.ack",
+                           "/.crosspoint/vocabulary/acknowledged/01/0123456789abcdef0123456789abcdef.ack.other",
+                           "/.crosspoint/vocabulary/.notice-accepted.bin.other"})
+    CHECK(storageMutation(path) == StorageMutation::Resources);
   CHECK(!Storage.mkdir("/.crosspoint"));
   CHECK(Storage.ensureDirectoryExists("/.crosspoint"));
   CHECK(Storage.resourceRevision() == resource);

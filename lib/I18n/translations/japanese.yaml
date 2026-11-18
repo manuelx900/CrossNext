@@ -8482,3 +8482,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "ホームに戻ると、本の表紙の読み込
 STR_HOME_COVER_NOTICE_DURING: "読み込み中は仮の表紙と読み込み案内が表示されます。準備ができると、表紙が自動的に表示されます。"
 STR_HOME_COVER_NOTICE_DISABLED: "この設定を無効にすると、表紙を読み込んでからホームを表示するため、戻るまでに時間がかかる場合があります。"
 STR_HOME_COVER_NOTICE_ADVANTAGE: "本や他の画面を閉じた後、表紙の準備を待たずに、より短い待ち時間でホームに戻れます。"
+STR_WORDS_STORAGE_ERROR: "保存した単語にアクセスできません。SD カードが挿入され、書き込み可能であることを確認してください。"
+STR_WORDS_RECORDS_SKIPPED: "一部の保存データを読み込めなかったため、スキップしました。削除はしていません。"
+STR_WORDS_NOTICE_SAVE_ERROR: "選択内容を保存できませんでした。SD カードの空き容量と書き込み権限を確認してください。"

@@ -491,3 +491,16 @@ Older one/two-line saves default to folder origin. Opening a folder clears the
 open shortcut and restores normal folder navigation.
 
 Carousel 2 and Bookshelf folder menus use unboxed regular labels, gray separators and a compact footer with page controls. Their page capacity uses the same row height for drawing and navigation. Framed and Carousel retain their existing bordered rows and paginators.
+
+Games and Apps share the same folder screen. Navigation metadata is coalesced
+and saved after the destination's first completed drawing, with failed writes
+retried at most once a second. Sleep forces pending metadata to storage. Game
+saves and app records retain their own persistence rules. An abrupt loss of
+power before the deferred save can restore the previous navigation position;
+this does not discard a game's own saved progress.
+
+All appearances read the running system clock that is restored from the UTC
+RTC at boot and updated by synchronization. Header clocks use the same source
+as Home, including across minute/date changes and timezone adjustments. RTC
+restoration interprets its fields as UTC even if a process timezone is already
+set; normal header reads do not poll the hardware RTC while system time is valid.

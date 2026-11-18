@@ -70,7 +70,7 @@ def build(arch):
         info.external_attr = (stat.S_IFREG | 0o644) << 16
         bundle.writestr(info, json.dumps(package, indent=2))
         for source in (ROOT / 'shell').rglob('*'):
-            if source.is_file() and (source.name in ('main.cjs', 'preload.cjs', 'platform.cjs') or 'ui' in source.parts or 'assets' in source.parts):
+            if source.is_file() and (source.name in ('main.cjs', 'preload.cjs', 'platform.cjs', 'card-storage.cjs', 'cache-cleaner.cjs') or 'ui' in source.parts or 'assets' in source.parts):
                 add_file(bundle, source, APP + '/Contents/Resources/app/' + source.relative_to(ROOT).as_posix())
         for source in (ROOT / 'build/desktop-runtime').iterdir():
             if source.is_file():

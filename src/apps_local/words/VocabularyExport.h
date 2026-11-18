@@ -15,6 +15,7 @@ class ExportJob {
   bool idle() const { return phase == Phase::Idle; }
   bool finished() const { return phase == Phase::Done || phase == Phase::Failed; }
   bool succeeded() const { return phase == Phase::Done; }
+  unsigned skipped() const { return skipped_; }
 
  private:
   enum class Phase : uint8_t { Idle, Prepare, Read, Probe, Append, Commit, Done, Failed };
@@ -29,6 +30,7 @@ class ExportJob {
   Phase phase = Phase::Idle;
   uint32_t slots = 0, prepared = 0, slot = 0, probes = 0;
   unsigned field = 0, offset = 0;
+  unsigned skipped_ = 0;
   char buffer[96]{};
   void fail();
   void close();

@@ -139,6 +139,13 @@ bool StorageRecords::replace(const char* dir, const T& value) {
 }
 Read StorageRecords::word(const char* id, Word& w) { return read(kWords, id, w); }
 Read StorageRecords::context(const char* id, Context& c) { return read(kContexts, id, c); }
+Read StorageRecords::context(HalFile& file, const char* id, Context& value) {
+  const auto size = file.size();
+  if (validId(id) && size >= 20 && size <= sizeof(bytes) && file.read(bytes, size) == static_cast<int>(size) &&
+      decode(bytes, size, value) && !std::strcmp(value.id, id))
+    return Read::Ok;
+  return context(id, value);
+}
 bool StorageRecords::put(const Word& w) { return replace(kWords, w); }
 bool StorageRecords::put(const Context& c) { return replace(kContexts, c); }
 bool StorageRecords::remove(const char* dir, const char* id) {

@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Grįžus į pagrindinį meniu, jis pasirodo dar 
 STR_HOME_COVER_NOTICE_DURING: "Kol jie keliami, matomi laikini viršeliai ir įkėlimo pranešimas. Paruošti viršeliai pasirodo automatiškai."
 STR_HOME_COVER_NOTICE_DISABLED: "Išjungus šią parinktį, skaityklė pirmiausia įkelia viršelius ir tik tada rodo meniu, todėl grįžimas gali užtrukti ilgiau."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Taip išėję iš knygos ar kito skyriaus laukiate mažiau ir greičiau grįžtate į pagrindinį meniu, nelaukdami viršelių."
+STR_WORDS_STORAGE_ERROR: "Nepavyko pasiekti išsaugotų žodžių. Patikrinkite, ar SD kortelė įdėta ir į ją galima rašyti."
+STR_WORDS_RECORDS_SKIPPED: "Kai kurių išsaugotų įrašų nepavyko perskaityti. Jie praleisti, bet neištrinti."
+STR_WORDS_NOTICE_SAVE_ERROR: "Nepavyko išsaugoti pasirinkimo. Patikrinkite laisvą vietą SD kortelėje ir rašymo teises."

@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Po powrocie do menu głównego pojawia się ono,
 STR_HOME_COVER_NOTICE_DURING: "Podczas wczytywania widzisz tymczasowe okładki i komunikat. Gotowe okładki pojawiają się automatycznie."
 STR_HOME_COVER_NOTICE_DISABLED: "Jeśli wyłączysz tę opcję, czytnik najpierw wczyta okładki, a potem pokaże menu, więc powrót może potrwać dłużej."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Dzięki temu po wyjściu z książki lub innej sekcji czekasz krócej i szybciej wracasz do menu głównego, bez czekania na okładki."
+STR_WORDS_STORAGE_ERROR: "Nie można uzyskać dostępu do zapisanych słów. Sprawdź, czy karta SD jest włożona i umożliwia zapis."
+STR_WORDS_RECORDS_SKIPPED: "Niektórych zapisanych wpisów nie można odczytać. Zostały pominięte, ale nie usunięte."
+STR_WORDS_NOTICE_SAVE_ERROR: "Nie udało się zapisać wyboru. Sprawdź wolne miejsce na karcie SD i dostęp do zapisu."

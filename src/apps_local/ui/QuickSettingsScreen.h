@@ -107,7 +107,8 @@ enum : fui::ActionId {
   WarmthStep,
   Tile,
   ToggleWarmth,
-  BluetoothSettings
+  BluetoothSettings,
+  WifiSettings
 };
 struct Model {
   char time[8] = "--:--";
@@ -273,18 +274,23 @@ void build(Screen& screen, const Model& model, Work& work) {
   screen.sheet(sheet, g.bottom);
   pixelui::copyCaps(work.label, sizeof(work.label), chrome::lightHeader ? "" : tr(STR_SETTINGS_TITLE));
   pixelui::text(screen.target(), fui::makeRect(bar.x, bar.y, bar.width / 3, bar.height), work.label, pixelui::kSmall);
-  pixelui::text(screen.target(),
-                fui::makeRect(chrome::lightHeader ? g.header.x : g.header.x + g.header.width / 3, g.header.y,
-                              g.header.width / 3, bar.height),
-                model.time, pixelui::kSmall, fui::Color::Black,
-                chrome::lightHeader ? fui::TextAlign::Left : fui::TextAlign::Center);
   const auto battery =
       fui::makeRect(g.header.right() - statusbattery::width - statusbattery::terminal,
                     bar.y + (bar.height - statusbattery::height) / 2, statusbattery::width, statusbattery::height);
+  const auto wifi = fui::makeRect(battery.x - 126, bar.y, 44, bar.height);
+  auto clock = fui::makeRect(chrome::lightHeader ? bar.x : bar.x + bar.width / 3, bar.y, bar.width / 3, bar.height);
+  if (model.wifiConnected) clock.width = std::min<int>(clock.width, wifi.x - 8 - clock.x);
+  pixelui::text(screen.target(), clock, model.time, pixelui::kSmall, fui::Color::Black,
+                chrome::lightHeader ? fui::TextAlign::Left : fui::TextAlign::Center);
   std::snprintf(work.label, sizeof(work.label), "%d%%", model.battery);
   pixelui::text(screen.target(), fui::makeRect(battery.x - 74, bar.y, 66, bar.height), work.label,
                 chrome::lightHeader ? 0 : 3, fui::Color::Black, fui::TextAlign::Right);
   statusbattery::draw(screen.target(), battery, model.battery, model.charging, fui::Color::Black);
+  if (model.wifiConnected) {
+    const auto glyph = fui::makeRect(wifi.x + 2, wifi.y + (wifi.height - 40) / 2, 40, 40);
+    screen.target().bitmap(glyph, fui::bitmapFromIcon(icon(Shortcut::Wifi)), fui::BitmapMode::Contain);
+    screen.frame().hit(wifi, WifiSettings, 0, fui::InputTouch);
+  }
   if (bluetooth) {
     std::snprintf(work.label, sizeof(work.label), "%s: %s", tr(STR_BT_SHORT_NAME),
                   I18N.get(bluetoothui::bannerLabel(model.bluetooth)));

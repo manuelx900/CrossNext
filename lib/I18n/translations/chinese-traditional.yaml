@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "返回主選單時，不必等書籍封面載入
 STR_HOME_COVER_NOTICE_DURING: "載入過程中，你會看到暫用封面和載入提示。封面準備好後會自動顯示。"
 STR_HOME_COVER_NOTICE_DISABLED: "關閉此選項後，閱讀器會先載入封面，再顯示主選單，因此返回選單可能需要更長時間。"
 STR_HOME_COVER_NOTICE_ADVANTAGE: "這樣，離開書籍或其他功能時等待更少，不必等封面載入完成，就能更快返回主選單。"
+STR_WORDS_STORAGE_ERROR: "無法存取已儲存的單字。請確認 SD 卡已插入且可以寫入。"
+STR_WORDS_RECORDS_SKIPPED: "部分已儲存的紀錄無法讀取，已略過，但未刪除。"
+STR_WORDS_NOTICE_SAVE_ERROR: "無法儲存你的選擇。請檢查 SD 卡的剩餘空間和寫入權限。"

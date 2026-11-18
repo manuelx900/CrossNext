@@ -79,16 +79,44 @@ inline bool isPreparedCover(const char* path) {
   return true;
 }
 
+inline bool isVocabularyNotice(const char* path) {
+  if (!path) return false;
+  std::string_view value(path);
+  if (value == "/.crosspoint/vocabulary/.notice-current.tmp" || value == "/.crosspoint/vocabulary/.notice-accepted.bin")
+    return true;
+  constexpr std::string_view prefix = "/.crosspoint/vocabulary/acknowledged/";
+  if (value.size() != prefix.size() + 39 || value.substr(0, prefix.size()) != prefix) return false;
+  value.remove_prefix(prefix.size());
+  if (value[2] != '/' || value[0] != value[3] || value[1] != value[4] || value.substr(35) != ".ack") return false;
+  for (size_t n = 3; n < 35; ++n)
+    if (!((value[n] >= '0' && value[n] <= '9') || (value[n] >= 'a' && value[n] <= 'f'))) return false;
+  return true;
+}
+inline bool isVocabularyRecord(const char* path) {
+  if (!path) return false;
+  std::string_view value(path);
+  constexpr std::string_view words = "/.crosspoint/vocabulary/words/", contexts = "/.crosspoint/vocabulary/contexts/";
+  const auto prefix = value.substr(0, words.size()) == words ? words : contexts;
+  if (value.size() != prefix.size() + 36 || value.substr(0, prefix.size()) != prefix) return false;
+  value.remove_prefix(prefix.size());
+  for (size_t n = 0; n < 32; ++n)
+    if (!((value[n] >= '0' && value[n] <= '9') || (value[n] >= 'a' && value[n] <= 'f'))) return false;
+  const auto suffix = value.substr(32);
+  return suffix == ".dat" || suffix == ".tmp" || suffix == ".bak";
+}
+
 // Navigation and reading state cannot alter book or cover resources.
 inline StorageMutation storageMutation(const char* path) {
   if (!path) return StorageMutation::Resources;
   std::string_view value(path);
   if (value == "/.crosspoint/stats-period-a.tmp" || value == "/.crosspoint/stats-period-b.tmp" ||
-      value == "/.crosspoint/stats-days-a.tmp" || value == "/.crosspoint/stats-days-b.tmp")
+      value == "/.crosspoint/stats-days-a.tmp" || value == "/.crosspoint/stats-days-b.tmp" ||
+      value == "/.crosspoint/vocabulary/.list-words.tmp" || value == "/.crosspoint/vocabulary/.list-language.tmp")
     return StorageMutation::DerivedCache;
   if (value == "/.crosspoint/shelf.cfg" || value == "/.crosspoint/shelf-hidden.cfg")
     return StorageMutation::NavigationState;
-  if (value == "/.crosspoint/state.json" || storageStateKey(path).valid() || isBookTextPreferences(path))
+  if (value == "/.crosspoint/state.json" || storageStateKey(path).valid() || isBookTextPreferences(path) ||
+      isVocabularyRecord(path) || isVocabularyNotice(path))
     return StorageMutation::ReadingState;
   constexpr std::string_view root = "/.crosspoint/";
   if (value.substr(0, root.size()) != root) return StorageMutation::Resources;

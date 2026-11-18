@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Kada se vratite na početni meni, on se prikaže
 STR_HOME_COVER_NOTICE_DURING: "Tokom učitavanja vidite privremene korice i obavijest o učitavanju. Korice se automatski prikažu kada budu spremne."
 STR_HOME_COVER_NOTICE_DISABLED: "Ako ovo isključite, čitač učitava korice prije prikaza početnog menija, pa povratak može trajati duže."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Tako manje čekate pri izlasku iz knjige ili drugog odjeljka i brže se vraćate na početni meni, bez čekanja na korice."
+STR_WORDS_STORAGE_ERROR: "Nije moguće pristupiti sačuvanim riječima. Provjerite je li SD kartica umetnuta i dozvoljava li upis."
+STR_WORDS_RECORDS_SKIPPED: "Neki sačuvani zapisi nisu mogli biti pročitani. Preskočeni su, nisu obrisani."
+STR_WORDS_NOTICE_SAVE_ERROR: "Nije moguće sačuvati vaš izbor. Provjerite slobodan prostor na SD kartici i dozvolu za upis."

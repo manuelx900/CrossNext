@@ -9132,3 +9132,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "When you return to Home, the menu appears before
 STR_HOME_COVER_NOTICE_DURING: "While they load, you see temporary covers and the loading notice. The covers appear automatically when ready."
 STR_HOME_COVER_NOTICE_DISABLED: "If you turn this off, the reader loads the covers before showing Home, so returning to the menu may take longer."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "This means less waiting when you leave a book or another section: you return to Home faster, without waiting for the covers to be ready."
+STR_WORDS_STORAGE_ERROR: "Could not access saved words. Check that the SD card is inserted and writable."
+STR_WORDS_RECORDS_SKIPPED: "Some saved entries could not be read. They were skipped, not deleted."
+STR_WORDS_NOTICE_SAVE_ERROR: "Could not remember your choice. Check the SD card's free space and write access."

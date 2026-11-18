@@ -132,4 +132,8 @@ class FsFile {
     return {};
   }
   int getError() const { return 0; }
+  bool openNext(FsFile* directory, oflag_t) {
+    *this = directory->openNextFile();
+    return isOpen();
+  }
 };

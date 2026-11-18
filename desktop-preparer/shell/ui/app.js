@@ -8,6 +8,8 @@ const copy = {
     skip:'Skip to content',companion:'Reading companion',workspace:'LIBRARY',prepareLibrary:'Prepare library',connect:'Connect your microSD',connectHint:'Choose your reader’s card',personalize:'Choose what to prepare',personalizeHint:'Formats, fonts and sizes',read:'Prepare and keep reading',readHint:'Bring your library to the reader',localTitle:'Your books stay with you',localHint:'Preparation happens on your computer. Your books are never uploaded.',desktopCompanion:'FROM DESKTOP TO READER',language:'Language',title:'Prepare books and covers on your computer to use them with your CrossNext firmware.',intro:'Prepare books and covers on your computer, then take them with you on CrossNext.',cardHeading:'Connect your library',notConnected:'Not connected',chooseCard:'Select your microSD',cardHint:'Choose the card root, rather than a books folder.',browse:'Choose card',autoSettings:'We’ll detect your reading settings automatically.',refresh:'Refresh',optionsHeading:'Choose what to prepare',readerDefaults:'Your reader settings by default',formats:'Book formats',reflow:'Reflowable text',fixedPages:'Fixed pages',readingFonts:'Reading fonts',selectAllFonts:'Select all',deselectAllFonts:'Deselect all',selectAllFontsLabel:'Select all reading fonts',deselectAllFontsLabel:'Deselect all reading fonts',searchFonts:'Search fonts…',fontsEmpty:'The fonts on your card will appear here.',fontSize:'Text size',readerSize:'Reader size',sizeHint:'Only sizes supported by each font are prepared.',engine:'EPUB engine',modern:'Modern',classic:'Classic',engineHint:'Use the same engine on your reader to use the prepared pages.',readyInside:'READY BEHIND THE SCENES',lessWaiting:'Less waiting.\nMore reading.',preparedInfo:'Get a head start before returning to your reader.',index:'Index and metadata',indexHint:'Your library, organized',pages:'Reading pages',pagesHint:'With the options you choose',covers:'Book covers',coversHint:'For your reader’s appearances',initialStatus:'Choose a card',initialDetail:'Connect your microSD to prepare your next read.',preserved:'Your books and reading progress are preserved.',diagnostics:'Open diagnostics',cancel:'Cancel',start:'Prepare library',connected:'Connected',reading:'Reading your card…',readingDetail:'Detecting reading fonts and settings.',ready:'Ready to prepare',readyDetail:'Review the options and prepare your library.',working:'Preparing library…',checking:'Checking your library…',checkingDetail:'Already prepared files will be reused.',stopping:'Cancelling safely…',stoppingDetail:'Waiting for the current step to finish. Completed files will be preserved.',complete:'Your library is ready',completeDetail:'Safely eject the microSD in your system before removing it.',cancelled:'Preparation cancelled',cancelledDetail:'Completed files are preserved. Continue whenever you’re ready.',partial:'Preparation finished with errors',partialDetail:'Open diagnostics, check the reported books and try again.',error:'Unable to complete preparation',errorDetail:'Check the card, choose it again and retry.',engineStopped:'The engine could not start. Open diagnostics and try again.',detectedCards:n=>`${n} cards detected. Choose the one to prepare.`,fontMissing:'The saved font is not installed. Ubuntu has been selected.',selectedFonts:n=>`${n} selected`,supported:points=>`Available sizes: ${points} pt`,allSizes:'All available sizes',allUsual:'All usual sizes',moreSizes:'More sizes',fewerSizes:'Usual sizes',usualSizes:points=>`Usual sizes: ${points} pt`,noCommonSizes:'Each font uses its own supported sizes.',noFonts:'Select at least one reading font.',noFormats:'Select at least one book format.',noMatches:'No matching fonts. Try another name.',readerSettings:(font,size)=>`Reader settings · ${font} · ${size} pt`,found:n=>`${n} files found`,summary:e=>`${e.completed} of ${e.total} prepared · ${e.failed} with errors · ${e.alreadyPrepared||0} already prepared`,chapter:(a,b)=>`Chapter ${a} of ${b}`,pending:n=>`${n} books pending`,busyButton:'Preparing…',bookTitle:'One page\nat a time.'
   }
 };
+Object.assign(copy.es, {spaceLow:'Queda muy poco espacio en la microSD. Libera caché o archivos y vuelve a preparar con una fuente y un tamaño.'});
+Object.assign(copy.en, {spaceLow:'The microSD has very little free space. Clear caches or remove files, then prepare with one font and one size.'});
 let lang;
 try { lang=localStorage.getItem('preferredLanguage'); } catch {}
 lang=['en','es'].includes(lang) ? lang : 'en';
@@ -23,7 +25,7 @@ function translate() {
 }
 async function invoke(action) {
   $('validation').hidden=true;
-  try {await action();} catch(error) {model.phase='error';model.error=error.message;render();}
+  try {await action();} catch(error) {model.phase='error';model.error=error.message;model.errorCode=error.message.includes('spaceLow:') ? 'spaceLow' : null;render();}
 }
 function commonSelectedSizes() {
   const selected=(model.catalog?.fonts || []).filter(font=>model.fonts.has(font.name));
@@ -80,6 +82,7 @@ function updateStatusIcon() {
   $('status-symbol').replaceChildren(icon);$('status-symbol').dataset.icon=kind;
 }
 function render() {
+  window.cacheSafety?.setBusy(model.busy);
   const ready=Boolean(model.catalog) && model.phase!=='error';
   document.body.classList.toggle('busy',model.busy);document.body.classList.toggle('complete',model.phase==='complete');document.body.classList.toggle('error',['error','partial'].includes(model.phase));
   $('browse').disabled=model.busy;$('refresh').disabled=model.busy;$('options').disabled=model.busy || !ready;$('start').disabled=model.busy || !ready;
@@ -103,7 +106,7 @@ function render() {
   else if(model.phase==='working') setStatus(t('working'),t('pending',model.progress?.total || 0));
   else if(model.phase==='stopping') setStatus(t('stopping'),t('stoppingDetail'));
   else if(['complete','cancelled','partial'].includes(model.phase)) setStatus(t(model.phase),t('summary',model.result)+' · '+t(model.phase+'Detail'));
-  else if(model.phase==='error') setStatus(t('error'),t(model.errorCode==='engineStopped' ? 'engineStopped' : 'errorDetail'));
+  else if(model.phase==='error') setStatus(t('error'),t(model.errorCode==='spaceLow' ? 'spaceLow' : model.errorCode==='engineStopped' ? 'engineStopped' : 'errorDetail'));
   if(model.progress) {
     const event=model.progress,value=Math.min(100,Math.max(0,(event.completed+(event.percent || 0)/100)/(event.total || 1)*100));
     $('progress').value=model.phase==='complete' ? 100 : value;$('percentage').textContent=Math.floor(model.phase==='complete' ? 100 : value)+'%';
@@ -136,6 +139,18 @@ $('start').addEventListener('click',()=>{
   const formats=[...document.querySelectorAll('.formats input:checked')].map(input=>input.value);
   const key=!formats.length ? 'noFormats' : !model.fonts.size ? 'noFonts' : null;
   if(key) {$('validation').textContent=t(key);$('validation').hidden=false;(key==='noFonts' ? $('font-search') : document.querySelector('.formats input')).focus();return;}
-  const value=$('sizes').value;invoke(()=>window.preparer.prepare({fonts:[...model.fonts],formats,sizes:value==='usual' ? window.readerSizePolicy.usualSizes(commonSelectedSizes()) : ['all','current'].includes(value) ? value : [Number(value)],engine:Number($('engine').value)}));
+  const value=$('sizes').value;
+  invoke(async()=>{
+    const confirmed=await window.cacheSafety.confirmPreparation({fonts:[...model.fonts],formats,sizes:value==='usual' ? window.readerSizePolicy.usualSizes(commonSelectedSizes()) : ['all','current'].includes(value) ? value : [Number(value)],engine:Number($('engine').value)},model.catalog);
+    if(confirmed) await window.preparer.prepare(confirmed);
+  });
+});
+window.addEventListener('use-reader-selection',()=>{
+  if(!model.catalog) return;
+  model.fonts=new Set([model.catalog.selectedFont]);refreshSizes();$('sizes').value='current';renderFonts();
+});
+window.addEventListener('cache-cleanup-finished',()=>{
+  if(!model.catalog || model.busy) return;
+  model.phase='ready';model.result=null;model.progress=null;model.error=null;model.errorCode=null;render();
 });
 document.body.dataset.platform=window.preparer.platform;translate();

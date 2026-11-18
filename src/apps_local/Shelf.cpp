@@ -312,6 +312,7 @@ void loadState() {
 }
 
 bool stateDirty = false;
+uint32_t stateSaveAttempt = 0;
 
 void saveState(const bool defer = false) {
   stateDirty = true;
@@ -363,7 +364,7 @@ void saveHiddenItems() {
 }
 
 // Reopening an unchanged folder should not serialize or write the SD state.
-void saveIfChanged(const int folder, const int row, const bool defer = false) {
+void saveIfChanged(const int folder, const int row, const bool defer = true) {
   ensureLoaded();
   if (state.lastFolder == folder && (folder < 0 || state.resumeRow[folder] == row)) return;
   state.lastFolder = folder;
@@ -375,7 +376,7 @@ void saveIfChanged(const int folder, const int row, const bool defer = false) {
 // because the two facts change on different events: the position changes as you
 // navigate, this changes when an item opens, closes, or is left behind.
 void setOpenTitle(const char* title, shelf::LaunchOrigin origin = shelf::LaunchOrigin::Folder,
-                  const bool defer = false) {
+                  const bool defer = true) {
   ensureLoaded();
   const char* wanted = title == nullptr ? "" : title;
   if (strcmp(state.openTitle, wanted) == 0 && state.origin == origin) return;
@@ -465,8 +466,12 @@ void openFolder(const int index, GfxRenderer& renderer, MappedInputManager& mapp
   replaceWith(std::move(next), kFolders[index].title);
 }
 
-void flushPendingState() {
-  if (stateDirty) saveState();
+bool hasPendingState() { return stateDirty; }
+
+void flushPendingState(const uint32_t now) {
+  if (!stateDirty || (now && stateSaveAttempt && uint32_t(now - stateSaveAttempt) < 1000)) return;
+  if (now) stateSaveAttempt = now;
+  saveState();
 }
 
 bool openItem(const int folder, const int item, GfxRenderer& renderer, MappedInputManager& mappedInput,
@@ -588,7 +593,10 @@ void autostartFromEnv(GfxRenderer& renderer, MappedInputManager& mappedInput) {
 
 void rememberForWake(const char* currentActivityName) {
   ensureLoaded();
-  if (state.openTitle[0] == '\0') return;
+  if (state.openTitle[0] == '\0') {
+    flushPendingState();
+    return;
+  }
   // An item is only still open if the activity it launched is the one on
   // screen. Leaving a game by the Home gesture never passes through leave(),
   // so without this a sleep taken on Home would resume into the game you left.
@@ -597,6 +605,7 @@ void rememberForWake(const char* currentActivityName) {
     LOG_DBG("SHELF", "Sleeping on %s, not %s: nothing to resume", onScreen, state.openTitle);
     setOpenTitle(nullptr);
   }
+  flushPendingState();
 }
 
 bool resumeFromWake(GfxRenderer& renderer, MappedInputManager& mappedInput) {

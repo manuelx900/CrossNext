@@ -33,6 +33,7 @@ class KeyboardEntryActivity : public Activity {
 
   void onEnter() override;
   void setCenteredText(bool centered) { centerInputText = centered; }
+  void setPasswordVisible(bool visible) { passwordVisible = inputType == InputType::Password && visible; }
   void onExit() override;
   void loop() override;
   void render(RenderLock&&) override;

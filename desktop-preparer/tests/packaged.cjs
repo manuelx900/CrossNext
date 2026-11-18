@@ -14,6 +14,10 @@ for(const name of ['CrossNext-EPUB-Comparison.epub','CrossNext-Reader-Showcase.e
   fs.copyFileSync(path.join(root,'../docs/downloads',name),path.join(card,'books',name));
 const protectedFiles=[...fs.readdirSync(path.join(card,'books')).map(name=>path.join(card,'books',name)),
   path.join(card,'.crosspoint/settings.json'),path.join(card,'.crosspoint/reading/stats.json')].map(name=>[name,fs.readFileSync(name)]);
+async function startPreparation(page) {
+  await page.locator('#start').click();
+  await page.locator('#prepare-confirm').click();
+}
 let app;
 (async()=>{
   const payload=process.env.CROSSNEXT_PACKAGED_DIR||path.join(root,'dist/desktop/win-unpacked');
@@ -24,7 +28,7 @@ let app;
   await app.evaluate(({dialog},card)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[card]});},card);
   await page.locator('#browse').click();
   await page.waitForFunction(()=>!document.querySelector('#start').disabled,{},{timeout:60000});
-  await page.locator('#start').click();
+  await startPreparation(page);
   await page.waitForFunction(()=>document.querySelector('#status').textContent==='Tu biblioteca está lista' && !document.querySelector('#start').disabled,{},{timeout:120000});
   await page.screenshot({path:path.join(output,'finished.png')});
   assert.ok(fs.readdirSync(path.join(card,'.crosspoint')).some(name=>name.startsWith('epub_')));

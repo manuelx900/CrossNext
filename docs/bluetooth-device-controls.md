@@ -189,3 +189,12 @@ records precise corrections and validates placeholders/UTF-8. It is not a
 native-speaker certification. Update only `/languages/*.cplang`; retain installed
 fonts, keyboards and game data. Identical English/brand strings are intentionally
 omitted from packs and use the existing fallback.
+
+## Wi-Fi shortcut in quick settings
+
+When Wi-Fi is connected to a network, quick settings shows a Wi-Fi icon between
+the clock and battery percentage. Tap it to open the existing Wi-Fi management
+screen. A disabled or disconnected connection has no header icon. Connection
+changes use the panel's existing one-second status poll and repaint only the
+affected header/tiles; opening this shortcut follows the same radio lifecycle
+as the existing Wi-Fi tile.

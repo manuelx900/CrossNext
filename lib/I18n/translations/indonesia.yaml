@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Saat kembali ke menu utama, menu muncul sebelum 
 STR_HOME_COVER_NOTICE_DURING: "Selama pemuatan, sampul sementara dan pemberitahuan pemuatan ditampilkan. Sampul akan muncul otomatis setelah siap."
 STR_HOME_COVER_NOTICE_DISABLED: "Jika opsi ini dinonaktifkan, perangkat memuat sampul sebelum menampilkan menu utama, sehingga waktu kembali bisa lebih lama."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Jadi, saat keluar dari buku atau bagian lain, waktu tunggu berkurang dan Anda lebih cepat kembali ke menu utama tanpa menunggu sampul siap."
+STR_WORDS_STORAGE_ERROR: "Tidak dapat mengakses kata tersimpan. Pastikan kartu SD terpasang dan dapat ditulis."
+STR_WORDS_RECORDS_SKIPPED: "Beberapa catatan tersimpan tidak dapat dibaca. Catatan tersebut dilewati, bukan dihapus."
+STR_WORDS_NOTICE_SAVE_ERROR: "Pilihan Anda tidak dapat disimpan. Periksa ruang kosong dan akses tulis kartu SD."

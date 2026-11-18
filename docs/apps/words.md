@@ -49,7 +49,7 @@ There is one scheduling record per dictionary and canonical headword. Repeated
 explicit saves increment its encounter count without changing its FSRS state or the
 meaning already studied. Legacy “already known” flags remain excluded from scheduled reviews; explicitly reviewing a word from its detail and rating it includes it again.
 
-Each learning purpose and book/chapter has its own first encountered form, sentence and position for the same word. Additional encounters in that chapter retain the first passage; a different chapter or book adds another context. Details and revealed cards use bold labels followed by the word, definition or translation and original sentence in regular type. Details also show the book in regular type. The unrevealed review face shows only the word. Source chapter, page, dictionary and lookup counters remain internal. Long content is paginated, including non-Latin scripts using the selected reading font.
+Each learning purpose and book/chapter has its own first encountered form, sentence and position for the same word. Additional encounters in that chapter retain the first passage; a different chapter or book adds another context. Details use a regular-weight term; revealed review cards show the term in bold. Definition or translation and original sentence remain in regular type, with bold section labels. Details also show the book in regular type. The unrevealed review face shows only the word. Source chapter, page, dictionary and lookup counters remain internal. Long content is paginated, including non-Latin scripts using the selected reading font.
 
 The three actions are View in book, Delete and Review. Delete asks for confirmation and removes the selected saved context from this collection. Other saved passages and its shared scheduling record remain; saving the same word later keeps its learning history. Returning from a detail preserves the collection page. Collection keys change the page; holding one opens View List. Home retains its physical-key focus indicator.
 
@@ -85,6 +85,65 @@ offset, with the saved local page as fallback. The offset survives repagination.
 A moved/deleted source book is reported; no unrelated book is opened.
 
 ## Persistence and ownership
+
+Unreadable vocabulary records no longer stop the collection scan or review.
+Words skips that entry, keeps its original file and recovery copy, and displays
+a nonblocking notice with a Got it button. Dismissing it restores the full list
+area. The choice survives leaving Words, restarting and suspension; the same
+unreadable context is omitted silently. A newly unreadable context shows the
+notice again. Recognition uses stable context IDs, so a repaired context remains
+readable and is not excluded by an acknowledgment.
+A card that becomes unreadable after scanning is skipped
+as well. Healthy words remain available; an absent/unavailable SD card still
+gets a Words-specific storage error instead of a reading-history error. Export
+can include the readable entries and reports a partial result.
+
+Acknowledgments are separate from saved words. Got it commits the accepted IDs
+by renaming `.notice-current.tmp` to `.notice-accepted.bin` under the vocabulary
+directory. A bounded worker then creates checked 40-byte markers in
+`acknowledged/<first-two-ID-characters>/<context-ID>.ack`. The accepted batch is
+kept until all markers are verified, including across interrupted maintenance.
+Only unreadable entries need this metadata; healthy collections do not. Failed
+persistence reports a translated SD write/space error and does not remove any
+word. Without writable storage, the choice can only last for the current visit.
+If marker creation cannot continue, accepted-batch membership reads at most
+eight fixed records per input-loop pass. The read cursor is reused across
+matches; a long failure-recovery lookup yields between batches rather than
+holding the screen lock for the entire accepted list. Review defers the next
+card while resolving such a lookup, with Back remaining available.
+
+During an app visit, two disposable files under `/.crosspoint/vocabulary/`
+(`.list-words.tmp` and `.list-language.tmp`) hold compact navigation rows and
+review summaries. They are rebuilt from validated records, checked on read and
+removed on exit; original records remain authoritative for opening and rating.
+An unavailable cache falls back to source scanning. Memory stays fixed as the
+collection grows: the four-entry I/O batch replaces the unused definition
+previews in UI rows. No resident collection cache, task or framebuffer is added.
+Canonical word/context record writes are reading-state mutations, so saving a
+rating does not invalidate unrelated book, cover, ZIP or CSS resource caches.
+Ratings queue bounded scheduling maintenance in both collections after the
+next card is presented; a new answer during unfinished maintenance discards
+only the disposable index and leaves the review operational. Navigation waits
+cooperatively for pending maintenance, with the old view retained; cached totals are
+recomputed after a rating or clock-minute change. List pagination reads only
+the visible rows when the totals are current and preserves the visible screen
+while preparing another view, without a reading-history/loading overlay.
+
+Headwords are displayed with an uppercase initial (including Turkish and
+Azerbaijani dotted I from the saved book language) without rewriting their
+canonical dictionary identity or saved review history. The term is bold when
+revealing a review answer. The source-book label follows the example without
+a horizontal divider.
+Non-Latin list text prepares only the visible rows through the existing
+fixed-size bundled reader font and glyph cache, without increasing its limits.
+
+Verify with mixed valid/corrupt word and context records (including valid
+`.bak` recovery), all-invalid collections, cache write/read failure and an
+unavailable card. Retain a backup; never delete `/.crosspoint` to diagnose
+Words. Check page totals, both collections, due/difficult/all-saved reviews,
+rating and deletion followed by re-entry, both orientations, and Bluetooth
+button navigation with Wi-Fi enabled. Host I/O counts do not measure physical
+SD latency, heap/PSRAM peaks or e-ink refresh time.
 
 `/.crosspoint/vocabulary/words/<id>.dat` owns scheduling and encounter counts.
 `contexts/<id>.dat` owns book/chapter provenance. IDs comprise two deterministic
@@ -202,8 +261,9 @@ TTF/OTF reader fonts are scaled to the selected size rather than keeping
 their original cut. The retained built-in reader face follows the same local size
 policy when a fallback is needed.
 
-Details and revealed review cards label Word, Definition and Example sentence
-in bold; the actual word uses regular weight. Empty examples are omitted. The question face shows only the word, without the Word label. Definitions and
+Details and revealed cards label Definition and Example sentence in bold.
+The revealed review term is bold; the detail and question terms use regular
+weight, without a Word label. Empty examples are omitted. Definitions and
 examples use regular content type. Definitions and examples use the content
 size, including when opening an individual word from View list. Horizontal
 swipes and the existing arrows navigate within the current face's pages.

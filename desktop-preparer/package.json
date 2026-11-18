@@ -1,7 +1,7 @@
 {
   "name": "crossnext-book-preparer",
   "productName": "CrossNext Book Preparer",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Prepare your CrossNext library on Windows and macOS",
   "main": "shell/main.cjs",
   "author": "CrossNext contributors",
@@ -10,7 +10,7 @@
   "scripts": {
     "start": "electron .",
     "stage": "node shell/stage.cjs",
-    "test": "node tests/platform.cjs && node tests/desktop.cjs && node tests/mac-layout.cjs && node tests/locale.cjs",
+    "test": "node tests/platform.cjs && node tests/cache-cleaner.cjs && node tests/desktop.cjs && node tests/mac-layout.cjs && node tests/locale.cjs && node tests/cache-ui.cjs",
     "dist:win": "npm run stage && electron-builder --win portable --x64",
     "dist:mac": "npm run stage && electron-builder --mac dmg --arm64 --x64",
     "pack:mac": "npm run stage && python build_macos.py"
@@ -31,6 +31,8 @@
       "shell/main.cjs",
       "shell/preload.cjs",
       "shell/platform.cjs",
+      "shell/card-storage.cjs",
+      "shell/cache-cleaner.cjs",
       "shell/ui/**/*",
       "shell/assets/**/*",
       "package.json"

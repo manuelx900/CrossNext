@@ -14,6 +14,7 @@ mark = white.resize((224,224),Image.Resampling.NEAREST)
 icon.alpha_composite(mark,(16,16))
 icon.save(ROOT/'build/crossnext.ico',sizes=[(16,16),(24,24),(32,32),(48,48),(64,64),(128,128),(256,256)])
 shutil.copy2(ROOT / 'src/worker.cjs', RUNTIME / 'worker.cjs')
+shutil.copy2(ROOT / 'shell/card-storage.cjs', RUNTIME / 'card-storage.cjs')
 shutil.copy2(shutil.which('node'), RUNTIME / 'node.exe')
 version = subprocess.check_output([shutil.which('node'),'--version'],text=True).strip()
 node_license = Path(shutil.which('node')).parent / 'LICENSE'

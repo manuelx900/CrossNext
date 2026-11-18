@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Când revii la meniul principal, acesta apare î
 STR_HOME_COVER_NOTICE_DURING: "În timpul încărcării vezi coperți provizorii și mesajul de încărcare. Coperțile apar automat când sunt gata."
 STR_HOME_COVER_NOTICE_DISABLED: "Dacă dezactivezi această opțiune, cititorul încarcă mai întâi coperțile și apoi afișează meniul, astfel că revenirea poate dura mai mult."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Astfel aștepți mai puțin când ieși dintr-o carte sau altă secțiune și revii mai repede la meniul principal, fără să aștepți coperțile."
+STR_WORDS_STORAGE_ERROR: "Nu se pot accesa cuvintele salvate. Verifică dacă este introdus cardul SD și dacă permite scrierea."
+STR_WORDS_RECORDS_SKIPPED: "Unele înregistrări salvate nu au putut fi citite. Au fost omise, nu șterse."
+STR_WORDS_NOTICE_SAVE_ERROR: "Nu s-a putut salva alegerea. Verifică spațiul liber și permisiunea de scriere pe cardul SD."

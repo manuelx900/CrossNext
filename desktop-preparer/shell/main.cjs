@@ -7,11 +7,32 @@ const readline = require('node:readline');
 const {resolveRuntime, discoverCards} = require('./platform.cjs');
 let window, currentCard, job, diagnosticFolder, quitting = false;
 const runtime = resolveRuntime(process.resourcesPath, app.getAppPath());
+const {spaceInfo, requireSpace} = require('./card-storage.cjs');
+const {scanCachePlan, deleteCachePlan} = require('./cache-cleaner.cjs');
+let cacheTask = null, cachePlan = null;
+const cacheEvent = event => { if (window && !window.isDestroyed()) window.webContents.send('cache-event', event); };
+function discardCachePlan() {
+  if (!cachePlan) return;
+  const {folder, filename} = cachePlan;
+  if (path.dirname(folder) !== path.resolve(os.tmpdir()) || !path.basename(folder).startsWith('CrossNext-cache-') ||
+      path.dirname(filename) !== folder || path.basename(filename) !== 'plan.jsonl') throw Error('Unsafe cache plan location.');
+  cachePlan = null;
+  try { fs.unlinkSync(filename); fs.rmdirSync(folder); } catch (error) {
+    if (!['ENOENT', 'EPERM', 'EACCES', 'EBUSY', 'ENOTEMPTY'].includes(error.code)) throw error;
+  }
+}
+async function cacheOperation(action) {
+  if (job || cacheTask) throw Error('Wait for the current operation to finish.');
+  if (!currentCard) throw Error('Choose the microSD card first.');
+  cacheTask = new AbortController();
+  try { return await action(cacheTask.signal); }
+  finally { cacheTask = null; if (quitting) app.quit(); }
+}
 let scanningCards = false;
 const emit = event => { if (window && !window.isDestroyed()) window.webContents.send('job-event', event); };
 app.setName('CrossNext Book Preparer');
 function launch(mode, configuration) {
-  if (job) throw Error('An operation is already running.');
+  if (job || cacheTask) throw Error('An operation is already running.');
   if (!currentCard) throw Error('Choose the microSD card first.');
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'CrossNext-job-'));
   const cancelFile = path.join(folder, 'cancel');
@@ -57,11 +78,11 @@ function cancel() {
   if (job && job.mode === 'run') fs.writeFileSync(job.cancelFile, 'cancel');
 }
 async function detectCards() {
-  if (process.argv.includes('--disable-card-discovery') || scanningCards || job) return;
+  if (process.argv.includes('--disable-card-discovery') || scanningCards || job || cacheTask) return;
   scanningCards = true;
   try {
     const cards = await discoverCards();
-    if (!window || window.isDestroyed() || quitting) return;
+    if (!window || window.isDestroyed() || quitting || job || cacheTask) return;
     emit({type: 'devices', cards});
     if (currentCard && !fs.existsSync(currentCard) && !job) {
       currentCard = null;
@@ -82,15 +103,43 @@ function checkedOptions(value) {
 }
 function setupIpc() {
   ipcMain.handle('choose-card', async () => {
-    if (job) return;
+    if (job || cacheTask) return;
     const choice = await dialog.showOpenDialog(window, {title: 'Select the microSD root / Selecciona la raíz de la microSD', defaultPath: process.platform === 'darwin' ? '/Volumes' : undefined, properties: ['openDirectory']});
+    if (job || cacheTask) return;
     if (!choice.canceled && choice.filePaths.length) {
+      discardCachePlan();
       currentCard = choice.filePaths[0];
       launch('inspect', {});
     }
   });
   ipcMain.handle('inspect', () => currentCard ? launch('inspect', {}) : detectCards());
-  ipcMain.handle('prepare', (_, value) => { launch('run', checkedOptions(value)); });
+  ipcMain.handle('prepare', (_, value) => {
+    const configuration = checkedOptions(value);
+    if (!currentCard) throw Error('Choose the microSD card first.');
+    requireSpace(currentCard);
+    discardCachePlan();
+    launch('run', configuration);
+  });
+  ipcMain.handle('card-space', () => currentCard ? spaceInfo(currentCard) : null);
+  ipcMain.handle('cache-preview', (_, filter) => cacheOperation(async signal => {
+    discardCachePlan();
+    const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'CrossNext-cache-'));
+    const filename = path.join(folder, 'plan.jsonl');
+    cachePlan = {folder, filename};
+    try {
+      const plan = await scanCachePlan(currentCard, filter, filename, {signal, onProgress: value => cacheEvent({type: 'scan', ...value})});
+      cachePlan = {...plan, folder, id: require('node:crypto').randomUUID()};
+      return {id: cachePlan.id, files: plan.files, logicalBytes: plan.logicalBytes, allocatedBytes: plan.allocatedBytes,
+        validationFiles: plan.validationFiles, blockBytes: plan.blockBytes, freeBytes: plan.freeBytes, totalBytes: plan.totalBytes};
+    } catch (error) { discardCachePlan(); throw error; }
+  }));
+  ipcMain.handle('cache-delete', (_, id) => cacheOperation(async signal => {
+    if (!cachePlan || cachePlan.id !== id || cachePlan.root !== path.resolve(currentCard)) throw Error('Preview the cache again before deleting.');
+    try { return await deleteCachePlan(cachePlan, {signal, onProgress: value => cacheEvent({type: 'delete', ...value})}); }
+    finally { discardCachePlan(); }
+  }));
+  ipcMain.handle('cache-cancel', () => cacheTask?.abort());
+  ipcMain.handle('cache-discard', () => { if (!cacheTask) discardCachePlan(); });
   ipcMain.handle('cancel', cancel);
   ipcMain.handle('diagnostics', () => diagnosticFolder ? shell.openPath(diagnosticFolder) : undefined);
 }
@@ -108,6 +157,8 @@ function createWindow() {
   window.webContents.setWindowOpenHandler(() => ({action: 'deny'}));
   window.webContents.on('will-navigate', event => event.preventDefault());
   window.on('close', async event => {
+    if (cacheTask) { event.preventDefault(); quitting = true; cacheTask.abort(); return; }
+    discardCachePlan();
     if (!job) return;
     event.preventDefault();
     if (quitting) return;

@@ -5,35 +5,12 @@ const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
 const createEngine = require('./engine.cjs');
+const {safeDirectory, rejectLinks, requireSpace} = require('./card-storage.cjs');
 const emit = event => process.stdout.write(JSON.stringify(event) + '\n');
 const sha = value => crypto.createHash('sha256').update(value).digest('hex');
 const defer = () => new Promise(resolve => setImmediate(resolve));
 const excluded = /^(\.|languages$|fonts$|sleep$|wallpapers?$|pet$|dictionaries$|System Volume Information$|\$RECYCLE.BIN$)/i;
 
-function safeDirectory(root) {
-  const absolute = path.resolve(root);
-  if (!fs.statSync(absolute).isDirectory() || fs.lstatSync(absolute).isSymbolicLink()) throw Error('Select a real microSD folder.');
-  if (process.platform !== 'win32' && (absolute === path.parse(absolute).root ||
-      ['/System', '/Library', '/Applications', '/usr', '/bin', '/sbin', '/etc', '/private', '/dev'].some(folder => absolute === folder || absolute.startsWith(folder + '/'))))
-    throw Error('Select the microSD volume under /Volumes, rather than a system folder.');
-  const windows = process.env.SystemRoot && path.resolve(process.env.SystemRoot).toLowerCase();
-  const system = windows && path.parse(windows).root;
-  if ((system && absolute.toLowerCase() === system.toLowerCase()) ||
-      (windows && (absolute.toLowerCase() === windows || absolute.toLowerCase().startsWith(windows + path.sep))) ||
-      fs.existsSync(path.join(absolute, 'Windows', 'System32')))
-    throw Error('The Windows system drive cannot be used as a microSD.');
-  rejectLinks(absolute, '.crosspoint');
-  return absolute;
-}
-function rejectLinks(root, relative) {
-  let current = root;
-  for (const segment of relative.split(/[\\/]/)) {
-    if (!segment || segment === '..' || segment.includes(':')) throw Error('Unsafe cache path.');
-    current = path.join(current, segment);
-    if (fs.existsSync(current) && fs.lstatSync(current).isSymbolicLink()) throw Error('Linked cache folders are not supported.');
-  }
-  return current;
-}
 function scan(root, formats) {
   const books = [], pending = [root];
   while (pending.length) {
@@ -117,6 +94,7 @@ function atomicCopy(source, root, relative) {
     if (same) return;
   }
   fs.mkdirSync(path.dirname(target), {recursive: true});
+  requireSpace(root, fs.statSync(source).size);
   const temporary = target + '.crossnext-preparing';
   rejectLinks(root, relative + '.crossnext-preparing');
   try {
@@ -229,6 +207,7 @@ async function main(configuration, mode) {
     const selectedSize = selectedFamily.sizes.reduce((a,b) => Math.abs(b - profile.fontPointSize) < Math.abs(a - profile.fontPointSize) ? b : a);
     emit({type: 'catalog', ...catalog, profile, card, requestedFont, selectedFont, selectedSize, fontMissing: !availableFont});
     if (mode === 'inspect') return;
+    if (mode === 'run') requireSpace(card);
     const layouts = buildLayouts(catalog, configuration, selectedFont, profile.fontPointSize);
     const formats = configuration.formats || ['epub', 'xtc', 'xtch'];
     const candidates = scan(card, formats);

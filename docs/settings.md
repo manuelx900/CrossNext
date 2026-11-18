@@ -60,7 +60,7 @@ The X4 Pro release enables the BLE HID host. Connectivity > Bluetooth opens scan
 
 ## Wi-Fi and clock
 
-Open Connectivity → Wi-Fi to scan the available networks. Select a protected network, tap its password field to enter the password, and choose Connect. Show password controls visibility on the review screen; leaving that screen hides it again. Saved credentials retain their existing connection behavior.
+Open Connectivity → Wi-Fi to scan the available networks. Select a protected network, tap its password field to enter the password, and choose Connect. Show password controls visibility both on the review screen and while editing. Confirming the keyboard returns its chosen visibility with the password; cancelling preserves the previous password and visibility. A new password prompt starts hidden. Saved credentials retain their existing connection behavior.
 
 While connected, select the current network to see its signal, protection, IP and MAC address. If an existing connection is absent from the scan, protection stays unknown (shown as “--” and a question mark) until it is observed; the UI does not assume an open network. Disconnect ends the current connection and keeps its saved password. Forget network asks for confirmation, removes that network's saved password and ends its current connection. Returning to Settings or closing the control center preserves the live Wi-Fi on/off state. An enabled radio continues using power and driver memory until switched off or an existing shutdown boundary applies. Sleep, restart and other network apps keep their existing connection lifecycle; enabling Wi-Fi does not add automatic connection on wake.
 

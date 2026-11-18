@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Quando torni al menu iniziale, il menu appare pr
 STR_HOME_COVER_NOTICE_DURING: "Durante il caricamento vedrai copertine provvisorie e l’avviso di caricamento. Le copertine appariranno automaticamente quando saranno pronte."
 STR_HOME_COVER_NOTICE_DISABLED: "Se disattivi questa opzione, il lettore carica le copertine prima di mostrare il menu iniziale, quindi il ritorno può richiedere più tempo."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Così aspetti meno quando esci da un libro o da un’altra sezione e torni al menu iniziale più rapidamente, senza attendere le copertine."
+STR_WORDS_STORAGE_ERROR: "Impossibile accedere alle parole salvate. Verifica che la scheda SD sia inserita e scrivibile."
+STR_WORDS_RECORDS_SKIPPED: "Alcune voci salvate non sono leggibili. Sono state ignorate, non eliminate."
+STR_WORDS_NOTICE_SAVE_ERROR: "Impossibile salvare la scelta. Verifica lo spazio libero e l’accesso in scrittura alla scheda SD."

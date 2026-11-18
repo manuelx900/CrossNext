@@ -8481,3 +8481,6 @@ STR_HOME_COVER_NOTICE_BENEFIT: "Kun palaat aloitusvalikkoon, valikko näkyy enne
 STR_HOME_COVER_NOTICE_DURING: "Latauksen aikana näet väliaikaiset kannet ja latausilmoituksen. Kannet tulevat näkyviin automaattisesti, kun ne ovat valmiit."
 STR_HOME_COVER_NOTICE_DISABLED: "Jos poistat tämän käytöstä, lukulaite lataa kannet ennen aloitusvalikon näyttämistä, joten palaaminen voi kestää kauemmin."
 STR_HOME_COVER_NOTICE_ADVANTAGE: "Näin odotat vähemmän poistuessasi kirjasta tai muusta osiosta ja palaat aloitusvalikkoon nopeammin odottamatta kansien valmistumista."
+STR_WORDS_STORAGE_ERROR: "Tallennettuja sanoja ei voi avata. Tarkista, että SD-kortti on paikallaan ja sille voi kirjoittaa."
+STR_WORDS_RECORDS_SKIPPED: "Joitakin tallennettuja tietueita ei voitu lukea. Ne ohitettiin, mutta niitä ei poistettu."
+STR_WORDS_NOTICE_SAVE_ERROR: "Valintaasi ei voitu tallentaa. Tarkista SD-kortin vapaa tila ja kirjoitusoikeudet."

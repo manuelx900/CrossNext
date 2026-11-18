@@ -21,6 +21,7 @@
 #include "../ui/ToyboxFonts.h"
 #include "CrossPointSettings.h"
 #include "DefinitionText.h"
+#include "WordsLabel.h"
 #include "activities/ActivityManager.h"
 #include "activities/reader/EpubReaderActivity.h"
 #include "components/HeaderBackTapTarget.h"
@@ -30,7 +31,7 @@ extern SdCardFontSystem sdFontSystem;
 
 namespace fui = freeink::ui;
 namespace {
-bool needsReaderFont(const GfxRenderer& renderer, const char* text, int fontId = NOTOSERIF_12_FONT_ID) {
+bool needsReaderFont(const GfxRenderer& renderer, const char* text, int fontId = toybox::kProseFontId) {
   const auto it = renderer.getFontMap().find(fontId);
   if (it == renderer.getFontMap().end()) return true;
   auto* at = reinterpret_cast<const unsigned char*>(text);
@@ -62,14 +63,20 @@ void WordsActivity::onEnter() {
   vocabulary::copy(filterLabel, sizeof(filterLabel), tr(STR_WORDS_ALL));
   if (!vocabulary::StorageRecords::ready()) {
     failed = true;
-    vocabulary::copy(message, sizeof(message), tr(STR_READING_STORAGE_ERROR));
+    vocabulary::copy(message, sizeof(message), tr(STR_WORDS_STORAGE_ERROR));
   }
-  if (!failed) beginScan();
+  if (!failed) {
+    notices.resume();
+    beginScan();
+  }
   requestUpdate();
 }
 void WordsActivity::onExit() {
   exportJob.cancel();
   directory.close();
+  scanFile.close();
+  index.cancel();
+  notices.close();
   Activity::onExit();
 }
 void WordsActivity::clock() {
@@ -82,99 +89,233 @@ void WordsActivity::clock() {
   minute = ((local.tm_hour + 20) % 24) * 60 + local.tm_min;
 }
 bool WordsActivity::openContext(const char* id) {
-  const auto result = records.context(id, context);
-  if (result != vocabulary::Read::Ok) {
-    if (result == vocabulary::Read::Error) failed = true;
-    return false;
-  }
-  const auto found = records.word(context.word, word);
-  if (found == vocabulary::Read::Error) failed = true;
-  return found == vocabulary::Read::Ok;
+  if (records.context(id, context) == vocabulary::Read::Ok && records.word(context.word, word) == vocabulary::Read::Ok)
+    return true;
+  failed = !Storage.ready();
+  if (failed) vocabulary::copy(message, sizeof(message), tr(STR_WORDS_STORAGE_ERROR));
+  return false;
 }
 void WordsActivity::beginScan(bool review) {
+  resumeCardAfterNotice = false;
   directory.close();
-  directory = Storage.open(vocabulary::kContexts);
-  if (directory && !directory.isDirectory()) directory.close();
+  scanFile.close();
+  if (!Storage.ready()) index.cancel();
+  indexedScan = index.available();
+  indexAt = 0;
   scanned = 0;
   if (wordsui::isList(model.view))
     wordsui::setListCapacity(model,
                              wordsui::listCapacity(model.view, renderer.getScreenWidth(), renderer.getScreenHeight()));
-  if (!review) model.count = model.total = model.due = model.eligible = model.difficult = 0;
+  if (!review) {
+    model.count = model.due = model.eligible = model.difficult = 0;
+    model.total = wordsui::isList(model.view) ? (indexedScan ? index.count(purpose) : model.total) : 0;
+  }
   if (model.view == wordsui::View::Home) model.saved = model.pending = 0;
-  model.busy = scanning = bool(directory);
   scan = review ? Scan::Review : Scan::Collection;
-  failed = !directory;
+  failed = false;
   message[0] = 0;
-  if (!directory) vocabulary::copy(message, sizeof(message), tr(STR_READING_STORAGE_ERROR));
   clock();
+  auto& summary = totals[static_cast<unsigned>(purpose)];
+  directPage = indexedScan && !index.updating() && !review && wordsui::isList(model.view) && summary.valid &&
+               summary.day == today && summary.minute == minute;
+  if (!indexedScan || model.view == wordsui::View::Home) {
+    for (auto& item : totals) item = {};
+  } else if (!directPage)
+    summary = {};
+  if (!indexedScan) {
+    model.skipped = 0;
+    notices.beginScan();
+    directory = Storage.open(vocabulary::kContexts);
+    if (directory && !directory.isDirectory()) directory.close();
+    failed = !directory;
+    buildingIndex = !failed && index.begin();
+  }
+  model.busy = scanning = !failed;
+  if (failed) vocabulary::copy(message, sizeof(message), tr(STR_WORDS_STORAGE_ERROR));
+  // Cached list pages need only their visible rows. No pending/loading frame.
+  if (directPage) {
+    model.total = summary.total;
+    model.due = summary.due;
+    model.eligible = summary.eligible;
+    model.difficult = summary.difficult;
+    if (model.total && model.page * model.capacity >= model.total) model.page = (model.total - 1) / model.capacity;
+    indexAt = model.page * model.capacity;
+    while (scanning && indexedScan) indexedStep();
+  }
+  resetUi();
+  if (!scanning) requestUpdate();
+}
+void WordsActivity::finishScan() {
+  directory.close();
+  scanFile.close();
+  if (buildingIndex) {
+    index.finish();
+    buildingIndex = false;
+  }
+  scanning = model.busy = false;
+  if (!failed && !directPage) {
+    for (unsigned n = 0; n < 2; ++n) {
+      if (indexedScan && model.view != wordsui::View::Home && n != static_cast<unsigned>(purpose)) continue;
+      totals[n].day = today;
+      totals[n].minute = minute;
+      totals[n].valid = true;
+    }
+  }
+  if (failed) {
+    vocabulary::copy(message, sizeof(message), tr(STR_WORDS_STORAGE_ERROR));
+  } else if (scan == Scan::Review) {
+    model.reviewTotal = session.count();
+    nextCard();
+    return;
+  } else if (wordsui::isList(model.view)) {
+    if (!directPage) model.total = scanned;
+    if (model.total && model.page * model.capacity >= model.total) {
+      model.page = (model.total - 1) / model.capacity;
+      model.focus = 0;
+      beginScan();
+      return;
+    }
+    const int first = model.view == wordsui::View::List && model.total ? -5 : 0;
+    model.focus = std::clamp(model.focus, first, std::max(0, model.count - 1));
+    listFocus = model.focus;
+    prepareList();
+  }
   resetUi();
   requestUpdate();
 }
-void WordsActivity::scanStep() {
-  for (int budget = 0; budget < 8; ++budget) {
-    auto file = directory.openNextFile();
-    if (!file) {
-      if (!Storage.ready()) failed = true;
-      directory.close();
-      scanning = model.busy = false;
-      if (scan == Scan::Review && !failed) {
-        model.reviewTotal = session.count();
-        nextCard();
-        return;
-      }
-      if (!failed && wordsui::isList(model.view) && model.total && model.page * model.capacity >= model.total) {
-        model.page = (model.total - 1) / model.capacity;
-        model.focus = 0;
-        beginScan();
-        return;
-      }
-      if (!failed && wordsui::isList(model.view)) {
-        const int first = model.view == wordsui::View::List && model.total ? -5 : 0;
-        model.focus = std::clamp(model.focus, first, std::max(0, model.count - 1));
-        listFocus = model.focus;
-      }
-      if (failed) vocabulary::copy(message, sizeof(message), tr(STR_READING_STORAGE_ERROR));
-      resetUi();
-      requestUpdate();
-      return;
-    }
-    if (!vocabulary::recordId(file, vocabulary::kContexts, filename)) continue;
-    const bool opened = openContext(filename);
-    if (failed) {
-      directory.close();
-      scanning = model.busy = false;
-      vocabulary::copy(message, sizeof(message), tr(STR_READING_STORAGE_ERROR));
-      resetUi();
-      requestUpdate();
-      return;
-    }
-    if (!opened) continue;
-    const bool due = !word.known && model.clockReady && study::Scheduler::isDue(word.card, today, minute);
-    if (model.view == wordsui::View::Home) {
-      ++model.saved;
-      if (due) ++model.pending;
-      continue;
-    }
-    if (context.purpose != purpose) continue;
-    if (scan == Scan::Review) {
-      if (model.review == wordsui::ReviewKind::AllSaved ||
-          (due && (model.review != wordsui::ReviewKind::Difficult || vocabulary::difficult(word))))
-        session.add(word, context);
-      continue;
-    }
-    if (scanned >= model.page * model.capacity && model.count < model.capacity) {
+void WordsActivity::prepareList() {
+  listReaderContent = false;
+  for (int n = 0; n < model.count; ++n)
+    if (needsReaderFont(renderer, model.rows[n].label)) listReaderContent = true;
+  if (!listReaderContent) return;
+  for (int n = 0; n < model.count; ++n) renderer.ensureSdCardFontReady(NOTOSERIF_12_FONT_ID, model.rows[n].label, 0x01);
+}
+void WordsActivity::scanEntry() {
+  const bool due = !word.known && model.clockReady && study::Scheduler::isDue(word.card, today, minute);
+  auto& summary = totals[static_cast<unsigned>(context.purpose)];
+  ++summary.total;
+  if (due) ++summary.due;
+  if (!word.known) {
+    ++summary.eligible;
+    if (due && vocabulary::difficult(word)) ++summary.difficult;
+  }
+  if (model.view == wordsui::View::Home) {
+    ++model.saved;
+    if (due) ++model.pending;
+    return;
+  }
+  if (context.purpose != purpose) return;
+  if (scan == Scan::Review) {
+    if (model.review == wordsui::ReviewKind::AllSaved ||
+        (due && (model.review != wordsui::ReviewKind::Difficult || vocabulary::difficult(word))))
+      session.add(word, context);
+    return;
+  }
+  if (scanned >= model.page * model.capacity && model.count < model.capacity) {
+    auto& row = model.rows[model.count++];
+    vocabulary::copy(row.id, sizeof(row.id), context.id);
+    wordsui::wordLabel(row.label, sizeof(row.label), word.headword, word.language);
+  }
+  ++scanned;
+  model.total = std::max(model.total, scanned);
+  if (due) ++model.due;
+  if (!word.known) {
+    ++model.eligible;
+    if (vocabulary::difficult(word) && due) ++model.difficult;
+  }
+}
+void WordsActivity::indexedStep() {
+  if (!index.available()) {
+    beginScan(scan == Scan::Review);
+    return;
+  }
+  if (index.updating()) {
+    index.stepUpdate();
+    return;
+  }
+  // Home visits both collections; review and list navigation visit one.
+  const bool home = model.view == wordsui::View::Home;
+  const auto firstCount = index.count(vocabulary::Purpose::Vocabulary);
+  const auto collection =
+      home ? (indexAt < firstCount ? vocabulary::Purpose::Vocabulary : vocabulary::Purpose::Language) : purpose;
+  const uint32_t at = home && indexAt >= firstCount ? indexAt - firstCount : indexAt;
+  const uint32_t total = index.count(collection);
+  if (at >= total || (directPage && model.count == model.capacity)) {
+    finishScan();
+    return;
+  }
+  const auto count = std::min(vocabulary::WordsIndex::kBatch, total - at);
+  if (!index.read(collection, at, count)) {
+    // A failed disposable cache never makes the saved collection inaccessible.
+    beginScan(scan == Scan::Review);
+    return;
+  }
+  for (unsigned n = 0; n < count; ++n) {
+    index.unpack(n, word, context);
+    context.purpose = collection;
+    if (directPage) {
+      if (model.count == model.capacity) break;
       auto& row = model.rows[model.count++];
       vocabulary::copy(row.id, sizeof(row.id), context.id);
-      vocabulary::copy(row.label, sizeof(row.label), word.headword);
-      vocabulary::copy(row.source, sizeof(row.source), word.meaning);
+      wordsui::wordLabel(row.label, sizeof(row.label), word.headword, word.language);
+    } else
+      scanEntry();
+  }
+  indexAt += count;
+}
+void WordsActivity::scanStep() {
+  if (notices.observing()) {
+    pollNotice();
+    if (notices.observing()) return;
+  }
+  if (indexedScan) {
+    // Compact sequential reads replace opening and decoding every source file.
+    for (int n = 0; n < 8 && scanning && indexedScan; ++n) indexedStep();
+    return;
+  }
+  if (notices.busy()) {
+    for (int budget = 0; budget < 4 && notices.busy(); ++budget) notices.step();
+    return;
+  }
+  for (int budget = 0; budget < 8; ++budget) {
+    bool ioError = false;
+    if (!directory.openNextFile(scanFile, ioError)) {
+      failed = ioError || !Storage.ready();
+      if (failed) {
+        index.cancel();
+        buildingIndex = false;
+      }
+      finishScan();
+      return;
     }
-    ++scanned;
-    model.total = scanned;
-    if (due) ++model.due;
-    if (!word.known) {
-      ++model.eligible;
-      if (vocabulary::difficult(word) && due) ++model.difficult;
+    if (!vocabulary::recordId(scanFile, vocabulary::kContexts, filename)) continue;
+    const auto source = records.context(scanFile, filename, context);
+    const bool opened = source == vocabulary::Read::Ok && records.word(context.word, word) == vocabulary::Read::Ok;
+    failed = !Storage.ready();
+    if (failed) {
+      finishScan();
+      return;
     }
+    if (!opened) {
+      noteUnreadable(filename);
+      LOG_ERR("WORDS", "Skipping unreadable vocabulary context: %s", filename);
+      return;
+    }
+    if (buildingIndex) buildingIndex = index.append(word, context);
+    scanEntry();
+  }
+}
+void WordsActivity::noteUnreadable(const char* id) {
+  if (notices.observe(id)) {
+    ++model.skipped;
+    model.noticeDismissed = false;
+  }
+}
+void WordsActivity::pollNotice() {
+  if (notices.stepObservation()) {
+    ++model.skipped;
+    model.noticeDismissed = false;
+    if (!scanning && !resumeCardAfterNotice) requestUpdate();
   }
 }
 void WordsActivity::startCard() {
@@ -196,18 +337,28 @@ void WordsActivity::preview() {
   }
 }
 void WordsActivity::nextCard() {
+  if (notices.observing()) {
+    resumeCardAfterNotice = true;
+    return;
+  }
   clock();
-  currentCard = session.next(today, minute);
-  if (currentCard >= 0) {
-    if (!openContext(session.entry(currentCard).context)) {
-      failed = true;
-      vocabulary::copy(message, sizeof(message), tr(STR_READING_STORAGE_ERROR));
+  while ((currentCard = session.next(today, minute)) >= 0) {
+    if (openContext(session.entry(currentCard).context)) {
+      startCard();
+      return;
+    }
+    if (failed) {
       resetUi();
       requestUpdate();
       return;
     }
-    startCard();
-    return;
+    noteUnreadable(session.entry(currentCard).context);
+    session.skip(currentCard);
+    index.cancel();
+    if (notices.observing()) {
+      resumeCardAfterNotice = true;
+      return;
+    }
   }
   model.waitMinutes = session.waitingMinutes(today, minute);
   if (model.waitMinutes >= 0)
@@ -225,6 +376,7 @@ void WordsActivity::nextCard() {
   requestUpdate();
 }
 void WordsActivity::buildText() {
+  wordsui::wordLabel(displayTerm, sizeof(displayTerm), word.headword, word.language);
   textLayoutValid = false;
   prewarmText = true;
   model.textCache.invalidate();
@@ -236,13 +388,13 @@ void WordsActivity::buildText() {
   std::snprintf(content + sentenceAt, sizeof(content) - sentenceAt, "%s%s",
                 context.fragment ? tr(STR_WORDS_FRAGMENT) : "", context.sentence);
   model.sentence = content + sentenceAt;
-  model.readerContent = needsReaderFont(renderer, word.headword) || needsReaderFont(renderer, word.meaning) ||
+  model.readerContent = needsReaderFont(renderer, displayTerm) || needsReaderFont(renderer, word.meaning) ||
                         needsReaderFont(renderer, context.sentence) || needsReaderFont(renderer, context.book);
   if (!model.readerContent) return;
   const int font = SETTINGS.getReaderFontId();
   renderer.ensureSdCardFontReady(font, model.meaning, 0x07);
   renderer.ensureSdCardFontReady(font, model.sentence, 0x07);
-  renderer.ensureSdCardFontReady(font, word.headword, 0x07);
+  renderer.ensureSdCardFontReady(font, displayTerm, 0x07);
   renderer.ensureSdCardFontReady(font, context.book, 0x07);
 }
 void WordsActivity::back() {
@@ -285,8 +437,16 @@ void WordsActivity::back() {
 }
 void WordsActivity::dispatch(int action, int value) {
   using namespace wordsui;
-  if ((scanning || exporting) && action != Back) return;
+  if ((scanning || exporting || resumeCardAfterNotice) && action != Back) return;
   switch (action) {
+    case DismissNotice:
+      if (model.noticeSaveFailed) {
+        model.noticeSaveFailed = false;
+        break;
+      }
+      model.noticeDismissed = true;
+      model.noticeSaveFailed = !notices.acknowledge();
+      break;
     case Back:
       back();
       return;
@@ -334,7 +494,10 @@ void WordsActivity::dispatch(int action, int value) {
     case Open:
       if (value < 0 || value >= model.count) return;
       if (!openContext(model.rows[value].id)) {
-        if (failed) {
+        if (!failed) {
+          index.cancel();
+          beginScan();
+        } else {
           resetUi();
           requestUpdate();
         }
@@ -412,15 +575,25 @@ void WordsActivity::dispatch(int action, int value) {
         // Re-read before writing so neither another encounter nor a recovered
         // record can be replaced by stale in-memory scheduling state.
         if (records.word(context.word, word) != vocabulary::Read::Ok) {
-          failed = true;
+          failed = !Storage.ready();
+          if (failed)
+            vocabulary::copy(message, sizeof(message), tr(STR_WORDS_STORAGE_ERROR));
+          else {
+            noteUnreadable(context.id);
+            session.skip(currentCard);
+            index.cancel();
+            nextCard();
+          }
           break;
         }
         vocabulary::rate(word, static_cast<study::Rating>(value), scheduler, today, minute);
         if (!records.put(word)) {
           failed = true;
-          vocabulary::copy(message, sizeof(message), tr(STR_READING_STORAGE_ERROR));
+          vocabulary::copy(message, sizeof(message), tr(STR_WORDS_STORAGE_ERROR));
           break;
         }
+        index.update(word);
+        for (auto& summary : totals) summary.valid = false;
         ++model.reviewIndex;
         session.answered(currentCard, word.card);
         nextCard();
@@ -438,9 +611,10 @@ void WordsActivity::dispatch(int action, int value) {
       if (model.view != View::Delete) return;
       if (!records.removeContext(context.id)) {
         failed = true;
-        vocabulary::copy(message, sizeof(message), tr(STR_READING_STORAGE_ERROR));
+        vocabulary::copy(message, sizeof(message), tr(STR_WORDS_STORAGE_ERROR));
         break;
       }
+      index.cancel();
       model.view = listReturn;
       model.focus = listFocus = 0;
       model.page = 0;
@@ -467,17 +641,20 @@ void WordsActivity::dispatch(int action, int value) {
     default:
       return;
   }
-  resetUi();
-  requestUpdate();
+  if (!scanning) {
+    resetUi();
+    requestUpdate();
+  }
 }
 void WordsActivity::screen(UiScreen& screen, void* user) {
   auto& self = *static_cast<WordsActivity*>(user);
   pixelui::begin(screen);
   pixelui::bindFonts(self.uiTarget, self.renderer, true);
-  if (wordsui::isList(self.model.view)) self.uiTarget.setFont(1, toybox::kProseFontId);
+  if (wordsui::isList(self.model.view))
+    self.uiTarget.setFont(1, self.listReaderContent ? NOTOSERIF_12_FONT_ID : toybox::kProseFontId);
   const bool detail = self.model.view == wordsui::View::Detail;
   const bool review = self.model.view == wordsui::View::Review;
-  self.model.term = self.word.headword;
+  self.model.term = self.displayTerm;
   self.model.book = self.context.book;
   const uint8_t manualTitle = flashcards::validTextSize(SETTINGS.wordsQuestionSize);
   const uint8_t manualBody = flashcards::validTextSize(SETTINGS.wordsAnswerSize);
@@ -545,7 +722,7 @@ void WordsActivity::screen(UiScreen& screen, void* user) {
   }
   if (review || wordsui::isList(self.model.view)) self.model.keyboardFocus = false;
   self.model.error = self.failed;
-  self.model.term = self.word.headword;
+  self.model.term = self.displayTerm;
   self.model.book = self.context.book;
   self.model.language = self.word.language;
   self.model.translation = self.context.purpose == vocabulary::Purpose::Language;
@@ -582,17 +759,23 @@ void WordsActivity::loop() {
     if (!exportJob.finished()) exportJob.step();
     if (exportJob.finished()) {
       const bool ok = exportJob.succeeded();
+      const bool skipped = exportJob.skipped() != 0;
       exportJob.cancel();
       RenderLock lock;
       exporting = model.busy = false;
       failed = !ok;
-      vocabulary::copy(message, sizeof(message), ok ? tr(STR_WORDS_EXPORTED) : tr(STR_READING_STORAGE_ERROR));
+      vocabulary::copy(message, sizeof(message),
+                       !ok       ? tr(STR_WORDS_STORAGE_ERROR)
+                       : skipped ? tr(STR_WORDS_RECORDS_SKIPPED)
+                                 : tr(STR_WORDS_EXPORTED));
       resetUi();
       requestUpdate();
     }
     return;
   }
   RenderLock lock;
+  if (routingReady())
+    for (int budget = 0; budget < 8 && index.updating(); ++budget) index.stepUpdate();
   if (wordsui::isList(model.view)) {
     const int capacity = wordsui::listCapacity(model.view, renderer.getScreenWidth(), renderer.getScreenHeight());
     if (capacity != model.capacity) {
@@ -627,6 +810,12 @@ void WordsActivity::loop() {
   }
   if (scanning) {
     scanStep();
+    return;
+  }
+  if (notices.observing()) pollNotice();
+  if (resumeCardAfterNotice && !notices.observing()) {
+    resumeCardAfterNotice = false;
+    nextCard();
     return;
   }
   if (routingReady()) {
@@ -739,8 +928,10 @@ void WordsActivity::loop() {
     } else if (model.view == wordsui::View::Review && !model.answer)
       dispatch(wordsui::Reveal);
   }
+  if (routingReady() && notices.busy()) notices.step();
 }
 void WordsActivity::prepareForSleep() {
+  notices.close();
   if (!exporting) return;
   exportJob.cancel();
   exporting = model.busy = false;
