@@ -132,6 +132,27 @@ constexpr uint8_t kBayer8[64] = {
 inline uint8_t px2(const uint8_t* data, int x) {
   return static_cast<uint8_t>((data[x >> 2] >> (6 - ((x & 3) * 2))) & 0x3);
 }
+
+uint32_t bmp32(const uint8_t* bytes) {
+  return uint32_t(bytes[0]) | (uint32_t(bytes[1]) << 8) | (uint32_t(bytes[2]) << 16) | (uint32_t(bytes[3]) << 24);
+}
+
+// Both source converters write a 1-bit BITMAPINFOHEADER and two palette entries.
+bool completeConvertedBmp(const std::string& path) {
+  HalFile file;
+  uint8_t header[54];
+  if (!Storage.openFileForRead("WALL", path, file) ||
+      file.read(header, sizeof(header)) != static_cast<int>(sizeof(header)))
+    return false;
+  if (header[0] != 'B' || header[1] != 'M' || bmp32(header + 10) != 62 || bmp32(header + 14) != 40 || header[26] != 1 ||
+      header[27] != 0 || header[28] != 1 || header[29] != 0 || bmp32(header + 30) != 0)
+    return false;
+  const uint32_t width = bmp32(header + 18), rawHeight = bmp32(header + 22);
+  const uint32_t height = rawHeight & 0x80000000u ? 0u - rawHeight : rawHeight;
+  if (!width || width > 0x7fffffffu || !height || height > 0x7fffffffu) return false;
+  const uint64_t expected = 62 + ((uint64_t(width) + 31) / 32) * 4 * height;
+  return file.fileSize64() == expected && bmp32(header + 2) == expected;
+}
 }  // namespace
 
 std::unique_ptr<Activity> WallpapersActivity::create(GfxRenderer& renderer, MappedInputManager& mappedInput) {
@@ -485,7 +506,7 @@ std::string WallpapersActivity::sourcePathFor(const std::string& name) const {
     if (item.alias == name) {
       if (FsHelpers::hasBmpExtension(item.path)) return item.path;
       const std::string cache = std::string("/.crosspoint/wallpaper-source/") + name;
-      if (Storage.exists(cache.c_str())) return cache;
+      if (completeConvertedBmp(cache)) return cache;
       if (!Storage.ensureDirectoryExists("/.crosspoint/wallpaper-source")) return {};
       const std::string part = cache + ".part";
       HalFile input, output;
@@ -501,7 +522,7 @@ std::string WallpapersActivity::sourcePathFor(const std::string& name) const {
       output.flush();
       output.close();
       input.close();
-      if (!converted || !Storage.replaceFile(part.c_str(), cache.c_str())) {
+      if (!converted || !completeConvertedBmp(part) || !Storage.replaceFile(part.c_str(), cache.c_str())) {
         Storage.remove(part.c_str());
         LOG_ERR("WALL", "Could not convert %s", item.path.c_str());
         return {};
@@ -746,6 +767,7 @@ void WallpapersActivity::ensureThumbsForPage() {
     if (combined < specials) continue;  // the chrome tiles have no thumbnail
     const int idx = combined - specials;
     if (idx >= static_cast<int>(names_.size())) break;
+    if (!usableSet_.test(size_t(idx))) continue;
     std::string path = sourcePathFor(names_[static_cast<size_t>(idx)]);
     thumbs_[static_cast<size_t>(slot)] = thumbFor(names_[static_cast<size_t>(idx)], path, geom.cellW, geom.cellH,
                                                   &decoded, &thumbs_[static_cast<size_t>(slot)]);

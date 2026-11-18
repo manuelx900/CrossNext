@@ -60,7 +60,6 @@ class WallpapersActivity final : public Activity {
   bool useAll_ = false;
   void initializeLibrary();
   void preparationStep();
-  bool cachePrepared(bool write);
   void beginSelection();
   void toggleAllSelection();
   void confirmSelection();

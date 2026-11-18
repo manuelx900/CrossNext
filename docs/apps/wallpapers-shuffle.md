@@ -13,7 +13,7 @@ Back or a left-edge swipe returns from full-screen preview to the gallery. Back 
 
 The existing single-image commit, sleep-mode and quick-resume checks remain in use. Confirmed multi-image sets become the random sleep set. Setting one image through its context menu replaces that selection with that image. No slideshow timer or pending selection mode is persisted and no background task is created.
 
-On first entry, preparation appears before discovery and processes supported images with a current/total count. Cached thumbnail dimensions and source metadata are reused on later unchanged entries. The gallery balances thumbnails between the header and the page selector. Applying a chosen set reports progress; let the copy operation finish before leaving.
+On entry, preparation appears before discovery and checks every supported image with a current/total count before opening the gallery. Valid source conversions and thumbnails are reused; missing or incomplete caches are regenerated from the original images. A preparation marker copied from another card cannot bypass these checks. Original images are retained and the conversion settings are unchanged. The gallery balances thumbnails between the header and the page selector. Applying a chosen set reports progress; let the copy operation finish before leaving.
 
 See the [Citas, Notas and reading UI redesign](reading-tools-redesign.md) for the shared update and verification plan.
 

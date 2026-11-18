@@ -6,17 +6,6 @@
 #include "../ui/ToyboxTheme.h"
 #include "WallpapersActivity.h"
 
-namespace {
-constexpr char kReadyPath[] = "/wallpapers/.thumbs/.ready-v3";
-struct Ready {
-  uint64_t stamp = 0;
-  uint32_t magic = 0x33525057;
-  uint16_t count = 0, width = 0, height = 0, errors = 0;
-  uint8_t reserved[4]{};
-  uint8_t usable[32]{};
-};
-static_assert(sizeof(Ready) == 56);
-}  // namespace
 void WallpapersActivity::onEnter() {
   Activity::onEnter();
   toybox::ensureFonts(renderer);
@@ -26,42 +15,6 @@ void WallpapersActivity::onEnter() {
   fetchTotal_ = 0;
   progressAt_ = millis();
   requestUpdate();
-}
-bool WallpapersActivity::cachePrepared(bool write) {
-  const auto geom = wallpapersui::gridGeom(toybox::makeTarget(renderer).deviceContext());
-  Ready ready;
-  if (!write) {
-    HalFile file;
-    if (!Storage.openFileForRead("WALL", kReadyPath, file) || file.fileSize64() != sizeof(ready) ||
-        file.read(&ready, sizeof(ready)) != sizeof(ready))
-      return false;
-    if (ready.magic != 0x33525057 || ready.stamp != libraryStamp_ || ready.count != names_.size() ||
-        ready.width != geom.cellW || ready.height != geom.cellH)
-      return false;
-    prepareErrors_ = ready.errors;
-    usableSet_.reset();
-    for (size_t n = 0; n < names_.size() && n < usableSet_.size(); ++n)
-      usableSet_.set(n, (ready.usable[n / 8] & (1u << (n % 8))) != 0);
-    return prepareErrors_ == 0;
-  }
-  ready.stamp = libraryStamp_;
-  ready.count = uint16_t(names_.size());
-  ready.width = geom.cellW;
-  ready.height = geom.cellH;
-  ready.errors = uint16_t(prepareErrors_);
-  for (size_t n = 0; n < names_.size() && n < usableSet_.size(); ++n)
-    if (usableSet_.test(n)) ready.usable[n / 8] |= uint8_t(1u << (n % 8));
-  Storage.ensureDirectoryExists("/wallpapers/.thumbs");
-  constexpr char part[] = "/wallpapers/.thumbs/.ready-v3.part";
-  HalFile file;
-  if (!Storage.openFileForWrite("WALL", part, file)) return false;
-  const bool saved = file.write(&ready, sizeof(ready)) == sizeof(ready);
-  file.close();
-  if (!saved || !Storage.replaceFile(part, kReadyPath)) {
-    Storage.remove(part);
-    return false;
-  }
-  return true;
 }
 void WallpapersActivity::preparationStep() {
   switch (job_) {
@@ -74,12 +27,13 @@ void WallpapersActivity::preparationStep() {
       const auto geom = wallpapersui::gridGeom(toybox::makeTarget(renderer).deviceContext());
       prepareW_ = geom.cellW;
       prepareH_ = geom.cellH;
-      job_ = names_.empty() || cachePrepared(false) ? Job::Page : Job::Thumbnails;
+      // A restored ready marker cannot attest that each cache file survived.
+      job_ = names_.empty() ? Job::Page : Job::Thumbnails;
       view_ = View::Preparing;
       if (job_ == Job::Thumbnails) {
         painted_ = false;
         ++animationFrame_;
-        requestUpdate();
+        requestUpdateAndWait();
       }
       return;
     }
@@ -104,7 +58,6 @@ void WallpapersActivity::preparationStep() {
         }
         return;
       }
-      cachePrepared(true);
       job_ = Job::Page;
       return;
     }
