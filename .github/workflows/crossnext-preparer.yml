@@ -2,7 +2,7 @@ name: CrossNext desktop packages
 
 on:
   push:
-    branches: [codex/release-crossnext-2.0.3]
+    branches: [codex/release-crossnext-2.0.4]
   workflow_dispatch:
 
 permissions:
@@ -99,7 +99,7 @@ jobs:
           done
       - uses: actions/upload-artifact@v4
         with:
-          name: CrossNext-Book-Preparer-macOS-${{ matrix.arch }}-2.0.3
+          name: CrossNext-Book-Preparer-macOS-${{ matrix.arch }}-2.0.4
           path: desktop-preparer/dist/desktop/*.dmg
           if-no-files-found: error
           retention-days: 14
@@ -136,7 +136,7 @@ jobs:
           node tests/cache-ui.cjs
       - uses: actions/upload-artifact@v4
         with:
-          name: CrossNext-Book-Preparer-Windows-2.0.3
+          name: CrossNext-Book-Preparer-Windows-2.0.4
           path: desktop-preparer/dist/desktop/*.exe
           if-no-files-found: error
           retention-days: 14

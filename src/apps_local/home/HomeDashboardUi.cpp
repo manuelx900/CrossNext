@@ -237,6 +237,7 @@ int HomeDashboardUi::selectedAction(const MappedInputManager& input) {
 }
 
 void HomeDashboardUi::paintPlaceholders() {
+  if (model.recentCount <= 0) return;
   const auto previous = uiTarget.clipRect();
   const auto area = layout.coverRegion;
   const auto clipped = freeink::ui::makeRect(std::max(area.x, previous.x), std::max(area.y, previous.y),
@@ -245,6 +246,7 @@ void HomeDashboardUi::paintPlaceholders() {
   if (clipped.empty() || !uiTarget.setClipRect(clipped)) return;
   if (model.style != homeui::Style::Framed) {
     for (int index : {1, 2}) {
+      if (model.recentCount < (index == 1 ? 3 : 2)) continue;
       const auto art = layout.sides[index];
       GUI.drawCoverPlaceholder(renderer, Rect{art.x, art.y, art.width, art.height});
     }

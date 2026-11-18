@@ -8,7 +8,7 @@
 namespace referenceslider {
 namespace fui = freeink::ui;
 template <typename Screen, typename Spec>
-void build(Screen& screen, const Spec& spec, bool touch) {
+void build(Screen& screen, const Spec& spec, bool touch, bool regularTitle = false) {
   auto safe = screen.device().safeRect();
   if (chrome::lightHeader) {
     const int header = std::clamp(chrome::headerHeight - int(safe.y), 0, int(safe.height));
@@ -26,9 +26,10 @@ void build(Screen& screen, const Spec& spec, bool touch) {
   screen.frame().hit(box, spec.chromeAction, 0, fui::InputTouch);
   fui::TextStyle text;
   text.font = 0;
-  text.bold = !chrome::lightHeader;
+  text.bold = !chrome::lightHeader && !regularTitle;
   text.align = fui::TextAlign::Center;
   screen.target().text(fui::makeRect(box.x + 12, box.y + 16, box.width - 24, 42), spec.title, text);
+  text.bold = !chrome::lightHeader;
   int y = box.y + 62;
   if (spec.subtitle) {
     screen.target().text(fui::makeRect(box.x + 12, y, box.width - 24, 34), spec.subtitle, text);

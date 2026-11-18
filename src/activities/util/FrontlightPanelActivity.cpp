@@ -73,28 +73,7 @@ void FrontlightPanelActivity::onEnter() {
   app.on(ACTION_BRIGHTNESS_STEP, &FrontlightPanelActivity::onBrightnessStepEvent, this);
   app.on(ACTION_WARMTH_STEP, &FrontlightPanelActivity::onWarmthStepEvent, this);
   app.on(ACTION_TILE, &FrontlightPanelActivity::onTileEvent, this);
-  app.on(
-      quickui::WifiSettings,
-      [](const fui::ActionEvent&, void* user) {
-        auto* self = static_cast<FrontlightPanelActivity*>(user);
-        self->app.clearTapFlash();
-        self->openWifiSettings();
-      },
-      this);
-  app.on(
-      quickui::BluetoothSettings,
-      [](const fui::ActionEvent&, void* user) {
-        auto* self = static_cast<FrontlightPanelActivity*>(user);
-        self->app.clearTapFlash();
-        self->persistLightSettings();
-        auto next = makeUniqueNoThrow<BleSettingsActivity>(self->renderer, self->mappedInput);
-        if (!next) {
-          LOG_ERR("QUICK", "OOM: Bluetooth settings");
-          return;
-        }
-        self->startActivityForResult(std::move(next), [self](const ActivityResult&) { self->close(); });
-      },
-      this);
+  app.on(quickui::OpenSettings, &FrontlightPanelActivity::onSettingsEvent, this);
   app.setScreen(&FrontlightPanelActivity::panelScreen, this);
   requestUpdate();
 }
@@ -172,6 +151,19 @@ void FrontlightPanelActivity::onWarmthStepEvent(const fui::ActionEvent& event, v
 
 void FrontlightPanelActivity::onTileEvent(const fui::ActionEvent& event, void* user) {
   static_cast<FrontlightPanelActivity*>(user)->runTile(event.value);
+}
+
+void FrontlightPanelActivity::onSettingsEvent(const fui::ActionEvent& event, void* user) {
+  auto* self = static_cast<FrontlightPanelActivity*>(user);
+  self->app.clearTapFlash();
+  switch (static_cast<quickui::SettingsDestination>(event.value)) {
+    case quickui::SettingsDestination::Bluetooth:
+      self->openBluetoothSettings();
+      break;
+    case quickui::SettingsDestination::Wifi:
+      self->openWifiSettings();
+      break;
+  }
 }
 
 void FrontlightPanelActivity::runTile(const int idx) {
@@ -328,6 +320,16 @@ void FrontlightPanelActivity::close() { finish(); }
 void FrontlightPanelActivity::syncBluetoothState(const bluetoothui::State state) {
   if (quickui::hasBluetoothStatus(bluetoothState) != quickui::hasBluetoothStatus(state)) resetUi();
   bluetoothState = state;
+}
+
+void FrontlightPanelActivity::openBluetoothSettings() {
+  persistLightSettings();
+  auto next = makeUniqueNoThrow<BleSettingsActivity>(renderer, mappedInput);
+  if (!next) {
+    LOG_ERR("QUICK", "OOM: Bluetooth settings");
+    return;
+  }
+  startActivityForResult(std::move(next), [this](const ActivityResult&) { close(); });
 }
 
 void FrontlightPanelActivity::openWifiSettings() {

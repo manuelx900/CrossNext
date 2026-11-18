@@ -194,47 +194,48 @@ void SettingsActivity::rebuildSettingsLists() {
   std::vector<SettingInfo> forkSystemSettings;
   forkSystemSettings.reserve(2);
 
-  for (auto& setting : getSettingsList(readingResourcesReady ? &sdFontSystem.registry() : nullptr,
-                                       readingResourcesReady ? &dictionaries : nullptr)) {
-    if (setting.nameId == StrId::STR_DEVICE_REPORT) continue;
+  // Retain only device rows; reader font selectors live in Text Settings.
+  auto collect = [&](SettingInfo& setting) {
+    if (setting.nameId == StrId::STR_DEVICE_REPORT) return;
+    if (setting.nameId == StrId::STR_RESTORE_LIGHT_ON_WAKE && !Frontlight.present()) return;
     if (setting.valuePtr == &CrossPointSettings::xtcCoverRotation ||
         setting.valuePtr == &CrossPointSettings::xtcInvertPageDirection) {
-      mangaSettings.push_back(setting);
-      continue;
+      mangaSettings.push_back(std::move(setting));
+      return;
     }
     // home_button::isSetting: upstream's Home Button Gestures rows render on
     // their own screen, not in this list.
-    if (setting.category == StrId::STR_NONE_OPT || home_button::isSetting(setting.valuePtr)) continue;
+    if (setting.category == StrId::STR_NONE_OPT || home_button::isSetting(setting.valuePtr)) return;
     if (BoardConfig::hasTouch() &&
         (setting.nameId == StrId::STR_SHORT_PWR_BTN || setting.valuePtr == &CrossPointSettings::doubleClickPwrLight ||
          setting.valuePtr == &CrossPointSettings::showReaderMenu ||
          setting.valuePtr == &CrossPointSettings::pwrBtnFootnoteBack))
-      continue;
+      return;
     if (setting.category == StrId::STR_CAT_INTERFACE) {
-      continue;
+      return;
     } else if (setting.category == StrId::STR_CAT_DISPLAY) {
       if (setting.valuePtr == &CrossPointSettings::uiTheme) {
-        continue;
+        return;
       }
       // The sunlight fading fix is a grayscale-waveform compensation that does
       // not apply on the X4 Pro / X4 Classic (plain OTP waveform, same panels).
       if (setting.valuePtr == &CrossPointSettings::fadingFix &&
           (BoardConfig::isX4Pro() || BoardConfig::isX4Classic())) {
-        continue;
+        return;
       }
-      displaySettings.push_back(setting);
+      displaySettings.push_back(std::move(setting));
     } else if (setting.category == StrId::STR_CAT_READER) {
       // Settings merged into "Text Settings"
       // (they stay in the shared list for the web settings API)
-      if (setting.inTextSettings) continue;
-      readerSettings.push_back(setting);
+      if (setting.inTextSettings) return;
+      readerSettings.push_back(std::move(setting));
     } else if (setting.category == StrId::STR_CAT_CONTROLS) {
-      if (BoardConfig::hasHomeKey() && setting.nameId == StrId::STR_LONG_PRESS_MENU) continue;
+      if (BoardConfig::hasHomeKey() && setting.nameId == StrId::STR_LONG_PRESS_MENU) return;
       if (setting.valuePtr == &CrossPointSettings::pwrBtnFootnoteBack &&
           SETTINGS.shortPwrBtn != CrossPointSettings::SHORT_PWRBTN::FOOTNOTES) {
-        continue;
+        return;
       }
-      controlsSettings.push_back(setting);
+      controlsSettings.push_back(std::move(setting));
     } else if (setting.category == StrId::STR_CAT_SYSTEM) {
       // CrossPlay's own settings sort below every CrossPoint one. Held back
       // rather than pushed here, because the action rows below are appended
@@ -245,11 +246,16 @@ void SettingsActivity::rebuildSettingsLists() {
       // triviaShowUsCentric was in this list until card #311 and is now
       // category-less, so it never reaches this switch at all.
       if (setting.valuePtr == &CrossPointSettings::deviceReport || setting.valuePtr == &CrossPointSettings::devMode) {
-        forkSystemSettings.push_back(setting);
-        continue;
+        forkSystemSettings.push_back(std::move(setting));
+        return;
       }
-      systemSettings.push_back(setting);
+      systemSettings.push_back(std::move(setting));
     }
+  };
+  forEachBaseSetting(collect);
+  if (readingResourcesReady) {
+    readerSettings.push_back(buildDictionarySetting(dictionaries));
+    readerSettings.push_back(buildDictionarySetting(dictionaries, true));
   }
 
   // Append device-only ACTION items
@@ -285,7 +291,7 @@ void SettingsActivity::rebuildSettingsLists() {
   // The fork's own System rows go last, under every upstream row, so a reader
   // looking for a CrossPoint setting never scrolls past one of ours to reach
   // it. host-tests/settingsorder/ holds the line. See LOCAL_SCOPE.md.
-  for (const auto& setting : forkSystemSettings) systemSettings.push_back(setting);
+  for (auto& setting : forkSystemSettings) systemSettings.push_back(std::move(setting));
   systemSettings.insert(systemSettings.begin(), SettingInfo::Action(StrId::STR_HOME_MENU, SettingAction::HomeMenu));
   readerSettings.insert(readerSettings.begin(),
                         SettingInfo::Action(StrId::STR_READING_FORMATS, SettingAction::ReadingFormats));

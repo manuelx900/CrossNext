@@ -218,8 +218,8 @@ int main(int argc, char** argv) {
           quickui::Work work;
           quickui::build(off.screen, before, work);
           quickui::build(on.screen, after, work);
-          CHECK(!off.has(quickui::WifiSettings));
-          CHECK(on.has(quickui::WifiSettings));
+          CHECK(!off.has(quickui::OpenSettings, int(quickui::SettingsDestination::Wifi)));
+          CHECK(on.has(quickui::OpenSettings, int(quickui::SettingsDestination::Wifi)));
           off.checkHits();
           on.checkHits();
           const auto layout = quickui::layout(on.device, true, true, true, quickui::hasBluetoothStatus(bluetooth));

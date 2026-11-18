@@ -1,7 +1,7 @@
-# CrossNext Book Preparer 2.0.3
+# CrossNext Book Preparer 2.0.4
 
 The desktop app runs the firmware's real preparation engine in WebAssembly with
-an included Node runtime. See the [current 2.0.3 build and runtime instructions](../desktop-preparer/DESKTOP.txt).
+an included Node runtime. See the [current 2.0.4 build and runtime instructions](../desktop-preparer/DESKTOP.txt).
 
 ## English
 
@@ -29,7 +29,7 @@ Books, settings, reading progress and statistics are preserved. Only known gener
 cache paths under `/.crosspoint/` are written. Safely eject the card after completion.
 Keep the diagnostic folder shown after an error. Do not remove the card during work.
 
-The Windows executable is portable and unsigned. The macOS arm64/x64 DMGs are built and verified on macOS. They are not Apple-notarized; platform security prompts may apply. Open the matching DMG and drag the app to Applications. Version 2.0.3
+The Windows executable is portable and unsigned. The macOS arm64/x64 DMGs are built and verified on macOS. They are not Apple-notarized; platform security prompts may apply. Open the matching DMG and drag the app to Applications. Version 2.0.4
 and cache ABI versions are independent; `engine-build.json` records provenance.
 
 ## Español
@@ -59,6 +59,6 @@ Solo se escriben rutas conocidas de caché generada en `/.crosspoint/`; se conse
 libros, ajustes, progreso y estadísticas. Expulsa la tarjeta al terminar y conserva
 la carpeta de diagnóstico si falla. No la retires durante el proceso.
 
-Windows es portátil y sin firmar. Los DMG para macOS arm64/x64 se generan y verifican en macOS. No tienen notarización de Apple; pueden aparecer avisos de seguridad. Abre el DMG correspondiente y arrastra la app a Aplicaciones. La versión 2.0.3 de la aplicación
+Windows es portátil y sin firmar. Los DMG para macOS arm64/x64 se generan y verifican en macOS. No tienen notarización de Apple; pueden aparecer avisos de seguridad. Abre el DMG correspondiente y arrastra la app a Aplicaciones. La versión 2.0.4 de la aplicación
 y las versiones internas de caché son independientes; `engine-build.json` registra
 el origen del motor. Comprueba las cachés con el firmware correspondiente en el X4 Pro físico.

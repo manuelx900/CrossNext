@@ -197,7 +197,8 @@ void IntervalSelectionActivity::buildIntervalScreen(UiScreen& screen) {
   spec.chromeAction = ACTION_CHROME;
   spec.hintLine1 = hints[0];
   spec.hintLine2 = hints[1];
-  buildSliderDialogScreen(screen, uiTarget, mappedInput, renderer, spec);
+  const bool regularTitle = titleId == StrId::STR_HOME_RECENT_BOOK_COUNT || titleId == StrId::STR_HOME_SHELF_PAGES;
+  buildSliderDialogScreen(screen, uiTarget, mappedInput, renderer, spec, regularTitle);
 }
 
 void IntervalSelectionActivity::render(RenderLock&&) {

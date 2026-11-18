@@ -59,6 +59,7 @@ class FrontlightPanelActivity final : public Activity, private UiAppHost {
   static void onWarmthEvent(const freeink::ui::ActionEvent& event, void* user);
   static void onBrightnessStepEvent(const freeink::ui::ActionEvent& event, void* user);
   static void onWarmthStepEvent(const freeink::ui::ActionEvent& event, void* user);
+  static void onSettingsEvent(const freeink::ui::ActionEvent& event, void* user);
   static void onTileEvent(const freeink::ui::ActionEvent& event, void* user);
 
   void buildPanelScreen(UiScreen& screen);
@@ -68,6 +69,7 @@ class FrontlightPanelActivity final : public Activity, private UiAppHost {
   void toggleLight();
   void toggleWarmth();
   void runTile(int idx);
+  void openBluetoothSettings();
   void openWifiSettings();
   void syncLightState(bool useSavedWarmth = false);
   void syncBluetoothState(bluetoothui::State state);

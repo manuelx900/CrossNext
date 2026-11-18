@@ -107,9 +107,9 @@ enum : fui::ActionId {
   WarmthStep,
   Tile,
   ToggleWarmth,
-  BluetoothSettings,
-  WifiSettings
+  OpenSettings
 };
+enum class SettingsDestination : int16_t { Bluetooth, Wifi };
 struct Model {
   char time[8] = "--:--";
   int brightness = 60, warmth = 50, battery = 100;
@@ -289,14 +289,14 @@ void build(Screen& screen, const Model& model, Work& work) {
   if (model.wifiConnected) {
     const auto glyph = fui::makeRect(wifi.x + 2, wifi.y + (wifi.height - 40) / 2, 40, 40);
     screen.target().bitmap(glyph, fui::bitmapFromIcon(icon(Shortcut::Wifi)), fui::BitmapMode::Contain);
-    screen.frame().hit(wifi, WifiSettings, 0, fui::InputTouch);
+    screen.frame().hit(wifi, OpenSettings, int16_t(SettingsDestination::Wifi), fui::InputTouch);
   }
   if (bluetooth) {
     std::snprintf(work.label, sizeof(work.label), "%s: %s", tr(STR_BT_SHORT_NAME),
                   I18N.get(bluetoothui::bannerLabel(model.bluetooth)));
     const auto banner =
         fui::makeRect(g.header.x, bar.bottom() + kBluetoothSpacing.gap, g.header.width, kBluetoothSpacing.banner);
-    screen.frame().hit(banner, BluetoothSettings, 0, fui::InputTouch);
+    screen.frame().hit(banner, OpenSettings, int16_t(SettingsDestination::Bluetooth), fui::InputTouch);
     screen.target().fill(banner, lightui::ink, lightui::radius());
     screen.target().stroke(banner, lightui::ink, chrome::lightHeader ? 1 : pixelui::kBorder, lightui::radius());
     fui::TextStyle status;

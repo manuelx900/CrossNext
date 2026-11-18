@@ -34,7 +34,7 @@ struct UiSliderDialogSpec {
 
 inline void buildSliderDialogScreen(UiAppHost::UiScreen& screen, freeink::ui::GfxRendererTarget& uiTarget,
                                     const MappedInputManager& mappedInput, const GfxRenderer& renderer,
-                                    const UiSliderDialogSpec& spec) {
+                                    const UiSliderDialogSpec& spec, bool regularTitle = false) {
   if (chrome::lightHeader) {
     pixelui::bindFonts(uiTarget, const_cast<GfxRenderer&>(renderer));
   } else {
@@ -42,5 +42,5 @@ inline void buildSliderDialogScreen(UiAppHost::UiScreen& screen, freeink::ui::Gf
     uiTarget.setFont(1, UI_12_FONT_ID);
     uiTarget.setFont(3, UI_10_FONT_ID);
   }
-  referenceslider::build(screen, spec, mappedInput.hasTouch());
+  referenceslider::build(screen, spec, mappedInput.hasTouch(), regularTitle);
 }

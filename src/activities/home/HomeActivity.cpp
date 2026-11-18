@@ -836,7 +836,8 @@ void HomeActivity::render(RenderLock&&) {
       UITheme::getInstance().drawCoverGridHome(*coverGridUi);
       coverGridUi->setLoadingShell(false);
     } else {
-      dashboard.draw(nullptr, hasLibrarySlot(), hasPlugins, -1, 0, 0, nullptr, true);
+      const int count = std::clamp(int(SETTINGS.homeRecentBookCount), 1, RecentBooksStore::MAX_RECENT_BOOKS);
+      dashboard.draw(nullptr, hasLibrarySlot(), hasPlugins, -1, 0, count, nullptr, true);
       dashboard.paintPlaceholders();
     }
     auto target = toybox::makeTarget(renderer);
@@ -898,7 +899,7 @@ void HomeActivity::render(RenderLock&&) {
   const RecentBook* sides[4]{};
   static constexpr int offsets[] = {-2, -1, 1, 2};
   for (int n = 0; n < 4; ++n) {
-    if (recentBookCount <= 1 || n == 0 || n == 3) continue;
+    if (recentBookCount <= 1 || n == 0 || n == 3 || (recentBookCount == 2 && n == 1)) continue;
     const int at = (recentBookIndex + offsets[n] + recentBookCount) % recentBookCount;
     sides[n] = &RECENT_BOOKS.getBooks()[recentSourceIndices[at]];
   }
