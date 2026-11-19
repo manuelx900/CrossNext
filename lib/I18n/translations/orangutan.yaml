@@ -495,3 +495,17 @@ STR_HOME_COVER_NOTICE_ADVANTAGE: "Ook! Ook."
 STR_WORDS_STORAGE_ERROR: "Ook! Oook? Ook ook."
 STR_WORDS_RECORDS_SKIPPED: "Ook... Ook! Oook."
 STR_WORDS_NOTICE_SAVE_ERROR: "Ook! Oook? Ook ook."
+
+# Independent header background and contrasting foreground.
+STR_HEADER_COLOR: "Ook! Ook?"
+STR_HEADER_APPEARANCE: "Ook!"
+STR_HEADER_BLACK: "Ook! Ook!"
+STR_HEADER_WHITE: "Ook? Ook?"
+
+STR_HOME_ADD_PLUGIN: "Ook! Ook?"
+STR_STATS_RESET_BOOK: "Ook! Ook!"
+STR_STATS_RESET_BOOK_ASK: "Ook? Ook! Ook. Ook! Ook? Ook. Ook! Ook."
+STR_STATS_RESETTING: "Ook…"
+STR_HOME_TAP_NONE: "Ook!"
+STR_HOME_TAP_100: "100 ms"
+STR_HOME_TAP_200: "200 ms"

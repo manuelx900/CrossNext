@@ -292,7 +292,7 @@ void CoverGridHomeUi::drawLicorice(UiScreen& screen) {
   const auto safe = screen.device().safeRect();
   const bool wide = screen.device().width > screen.device().height;
   const int band = safe.y + 44;
-  chrome::headerHeight = band;
+  chrome::recordPaintedHeader(band, false);
   GUI.applyHeaderStatus(renderer, shelfStatus);
   auto& target = screen.target();
   const auto ink = fui::Paint::solid(fui::Color::Black), paper = fui::Paint::solid(fui::Color::White);

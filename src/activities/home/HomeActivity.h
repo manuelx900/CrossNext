@@ -86,23 +86,12 @@ class HomeActivity final : public Activity {
 
   // Convert HomeMenuItem to menu index (used in onEnter)
   static int menuItemToIndex(HomeMenuItem item, bool hasOpdsUrl) {
-    if (SETTINGS.homeLayout == CrossPointSettings::HOME_BOOX) {
-      for (int n = 0; n < homeui::kPiccoActions; ++n)
-        if (indexToMenuItem(n, hasOpdsUrl) == item) return n;
-      return 0;
-    }
     const int index = homemenu::indexOf(homemenu::config(), homemenu::idFor(item), hasOpdsUrl);
     return index < 0 ? 0 : index;
   }
 
   // Convert menu index to HomeMenuItem (used in loop)
   static HomeMenuItem indexToMenuItem(int idx, bool hasOpdsUrl) {
-    if (SETTINGS.homeLayout == CrossPointSettings::HOME_BOOX) {
-      static constexpr HomeMenuItem actions[] = {
-          HomeMenuItem::FILE_BROWSER, HomeMenuItem::LIBRARY, HomeMenuItem::FILE_TRANSFER, HomeMenuItem::READING_STATS,
-          HomeMenuItem::APPS,         HomeMenuItem::GAMES,   HomeMenuItem::SETTINGS_MENU};
-      return idx >= 0 && idx < homeui::kPiccoActions ? actions[idx] : HomeMenuItem::NONE;
-    }
     return homemenu::item(homemenu::at(homemenu::config(), idx, hasOpdsUrl));
   }
   void onSelectBook(const std::string& path);

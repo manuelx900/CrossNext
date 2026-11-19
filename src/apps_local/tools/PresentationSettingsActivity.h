@@ -14,6 +14,8 @@ class PresentationSettingsActivity final : public UiListActivity {
 
  private:
   Kind kind;
+  enum class PendingPicker : uint8_t { None, Theme, Header };
+  PendingPicker pendingPicker = PendingPicker::None;
   OptionPopup optionPopup;
   bool saveFailed = false;
   bool buttonFocus = false;
@@ -28,6 +30,8 @@ class PresentationSettingsActivity final : public UiListActivity {
   }
   uint8_t& fontChoice(int row);
   uint8_t& themeChoice(int row);
+  void showThemePicker(int row);
+  void showHeaderPicker();
   const char* fontTargetName(int row) const;
   static void fontRow(void*, uint16_t, freeink::ui::ListItem&);
   static void themeRow(void*, uint16_t, freeink::ui::ListItem&);

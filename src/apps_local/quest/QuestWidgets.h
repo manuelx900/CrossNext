@@ -254,9 +254,9 @@ inline fui::Rect content(toybox::Screen& s) {
   return rect(r.x + 10, r.y + HEADER_HEIGHT + 10, r.width - 20, r.height - HEADER_HEIGHT - 20);
 }
 inline void navigation(toybox::Screen& s, const Model& m, Work& w) {
-  chrome::headerHeight = 0;
+  chrome::recordPaintedHeader(0, false);
   const auto safe = s.device().safeRect();
-  const bool dark = !chrome::lightHeader;
+  const bool dark = !chrome::headerIsLight();
   const auto foreground = dark ? paper : ink;
   s.target().fill(rect(0, 0, s.device().width, safe.y + HEADER_HEIGHT), dark ? ink : paper);
   const auto back = pixelui::geometry(s.device()).back;
@@ -296,5 +296,6 @@ inline void navigation(toybox::Screen& s, const Model& m, Work& w) {
   pixelui::copyNatural(w.label, sizeof(w.label), tr(STR_READING_QUEST));
   text(s, rect(titleX, rowY, (clockBox.empty() ? right - 8 : clockBox.x - 12) - titleX, 48), w.label,
        pixelui::uppercaseLabels ? fui::HEADER_CLOCK_FONT : 0, true, fui::TextAlign::Left, dark);
+  chrome::recordPaintedHeader(safe.y + HEADER_HEIGHT, !dark);
 }
 }  // namespace questui::widget

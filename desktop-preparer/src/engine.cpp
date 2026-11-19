@@ -49,6 +49,40 @@ void ensureFonts(GfxRenderer&) {}
 }  // namespace toybox
 
 extern "C" {
+EMSCRIPTEN_KEEPALIVE const char* prepare_orientation(int orientation) {
+  if (orientation < 0 || orientation > 3) return "{\"error\":\"Invalid orientation\"}";
+  SETTINGS.orientation = static_cast<uint8_t>(orientation);
+  renderer.setOrientation(static_cast<GfxRenderer::Orientation>(orientation));
+  int top, right, bottom, left;
+  renderer.getOrientedViewableTRBL(&top, &right, &bottom, &left);
+  const int margin = SETTINGS.screenMargin;
+  active.viewportWidth = renderer.getScreenWidth() - left - right - margin * 2;
+  active.viewportHeight = renderer.getScreenHeight() - top - bottom - margin -
+                          std::max(margin, UITheme::getInstance().getStatusBarHeight());
+  bookprep::Job geometry;
+  bookprep::collectCoverSizes(geometry, renderer);
+  std::copy(std::begin(geometry.thumbnailHeights), std::end(geometry.thumbnailHeights), std::begin(coverHeights));
+  std::copy(std::begin(geometry.nativeAreas), std::end(geometry.nativeAreas), std::begin(nativeAreas));
+  JsonDocument reply;
+  auto heights = reply["covers"].to<JsonArray>();
+  for (auto h : coverHeights)
+    if (h > 0) heights.add(h);
+  auto native = reply["nativeCovers"].to<JsonArray>();
+  for (const auto& area : nativeAreas) {
+    const auto key = libraryui::PreparedCoverCache::key(renderer, area);
+    if (!key) continue;
+    auto row = native.add<JsonObject>();
+    row["height"] = area.height;
+    row["width"] = area.width;
+    row["bytes"] = renderer.getPackedRegionByteSize(area.x, area.y, area.width, area.height);
+    char hex[17];
+    std::snprintf(hex, sizeof(hex), "%016llx", static_cast<unsigned long long>(key));
+    row["key"] = hex;
+  }
+  output.clear();
+  serializeJson(reply, output);
+  return output.c_str();
+}
 EMSCRIPTEN_KEEPALIVE const char* prepare_initialize(const char* configuration) {
   desktopdevice::apply();
   JsonDocument doc;

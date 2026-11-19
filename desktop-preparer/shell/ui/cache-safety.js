@@ -5,7 +5,7 @@
     es: {
       cleanup:'Eliminar caché de CrossPoint', recommend:'Para empezar, elige una fuente y un tamaño. Cada combinación EPUB guarda páginas aparte y ocupa más espacio.',
       beforePreparing:'ANTES DE PREPARAR', reviewSelection:'Revisa el espacio que vas a utilizar',
-      combinationWarning:'Cada fuente y tamaño genera su propia paginación para cada EPUB. Elegir muchas combinaciones puede llenar la microSD.',
+      combinationWarning:'Cada fuente, tamaño y orientación genera su propia paginación para cada EPUB. Elegir muchas combinaciones puede llenar la microSD.',
       fixedWarning:'Se prepararán las portadas y los índices de los libros seleccionados. Los archivos generados también ocupan espacio en la microSD.',
       layoutsLabel:'Combinaciones EPUB', availableLabel:'Espacio disponible', recommendedTitle:'Recomendado: una fuente y un tamaño',
       recommendedBody:'Usa los que lees habitualmente. Puedes preparar otras combinaciones más adelante, cuando las necesites.',
@@ -37,7 +37,7 @@
     en: {
       cleanup:'Clear CrossPoint cache', recommend:'Start with one font and one size. Each EPUB combination stores separate pages and uses more space.',
       beforePreparing:'BEFORE PREPARING', reviewSelection:'Review the space you are about to use',
-      combinationWarning:'Each font and size creates a separate page layout for every EPUB. Selecting many combinations can fill the microSD.',
+      combinationWarning:'Each font, size and orientation creates a separate page layout for every EPUB. Selecting many combinations can fill the microSD.',
       fixedWarning:'Covers and indexes will be prepared for the selected books. Generated files also use space on the microSD.',
       layoutsLabel:'EPUB combinations', availableLabel:'Available space', recommendedTitle:'Recommended: one font and one size',
       recommendedBody:'Use the settings you normally read with. Prepare other combinations later, when you need them.',
@@ -110,6 +110,7 @@
         const font = catalog.fonts.find(family => family.name === name);
         count += configuration.sizes === 'all' ? font.sizes.length : Array.isArray(configuration.sizes) ? configuration.sizes.length : 1;
       }
+    if (configuration.orientation === 'both') count *= 2;
     $('prepare-layouts').textContent = number(count);
     $('prepare-warning-description').textContent = t(count ? 'combinationWarning' : 'fixedWarning');
     $('prepare-recommendation').hidden = !count;

@@ -113,4 +113,8 @@ class ReadingStatsActivity final : public Activity {
   bool pickerVisible = false, periodFromPicker = false;
   bool clockKnown = false;
   bool details = false, damaged = false, ready = false;
+  enum class ResetState { Idle, Requested, Working };
+  ResetState resetState = ResetState::Idle;
+  bool detailReset = false;
+  void resetSelectedBook();
 };

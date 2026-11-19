@@ -2,11 +2,13 @@
 
 #include <I18n.h>
 #include <Logging.h>
+#include <Memory.h>
 
 #include <cstring>
 
 #include "../../activities/Activity.h"
 #include "../../activities/ActivityManager.h"
+#include "../../activities/plugins/PluginCatalogActivity.h"
 #include "../Shelf.h"
 
 namespace homemenu {
@@ -22,7 +24,8 @@ const char* label(Id id, bool plugins) {
   if (id == Id::Count) return "";
   const auto* custom = config().labels[static_cast<int>(id)];
   if (*custom) return custom;
-  if (const auto* entry = shortcut(config(), id)) return shelf::label(entry->title);
+  if (const auto* entry = shortcut(config(), id))
+    return entry->folder == kPluginFolder ? entry->title : shelf::label(entry->title);
   switch (id) {
     case Id::Files:
       return tr(STR_BROWSE_FILES);
@@ -51,7 +54,10 @@ const char* label(Id id, bool plugins) {
   return "";
 }
 homeui::Icon icon(Id id) {
-  if (const auto* entry = shortcut(config(), id)) return entry->folder == 0 ? homeui::Icon::Games : homeui::Icon::Apps;
+  if (const auto* entry = shortcut(config(), id))
+    return entry->folder == kPluginFolder ? homeui::Icon::Plugins
+           : entry->folder == 0           ? homeui::Icon::Games
+                                          : homeui::Icon::Apps;
   switch (id) {
     case Id::Files:
       return homeui::Icon::Files;
@@ -133,6 +139,16 @@ Id idFor(HomeMenuItem value) {
 int count(bool services) { return visibleCount(config(), services); }
 bool launchShortcut(Id id, GfxRenderer& renderer, MappedInputManager& input) {
   const auto* entry = shortcut(config(), id);
+  if (entry && entry->folder == kPluginFolder && *entry->title) {
+    auto activity = makeUniqueNoThrow<PluginCatalogActivity>(renderer, input, false,
+                                                             PluginCatalogActivity::Origin::Shortcut, entry->title);
+    if (!activity) {
+      LOG_ERR("HOME-MENU", "OOM: plugin shortcut");
+      return false;
+    }
+    activityManager.replaceActivity(std::move(activity));
+    return true;
+  }
   if (!entry || !*entry->title || entry->folder >= shelf::folderCount()) return false;
   const auto& folder = shelf::folders()[entry->folder];
   for (int n = 0; n < folder.count; ++n)

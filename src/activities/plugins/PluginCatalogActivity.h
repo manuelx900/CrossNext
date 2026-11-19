@@ -36,10 +36,11 @@ std::vector<PluginRef> discoverPlugins();
 // See docs/sd-plugins.md for the device.json schema.
 class PluginCatalogActivity final : public CatalogActivity {
  public:
-  // showOpds adds the OPDS row; rootMode returns Home instead of popping to Settings.
+  enum class Origin : uint8_t { Settings, Home, Shortcut };
+  // showOpds adds the OPDS row. Direct shortcuts return Home from the catalog root.
   // Out-of-line construction/destruction needs the complete SecureHttpClient type.
   explicit PluginCatalogActivity(GfxRenderer& renderer, MappedInputManager& mappedInput, bool showOpds = false,
-                                 bool rootMode = false);
+                                 Origin origin = Origin::Settings, const char* initialPlugin = nullptr);
   ~PluginCatalogActivity() override;
 
   void onEnter() override;
@@ -145,7 +146,8 @@ class PluginCatalogActivity final : public CatalogActivity {
   bool ignoreHubInstallerBackRelease = false;
   OptionPopup pluginHubPopup;
   bool showOpds = false;
-  bool rootMode = false;
+  Origin origin = Origin::Settings;
+  std::string initialPlugin;
   std::string pickerReturnName;  // plugin identity to reselect after leaving a catalog
   std::vector<Item> items;
   // Row buffer over items/browseLists plus the synthetic pager rows; rebuilt

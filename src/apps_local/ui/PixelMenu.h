@@ -48,6 +48,9 @@ struct Header {
 };
 void header(toybox::Screen& screen, Header model);
 void header(fui::DrawTarget& target, const fui::DeviceContext& device, const Header& model);
+// Use on screens that paint the entire header here, including its decorations.
+void headerWithSelectedColor(fui::DrawTarget& target, const fui::DeviceContext& device, const Header& model,
+                             bool outputInverted);
 void text(fui::DrawTarget& target, fui::Rect box, const char* label, fui::FontId font = kBody,
           fui::Color color = fui::Color::Black, fui::TextAlign align = fui::TextAlign::Left, bool emphasis = false,
           LabelCase casing = LabelCase::Sentence);

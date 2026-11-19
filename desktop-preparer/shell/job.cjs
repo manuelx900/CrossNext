@@ -7,5 +7,5 @@ const filename = process.argv[process.argv.length - 1];
 Promise.resolve().then(() => worker.main(JSON.parse(fs.readFileSync(filename, 'utf8')), mode))
   .then(() => process.stdout.write('', () => process.exit(0)))
   .catch(error => {
-    process.stdout.write(JSON.stringify({type: 'error', code: error.code, message: String(error.message || error)}) + '\n', () => process.exit(1));
+    process.stdout.write(JSON.stringify({type: 'error', code: error.code, book: error.book, message: String(error.message || error)}) + '\n', () => process.exit(1));
   });

@@ -36,13 +36,13 @@ void MappedInputManager::update(const bool deferHomeButtonAction) const {
     if (!readerHome) readerHomeOwned = false;
     if (gpio.wasHomeKeyPressed()) readerHomeOwned = readerHome;
     homeButtonInput.setWindow(SETTINGS.homeButtonDoubleTapTiming);
-    homeAction = homeButtonInput.update(
-        millis(), gpio.wasHomeKeyTapped(), gpio.wasHomeKeyLongPressed(), wasSwipe() != SwipeDir::None,
-        gpio.wasHomeKeyPressed(), static_cast<HomeButtonAction>(SETTINGS.homeButtonTapAction),
-        static_cast<HomeButtonAction>(SETTINGS.homeButtonDoubleTapAction),
-        readerHomeOwned ? HomeButtonAction::ReaderMenu
-                        : static_cast<HomeButtonAction>(SETTINGS.homeButtonLongPressAction),
-        isTouchscreenLocked());
+    homeAction =
+        homeButtonInput.update(millis(), gpio.wasHomeKeyTapped(), gpio.wasHomeKeyLongPressed(),
+                               wasSwipe() != SwipeDir::None, gpio.wasHomeKeyPressed(), HomeButtonAction::Home,
+                               static_cast<HomeButtonAction>(SETTINGS.homeButtonDoubleTapAction),
+                               readerHomeOwned ? HomeButtonAction::ReaderMenu
+                                               : static_cast<HomeButtonAction>(SETTINGS.homeButtonLongPressAction),
+                               isTouchscreenLocked());
     if (gpio.wasHomeKeyTapped() || gpio.wasHomeKeyLongPressed()) readerHomeOwned = false;
     if (gpio.wasHomeKeyLongPressed() && homeAction != HomeButtonAction::Ignore) {
       HalHaptics::longPress(SETTINGS.vibration != CrossPointSettings::VIBRATION_OFF, SETTINGS.hapticIntensity);

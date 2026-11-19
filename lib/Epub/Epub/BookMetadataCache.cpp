@@ -539,6 +539,27 @@ BookMetadataCache::TocEntry BookMetadataCache::getTocEntry(const int index) {
   return readTocEntry(bookFile);
 }
 
+void BookMetadataCache::copyTocTitle(int index, char* title, size_t capacity) {
+  if (capacity == 0) return;
+  title[0] = '\0';
+  if (!loaded || index < 0 || index >= tocCount) return;
+
+  uint32_t offset, length;
+  if (!bookFile.seek(lutOffset + sizeof(uint32_t) * (spineCount + index)) ||
+      !serialization::tryReadPod(bookFile, offset) || !bookFile.seek(offset) ||
+      !serialization::tryReadPod(bookFile, length)) {
+    LOG_ERR("BMC", "Could not read title for TOC entry %d", index);
+    return;
+  }
+  const size_t count = std::min<size_t>(capacity - 1, length);
+  if (count && bookFile.read(title, count) != static_cast<int>(count)) {
+    title[0] = '\0';
+    LOG_ERR("BMC", "Short title for TOC entry %d", index);
+    return;
+  }
+  title[count] = '\0';
+}
+
 BookMetadataCache::SpineEntry BookMetadataCache::readSpineEntry(HalFile& file) const {
   return readSpineEntryFrom(file);
 }

@@ -104,6 +104,7 @@ void PresentationSettingsActivity::themeRow(void* context, uint16_t row, fui::Li
   auto& self = *static_cast<PresentationSettingsActivity*>(context);
   item = {};
   item.label = menufontui::sectionName(menufont::Section(row));
+  if (row == 0) item.subtitle = tr(STR_HEADER_COLOR);
   const auto choice = self.themeChoice(row);
   item.value = row == int(menufont::Section::Home) ? I18N.get(themes[choice])
                : choice                            ? I18N.get(themes[choice - 1])
@@ -340,23 +341,14 @@ void PresentationSettingsActivity::activateIndex(int n) {
       SETTINGS.readingFormats ^= masks[n];
       break;
     case Kind::ThemeOverview: {
-      const bool home = n == int(menufont::Section::Home);
-      const int count = CrossPointSettings::HOME_LAYOUT_COUNT + (home ? 0 : 1);
-      const char* names[CrossPointSettings::HOME_LAYOUT_COUNT + 1];
-      if (!home) names[0] = n ? tr(STR_INTERFACE_THEME_GENERAL) : tr(STR_INTERFACE_THEME_HOME);
-      for (int j = 0; j < CrossPointSettings::HOME_LAYOUT_COUNT; ++j) names[j + (home ? 0 : 1)] = I18N.get(themes[j]);
-      optionPopup.show(menufontui::sectionName(menufont::Section(n)), names, count, themeChoice(n),
-                       [this, n](int selected) {
-                         auto& choice = themeChoice(n);
-                         if (choice == selected) return;
-                         const auto previous = choice;
-                         choice = uint8_t(selected);
-                         saveFailed = !SETTINGS.saveToFile();
-                         if (saveFailed) choice = previous;
-                         UITheme::getInstance().setInterfaceSection(activityManager.currentInterfaceFontSection());
-                         resetUi();
-                         requestUpdate();
-                       });
+      if (n != 0) {
+        showThemePicker(n);
+        return;
+      }
+      const char* names[] = {tr(STR_INTERFACE_THEME), tr(STR_HEADER_COLOR)};
+      optionPopup.show(menufontui::sectionName(menufont::Section::General), names, 2, 0, [this](int selected) {
+        pendingPicker = selected == 0 ? PendingPicker::Theme : PendingPicker::Header;
+      });
       requestUpdate();
       return;
     }
@@ -405,6 +397,42 @@ void PresentationSettingsActivity::activateIndex(int n) {
   requestUpdate();
 }
 
+void PresentationSettingsActivity::showThemePicker(int n) {
+  const bool home = n == int(menufont::Section::Home);
+  const int count = CrossPointSettings::HOME_LAYOUT_COUNT + (home ? 0 : 1);
+  const char* names[CrossPointSettings::HOME_LAYOUT_COUNT + 1];
+  if (!home) names[0] = n ? tr(STR_INTERFACE_THEME_GENERAL) : tr(STR_INTERFACE_THEME_HOME);
+  for (int j = 0; j < CrossPointSettings::HOME_LAYOUT_COUNT; ++j) names[j + (home ? 0 : 1)] = I18N.get(themes[j]);
+  optionPopup.show(menufontui::sectionName(menufont::Section(n)), names, count, themeChoice(n),
+                   [this, n](int selected) {
+                     auto& choice = themeChoice(n);
+                     if (choice == selected) return;
+                     const auto previous = choice;
+                     choice = uint8_t(selected);
+                     saveFailed = !SETTINGS.saveToFile();
+                     if (saveFailed) choice = previous;
+                     UITheme::getInstance().setInterfaceSection(activityManager.currentInterfaceFontSection());
+                     resetUi();
+                     requestUpdate();
+                   });
+  requestUpdate();
+}
+
+void PresentationSettingsActivity::showHeaderPicker() {
+  const char* names[] = {tr(STR_HEADER_APPEARANCE), tr(STR_HEADER_BLACK), tr(STR_HEADER_WHITE)};
+  optionPopup.show(tr(STR_HEADER_COLOR), names, 3, SETTINGS.interfaceHeaderColor, [this](int selected) {
+    if (SETTINGS.interfaceHeaderColor == selected) return;
+    const auto previous = SETTINGS.interfaceHeaderColor;
+    SETTINGS.interfaceHeaderColor = uint8_t(selected);
+    saveFailed = !SETTINGS.saveToFile();
+    if (saveFailed) SETTINGS.interfaceHeaderColor = previous;
+    UITheme::getInstance().setInterfaceSection(activityManager.currentInterfaceFontSection());
+    resetUi();
+    requestUpdate();
+  });
+  requestUpdate();
+}
+
 void PresentationSettingsActivity::navigateButtons() {
   if (showingCoverHelp) return;
   const int previous = activeNav().selected;
@@ -423,7 +451,17 @@ void PresentationSettingsActivity::loop() {
     requestUpdate();
     return;
   }
-  if (optionPopup.handleInput(mappedInput, [this] { requestUpdate(); })) return;
+  const bool popupHandled = optionPopup.handleInput(mappedInput, [this] { requestUpdate(); });
+  if (pendingPicker != PendingPicker::None) {
+    const auto next = pendingPicker;
+    pendingPicker = PendingPicker::None;
+    if (next == PendingPicker::Header)
+      showHeaderPicker();
+    else
+      showThemePicker(0);
+    return;
+  }
+  if (popupHandled) return;
   if (mappedInput.wasReleased(MappedInputManager::Button::Back)) {
     onBackButton();
     return;

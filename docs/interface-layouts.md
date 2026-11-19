@@ -1,5 +1,11 @@
 # Interface layouts and reader fonts
 
+Appearance > Interface theme > General also offers Header color. Appearance default uses black for Framed and Carousel and white for Carousel 2 and Bookshelf. Black and White override the header without changing the layout or body theme. Text, clock, battery and header icons change contrast together, including after rotation and in night mode. PET and Reading Adventure also follow this choice, including their artwork screens. With a white header, Framed and Carousel use a white outlined Continue reading button with black text. The button and its neighboring arrows still follow the body’s normal night-mode inversion; the header choice itself stays absolute. Changing header color leaves the remaining body controls and artwork unchanged. This reuses the existing header output inversion and adds no framebuffer. The Home dashboard in Framed, Carousel and Carousel 2, the Apps and Games folders, and the PET and Reading Adventure artwork screens honor the selected color when drawing. The Home dashboard and Apps/Games lists account for night inversion while painting, so the selected color does not require a post-draw header pass in either mode. The renderer uses the registered polarity to preserve contrast in all other cases.
+
+Carousel 2 centers its visible shortcuts as a group. One to three use a centered single row; four use 2+2, five use 3+2 and six use 3+3. A short final row is centered between the upper shortcuts. The Settings shortcut remains in the header. The same rectangles drive painting and touch targets in portrait and landscape.
+
+Header output inversion uses whole-byte spans with masks only at the two edges. Window refreshes retain full header compensation because supported display drivers can promote them to full-screen updates. Panel timing excludes this software conversion; the existing repaint trace can distinguish conversion/drawing time from the display waveform. No SD access, heap allocation, task or extra framebuffer is added.
+
 Appearance > Interface theme separates the Home layout from the rest of the interface. General follows the Home theme unless another theme is chosen. Files, Library, File Transfer, Reading Stats, Games, Apps, Settings, reader controls and the control panel can each inherit General or select Framed, Carousel, Carousel 2 or Bookshelf. The Home row changes the same Home theme shown in Appearance. Existing settings continue to follow Home until an override is selected. Interface font choices remain independent of these themes and of the book's reading font.
 
 Settings > Appearance offers Framed, Carousel, Carousel 2 and Bookshelf. The following describes the two legacy layouts; [Cover themes and Library](cover-themes-library.md) describes the new layouts and their white headers. Framed keeps the book card and divided menu, with known progress at the cover's upper right. Carousel is the former Focus layout: the most recent book centered between up to two neighboring covers, separated reading progress and compact menu icons. The old third layout migrates to Carousel. Swipe horizontally, tap a neighboring-cover band, or use the arrows to change the selected recent book. The center opens the selected book. Settings > Appearance > Recent books selects how many available books both Home layouts browse, from one to ten (default three), using the existing recently opened store. Navigation wraps in both directions. Reducing this display limit does not remove books from the history or SD card. Other recent-book views retain their existing behavior. It never adds synthetic books or changes their order. Settings remains enabled and follows the saved Home menu order, alongside shortcuts. Settings > System > Home Menu > Reorder Menu Items changes that order. See [Settings](settings.md) for the current category menu.
@@ -9,6 +15,11 @@ The layouts share the existing Home dashboard, input host, cover generation and 
 Framed and Carousel show day and month on the left, a centered local clock,
 and battery on the right. An old Library appearance setting falls back to Framed.
 The indexed Library and the Files browser remain available through their normal entries.
+
+Carousel 2 uses the saved Home menu's visibility, order, custom labels and app
+shortcuts. Settings stays in its header gear; the remaining visible entries use
+the six existing lower slots. Touch and button navigation resolve the same
+saved entry; no separate fixed action list is maintained.
 
 ## Indexed Library
 

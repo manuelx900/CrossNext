@@ -61,21 +61,22 @@ function launch(mode, configuration) {
   child.stderr.on('data', data => fs.appendFileSync(path.join(folder, 'stderr.log'), data));
   child.once('exit', async code => {
     await outputClosed;
-    const okay = code === 0 && (mode === 'inspect' ? catalog : finished);
+    const okay = code === 0 && (mode === 'inspect' || mode === 'plan' ? catalog : finished);
     if (!okay) {
       failure = true;
       fs.writeFileSync(path.join(folder, 'job-exit.json'), JSON.stringify({code, mode, runtime, platform: process.platform, arch: process.arch, appIsPackaged: app.isPackaged}, null, 2));
       if (!reportedError) emit({type: 'error', code: 'engineStopped', message: 'The preparation engine stopped.'});
     }
     job = null;
-    diagnosticFolder = failure ? folder : null;
+    if (failure) diagnosticFolder = folder;
+    else if (mode !== 'plan') diagnosticFolder = null;
     if (!failure) fs.rmSync(folder, {recursive: true, force: true});
     emit({type: 'idle', okay, diagnostics: Boolean(diagnosticFolder)});
     if (quitting) app.quit();
   });
 }
 function cancel() {
-  if (job && job.mode === 'run') fs.writeFileSync(job.cancelFile, 'cancel');
+  if (job) fs.writeFileSync(job.cancelFile, 'cancel');
 }
 async function detectCards() {
   if (process.argv.includes('--disable-card-discovery') || scanningCards || job || cacheTask) return;
@@ -99,7 +100,9 @@ function checkedOptions(value) {
   if (!Array.isArray(value.fonts) || !value.fonts.length || value.fonts.length > 128 || value.fonts.some(v => typeof v !== 'string' || v.length > 256)) throw Error('Select at least one reading font.');
   if (!['current', 'all'].includes(value.sizes) && !(Array.isArray(value.sizes) && value.sizes.length > 0 && value.sizes.length <= 64 && value.sizes.every(size => Number.isInteger(size) && size >= 4 && size <= 255))) throw Error('Select a supported font size.');
   if (![0, 1].includes(value.engine)) throw Error('Select an EPUB engine.');
-  return {formats: value.formats, fonts: value.fonts, sizes: value.sizes, profile: {epubEngine: value.engine}};
+    const orientation = value.orientation || 'reader';
+    if (!['reader', 'portrait', 'landscape', 'both'].includes(orientation)) throw Error('Select a supported orientation.');
+    return {formats: value.formats, fonts: value.fonts, sizes: value.sizes, orientation, profile: {epubEngine: value.engine}};
 }
 function setupIpc() {
   ipcMain.handle('choose-card', async () => {
@@ -113,6 +116,7 @@ function setupIpc() {
     }
   });
   ipcMain.handle('inspect', () => currentCard ? launch('inspect', {}) : detectCards());
+  ipcMain.handle('plan', (_, value) => launch('plan', checkedOptions(value)));
   ipcMain.handle('prepare', (_, value) => {
     const configuration = checkedOptions(value);
     if (!currentCard) throw Error('Choose the microSD card first.');
@@ -162,7 +166,7 @@ function createWindow() {
     if (!job) return;
     event.preventDefault();
     if (quitting) return;
-    if (job.mode === 'inspect') { quitting = true; return; }
+    if (job.mode !== 'run') { quitting = true; cancel(); return; }
     const spanish = await window.webContents.executeJavaScript('document.documentElement.lang === "es"');
     const result = await dialog.showMessageBox(window, {
       type: 'question', title: 'CrossNext', defaultId: 0, cancelId: 0,

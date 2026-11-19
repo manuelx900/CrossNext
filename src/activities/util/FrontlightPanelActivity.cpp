@@ -490,7 +490,7 @@ void FrontlightPanelActivity::preparePanelModel() {
 }
 
 void FrontlightPanelActivity::buildPanelScreen(UiScreen& screen) {
-  chrome::headerHeight = 0;
+  chrome::recordPaintedHeader(0, false);
   pixelui::FontScope fonts(uiTarget, renderer, I18N.getLanguage() != Language::EN);
   uiTarget.setFont(fui::HEADER_CLOCK_FONT, UI_10_FONT_ID);
   quickui::build(screen, panelModel, panelWork);

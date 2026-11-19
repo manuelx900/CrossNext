@@ -485,6 +485,22 @@ void ReadingStatsActivity::action(fui::ActionId action, int value) {
       action != readingui::Tab)
     return;
   switch (action) {
+    case readingui::ResetBook: {
+      if (!details || source != readingstats::Source::Local || loading != Load::Ready ||
+          !readingstats::validDocument(detail.document))
+        return;
+      const char* options[] = {tr(STR_CANCEL), tr(STR_RESET)};
+      goalPopup.showMessage(
+          tr(STR_STATS_RESET_BOOK), tr(STR_STATS_RESET_BOOK_ASK), options, 2, 0,
+          [this](int selected) {
+            RenderLock lock(*this);
+            if (selected == 1) resetState = ResetState::Requested;
+            requestUpdate();
+          },
+          12);
+      requestUpdate();
+      return;
+    }
     case readingui::BookDays:
       if (details && loading == Load::Ready && readingstats::validDocument(detail.document)) loadBookDays();
       return;
@@ -716,6 +732,7 @@ void ReadingStatsActivity::action(fui::ActionId action, int value) {
       }
       return;
     case readingui::OpenBook:
+      detailReset = false;
       detailPage = DetailPage::Summary;
       if (value < 0 || value >= (periodBooksVisible ? periodBooks.count : count)) return;
       if (periodBooksVisible) {
@@ -774,7 +791,55 @@ void ReadingStatsActivity::action(fui::ActionId action, int value) {
       return;
   }
 }
+void ReadingStatsActivity::resetSelectedBook() {
+  periodView.close();
+  daysView.close();
+  repository.close();
+  const bool saved = repository.resetBook(detail.document);
+  repository.close();
+  RenderLock lock(*this);
+  resetState = ResetState::Idle;
+  if (!saved) {
+    const char* options[] = {tr(STR_DONE)};
+    goalPopup.showMessage(tr(STR_STATS_RESET_BOOK), tr(STR_TOOLS_SAVE_FAILED), options, 1, 0,
+                          [this](int) { requestUpdate(); });
+    requestUpdate();
+    return;
+  }
+  record.book = detail;
+  detail = {};
+  readingstats::copyText(detail.document, sizeof(detail.document), record.book.document);
+  readingstats::copyText(detail.title, sizeof(detail.title), record.book.title);
+  readingstats::copyText(detail.author, sizeof(detail.author), record.book.author);
+  detailReset = true;
+  detailPage = DetailPage::Summary;
+  periodBooksVisible = periodFromPicker = false;
+  completionIndex.reset();
+  completionMemory.reset();
+  summary = {};
+  summary.anchorDay = currentDay;
+  readingstats::setPeriod(dayStats, readingstats::Period::Day, displayedDay, SETTINGS.weekStartsSunday);
+  readingstats::setPeriod(annualStats, readingstats::Period::Year, currentDay, SETTINGS.weekStartsSunday);
+  listedFinished = 0;
+  recordedYears = {};
+  recentCount = count = page = 0;
+  finishedPage = -1;
+  filter = readingstats::BookFilter::Recent;
+  tab = 3;
+  summaryReady = dayReady = annualReady = ready = false;
+  loading = beginScan(currentDay == 0) ? (currentDay ? Load::Summary : Load::Anchor) : Load::Failed;
+  requestUpdate();
+}
 void ReadingStatsActivity::loop() {
+  if (resetState == ResetState::Requested) {
+    {
+      RenderLock lock(*this);
+      resetState = ResetState::Working;
+    }
+    requestUpdateAndWait();
+    resetSelectedBook();
+    return;
+  }
   if (goalSaveFailed && !goalPopup.isActive()) {
     goalSaveFailed = false;
     const char* options[] = {tr(STR_DONE)};
@@ -1029,7 +1094,10 @@ void ReadingStatsActivity::render(RenderLock&&) {
   model.periodBookTotal = periodView.count();
   model.periodBookNext = periodBooks.hasNext;
   model.bookDays = detailPage == DetailPage::Days ? &bookDays : nullptr;
-  model.detail = details && detail.seconds >= readingstats::kMinimumVisibleSeconds ? &detail : nullptr;
+  model.detail = details && (detailReset || detail.seconds >= readingstats::kMinimumVisibleSeconds) ? &detail : nullptr;
+  model.canResetBook = details && detailPage == DetailPage::Summary && source == readingstats::Source::Local &&
+                       loading == Load::Ready && readingstats::validDocument(detail.document);
+  model.resetting = resetState == ResetState::Working;
   model.bookOnly = *initialBook;
   model.periodFromPicker = periodFromPicker;
   model.pickerVisible = pickerVisible;

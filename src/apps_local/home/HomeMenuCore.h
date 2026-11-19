@@ -24,6 +24,7 @@ constexpr int kCount = static_cast<int>(Id::Count);
 constexpr int kBaseCount = static_cast<int>(Id::Shortcut0);
 constexpr int kShortcutCount = kCount - kBaseCount;
 constexpr int kMaxVisible = 7;
+constexpr uint8_t kPluginFolder = 2;
 constexpr char kSaveVersion = '4';
 constexpr size_t kLabelBytes = 49;
 constexpr size_t kItemBytes = 64;

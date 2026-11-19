@@ -1,6 +1,6 @@
-CrossNext Book Preparer 2.0.4
+CrossNext Book Preparer 2.0.5
 
-This coordinated 2.0.4 release retains the desktop UI from the previous development builds and rebuilds the real preparation engine against the matching firmware source. Application version numbers and cache-format versions are independent. engine-build.json records firmware version, preparation ABI and source SHA256 hashes.
+This coordinated 2.0.5 release adds resumable preparation, an accurate progress counter and orientation selection, and rebuilds the real preparation engine against the matching firmware source. Application version numbers and cache-format versions are independent. engine-build.json records firmware version, preparation ABI and source SHA256 hashes.
 
 Run preparation again after installing this release to update outdated caches. Valid matching combinations are reused. Books, settings and reading progress are preserved. Font sizes come from the current firmware's actual supported font catalog.
 
@@ -10,10 +10,14 @@ Clear CrossPoint cache: select prepared pages by an inclusive local-date range, 
 
 Seguridad de espacio: empieza con una fuente y un tamaño. Cada combinación EPUB guarda páginas aparte y prepararlas todas puede llenar la microSD. Antes de comenzar se muestran las combinaciones y el espacio disponible y se pide confirmación. La preparación conserva una reserva de 128–512 MiB y se detiene si falta espacio. «Eliminar caché de CrossPoint» permite revisar y borrar páginas por fecha o toda la caché generada reconocida; conserva libros, progreso, ajustes, palabras, estadísticas, partidas y archivos desconocidos. El filtro por fecha usa la última modificación, conserva páginas anteriores y no recupera versiones sobrescritas. Borrar no se puede deshacer; lo eliminado tendrá que prepararse otra vez. Revisa el espacio estimado y confirma antes de borrar.
 
-Windows: open CrossNext-Book-Preparer-Windows-v2.0.4.exe.
+Windows: open CrossNext-Book-Preparer-Windows-v2.0.5.exe.
 macOS: open the arm64 (Apple Silicon) or x64 (Intel) DMG, then drag the app to Applications. Close an older copy with Command-Q first. Disk images are built on macOS, mounted read-only and verified against the matching WASM engine. They are not notarized with an Apple Developer certificate; ordinary platform security prompts may apply.
 
 CI builds a shared 32-bit WASM engine from this firmware revision, then packages it on macOS. This is independent of the computer CPU architecture and preserves the device cache ABI. Workflow artifacts are build outputs, not published Releases.
+
+The macOS workflow opens each mounted arm64 or Intel DMG and verifies actual book and cover preparation with sample books and preservation of original files. It also checks generated-cache controls.
+
+El flujo de macOS abre cada DMG montado de Apple Silicon o Intel. Comprueba la preparación de libros y portadas con ejemplos públicos, la conservación de los originales y los controles de caché.
 
 Build the shared engine against the current firmware checkout:
   python build_engine.py --firmware /path/to/firmware

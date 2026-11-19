@@ -7,6 +7,8 @@ corners and four action buttons arranged in a cross. A same-named PNG takes
 precedence over the older SVG when generating `src/apps_local/ui/HomeIcons.h`.
 Folder.png is an imagegen replacement with a compact body, an upper-left tab
 and a uniform outline matched to the accepted controller artwork.
+Plugins.png is a transparent imagegen puzzle piece with a substantial uniform
+outline, used by plugin shortcuts and the Plugins Home entry.
 
 Run `python tools_local/navigation_art/generate_home.py` after changing a source.
 It composites transparency over white and creates monochrome masks at the menu's

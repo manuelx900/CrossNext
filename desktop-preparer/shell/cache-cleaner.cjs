@@ -22,7 +22,7 @@ function cacheKind(relative) {
   if (name.startsWith('._')) name = name.slice(2);
   if (parts.length === 2) {
     if (/^ready-v1-[a-f0-9]{8}\.bin$/.test(name)) return 'stamp';
-    if (/^(?:book\.bin|\.items\.bin|css_rules\.cache|\.desktop-source-v1\.bin|cover(?:_ccw3)?\.bmp|thumb_(?:ccw3_)?[0-9]+\.bmp)$/.test(name) ||
+    if (/^(?:book\.bin|\.items\.bin|css_rules\.cache|\.desktop-source-v1\.bin|\.desktop-ready-v2\.json|cover(?:_ccw3)?\.bmp|thumb_(?:ccw3_)?[0-9]+\.bmp)$/.test(name) ||
         /\.pxc$|\.css\.bin$/.test(name) || /^\.css[-_.a-f0-9]*$/.test(name)) return 'shared';
   }
   if (parts.length !== 3) return null;

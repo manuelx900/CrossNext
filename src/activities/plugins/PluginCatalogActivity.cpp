@@ -501,10 +501,11 @@ std::string PluginCatalogActivity::downloadDir() const {
 }
 
 PluginCatalogActivity::PluginCatalogActivity(GfxRenderer& renderer, MappedInputManager& mappedInput,
-                                             const bool showOpds, const bool rootMode)
+                                             const bool showOpds, const Origin origin, const char* initialPlugin)
     : CatalogActivity("PluginCatalog", renderer, mappedInput, /*wantsTouchLongPress=*/true),
       showOpds(showOpds),
-      rootMode(rootMode) {}
+      origin(origin),
+      initialPlugin(initialPlugin ? initialPlugin : "") {}
 
 PluginCatalogActivity::~PluginCatalogActivity() = default;
 
@@ -515,6 +516,18 @@ int PluginCatalogActivity::apiRequest(const pluginhttp::RequestSpec& req, String
 void PluginCatalogActivity::onEnter() {
   CatalogActivity::onEnter();
   enterPluginPicker();
+  if (!initialPlugin.empty()) {
+    for (size_t n = 0; n < installedPlugins.size(); ++n) {
+      if (installedPlugins[n].name != initialPlugin) continue;
+      const int row = static_cast<int>(n) + (showOpds ? 1 : 0) + (showPluginHubInstallRow ? 1 : 0);
+      initialPlugin.clear();
+      activateIndex(row);
+      return;
+    }
+    initialPlugin.clear();
+    errorMessage = tr(STR_PLUGIN_MANIFEST_INVALID);
+    requestUpdate();
+  }
 }
 
 void PluginCatalogActivity::enterPluginPicker() {
@@ -639,7 +652,12 @@ void PluginCatalogActivity::enterCatalog() {
 // Leaving the open catalog (Back at its root, or Back out of an error /
 // sign-in screen): return to the plugin picker. Wi-Fi stays up so the next
 // pick connects instantly; onExit tears it down when the activity ends.
-void PluginCatalogActivity::exitCatalog() { enterPluginPicker(); }
+void PluginCatalogActivity::exitCatalog() {
+  if (origin == Origin::Shortcut)
+    onGoHome();
+  else
+    enterPluginPicker();
+}
 
 void PluginCatalogActivity::resetBrowse() {
   items.clear();
@@ -1396,7 +1414,7 @@ void PluginCatalogActivity::onBackButton() {
     return;
   }
   if (state == State::PLUGIN_PICKER) {
-    if (rootMode) {
+    if (origin != Origin::Settings) {
       onGoHome();  // home launch replaced the home screen (root)
     } else {
       finish();  // Settings launch pushed us

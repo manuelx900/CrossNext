@@ -18,6 +18,7 @@
 #include "FontCacheManager.h"
 #include "FontFallback.h"
 #include "GlyphBitmap.h"
+#include "HeaderBand.h"
 #include "PackedRegion.h"
 #include "PaintClock.h"
 
@@ -1934,26 +1935,20 @@ void GfxRenderer::invertHeaderBand(int height) const {
   rotateCoordinates(orientation, 0, 0, &ax, &ay, panelWidth, panelHeight);
   rotateCoordinates(orientation, getScreenWidth() - 1, height - 1, &bx, &by, panelWidth, panelHeight);
   const int left = std::min(ax, bx), right = std::max(ax, bx), top = std::min(ay, by), bottom = std::max(ay, by);
-  for (int y = top; y <= bottom; ++y) {
-    auto* row = frameBuffer + size_t(y) * panelWidthBytes;
-    for (int byte = left / 8; byte <= right / 8; ++byte) {
-      const int first = std::max(left, byte * 8) - byte * 8, last = std::min(right, byte * 8 + 7) - byte * 8;
-      row[byte] ^= uint8_t((0xffu >> first) & (0xffu << (7 - last)));
-    }
-  }
+  headerband::invertRect(frameBuffer, panelWidthBytes, left, right, top, bottom);
 }
 
 void GfxRenderer::displayBuffer(HalDisplay::RefreshMode refreshMode) const {
   auto elapsed = millis() - start_ms;
   LOG_DBG("GFX", "Time = %lu ms from clearScreen to displayBuffer", elapsed);
   refreshMode = applyPromotedRefresh(refreshMode);
+  const int header = chrome::invertHeaderForOutput(display.isInverted()) ? chrome::headerHeight : 0;
+  invertHeaderBand(header);
   {
     PanelSpan span;
-    const int header = chrome::invertHeaderForOutput(display.isInverted()) ? chrome::headerHeight : 0;
-    invertHeaderBand(header);
     display.displayBuffer(refreshMode, fadingFix);
-    invertHeaderBand(header);
   }
+  invertHeaderBand(header);
   // The panel now shows this framebuffer. Counted HERE, after the waveform,
   // because that is the moment the user can see what they are touching --
   // see PaintClock.h and toybox::Interactions::route().
@@ -1965,20 +1960,20 @@ void GfxRenderer::displayBufferAsync(HalDisplay::RefreshMode refreshMode) const 
   // The async path has no turn-off-screen hook, which the sunlight fading fix
   // relies on; keep those users on the blocking path.
   if (fadingFix) {
+    const int header = chrome::invertHeaderForOutput(display.isInverted()) ? chrome::headerHeight : 0;
+    invertHeaderBand(header);
     {
       PanelSpan span;
-      const int header = chrome::invertHeaderForOutput(display.isInverted()) ? chrome::headerHeight : 0;
-      invertHeaderBand(header);
       display.displayBuffer(refreshMode, fadingFix);
-      invertHeaderBand(header);
     }
+    invertHeaderBand(header);
     paintclock::notePainted();
     return;
   }
+  deferredHeaderHeight = chrome::invertHeaderForOutput(display.isInverted()) ? chrome::headerHeight : 0;
+  invertHeaderBand(deferredHeaderHeight);
   {
     PanelSpan span;
-    deferredHeaderHeight = chrome::invertHeaderForOutput(display.isInverted()) ? chrome::headerHeight : 0;
-    invertHeaderBand(deferredHeaderHeight);
     display.displayBufferAsync(refreshMode);
   }
   // Deliberately NOT counted yet: the waveform is still running and the panel
@@ -2000,10 +1995,13 @@ void GfxRenderer::displayWindow(int x, int y, int width, int height) const {
   rotateCoordinates(orientation, right - 1, bottom - 1, &bx, &by, panelWidth, panelHeight);
   const int left = std::min(ax, bx) & ~7, top = std::min(ay, by);
   const int end = std::min<int>(panelWidth, (std::max(ax, bx) + 8) & ~7);
-  PanelSpan span;
   const int header = chrome::invertHeaderForOutput(false) ? chrome::headerHeight : 0;
   invertHeaderBand(header);
-  const bool painted = display.displayWindow(left, top, end - left, std::abs(by - ay) + 1, fadingFix);
+  bool painted;
+  {
+    PanelSpan span;
+    painted = display.displayWindow(left, top, end - left, std::abs(by - ay) + 1, fadingFix);
+  }
   invertHeaderBand(header);
   if (painted) paintclock::notePainted();
 }
@@ -2012,9 +2010,9 @@ void GfxRenderer::waitRefreshComplete() const {
   {
     PanelSpan span;
     display.waitRefreshComplete();
-    invertHeaderBand(deferredHeaderHeight);
-    deferredHeaderHeight = 0;
   }
+  invertHeaderBand(deferredHeaderHeight);
+  deferredHeaderHeight = 0;
   // Only when one was actually outstanding. Counting an idle wait would open
   // the touch gate for a paint that never happened.
   if (deferredPaintPending) {
@@ -2022,6 +2020,8 @@ void GfxRenderer::waitRefreshComplete() const {
     paintclock::notePainted();
   }
 }
+
+bool GfxRenderer::isOutputInverted() const { return display.isInverted(); }
 
 bool GfxRenderer::supportsAsyncRefresh() const { return !fadingFix && display.supportsAsyncRefresh(); }
 

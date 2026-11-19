@@ -2,6 +2,16 @@
 
 The current per-screen behavior is documented in [Side-button navigation](button-navigation.md).
 
+On X4 Pro, a single Home tap always returns to Home, including from a book or
+game. It cannot be reassigned. Saved assignments from older versions are reset
+to Home when settings load; input also enforces Home if an old settings file is
+restored. Double-tap, long-press and the double-tap interval remain configurable
+in **Settings > Controls > Home Button Gestures**. Choose **None** for a single
+press that goes to Home without waiting for a second press. The double-tap
+shortcut stays saved and becomes available again when a timed interval is chosen.
+The timed choices are 100, 200, 350 (default), 450, 550, 650 and 750 ms.
+The reader's bottom sheet retains its full-width Done button.
+
 ## Assigning the X4 Pro side keys
 
 In **Settings > Controls > Left side button / Right side button**, each key can

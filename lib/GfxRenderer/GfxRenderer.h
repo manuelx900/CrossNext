@@ -245,6 +245,7 @@ class GfxRenderer {
   int getScreenHeight() const;
   void tapToLogical(float nx, float ny, int& outX, int& outY) const;
   void displayBuffer(HalDisplay::RefreshMode refreshMode = HalDisplay::FAST_REFRESH) const;
+  bool isOutputInverted() const;
   // One-shot: the next displayBuffer(), displayBufferAsync(), or
   // displayGrayscaleBase() call uses `mode`
   // instead of what its caller asked for, then the override clears itself.

@@ -17,6 +17,7 @@
 #include "../ui/ToolsDigits.h"
 #include "../ui/ToyboxIcons.h"
 #include "ReadingGoalScreens.h"
+#include "components/icons/listIcons.h"
 
 namespace readingui {
 namespace {
@@ -751,7 +752,13 @@ void bookDetails(Context& s, fui::Rect r, const Model& m) {
   const auto& b = *m.detail;
   const bool wide = r.width > r.height;
   if (!m.bookOnly) {
-    button(s, fui::makeRect(r.x, r.y, wide ? 240 : r.width, 44), tr(STR_STATS_BACK_BOOKS), BackToBooks);
+    button(s, fui::makeRect(r.x, r.y, wide ? 240 : r.width - (m.canResetBook ? 52 : 0), 44), tr(STR_STATS_BACK_BOOKS),
+           BackToBooks);
+    if (m.canResetBook) {
+      const auto reset = fui::makeRect(r.right() - 44, r.y, 44, 44);
+      button(s, reset, "", ResetBook);
+      art(s, reset.inset({6, 6, 6, 6}), fui::bitmapFromIcon(icon_refresh_cw_32));
+    }
     r.y += 50;
     r.height -= 50;
   }
@@ -1003,6 +1010,10 @@ void build(toybox::Screen& screen, const Model& m, Work& work) {
   header.battery = m.battery;
   header.charging = m.charging;
   header.showPercent = m.showPercent;
+  if (m.bookOnly && m.canResetBook) {
+    header.mark = fui::bitmapFromIcon(icon_refresh_cw_24);
+    header.markAction = ResetBook;
+  }
   if (!m.bookOnly && m.syncAvailable) {
     header.mark = fui::bitmapFromIcon(icon_live_check_24);
     header.markAction = ImportHistory;
@@ -1043,6 +1054,10 @@ void build(toybox::Screen& screen, const Model& m, Work& work) {
     }
   }
   auto body = s.body();
+  if (m.resetting) {
+    text(s, body, tr(STR_STATS_RESETTING), pixelui::kBody, fui::TextAlign::Center);
+    return;
+  }
   if (m.loading || m.failed) {
     text(s, body, (m.failed ? tr(STR_READING_STORAGE_ERROR) : tr(STR_READING_LOADING)), pixelui::kBody,
          fui::TextAlign::Center, fui::Color::Black, 3);

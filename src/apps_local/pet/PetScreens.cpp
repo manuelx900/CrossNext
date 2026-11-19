@@ -243,7 +243,7 @@ void homeControls(toybox::Screen& s, const Model& m, Work& w, fui::Rect r, bool 
 }
 void build(toybox::Screen& s, const Model& m, Work& w, Palette* palette, bool lightHeader, bool uppercaseHeader) {
   pixelui::begin(s);
-  chrome::headerHeight = 0;
+  chrome::recordPaintedHeader(0, false);
   if (m.resourcesReady && !m.loading && m.profile && m.profile->lifeStatus == pet::LifeStatus::Active &&
       (m.view == pet::View::Dashboard || m.view == pet::View::Home || m.view == pet::View::Care ||
        m.view == pet::View::Games || m.view == pet::View::Projects || m.view == pet::View::ProjectPreview ||
@@ -370,6 +370,7 @@ void build(toybox::Screen& s, const Model& m, Work& w, Palette* palette, bool li
 }
 void render(fui::DrawTarget& target, const fui::DeviceContext& device, const fui::InputSnapshot& input,
             toybox::Interactions& interactions, toybox::HeaderStatus status, const Model& m, Work& w) {
+  const bool lightHeader = chrome::headerIsLight();
   struct ControlStyle {
     bool lightHeader = chrome::lightHeader;
     ControlStyle() { chrome::lightHeader = true; }
@@ -384,6 +385,7 @@ void render(fui::DrawTarget& target, const fui::DeviceContext& device, const fui
   palette.fill(device.screen(), paper);
   toybox::Frame frame(palette, device, input, interactions, nullptr, status);
   toybox::Screen screen(frame);
-  build(screen, m, w, &palette, controls.lightHeader, naturalLabels.previous);
+  build(screen, m, w, &palette, lightHeader, naturalLabels.previous);
+  chrome::recordPaintedHeader(device.safeRect().y + simple::HEADER_HEIGHT, lightHeader);
 }
 }  // namespace petui

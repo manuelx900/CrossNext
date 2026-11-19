@@ -18,8 +18,15 @@ base = importlib.util.module_from_spec(spec); spec.loader.exec_module(base)
 BUILD.mkdir(exist_ok=True); OUT.mkdir(parents=True, exist_ok=True)
 base.OBJ = BUILD / 'objects'
 
+# Match the firmware's optional FreeType modules even with an older simulator database.
+FONT_FEATURES = {
+    name: int(value) for name, value in re.findall(
+        r'^\s*-D(FREEINK_FONT_ENABLE_[A-Z_]+)=([01])\s*$',
+        (REPO / 'platformio.ini').read_text(encoding='utf-8'), re.M)
+}
+
 def source_hashes():
-    directories = ['lib/Epub', 'lib/Xtc', 'lib/EpdFont', 'lib/GfxRenderer',
+    directories = ['lib/Epub', 'lib/Xtc', 'lib/EpdFont', 'lib/GfxRenderer', 'lib/XmlParserUtils',
                    'src/apps_local/bookprep', 'src/components', 'src/apps_local/home',
                    'src/apps_local/library', 'src/apps_local/ui', 'src/apps_local/readerbars', 'lib/Performance',
                    'sim-stubs', 'tools_local/wasm/stubs']
@@ -83,6 +90,12 @@ def sources():
     }
     missing = [definition for name, definition in shims.items() if not re.search(r'\b' + name + r'\s*\(', header)]
     header = header.replace('  bool ready() const;', '  bool ready() const;\n  ' + '\n  '.join(missing))
+    if not re.search(r'bool\s+openNextFile\s*\(HalFile\s*&', header):
+        header = header.replace('  HalFile openNextFile();', '''  bool openNextFile(HalFile& entry, bool& ioError) {
+    entry = openNextFile(ioError);
+    return bool(entry);
+  }
+  HalFile openNextFile();''')
     (BUILD / 'HalStorage.h').write_text(header, encoding='utf-8')
 
     # Keep source-owned includes intact while adapting libc++ hashes to the device ABI.
@@ -97,6 +110,8 @@ def sources():
             if path.name == 'PixelCache.h':
                 # A JPEG MCU can be taller than a tiny image; only visible rows enter its cache.
                 text = text.replace('if (wantRows < maxBlockDstRows)', 'if (wantRows < std::min(maxBlockDstRows, h))')
+                # The desktop can hold a full 800x480 2-bit image; the device keeps its 24 KiB ceiling.
+                text = text.replace('MAX_BAND_BYTES = 24 * 1024', 'MAX_BAND_BYTES = 128 * 1024')
             if not target.exists() or target.read_text(encoding='utf-8') != text:
                 target.write_text(text, encoding='utf-8')
     chosen = {
@@ -143,13 +158,16 @@ def translate(args, obj, is_c):
     if not is_c:
         flags[1:1] = ['-include', str(ROOT / 'src/compatibility.h'), '-include', str(REPO / 'lib/Memory/Memory.h'),
                       '-I' + str(BUILD), '-I' + str(REPO / 'lib/Performance'),
+                      '-I' + str(REPO / 'lib/XmlParserUtils'),
                       '-I' + str(BUILD / 'device-sources/Xtc'), '-I' + str(BUILD / 'device-sources/Epub')]
     # Desktop CPU budget: keep the same algorithms and ABI, optimize them for throughput.
     prefixes = {str(REPO): '/crossnext', REPO.as_posix(): '/crossnext',
                 str(Path.home()): '/builder', Path.home().as_posix(): '/builder'}
     maps = ['-ffile-prefix-map=' + local + '=' + public
             for local, public in sorted(prefixes.items(), key=lambda item: -len(item[0]))]
-    return [f for f in flags if f not in ('-Oz', '-Os', '-Og')] + ['-O2', *maps]
+    feature_flags = ['-D' + name + '=' + str(value) for name, value in sorted(FONT_FEATURES.items())]
+    return [f for f in flags if f not in ('-Oz', '-Os', '-Og') and
+            not any(f.startswith('-D' + name + '=') for name in FONT_FEATURES)] + ['-O2', *feature_flags, *maps]
 base.translate = translate
 
 if __name__ == '__main__':
@@ -173,7 +191,7 @@ if __name__ == '__main__':
              '-sINITIAL_MEMORY=134217728', '-sMAXIMUM_MEMORY=2147483648', '-sEXIT_RUNTIME=0',
              '-sMODULARIZE=1', '-sEXPORT_NAME=createPreparationEngine', '-sENVIRONMENT=node',
              '-lnodefs.js', '-sEXPORTED_RUNTIME_METHODS=ccall,FS,ENV,PThread',
-             '-sEXPORTED_FUNCTIONS=_main,_prepare_initialize,_prepare_font,_prepare_open,_prepare_step,_prepare_status,_prepare_cancel,_prepare_hash,_prepare_stamp,_prepare_verify,_prepare_native_covers']
+             '-sEXPORTED_FUNCTIONS=_main,_prepare_initialize,_prepare_orientation,_prepare_font,_prepare_open,_prepare_step,_prepare_status,_prepare_cancel,_prepare_hash,_prepare_stamp,_prepare_verify,_prepare_native_covers']
     response = BUILD / 'link.rsp'
     response.write_text(shlex.join(flags), encoding='utf-8')
     r = subprocess.run([str(SDK / ('em++.exe' if os.name == 'nt' else 'em++')), '@' + str(response)], cwd=REPO, text=True, capture_output=True)
@@ -198,5 +216,5 @@ if __name__ == '__main__':
             license_files[name] = {'source': source.relative_to(REPO).as_posix(), 'sha256': hashlib.sha256(source.read_bytes()).hexdigest()}
         config = configparser.ConfigParser(interpolation=None)
         config.read(REPO / 'platformio.ini', encoding='utf8')
-        (OUT/'engine-build.json').write_text(json.dumps({'firmwareVersion': config.get('crossplay', 'version'), 'applicationVersion':json.loads((ROOT/'package.json').read_text())['version'], 'cacheVersion':version,'sourceHashes':inputs,'licenseFiles':license_files},indent=2),encoding='utf-8')
+        (OUT/'engine-build.json').write_text(json.dumps({'firmwareVersion': config.get('crossplay', 'version'), 'applicationVersion':json.loads((ROOT/'package.json').read_text())['version'], 'cacheVersion':version,'fontFeatures':FONT_FEATURES,'sourceHashes':inputs,'licenseFiles':license_files},indent=2),encoding='utf-8')
     print(r.stderr[-7000:]); sys.exit(r.returncode)

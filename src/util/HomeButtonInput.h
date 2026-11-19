@@ -35,10 +35,20 @@ constexpr bool readerHomeAction(HomeButtonAction action) {
 class HomeButtonInput {
  public:
   static constexpr uint32_t DOUBLE_TAP_MS = 350;
-  static constexpr uint16_t TAP_WINDOWS_MS[] = {350, 450, 550, 650, 750};
-  static constexpr unsigned TAP_WINDOW_COUNT = sizeof(TAP_WINDOWS_MS) / sizeof(TAP_WINDOWS_MS[0]);
-  static constexpr uint32_t windowFor(unsigned index) { return TAP_WINDOWS_MS[index < TAP_WINDOW_COUNT ? index : 0]; }
-  void setWindow(unsigned index) { doubleTapMs = windowFor(index); }
+  // Indices are stored on the SD card. Append new selections here.
+  static constexpr unsigned TAP_100_MS = 5, TAP_200_MS = 6, NO_DOUBLE_TAP = 7;
+  static constexpr uint16_t TAP_WINDOWS_MS[] = {350, 450, 550, 650, 750, 100, 200, 0};
+  static_assert(TAP_WINDOWS_MS[NO_DOUBLE_TAP] == 0 && TAP_WINDOWS_MS[TAP_100_MS] == 100 &&
+                TAP_WINDOWS_MS[TAP_200_MS] == 200);
+  static constexpr unsigned TAP_WINDOW_COUNT = NO_DOUBLE_TAP;
+  static constexpr unsigned TAP_OPTION_COUNT = sizeof(TAP_WINDOWS_MS) / sizeof(TAP_WINDOWS_MS[0]);
+  static constexpr uint32_t windowFor(unsigned index) { return TAP_WINDOWS_MS[index < TAP_OPTION_COUNT ? index : 0]; }
+  void setWindow(unsigned index) {
+    const auto window = windowFor(index);
+    if (window == doubleTapMs) return;
+    doubleTapMs = window;
+    reset();
+  }
 
   uint32_t nextActionDelayMs(uint32_t now, uint32_t maximum) const {
     if (!pending || secondContact) return maximum;
@@ -59,6 +69,10 @@ class HomeButtonInput {
       // A locked touchscreen must always have a physical way out.
       return touchLocked ? HomeButtonAction::ToggleTouchscreen : longPress;
     }
+    if (doubleTapMs == 0 || doubleTap == HomeButtonAction::Ignore) {
+      reset();
+      return tapped ? tap : HomeButtonAction::Ignore;
+    }
     if (pending && !secondContact && now - tappedAt > doubleTapMs) {
       pending = tapped;
       tappedAt = now;
@@ -66,10 +80,6 @@ class HomeButtonInput {
     }
     if (pending && pressed) secondContact = true;
     if (!tapped) return HomeButtonAction::Ignore;
-    if (doubleTap == HomeButtonAction::Ignore) {
-      reset();
-      return tap;
-    }
     if (pending) {
       reset();
       return doubleTap;

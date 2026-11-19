@@ -298,6 +298,7 @@ void ShelfFolderActivity::render(RenderLock&&) {
   model.selected = buttonCursorVisible ? selected - first : -1;
   model.page = page;
   model.pageCount = paging.pageCount;
+  model.outputInverted = renderer.isOutputInverted();
   shelfui::buildMenu(screen, model);
 
   interactionsReady = true;

@@ -6,6 +6,9 @@ const os = require('os');
 const crypto = require('crypto');
 const createEngine = require('./engine.cjs');
 const {safeDirectory, rejectLinks, requireSpace} = require('./card-storage.cjs');
+const {hashFile, recoverPublication, publishBook} = require('./cache-transaction.cjs');
+const RECEIPT = '.desktop-ready-v2.json';
+const FONT_SIGNATURE = JSON.stringify(Object.entries(require('./engine-build.json').fontFeatures || {}).sort());
 const emit = event => process.stdout.write(JSON.stringify(event) + '\n');
 const sha = value => crypto.createHash('sha256').update(value).digest('hex');
 const defer = () => new Promise(resolve => setImmediate(resolve));
@@ -32,7 +35,7 @@ function cacheFile(relative) {
   const parts = relative.replace(/\\/g, '/').split('/');
   const name = parts[parts.length - 1];
   if (parts.includes('..') || /\.tmp$|\.bak$|\.part$/.test(name)) return false;
-  return /^(\.desktop-source-v1\.bin|book\.bin|\.items\.bin|css_rules\.cache|cover(?:_ccw3)?\.bmp|thumb_(?:ccw3_)?\d+\.bmp|ready-v1-[a-f0-9]+\.bin|.*\.pxc|.*\.css\.bin)$/.test(name)
+  return name === RECEIPT || /^(\.desktop-source-v1\.bin|book\.bin|\.items\.bin|css_rules\.cache|cover(?:_ccw3)?\.bmp|thumb_(?:ccw3_)?\d+\.bmp|ready-v1-[a-f0-9]+\.bin|.*\.pxc|.*\.css\.bin)$/.test(name)
     || (parts[0] === 'html' && /^\d+\.html$/.test(name))
     || (parts[0] === 'sections' && /^(?:\d+.*\.bin|ready-v1-[a-f0-9]+\.bin)$/.test(name))
     || /^\.css/.test(name) && !/tmp|bak/.test(name);
@@ -77,6 +80,48 @@ function walk(directory, prefix = '') {
     else if (entry.isFile()) files.push(relative);
   }
   return files;
+}
+function copyWithTime(source, target) {
+  fs.mkdirSync(path.dirname(target), {recursive: true});
+  fs.copyFileSync(source, target);
+  const stat = fs.statSync(source);
+  fs.utimesSync(target, stat.atime, stat.mtime);
+}
+function readReceipt(directory) {
+  const filename = rejectLinks(directory, RECEIPT);
+  try {
+    if (fs.statSync(filename).size > 16 * 1024 * 1024) return null;
+    return JSON.parse(fs.readFileSync(filename, 'utf8'));
+  } catch (error) {
+    if (['ENOENT', 'ENOTDIR'].includes(error.code) || error instanceof SyntaxError) return null;
+    throw error;
+  }
+}
+function compatibleReceipt(receipt, identity) {
+  return receipt?.version === 5 && receipt.fontFeatures === FONT_SIGNATURE && receipt.source === identity.toString('hex');
+}
+function receiptReady(directory, identity, stamps, saved = undefined) {
+  try {
+    const receipt = saved === undefined ? readReceipt(directory) : saved;
+    return compatibleReceipt(receipt, identity) &&
+      Array.isArray(receipt.stamps) && stamps.every(name => receipt.stamps.includes(name)) &&
+      Array.isArray(receipt.files) && receipt.files.length > 0 && receipt.files.every(file => {
+        if (!file || typeof file.name !== 'string' || file.name === RECEIPT || !cacheFile(file.name)) return false;
+        const stat = fs.statSync(rejectLinks(directory, file.name));
+        return stat.size === file.bytes && sourceIdentity(stat).readUInt32LE(8) === file.modified;
+      });
+  } catch (error) {
+    if (['ENOENT', 'ENOTDIR'].includes(error.code) || error instanceof SyntaxError) return false;
+    throw error;
+  }
+}
+function writeReceipt(directory, identity, verifiedStamps, allowed = null) {
+  const files = walk(directory).filter(name => name !== RECEIPT && cacheFile(name) && (!allowed || allowed(name))).map(name => {
+    const filename = rejectLinks(directory, name), stat = fs.statSync(filename);
+    return {name, bytes: stat.size, modified: sourceIdentity(stat).readUInt32LE(8), sha256: hashFile(filename)};
+  });
+  const stamps = files.filter(file => verifiedStamps.includes(file.name)).map(file => file.name);
+  fs.writeFileSync(path.join(directory, RECEIPT), JSON.stringify({version: 5, fontFeatures: FONT_SIGNATURE, source: identity.toString('hex'), stamps, files}));
 }
 function atomicCopy(source, root, relative) {
   const target = rejectLinks(root, relative);
@@ -158,10 +203,12 @@ async function closeEngine(engine) {
 }
 async function main(configuration, mode) {
   const card = safeDirectory(configuration.card);
+  if (recoverPublication(card, cacheFile)) emit({type: 'recovered'});
   const profile = profileFor(card, configuration.profile || {});
   const stage = fs.mkdtempSync(path.join(os.tmpdir(), 'CrossNext-prepare-'));
   const stageCache = path.join(stage, 'cache'); fs.mkdirSync(stageCache);
   const diagnostics = [];
+  const readCaches = new Set();
   const errors = [];
   const stderr = line => {
     if (!line) return;
@@ -193,11 +240,19 @@ async function main(configuration, mode) {
           const writable = typeof flags === 'string' ? /[wa+]/.test(flags) : (flags & (1 | 2 | 64 | 512 | 1024));
           if (writable && resolved.startsWith('/sd/') && !resolved.startsWith('/sd/.crosspoint/'))
             throw Error('Engine attempted a write outside its cache: ' + resolved);
+          if (!writable && resolved.startsWith('/sd/.crosspoint/')) readCaches.add(resolved.slice('/sd/.crosspoint/'.length));
           return open(filename, flags, ...rest);
         };
       }
     });
     const call = (name, returns, types, args) => engine.ccall(name, returns, types, args);
+    const refreshCacheMount = () => {
+      call('prepare_cancel', null, [], []);
+      const FS = engine.FS;
+      FS.unmount('/sd/.crosspoint');
+      FS.mount(FS.filesystems.NODEFS, {root: stageCache}, '/sd/.crosspoint');
+      readCaches.clear();
+    };
     const catalog = JSON.parse(call('prepare_initialize', 'string', ['string'], [JSON.stringify(profile)]));
     if (catalog.error) throw Error(catalog.error);
     const requestedFont = profile.sdFontFamilyName || 'Ubuntu';
@@ -206,25 +261,43 @@ async function main(configuration, mode) {
     const selectedFamily = catalog.fonts.find(font => font.name === selectedFont);
     const selectedSize = selectedFamily.sizes.reduce((a,b) => Math.abs(b - profile.fontPointSize) < Math.abs(a - profile.fontPointSize) ? b : a);
     emit({type: 'catalog', ...catalog, profile, card, requestedFont, selectedFont, selectedSize, fontMissing: !availableFont});
-    if (mode === 'inspect') return;
     if (mode === 'run') requireSpace(card);
-    const layouts = buildLayouts(catalog, configuration, selectedFont, profile.fontPointSize);
+    const choice = configuration.orientation || 'reader';
+    if (!['reader', 'portrait', 'landscape', 'both'].includes(choice)) throw Error('Select a supported orientation.');
+    const saved = Number(profile.orientation || 0);
+    const portrait = saved % 2 === 0 ? saved : 0, landscape = saved % 2 === 1 ? saved : 1;
+    const orientations = choice === 'both' ? [portrait, landscape] :
+      [choice === 'portrait' ? portrait : choice === 'landscape' ? landscape : saved];
+    const geometry = new Map();
+    const orient = orientation => {
+      const value = JSON.parse(call('prepare_orientation', 'string', ['number'], [orientation]));
+      if (value.error) throw Error(value.error);
+      return value;
+    };
+    for (const orientation of orientations) geometry.set(orientation, orient(orientation));
+    const requiredCovers = [...new Set([...geometry.values()].flatMap(value => value.covers))];
+    const layouts = orientations.flatMap(orientation =>
+      buildLayouts(catalog, configuration, selectedFont, profile.fontPointSize).map(layout => ({...layout, orientation})));
     const formats = configuration.formats || ['epub', 'xtc', 'xtch'];
     const candidates = scan(card, formats);
     let completed = 0, failed = 0, cancelled = false;
     const aborted = () => configuration.cancelFile && fs.existsSync(configuration.cancelFile);
     emit({type: 'checking', total: candidates.length});
-    const epubStamps = [];
+    const epubStamps = [], xtcStamps = [];
     for (const layout of layouts) {
+      orient(layout.orientation);
       if (!call('prepare_font', 'number', ['string', 'number'], [layout.name === 'Ubuntu' ? '' : layout.name, layout.size]))
         throw Error('Could not load font: ' + layout.name);
       epubStamps.push(call('prepare_stamp', 'string', ['number', 'number'], [1, profile.xtcCoverRotation || 0]));
       await defer();
       if (aborted()) { cancelled = true; break; }
     }
-    const xtcStamp = call('prepare_stamp', 'string', ['number', 'number'], [0, profile.xtcCoverRotation || 0]);
+    for (const orientation of orientations) {
+      orient(orientation);
+      xtcStamps.push(call('prepare_stamp', 'string', ['number', 'number'], [0, profile.xtcCoverRotation || 0]));
+    }
     const books = [];
-    let alreadyPrepared = 0;
+    let alreadyPrepared = 0, needsRefresh = 0, differentSettings = 0;
     for (const book of candidates) {
       if (cancelled || aborted()) { cancelled = true; break; }
       rejectLinks(card, book.slice(1));
@@ -237,52 +310,102 @@ async function main(configuration, mode) {
         try { return fs.statSync(filename).size === identity.length && fs.readFileSync(filename).equals(identity); }
         catch (error) { if (error.code === 'ENOENT') return false; throw error; }
       };
-      const covers = catalog.covers.every(height => fs.existsSync(rejectLinks(existing,
+      const covers = requiredCovers.every(height => fs.existsSync(rejectLinks(existing,
         'thumb_' + (!epub && profile.xtcCoverRotation ? 'ccw3_' : '') + height + '.bmp')));
-      const native = (catalog.nativeCovers || []).every(spec => nativeCoverReady(existing, spec, !epub && !!profile.xtcCoverRotation));
-      if (covers && native && (!epub || fs.existsSync(rejectLinks(existing, 'book.bin'))) &&
-          (epub ? epubStamps : [xtcStamp]).every(matches)) ++alreadyPrepared;
-      else books.push(book);
+      const native = [...geometry.values()].flatMap(value => value.nativeCovers || []).every(spec => nativeCoverReady(existing, spec, !epub && !!profile.xtcCoverRotation));
+      const stamps = epub ? epubStamps : xtcStamps;
+      const hasDesktopPreparation = fs.existsSync(rejectLinks(existing, '.desktop-source-v1.bin')) ||
+        fs.existsSync(rejectLinks(existing, RECEIPT));
+      let savedReceipt = null, receiptMatches = false;
+      try {
+        savedReceipt = readReceipt(existing);
+        receiptMatches = receiptReady(existing, identity, stamps, savedReceipt);
+      } catch (error) {
+        // Certification is advisory here; the per-book run reports access failures.
+        if (!['EACCES', 'EPERM'].includes(error.code)) throw error;
+      }
+      let ready = covers && native && (!epub || fs.existsSync(rejectLinks(existing, 'book.bin'))) && stamps.every(matches);
+      if (ready && !receiptMatches && hasDesktopPreparation) ready = false;
+      if (ready && !receiptMatches) {
+        const local = path.join(stageCache, key);
+        fs.mkdirSync(local, {recursive: true});
+        for (const relative of walk(existing).filter(name => name !== RECEIPT && cacheFile(name)))
+          copyWithTime(rejectLinks(existing, relative), rejectLinks(local, relative));
+        refreshCacheMount();
+        if (epub) for (const layout of layouts) {
+          orient(layout.orientation);
+          if (!call('prepare_font', 'number', ['string', 'number'], [layout.name === 'Ubuntu' ? '' : layout.name, layout.size]) ||
+              call('prepare_verify', 'number', ['string'], [book]) < 0) { ready = false; break; }
+          await defer();
+        }
+        if (ready) {
+          writeReceipt(local, identity, stamps, epub ? name => stamps.includes(name) ||
+            /^(?:cover|thumb_).*\.bmp$/.test(name) || readCaches.has(key + '/' + name) : null);
+          atomicCopy(path.join(local, RECEIPT), card, '.crosspoint/' + key + '/' + RECEIPT);
+        }
+        fs.rmSync(local, {recursive: true, force: true});
+      }
+      if (ready) ++alreadyPrepared;
+      else {
+        books.push(book);
+        if (hasDesktopPreparation && !compatibleReceipt(savedReceipt, identity)) ++needsRefresh;
+        else if (compatibleReceipt(savedReceipt, identity) &&
+                 (!Array.isArray(savedReceipt.stamps) || !stamps.every(name => savedReceipt.stamps.includes(name)))) ++differentSettings;
+      }
+      if ((books.length + alreadyPrepared) % 16 === 0 || books.length + alreadyPrepared === candidates.length)
+        emit({type: 'inventory', prepared: alreadyPrepared, checked: books.length + alreadyPrepared,
+          found: candidates.length, needsRefresh, differentSettings, complete: false});
       if ((books.length + alreadyPrepared) % 32 === 0) await defer();
     }
-    emit({type: 'scanned', total: books.length, alreadyPrepared, found: candidates.length});
-    if (mode === 'plan') return;
+    emit({type: 'scanned', total: books.length, alreadyPrepared, found: candidates.length, needsRefresh, differentSettings});
+    emit({type: 'inventory', prepared: alreadyPrepared, checked: books.length + alreadyPrepared, found: candidates.length, needsRefresh, differentSettings, complete: !cancelled});
+    if (mode === 'plan' || mode === 'inspect') return;
     for (const book of books) {
       if (aborted()) { cancelled = true; break; }
       diagnostics.length = 0;
       errors.length = 0;
       const absolute = path.join(card, ...book.slice(1).split('/'));
       rejectLinks(card, book.slice(1));
-      const before = fs.statSync(absolute);
       const key = (/\.epub$/i.test(book) ? 'epub_' : 'xtc_') + (call('prepare_hash', 'number', ['string'], [book]) >>> 0);
       const existing = rejectLinks(card, '.crosspoint/' + key);
       const local = path.join(stageCache, key);
       fs.mkdirSync(local, {recursive: true});
+      try {
+      const before = fs.statSync(absolute);
       const previous = walk(existing);
       const identity = sourceIdentity(before);
+      const certified = receiptReady(existing, identity, []);
       const identityFiles = previous.filter(name => name === '.desktop-source-v1.bin' || /ready-v1-.*\.bin$/.test(name));
       const sameSource = identityFiles.length > 0 && identityFiles.every(name => {
         const saved = fs.readFileSync(path.join(existing, ...name.split('/')));
         return saved.equals(identity);
       });
-      for (const relative of previous) if (sameSource && cacheFile(relative)) {
+      const reuse = sameSource && certified;
+      const trusted = reuse ? readReceipt(existing) : null;
+      const trustedStamps = trusted?.stamps || [];
+      const trustedFiles = new Set((trusted?.files || []).map(file => file.name));
+      for (const relative of previous) if (reuse && relative !== RECEIPT && cacheFile(relative) &&
+          trustedFiles.has(relative) &&
+          (!/ready-v1-.*\.bin$/.test(relative) || trustedStamps.includes(relative))) {
         const target = path.join(local, ...relative.split('/')); fs.mkdirSync(path.dirname(target), {recursive: true});
-        fs.copyFileSync(path.join(existing, ...relative.split('/')), target);
+        copyWithTime(path.join(existing, ...relative.split('/')), target);
       }
-      let okay = true;
-      const passes = /\.epub$/i.test(book) ? layouts : [layouts[0]];
+      refreshCacheMount();
+      let okay = true, failureCode = 'preparationFailed';
+      const passes = /\.epub$/i.test(book) ? layouts : orientations.map(orientation => ({...layouts[0], orientation}));
       for (const layout of passes) {
-        emit({type: 'progress', completed, total: books.length, book, font: layout.name, size: layout.size, percent: 0});
+        orient(layout.orientation);
+        emit({type: 'progress', completed, failed, alreadyPrepared, found:candidates.length, total: books.length, book, font: layout.name, size: layout.size, orientation: layout.orientation, percent: 0});
         if (!call('prepare_font', 'number', ['string', 'number'], [layout.name === 'Ubuntu' ? '' : layout.name, layout.size]))
           throw Error('Could not load font: ' + layout.name);
-        if (!call('prepare_open', 'number', ['string', 'number'], [book, profile.xtcCoverRotation || 0])) { okay = false; break; }
+        if (!call('prepare_open', 'number', ['string', 'number'], [book, profile.xtcCoverRotation || 0])) { okay = false; failureCode = 'openFailed'; break; }
         let phase = 1, last = 0;
         while (phase === 1) {
           if (aborted()) { cancelled = true; call('prepare_cancel', null, [], []); break; }
           phase = call('prepare_step', 'number', [], []);
           if (Date.now() - last >= 250 || phase !== 1) {
             const status = JSON.parse(call('prepare_status', 'string', [], []));
-            emit({type: 'progress', completed, total: books.length, book, font: layout.name, size: layout.size,
+            emit({type: 'progress', completed, failed, alreadyPrepared, found:candidates.length, total: books.length, book, font: layout.name, size: layout.size, orientation: layout.orientation,
               percent: status.total ? Math.min(100, Math.floor(status.done * 100 / status.total)) : 0,
               chapter: status.chapter, chapters: status.chapters, phase: status.phase});
             last = Date.now();
@@ -291,28 +414,37 @@ async function main(configuration, mode) {
           await defer();
         }
         if (phase < 0) okay = false;
-        if (configuration.verify && /\.epub$/i.test(book) && !cancelled) {
+        if (/\.epub$/i.test(book) && !cancelled && okay) {
           const pages = call('prepare_verify', 'number', ['string'], [book]);
-          emit({type: 'verified', book, pages, font: layout.name, size: layout.size});
-          if (pages < 0) okay = false;
+          emit({type: 'verified', book, pages, font: layout.name, size: layout.size, orientation: layout.orientation});
+          if (pages < 0) { okay = false; failureCode = 'verificationFailed'; }
         }
         if (cancelled) break;
       }
       call('prepare_cancel', null, [], []);
-      if (okay && !cancelled && catalog.nativeCovers?.length &&
-          !call('prepare_native_covers', 'number', ['string', 'number'], [book, profile.xtcCoverRotation || 0])) okay = false;
+      if (okay && !cancelled) for (const orientation of orientations) {
+        orient(orientation);
+        if (!call('prepare_native_covers', 'number', ['string', 'number'], [book, profile.xtcCoverRotation || 0])) {
+          okay = false; failureCode = 'coverFailed'; break;
+        }
+      }
       const after = fs.statSync(absolute);
       if (before.size !== after.size || before.mtimeMs !== after.mtimeMs) throw Error('A book changed during preparation: ' + book);
-      if (!sameSource && identityFiles.length) {
-        for (const relative of previous.filter(cacheFile)) fs.unlinkSync(rejectLinks(card, '.crosspoint/' + key + '/' + relative));
+      if (okay && !cancelled) {
+        fs.writeFileSync(path.join(local, '.desktop-source-v1.bin'), identity);
+        writeReceipt(local, identity, [...trustedStamps, ...(/\.epub$/i.test(book) ? epubStamps : xtcStamps)]);
+        const files = walk(local).filter(cacheFile).sort((a,b) => Number(a.includes('ready-v1-') || a === RECEIPT) - Number(b.includes('ready-v1-') || b === RECEIPT));
+        const obsolete = previous.filter(name => cacheFile(name) && !files.includes(name));
+        publishBook(card, key, local, files, obsolete, cacheFile);
       }
-      fs.writeFileSync(path.join(local, '.desktop-source-v1.bin'), identity);
-      // Commit only known cache formats. Stamps follow their chapters and covers.
-      const files = walk(local).filter(cacheFile).sort((a,b) => Number(a.includes('ready-v1-')) - Number(b.includes('ready-v1-')));
-      for (const relative of files) atomicCopy(path.join(local, ...relative.split('/')), card, '.crosspoint/' + key + '/' + relative);
       if (cancelled) break;
-      if (okay) ++completed; else { ++failed; emit({type: 'bookError', book, diagnostics: [...errors,...diagnostics]}); }
-      fs.rmSync(local, {recursive: true, force: true});
+      if (okay) ++completed; else { ++failed; emit({type: 'bookError', book, code: failureCode, diagnostics: [...errors,...diagnostics]}); }
+      } catch (error) {
+        if (error.code === 'recoveryNeeded') { error.book = book; throw error; }
+        ++failed;
+        emit({type: 'bookError', book, code: error.code || 'preparationFailed', diagnostics: [String(error.message || error), ...errors]});
+      } finally { fs.rmSync(local, {recursive: true, force: true}); }
+      emit({type: 'bookComplete', completed, failed, prepared: alreadyPrepared + completed, found: candidates.length});
     }
     emit({type: 'finished', completed, failed, total: books.length, alreadyPrepared, found: candidates.length, cancelled});
   } catch (error) {
@@ -331,7 +463,7 @@ module.exports = {safeDirectory, rejectLinks, scan, cacheFile, sourceIdentity, n
 if (require.main === module) {
   const configuration = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));
   main(configuration, process.argv[2]).then(() => { process.exitCode = 0; }).catch(error => {
-    emit({type: 'error', message: String(error.message || error)}); process.exitCode = 1;
+    emit({type: 'error', code: error.code, book: error.book, message: String(error.message || error)}); process.exitCode = 1;
   });
 }
 

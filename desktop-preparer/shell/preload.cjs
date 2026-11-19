@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('preparer', Object.freeze({
   platform: process.platform,
   chooseCard: () => ipcRenderer.invoke('choose-card'),
   inspect: () => ipcRenderer.invoke('inspect'),
+  plan: configuration => ipcRenderer.invoke('plan', configuration),
   prepare: configuration => ipcRenderer.invoke('prepare', configuration),
   cancel: () => ipcRenderer.invoke('cancel'),
   diagnostics: () => ipcRenderer.invoke('diagnostics'),

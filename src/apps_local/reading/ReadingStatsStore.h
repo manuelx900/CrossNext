@@ -19,6 +19,7 @@ class Repository {
   bool loadBook(const char* document, Book& book);
   // Read the disposable cumulative snapshot without scanning the journal.
   bool cachedBook(const char* document, Book& book);
+  bool resetBook(const char* document);
   bool complete(const char* document, const char* title, const char* author, int64_t epoch);
   bool reopen(const char* document, const char* title, const char* author, int64_t epoch, uint16_t progressBp);
   bool completionStatus(const char* document, bool& completed, bool& manuallyUnfinished);
@@ -39,6 +40,7 @@ class Repository {
   bool readAt(uint64_t offset, Record& record);
   bool header(HalFile& input);
   bool append(const Record& record);
+  bool repairBookIndex(const char* document, uint64_t offset);
 };
 int today();
 bool recordSession(const char* document, const char* title, const char* author, int64_t epoch, uint32_t seconds,

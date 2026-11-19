@@ -286,7 +286,7 @@ inline void headerBand(Screen& screen, const freeink::ui::HeaderProps& props) {
   auto band = screen.takeTop(screen.theme().headerHeight, kBandRuleGap + kRule);
   if (screen.device().height > screen.device().width)
     band.height = screen.frame().safeRect().y + kMenuHeaderVisibleHeight;
-  chrome::headerHeight = band.bottom();
+  chrome::recordPaintedHeader(band.bottom(), false);
   const int16_t safeTop = screen.frame().safeRect().y;
   const int16_t inkTop = band.y > safeTop ? band.y : safeTop;
   const fui::StyleSet& styles = props.styles.unset() ? screen.theme().popup : props.styles;

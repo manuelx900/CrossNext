@@ -1,8 +1,6 @@
 name: CrossNext desktop packages
 
 on:
-  push:
-    branches: [codex/release-crossnext-2.0.4]
   workflow_dispatch:
 
 permissions:
@@ -51,6 +49,9 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -86,20 +87,20 @@ jobs:
             architecture=$(lipo -archs "$executable")
             echo "$architecture"
             test "$architecture" = "$(uname -m)"
-              ELECTRON_RUN_AS_NODE=1 "$executable" -p 'process.platform + ":" + process.arch'
-              (
-                cd desktop-preparer
-                CROSSNEXT_PACKAGED_EXECUTABLE="$executable" \
-                CROSSNEXT_PACKAGED_RUNTIME="$app/Contents/Resources/runtime" \
-                CROSSNEXT_TEST_PYTHON=python3 node tests/packaged.cjs
-                CROSSNEXT_PACKAGED_EXECUTABLE="$executable" \
-                CROSSNEXT_TEST_PYTHON=python3 node tests/cache-ui.cjs
-              )
+            ELECTRON_RUN_AS_NODE=1 "$executable" -p 'process.platform + ":" + process.arch'
+            (
+              cd desktop-preparer
+              CROSSNEXT_PACKAGED_EXECUTABLE="$executable" \
+              CROSSNEXT_PACKAGED_RUNTIME="$app/Contents/Resources/runtime" \
+              CROSSNEXT_TEST_PYTHON=python3 node tests/packaged.cjs
+              CROSSNEXT_PACKAGED_EXECUTABLE="$executable" \
+              CROSSNEXT_TEST_PYTHON=python3 node tests/cache-ui.cjs
+            )
             hdiutil detach "$mount"
           done
       - uses: actions/upload-artifact@v4
         with:
-          name: CrossNext-Book-Preparer-macOS-${{ matrix.arch }}-2.0.4
+          name: CrossNext-Book-Preparer-macOS-${{ matrix.arch }}
           path: desktop-preparer/dist/desktop/*.dmg
           if-no-files-found: error
           retention-days: 14
@@ -136,7 +137,7 @@ jobs:
           node tests/cache-ui.cjs
       - uses: actions/upload-artifact@v4
         with:
-          name: CrossNext-Book-Preparer-Windows-2.0.4
+          name: CrossNext-Book-Preparer-Windows
           path: desktop-preparer/dist/desktop/*.exe
           if-no-files-found: error
           retention-days: 14

@@ -15,6 +15,8 @@
 namespace readingstats {
 namespace {
 constexpr const char* kRoot = "/.crosspoint/reading-history";
+constexpr const char* kResetStage = "/.crosspoint/reading-history/.reset.tmp";
+constexpr const char* kResetBackup = "/.crosspoint/reading-history/.reset.bak";
 void cachePath(char* path, size_t size, const char* document) { snprintf(path, size, "%s/%s.idx", kRoot, document); }
 uint64_t getOffset(const uint8_t* bytes) {
   uint64_t v = 0;
@@ -44,9 +46,16 @@ bool Repository::begin(bool reverse, uint8_t* ahead, uint32_t aheadBytes) {
   backwards = reverse;
   if (!Storage.ensureDirectoryExists(kRoot)) return false;
   if (!Storage.exists(kJournalPath)) {
-    end = 16;
-    cursor = 16;
-    return true;
+    if (Storage.exists(kResetBackup)) {
+      if (!Storage.rename(kResetBackup, kJournalPath)) {
+        LOG_ERR("READ-STATS", "Cannot recover interrupted book reset");
+        return false;
+      }
+    } else {
+      end = 16;
+      cursor = 16;
+      return true;
+    }
   }
   if (!Storage.openFileForRead("READ-STATS", kJournalPath, file) || !header(file)) {
     close();
@@ -195,6 +204,126 @@ bool Repository::append(const Record& record) {
     LOG_ERR("READ-STATS", "Index save failed; journal remains recoverable");
   else
     readingtime::publish(record.book.document, record.book.seconds);
+  return true;
+}
+bool Repository::repairBookIndex(const char* document, uint64_t offset) {
+  char path[100];
+  cachePath(path, sizeof(path), document);
+  uint8_t index[12];
+  {
+    HalFile cached;
+    if (Storage.openFileForRead("READ-STATS", path, cached) && cached.size() == sizeof(index) &&
+        cached.read(index, sizeof(index)) == static_cast<int>(sizeof(index))) {
+      const auto saved = getOffset(index);
+      const uint32_t hash =
+          uint32_t(index[8]) | uint32_t(index[9]) << 8 | uint32_t(index[10]) << 16 | uint32_t(index[11]) << 24;
+      if (hash == checksum(index, 8) && saved >= offset && saved < end && (saved - 16) % kRecordBytes == 0 &&
+          readAt(saved, scratch) && !std::strcmp(scratch.book.document, document))
+        return true;
+    }
+  }
+  setOffset(index, offset);
+  const auto hash = checksum(index, 8);
+  for (int n = 0; n < 4; ++n) index[8 + n] = static_cast<uint8_t>(hash >> (n * 8));
+  HalFile cached;
+  return Storage.openDerivedCacheForWrite("READ-STATS", path, cached) &&
+         cached.write(index, sizeof(index)) == sizeof(index) && cached.close();
+}
+bool Repository::resetBook(const char* document) {
+  if (!validDocument(document) || !begin()) return false;
+  if (!file) return true;
+  const auto revision = Storage.stateFileRevision(kJournalPath);
+  const auto bytes = file.fileSize64();
+  if ((Storage.exists(kResetBackup) && !Storage.remove(kResetBackup)) ||
+      (Storage.exists(kResetStage) && !Storage.remove(kResetStage))) {
+    LOG_ERR("READ-STATS", "Cannot clear previous reset workspace");
+    close();
+    return false;
+  }
+  HalFile output;
+  if (!Storage.openFileForWrite("READ-STATS", kResetStage, output) || !file.seek64(0)) {
+    LOG_ERR("READ-STATS", "Cannot begin book reset copy");
+    close();
+    return false;
+  }
+  uint64_t copied = 0;
+  uint32_t expected = 2166136261u;
+  const auto copy = [&](size_t size) {
+    if (output.write(buffer, size) != size) return false;
+    for (size_t n = 0; n < size; ++n) expected = (expected ^ buffer[n]) * 16777619u;
+    copied += size;
+    return true;
+  };
+  bool okay = file.read(buffer, 16) == 16 && copy(16);
+  unsigned batch = 0;
+  for (uint64_t at = 16; okay && at < bytes;) {
+    const auto size = static_cast<size_t>(std::min<uint64_t>(kRecordBytes, bytes - at));
+    okay = file.read(buffer, size) == static_cast<int>(size);
+    if (okay && !(size == kRecordBytes && decode(buffer, scratch) && !std::strcmp(document, scratch.book.document)))
+      okay = copy(size);
+    at += size;
+    if (++batch == 32) {
+      batch = 0;
+      vTaskDelay(1);
+    }
+  }
+  okay = output.close() && okay;
+  close();
+  if (okay) okay = Storage.openFileForRead("READ-STATS", kResetStage, output) && output.fileSize64() == copied;
+  uint32_t actual = 2166136261u;
+  for (uint64_t at = 0; okay && at < copied;) {
+    const auto size = static_cast<size_t>(std::min<uint64_t>(sizeof(buffer), copied - at));
+    okay = output.read(buffer, size) == static_cast<int>(size);
+    for (size_t n = 0; okay && n < size; ++n) actual = (actual ^ buffer[n]) * 16777619u;
+    at += size;
+    if (++batch == 32) {
+      batch = 0;
+      vTaskDelay(1);
+    }
+  }
+  output.close();
+  if (!okay || actual != expected || revision != Storage.stateFileRevision(kJournalPath)) {
+    LOG_ERR("READ-STATS", "Book reset verification failed; history preserved");
+    Storage.remove(kResetStage);
+    return false;
+  }
+  if (!Storage.rename(kJournalPath, kResetBackup)) {
+    LOG_ERR("READ-STATS", "Cannot begin book reset publication");
+    return false;
+  }
+  if (!Storage.rename(kResetStage, kJournalPath)) {
+    LOG_ERR("READ-STATS", "Cannot publish book reset");
+    if (!Storage.rename(kResetBackup, kJournalPath)) LOG_ERR("READ-STATS", "Book reset rollback deferred to reopen");
+    return false;
+  }
+  if (!Storage.remove(kResetBackup)) LOG_ERR("READ-STATS", "Reset committed; backup cleanup pending");
+  char path[100];
+  cachePath(path, sizeof(path), document);
+  if (Storage.exists(path) && !Storage.remove(path)) LOG_ERR("READ-STATS", "Reset index cleanup pending");
+  // Reverse order repairs each retained book's latest offset before older snapshots.
+  if (begin(true)) {
+    batch = 0;
+    for (;;) {
+      const auto state = next(scratch);
+      if (state == ScanResult::Finished) break;
+      if (state == ScanResult::Error) {
+        LOG_ERR("READ-STATS", "Reset committed; index repair interrupted");
+        break;
+      }
+      if (state == ScanResult::Record) {
+        char retained[33];
+        copyText(retained, sizeof(retained), scratch.book.document);
+        if (!repairBookIndex(retained, recordOffset())) LOG_ERR("READ-STATS", "Reset index repair failed");
+      }
+      if (++batch == 32) {
+        batch = 0;
+        vTaskDelay(1);
+      }
+    }
+    close();
+  } else
+    LOG_ERR("READ-STATS", "Reset committed; index repair unavailable");
+  readingtime::publish(document, 0);
   return true;
 }
 bool Repository::record(const char* document, const char* title, const char* author, int64_t epoch, uint32_t seconds,

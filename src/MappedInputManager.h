@@ -184,9 +184,8 @@ class MappedInputManager {
   // Back = left-to-right swipe anchored at the left edge. Public so swipe-mode
   // page turns (reader) can exclude it from a plain SwipeDir::Right.
   bool wasBackGesture() const;
-  // Home-key boards use a short Home-key tap to exit; their bottom-edge swipe
-  // is intentionally unused. Other boards retain the bottom-edge Home gesture.
-  // The reader menu remains on its existing top-edge gesture and middle tap.
+  // Home-key boards always use a short Home-key tap to exit. Reading reserves
+  // the bottom edge for book controls; other boards retain their Home gesture.
   bool wasHomeGesture() const;
   // Configured one-frame action, independent of the gesture that triggered it.
   HomeButtonAction homeButtonAction() const { return homeAction; }

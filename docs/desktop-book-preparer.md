@@ -1,9 +1,36 @@
-# CrossNext Book Preparer 2.0.4
+# CrossNext Book Preparer 2.0.5
 
 The desktop app runs the firmware's real preparation engine in WebAssembly with
-an included Node runtime. See the [current 2.0.4 build and runtime instructions](../desktop-preparer/DESKTOP.txt).
+the Node runtime bundled with Electron. See the [current 2.0.5 build and runtime instructions](../desktop-preparer/DESKTOP.txt).
 
 ## English
+
+Orientation can follow the reader, use portrait, use landscape, or prepare both. Both prepares and verifies separate page layouts for each selected font and size, while counting the book once. It uses more card space; the warning counts both orientations. This does not change the saved reader orientation or the original EPUB. Rotating can reuse those pages while the engine, font, size, margins and other layout settings still match. XTC/XTCH pages are fixed; they do not need EPUB reflow.
+
+Verified existing profiles are preserved when adding another orientation or font. Desktop certification version 5 distinguishes verified files from unrelated legacy layouts: a legacy audit records only the selected pages it actually checked, and unverified derived variants are retired when new output is published. Earlier desktop certifications rebuild once; reading positions and original books remain untouched.
+
+The card summary counts complete books for the selected formats, fonts, sizes,
+orientations and engine. For example, 300 of 2000 prepared books starts preparation at 300;
+each successfully completed book adds one, regardless of its font/size passes.
+Failed books remain separate. Changing the options recomputes the summary.
+Legacy preparation markers are checked with the real page loader before the
+first verified receipt is saved; later checks reuse unchanged receipt metadata.
+
+The compact footer highlights the current book and chapter, keeps the overall counter beside the progress bar and aligns the preparation controls. Expand **Preparation details** to see which existing caches will be kept and why other books need preparation. Available card space shares the reader-settings row.
+
+The summary explains how many verified books will be kept and how many remain. It separately reports outdated/incompatible preparations needing a cache update and books needing pages for the newly selected layout settings. Checking caches is identified before page generation begins; a zero count is not presented as unexplained loss of the previous work.
+
+Diagnostics opens a paged report in the app with each failed book, a readable
+reason and expandable technical details. The technical log folder remains
+available from that report. Original books and reader state are not written.
+
+An unfinished or failed book never publishes its generated files. A successful
+book is verified before publication, then its new caches are staged on the card
+with a recovery journal. Existing cache files are retained until publication
+finishes. A handled failure restores them; after a process interruption, reconnect
+the same card to Book Preparer to finish recovery before returning it to the reader.
+This uses temporary disk space for one book, not extra firmware RAM. Prepared
+cache files remain compatible with the existing reader.
 
 Select the microSD root. The app detects the saved reading engine, font, size,
 orientation, layout and XTC cover rotation. Interface and reading fonts are separate.
@@ -24,15 +51,41 @@ does not change the reader's setting. It prepares only that engine's pages.
 Changing layout later can require new pages. Covers include the dimensions used
 by all four appearances and Library. Valid existing variants are reused.
 
-Cancel leaves completed outputs intact. Resume by running the same selection again.
+Cancel leaves fully completed books intact; an unfinished book does not replace its previous caches. Resume by running the same selection again.
 Books, settings, reading progress and statistics are preserved. Only known generated
 cache paths under `/.crosspoint/` are written. Safely eject the card after completion.
 Keep the diagnostic folder shown after an error. Do not remove the card during work.
 
-The Windows executable is portable and unsigned. The macOS arm64/x64 DMGs are built and verified on macOS. They are not Apple-notarized; platform security prompts may apply. Open the matching DMG and drag the app to Applications. Version 2.0.4
+The Windows executable is portable and unsigned. The macOS arm64/x64 DMGs are built and verified on macOS. They are not Apple-notarized; platform security prompts may apply. Open the matching DMG and drag the app to Applications. Version 2.0.5
 and cache ABI versions are independent; `engine-build.json` records provenance.
 
 ## Español
+
+Orientación permite usar la del lector, vertical, horizontal o ambas. Ambas prepara y verifica una paginación por orientación para cada fuente y tamaño, contando cada libro una sola vez. Ocupa más espacio; el aviso cuenta las dos orientaciones. No cambia la orientación guardada ni el EPUB original. Al girar se reutilizan esas páginas si coinciden motor, fuente, tamaño, márgenes y los demás ajustes de lectura. XTC y XTCH tienen páginas fijas y no necesitan redistribuir el texto.
+
+Los perfiles ya verificados se conservan al añadir otra orientación o fuente. La certificación 5 del preparador distingue los archivos verificados de otras variantes antiguas: una revisión antigua certifica solo las páginas seleccionadas que comprobó, y las variantes derivadas sin verificar se retiran al publicar nuevos archivos. Las certificaciones anteriores se preparan de nuevo una vez; se conservan el progreso y los libros originales.
+
+El resumen cuenta libros completos para los formatos, fuentes, tamaños, orientaciones y motor
+seleccionados. Si hay 300 de 2000 preparados, la preparación continúa desde 300;
+cada libro terminado suma uno, aunque tenga varias combinaciones de fuente y
+tamaño. Los fallidos se muestran por separado. Cambiar las opciones recalcula
+el resumen. Las marcas antiguas se comprueban con el cargador real de páginas
+antes de guardar su primera verificación; las siguientes reutilizan sus metadatos.
+
+El pie compacto destaca el libro y el capítulo actuales, mantiene el contador junto a la barra de progreso y alinea los controles de preparación. Abre **Detalles de preparación** para saber qué cachés se conservan y por qué otros libros necesitan preparación. El espacio disponible comparte fila con los ajustes del lector.
+
+El resumen explica cuántos libros verificados se conservan y cuántos faltan. Distingue las preparaciones antiguas o incompatibles que necesitan actualizar la caché y los libros que requieren páginas con los ajustes seleccionados. La comprobación de cachés se identifica antes de generar páginas nuevas; un contador en cero no aparece sin explicar qué ocurrió con la preparación anterior.
+
+El diagnóstico muestra una lista paginada de libros fallidos, sus motivos y los
+detalles técnicos desplegables. Desde ahí se puede abrir la carpeta de registros.
+No se escriben los libros originales ni el progreso del lector.
+
+Un libro fallido o incompleto no sustituye las cachés anteriores. Cada libro
+terminado se verifica antes de publicar sus archivos y usa un registro de
+recuperación en la tarjeta. Si se interrumpe el proceso durante esa publicación,
+vuelve a conectar la misma tarjeta a Book Preparer para restaurarla antes de
+usarla en el lector. Se utiliza espacio temporal para un libro, sin añadir RAM
+al firmware ni cambiar el formato de páginas que lee el dispositivo.
 
 Selecciona la raíz de la microSD. El programa detecta motor, fuente, tamaño,
 orientación, diseño y giro de portadas XTC guardados en el lector. La fuente de
@@ -59,6 +112,11 @@ Solo se escriben rutas conocidas de caché generada en `/.crosspoint/`; se conse
 libros, ajustes, progreso y estadísticas. Expulsa la tarjeta al terminar y conserva
 la carpeta de diagnóstico si falla. No la retires durante el proceso.
 
-Windows es portátil y sin firmar. Los DMG para macOS arm64/x64 se generan y verifican en macOS. No tienen notarización de Apple; pueden aparecer avisos de seguridad. Abre el DMG correspondiente y arrastra la app a Aplicaciones. La versión 2.0.4 de la aplicación
+Windows es portátil y sin firmar. Los DMG para macOS arm64/x64 se generan y verifican en macOS. No tienen notarización de Apple; pueden aparecer avisos de seguridad. Abre el DMG correspondiente y arrastra la app a Aplicaciones. La versión 2.0.5 de la aplicación
 y las versiones internas de caché son independientes; `engine-build.json` registra
 el origen del motor. Comprueba las cachés con el firmware correspondiente en el X4 Pro físico.
+
+
+The desktop engine uses the firmware's optional font modules, including auto-hinting. Older desktop caches are rebuilt once when their certification does not match the current font configuration. Incompatible generated variants for other font profiles are retired transactionally, so the reader cannot reuse them; original books and reader-owned state remain. Subsequent runs reuse matching complete books. The desktop image-cache row band can use up to 128 KiB to handle tall JPEG decode blocks; the device retains its existing 24 KiB limit and image quality. These changes add no firmware RAM allocation.
+
+El motor del computador utiliza los mismos módulos de fuentes del firmware, incluido el ajuste automático de los trazos. Las cachés del preparador antiguo se vuelven a preparar una vez cuando su certificación no coincide con la configuración actual de fuentes. Las variantes generadas incompatibles de otros perfiles se retiran durante la actualización recuperable para que el lector no las reutilice; se conservan los libros originales y los datos del lector. Las siguientes ejecuciones reutilizan los libros completos compatibles. La banda de caché de imágenes puede usar hasta 128 KiB en el computador para procesar bloques JPEG altos; el lector conserva su límite de 24 KiB y la calidad de imagen. Esto no añade asignaciones de RAM al firmware.

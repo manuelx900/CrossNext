@@ -85,7 +85,8 @@ void text(fui::DrawTarget& target, fui::Rect box, const char* label, fui::FontId
   fittext::draw(target, box, value, style, 2);
 }
 
-static fui::Rect paintHeader(fui::DrawTarget&, const fui::DeviceContext&, const Header&, fui::Rect* = nullptr);
+static fui::Rect paintHeader(fui::DrawTarget&, const fui::DeviceContext&, const Header&, bool light,
+                             fui::Rect* = nullptr);
 
 void header(toybox::Screen& screen, Header model) {
   const auto& status = screen.headerStatus();
@@ -97,7 +98,7 @@ void header(toybox::Screen& screen, Header model) {
   model.compactBattery = true;
   if (!model.clockText && status.clock[0]) model.clockText = status.clock;
   fui::Rect secondary;
-  const auto mark = paintHeader(screen.target(), screen.device(), model, &secondary);
+  const auto mark = paintHeader(screen.target(), screen.device(), model, false, &secondary);
   if (model.markAction && !mark.empty()) {
     screen.frame().hit(mark, model.markAction, 0, model.actionInputMask);
     if ((model.actionInputMask & fui::InputFocus) && screen.frame().buttonSelected(model.markAction, 0))
@@ -111,23 +112,29 @@ void header(toybox::Screen& screen, Header model) {
 }
 
 void header(fui::DrawTarget& target, const fui::DeviceContext& device, const Header& model) {
-  paintHeader(target, device, model);
+  paintHeader(target, device, model, false);
 }
 
-static fui::Rect paintHeader(fui::DrawTarget& target, const fui::DeviceContext& device, const Header& model,
+void headerWithSelectedColor(fui::DrawTarget& target, const fui::DeviceContext& device, const Header& model,
+                             bool outputInverted) {
+  paintHeader(target, device, model, chrome::headerIsLight() != outputInverted);
+}
+
+static fui::Rect paintHeader(fui::DrawTarget& target, const fui::DeviceContext& device, const Header& model, bool light,
                              fui::Rect* secondary) {
   fui::Rect mark{};
   const auto geometry = pixelui::geometry(device);
   backui::publish(model.back && device.hasTouch, geometry.back);
   const auto safe = device.safeRect();
   const int top = geometry.header.bottom() - 72;
-  chrome::headerHeight = geometry.header.height;
-  target.fill(geometry.header, black);
+  const auto ink = light ? black : white;
+  chrome::recordPaintedHeader(geometry.header.height, light);
+  target.fill(geometry.header, light ? white : black);
   int right = safe.right() - (model.homeBattery ? 20 : 14);
   if (model.battery >= 0) {
     const auto icon = statusbattery::headerIcon(right, top);
     const int percent = std::clamp(model.battery, 0, 100);
-    statusbattery::draw(target, icon, percent, model.charging, fui::Color::White);
+    statusbattery::draw(target, icon, percent, model.charging, ink.color);
     right = icon.x - 8;
     if (model.showPercent) {
       char percentLabel[8];
@@ -139,12 +146,12 @@ static fui::Rect paintHeader(fui::DrawTarget& target, const fui::DeviceContext& 
       if (model.homeBattery) {
         fui::TextStyle style;
         style.font = kSmall;
-        style.color = fui::Color::White;
+        style.color = ink.color;
         style.align = fui::TextAlign::Right;
         style.maxLines = 1;
         target.text(label, percentLabel, style);
       } else {
-        text(target, label, percentLabel, font, fui::Color::White, fui::TextAlign::Right);
+        text(target, label, percentLabel, font, ink.color, fui::TextAlign::Right);
       }
       right = model.homeBattery ? label.x - 10 : right - width - 10;
     }
@@ -153,14 +160,14 @@ static fui::Rect paintHeader(fui::DrawTarget& target, const fui::DeviceContext& 
     fui::TextStyle style;
     style.font = kSmall;
     const int width = target.measureText(style.font, model.trailingLabel, style).width + 12;
-    text(target, fui::makeRect(right - width, top, width, 72), model.trailingLabel, kSmall, fui::Color::White,
+    text(target, fui::makeRect(right - width, top, width, 72), model.trailingLabel, kSmall, ink.color,
          fui::TextAlign::Right);
     right -= width + 12;
   }
   if (model.mark) {
     const auto icon = fui::makeRect(right - 32, top + 20, 32, 32);
     mark = icon.inset({-6, -6, -6, -6});
-    target.bitmap(icon, model.mark, fui::BitmapMode::Contain, white);
+    target.bitmap(icon, model.mark, fui::BitmapMode::Contain, ink);
     right = icon.x - 12;
   }
   if (model.secondaryLabel) {
@@ -169,26 +176,26 @@ static fui::Rect paintHeader(fui::DrawTarget& target, const fui::DeviceContext& 
     const int width = std::clamp(int(target.measureText(style.font, model.secondaryLabel, style).width) + 24, 44, 160);
     const auto button = fui::makeRect(right - width, top + 14, width, 44);
     if (secondary) *secondary = button;
-    target.stroke(button, white, 1, chrome::lightHeader ? lightui::kControlRadius : 0);
-    text(target, button.inset({2, 8, 2, 8}), model.secondaryLabel, kSmall, fui::Color::White, fui::TextAlign::Center);
+    target.stroke(button, ink, 1, chrome::lightHeader ? lightui::kControlRadius : 0);
+    text(target, button.inset({2, 8, 2, 8}), model.secondaryLabel, kSmall, ink.color, fui::TextAlign::Center);
     right = button.x - 12;
   } else if (model.secondaryMark) {
     const auto icon = fui::makeRect(right - 32, top + 20, 32, 32);
     if (secondary) *secondary = icon.inset({-6, -6, -6, -6});
-    target.bitmap(icon, model.secondaryMark, fui::BitmapMode::Contain, white);
+    target.bitmap(icon, model.secondaryMark, fui::BitmapMode::Contain, ink);
     right = icon.x - 12;
   }
   if (model.rightLabel) {
     fui::TextStyle style;
     style.font = kBody;
     const int width = target.measureText(style.font, model.rightLabel, style).width + 8;
-    text(target, fui::makeRect(right - width, top, width, 72), model.rightLabel, kBody, fui::Color::White,
+    text(target, fui::makeRect(right - width, top, width, 72), model.rightLabel, kBody, ink.color,
          fui::TextAlign::Right);
     right -= width + 12;
   }
   int left = safe.x + 14;
   if (model.back) {
-    backui::paint(target, geometry.back);
+    backui::paint(target, geometry.back, ink.color);
     left = geometry.back.right() + 4;
   }
   right -= model.titleReserve;
@@ -200,14 +207,14 @@ static fui::Rect paintHeader(fui::DrawTarget& target, const fui::DeviceContext& 
   const int titleEnd = left + target.measureText(titleStyle.font, title, titleStyle).width + 14;
   fui::TextStyle clockStyle;
   clockStyle.font = fui::HEADER_CLOCK_FONT;
-  clockStyle.color = fui::Color::White;
+  clockStyle.color = ink.color;
   const auto clock = fui::headerClockRect(target, fui::makeRect(titleEnd, top, std::max(0, right - titleEnd), 72),
                                           model.clockText, clockStyle);
   if (!clock.empty()) {
     target.text(clock, model.clockText, clockStyle);
     right = clock.x - 14;
   }
-  titleStyle.color = fui::Color::White;
+  titleStyle.color = ink.color;
   fittext::draw(target, fui::makeRect(left, top, std::max(0, right - left), 72), title, titleStyle, 2);
   return mark;
 }

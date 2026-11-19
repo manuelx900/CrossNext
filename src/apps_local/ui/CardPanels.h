@@ -10,7 +10,7 @@ namespace fui = freeink::ui;
 inline fui::Rect begin(toybox::Screen& s, const char* title, int actionReserve = 0) {
   const auto safe = s.device().safeRect();
   const int h = safe.y + 56;
-  chrome::headerHeight = h;
+  chrome::recordPaintedHeader(h, false);
   s.target().fill(fui::makeRect(0, 0, s.device().width, h), dashboard::ink);
   const auto back = fui::makeRect(safe.x + 6, safe.y + 6, 44, 44);
   backui::paint(s.target(), back);

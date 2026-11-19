@@ -18,15 +18,16 @@ class HomeButtonSettingsActivity final : public UiListActivity {
 
  private:
   enum class Page : uint8_t { Gestures, Actions, Apps, Timing };
-  static constexpr int GESTURE_COUNT = 3;
+  static constexpr int GESTURE_COUNT = 2;
   static constexpr int HOME_ACTION_COUNT = int(HomeButtonAction::OpenShortcut) + 1;
   static constexpr int ROW_COUNT = remoteshortcuts::COUNT > int(SideButtonAction::Count) ? remoteshortcuts::COUNT
                                                                                          : int(SideButtonAction::Count);
+  static_assert(ROW_COUNT >= int(HomeButtonInput::TAP_OPTION_COUNT));
   freeink::ui::ListItem rows[ROW_COUNT]{};
   Binding binding;
   Page page;
   bleturner::RemoteTable* remote;
-  int gesture = 0;
+  int gesture = 1;
   bool saveFailed = false;
 
   int listCount() const override;

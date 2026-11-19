@@ -5135,6 +5135,9 @@ STR_HOME_TAP_450: "450 ms"
 STR_HOME_TAP_550: "550 ms"
 STR_HOME_TAP_650: "650 ms"
 STR_HOME_TAP_750: "750 ms"
+STR_HOME_TAP_NONE: "None"
+STR_HOME_TAP_100: "100 ms"
+STR_HOME_TAP_200: "200 ms"
 
 STR_READER_FOUR_ORIENTATIONS: "Rotate in four directions"
 STR_HOME_RECENT_BOOK_COUNT: "Recent books on Home"
@@ -9135,3 +9138,14 @@ STR_HOME_COVER_NOTICE_ADVANTAGE: "This means less waiting when you leave a book 
 STR_WORDS_STORAGE_ERROR: "Could not access saved words. Check that the SD card is inserted and writable."
 STR_WORDS_RECORDS_SKIPPED: "Some saved entries could not be read. They were skipped, not deleted."
 STR_WORDS_NOTICE_SAVE_ERROR: "Could not remember your choice. Check the SD card's free space and write access."
+
+# Independent header background and contrasting foreground.
+STR_HEADER_COLOR: "Header color"
+STR_HEADER_APPEARANCE: "Appearance default"
+STR_HEADER_BLACK: "Black"
+STR_HEADER_WHITE: "White"
+
+STR_HOME_ADD_PLUGIN: "Add a plugin"
+STR_STATS_RESET_BOOK: "Reset book statistics"
+STR_STATS_RESET_BOOK_ASK: "Reset this book’s local statistics and reading dates? Your reading position, bookmarks and other books are kept. This cannot be undone."
+STR_STATS_RESETTING: "Resetting book statistics…"

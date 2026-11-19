@@ -78,6 +78,7 @@ void UITheme::setTheme(CrossPointSettings::UI_THEME type) {
 
 void UITheme::setInterfaceSection(menufont::Section section) {
   interfaceSection = section;
+  chrome::headerColor = chrome::normalizedHeaderColor(SETTINGS.interfaceHeaderColor);
   const auto choice = section == menufont::Section::General || section == menufont::Section::Home
                           ? 0
                           : SETTINGS.interfaceThemeOverrides[int(section)];

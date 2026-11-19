@@ -1,6 +1,5 @@
 #include "HomeDashboardUi.h"
 
-#include <ChromeRegion.h>
 #include <FreeInkUIGfxRenderer.h>
 #include <FreeInkUIIcon.h>
 #include <FsHelpers.h>
@@ -136,7 +135,6 @@ bool HomeDashboardUi::draw(const RecentBook* book, bool librarySlot, bool plugin
   uiTarget.setFont(2, toybox::kDisplayFontId);
   uiTarget.setFont(3, toybox::kTileFontId);
   uiTarget.setFont(4, toybox::kCarouselTitleFontId);
-  chrome::headerHeight = layout.header.bottom();
   renderUi();
   return changed;
 }
@@ -202,7 +200,7 @@ void HomeDashboardUi::paintCover(const RecentBook& book) {
 
 void HomeDashboardUi::screenFn(UiScreen& screen, void* user) {
   auto& self = *static_cast<HomeDashboardUi*>(user);
-  homeui::build(screen, self.model, self.layout, self.hit);
+  homeui::build(screen, self.model, self.layout, self.hit, self.renderer.isOutputInverted());
 }
 
 void HomeDashboardUi::finishCover() { homeui::drawCardSelection(uiTarget, model, layout); }

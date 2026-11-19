@@ -2,6 +2,7 @@
 
 #include <BlePageTurnerJson.h>
 #include <BoardConfig.h>
+#include <ChromeRegion.h>
 #include <I18n.h>
 #include <LanguagePack.h>
 #include <Logging.h>
@@ -128,6 +129,7 @@ void CrossPointSettings::toJson(JsonDocument& doc) const {
   doc["homeCoverLoadingMask"] = homeCoverLoadingMask;
   doc["homeLayoutVersion"] = 2;
   doc["interfaceThemeStyle"] = interfaceThemeStyle;
+  doc["interfaceHeaderColor"] = interfaceHeaderColor;
   auto themeOverrides = doc["interfaceThemeOverrides"].to<JsonArray>();
   for (int n = 2; n < menufont::kSectionCount; ++n) themeOverrides.add(interfaceThemeOverrides[n]);
   auto fonts = doc["menuFontOverrides"].to<JsonArray>();
@@ -152,6 +154,7 @@ void CrossPointSettings::toJson(JsonDocument& doc) const {
   // display-index mapping and is skipped by the generic persistence loop.
   doc["longPressMenuFunction"] = longPressMenuFunction;
   doc["shortPwrBtn"] = shortPwrBtn;
+  doc["homeButtonTapAction"] = uint8_t(HomeButtonAction::Home);
   doc["pluginHubPromptHidden"] = pluginHubPromptHidden;
   doc["perBookTextSettings"] = perBookTextSettings;
 
@@ -193,6 +196,9 @@ bool CrossPointSettings::fromJson(JsonVariantConst doc) {
   wordsTextAlignment = std::min<uint8_t>(doc["wordsTextAlignment"] | uint8_t(0), 3);
   flashcardTextAlignment = std::min<uint8_t>(doc["flashcardTextAlignment"] | uint8_t(0), 3);
   const auto commonTheme = doc["interfaceThemeStyle"];
+  const auto headerColor = doc["interfaceHeaderColor"];
+  interfaceHeaderColor =
+      headerColor.is<uint8_t>() ? uint8_t(chrome::normalizedHeaderColor(headerColor.as<uint8_t>())) : 0;
   interfaceThemeStyle = commonTheme.is<uint8_t>() ? uint8_t(interfacetheme::normalized(commonTheme.as<uint8_t>())) : 0;
   const auto themeOverrides = doc["interfaceThemeOverrides"];
   for (int n = 2; n < menufont::kSectionCount; ++n) {
@@ -382,6 +388,9 @@ bool CrossPointSettings::fromJson(JsonVariantConst doc) {
   longPressMenuFunction = clamp(doc["longPressMenuFunction"] | (uint8_t)LP_MENU_DISABLED,
                                 (uint8_t)(LP_MENU_CREATE_CLIPPING + 1), (uint8_t)LP_MENU_DISABLED);
   shortPwrBtn = clamp(doc["shortPwrBtn"] | (uint8_t)IGNORE, (uint8_t)SHORT_PWRBTN_COUNT, (uint8_t)IGNORE);
+  homeButtonTapAction = uint8_t(HomeButtonAction::Home);
+  if ((doc["homeButtonTapAction"] | uint8_t(HomeButtonAction::Home)) != uint8_t(HomeButtonAction::Home))
+    needsResave = true;
   if (BoardConfig::hasHomeKey() && doc["homeButtonLongPressAction"].isNull() &&
       !doc["longPressMenuFunction"].isNull()) {
     static constexpr HomeButtonAction LEGACY[] = {HomeButtonAction::Sync,       HomeButtonAction::Ignore,
@@ -393,6 +402,8 @@ bool CrossPointSettings::fromJson(JsonVariantConst doc) {
     }
   }
 
+  if (const char* legacyTarget = doc["homeButtonShortcutTitle"].as<const char*>())
+    copyToField(homeButtonShortcutTitle, legacyTarget, sizeof(homeButtonShortcutTitle));
   if (std::strcmp(homeButtonShortcutTitle, "BESTIARY") == 0) {
     copyToField(homeButtonShortcutTitle, "READING QUEST", sizeof(homeButtonShortcutTitle));
     needsResave = true;

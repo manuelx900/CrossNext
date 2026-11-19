@@ -2,6 +2,7 @@
 #include <I18n.h>
 
 #include "../../activities/UiListActivity.h"
+#include "../../activities/plugins/PluginCatalogActivity.h"
 #include "../ui/PixelMenu.h"
 #include "HomeMenuIntegration.h"
 #include "HomeMenuOrderUi.h"
@@ -22,7 +23,8 @@ class HomeMenuSettingsActivity final : public UiListActivity {
   void drawFooter() override;
 
  private:
-  enum class View { Root, Names, Visibility, ChooseGame, ChooseApp, Order, GameOrder, AppOrder };
+  enum class View { Root, Names, Visibility, ChooseGame, ChooseApp, ChoosePlugin, Order, GameOrder, AppOrder };
+  std::vector<PluginRef> pluginChoices;
   View view = View::Root;
   homemenu::Config draft;
   pixelui::RowSource rowText;

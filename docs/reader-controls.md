@@ -22,7 +22,7 @@ Saved-collection pages are stable slices of absolute row indexes. Arrows, swipes
 
 Closing bookmarks or quotes returns to the four-tab lower sheet on More, after redrawing the reading page. A selected anchored record still navigates directly to its saved position. Empty quotes also retain the collection screen.
 
-On X4 Pro, Settings → Controls → Home Button Gestures configures tap, double tap and long press. Reader bottom sheet opens the same format-aware lower sheet as the bottom-edge swipe and only acts on an active book. It is the default long-press action. Lock/unlock touchscreen toggles the global touchscreen lock from any screen; physical keys remain usable. Settings → Controls → Touch → Lock touchscreen controls the same persistent lock. While locked, holding the circular Home button always unlocks, including when its saved action is Ignore or Reader bottom sheet. This safety override does not overwrite that saved action. The separate Touch controls setting retains its reader-only meaning. A contact already held when locking or unlocking is suppressed until released.
+On X4 Pro, a single Home tap always returns to Home, including after updating settings with an old tap assignment. Settings → Controls → Home Button Gestures configures double tap and long press. Reader bottom sheet opens the same format-aware lower sheet as the bottom-edge swipe and only acts on an active book. It is the default long-press action. Lock/unlock touchscreen toggles the global touchscreen lock from any screen; physical keys remain usable. Settings → Controls → Touch → Lock touchscreen controls the same persistent lock. While locked, holding the circular Home button always unlocks, including when its saved action is Ignore or Reader bottom sheet. This safety override does not overwrite that saved action. The separate Touch controls setting retains its reader-only meaning. A contact already held when locking or unlocking is suppressed until released.
 
 The quick panel light and warmth toggles and configurable shortcut choices are described in [Settings](settings.md#quick-settings-shortcuts).
 
@@ -99,3 +99,5 @@ a page outside the selected band keeps its usual tap behavior. A top-edge tap
 opens book settings; swiping down from the top continues to open quick settings.
 Existing saved opening methods keep their meaning after this update. These
 choices add no task, cache or framebuffer.
+
+The EPUB bottom sheet reads only the visible chapter titles on its Contents tab. It looks up the current chapter once for that frame and uses it to place the initial page and selection. Font sizes and More actions are prepared when their tabs open. Opening another overlay over an existing one or dismissing a picker reuses the existing clean-page snapshot while it is valid. The page underneath still uses the selected image, font and antialiasing settings.

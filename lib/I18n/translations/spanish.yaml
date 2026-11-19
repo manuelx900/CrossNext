@@ -5092,6 +5092,9 @@ STR_HOME_TAP_450: "450 ms"
 STR_HOME_TAP_550: "550 ms"
 STR_HOME_TAP_650: "650 ms"
 STR_HOME_TAP_750: "750 ms"
+STR_HOME_TAP_NONE: "Ninguno"
+STR_HOME_TAP_100: "100 ms"
+STR_HOME_TAP_200: "200 ms"
 
 STR_READER_FOUR_ORIENTATIONS: "Rotar en cuatro direcciones"
 STR_HOME_RECENT_BOOK_COUNT: "Libros recientes en Inicio"
@@ -9077,3 +9080,14 @@ STR_HOME_COVER_NOTICE_ADVANTAGE: "Así esperas menos al salir de un libro o de o
 STR_WORDS_STORAGE_ERROR: "No se puede acceder a las palabras guardadas. Comprueba que la microSD esté insertada y permita escribir."
 STR_WORDS_RECORDS_SKIPPED: "Algunos registros no se pudieron leer. Se han omitido sin borrarlos."
 STR_WORDS_NOTICE_SAVE_ERROR: "No se pudo guardar tu elección. Comprueba el espacio libre y la escritura de la microSD."
+
+# Independent header background and contrasting foreground.
+STR_HEADER_COLOR: "Color de cabecera"
+STR_HEADER_APPEARANCE: "Según la apariencia"
+STR_HEADER_BLACK: "Negro"
+STR_HEADER_WHITE: "Blanco"
+
+STR_HOME_ADD_PLUGIN: "Añadir un plugin"
+STR_STATS_RESET_BOOK: "Reiniciar estadísticas del libro"
+STR_STATS_RESET_BOOK_ASK: "¿Reiniciar las estadísticas locales y las fechas de lectura de este libro? Se conservan la posición de lectura, los marcadores y los demás libros. No se puede deshacer."
+STR_STATS_RESETTING: "Reiniciando estadísticas del libro…"

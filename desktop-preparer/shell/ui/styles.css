@@ -66,3 +66,50 @@ select:not(:open)::picker(select){display:none}
 .cache-summary{display:flex;flex-direction:column;gap:12px}.button.destructive{background:#a82b24;color:#fff}.button.destructive:hover{background:#8d211b}.button.destructive:disabled{background:var(--surface-soft);color:var(--text-muted)}
 @media(max-width:420px){.dialog-body{padding:18px;gap:14px}.dialog-actions{padding:14px 18px;gap:10px}.dialog-body h2{font-size:1.3rem}.storage-metrics{gap:10px}.storage-metrics>div{padding:10px}.storage-metrics strong{font-size:1.3rem}.date-fields{grid-template-columns:1fr}.storage-row{align-items:flex-start;flex-direction:column}}
 .cache-confirmation{display:flex;align-items:flex-start;gap:12px}.cache-confirmation input{flex-shrink:0;width:18px;height:18px;margin:3px 0 0}
+.library-summary{display:flex;flex-direction:column;gap:3px;margin-top:8px;font-variant-numeric:tabular-nums}.library-summary strong{font-size:14px}.library-summary span{font-size:11px;color:var(--text-secondary)}.diagnostics-dialog ol{padding-left:24px}.diagnostics-dialog li{padding:12px 0;border-bottom:1px solid var(--border);overflow-wrap:anywhere}.diagnostics-dialog li strong{font-size:14px}.diagnostics-dialog li p{margin:6px 0}.diagnostics-dialog pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;max-height:200px;overflow:auto}.diagnostics-dialog summary{cursor:pointer}.diagnostics-pager{display:flex;align-items:center;justify-content:center;gap:12px}.diagnostics-dialog .dialog-actions{flex-wrap:wrap}
+.diagnostics-pager .button{min-width:44px;min-height:44px;padding:0;font-size:24px;flex-shrink:0}.diagnostics-dialog .dialog-actions .text-button{white-space:normal;min-width:0;flex:1 1 160px}
+.footer-main{grid-template-columns:minmax(0,1fr) minmax(0,max-content)}.actions{min-width:0;max-width:100%;flex-wrap:wrap}.actions .button{min-width:0;max-width:100%;white-space:normal}
+
+/* Card facts share a single compact row; preparation owns the footer hierarchy. */
+.card-meta{align-items:center;flex-wrap:wrap;gap:4px 16px;margin-block-start:8px}
+.card-facts,.card-tools{display:flex;align-items:center;flex-wrap:wrap;gap:4px 14px;min-inline-size:0}
+.card-facts{flex:1 1 220px;font-size:var(--text-small)}
+.card-facts>span{overflow-wrap:anywhere}
+#card-space:not(:empty){padding:2px 8px;border-radius:5px;background:var(--surface-soft);font-variant-numeric:tabular-nums;white-space:nowrap}
+.card-tools{margin-inline-start:auto;gap:4px 10px}
+.card-tools .text-button{min-block-size:32px;padding:4px;font-size:var(--text-small)}
+.card-tools #cache-open{text-decoration:underline;text-underline-offset:3px}
+.card-section+.options-section{margin-block-start:24px}
+.preparation-footer{padding-block:12px;max-block-size:55%;overflow-y:auto;overscroll-behavior:contain;box-shadow:none}
+.footer-main{grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center}
+.preparation-summary{min-inline-size:0}
+.progress-heading{gap:7px;align-items:flex-start}
+.status-symbol{inline-size:20px;block-size:20px}
+.status-symbol svg{inline-size:18px;block-size:18px}
+.status-copy>strong{font-size:var(--text-body);line-height:1.5}
+.status-copy>span{font-size:var(--text-small);margin-block-start:2px}
+.has-current-book .status-copy>span{display:none}
+.has-current-book .status-copy>strong{font-size:var(--text-small);color:var(--text-secondary);font-weight:500}
+.book-progress{display:block;margin-block-start:4px;color:var(--text)}
+#current-book{display:block;font-size:1.2rem;font-weight:650;line-height:1.4;max-block-size:3.1em;overflow:auto;overflow-wrap:anywhere}
+.book-details{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 12px;margin-block-start:3px;line-height:1.5}
+#current-chapter{font-size:var(--text-body);font-weight:600;font-variant-numeric:tabular-nums}
+#book-detail{font-size:var(--text-small);color:var(--text-secondary);flex-shrink:1}
+.progress-line{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:2px 12px;margin-block-start:4px;font-variant-numeric:tabular-nums}
+.progress-line:has(>[hidden]):not(:has(>:not([hidden]))){display:none}
+#library-counter{font-size:var(--text-body);font-weight:600;overflow-wrap:anywhere}
+.percentage{font-size:var(--text-small);font-weight:500;margin-inline-start:auto}
+.preparation-footer progress{block-size:4px;margin-block-start:5px;border-radius:2px}
+.library-summary{display:block;margin-block-start:3px;font-size:var(--text-small);color:var(--text-secondary)}
+.library-summary summary{cursor:pointer;inline-size:fit-content;max-inline-size:100%;padding-block:2px;min-block-size:24px}
+.library-summary summary:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.library-summary p{margin-block:5px 0;max-inline-size:80ch;font-size:var(--text-small);line-height:1.5;overflow-wrap:anywhere}
+.actions{justify-content:flex-end;gap:8px;max-inline-size:290px}
+.actions .button{min-block-size:36px;padding:8px 14px;font-size:var(--text-body);gap:8px}
+.busy .actions:has(#cancel:not([hidden])) #start{display:none}
+@media(max-width:690px){
+  .footer-main{grid-template-columns:minmax(0,1fr);gap:8px}
+  .actions{max-inline-size:none}
+  .preparation-footer{padding-block:10px}
+  #current-book{font-size:1.1rem}
+}

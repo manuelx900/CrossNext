@@ -50,7 +50,7 @@ bool copyLabel(char* out, size_t size, const char* text);
 void formatDate(char* out, size_t size, int year, int month, int day);
 void drawIcon(fui::DrawTarget& target, fui::Rect rect, Icon kind, bool inverted = false);
 Layout layout(const fui::DeviceContext& device, int rows, Style style = Style::Framed, const Model* model = nullptr);
-void draw(fui::DrawTarget& target, const Model& model, const Layout& layout);
+void draw(fui::DrawTarget& target, const Model& model, const Layout& layout, bool outputInverted = false);
 // Keeps the book, status and published interaction geometry untouched.
 void drawMenuSelection(fui::DrawTarget& target, Model& model, const Layout& layout, int selected);
 // Draw after the byte-aligned cover snapshot has been captured or restored.
@@ -58,42 +58,37 @@ void drawCardSelection(fui::DrawTarget& target, const Model& model, const Layout
 
 constexpr fui::ActionId kSelect = 1;
 constexpr int kPreviousBook = -2, kNextBook = -3;
-enum class QuickAction : int16_t {
-  Settings = -4,
-  Files = -10,
-  Library = -11,
-  Transfer = -12,
-  Stats = -13,
-  Apps = -14,
-  Games = -15
-};
-constexpr QuickAction primaryActions[] = {QuickAction::Files, QuickAction::Library, QuickAction::Transfer,
-                                          QuickAction::Stats, QuickAction::Apps,    QuickAction::Games};
-constexpr int kPiccoActions = 7;
-constexpr QuickAction piccoAction(int index) {
-  return index >= 0 && index < 6 ? primaryActions[index] : QuickAction::Settings;
+inline int settingsRow(const Model& model) {
+  for (int n = 0; n < model.count; ++n)
+    if (model.rows[n].icon == Icon::Settings) return n;
+  return -1;
 }
-constexpr int piccoIndex(QuickAction action) {
-  for (int n = 0; n < kPiccoActions; ++n)
-    if (piccoAction(n) == action) return n;
+inline int primaryRow(const Model& model, int slot) {
+  for (int n = 0; n < model.count; ++n)
+    if (model.rows[n].icon != Icon::Settings && slot-- == 0) return n;
   return -1;
 }
 template <typename Screen>
-void build(Screen& screen, const Model& model, const Layout& geometry, fui::ButtonProps& hit) {
-  draw(screen.target(), model, geometry);
+void build(Screen& screen, const Model& model, const Layout& geometry, fui::ButtonProps& hit,
+           bool outputInverted = false) {
+  draw(screen.target(), model, geometry, outputInverted);
   hit.value = 0;
   hit.action = kSelect;
   hit.styles.explicitlySet = true;
   hit.minTouchSize = 0;
   if (model.style == Style::Boox) {
-    screen.frame().hit(geometry.settingsButton, kSelect, int(QuickAction::Settings), fui::InputTouch);
+    const int base = model.hasBook ? 1 : 0;
+    const int settings = settingsRow(model);
+    if (settings >= 0) screen.frame().hit(geometry.settingsButton, kSelect, base + settings, fui::InputTouch);
     if (model.hasBook) {
       screen.frame().hit(geometry.cover, kSelect, 0, fui::InputTouch);
       if (model.canPrevious) screen.frame().hit(geometry.sides[1], kSelect, kPreviousBook, fui::InputTouch);
       if (model.canNext) screen.frame().hit(geometry.sides[2], kSelect, kNextBook, fui::InputTouch);
     }
-    for (int n = 0; n < 6; ++n)
-      screen.frame().hit(geometry.primary[n], kSelect, int(primaryActions[n]), fui::InputTouch);
+    for (int n = 0; n < 6; ++n) {
+      const int index = primaryRow(model, n);
+      if (index >= 0) screen.frame().hit(geometry.primary[n], kSelect, base + index, fui::InputTouch);
+    }
     return;
   }
   if (model.hasBook) {

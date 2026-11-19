@@ -29,8 +29,19 @@ inline constexpr uint8_t CrossPointSettings::* FIELDS[] = {&CrossPointSettings::
                                                            &CrossPointSettings::homeButtonLongPressAction};
 inline constexpr const char* KEYS[] = {"homeButtonTapAction", "homeButtonDoubleTapAction", "homeButtonLongPressAction"};
 inline constexpr StrId TIMING_LABELS[] = {StrId::STR_HOME_TAP_350, StrId::STR_HOME_TAP_450, StrId::STR_HOME_TAP_550,
-                                          StrId::STR_HOME_TAP_650, StrId::STR_HOME_TAP_750};
-static_assert(sizeof(TIMING_LABELS) / sizeof(TIMING_LABELS[0]) == HomeButtonInput::TAP_WINDOW_COUNT);
+                                          StrId::STR_HOME_TAP_650, StrId::STR_HOME_TAP_750, StrId::STR_HOME_TAP_100,
+                                          StrId::STR_HOME_TAP_200, StrId::STR_HOME_TAP_NONE};
+static_assert(sizeof(TIMING_LABELS) / sizeof(TIMING_LABELS[0]) == HomeButtonInput::TAP_OPTION_COUNT);
+// The device shows durations in ascending order. The saved IDs use TIMING_LABELS order.
+inline constexpr uint8_t TIMING_ORDER[] = {
+    HomeButtonInput::NO_DOUBLE_TAP, HomeButtonInput::TAP_100_MS, HomeButtonInput::TAP_200_MS, 0, 1, 2, 3, 4};
+static_assert(sizeof(TIMING_ORDER) == HomeButtonInput::TAP_OPTION_COUNT);
+inline int timingRow(unsigned value) {
+  const unsigned selected = value < HomeButtonInput::TAP_OPTION_COUNT ? value : 0;
+  for (unsigned row = 0; row < HomeButtonInput::TAP_OPTION_COUNT; ++row)
+    if (TIMING_ORDER[row] == selected) return row;
+  return 0;
+}
 inline bool opensShortcut(HomeButtonAction action) {
   return action == HomeButtonAction::OpenShortcut || action == HomeButtonAction::OpenDoubleShortcut ||
          action == HomeButtonAction::OpenLongShortcut;

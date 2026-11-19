@@ -78,7 +78,7 @@ Framed and Carousel use square controls in their menus and reader sheets. Older 
 
 System → Clock → Show in header enables a fixed, larger clock in shared app headers, including Solitaire and Hearts. Titles, navigation buttons and battery status take precedence: the clock is omitted when its complete text cannot fit. It follows the selected 12/24-hour format and updates when that screen repaints; Home retains its dedicated clock and minute updates. Turning the optional clock or battery percentage off clears it on the next repaint.
 
-The device and web settings lists omit legacy theme selection and touch-inapplicable power/menu controls. Their saved keys remain compatible with existing settings files. Appearance offers Framed, Carousel, Carousel 2 and Bookshelf; Home-button gestures are configured in Controls. Frontlight and tilt options depend on the hardware capabilities.
+The device and web settings lists omit legacy theme selection and touch-inapplicable power/menu controls. Their saved keys remain compatible with existing settings files. Appearance offers Framed, Carousel, Carousel 2 and Bookshelf; Home double-tap and long-press gestures are configured in Controls. A single Home tap is fixed to Home, including when older settings assigned it another action. Frontlight and tilt options depend on the hardware capabilities.
 
 The reader's Contents and More lists both accept horizontal swipes between available list pages. Swiping at either end stays on that list page and does not turn the book underneath. A downward swipe closes the sheet.
 

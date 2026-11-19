@@ -243,7 +243,7 @@ void ActivityManager::loop() {
       return;
     }
     if (!currentActivity->isHomeActivity() && mappedInput.wasHomeGesture()) {
-      if (currentActivity->handleHomeGesture()) {
+      if (mappedInput.homeButtonAction() != HomeButtonAction::Home && currentActivity->handleHomeGesture()) {
         return;
       }
       goHome();
@@ -483,7 +483,8 @@ void ActivityManager::goToBrowser() {
 }
 
 void ActivityManager::goToPlugins(bool showOpds) {
-  replaceActivity(std::make_unique<PluginCatalogActivity>(renderer, mappedInput, showOpds, /*rootMode=*/true));
+  replaceActivity(
+      std::make_unique<PluginCatalogActivity>(renderer, mappedInput, showOpds, PluginCatalogActivity::Origin::Home));
 }
 
 void ActivityManager::goToReader(std::string path, const bool allowFastInitialRefresh) {

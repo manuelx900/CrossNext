@@ -119,6 +119,7 @@ class BookMetadataCache {
   bool load();
   SpineEntry getSpineEntry(int index);
   TocEntry getTocEntry(int index);
+  void copyTocTitle(int index, char* title, size_t capacity);
   // Cumulative byte size up to and including the given spine item (0 if out of range
   // or not loaded). Backed by the in-RAM cumulativeSizes cache populated in load().
   uint32_t getCumulativeSize(int index) const;

@@ -102,7 +102,7 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
   }
   if (choosing) heading.trailingLabel = kDoneChip;
   if (!choosing) heading.mark = fui::bitmapFromIcon(icon_go_settings_32);
-  pixelui::header(screen.target(), device, heading);
+  pixelui::headerWithSelectedColor(screen.target(), device, heading, model.outputInverted);
   const auto geometry = pixelui::geometry(device);
   backui::publish(heading.back, geometry.back);
   fui::ButtonProps headerHit;

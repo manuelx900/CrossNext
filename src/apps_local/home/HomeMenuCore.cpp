@@ -58,7 +58,7 @@ void removeShortcut(Config& config, Id id) {
   config.labels[static_cast<int>(id)][0] = 0;
 }
 Id addShortcut(Config& config, int folder, const char* title) {
-  if (folder < 0 || folder > 1 || !title || !*title || std::strlen(title) >= kItemBytes || !utf8(title))
+  if (folder < 0 || folder > kPluginFolder || !title || !*title || std::strlen(title) >= kItemBytes || !utf8(title))
     return Id::Count;
   Id id = findShortcut(config, folder, title);
   if (id != Id::Count && (config.visible & (1u << static_cast<int>(id)))) return id;
@@ -175,7 +175,8 @@ bool decode(const uint8_t* bytes, Config& config, uint32_t& generation, size_t l
     for (int n = 0; n < kShortcutCount; ++n) {
       auto& entry = config.shortcuts[n];
       entry.folder = *in++;
-      if (entry.folder > 1 || !std::memchr(in, 0, kItemBytes) || !utf8(reinterpret_cast<const char*>(in))) return false;
+      if (entry.folder > kPluginFolder || !std::memchr(in, 0, kItemBytes) || !utf8(reinterpret_cast<const char*>(in)))
+        return false;
       std::memcpy(entry.title, in, kItemBytes);
       in += kItemBytes;
       if ((mask & (1u << (kBaseCount + n))) && !*entry.title) return false;

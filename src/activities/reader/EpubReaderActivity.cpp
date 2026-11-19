@@ -649,7 +649,6 @@ void EpubReaderActivity::openSavedItemsMenu() {
   panelCursorShown = !mappedInput.hasTouch();
   toolbarUi->nav().reset();
   buildMoreActions();
-  loadTextSheetSizes();
   discardOverlayPage();
   requestUpdate();
 }
@@ -1216,7 +1215,10 @@ void EpubReaderActivity::onReaderMenuConfirm(EpubReaderMenuActivity::MenuAction 
       }
       stats->openBook(KOReaderDocumentId::calculate(bookPath).c_str(), epub->getTitle().c_str(),
                       epub->getAuthor().c_str());
-      startActivityForResult(std::move(stats), [this](const ActivityResult&) { requestUpdate(); });
+      startActivityForResult(std::move(stats), [this](const ActivityResult&) {
+        completionStatusPending = true;
+        requestUpdate();
+      });
       break;
     }
     case EpubReaderMenuActivity::MenuAction::SELECT_CHAPTER: {
@@ -3100,11 +3102,9 @@ void EpubReaderActivity::openOverlay(Overlay target, const bool showStyle) {
       case Overlay::Text:
         textSheetView = showStyle ? readertext::SheetView::Style : readertext::SheetView::Controls;
         textSheetTab = showStyle ? 3 : 2;
-        textListPage = showStyle ? 0
-                                 : std::max(0, epub->getTocIndexForSpineIndex(currentSpineIndex)) /
-                                       readertext::sheetRowsPerPage(toolbarUi->uiTarget.deviceContext());
-        buildMoreActions();
-        loadTextSheetSizes();
+        // Choose the initial page when the Contents view reads the current chapter.
+        textListPage = showStyle ? 0 : -1;
+        if (showStyle) buildMoreActions();
         panelIndex = 0;
         toolbarUi->nav().reset();
         break;
@@ -3141,12 +3141,13 @@ void EpubReaderActivity::openOverlay(Overlay target, const bool showStyle) {
       overlayPageStored = renderer.storeBwBuffer();
     } else if (overlayPageStored) {
       // Overlay -> overlay: wipe the previous chrome (toolbar header, sheet,
-      // progress row) back to the clean page so none of it shows around or
-      // through the new sheet; re-store for the next transition. No baseline
-      // resync: the glass still shows the old chrome, and the differential
-      // must keep diffing against it to erase it.
-      renderer.restoreBwBuffer(/*resyncPanelBaseline=*/false);
-      overlayPageStored = renderer.storeBwBuffer();
+      // progress row) while retaining the clean snapshot. The differential
+      // refresh still needs the panel's baseline for the old chrome.
+      if (!renderer.copyStoredBwBuffer()) {
+        discardOverlayPage();
+        requestUpdate();
+        return;
+      }
     }
     renderOverlay();
     pushOverlayRefresh();
@@ -3188,24 +3189,30 @@ void EpubReaderActivity::renderOverlay() {
     auto& text = model.text;
     text.tab = textSheetTab;
     text.contentsAvailable = true;
+    if (textSheetTab == 2) {
+      text.currentChapter = epub->getTocIndexForSpineIndex(currentSpineIndex);
+      if (textListPage < 0)
+        textListPage =
+            std::max(0, text.currentChapter) / readertext::sheetRowsPerPage(toolbarUi->uiTarget.deviceContext());
+    }
     text.listPage = textListPage;
     text.listContext = this;
-    text.currentChapter = epub->getTocIndexForSpineIndex(currentSpineIndex);
     text.alignmentIndex = SETTINGS.paragraphAlignment;
     text.listCount = textSheetTab == 2 ? epub->getTocItemsCount() : static_cast<int>(moreItems.size());
     text.listLabel = [](const void* context, int n, char* out, size_t size) {
       const auto* self = static_cast<const EpubReaderActivity*>(context);
       if (self->textSheetTab == 2) {
-        const auto item = self->epub->getTocItem(n);
-        std::snprintf(out, size, "%s", item.title.c_str());
+        self->epub->copyTocTitle(n, out, size);
       } else if (n < int(self->moreItems.size())) {
         std::snprintf(out, size, "%s", I18N.get(self->moreItems[n].labelId));
       }
     };
     text.view = textSheetView;
     text.fontPage = textFontPage;
-    text.fontCount = readerFontFamilyCount(&sdFontSystem.registry());
-    text.fontSelected = readerFontFamilyIndex(&sdFontSystem.registry(), SETTINGS.sdFontFamilyName);
+    if (textSheetView == readertext::SheetView::Families) {
+      text.fontCount = readerFontFamilyCount(&sdFontSystem.registry());
+      text.fontSelected = readerFontFamilyIndex(&sdFontSystem.registry(), SETTINGS.sdFontFamilyName);
+    }
     text.fontContext = &sdFontSystem.registry();
     text.fontLabel = [](const void* context, int index) -> const char* {
       if (index < CrossPointSettings::BUILTIN_FONT_COUNT) return tr(STR_MENU_FONT_CLASSIC);
@@ -3386,6 +3393,8 @@ void EpubReaderActivity::handleTextSheetInput(const ReaderToolbarUi::Routed& rou
     RenderLock lock;
     settleOverlayRefresh();
     textSheetTab = nextTab;
+    if (nextTab == 0) loadTextSheetSizes();
+    if (nextTab == 3) buildMoreActions();
     textSheetView = readertext::SheetView::Controls;
     textListPage = 0;
     toolbarUi->begin();
@@ -3668,8 +3677,11 @@ void EpubReaderActivity::handleOverlayInput() {
       RenderLock lock;
       settleOverlayRefresh();
       if (overlayPageStored) {
-        renderer.restoreBwBuffer(/*resyncPanelBaseline=*/false);
-        overlayPageStored = renderer.storeBwBuffer();
+        if (!renderer.copyStoredBwBuffer()) {
+          discardOverlayPage();
+          requestUpdate();
+          return;
+        }
         renderOverlay();
         pushOverlayRefresh();
       } else {

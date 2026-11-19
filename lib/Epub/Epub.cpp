@@ -1250,6 +1250,13 @@ BookMetadataCache::TocEntry Epub::getTocItem(const int tocIndex) const {
   return bookMetadataCache->getTocEntry(tocIndex);
 }
 
+void Epub::copyTocTitle(int tocIndex, char* title, size_t capacity) const {
+  if (bookMetadataCache)
+    bookMetadataCache->copyTocTitle(tocIndex, title, capacity);
+  else if (capacity)
+    title[0] = '\0';
+}
+
 int Epub::getTocItemsCount() const {
   if (!bookMetadataCache || !bookMetadataCache->isLoaded()) {
     return 0;

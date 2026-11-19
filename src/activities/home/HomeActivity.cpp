@@ -56,8 +56,7 @@ bool availableRecent(const RecentBook& book) {
 
 int HomeActivity::getMenuItemCount() const {
   // The persisted registry defines the same rows for drawing and activation.
-  int count =
-      SETTINGS.homeLayout == CrossPointSettings::HOME_BOOX ? homeui::kPiccoActions : homemenu::count(hasLibrarySlot());
+  int count = homemenu::count(hasLibrarySlot());
   if (!recentBooks.empty()) {
     count += displayBookCount();
   }
@@ -481,8 +480,7 @@ void HomeActivity::loop() {
     libraryWarmInterrupted = true;
     libraryWarmInputAt = millis();
   }
-  const int options =
-      SETTINGS.homeLayout == CrossPointSettings::HOME_BOOX ? homeui::kPiccoActions : homemenu::count(hasLibrarySlot());
+  const int options = homemenu::count(hasLibrarySlot());
   const auto move = [this, options](int direction) {
     if (!menuInput.move(direction, options)) LOG_ERR("HOME", "Menu input queue full");
   };
@@ -542,7 +540,7 @@ void HomeActivity::loop() {
     }
     const int menuIndex = selectorIndex - displayBookCount();
     const auto id = homemenu::at(homemenu::config(), menuIndex, hasLibrarySlot());
-    if (SETTINGS.homeLayout != CrossPointSettings::HOME_BOOX && homemenu::isShortcut(id)) {
+    if (homemenu::isShortcut(id)) {
       homemenu::launchShortcut(id, renderer, mappedInput);
       return;
     }
@@ -670,12 +668,6 @@ void HomeActivity::loop() {
   const int touched = carouselNext       ? homeui::kNextBook
                       : carouselPrevious ? homeui::kPreviousBook
                                          : dashboard.selectedAction(mappedInput);
-  const int picco = homeui::piccoIndex(static_cast<homeui::QuickAction>(touched));
-  if (SETTINGS.homeLayout == CrossPointSettings::HOME_BOOX && picco >= 0) {
-    selectorIndex = displayBookCount() + picco;
-    activateSelection();
-    return;
-  }
   if (touched == homeui::kPreviousBook || touched == homeui::kNextBook) {
     const int next =
         recentBookCount > 1

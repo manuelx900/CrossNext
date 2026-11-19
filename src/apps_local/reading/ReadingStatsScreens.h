@@ -39,7 +39,8 @@ enum : freeink::ui::ActionId {
   PeriodBooksBack,
   BookDays,
   BookDaysPage,
-  BookDaysBack
+  BookDaysBack,
+  ResetBook
 };
 enum class StatsScope { Year, AllTime };
 struct Model {
@@ -60,6 +61,7 @@ struct Model {
   bool charging = false, showPercent = true;
   bool loading = false, failed = false, damaged = false;
   bool bookOnly = false;
+  bool canResetBook = false, resetting = false;
   const readingstats::BookDayPage* bookDays = nullptr;
   bool periodBooks = false, periodBookNext = false;
   int periodBookFirst = 0, periodBookLast = 0, periodBookPage = 0, periodBookCount = 0;

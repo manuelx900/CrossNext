@@ -115,8 +115,9 @@ inline StorageMutation storageMutation(const char* path) {
     return StorageMutation::DerivedCache;
   if (value == "/.crosspoint/shelf.cfg" || value == "/.crosspoint/shelf-hidden.cfg")
     return StorageMutation::NavigationState;
-  if (value == "/.crosspoint/state.json" || storageStateKey(path).valid() || isBookTextPreferences(path) ||
-      isVocabularyRecord(path) || isVocabularyNotice(path))
+  if (value == "/.crosspoint/state.json" || value == "/.crosspoint/reading-history/.reset.tmp" ||
+      value == "/.crosspoint/reading-history/.reset.bak" || storageStateKey(path).valid() ||
+      isBookTextPreferences(path) || isVocabularyRecord(path) || isVocabularyNotice(path))
     return StorageMutation::ReadingState;
   constexpr std::string_view root = "/.crosspoint/";
   if (value.substr(0, root.size()) != root) return StorageMutation::Resources;

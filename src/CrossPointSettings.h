@@ -309,7 +309,7 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   // X4 Pro: double-click power toggles the frontlight. Disabling frees the
   // power button for shortPwrBtn actions without the double-click wait.
   uint8_t doubleClickPwrLight = 1;
-  uint8_t homeButtonTapAction = static_cast<uint8_t>(HomeButtonAction::Home);
+  uint8_t homeButtonTapAction = static_cast<uint8_t>(HomeButtonAction::Home);  // Legacy save field; tap is fixed.
   uint8_t homeButtonDoubleTapAction = static_cast<uint8_t>(HomeButtonAction::ToggleFrontlight);
   uint8_t homeButtonDoubleTapTiming = 0;
   uint8_t homeButtonLongPressAction = static_cast<uint8_t>(HomeButtonAction::ReaderMenu);
@@ -386,6 +386,7 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   }
 
   uint8_t interfaceThemeStyle = 0;
+  uint8_t interfaceHeaderColor = 0;
   uint8_t interfaceThemeOverrides[menufont::kSectionCount]{};
   uint8_t menuFontStyle = uint8_t(menufont::kDefault);
   uint8_t menuFontOverrides[menufont::kSectionCount]{};
