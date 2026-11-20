@@ -101,7 +101,7 @@ Prepara la microSD en el ordenador antes de volver al lector,
 para que CrossNext pueda reutilizar los resultados y evitar hacer ese trabajo en
 el dispositivo. Tus libros se procesan localmente: no se suben a Internet.
 
-![CrossNext Book Preparer: selección de tarjeta, formatos, fuentes, tamaños y motor EPUB](docs/images/book-preparer.png)
+![CrossNext Book Preparer: selección de tarjeta, formatos, fuentes, tamaño del texto y orientación](docs/images/book-preparer.png)
 
 Utiliza el motor real del firmware para generar:
 

@@ -100,7 +100,7 @@ It prepares your microSD on the computer before you return
 to the reader, so CrossNext can reuse the results instead of doing that work on
 the device. Your books stay on your computer and card; they are not uploaded.
 
-![CrossNext Book Preparer: card selection, formats, reading fonts, text sizes and EPUB engine](docs/images/book-preparer.png)
+![CrossNext Book Preparer: card selection, formats, reading fonts, text size and orientation](docs/images/book-preparer.png)
 
 Using the real firmware preparation engine, it generates:
 
