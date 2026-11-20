@@ -18,19 +18,26 @@ class Projection {
   bool find(const char* document, Book& out);
   bool page(BookFilter filter, int page, Book* out, int capacity, int& count);
   bool project(PeriodStats& out, bool* known = nullptr) const;
+  bool projectAnnual(PeriodStats& out, bool& timeKnown, bool& finishedKnown) const;
   uint64_t daySeconds(int day) const;
   const RecordedYears& recordedYears() const { return years; }
   bool annualTimeKnown(const PeriodStats& period) const;
+  bool annualFinished(int year, uint32_t& count) const;
   uint64_t tod[4]{}, dow[7]{};
 
  private:
   static constexpr uint32_t kSlots = 32768, kDates = 36525;
   struct Entry {
     uint8_t document[16]{};
-    uint32_t cloud = 0;
     uint64_t latest = 0, prior = 0;
-    bool used = false, finished = false;
+    int64_t importedFinishedEpoch = 0;
+    int localFinishedDay = 0;
+    uint16_t cloud = 0;
+    uint8_t importedFinishedYearOffset = 0;  // 1 means RecordedYears::firstYear.
+    bool finished = false;
   };
+  static_assert(kMaxBooks <= UINT16_MAX && sizeof(Entry) <= 48);
+  static_assert(RecordedYears::lastYear - RecordedYears::firstYear + 1 <= UINT8_MAX);
   HalMemory::PsramBuffer indexMemory, orderMemory, dayMemory;
   Entry* entries = nullptr;
   uint32_t* order = nullptr;

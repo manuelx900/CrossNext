@@ -88,6 +88,7 @@ class ReadingStatsActivity final : public Activity {
   readingstats::RecordedYears recordedYears;
   readingui::StatsScope statsScope = readingui::StatsScope::Year;
   bool annualKnown = true, annualReady = false;
+  bool annualFinishedKnown = false;
   readingstats::Repository repository;
   HalMemory::PsramBuffer completionMemory;
   readingstats::CompletionIndex completionIndex;

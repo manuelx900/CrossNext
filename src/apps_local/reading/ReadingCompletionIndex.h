@@ -5,8 +5,7 @@
 #include "ReadingStatsCore.h"
 
 namespace readingstats {
-// Non-owning, bounded index of completion events. The activity owns one PSRAM
-// allocation; ordinary reading snapshots need no entry and cause no SD lookup.
+// Non-owning, bounded index of completion events and completed snapshots.
 class CompletionIndex {
  public:
   struct Entry {
@@ -24,9 +23,9 @@ class CompletionIndex {
     slots = capacity;
     if (table) std::memset(table, 0, slots * sizeof(Entry));
   }
-  bool apply(const Record& record, uint64_t offset, bool visibleOnly = false) {
-    const bool visible = record.book.completed && record.book.seconds >= kMinimumVisibleSeconds;
-    if (!record.firstCompletion && record.kind != RecordKind::Reopen && !(visibleOnly && visible)) return true;
+  bool apply(const Record& record, uint64_t offset, bool latestSnapshot = false) {
+    const bool completed = latestSnapshot ? record.book.completed : record.firstCompletion;
+    if (!completed && record.kind != RecordKind::Reopen) return true;
     uint8_t key[16];
     if (!keyFor(record.book.document, key) || !slots || offset < 16) return false;
     size_t at = checksum(key, sizeof(key)) & (slots - 1);
@@ -34,15 +33,13 @@ class CompletionIndex {
       auto& entry = table[at];
       if (entry.completionOffset && std::memcmp(entry.document, key, sizeof(key))) continue;
       std::memcpy(entry.document, key, sizeof(key));
-      entry.completionOffset = (visibleOnly ? visible : record.firstCompletion) ? offset : 1;
+      entry.completionOffset = completed ? offset : 1;
       return true;
     }
     return false;
   }
-  bool current(const Record& record, uint64_t offset, bool visibleOnly = false) const {
-    if (!slots || (visibleOnly ? !record.book.completed || record.book.seconds < kMinimumVisibleSeconds
-                               : !record.firstCompletion))
-      return false;
+  bool current(const Record& record, uint64_t offset, bool latestSnapshot = false) const {
+    if (!slots || !(latestSnapshot ? record.book.completed : record.firstCompletion)) return false;
     uint8_t key[16];
     if (!keyFor(record.book.document, key)) return false;
     size_t at = checksum(key, sizeof(key)) & (slots - 1);

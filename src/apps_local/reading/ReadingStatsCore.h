@@ -34,6 +34,7 @@ struct Book {
   bool manuallyUnfinished = false;
   int finishedDay = 0;
   int firstDay = 0;
+  bool visibleInBookHistory() const { return completed || seconds >= kMinimumVisibleSeconds; }
 };
 struct Record {
   Book book;

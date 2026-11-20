@@ -283,26 +283,42 @@ void timeMetric(Context& s, fui::Rect r, const char* label, uint64_t seconds, bo
   timeValue(s, value, seconds, precise, s.device().width > s.device().height ? 40 : 52);
   text(s, fui::makeRect(r.x + 6, r.bottom() - 28, r.width - 12, 24), label, 3);
 }
+void finishedMetric(Context& s, fui::Rect r, uint32_t completed, bool known) {
+  frame(s, r, 2);
+  art(s, fui::makeRect(r.x + 10, r.y + 6, 34, r.height - 12), statsart::book);
+  text(s, fui::makeRect(r.x + 56, r.y, r.width - 115, r.height), tr(STR_STATS_FINISHED_BOOKS), 0, fui::TextAlign::Left);
+  const auto value = fui::makeRect(r.right() - 46, r.y + 6, 36, r.height - 12);
+  if (known)
+    count(s, value, completed);
+  else
+    text(s, value, "--");
+}
 void summary(Context& s, fui::Rect r, const Model& m) {
   const auto& v = *m.summary;
   const bool annual = m.statsScope == StatsScope::Year && m.annualStats;
   const auto* year = m.annualStats;
-  const bool totalsKnown = !annual || m.source == readingstats::Source::Local;
+  const bool lifetimeMetrics = annual && m.source == readingstats::Source::Unified;
+  const bool finishedKnown = !lifetimeMetrics || m.annualFinishedKnown;
+  const bool timeKnown = !annual || m.annualKnown;
   const uint64_t seconds = annual ? year->seconds : v.seconds;
-  const uint64_t pages = annual ? year->pages : v.pages;
-  const uint32_t sessions = annual ? year->sessions : v.sessions;
+  const uint64_t metricSeconds = lifetimeMetrics ? v.seconds : seconds;
+  const uint64_t pages = annual && !lifetimeMetrics ? year->pages : v.pages;
+  const uint32_t sessions = annual && !lifetimeMetrics ? year->sessions : v.sessions;
+  const auto average = sessions ? metricSeconds / sessions : 0;
   const bool wide = r.width > r.height;
   const int gap = 10;
+  const int finishedH = wide ? 36 : 46;
   const auto main = fui::makeRect(r.x, r.y, wide ? r.width / 3 - gap : r.width, wide ? r.height : r.height * 24 / 100);
   if (annual && year->first > 0)
     std::snprintf(s.work.buttonLabel, sizeof(s.work.buttonLabel), "%s - %d", tr(STR_STATS_TOTAL_MINUTES),
                   readingstats::dateFromDay(year->first).year);
   else
     std::snprintf(s.work.buttonLabel, sizeof(s.work.buttonLabel), "%s", tr(STR_STATS_TOTAL_MINUTES));
-  if (annual && !m.annualKnown) {
+  if (!timeKnown) {
     frame(s, main, 2);
     text(s, fui::makeRect(main.x + 8, main.y + 52, main.width - 16, main.height - 60), s.work.buttonLabel, 0,
          fui::TextAlign::Center, fui::Color::Black, 2);
+    bookAccess(s, fui::makeRect(main.right() - 52, main.bottom() - 52, 44, 44));
   } else
     timePanel(s, main, s.work.buttonLabel, seconds, false, true, wide ? 2 : 1, false, annual);
   if (m.today >= readingstats::dayIndex({2020, 1, 1})) {
@@ -315,50 +331,43 @@ void summary(Context& s, fui::Rect r, const Model& m) {
   frame(s, scope, 2);
   art(s, fui::makeRect(scope.x + 8, scope.y + 5, 30, 30), fui::bitmapFromIcon(navicons::ListBox32));
   dashboard::hit(s.screen, scope, ChooseStatsScope);
-  if (annual && !m.annualKnown) {
-    bookAccess(s, fui::makeRect(main.right() - 52, main.bottom() - 52, 44, 44));
-    const auto message =
-        wide ? fui::makeRect(main.right() + 24, r.y + 20, r.right() - main.right() - 36, r.height - 32)
-             : fui::makeRect(r.x + 12, main.bottom() + 20, r.width - 24, r.bottom() - main.bottom() - 32);
-    prose(s, message, tr(STR_STATS_YEAR_UNAVAILABLE));
-    return;
+  auto stats = wide ? fui::makeRect(main.right() + gap, r.y, r.right() - main.right() - gap, r.height * 46 / 100)
+                    : fui::makeRect(r.x, main.bottom() + gap, r.width, r.height * 34 / 100);
+  if (lifetimeMetrics) {
+    const int scopeHeight = s.target().lineHeight(3) + 4;
+    text(s, fui::makeRect(stats.x, stats.y, stats.width, scopeHeight), tr(STR_STATS_ALL_TIME), 3);
+    stats.y += scopeHeight;
+    stats.height -= scopeHeight;
   }
-  const auto stats = wide ? fui::makeRect(main.right() + gap, r.y, r.right() - main.right() - gap, r.height * 46 / 100)
-                          : fui::makeRect(r.x, main.bottom() + gap, r.width, r.height * 34 / 100);
   gridFrame(s, stats, 2, 2);
-  if (totalsKnown)
-    numberMetric(s, cell(stats, 0, 2, 2), tr(STR_READING_SESSIONS), sessions, statsart::book, !wide, false);
-  else
-    metric(s, cell(stats, 0, 2, 2), tr(STR_READING_SESSIONS), "--", statsart::book, !wide, false);
-  if (!totalsKnown)
-    metric(s, cell(stats, 1, 2, 2), tr(STR_READING_AVERAGE), "--", statsart::clock, !wide, false);
-  else if (wide)
-    timeMetric(s, cell(stats, 1, 2, 2), tr(STR_READING_AVERAGE), sessions ? seconds / sessions : 0, false, false);
+  numberMetric(s, cell(stats, 0, 2, 2), tr(STR_READING_SESSIONS), sessions, statsart::book, !wide, false);
+  if (wide)
+    timeMetric(s, cell(stats, 1, 2, 2), tr(STR_READING_AVERAGE), average, false, false);
   else {
     auto box = cell(stats, 1, 2, 2);
     const int side = std::min(28, int(box.height) / 4);
     art(s, fui::makeRect(box.x + (box.width - side) / 2, box.y + 10, side, side), statsart::clock);
-    timeValue(s, fui::makeRect(box.x + 10, box.y + side + 17, box.width - 20, box.height - side - 48),
-              sessions ? seconds / sessions : 0);
+    timeValue(s, fui::makeRect(box.x + 10, box.y + side + 17, box.width - 20, box.height - side - 48), average);
     text(s, fui::makeRect(box.x + 4, box.bottom() - 28, box.width - 8, 24), tr(STR_READING_AVERAGE), 3);
   }
-  if (totalsKnown)
-    numberMetric(s, cell(stats, 2, 2, 2), tr(STR_READING_PAGES), pages, wide ? fui::BitmapRef{} : statsart::page, !wide,
-                 false);
-  else
-    metric(s, cell(stats, 2, 2, 2), tr(STR_READING_PAGES), "--", statsart::page, !wide, false);
+  numberMetric(s, cell(stats, 2, 2, 2), tr(STR_READING_PAGES), pages, wide ? fui::BitmapRef{} : statsart::page, !wide,
+               false);
   char speed[24];
-  if (totalsKnown)
-    std::snprintf(speed, sizeof(speed), "%.1f", seconds ? pages * 60.0 / seconds : 0.0);
-  else
-    std::snprintf(speed, sizeof(speed), "--");
+  std::snprintf(speed, sizeof(speed), "%.1f", metricSeconds ? pages * 60.0 / metricSeconds : 0.0);
   localizeDecimal(speed);
   metric(s, cell(stats, 3, 2, 2), tr(STR_READING_SPEED), speed, statsart::speed, !wide, false);
   const auto rest = wide ? fui::makeRect(stats.x, stats.bottom() + gap, stats.width, r.bottom() - stats.bottom() - gap)
                          : fui::makeRect(r.x, stats.bottom() + gap, r.width, r.bottom() - stats.bottom() - gap);
+  const auto finished = fui::makeRect(rest.x, rest.bottom() - finishedH, rest.width, finishedH);
+  if (!timeKnown) {
+    if (finishedKnown) finishedMetric(s, finished, year->completed, true);
+    const int bottom = finishedKnown ? finished.y - gap : rest.bottom();
+    prose(s, fui::makeRect(rest.x + 12, rest.y, rest.width - 24, bottom - rest.y), tr(STR_STATS_YEAR_UNAVAILABLE));
+    return;
+  }
   const int headingH = wide ? 24 : 30;
   text(s, fui::makeRect(rest.x, rest.y, rest.width, headingH), tr(STR_STATS_CONSISTENCY), 0, fui::TextAlign::Left);
-  const int finishedH = wide ? 36 : 46, streakTop = wide ? 28 : 34;
+  const int streakTop = wide ? 28 : 34;
   const int streakH = rest.height - (wide ? streakTop : 40) - finishedH - gap;
   const auto streak = fui::makeRect(rest.x, rest.y + streakTop, rest.width, streakH);
   gridFrame(s, streak, 3, 1);
@@ -368,16 +377,7 @@ void summary(Context& s, fui::Rect r, const Model& m) {
                annual ? year->longestStreakThrough(year->last) : v.longest, statsart::trophy, !wide, false);
   numberMetric(s, cell(streak, 2, 3, 1), tr(STR_READING_DAYS),
                annual ? year->daysReadThrough(year->last) : v.daysRead(), statsart::calendar, !wide, false);
-  const auto finished = fui::makeRect(rest.x, rest.bottom() - finishedH, rest.width, finishedH);
-  frame(s, finished, 2);
-  art(s, fui::makeRect(finished.x + 10, finished.y + 6, 34, finishedH - 12), statsart::book);
-  text(s, fui::makeRect(finished.x + 56, finished.y, finished.width - 115, finishedH), tr(STR_STATS_FINISHED_BOOKS), 0,
-       fui::TextAlign::Left);
-  if (totalsKnown)
-    count(s, fui::makeRect(finished.right() - 46, finished.y + 6, 36, finishedH - 12),
-          annual ? year->completed : v.completed);
-  else
-    text(s, fui::makeRect(finished.right() - 46, finished.y + 6, 36, finishedH - 12), "--");
+  finishedMetric(s, finished, annual ? year->completed : v.completed, finishedKnown);
 }
 void today(Context& s, fui::Rect r, const Model& m) {
   const bool wide = r.width > r.height;

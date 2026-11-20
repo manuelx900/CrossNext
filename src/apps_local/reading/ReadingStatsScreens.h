@@ -48,6 +48,7 @@ struct Model {
   const readingstats::PeriodStats* annualStats = nullptr;
   StatsScope statsScope = StatsScope::Year;
   bool annualKnown = true;
+  bool annualFinishedKnown = false;
   const readingstats::PeriodStats* periodStats = nullptr;
   readingstats::Period period = readingstats::Period::Calendar;
   readingstats::BookFilter filter = readingstats::BookFilter::Finished;

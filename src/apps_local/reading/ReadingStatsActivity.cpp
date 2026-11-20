@@ -127,6 +127,16 @@ void ReadingStatsActivity::back() {
   }
   if (details) {
     details = false;
+    if (detailReset) {
+      detailReset = false;
+      if (summaryReady)
+        loadPage(0);
+      else {
+        ready = false;
+        requestUpdate();
+      }
+      return;
+    }
     loading = Load::Ready;
     repository.close();
     ready = false;
@@ -207,8 +217,7 @@ void ReadingStatsActivity::loadAnnual(int year) {
   annualKnown = true;
   annualReady = false;
   if (source == readingstats::Source::Unified) {
-    loading = combined->project(annualStats, &annualKnown) ? Load::Ready : Load::Failed;
-    annualKnown &= combined->annualTimeKnown(annualStats);
+    loading = combined->projectAnnual(annualStats, annualKnown, annualFinishedKnown) ? Load::Ready : Load::Failed;
     annualReady = loading == Load::Ready;
   } else
     loading = beginScan() ? Load::Annual : Load::Failed;
@@ -299,7 +308,7 @@ void ReadingStatsActivity::scan() {
         requestUpdate();
         return;
       }
-      if (record.book.seconds < readingstats::kMinimumVisibleSeconds) continue;
+      if (!record.book.visibleInBookHistory()) continue;
       if (!cloudListedKnown) {
         if (record.book.completed)
           ++listedCloudFinished;
@@ -349,6 +358,7 @@ void ReadingStatsActivity::scan() {
         return;
       }
       if (loading == Load::Anchor || loading == Load::Summary) {
+        if (loading == Load::Summary) summary.completed = listedFinished;
         summaryReady = true;
         annualReady = true;
         finishedPage = -1;
@@ -370,9 +380,7 @@ void ReadingStatsActivity::scan() {
       return;
     }
     if (status != readingstats::ScanResult::Record) continue;
-    if (loading == Load::Summary &&
-        (record.firstCompletion || record.kind == readingstats::RecordKind::Reopen ||
-         (record.book.completed && record.book.seconds >= readingstats::kMinimumVisibleSeconds))) {
+    if (loading == Load::Summary && (record.book.completed || record.kind == readingstats::RecordKind::Reopen)) {
       if (!completionMemory) {
         const auto slots = readingstats::CompletionIndex::slotsFor(repository.recordCount());
         completionMemory = HalMemory::allocatePsram(slots * sizeof(readingstats::CompletionIndex::Entry));
@@ -382,7 +390,7 @@ void ReadingStatsActivity::scan() {
           LOG_ERR("STATS", "OOM: completion-event index");
       }
       const bool previouslyListed = completionIndex.completed(record.book.document);
-      if (!completionMemory || !completionIndex.apply(record, repository.recordOffset(), /*visibleOnly=*/true)) {
+      if (!completionMemory || !completionIndex.apply(record, repository.recordOffset(), /*latestSnapshot=*/true)) {
         LOG_ERR("STATS", "Completion-event index unavailable or full");
         repository.close();
         loading = Load::Failed;
@@ -394,7 +402,7 @@ void ReadingStatsActivity::scan() {
       if (!nowListed && previouslyListed && listedFinished) --listedFinished;
     }
     const bool currentCompletion =
-        loading == Load::Books && completionIndex.current(record, repository.recordOffset(), /*visibleOnly=*/true);
+        loading == Load::Books && completionIndex.current(record, repository.recordOffset(), /*latestSnapshot=*/true);
     switch (loading) {
       case Load::Anchor: {
         currentDay =
@@ -414,8 +422,7 @@ void ReadingStatsActivity::scan() {
         annualStats.add(record);
         recordedYears.add(record);
         if (clockKnown) dayStats.add(record);
-        if (record.book.seconds >= readingstats::kMinimumVisibleSeconds)
-          readingstats::addRecent(books, recentCount, record.book);
+        if (record.book.visibleInBookHistory()) readingstats::addRecent(books, recentCount, record.book);
         break;
       case Load::Day:
         dayStats.add(record);
@@ -431,8 +438,7 @@ void ReadingStatsActivity::scan() {
         break;
       case Load::Books:
         if (filter == readingstats::BookFilter::Recent) {
-          if (record.book.seconds >= readingstats::kMinimumVisibleSeconds)
-            readingstats::addRecent(books, recentCount, record.book);
+          if (record.book.visibleInBookHistory()) readingstats::addRecent(books, recentCount, record.book);
         } else if (currentCompletion && skipped++ >= page * pageSize) {
           finishedBooks[count++] = record.book;
           if (count == pageSize) {
@@ -725,7 +731,7 @@ void ReadingStatsActivity::action(fui::ActionId action, int value) {
         month = next;
         ready = false;
         requestUpdate();
-      } else if (tab == 3) {
+      } else if (tab == 3 && summaryReady) {
         const int pages = std::max(1, static_cast<int>((bookTotal() + pageSize - 1) / pageSize));
         const int next = std::clamp(page + value, 0, pages - 1);
         if (next != page) loadPage(next);
@@ -910,6 +916,18 @@ void ReadingStatsActivity::loop() {
     }
   }
   if (navigated) return;
+  if (loading == Load::Anchor || loading == Load::Summary) {
+    scan();
+    if (loading == Load::Ready) {
+      const int next = queuedTab;
+      queuedTab = -1;
+      if (next >= 0 && next != tab)
+        action(readingui::Tab, next);
+      else if (tab == 3 && !details)
+        loadPage(0);
+    }
+    return;
+  }
   if (detailPage == DetailPage::Days &&
       bookDays.capacity != (renderer.getScreenWidth() > renderer.getScreenHeight() ? 2 : readingstats::kBooksPerPage)) {
     loadBookDays();
@@ -929,15 +947,6 @@ void ReadingStatsActivity::loop() {
         loadPage(first / pageSize);
       return;
     }
-  }
-  if (loading == Load::Anchor || loading == Load::Summary) {
-    scan();
-    if (loading == Load::Ready && queuedTab >= 0) {
-      const int next = queuedTab;
-      queuedTab = -1;
-      action(readingui::Tab, next);
-    }
-    return;
   }
   if (loading != Load::Ready && loading != Load::Failed) {
     scan();
@@ -1077,6 +1086,7 @@ void ReadingStatsActivity::render(RenderLock&&) {
   model.annualStats = &annualStats;
   model.statsScope = statsScope;
   model.annualKnown = annualKnown;
+  model.annualFinishedKnown = annualFinishedKnown;
   model.periodStats = tab == 0 ? &dayStats : &periodStats;
   model.period = period;
   model.filter = filter;
@@ -1094,7 +1104,7 @@ void ReadingStatsActivity::render(RenderLock&&) {
   model.periodBookTotal = periodView.count();
   model.periodBookNext = periodBooks.hasNext;
   model.bookDays = detailPage == DetailPage::Days ? &bookDays : nullptr;
-  model.detail = details && (detailReset || detail.seconds >= readingstats::kMinimumVisibleSeconds) ? &detail : nullptr;
+  model.detail = details && (detailReset || detail.visibleInBookHistory()) ? &detail : nullptr;
   model.canResetBook = details && detailPage == DetailPage::Summary && source == readingstats::Source::Local &&
                        loading == Load::Ready && readingstats::validDocument(detail.document);
   model.resetting = resetState == ResetState::Working;
@@ -1240,12 +1250,11 @@ void ReadingStatsActivity::loadCloud() {
     }
   }
   readingstats::setPeriod(annualStats, readingstats::Period::Year, currentDay, SETTINGS.weekStartsSunday);
-  if (!combined->project(annualStats, &annualKnown)) {
+  if (!combined->projectAnnual(annualStats, annualKnown, annualFinishedKnown)) {
     loading = Load::Failed;
     requestUpdate();
     return;
   }
-  annualKnown &= combined->annualTimeKnown(annualStats);
   annualReady = true;
   summaryReady = true;
   dayReady = true;
