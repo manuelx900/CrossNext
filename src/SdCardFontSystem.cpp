@@ -70,6 +70,12 @@ constexpr UiFontSize kUiFontSizes[] = {
     {UI_12_FONT_ID, 12},
 };
 
+bool usesBundledReaderDefaults(const SdCardFontRegistry& registry, const char* familyName) {
+  if (std::strcmp(familyName, "Noto Serif") != 0) return false;
+  const auto* family = registry.findFamily(familyName);
+  return !family || !family->vector;
+}
+
 }  // namespace
 
 void SdCardFontSystem::loadReaderDefaults(GfxRenderer& renderer, uint8_t requestedSize) {
@@ -95,7 +101,7 @@ void SdCardFontSystem::loadReaderDefaults(GfxRenderer& renderer, uint8_t request
   }
   if (requestedSize)
     requestedSize =
-        snapToNearestPointSize(VECTOR_READER_POINT_SIZES, std::size(VECTOR_READER_POINT_SIZES), requestedSize);
+        snapToNearestPointSize(BITMAP_READER_POINT_SIZES, std::size(BITMAP_READER_POINT_SIZES), requestedSize);
   for (size_t n = 0; n < std::size(POINTS); ++n) {
     const uint8_t size = POINTS[n];
     if ((requestedSize && requestedSize != size) || readerDefaults_.getFontId("Noto Serif", size)) continue;
@@ -141,8 +147,9 @@ void SdCardFontSystem::begin(GfxRenderer& renderer) {
     const auto* self = static_cast<SdCardFontSystem*>(ctx);
     return self->readerDefaults_.getFontId(familyName, pointSize) != 0 ? self->readerDefaultsHash_ : 0;
   };
-  if (!std::strcmp(SETTINGS.sdFontFamilyName, "Noto Serif")) {
-    snapFontPointSizeTo(snapToNearestPointSize(VECTOR_READER_POINT_SIZES, std::size(VECTOR_READER_POINT_SIZES),
+  const bool useDefaults = usesBundledReaderDefaults(registry_, SETTINGS.sdFontFamilyName);
+  if (useDefaults) {
+    snapFontPointSizeTo(snapToNearestPointSize(BITMAP_READER_POINT_SIZES, std::size(BITMAP_READER_POINT_SIZES),
                                                SETTINGS.fontPointSize));
     loadReaderDefaults(renderer, SETTINGS.fontPointSize);
   }
@@ -155,8 +162,7 @@ void SdCardFontSystem::begin(GfxRenderer& renderer) {
 #endif
 
   // If user has a saved SD font selection, load it
-  if (SETTINGS.sdFontFamilyName[0] != '\0' &&
-      (readerDefaultsReady_ || std::strcmp(SETTINGS.sdFontFamilyName, "Noto Serif") != 0) &&
+  if (SETTINGS.sdFontFamilyName[0] != '\0' && (readerDefaultsReady_ || !useDefaults) &&
       !(readerDefaultsReady_ && readerDefaults_.getFontId(SETTINGS.sdFontFamilyName, SETTINGS.fontPointSize) != 0)) {
     const auto* family = registry_.findFamily(SETTINGS.sdFontFamilyName);
     if (family) {
@@ -204,17 +210,19 @@ bool SdCardFontSystem::refreshRegistry(GfxRenderer& renderer) {
       renderer.removeFont(id);
     readerDefaultsReady_ = false;
     readerDefaultsHash_ = 0;
-    if (used || !std::strcmp(SETTINGS.sdFontFamilyName, "Noto Serif"))
+    if (used || usesBundledReaderDefaults(registry_, SETTINGS.sdFontFamilyName))
       loadReaderDefaults(renderer, SETTINGS.fontPointSize);
   }
   return registryWasDirty;
 }
 
-int SdCardFontSystem::loadForPreparation(GfxRenderer& renderer, const char* familyName, uint8_t& pointSize) {
+int SdCardFontSystem::loadTemporaryFont(GfxRenderer& renderer, const char* familyName, uint8_t& pointSize,
+                                        bool requireBundledDefaults) {
   if (!familyName) return 0;
   const bool dirty = refreshRegistry(renderer);
-  if (!std::strcmp(familyName, "Noto Serif")) loadReaderDefaults(renderer, pointSize);
-  if (!readerDefaultsReady_ && std::strcmp(familyName, "Noto Serif") == 0) {
+  const bool useDefaults = requireBundledDefaults && usesBundledReaderDefaults(registry_, familyName);
+  if (useDefaults) loadReaderDefaults(renderer, pointSize);
+  if (useDefaults && !readerDefaultsReady_) {
     LOG_ERR("SDFS", "Bundled Noto Serif resources are incomplete");
     return 0;
   }
@@ -261,8 +269,9 @@ void SdCardFontSystem::ensureLoaded(GfxRenderer& renderer) {
   const bool registryWasDirty = refreshRegistry(renderer);
 
   const char* wantedFamily = SETTINGS.sdFontFamilyName;
-  if (!std::strcmp(wantedFamily, "Noto Serif")) {
-    snapFontPointSizeTo(snapToNearestPointSize(VECTOR_READER_POINT_SIZES, std::size(VECTOR_READER_POINT_SIZES),
+  const bool useDefaults = usesBundledReaderDefaults(registry_, wantedFamily);
+  if (useDefaults) {
+    snapFontPointSizeTo(snapToNearestPointSize(BITMAP_READER_POINT_SIZES, std::size(BITMAP_READER_POINT_SIZES),
                                                SETTINGS.fontPointSize));
     loadReaderDefaults(renderer, SETTINGS.fontPointSize);
   }
@@ -271,7 +280,7 @@ void SdCardFontSystem::ensureLoaded(GfxRenderer& renderer) {
     if (const auto* family = registry_.findFamily("Ubuntu"); family && family->vector) wantedFamily = "Ubuntu";
   }
 #endif
-  if (!readerDefaultsReady_ && std::strcmp(wantedFamily, "Noto Serif") == 0) {
+  if (useDefaults && !readerDefaultsReady_) {
 #if CROSSPOINT_VECTOR_FONTS
     if (!ttfFamily_.empty()) unloadTtf(renderer);
 #endif

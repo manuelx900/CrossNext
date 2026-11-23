@@ -8,6 +8,7 @@
 #include "KOReaderCredentialStore.h"
 #include "MappedInputManager.h"
 #include "ReaderUtils.h"
+#include "apps_local/power/FrontlightSchedule.h"
 #include "apps_local/ui/Rotation.h"
 #include "components/UITheme.h"
 
@@ -124,6 +125,7 @@ void EpubReaderMenuActivity::activateIndex(const int index) {
   if (selectedAction == MenuAction::FRONTLIGHT) {
     const bool lightOn = !Frontlight.isOn();
     Frontlight.setOn(lightOn);
+    frontlightschedule::noteManual(frontlightschedule::Power);
     SETTINGS.frontlightOn = lightOn ? 1 : 0;
     SETTINGS.saveToFile();
     requestUpdate();

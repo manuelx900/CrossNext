@@ -284,6 +284,7 @@ void Uc8279X4Driver::initController(EpdBus& bus) {
 }
 
 void Uc8279X4Driver::begin(EpdBus& bus) {
+  _selectionTouched.reset();
   _directGrayOnPanel = false;
   _grayImagePass = false;
   _absoluteInput = false;
@@ -310,11 +311,32 @@ void Uc8279X4Driver::display(EpdBus& bus, const uint8_t* fb, const uint8_t* prev
   // transition instead of a plain DU — this keeps the gray edge charge in check
   // continuously (like the UC8179 sibling), so the periodic Half scrub works
   // without a full flash. Same guard as UC8179.
-  if (mode == RefreshMode::Fast && _redriveAfterGray && _grayRefreshedOnce && _oldPlaneValid && !_needFullClear) {
+  if (mode == RefreshMode::Fast && _redriveAfterGray && _grayRefreshedOnce && _oldPlaneValid && !_needFullClear &&
+      !_selectionTouched) {
     transitionGrayscaleBase(bus, fb, turnOff);
     return;
   }
   displayStart(bus, fb, prev, mode, turnOff);
+  displayFinish(bus, fb);
+}
+
+void Uc8279X4Driver::displaySelectionPreview(EpdBus& bus, const uint8_t* fb, const uint8_t* prev, bool turnOff) {
+  // The short LUT has been measured on the X4 Pro's ZHX 0x68 panel.
+  const auto& board = BoardConfig::ACTIVE;
+  if (board.board != BoardConfig::Board::XteinkX4Pro || board.displayControllerVariant != 0x68 || !_grayBaseValid ||
+      _absoluteGrayPlanes || _redriveAfterGray || _directGrayOnPanel || !_oldPlaneValid || _needFullClear) {
+    display(bus, fb, prev, RefreshMode::Fast, turnOff);
+    return;
+  }
+  if (!_selectionTouched) {
+    _selectionTouched.reset(static_cast<uint8_t*>(heap_caps_malloc(_bufferSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT)));
+    if (!_selectionTouched) {
+      display(bus, fb, prev, RefreshMode::Fast, turnOff);
+      return;
+    }
+    memset(_selectionTouched.get(), 0, _bufferSize);
+  }
+  startDisplay(bus, fb, RefreshMode::Fast, turnOff, true);
   displayFinish(bus, fb);
 }
 
@@ -402,21 +424,18 @@ void Uc8279X4Driver::powerOnIfNeeded(EpdBus& bus, const char* tag) {
 }
 
 bool Uc8279X4Driver::displayStart(EpdBus& bus, const uint8_t* fb, const uint8_t* prev, RefreshMode mode, bool turnOff) {
+  (void)prev;
+  return startDisplay(bus, fb, mode, turnOff, false);
+}
+
+bool Uc8279X4Driver::startDisplay(EpdBus& bus, const uint8_t* fb, RefreshMode mode, bool turnOff,
+                                  bool selectionPreview) {
   const bool paintDestination = _directGrayOnPanel;
   _directGrayOnPanel = false;
   _grayImagePass = false;
   _absoluteInput = false;
   _directGrayPass = false;
-  (void)prev;
-  // Snapshot the B/W base for a grayscale overlay that may follow (the reader
-  // draws this base, then folds it into the absolute AA planes). Harmless for
-  // pure B/W paints — it's just a memcpy that the next AA page consumes.
-  _grayBaseValid = false;
   _absoluteGrayPlanes = false;
-  if (_grayBase != nullptr && fb != nullptr) {
-    memcpy(_grayBase, fb, _bufferSize);
-    _grayBaseValid = true;
-  }
   // Same differential model as the UC8179 sibling: only an EXPLICIT Fast request
   // uses the PTIN/PTOUT DU partial (OLD plane = previous displayed frame). Full
   // AND Half both run the clearing OTP GC waveform — but they seed the OLD plane
@@ -431,6 +450,7 @@ bool Uc8279X4Driver::displayStart(EpdBus& bus, const uint8_t* fb, const uint8_t*
   // pages) AND the manual force-refresh; it MUST scrub, exactly like UC8179.
   const bool scrub = (mode == RefreshMode::Half);
   const bool fast = (mode == RefreshMode::Fast) && !_needFullClear && _oldPlaneValid;
+  const bool settleSelection = _selectionTouched && !selectionPreview && !paintDestination;
 
   if (paintDestination) {
     streamPlane(bus, CMD_DTM1, fb, true);
@@ -450,20 +470,54 @@ bool Uc8279X4Driver::displayStart(EpdBus& bus, const uint8_t* fb, const uint8_t*
       // the absolute GC-from-white waveform.
       bus.fillPlane(CMD_DTM1, 0xFF, _tresH, _wb);
     }
-  } else if (_redriveAfterGray) {
+  } else if (_redriveAfterGray || (settleSelection && !_grayBaseValid)) {
     // Re-drive every pixel once after grayscale so the B/W transition scrubs
     // residual edge charge before restoring the ordinary differential baseline.
     streamPlane(bus, CMD_DTM1, fb, /*invert=*/true);
+  } else if (settleSelection) {
+    // Re-drive each touched pixel at full density. Keep the old plane equal
+    // to the previous displayed frame everywhere else.
+    for (uint32_t i = 0; i < _bufferSize; ++i) {
+      const uint8_t touched = _selectionTouched[i];
+      _selectionTouched[i] = static_cast<uint8_t>((_grayBase[i] & ~touched) | (~fb[i] & touched));
+    }
+    streamPlane(bus, CMD_DTM1, _selectionTouched.get());
   }
   // Consumed: the white-seed (!fast) or the re-drive above already scrubbed any
   // post-AA gray residue for this frame.
   _redriveAfterGray = false;
 
-  startBwRefresh(bus, fast);
+  if (selectionPreview) {
+    for (uint32_t i = 0; i < _bufferSize; ++i) _selectionTouched[i] |= static_cast<uint8_t>(_grayBase[i] ^ fb[i]);
+    startSelectionPreview(bus);
+  } else {
+    _selectionTouched.reset();
+    startBwRefresh(bus, fast);
+  }
+  // Save the new frame after consuming the previous baseline.
+  _grayBaseValid = _grayBase != nullptr && fb != nullptr;
+  if (_grayBaseValid) memcpy(_grayBase, fb, _bufferSize);
   _pendingPartial = fast;
   _pendingTurnOff = turnOff;
   _pendingRefresh = true;
   return true;
+}
+
+void Uc8279X4Driver::openPartialWindow(EpdBus& bus) {
+  const uint16_t xEnd = _w - 1;
+  const uint16_t yStart = _cfg.gateOffset;
+  const uint16_t yEnd = _cfg.gateOffset + _h - 1;
+  bus.cmd(CMD_PARTIAL_IN);
+  bus.cmd(CMD_PARTIAL_WINDOW);
+  bus.data(0x00);
+  bus.data(0x00);
+  bus.data(static_cast<uint8_t>(xEnd >> 8));
+  bus.data(static_cast<uint8_t>(xEnd | 0x07));
+  bus.data(static_cast<uint8_t>(yStart >> 8));
+  bus.data(static_cast<uint8_t>(yStart));
+  bus.data(static_cast<uint8_t>(yEnd >> 8));
+  bus.data(static_cast<uint8_t>(yEnd));
+  bus.data(0x01);
 }
 
 void Uc8279X4Driver::startBwRefresh(EpdBus& bus, bool fast) {
@@ -491,24 +545,52 @@ void Uc8279X4Driver::startBwRefresh(EpdBus& bus, bool fast) {
     // Stock NEVER issues PTIN without a PTL (0x90) window — with PTL unset the
     // DU scans but develops nothing (first field unit: 443 ms DRF, no image).
     // Full-screen window; gate coords carry the 120-gate visible offset.
-    const uint16_t xEnd = _w - 1;
-    const uint16_t yStart = _cfg.gateOffset;
-    const uint16_t yEnd = _cfg.gateOffset + _h - 1;
-    bus.cmd(CMD_PARTIAL_IN);
-    bus.cmd(CMD_PARTIAL_WINDOW);
-    bus.data(0x00);
-    bus.data(0x00);  // x start, byte-aligned (& 0xF8)
-    bus.data(static_cast<uint8_t>(xEnd >> 8));
-    bus.data(static_cast<uint8_t>(xEnd | 0x07));
-    bus.data(static_cast<uint8_t>(yStart >> 8));
-    bus.data(static_cast<uint8_t>(yStart & 0xFF));
-    bus.data(static_cast<uint8_t>(yEnd >> 8));
-    bus.data(static_cast<uint8_t>(yEnd & 0xFF));
-    bus.data(0x01);
+    openPartialWindow(bus);
   }
   bus.cmd(CMD_PANEL_SETTING);
   bus.data(static_cast<uint8_t>(_cfg.psr0 & 0xDF));  // REG cleared -> OTP (0x13)
   bus.data(_cfg.psr1);
+  fireRefresh(bus);
+}
+
+// Six-frame differential waveform by Mathias (CrossNext PR #33).
+void Uc8279X4Driver::startSelectionPreview(EpdBus& bus) {
+  openPartialWindow(bus);
+  bus.cmd(CMD_PANEL_SETTING);
+  bus.data(_cfg.psr0);
+  bus.data(_cfg.psr1);
+  bus.cmd(CMD_PFS);
+  bus.data(_cfg.pfs);
+  bus.cmd(CMD_GATE_SCAN);
+  bus.data(_cfg.gateScan);
+  bus.cmd(CMD_VCOM_DATA_INTERVAL);
+  bus.data(_cfg.cdiBwFast);
+  bus.cmd(CMD_CCSET);
+  bus.data(_cfg.ccset);
+  bus.cmd(CMD_TSSET);
+  bus.data(_cfg.tssetFast);
+  bus.cmd(CMD_PLL);
+  bus.data(_cfg.pll);
+
+  constexpr uint8_t frames = 6;
+  constexpr uint8_t rails[] = {0, 0, 0x80, 0x40, 0};
+  for (uint8_t i = 0; i < sizeof(rails); ++i) {
+    uint8_t table[PREBW_LUT_LEN] = {};
+    table[0] = 0x01;
+    table[1] = rails[i] | frames;
+    table[5] = 0x01;
+    table[6] = 0x01;
+    bus.cmd(static_cast<uint8_t>(0x20 + i));
+    bus.data(table, sizeof(table));
+  }
+  powerOnIfNeeded(bus, " 8279x4_selection_PON");
+  bus.cmd(CMD_PANEL_SETTING);
+  bus.data(_cfg.psr0);
+  bus.data(_cfg.psr1);
+  fireRefresh(bus);
+}
+
+void Uc8279X4Driver::fireRefresh(EpdBus& bus) {
   bus.cmd(CMD_DISPLAY_REFRESH);
   // Confirm the waveform started (BUSY dropped) before returning, so
   // displayFinish() only rides out the completion edge.
@@ -550,6 +632,8 @@ void Uc8279X4Driver::requestResync(uint8_t settlePasses) {
 void Uc8279X4Driver::skipInitialResync() { _needFullClear = false; }
 
 void Uc8279X4Driver::deepSleep(EpdBus& bus) {
+  _selectionTouched.reset();
+  _grayBaseValid = false;
   _directGrayOnPanel = false;
   _grayImagePass = false;
   _absoluteInput = false;
@@ -659,6 +743,7 @@ void Uc8279X4Driver::copyGrayscaleMsb(EpdBus& bus, const uint8_t* msb) {
 
 void Uc8279X4Driver::displayGray(EpdBus& bus, const uint8_t* fb, bool turnOff, const unsigned char* lut,
                                  bool factoryMode) {
+  _selectionTouched.reset();
   (void)lut;
 
   // Vendor AA sequence: PSR (REG=1) -> [planes already in RAM via
@@ -736,7 +821,7 @@ void Uc8279X4Driver::displayGrayscaleBase(EpdBus& bus, const uint8_t* fb, Refres
   // state that can't run the non-flashing transition (first AA page / no valid
   // previous / pending full clear), takes a real B/W activation via display().
   // Otherwise use stock's non-flashing prev->current transition.
-  if (fallback != RefreshMode::Fast || !_grayRefreshedOnce || !_oldPlaneValid || _needFullClear) {
+  if (fallback != RefreshMode::Fast || !_grayRefreshedOnce || !_oldPlaneValid || _needFullClear || _selectionTouched) {
     display(bus, fb, nullptr, fallback, turnOff);
     return;
   }

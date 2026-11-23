@@ -1938,7 +1938,7 @@ void GfxRenderer::invertHeaderBand(int height) const {
   headerband::invertRect(frameBuffer, panelWidthBytes, left, right, top, bottom);
 }
 
-void GfxRenderer::displayBuffer(HalDisplay::RefreshMode refreshMode) const {
+void GfxRenderer::displayBuffer(HalDisplay::RefreshMode refreshMode, bool selectionPreview) const {
   auto elapsed = millis() - start_ms;
   LOG_DBG("GFX", "Time = %lu ms from clearScreen to displayBuffer", elapsed);
   refreshMode = applyPromotedRefresh(refreshMode);
@@ -1946,7 +1946,14 @@ void GfxRenderer::displayBuffer(HalDisplay::RefreshMode refreshMode) const {
   invertHeaderBand(header);
   {
     PanelSpan span;
-    display.displayBuffer(refreshMode, fadingFix);
+#if defined(ARDUINO) && !defined(SIMULATOR)
+    if (selectionPreview && refreshMode == HalDisplay::FAST_REFRESH)
+      display.displaySelectionPreview(fadingFix);
+    else
+#else
+    (void)selectionPreview;
+#endif
+      display.displayBuffer(refreshMode, fadingFix);
   }
   invertHeaderBand(header);
   // The panel now shows this framebuffer. Counted HERE, after the waveform,

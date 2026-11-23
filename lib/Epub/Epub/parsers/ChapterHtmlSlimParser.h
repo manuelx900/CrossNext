@@ -252,6 +252,7 @@ class ChapterHtmlSlimParser final : public ChapterParser {
   uint32_t parseStartTime_ = 0;
   bool progressPopupFired_ = false;
 
+  bool beginParse(bool fromFile);
   void updateEffectiveInlineStyle();
   void startNewTextBlock(const BlockStyle& blockStyle, bool paragraphEnd = true);
   void flushPendingAnchor();
@@ -341,6 +342,11 @@ class ChapterHtmlSlimParser final : public ChapterParser {
 
   // One-shot parse: builds every page before returning (begin + step* + finish).
   bool parseAndBuildPages();
+
+  // Parse generated XHTML directly. Call finishParse after a final chunk,
+  // or abortParse on failure. The source has no file or event cache.
+  bool beginGeneratedXhtml();
+  bool feedGeneratedXhtml(const char* bytes, size_t size, bool final = false);
 
   // Resumable parse, for the incremental section builder. Drive as:
   //   if (!beginParse()) fail;

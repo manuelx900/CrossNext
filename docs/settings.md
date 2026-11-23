@@ -56,6 +56,8 @@ Display > Quick settings assigns four shortcuts from Night mode, Refresh, Rotate
 
 The leading light and warmth icons also toggle those controls directly. Light off displays 0% brightness; turning it on restores the preceding brightness. Warm off displays 0% warmth; turning it on restores the remembered positive warmth. The icons and checked state follow the active setting.
 
+Display → Frontlight schedule uses the reader's local clock to turn on the light at a daily start time. Choose brightness and, on supported models, warmth. Set the end time earlier than the start time to cross midnight. Equal times disable the interval. The schedule applies while the reader is awake and when you wake it. At the end, the original light levels return for controls that still match the schedule.
+
 The X4 Pro release enables the BLE HID host. Connectivity > Bluetooth opens scanning, pairing and remote-button mapping. The Bluetooth quick-settings tile toggles the saved opt-in; radio ownership still yields to Wi-Fi, exclusive storage and deep sleep. See [Bluetooth controls](bluetooth-controls.txt) for supported actions and device checks.
 
 ## Wi-Fi and clock
@@ -70,7 +72,7 @@ The timezone picker lists Punta Arenas directly after Santiago. Display order is
 
 System → Clock → Manual date and time adjusts year (2020–2099), month, day, hour and minute without Wi-Fi or a required timezone-selection step. Confirm writes the hardware RTC in UTC using the currently configured zone, then updates system time; Back discards edits. Invalid dates and daylight-saving gaps are rejected. Manual time counts as a configured clock for reading statistics. RTC persistence and power-cycle behavior still require device checks.
 
-The 12/24-hour setting applies to Home and shared pixel headers. Show in header controls the optional clock in those headers; Home keeps its dedicated clock. Reading → Manage fonts offers Installed fonts offline and Download fonts, which explicitly requires Wi-Fi. Reading sync and OPDS remain active features. English and Spanish UI languages select their corresponding initial keyboard even when an older saved mask omitted it. Wordle's English keyboard omits Ñ; Spanish includes it.
+The 12/24-hour setting applies to Home, the pull-down controls and shared pixel headers. Show in header controls the optional clock in those headers; Home keeps its dedicated clock. Reading → Manage fonts offers Installed fonts offline and Download fonts, which explicitly requires Wi-Fi. Reading sync and OPDS remain active features. English and Spanish UI languages select their corresponding initial keyboard even when an older saved mask omitted it. Wordle's English keyboard omits Ñ; Spanish includes it.
 
 ## Header clock and control shapes
 

@@ -92,7 +92,7 @@ void flushPendingState(uint32_t now = 0);
 // so leave() can undo it. False if the item could not be created, in which case
 // nothing was replaced and the caller still owns the screen.
 bool openItem(int folder, int item, GfxRenderer& renderer, MappedInputManager& mappedInput,
-              LaunchOrigin origin = LaunchOrigin::Folder);
+              LaunchOrigin origin = LaunchOrigin::Folder, bool waking = false);
 
 // ---------------------------------------------------------------------------
 // What a folder SHOWS, which is not the same as what it holds.

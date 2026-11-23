@@ -48,15 +48,11 @@ class Dictionary {
   bool open(const char* folderName);
   bool isOpen() const { return !basePath.empty(); }
 
-  // True when the .qidx sidecar (or the .sidx sidecar of a present .syn) is
-  // missing or stale — call buildIndex() first so the UI can show an
-  // "Indexing…" message for the slow first pass.
-
   // True when the .ifo declares sametypesequence=h — definitions are HTML and
   // the viewer may lay them out through the EPUB rendering pipeline.
   bool definitionsAreHtml() const { return htmlDefinitions; }
 
-  bool needsIndex();
+  bool needsIndex();  // The primary .qidx is missing or stale.
 
   // Why an index build failed — the scan buffer is a heap allocation, so the
   // same fragmentation that breaks lookups can break indexing, and it deserves
@@ -67,12 +63,8 @@ class Dictionary {
     ReadError,  // source open/read or sidecar write failure
   };
 
-  // One streaming pass over .idx writing the .qidx sidecar, plus a pass over
-  // .syn writing the .sidx sidecar when a synonym file is present. Each sidecar
-  // is rebuilt only when actually stale. yieldFn (optional) is called every
-  // ~64KB consumed to feed the watchdog / repaint the UI. *outResult (if
-  // provided) reports why a failed build failed; only the mandatory .idx pass
-  // can fail the build (a failed .syn pass just disables synonyms).
+  // Build the primary .qidx when stale. Lookup builds .sidx only if needed.
+  // Call yieldFn every ~64 KiB and report primary indexing failures in outResult.
   bool buildIndex(void (*yieldFn)(void*) = nullptr, void* ctx = nullptr, IndexResult* outResult = nullptr);
 
   // Clean the word, look it up, and on a miss retry dictionary-authored
@@ -82,7 +74,7 @@ class Dictionary {
   // reports the precise outcome so the UI can distinguish a genuine miss from a
   // decompression / low-memory / read failure.
   bool lookup(const char* word, std::string& definitionOut, std::string& matchedHeadwordOut,
-              LookupResult* outResult = nullptr);
+              LookupResult* outResult = nullptr, void (*onIndexing)(void*) = nullptr, void* context = nullptr);
 
   static std::string cleanWord(const char* word);
 
@@ -131,6 +123,8 @@ class Dictionary {
     // so a miss is an unfinished search rather than a verdict. Distinct from
     // "this dictionary has no .syn", which is a legitimate miss.
     bool synFailed = false;
+    void (*onIndexing)(void*) = nullptr;
+    void* indexContext = nullptr;
   };
 
   // Open .idx (required) and .qidx (optional — locate() falls back to a full

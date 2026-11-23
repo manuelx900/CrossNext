@@ -59,6 +59,15 @@
 
 namespace fui = freeink::ui;
 namespace {
+bool scheduleSetting(const SettingInfo& setting) {
+  const auto value = setting.valuePtr;
+  return value == &CrossPointSettings::frontlightSchedule || value == &CrossPointSettings::frontlightStartHour ||
+         value == &CrossPointSettings::frontlightStartMinute || value == &CrossPointSettings::frontlightEndHour ||
+         value == &CrossPointSettings::frontlightEndMinute ||
+         value == &CrossPointSettings::frontlightScheduledBrightness ||
+         value == &CrossPointSettings::frontlightScheduledWarmth;
+}
+
 int settingsGroup(const SettingInfo& s, int category) {
   if (category == 0) {
     if (s.valuePtr == &CrossPointSettings::sleepScreen || s.valuePtr == &CrossPointSettings::sleepScreenCoverMode ||
@@ -66,6 +75,7 @@ int settingsGroup(const SettingInfo& s, int category) {
         s.valuePtr == &CrossPointSettings::quickResumeSleepScreen)
       return 0;
     if (s.action == SettingAction::UiPresentation) return 2;
+    if (scheduleSetting(s)) return 3;
     return 1;
   }
   if (category == 1) {
@@ -103,7 +113,7 @@ int settingsGroup(const SettingInfo& s, int category) {
 }
 StrId settingsGroupLabel(int group, int category) {
   static constexpr StrId display[] = {StrId::STR_SETTINGS_SUSPENSION, StrId::STR_CAT_DISPLAY,
-                                      StrId::STR_SETTINGS_APPEARANCE};
+                                      StrId::STR_SETTINGS_APPEARANCE, StrId::STR_FRONTLIGHT_SCHEDULE};
   static constexpr StrId reader[] = {StrId::STR_SETTINGS_TEXTS, StrId::STR_SETTINGS_READING,
                                      StrId::STR_SETTINGS_DICTIONARIES, StrId::STR_STATUS_BAR};
   static constexpr StrId controls[] = {StrId::STR_SETTINGS_BUTTONS, StrId::STR_SETTINGS_TOUCH,
@@ -198,6 +208,10 @@ void SettingsActivity::rebuildSettingsLists() {
   auto collect = [&](SettingInfo& setting) {
     if (setting.nameId == StrId::STR_DEVICE_REPORT) return;
     if (setting.nameId == StrId::STR_RESTORE_LIGHT_ON_WAKE && !Frontlight.present()) return;
+    if (scheduleSetting(setting) &&
+        (!Frontlight.present() ||
+         (setting.valuePtr == &CrossPointSettings::frontlightScheduledWarmth && !Frontlight.hasColorTemperature())))
+      return;
     if (setting.valuePtr == &CrossPointSettings::xtcCoverRotation ||
         setting.valuePtr == &CrossPointSettings::xtcInvertPageDirection) {
       mangaSettings.push_back(std::move(setting));

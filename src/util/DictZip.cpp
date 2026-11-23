@@ -4,6 +4,7 @@
 #include <InflateReader.h>
 #include <Memory.h>
 
+#include <algorithm>
 #include <cstddef>
 
 namespace DictZip {
@@ -68,7 +69,7 @@ int chunkReadCb(uzlib_uncomp* u) {
 }
 
 bool extractChunkSlice(HalFile& file, uint32_t compressedOffset, uint32_t compressedSize, uint32_t discardSize,
-                       uint32_t extractSize, HalFile& outFile, ExtractError* outError) {
+                       uint32_t extractSize, HalFile* outFile, uint8_t* output, ExtractError* outError) {
   const auto fail = [outError](ExtractError e) {
     if (outError) *outError = e;
     return false;
@@ -100,8 +101,9 @@ bool extractChunkSlice(HalFile& file, uint32_t compressedOffset, uint32_t compre
   // already comes through the callback. Set it after, which resets state.
   src->reader.setReadCallback(&chunkReadCb);
 
-  auto buf = makeUniqueNoThrow<uint8_t[]>(512);
-  if (!buf) return fail(ExtractError::LowMemory);
+  constexpr size_t BATCH_BYTES = 512;
+  auto buf = discardSize || outFile ? makeUniqueNoThrow<uint8_t[]>(BATCH_BYTES) : nullptr;
+  if ((discardSize || outFile) && !buf) return fail(ExtractError::LowMemory);
 
   // A decode failure after the callback hit an IO error is a read failure, not
   // a corrupt stream — keep the two distinguishable for the caller.
@@ -111,15 +113,17 @@ bool extractChunkSlice(HalFile& file, uint32_t compressedOffset, uint32_t compre
 
   uint32_t batch;
   while (discardSize > 0) {
-    batch = discardSize < 512 ? discardSize : 512;
+    batch = std::min<size_t>(discardSize, BATCH_BYTES);
     if (!src->reader.read(buf.get(), batch)) return decodeFail();
     discardSize -= batch;
   }
 
+  if (output) return src->reader.read(output, extractSize) || decodeFail();
+
   while (extractSize > 0) {
-    batch = extractSize < 512 ? extractSize : 512;
+    batch = std::min<size_t>(extractSize, BATCH_BYTES);
     if (!src->reader.read(buf.get(), batch)) return decodeFail();
-    if (outFile.write(buf.get(), batch) != batch) return fail(ExtractError::ReadError);
+    if (outFile->write(buf.get(), batch) != batch) return fail(ExtractError::ReadError);
     extractSize -= batch;
   }
 
@@ -189,12 +193,17 @@ bool parse(HalFile& file, Info* info, ExtractError* outError) {
       info->chunkOffsets.reserve(static_cast<size_t>(chunkCount) + 1);
       info->chunkOffsets.push_back(0);
       uint32_t cumulative = 0;
-      for (uint16_t i = 0; i < chunkCount; i++) {
-        uint16_t compLen = 0;
-        if (!readLe16(file, &compLen)) return fail(ExtractError::ReadError);
-        extraRead += 2;
-        cumulative += compLen;
-        info->chunkOffsets.push_back(cumulative);
+      uint8_t lengths[128];
+      for (uint16_t i = 0; i < chunkCount;) {
+        const auto count = std::min<size_t>(chunkCount - i, sizeof(lengths) / 2);
+        const auto bytes = count * 2;
+        if (file.read(lengths, bytes) != static_cast<int>(bytes)) return fail(ExtractError::ReadError);
+        extraRead += bytes;
+        for (size_t j = 0; j < bytes; j += 2) {
+          cumulative += lengths[j] | (uint32_t(lengths[j + 1]) << 8);
+          info->chunkOffsets.push_back(cumulative);
+        }
+        i += count;
       }
       foundRa = true;
     } else {
@@ -236,7 +245,8 @@ bool parse(HalFile& file, Info* info, ExtractError* outError) {
   return true;
 }
 
-bool extractEntry(const char* path, uint32_t offset, uint32_t size, HalFile& outFile, ExtractError* outError) {
+static bool extractEntryTo(const char* path, uint32_t offset, uint32_t size, HalFile* outFile, uint8_t* output,
+                           ExtractError* outError) {
   const auto fail = [outError](ExtractError e) {
     if (outError) *outError = e;
     return false;
@@ -274,7 +284,8 @@ bool extractEntry(const char* path, uint32_t offset, uint32_t size, HalFile& out
 
     const uint32_t compOffset = info.dataOffset + info.chunkOffsets[chunk];
     const uint32_t compSize = info.chunkOffsets[chunk + 1] - info.chunkOffsets[chunk];
-    if (!extractChunkSlice(file, compOffset, compSize, localOffset, take, outFile, outError)) return false;
+    if (!extractChunkSlice(file, compOffset, compSize, localOffset, take, outFile, output, outError)) return false;
+    if (output) output += take;
 
     remaining -= take;
     if (remaining == 0) break;
@@ -284,6 +295,14 @@ bool extractEntry(const char* path, uint32_t offset, uint32_t size, HalFile& out
   // chunk table is inconsistent with the requested range — treat as corrupt.
   if (remaining != 0) return fail(ExtractError::Decompress);
   return true;
+}
+
+bool extractEntry(const char* path, uint32_t offset, uint32_t size, HalFile& outFile, ExtractError* outError) {
+  return extractEntryTo(path, offset, size, &outFile, nullptr, outError);
+}
+
+bool extractEntry(const char* path, uint32_t offset, std::span<uint8_t> output, ExtractError* outError) {
+  return extractEntryTo(path, offset, static_cast<uint32_t>(output.size()), nullptr, output.data(), outError);
 }
 
 }  // namespace DictZip

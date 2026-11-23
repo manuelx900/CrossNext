@@ -296,7 +296,7 @@ void guide(fui::DrawTarget& t, fui::Rect body, Model& m, Geometry& g) {
     prose(t, fui::makeRect(card.x + 16, card.y + (wide ? 112 : 168), card.width - 32, wide ? 56 : 60),
           tr(STR_WORDS_EXAMPLE_SENTENCE), 2);
     const auto save = fui::makeRect(card.x + 14, card.bottom() - (wide ? 48 : 64), card.width - 28, wide ? 40 : 50);
-    button(t, save, tr(STR_WORDS_SAVE_WORD), true);
+    button(t, save, tr(STR_WORD_SAVE), true);
     const auto help = wide ? fui::makeRect(body.x + cardW + 24, top, body.width - cardW - 24, bottom - top)
                            : fui::makeRect(body.x, card.bottom() + 22, body.width, bottom - card.bottom() - 22);
     prose(t, fui::makeRect(help.x, help.y, help.width, 56), tr(STR_WORDS_SAVE_HELP), 2);

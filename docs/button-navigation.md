@@ -32,7 +32,9 @@ way to change the settings and ratings listed below.
 | Tasks and task lists | Change the page | Change the page |
 | Pomodoro timer | Start if stopped; keep a running timer running | No stage selection |
 | Other Pomodoro controls | Touch only | Touch only |
-| Quotes | Change the page | Switch section |
+| Quotes list | Change the page | Switch between All, Books and Favorites |
+| Book quotes list | Change the page | Switch between the book's All and Favorites filters |
+| Quote detail | Change the text page or step between single-page quotes | Open the previous or next quote |
 | Flashcards deck library | Change the page | No separate action |
 | Flashcard question | Read pages; Next at the end reveals the answer. Either key reveals a single-page question | No rating selection |
 | Flashcard answer | Change the text page | No rating selection |

@@ -22,6 +22,7 @@
 #include "CrossPointSettings.h"
 #include "MappedInputManager.h"
 #include "activities/settings/BleSettingsActivity.h"
+#include "apps_local/power/FrontlightSchedule.h"
 #include "apps_local/power/PowerMenuActivity.h"
 #include "apps_local/ui/PixelMenuTheme.h"
 #include "apps_local/ui/QuickSettingsDirtyRegion.h"
@@ -49,6 +50,12 @@ uint8_t percentFromPermille(const int16_t permille) {
   if (value < 0) value = 0;
   if (value > 100) value = 100;
   return static_cast<uint8_t>(value);
+}
+
+bool panelLocalTime(tm& local) {
+  if (halClock.localTime(local) && local.tm_year >= 120) return true;
+  const auto epoch = std::time(nullptr);
+  return epoch > 0 && localtime_r(&epoch, &local) && local.tm_year >= 120;
 }
 }  // namespace
 
@@ -82,26 +89,23 @@ void FrontlightPanelActivity::syncLightState(const bool useSavedWarmth) {
   if (useSavedWarmth) rememberedWarmth = std::clamp<int>(SETTINGS.frontlightWarmthMemory, 1, 100);
   brightness = std::max(MIN_BRIGHTNESS, Frontlight.brightness());
   warmth = Frontlight.warmth();
-  if (warmth) rememberedWarmth = warmth;
+  if (warmth) rememberedWarmth = frontlightschedule::manualWarmthMemory(warmth);
   lightOn = Frontlight.isOn() && brightness > 0;
 }
 
 void FrontlightPanelActivity::persistLightSettings() {
   // Global actions and nested panels can change the light while Wi-Fi owns input.
   syncLightState(suspendedForWifi);
-  // brightness/warmth are always restored unconditionally on boot (see
-  // main.cpp), so they never diverge from SETTINGS at onEnter() — comparing
-  // against SETTINGS here only fires on a genuine user change. lightOn has
-  // no such guarantee (see lightOnChanged's declaration), so it's gated on
-  // the user actually having touched it this session instead.
-  const bool changed = SETTINGS.frontlightBrightness != brightness || SETTINGS.frontlightWarmth != warmth ||
+  const auto manual = frontlightschedule::manualLevels();
+  const bool changed = SETTINGS.frontlightBrightness != manual.brightness ||
+                       SETTINGS.frontlightWarmth != manual.warmth ||
                        SETTINGS.frontlightWarmthMemory != rememberedWarmth ||
-                       (lightOnChanged && SETTINGS.frontlightOn != (lightOn ? 1 : 0));
+                       (lightOnChanged && SETTINGS.frontlightOn != (manual.on ? 1 : 0));
   if (changed) {
-    SETTINGS.frontlightBrightness = brightness;
-    SETTINGS.frontlightWarmth = warmth;
+    SETTINGS.frontlightBrightness = manual.brightness;
+    SETTINGS.frontlightWarmth = manual.warmth;
     SETTINGS.frontlightWarmthMemory = rememberedWarmth;
-    if (lightOnChanged) SETTINGS.frontlightOn = lightOn ? 1 : 0;
+    if (lightOnChanged) SETTINGS.frontlightOn = manual.on ? 1 : 0;
     SETTINGS.saveToFile();
   }
 }
@@ -116,14 +120,16 @@ void FrontlightPanelActivity::onBrightnessEvent(const fui::ActionEvent& event, v
   if (event.dragPermille < 0) return;
   self->app.clearTapFlash();
   const auto value = percentFromPermille(event.dragPermille);
-  if (value) {
+  if (value && self->brightness != value) {
     self->brightness = value;
     Frontlight.setBrightness(value);
+    frontlightschedule::noteManual(frontlightschedule::Brightness);
   }
   if (self->lightOn != (value > 0)) {
     self->lightOn = value > 0;
     self->lightOnChanged = true;
     Frontlight.setOn(self->lightOn);
+    frontlightschedule::noteManual(frontlightschedule::Power);
   }
 }
 
@@ -131,9 +137,13 @@ void FrontlightPanelActivity::onWarmthEvent(const fui::ActionEvent& event, void*
   auto* self = static_cast<FrontlightPanelActivity*>(user);
   if (event.dragPermille < 0) return;
   self->app.clearTapFlash();
-  self->warmth = percentFromPermille(event.dragPermille);
-  if (self->warmth) self->rememberedWarmth = self->warmth;
-  Frontlight.setWarmth(self->warmth);
+  const auto value = percentFromPermille(event.dragPermille);
+  if (value != self->warmth) {
+    self->warmth = value;
+    Frontlight.setWarmth(value);
+    frontlightschedule::noteManual(frontlightschedule::Warmth);
+    if (value) self->rememberedWarmth = value;
+  }
   if (self->warmth && !self->lightOn) self->toggleLight();
 }
 
@@ -268,11 +278,13 @@ void FrontlightPanelActivity::adjustBrightness(const int delta) {
   if (next) {
     brightness = static_cast<uint8_t>(next);
     Frontlight.setBrightness(brightness);
+    frontlightschedule::noteManual(frontlightschedule::Brightness);
   }
   if (lightOn != (next > 0)) {
     lightOn = next > 0;
     lightOnChanged = true;
     Frontlight.setOn(lightOn);
+    frontlightschedule::noteManual(frontlightschedule::Power);
   }
   requestUpdate();
 }
@@ -286,6 +298,7 @@ void FrontlightPanelActivity::adjustWarmth(const int delta) {
   warmth = static_cast<uint8_t>(next);
   if (warmth) rememberedWarmth = warmth;
   Frontlight.setWarmth(warmth);
+  frontlightschedule::noteManual(frontlightschedule::Warmth);
   if (warmth && !lightOn) toggleLight();
   requestUpdate();
 }
@@ -296,9 +309,11 @@ void FrontlightPanelActivity::toggleLight() {
   if (lightOn && brightness == 0) {
     brightness = BRIGHTNESS_STEP;
     Frontlight.setBrightness(brightness);
+    frontlightschedule::noteManual(frontlightschedule::Brightness);
   }
   lightOnChanged = true;
   Frontlight.setOn(lightOn);
+  frontlightschedule::noteManual(frontlightschedule::Power);
   requestUpdate();
 }
 
@@ -306,13 +321,14 @@ void FrontlightPanelActivity::toggleWarmth() {
   app.clearTapFlash();
   if (!Frontlight.hasColorTemperature()) return;
   if (lightOn && warmth) {
-    rememberedWarmth = warmth;
+    rememberedWarmth = frontlightschedule::manualWarmthMemory(warmth);
     warmth = 0;
   } else {
     warmth = rememberedWarmth;
     if (!lightOn) toggleLight();
   }
   Frontlight.setWarmth(warmth);
+  frontlightschedule::noteManual(frontlightschedule::Warmth);
   requestUpdate();
 }
 void FrontlightPanelActivity::close() { finish(); }
@@ -429,9 +445,7 @@ void FrontlightPanelActivity::loop() {
   if (!touch.snap.touchHeld && millis() - lastClockPoll >= 1000) {
     lastClockPoll = millis();
     tm local{};
-    const auto now = std::time(nullptr);
-    const bool valid = (now > 0 && localtime_r(&now, &local) && local.tm_year >= 120) || halClock.localTime(local);
-    const int minute = valid ? local.tm_hour * 60 + local.tm_min : -1;
+    const int minute = panelLocalTime(local) ? local.tm_hour * 60 + local.tm_min : -1;
     const bool connected = WiFi.status() == WL_CONNECTED;
     RenderLock lock;
     if (minute != shownMinute || wifiConnected != connected) {
@@ -465,9 +479,14 @@ void FrontlightPanelActivity::preparePanelModel() {
   panelModel = {};
   auto& model = panelModel;
   tm local{};
-  const auto now = std::time(nullptr);
-  if ((now > 0 && localtime_r(&now, &local) && local.tm_year >= 120) || halClock.localTime(local)) {
-    std::snprintf(model.time, sizeof(model.time), "%02d:%02d", local.tm_hour, local.tm_min);
+  if (panelLocalTime(local)) {
+    if (SETTINGS.clockFormat == 1) {
+      const int hour = local.tm_hour % 12;
+      std::snprintf(model.time, sizeof(model.time), "%d:%02d %s", hour ? hour : 12, local.tm_min,
+                    local.tm_hour < 12 ? "AM" : "PM");
+    } else {
+      std::snprintf(model.time, sizeof(model.time), "%02d:%02d", local.tm_hour, local.tm_min);
+    }
     shownMinute = local.tm_hour * 60 + local.tm_min;
   } else {
     shownMinute = -1;

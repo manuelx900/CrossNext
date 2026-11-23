@@ -886,3 +886,10 @@ untransformed visible bytes are sent in larger pieces, with unchanged padding,
 waveform and HAL ownership. Cover-notice explanatory UI stays under
 `src/apps_local/` in the existing presentation-settings activity. It adds no
 background task or saved setting. See [display uploads and help](docs/display-upload-cover-help.md).
+
+The text-selection preview adapts CrossNext PR #33 through
+`ClipSelectionActivity`, `GfxRenderer`, `HalDisplay` and the FreeInkDisplay
+driver interface. The UC8279 X4 Pro driver enables the six-frame waveform on
+panel variant 0x68. It reuses the existing grayscale base and holds one
+48,000-byte PSRAM mask during preview. The next ordinary paint completes the
+transition and releases the mask.

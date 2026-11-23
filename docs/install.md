@@ -5,7 +5,7 @@ Other inherited board environments are outside this release's verification.
 
 | Model | Package | Application image | Factory image |
 | --- | --- | --- | --- |
-| X4 Pro | `CrossNext-X4PRO-Firmware-v2.0.2.zip` | `CrossNext-X4PRO-Firmware-v2.0.2.bin` | `CrossNext-X4PRO-Firmware-v2.0.2-factory.bin` |
+| X4 Pro | `CrossNext-X4PRO-Firmware-v2.0.7.zip` | `CrossNext-X4PRO-Firmware-v2.0.7.bin` | `CrossNext-X4PRO-Firmware-v2.0.7-factory.bin` |
 
 Packages are generated in `dist/`; raw images are in `dist/CrossNext/`.
 Check the package's `SHA256SUMS.txt` before installation. Back up the microSD.
@@ -15,7 +15,7 @@ An existing settings file retains its saved language.
 ## Update an existing compatible installation from microSD
 
 1. Extract the model's package and copy its **application** `.bin` to the microSD.
-2. Open **Settings > Device > Update firmware** on the reader.
+2. Open **Settings > System > Update firmware** on the reader.
 3. Select that application image and confirm the model and update prompt.
 4. Keep power stable until the update and restart finish.
 
@@ -32,7 +32,7 @@ table and application. For example, with esptool installed and the device in
 download mode, use the matching model's command:
 
 ```sh
-esptool.py --chip esp32s3 --baud 921600 write_flash 0x0 CrossNext-X4PRO-Firmware-v2.0.2-factory.bin
+esptool.py --chip esp32s3 --baud 921600 write_flash 0x0 CrossNext-X4PRO-Firmware-v2.0.7-factory.bin
 ```
 
 An application-only image belongs at `0x10000` when deliberately writing an
@@ -45,13 +45,13 @@ to these S3 devices.
 
 ## Online update source
 
-On X4 Pro, open **Settings → Device → Check for Updates**, connect to Wi-Fi and
+On X4 Pro, open **Settings → System → Check for Updates**, connect to Wi-Fi and
 wait for the release check. The firmware queries only
 `https://api.github.com/repos/manuelx900/CrossNext/releases/latest`.
 It compares the latest stable tag with the installed version and asks before
 installing. It does not query the CrossPlay proxy or CrossPoint releases.
 
-For each public GitHub Release, use a semantic tag such as `2.0.2` and attach
+For each public GitHub Release, use a semantic tag such as `2.0.7` and attach
 `CrossNext-X4PRO-OTA.bin` directly to the release. The packaging tool creates this
 stable application-only alias alongside the versioned application and factory
 images. Its bytes match the versioned application. The updater deliberately
@@ -67,19 +67,17 @@ failure is reported on the device; it never falls back to upstream firmware.
 
 Maintainers: publish the firmware ZIP, `CrossNext-X4PRO-OTA.bin` and checksums as
 Release attachments. Distribute the matching resource pack and Book Preparer from
-[release 2.0.2](https://github.com/manuelx900/CrossNext/releases/tag/2.0.2).
-Source commits remain separate. To test this patch's OTA check, keep the reader on
-`2.0.0` and use the newer `2.0.2` build/tag; the same or an older version must not
-be offered as an update.
+[release 2.0.7](https://github.com/manuelx900/CrossNext/releases/tag/2.0.7).
+For a physical OTA check, use a compatible X4 Pro with an earlier CrossNext version and verify that GitHub offers the newer build.
 
 ## Required app contents
 
-**Updating to 2.0.2, including from an earlier preview:** install the complete 2.0.2 resource pack.
-PET and Reading Adventure require the new versioned artwork folders. Use Book Preparer 2.0.2
+**Updating to 2.0.7, including from an earlier preview:** install the complete 2.0.7 resource pack.
+PET and Reading Adventure need their complete artwork folders. Keep the dictionary index files bundled with their dictionaries for faster lookup. Use Book Preparer 2.0.7
 for new preparation; existing compatible book caches can still be reused.
 
 For a new installation or an update from an older release, install the resource
-pack from [release 2.0.2](https://github.com/manuelx900/CrossNext/releases/tag/2.0.2).
+pack from [release 2.0.7](https://github.com/manuelx900/CrossNext/releases/tag/2.0.7).
 Back up
 custom fonts and dictionaries first. Leave your `images` folder intact. Replace the old bundled `apps`,
 `fonts`, `languages` and `dictionaries` folders with the new package at

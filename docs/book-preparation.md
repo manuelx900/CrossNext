@@ -7,8 +7,8 @@ reading configuration.
 
 The manual preparation screen lets you select EPUB, XTC and XTCH independently.
 All three are selected initially. For EPUB, choose one or more installed reading
-fonts, then a point size or **All available sizes**. Vector fonts offer the same
-8–22 pt sizes as the reader; bitmap fonts use their installed sizes. With one
+fonts, then a point size or **All available sizes**. Vector fonts offer 12, 14,
+16, 18 and 22 pt. Bitmap fonts use their installed sizes. With one
 size selected, each font uses its nearest available size, rounding ties down.
 All sizes prepares each family’s available sizes, rather than a union of sizes
 that a particular family may not support. Preparing books does not change your

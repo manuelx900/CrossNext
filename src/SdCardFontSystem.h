@@ -42,10 +42,10 @@ class SdCardFontSystem {
   /// Also re-discovers if the registry has been marked dirty (e.g. by web upload).
   void ensureLoaded(GfxRenderer& renderer);
 
-  // Caller holds RenderLock. Load one preparation face without changing or
-  // saving reader settings. pointSize is snapped to the installed family.
+  // Caller holds RenderLock. Load one face without changing reader settings.
+  // Book preparation requires the full bundled family to match reader caches.
   // Returns 0 on failure; ensureLoaded() restores the reader's selected face.
-  int loadForPreparation(GfxRenderer& renderer, const char* familyName, uint8_t& pointSize);
+  int loadTemporaryFont(GfxRenderer& renderer, const char* familyName, uint8_t& pointSize, bool requireBundledDefaults);
 
   /// Resolve an SD card font ID from family name + reader point size.
   /// Returns 0 if not found. Used by CrossPointSettings::getReaderFontId().

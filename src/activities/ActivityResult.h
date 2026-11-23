@@ -52,6 +52,7 @@ struct ClippingResult {
   uint16_t startWordIndex = 0;
   uint16_t endWordIndex = 0;
   uint16_t wordCount = 0;
+  int16_t lookupX = 0, lookupY = 0, lookupWidth = 0, lookupHeight = 0;
   uint32_t startOffset = UINT32_MAX;
   uint32_t endOffset = UINT32_MAX;
 };

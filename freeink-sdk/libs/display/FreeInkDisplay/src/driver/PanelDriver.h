@@ -51,6 +51,9 @@ class PanelDriver {
 
   // --- core paint path (load RAM + refresh) ---
   virtual void display(EpdBus& bus, const uint8_t* fb, const uint8_t* prev, RefreshMode mode, bool turnOff) = 0;
+  virtual void displaySelectionPreview(EpdBus& bus, const uint8_t* fb, const uint8_t* prev, bool turnOff) {
+    display(bus, fb, prev, RefreshMode::Fast, turnOff);
+  }
   virtual void displayWindow(EpdBus& bus, const uint8_t* fb, const uint8_t* prev, uint16_t x, uint16_t y, uint16_t w,
                              uint16_t h, bool turnOff) {
     display(bus, fb, prev, RefreshMode::Fast, turnOff);

@@ -16,6 +16,8 @@ The Focus home puts the navigation options first and Start focus at the bottom, 
 
 The timer groups its countdown, stage progress, accumulated study time and planned focus time. The chart button to the left of settings opens statistics for that focus only: all-time recorded study time, completed sessions, skipped focus stages, and today's 24 hourly study buckets. Breaks are excluded. Leaving the timer pauses it; opening its statistics keeps it running. Restart and Skip pause first and ask for confirmation. Cancel leaves the current stage paused. Confirmed Restart restores that stage's full duration; confirmed Skip moves to the next paused stage without earning a completed session. Both preserve already recorded study time.
 
+When the reader wakes from sleep inside Focus, it returns to the task, timer, list or screen you were using. A running timer pauses at sleep and returns with the remaining time. An open confirmation or text edit returns to its previous screen. Holding Back at startup bypasses reopening Focus.
+
 On the timer, a short press of either navigation button starts or pauses the
 current phase, matching Pomodoro. Confirm does the same when no other control
 has button focus. Compatible Bluetooth page turners can use Turn page / move

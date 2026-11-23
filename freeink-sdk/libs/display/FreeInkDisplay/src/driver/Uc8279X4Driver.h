@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdlib>
+#include <memory>
+
 // UC8279 panel driver — Xteink X4 Pro production runs that ship an UltraChip
 // UC8279 (800x480) in place of the SSD1677. NOT the X3's UC8279d (792x528,
 // Uc8279Driver) — this variant has its own init (PSR 0x37/0x4D, stock-exact;
@@ -73,6 +76,7 @@ class Uc8279X4Driver : public PanelDriver {
   void deepSleep(EpdBus& bus) override;
 
   void display(EpdBus& bus, const uint8_t* fb, const uint8_t* prev, RefreshMode mode, bool turnOff) override;
+  void displaySelectionPreview(EpdBus& bus, const uint8_t* fb, const uint8_t* prev, bool turnOff) override;
   bool displayStart(EpdBus& bus, const uint8_t* fb, const uint8_t* prev, RefreshMode mode, bool turnOff) override;
   void displayFinish(EpdBus& bus, const uint8_t* fb) override;
   bool supportsAsyncDisplay() const override { return true; }
@@ -112,7 +116,11 @@ class Uc8279X4Driver : public PanelDriver {
 
  private:
   void initController(EpdBus& bus);
+  bool startDisplay(EpdBus& bus, const uint8_t* fb, RefreshMode mode, bool turnOff, bool selectionPreview);
+  void openPartialWindow(EpdBus& bus);
   void startBwRefresh(EpdBus& bus, bool fast);
+  void startSelectionPreview(EpdBus& bus);
+  void fireRefresh(EpdBus& bus);
   // Stream a framebuffer into a RAM plane: 0xFF padding for gates before the
   // visible offset, visible rows in the stock convention (forward order, bytes
   // as-is; FREEINK_UC8279X4_ROWREV/XMIRROR can flip either axis for future
@@ -147,6 +155,12 @@ class Uc8279X4Driver : public PanelDriver {
   // absolute plane0, copyGrayscaleMsb derives plane1 and recovers the base for
   // the post-DRF restore. SPIRAM-backed, framebuffer-sized, allocated in begin().
   uint8_t* _grayBase = nullptr;
+  struct FreeSelectionMask {
+    void operator()(uint8_t* mask) const { std::free(mask); }
+  };
+  // One panel-sized mask in PSRAM during drag previews, released after the
+  // settling paint. The existing _grayBase holds the previous B/W frame.
+  std::unique_ptr<uint8_t[], FreeSelectionMask> _selectionTouched;
   bool _grayImagePass = false;
   bool _grayBaseValid = false;
   bool _absoluteGrayPlanes = false;

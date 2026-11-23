@@ -475,7 +475,7 @@ void flushPendingState(const uint32_t now) {
 }
 
 bool openItem(const int folder, const int item, GfxRenderer& renderer, MappedInputManager& mappedInput,
-              const LaunchOrigin origin) {
+              const LaunchOrigin origin, const bool waking) {
   if (folder < 0 || folder >= kFolderCount) {
     LOG_ERR("SHELF", "Bad folder index: %d", folder);
     return false;
@@ -492,7 +492,9 @@ bool openItem(const int folder, const int item, GfxRenderer& renderer, MappedInp
   homeReturn = origin == LaunchOrigin::Folder;
   saveIfChanged(folder, item);
   setOpenTitle(parent.items[item].title, origin);
-  auto activity = parent.items[item].create(renderer, mappedInput);
+  const auto create = parent.items[item].create;
+  auto activity = waking && create == FocusActivity::create ? FocusActivity::createForWake(renderer, mappedInput)
+                                                            : create(renderer, mappedInput);
   if (activity)
     activity->setInterfaceFontSection(folder == 0 ? menufont::Section::Games : menufont::Section::Apps,
                                       menufont::itemFor(parent.items[item].title));
@@ -623,7 +625,7 @@ bool resumeFromWake(GfxRenderer& renderer, MappedInputManager& mappedInput) {
   }
 
   LOG_INF("SHELF", "Wake: resuming %s", kFolders[folder].items[item].title);
-  return openItem(folder, item, renderer, mappedInput, state.origin);
+  return openItem(folder, item, renderer, mappedInput, state.origin, true);
 }
 
 void openPlayer(GfxRenderer& renderer, MappedInputManager& mappedInput) {

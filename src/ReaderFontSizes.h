@@ -44,8 +44,10 @@ inline int builtinReaderFontVariant(const int fontId, const float scale) {
   return 0;
 }
 
-// The compact reading selector keeps the four standard point sizes from 1.4.0.
-inline constexpr uint8_t VECTOR_READER_POINT_SIZES[] = {12, 14, 16, 18};
+inline constexpr uint8_t BITMAP_READER_POINT_SIZES[] = {12, 14, 16, 18};
+
+// Shared by the reader and the Windows/macOS preparation engine.
+inline constexpr uint8_t VECTOR_READER_POINT_SIZES[] = {12, 14, 16, 18, 22};
 
 // Ubuntu's installed reading family upgrades the resident fallback without
 // adding a duplicate choice or changing the saved built-in selection.

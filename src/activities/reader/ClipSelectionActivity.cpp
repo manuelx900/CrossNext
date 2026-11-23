@@ -428,6 +428,11 @@ void ClipSelectionActivity::confirmSelection(const ClippingResult::Action action
   }
   result.startPageOffset = words[first].pageOffset;
   if ((action == ClippingResult::Action::Lookup || action == ClippingResult::Action::Translate)) {
+    const auto anchor = lookupRect(words[first]);
+    result.lookupX = anchor.x;
+    result.lookupY = anchor.y;
+    result.lookupWidth = anchor.width;
+    result.lookupHeight = anchor.height;
     const auto span = wordedges::trim(result.text.c_str());
     result.text.resize(span.end);
     result.text.erase(0, span.first);
@@ -996,7 +1001,7 @@ void ClipSelectionActivity::render(RenderLock&&) {
       tr(STR_BACK), rangeStart < 0 ? tr(STR_SELECT) : (mode == Mode::Lookup ? tr(STR_LOOKUP) : tr(STR_DONE)),
       tr(STR_DIR_LEFT), tr(STR_DIR_RIGHT));
   GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);
-  renderer.displayBuffer();
+  renderer.displayBuffer(HalDisplay::FAST_REFRESH, touchDragSelecting && wordCount != 0);
 
   lastRenderedPageOffset = currentPageOffset;
   lastRenderedTextOffset = offset;

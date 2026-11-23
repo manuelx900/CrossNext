@@ -49,8 +49,8 @@ std::vector<uint8_t> readerFontPointSizes(const SdCardFontRegistry* registry, co
       const auto sizes = family->availableSizes();
       if (!sizes.empty()) {
         std::vector<uint8_t> selected;
-        selected.reserve(std::size(VECTOR_READER_POINT_SIZES));
-        for (const auto target : VECTOR_READER_POINT_SIZES) {
+        selected.reserve(std::size(BITMAP_READER_POINT_SIZES));
+        for (const auto target : BITMAP_READER_POINT_SIZES) {
           const auto nearest = snapToNearestPointSize(sizes, target);
           if (selected.empty() || selected.back() != nearest) selected.push_back(nearest);
         }

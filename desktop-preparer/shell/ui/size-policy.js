@@ -3,7 +3,8 @@
 window.readerSizePolicy = Object.freeze({
   usualSizes(available) {
     if (!available.length) return [];
-    return [...new Set([12,14,16,18].map(target => available.reduce((best,size) =>
+    const targets = available.includes(22) ? [12,14,16,18,22] : [12,14,16,18];
+    return [...new Set(targets.map(target => available.reduce((best,size) =>
       Math.abs(size-target)<Math.abs(best-target) || Math.abs(size-target)===Math.abs(best-target) && size<best ? size : best)))].sort((a,b)=>a-b);
   },
   formatSizes(points) {

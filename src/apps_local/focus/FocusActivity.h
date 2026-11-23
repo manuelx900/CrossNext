@@ -11,6 +11,7 @@ class FocusActivity final : public Activity {
  public:
   FocusActivity(GfxRenderer& renderer, MappedInputManager& input) : Activity("Focus", renderer, input) {}
   static std::unique_ptr<Activity> create(GfxRenderer&, MappedInputManager&);
+  static std::unique_ptr<Activity> createForWake(GfxRenderer&, MappedInputManager&);
   void onEnter() override;
   void onExit() override;
   void prepareForSleep() override;
@@ -32,6 +33,7 @@ class FocusActivity final : public Activity {
   int project = -1, task = -1, page = 0;
   uint8_t paints = 0;
   bool ready = false, dirty = false, saveFailed = false;
+  bool waking = false;
   focusui::DeleteTarget deleteTarget = focusui::DeleteTarget::Task;
   focusui::Filter filter = focusui::Filter::All;
   focus::CompletedScope cleanupScope = focus::CompletedScope::All;
@@ -40,6 +42,7 @@ class FocusActivity final : public Activity {
   focusui::Model model() const;
   void show(focusui::View next);
   void pause();
+  bool restoreWakeView();
   bool save();
   void back();
   void name(bool rename);

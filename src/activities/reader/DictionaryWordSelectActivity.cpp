@@ -25,17 +25,19 @@ void DictionaryWordSelectActivity::onEnter() {
     std::snprintf(dictionaryName, sizeof(dictionaryName), "%s",
                   translate ? SETTINGS.translationDictionaryName : SETTINGS.dictionaryName);
   lookupPending = true;
-  popupMsg = StrId::STR_DICT_LOOKING_UP;
-  popup = Popup::Busy;
-  requestUpdate();
 }
 
 void DictionaryWordSelectActivity::performLookup() {
-  {
-    RenderLock lock;
-    popupMsg = StrId::STR_DICT_LOOKING_UP;
-    popup = Popup::Busy;
-  }
+  const auto showIndexing = [](void* context) {
+    auto& self = *static_cast<DictionaryWordSelectActivity*>(context);
+    {
+      RenderLock lock;
+      if (self.popup == Popup::Busy) return;
+      self.popupMsg = StrId::STR_DICT_INDEXING;
+      self.popup = Popup::Busy;
+    }
+    self.requestUpdate(true);
+  };
   if (!dictOpenAttempted) {
     dictOpenAttempted = true;
     dictOpenOk = dict.open(dictionaryName);
@@ -44,15 +46,10 @@ void DictionaryWordSelectActivity::performLookup() {
     // the sidecar ourselves, which is handled below.
     dictNeedsIndex = dictOpenOk && dict.needsIndex();
   }
-  {
-    RenderLock lock;
-    popupMsg = dictNeedsIndex ? StrId::STR_DICT_INDEXING : StrId::STR_DICT_LOOKING_UP;
-  }
-  requestUpdateAndWait();  // paint the page + busy popup before blocking on SD
-
   bool ok = dictOpenOk;
   Dictionary::IndexResult indexResult = Dictionary::IndexResult::Ok;
   if (ok && dictNeedsIndex) {
+    showIndexing(this);
     ok = dict.buildIndex(&indexBuildYield, nullptr, &indexResult);
     dictNeedsIndex = !ok;  // a successful build leaves the sidecar fresh; a failed one retries
   }
@@ -60,7 +57,7 @@ void DictionaryWordSelectActivity::performLookup() {
   std::string definition;
   std::string headword;
   Dictionary::LookupResult result = Dictionary::LookupResult::NotFound;
-  const bool found = ok && dict.lookup(lookupText.c_str(), definition, headword, &result);
+  const bool found = ok && dict.lookup(lookupText.c_str(), definition, headword, &result, showIndexing, this);
 
   if (found) {
     vocabulary::CaptureNotice notice;
@@ -68,20 +65,21 @@ void DictionaryWordSelectActivity::performLookup() {
       notice.attempted = true;
       notice.status = vocabulary::Capture::Failed;
     }
-    {
-      RenderLock lock;
-      popup = Popup::None;
-      page.reset();
-    }
     auto activity = makeUniqueNoThrow<DictionaryDefinitionActivity>(
         renderer, mappedInput, std::move(headword), std::move(definition), dict.definitionsAreHtml(), notice);
     if (!activity) {
       LOG_ERR("DICT", "OOM: definition activity");
+      RenderLock lock;
       popup = Popup::Error;
       popupMsg = StrId::STR_DICT_LOW_MEMORY;
       popupTime = millis();
       requestUpdate();
       return;
+    }
+    {
+      RenderLock lock;
+      popup = Popup::None;
+      activity->showOverPage(std::move(page), fontId, marginLeft, marginTop, selection);
     }
     activity->enableLookup(dict, lookupText);
     if (source) {
@@ -95,6 +93,7 @@ void DictionaryWordSelectActivity::performLookup() {
   // Name the failure: a genuine miss is "Not found"; a word that WAS found but
   // couldn't be read is a real error — and we distinguish decompression from a
   // low-memory allocation from a generic read error.
+  RenderLock lock;
   if (!ok) {
     popup = Popup::Error;
     // An index build allocates a scan buffer, so it fails the same way lookups
@@ -153,6 +152,7 @@ void DictionaryWordSelectActivity::loop() {
 }
 
 void DictionaryWordSelectActivity::render(RenderLock&&) {
+  if (popup == Popup::None) return;
   renderer.clearScreen();
 
   auto* fcm = renderer.getFontCacheManager();
@@ -161,9 +161,5 @@ void DictionaryWordSelectActivity::render(RenderLock&&) {
   scope.endScanAndPrewarm();
   if (page) page->render(renderer, fontId, marginLeft, marginTop);
 
-  if (popup != Popup::None) {
-    GUI.drawPopup(renderer, I18N.get(popupMsg));
-    return;
-  }
-  renderer.displayBuffer(HalDisplay::FAST_REFRESH);
+  GUI.drawPopup(renderer, I18N.get(popupMsg));
 }

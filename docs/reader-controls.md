@@ -12,6 +12,10 @@ While the reading surface is active and touch reader controls are enabled, tappi
 
 Fixed-layout XTC keeps only controls the format supports and removes dark mode from its lower sheet. Global quick settings owns that toggle. Existing reader page/percent progress text remains part of reading status; discrete menu/picker pagination uses `PageIndicator.h`: previous, current / total, next, with non-interactive ends.
 
+After following a link in an EPUB, a swipe toward the previous page still turns one page, including when the gesture starts at the left edge. A short press of the physical Back button returns to the link's origin on devices with that button.
+
+On X4 Pro readers with the UC8279 0x68 panel, dragging a text selection can use a shorter refresh waveform. Releasing the selection returns to the normal refresh.
+
 Simulator and host checks do not establish X4 Pro touch/display timing. Before a device release, test top taps versus top swipes, lower-sheet gestures, long/multibyte chapter names, first/last pages, SD font families, all alignment choices, actual book searches, bookmark/clipping navigation, jump boundaries, stats return, light state across sleep, custom shortcut persistence and Wi-Fi teardown.
 
 The chapter and font pagers use compact arrows and two-pixel outlines. Family rows are 44 pixels high, with the smaller menu lettering, keeping touch targets while avoiding oversized cards. The shared jump/sleep selector uses a framed panel, a thin track with a square thumb, separate minus/plus buttons and Confirm. The thumb retains drag routing, exact-step controls and the existing cancellation/result semantics.

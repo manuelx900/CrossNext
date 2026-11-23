@@ -192,6 +192,7 @@ class ActivityManager {
   // a caller that just asked for one reads back what it asked for. Pushed
   // sub-screens report their own name, not the one underneath.
   const char* currentActivityName() const;
+  bool hasParentActivityNamed(const char* name) const;
 
   bool handleForcedRefresh();
   bool skipLoopDelay() const;

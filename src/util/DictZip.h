@@ -3,6 +3,7 @@
 #include <HalStorage.h>
 
 #include <cstdint>
+#include <span>
 #include <vector>
 
 // Random-access reader for dictzip (.dict.dz) files: gzip with an extra "RA"
@@ -37,5 +38,6 @@ bool parse(HalFile& file, Info* info, ExtractError* outError = nullptr);
 // On failure, *outError (if provided) reports the specific cause so callers can
 // distinguish low memory from IO from a corrupt file.
 bool extractEntry(const char* path, uint32_t offset, uint32_t size, HalFile& outFile, ExtractError* outError = nullptr);
+bool extractEntry(const char* path, uint32_t offset, std::span<uint8_t> output, ExtractError* outError = nullptr);
 
 }  // namespace DictZip

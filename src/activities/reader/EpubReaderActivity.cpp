@@ -59,6 +59,7 @@
 #include "activities/network/WifiSelectionActivity.h"
 #include "activities/settings/TextSettingsActivity.h"
 #include "apps_local/bookprep/OpenedBookPreparationActivity.h"
+#include "apps_local/power/FrontlightSchedule.h"
 #include "apps_local/readertext/BookSearchActivity.h"
 #include "apps_local/readertext/BookTextPreferences.h"
 #include "apps_local/reading/ReadingStatsActivity.h"
@@ -530,7 +531,9 @@ void EpubReaderActivity::startClipSelection(const int initialX, const int initia
       return;
     }
     if (clipping.action == ClippingResult::Action::Lookup || clipping.action == ClippingResult::Action::Translate) {
-      auto page = section ? section->loadPage(section->currentPage) : nullptr;
+      auto page = section && currentSpineIndex == spineIndex && startPage < section->pageCount
+                      ? section->loadPage(startPage)
+                      : nullptr;
       if (!page) {
         LOG_ERR("CLIP", "Failed to load lookup page");
         requestUpdate();
@@ -561,7 +564,8 @@ void EpubReaderActivity::startClipSelection(const int initialX, const int initia
           bookDictionaries.selected(clipping.action == ClippingResult::Action::Translate,
                                     clipping.action == ClippingResult::Action::Translate
                                         ? SETTINGS.translationDictionaryName
-                                        : SETTINGS.dictionaryName));
+                                        : SETTINGS.dictionaryName),
+          freeink::ui::makeRect(clipping.lookupX, clipping.lookupY, clipping.lookupWidth, clipping.lookupHeight));
       if (!lookup) {
         LOG_ERR("CLIP", "OOM: dictionary lookup activity");
         requestUpdate();
@@ -968,7 +972,7 @@ void EpubReaderActivity::loop() {
     }
   }
 
-  if (footnoteDepth > 0 && mappedInput.wasReleased(MappedInputManager::Button::Back) &&
+  if (footnoteDepth > 0 && !mappedInput.wasBackGesture() && mappedInput.wasReleased(MappedInputManager::Button::Back) &&
       mappedInput.getHeldTime() < ReaderUtils::GO_BACK_OR_HOME_MS) {
     restoreSavedPosition();
     return;
@@ -4155,6 +4159,7 @@ void EpubReaderActivity::activateMoreRow(int row) {
     case MA::FRONTLIGHT: {
       const bool lightOn = !Frontlight.isOn();
       Frontlight.setOn(lightOn);
+      frontlightschedule::noteManual(frontlightschedule::Power);
       SETTINGS.frontlightOn = lightOn ? 1 : 0;
       SETTINGS.saveToFile();
       {

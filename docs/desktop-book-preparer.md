@@ -1,7 +1,7 @@
-# CrossNext Book Preparer 2.0.5
+# CrossNext Book Preparer 2.0.7
 
 The desktop app runs the firmware's real preparation engine in WebAssembly with
-the Node runtime bundled with Electron. See the [current 2.0.5 build and runtime instructions](../desktop-preparer/DESKTOP.txt).
+the Node runtime bundled with Electron. See the [current 2.0.7 build and runtime instructions](../desktop-preparer/DESKTOP.txt).
 
 ## English
 
@@ -34,8 +34,8 @@ cache files remain compatible with the existing reader.
 
 Select the microSD root. The app detects the saved reading engine, font, size,
 orientation, layout and XTC cover rotation. Interface and reading fonts are separate.
-Choose EPUB, XTC and/or XTCH. Vector fonts support 8–22 pt; bitmap families use
-their installed sizes. Reader size selects the nearest supported size per family;
+Choose EPUB, XTC and/or XTCH. Vector fonts support 12, 14, 16, 18 and 22 pt.
+Bitmap families use the sizes offered in the reader. Reader size selects the nearest supported size per family;
 all sizes prepares each family's supported sizes. Font selection affects EPUB only.
 
 **Start with one font and one size.** Every EPUB font/size combination stores a separate pagination for every book. Selecting all combinations can fill the card, especially when its allocation blocks are large. Before preparation, the app shows the combination count, free space and an explicit confirmation. You can return to the reader's font and size without starting preparation. Final space cannot be predicted exactly from the book sizes alone.
@@ -56,7 +56,7 @@ Books, settings, reading progress and statistics are preserved. Only known gener
 cache paths under `/.crosspoint/` are written. Safely eject the card after completion.
 Keep the diagnostic folder shown after an error. Do not remove the card during work.
 
-The Windows executable is portable and unsigned. The macOS arm64/x64 DMGs are built and verified on macOS. They are not Apple-notarized; platform security prompts may apply. Open the matching DMG and drag the app to Applications. Version 2.0.5
+The Windows executable is portable and unsigned. The macOS arm64/x64 DMGs are built and verified on macOS. They are not Apple-notarized; platform security prompts may apply. Open the matching DMG and drag the app to Applications. Version 2.0.7
 and cache ABI versions are independent; `engine-build.json` records provenance.
 
 ## Español
@@ -90,7 +90,7 @@ al firmware ni cambiar el formato de páginas que lee el dispositivo.
 Selecciona la raíz de la microSD. El programa detecta motor, fuente, tamaño,
 orientación, diseño y giro de portadas XTC guardados en el lector. La fuente de
 interfaz es independiente. Elige EPUB, XTC y/o XTCH. Las fuentes vectoriales
-admiten 8–22 pt y las bitmap sus tamaños instalados. «Tamaño del lector» toma el
+admiten 12, 14, 16, 18 y 22 pt. Las fuentes bitmap usan los tamaños disponibles en el lector. «Tamaño del lector» toma el
 compatible más cercano de cada familia; «Todos los tamaños» prepara los de cada
 una. Las fuentes solo afectan a EPUB.
 
@@ -112,7 +112,7 @@ Solo se escriben rutas conocidas de caché generada en `/.crosspoint/`; se conse
 libros, ajustes, progreso y estadísticas. Expulsa la tarjeta al terminar y conserva
 la carpeta de diagnóstico si falla. No la retires durante el proceso.
 
-Windows es portátil y sin firmar. Los DMG para macOS arm64/x64 se generan y verifican en macOS. No tienen notarización de Apple; pueden aparecer avisos de seguridad. Abre el DMG correspondiente y arrastra la app a Aplicaciones. La versión 2.0.5 de la aplicación
+Windows es portátil y sin firmar. Los DMG para macOS arm64/x64 se generan y verifican en macOS. No tienen notarización de Apple; pueden aparecer avisos de seguridad. Abre el DMG correspondiente y arrastra la app a Aplicaciones. La versión 2.0.7 de la aplicación
 y las versiones internas de caché son independientes; `engine-build.json` registra
 el origen del motor. Comprueba las cachés con el firmware correspondiente en el X4 Pro físico.
 

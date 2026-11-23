@@ -83,7 +83,7 @@ bool BookPreparationActivity::loadFont(int index, ReaderRenderSpec& spec) {
   // Even a failed load may have released the previous face.
   preparationFontLoaded = true;
   const char* family = fonts.fonts[index].family;
-  const int id = sdFontSystem.loadForPreparation(renderer, family, activePointSize);
+  const int id = sdFontSystem.loadTemporaryFont(renderer, family, activePointSize, /* requireBundledDefaults */ true);
   if (!id) {
     LOG_ERR("PREP", "Could not load preparation font: %s", family);
     error = tr(STR_PREPARE_FONT_FAILED);

@@ -42,6 +42,7 @@ class DictionaryDefinitionActivity final : public Activity, protected UiAppHost 
   }
   bool handleReaderTextSettingsGesture() override { return handleHomeGesture(); }
   void offerVocabulary(std::unique_ptr<vocabulary::Context>, const char* dictionary, const char* language);
+  void showOverPage(std::unique_ptr<Page>, int font, int x, int y, freeink::ui::Rect word);
 
  private:
   // One wrapped display line: a byte span of `definition`. Wrapping keeps
@@ -60,6 +61,7 @@ class DictionaryDefinitionActivity final : public Activity, protected UiAppHost 
   };
 
   BodyArea bodyArea() const;
+  dictionaryui::Layout screenLayout() const;
   bool layoutHtmlPages();
   void wrapText();
   int measureSpan(int fontId, const char* text, size_t len) const;
@@ -94,6 +96,10 @@ class DictionaryDefinitionActivity final : public Activity, protected UiAppHost 
   // Not const: onEnter() normalizes embedded NULs (StarDict multi-type
   // separators) to newlines so C-string APIs see the whole text.
   std::string definition;
+  std::unique_ptr<Page> readingPage;
+  int readingFont = 0, readingX = 0, readingY = 0;
+  GfxRenderer::Orientation readingOrientation{};
+  freeink::ui::Rect selectedWord{};
   bool htmlDefinition;
   // Styled path: reader-identical Pages laid out from the HTML definition.
   // Empty means the plain-text span path below is active.

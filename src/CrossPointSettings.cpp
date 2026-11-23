@@ -18,6 +18,7 @@
 #include "ReaderFontSizes.h"
 #include "ReaderLineSpacing.h"
 #include "SettingsList.h"
+#include "apps_local/quotes/QuoteFontSizes.h"
 #include "apps_local/readerbars/ReaderBarsJson.h"
 #include "apps_local/readertext/BookTextPreferences.h"
 #include "apps_local/reading/ReadingGoal.h"
@@ -82,6 +83,10 @@ void CrossPointSettings::toJson(JsonDocument& doc) const {
   doc["readingGoalHistoryVersion"] = readinggoal::historyVersion;
   doc["wordsTextAlignment"] = wordsTextAlignment;
   doc["flashcardTextAlignment"] = flashcardTextAlignment;
+  doc["quoteTextAlignment"] = quoteTextAlignment;
+  doc["quoteTextFamily"] = quoteTextFamily;
+  doc["quoteTextPointSize"] = quoteTextPointSize;
+  if (quoteSdFontFamily[0]) doc["quoteSdFontFamily"] = quoteSdFontFamily;
 
   auto visit = [&](const SettingInfo& info) {
     if (!info.key) return;
@@ -195,6 +200,16 @@ bool CrossPointSettings::fromJson(JsonVariantConst doc) {
                                                              doc["readingGoalLegacyHistory"] | false);
   wordsTextAlignment = std::min<uint8_t>(doc["wordsTextAlignment"] | uint8_t(0), 3);
   flashcardTextAlignment = std::min<uint8_t>(doc["flashcardTextAlignment"] | uint8_t(0), 3);
+  const auto savedQuoteAlignment = doc["quoteTextAlignment"] | uint8_t(0);
+  quoteTextAlignment = savedQuoteAlignment < 4 ? savedQuoteAlignment : 0;
+  const auto savedQuoteFamily = doc["quoteTextFamily"] | uint8_t(0);
+  quoteTextFamily = savedQuoteFamily < quotes::kBuiltinFamilies ? savedQuoteFamily : 0;
+  const auto savedQuoteSize = doc["quoteTextSize"] | uint8_t(1);
+  const auto& quotePoints = quotes::kBuiltinPoints[quoteTextFamily];
+  const uint8_t legacyPoints = savedQuoteSize < std::size(quotePoints) ? quotePoints[savedQuoteSize] : 0;
+  quoteTextPointSize = doc["quoteTextPointSize"] | uint8_t(0);
+  if (!quoteTextPointSize) quoteTextPointSize = legacyPoints ? legacyPoints : quotePoints[1];
+  copyToField(quoteSdFontFamily, doc["quoteSdFontFamily"] | "", sizeof(quoteSdFontFamily));
   const auto commonTheme = doc["interfaceThemeStyle"];
   const auto headerColor = doc["interfaceHeaderColor"];
   interfaceHeaderColor =

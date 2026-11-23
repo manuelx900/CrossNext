@@ -76,6 +76,10 @@ void HalDisplay::displayBufferAsync(HalDisplay::RefreshMode mode) {
   einkDisplay.displayBufferAsyncNoShadow(convertRefreshMode(mode));
 }
 
+void HalDisplay::displaySelectionPreview(bool turnOffScreen) {
+  einkDisplay.displayBuffer(EInkDisplay::FAST_REFRESH, turnOffScreen, true);
+}
+
 bool HalDisplay::displayWindow(uint16_t x, uint16_t y, uint16_t width, uint16_t height, bool turnOffScreen) {
   if (!width || !height || x % 8 || width % 8 || uint32_t(x) + width > einkDisplay.getDisplayWidth() ||
       uint32_t(y) + height > einkDisplay.getDisplayHeight()) {

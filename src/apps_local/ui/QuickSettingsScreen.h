@@ -111,7 +111,7 @@ enum : fui::ActionId {
 };
 enum class SettingsDestination : int16_t { Bluetooth, Wifi };
 struct Model {
-  char time[8] = "--:--";
+  char time[9] = "--:--";
   int brightness = 60, warmth = 50, battery = 100;
   uint8_t shortcuts[4] = {0, 1, 2, 3};
   bluetoothui::State bluetooth = bluetoothui::State::Off;

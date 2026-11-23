@@ -593,6 +593,12 @@ bool ActivityManager::requiresExclusiveStorageLoop() const {
   return currentActivity && currentActivity->requiresExclusiveStorageLoop();
 }
 
+bool ActivityManager::hasParentActivityNamed(const char* name) const {
+  if (pendingActivity) return false;
+  return std::any_of(stackActivities.begin(), stackActivities.end(),
+                     [name](const auto& activity) { return activity->name == name; });
+}
+
 bool ActivityManager::isReaderActivity() const {
   return std::any_of(stackActivities.begin(), stackActivities.end(),
                      [](const auto& activity) { return activity->isReaderActivity(); }) ||

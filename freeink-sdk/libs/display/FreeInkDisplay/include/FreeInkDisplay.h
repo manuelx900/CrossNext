@@ -157,7 +157,7 @@ class FreeInkDisplay {
   void cleanupGrayscaleWithPreviousBuffer();
 #endif
 
-  void displayBuffer(RefreshMode mode = FAST_REFRESH, bool turnOffScreen = false);
+  void displayBuffer(RefreshMode mode = FAST_REFRESH, bool turnOffScreen = false, bool selectionPreview = false);
 
   // Non-blocking refresh: pushes the frame, starts the panel waveform, and
   // returns (~25 ms) while the panel refreshes on its own (~0.3-2 s). Poll

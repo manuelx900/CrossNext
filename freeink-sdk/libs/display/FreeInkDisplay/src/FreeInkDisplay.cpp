@@ -587,7 +587,7 @@ bool FreeInkDisplay::refreshBusy() {
   return _refreshPending && _bus.isBusy();
 }
 
-void FreeInkDisplay::displayBuffer(RefreshMode mode, bool turnOffScreen) {
+void FreeInkDisplay::displayBuffer(RefreshMode mode, bool turnOffScreen, bool selectionPreview) {
   cancelGrayscalePass();
   _grayPassFailed = false;
 #if defined(SSD1677_PROBE_DEBUG) && SSD1677_PROBE_DEBUG
@@ -597,9 +597,15 @@ void FreeInkDisplay::displayBuffer(RefreshMode mode, bool turnOffScreen) {
   if (_inversionDirty && mode == FAST_REFRESH) {
     mode = HALF_REFRESH;
   }
+  const auto paint = [&](const uint8_t* fb, const uint8_t* prev, RefreshMode effectiveMode) {
+    if (selectionPreview && effectiveMode == FAST_REFRESH)
+      _driver->displaySelectionPreview(_bus, fb, prev, turnOffScreen);
+    else
+      _driver->display(_bus, fb, prev, toInternal(effectiveMode), turnOffScreen);
+  };
 #ifdef EINK_DISPLAY_SINGLE_BUFFER_MODE
   if (_inverted) invertBytes(frameBuffer, bufferSize);
-  _driver->display(_bus, frameBuffer, nullptr, toInternal(mode), turnOffScreen);
+  paint(frameBuffer, nullptr, mode);
   if (_inverted) invertBytes(frameBuffer, bufferSize);
   // The blocking path resynced the controller's baseline from the live
   // framebuffer; the async shadow no longer matches what is displayed.
@@ -612,7 +618,7 @@ void FreeInkDisplay::displayBuffer(RefreshMode mode, bool turnOffScreen) {
     invertBytes(next, bufferSize);
     invertBytes(const_cast<uint8_t*>(prev), bufferSize);
   }
-  _driver->display(_bus, next, prev, toInternal(effMode), turnOffScreen);
+  paint(next, prev, effMode);
   if (_inverted) {
     invertBytes(next, bufferSize);
     invertBytes(const_cast<uint8_t*>(prev), bufferSize);
@@ -857,8 +863,8 @@ void FreeInkDisplay::cancelGrayscalePass() {
 bool FreeInkDisplay::acceptGrayscaleRows(unsigned plane, const uint8_t* data, uint16_t y, uint16_t rows) {
   if (_grayscaleMode == GrayscaleMode::Overlay) return true;
   const auto h = getDisplayHeight();
-  if (_grayPassFailed || !data || !rows || (plane == 1 && _grayRows[0] == 0) ||
-      y != _grayRows[plane] || y >= h || rows > h - y) {
+  if (_grayPassFailed || !data || !rows || (plane == 1 && _grayRows[0] == 0) || y != _grayRows[plane] || y >= h ||
+      rows > h - y) {
     _grayPassFailed = true;
     return false;
   }
@@ -930,9 +936,7 @@ void FreeInkDisplay::writeGrayscalePlaneStrip(GrayPlane plane, const uint8_t* ro
                                     rows, yStart, numRows);
 }
 
-bool FreeInkDisplay::supportsBusyGrayscaleStaging() const {
-  return grayscaleCapabilities().stagingWhileBusy;
-}
+bool FreeInkDisplay::supportsBusyGrayscaleStaging() const { return grayscaleCapabilities().stagingWhileBusy; }
 
 void FreeInkDisplay::prepareGrayscaleTarget() {
   if (grayscaleCapabilities().stagingWhileBusy) {
@@ -940,13 +944,9 @@ void FreeInkDisplay::prepareGrayscaleTarget() {
   }
 }
 
-bool FreeInkDisplay::supportsStripGrayscale() const {
-  return grayscaleCapabilities().stripUploads;
-}
+bool FreeInkDisplay::supportsStripGrayscale() const { return grayscaleCapabilities().stripUploads; }
 
-bool FreeInkDisplay::combinesGrayscaleBase() const {
-  return grayscaleCapabilities().base == GrayscaleBase::Combined;
-}
+bool FreeInkDisplay::combinesGrayscaleBase() const { return grayscaleCapabilities().base == GrayscaleBase::Combined; }
 
 void FreeInkDisplay::cleanupGrayscaleBuffers(const uint8_t* bwBuffer) {
   cancelGrayscalePass();

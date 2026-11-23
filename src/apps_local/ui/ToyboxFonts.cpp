@@ -314,4 +314,12 @@ void ensureFonts(GfxRenderer& renderer) {
   registered = true;
 }
 
+int sansReadingFont(GfxRenderer& renderer, bool small) {
+  constexpr int regularSizeId = 0x70B0'0013, smallSizeId = 0x70B0'0014;
+  const int id = small ? smallSizeId : regularSizeId;
+  if (!renderer.textMetricsKey(id, "A", EpdFontFamily::REGULAR))
+    renderer.insertFont(id, small ? libraryFamily : proseFamily);
+  return id;
+}
+
 }  // namespace toybox

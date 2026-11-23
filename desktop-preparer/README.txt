@@ -29,8 +29,8 @@ Scroll the settings area on smaller screens. Progress and actions stay visible.
 5. Choose EPUB, XTC and/or XTCH. Select more fonts if desired. Reader size uses
    the nearest supported size of each selected family; All supported sizes
    prepares every size each family supports. Explicit sizes are shared sizes
-   supported by all selected families. TTF/OTF supports 8-22 pt, .cpfont uses
-   installed sizes, and the resident Ubuntu fallback offers 12 pt. Unsupported
+   supported by all selected families. TTF/OTF/TTC supports 12, 14, 16, 18 and 22 pt.
+   Bitmap families use the sizes offered in the reader. The resident Ubuntu fallback offers 12 pt. Unsupported
    sizes are rejected before preparing books. XTC/XTCH pages are fixed images, so
    font and size choices affect EPUB pagination only.
 6. Prepare books. The book name, font, size, chapter and progress appear while
@@ -48,7 +48,7 @@ Only the chosen EPUB engine and layouts are prepared.
 Changing font, size, orientation, engine or layout later can require different
 pagination. Replacing books/fonts or changing firmware cache formats may also
 require regeneration. Prepared files are not guaranteed for arbitrary firmware
-versions. This preview targets the current CrossNext 2.0.0 preparation code.
+versions. Use the matching CrossNext firmware build.
 
 The engine is the actual firmware parser, renderer and preparation pipeline,
 compiled to 32-bit WebAssembly for the included Node runtime. No separate
@@ -90,8 +90,8 @@ compatible más cercano de cada fuente; «Todos los tamaños disponibles»
 prepara todos los que admite cada una. Los tamaños individuales mostrados
 son compatibles con todas las fuentes seleccionadas. En XTC/XTCH las páginas
 son imágenes fijas: las fuentes y tamaños solo afectan a la paginación EPUB.
-Las TTF/OTF admiten de 8 a 22 pt; las .cpfont ofrecen solo los tamaños
-instalados. El programa muestra los tamaños admitidos y rechaza los demás.
+Las TTF/OTF/TTC admiten 12, 14, 16, 18 y 22 pt. Las .cpfont usan los tamaños
+disponibles en el lector. El programa muestra los tamaños admitidos y rechaza los demás.
 
 El selector de motor EPUB comienza con el motor guardado en el lector. Puedes
 elegir Nuevo o Clásico para esta preparación sin cambiar sus ajustes. Selecciona

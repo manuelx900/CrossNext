@@ -49,6 +49,7 @@
 #include "activities/ActivityManager.h"
 #include "activities/settings/SdFirmwareUpdateActivity.h"
 #include "apps_local/Shelf.h"
+#include "apps_local/power/FrontlightSchedule.h"
 #include "apps_local/power/PowerButtonPolicy.h"
 #include "apps_local/power/PowerMenuActivity.h"
 #include "apps_local/powerprobe/PowerProbe.h"
@@ -198,11 +199,11 @@ static bool finishWifiSessionWithoutRestart() {
 // as the user left it. SETTINGS.frontlightOn is the saved preference and
 // legitimately diverges from the live state (a wake with Restore Light on Wake
 // off leaves the light off while the saved "was on" preference is kept), so
-// carry the live state across the reboot instead of re-deriving it from
-// settings. Cleared with the magic in setup().
+// carry the manual live state across the reboot instead of re-deriving it
+// from settings. The frontlight schedule applies again after setup.
 static void armSilentReboot(const uint32_t target) {
   silentRebootTarget = target;
-  silentRebootPayload = Frontlight.isOn() ? SILENT_REBOOT_LIGHT_ON : 0;
+  silentRebootPayload = frontlightschedule::powerForRestart() ? SILENT_REBOOT_LIGHT_ON : 0;
   silentRebootMagic = SILENT_REBOOT_MAGIC;
 }
 
@@ -287,6 +288,7 @@ void toggleFrontlight() {
   if (!Frontlight.present()) return;
   const bool lightOn = !Frontlight.isOn();
   Frontlight.setOn(lightOn);
+  frontlightschedule::noteManual(frontlightschedule::Power);
   SETTINGS.frontlightOn = lightOn ? 1 : 0;
   SETTINGS.saveToFile();
   LOG_INF("LIGHT", "Frontlight toggled %s", lightOn ? "on" : "off");
@@ -295,16 +297,22 @@ void toggleFrontlight() {
 void toggleWarmFrontlight() {
   if (!Frontlight.hasColorTemperature()) return;
   const auto current = Frontlight.warmth();
-  if (current) SETTINGS.frontlightWarmthMemory = current;
+  if (current) SETTINGS.frontlightWarmthMemory = frontlightschedule::manualWarmthMemory(current);
   const auto next = sideToggledWarmth(Frontlight.isOn(), current, SETTINGS.frontlightWarmthMemory);
   Frontlight.setWarmth(next);
+  frontlightschedule::noteManual(frontlightschedule::Warmth);
   if (next && !Frontlight.isOn()) {
-    if (!Frontlight.brightness()) Frontlight.setBrightness(5);
+    if (!Frontlight.brightness()) {
+      Frontlight.setBrightness(5);
+      frontlightschedule::noteManual(frontlightschedule::Brightness);
+    }
     Frontlight.setOn(true);
+    frontlightschedule::noteManual(frontlightschedule::Power);
   }
-  SETTINGS.frontlightWarmth = next;
-  SETTINGS.frontlightBrightness = Frontlight.brightness();
-  SETTINGS.frontlightOn = Frontlight.isOn() ? 1 : 0;
+  const auto manual = frontlightschedule::manualLevels();
+  SETTINGS.frontlightWarmth = manual.warmth;
+  SETTINGS.frontlightBrightness = manual.brightness;
+  SETTINGS.frontlightOn = manual.on ? 1 : 0;
   SETTINGS.saveToFile();
 }
 
@@ -325,19 +333,33 @@ void applyEdgeLight(edgelight::Event event) {
   const int next = std::clamp(previous + event.step, 0, 100);
   if (previous == next) return;
   if (brightness) {
-    if (next) Frontlight.setBrightness(next);
-    Frontlight.setOn(next > 0);
+    if (next) {
+      Frontlight.setBrightness(next);
+      frontlightschedule::noteManual(frontlightschedule::Brightness);
+    }
+    if (Frontlight.isOn() != (next > 0)) {
+      Frontlight.setOn(next > 0);
+      frontlightschedule::noteManual(frontlightschedule::Power);
+    }
   } else {
     Frontlight.setWarmth(next);
+    frontlightschedule::noteManual(frontlightschedule::Warmth);
     if (next) {
       SETTINGS.frontlightWarmthMemory = next;
-      if (!Frontlight.brightness()) Frontlight.setBrightness(5);
-      Frontlight.setOn(true);
+      if (!Frontlight.brightness()) {
+        Frontlight.setBrightness(5);
+        frontlightschedule::noteManual(frontlightschedule::Brightness);
+      }
+      if (!Frontlight.isOn()) {
+        Frontlight.setOn(true);
+        frontlightschedule::noteManual(frontlightschedule::Power);
+      }
     }
   }
-  SETTINGS.frontlightBrightness = Frontlight.brightness();
-  SETTINGS.frontlightWarmth = Frontlight.warmth();
-  SETTINGS.frontlightOn = Frontlight.isOn();
+  const auto manual = frontlightschedule::manualLevels();
+  SETTINGS.frontlightBrightness = manual.brightness;
+  SETTINGS.frontlightWarmth = manual.warmth;
+  SETTINGS.frontlightOn = manual.on;
   edgeLightDirty = true;
   edgeLightChangedAt = millis();
 }
@@ -588,10 +610,6 @@ CROSSPLAY_SLEEP_NORETURN static void startDeepSleepArmed(const uint64_t timerMic
 // either way. Deferrable events already queued (reader.exit) ride along in
 // the same drain.
 static void deliverSleepPluginEvents() {
-  // Activity-owned state must be queued before sleep.enter and before this
-  // same-sleep drain. The hook is idempotent with ordinary activity teardown.
-  activityManager.prepareForSleep();
-
   // Sleeping straight out of a book is the common flow, but the reader's own
   // reader.exit only fires later, inside goToSleep() — after this drain. Carry
   // the book and progress on sleep.enter itself so a sync handler bound to it
@@ -651,7 +669,10 @@ void enterDeepSleep(bool fromTimeout = false, bool unattended = false) {
 
   // Plugin events belong to a person's sleep. An unattended one has no
   // activity to prepare and nobody reading, and no network work is required.
-  if (!unattended && bluetoothStopped) deliverSleepPluginEvents();
+  if (!unattended) {
+    activityManager.prepareForSleep();
+    if (bluetoothStopped) deliverSleepPluginEvents();
+  }
 
   // An unattended sleep captures NOTHING. It is the tail of a boot nobody
   // asked for, running with no activity ever created, so every question below
@@ -675,7 +696,9 @@ void enterDeepSleep(bool fromTimeout = false, bool unattended = false) {
 
     // Before goToSleep() replaces the activity: after it, the thing on screen is
     // the sleep screen and the shelf can no longer tell what the user was doing.
-    shelf::rememberForWake(activityManager.currentActivityName());
+    const char* shelfActivity =
+        activityManager.hasParentActivityNamed("Focus") ? "Focus" : activityManager.currentActivityName();
+    shelf::rememberForWake(shelfActivity);
   }
 
   // Commit to sleeping before goToSleep() runs the outgoing activity's onExit():
@@ -1015,6 +1038,7 @@ void setup() {
     enterDeepSleep(/*fromTimeout=*/false, /*unattended=*/true);
     return;  // startDeepSleepArmed() does not return; this is for the reader
   }
+  frontlightschedule::poll();
 
   // First serial output only here to avoid timing inconsistencies for power button press duration verification
   LOG_DBG("MAIN", "Starting CrossNext version " CROSSPOINT_VERSION);
@@ -1308,6 +1332,7 @@ void loop() {
   static unsigned long lastActivityTime = millis();
   applyEdgeLight(mappedInputManager.edgeLightEvent());
   saveEdgeLight();
+  frontlightschedule::poll();
   // devmode::holdsRadio() counts as activity. Deep sleep on this chip is a full
   // reset, so a sleeping device does not merely idle -- it leaves the network
   // and cannot be woken from it. A development device that disappears after the

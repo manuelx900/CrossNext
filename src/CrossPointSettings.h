@@ -465,7 +465,9 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   uint8_t flashcardAnswerSize = 0;
   uint8_t flashcardSmartSize = 1;
   uint8_t wordsQuestionSize = 1;
-  uint8_t wordsTextAlignment = 0, flashcardTextAlignment = 0;
+  uint8_t wordsTextAlignment = 0, flashcardTextAlignment = 0, quoteTextAlignment = 0;
+  uint8_t quoteTextFamily = 0, quoteTextPointSize = 14;
+  char quoteSdFontFamily[160] = {};
   uint8_t wordsAnswerSize = 0;
   uint8_t wordsSmartSize = 1;
   // Reader menu open gesture (SHOW_READER_MENU: off / center tap / bottom-edge
@@ -481,6 +483,13 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   // Restore the saved on/off state after a normal boot or wake. Brightness and
   // warmth are always remembered even when this is disabled.
   uint8_t frontlightRestoreOnWake = 1;
+  uint8_t frontlightSchedule = 0;
+  uint8_t frontlightStartHour = 19;
+  uint8_t frontlightStartMinute = 0;
+  uint8_t frontlightEndHour = 7;
+  uint8_t frontlightEndMinute = 0;
+  uint8_t frontlightScheduledBrightness = 35;
+  uint8_t frontlightScheduledWarmth = 75;
   // Language setting (Language enum index, default 0 = EN)
   uint8_t language = 0;
   char languagePack[64] = {};

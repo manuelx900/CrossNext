@@ -9,13 +9,13 @@
 #include <algorithm>
 #include <cctype>
 #include <cstring>
+#include <string_view>
 
 #include "CrossPointSettings.h"
 
 namespace {
 
-// Normalized XHTML staged here for the file-driven parser; truncated on each
-// use, removed after the parse.
+// HTML tables use the file-backed parser to measure their column widths.
 constexpr const char* TMP_HTML_PATH = "/.crosspoint/dicthtml.tmp";
 
 // ENTRY gate: is there room to start a styled layout at all? Keeps enough
@@ -49,9 +49,10 @@ constexpr size_t MIN_STYLED_RETAIN_ALLOC = 8 * 1024;
 constexpr size_t MAX_STYLED_PAGES = 64;
 constexpr size_t MAX_STYLED_PAGE_ELEMENTS = 512;
 
-class BufferedFileWriter {
+template <typename Sink>
+class BufferedXhtmlWriter {
  public:
-  explicit BufferedFileWriter(HalFile& file) : file(file) {}
+  explicit BufferedXhtmlWriter(const Sink& sink) : sink(sink) {}
 
   bool append(const char c) { return append(&c, 1); }
 
@@ -72,17 +73,31 @@ class BufferedFileWriter {
 
   bool flush() {
     if (used == 0) return true;
-    if (file.write(buffer, used) != used) return false;
+    if (!sink(buffer, used)) return false;
     used = 0;
     return true;
   }
 
  private:
-  HalFile& file;
+  const Sink& sink;
   // Fixed stack staging avoids an expansion-sized XHTML heap allocation.
   char buffer[128] = {};
   size_t used = 0;
 };
+
+bool requiresTableSource(const std::string& html) {
+  constexpr std::string_view tag = "table";
+  for (auto at = html.find('<'); at != std::string::npos; at = html.find('<', at + 1)) {
+    const size_t end = at + 1 + tag.size();
+    if (end >= html.size()) break;
+    const unsigned char delimiter = html[end];
+    if ((delimiter == '>' || delimiter == '/' || std::isspace(delimiter)) &&
+        std::equal(tag.begin(), tag.end(), html.data() + at + 1,
+                   [](char expected, unsigned char actual) { return expected == std::tolower(actual); }))
+      return true;
+  }
+  return false;
+}
 
 // HTML void elements: legal without a closing tag in HTML, but must be
 // self-closed to be well-formed XML.
@@ -122,8 +137,9 @@ bool isEntityRef(const std::string& html, const size_t pos, size_t* end) {
 // that are not part of markup. Structural damage this cannot repair
 // (mismatched tags, unquoted attribute values) surfaces as a parse error and
 // the caller falls back to the plain-text path.
-bool writeNormalizedXhtml(const std::string& html, HalFile& file) {
-  BufferedFileWriter out(file);
+template <typename Sink>
+bool writeNormalizedXhtml(const std::string& html, const Sink& sink) {
+  BufferedXhtmlWriter out(sink);
   if (!out.append("<html><body>")) return false;
 
   const size_t n = html.size();
@@ -223,13 +239,15 @@ bool buildDictionaryHtmlPages(GfxRenderer& renderer, const int fontId, const std
     return false;
   }
 
-  {
+  const bool fileBacked = requiresTableSource(definition);
+  if (fileBacked) {
     HalFile tmp = Storage.open(TMP_HTML_PATH, O_WRITE | O_CREAT | O_TRUNC);
     if (!tmp) {
       LOG_ERR("DHTML", "Cannot create %s", TMP_HTML_PATH);
       return false;
     }
-    if (!writeNormalizedXhtml(definition, tmp)) {
+    if (!writeNormalizedXhtml(definition,
+                              [&](const char* chunk, size_t len) { return tmp.write(chunk, len) == len; })) {
       LOG_ERR("DHTML", "Short write to %s", TMP_HTML_PATH);
       return false;
     }
@@ -284,10 +302,17 @@ bool buildDictionaryHtmlPages(GfxRenderer& renderer, const int fontId, const std
     } else {
       parser->setTextSpacing(SETTINGS.getCharacterSpacing(), SETTINGS.wordSpacing);
       parser->setParagraphIndentSpaces(0);
-      ok = parser->parseAndBuildPages();  // closes the file on both outcomes
+      if (fileBacked) {
+        ok = parser->parseAndBuildPages();
+      } else if (parser->beginGeneratedXhtml() &&
+                 writeNormalizedXhtml(definition, [&](const char* chunk,
+                                                      size_t len) { return parser->feedGeneratedXhtml(chunk, len); }) &&
+                 parser->feedGeneratedXhtml("", 0, true)) {
+        ok = parser->finishParse();
+      }
     }
   }
-  Storage.remove(TMP_HTML_PATH);
+  if (fileBacked) Storage.remove(TMP_HTML_PATH);
 
   if (resourceLimitHit) {
     LOG_ERR("DHTML", "Styled definition exceeded page heap budget");

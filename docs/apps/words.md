@@ -12,9 +12,9 @@ does not choose the correct sense automatically. Choose dictionaries appropriate
 to those two purposes; the firmware does not infer dictionary type from its name.
 An unconfigured operation reports which dictionary to choose.
 
-A successful query opens its result under a black header with white text and an
-optional compact white Save word button with a thick black border. Nothing
-is stored until you tap it or press Confirm. Save keeps the selected form,
+A successful query opens its result over the book page. When saving is available,
+**Save** appears beside **×**. The result is stored when you tap **Save** or press
+Confirm. Save keeps the selected form,
 headword, meaning, dictionary, book language, passage, author, chapter and
 position. It reports Saved for review and offers Undo. Back returns to the
 reader's unchanged position. Failed queries create nothing. Allocation, length
@@ -236,11 +236,12 @@ and WikDict ES-EN; Spanish selects Spanish Wiktionary and WikDict EN-ES. A manua
 choice, including None, remains manual. Rebuilding the simulator refreshes its demo
 card without writing to a physical microSD or changing the source demo saves.
 
-Definition and translation results have Save word (or Undo) at the upper right.
-Previous/next arrows and the page counter occupy the bottom row. Swipe left or
-right over the definition to page; taps on the left third go back and other body
-taps go forward. The first/last arrows are disabled at the page bounds. Back uses
-the header arrow or physical Back. Pronunciation-only metadata with unsupported
+Definition and translation results have **Save** or **Undo** beside **×**.
+Previous and next arrows and the page counter occupy the bottom row. Swipe left
+or right over the definition to change pages. Taps on the left third go back, and
+other taps inside the definition go forward. Arrows are disabled at the page
+bounds. Tap **×** or outside the overlay to return to the book. The physical Back
+button returns to the previous lookup or closes the result. Pronunciation-only metadata with unsupported
 phonetic glyphs is omitted, including rows mixed with syllabication; meanings and
 syllabication remain. Definition text uses left alignment without paragraph indent,
 independent of the book's alignment. Saving still requires an explicit action.

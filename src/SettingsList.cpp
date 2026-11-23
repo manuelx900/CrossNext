@@ -84,6 +84,20 @@ void forEachBaseSetting(SettingVisitor visit, void* context) {
 #if FREEINK_CAP_FRONTLIGHT
   emit(SettingInfo::Toggle(StrId::STR_RESTORE_LIGHT_ON_WAKE, &CrossPointSettings::frontlightRestoreOnWake,
                            "frontlightRestoreOnWake", StrId::STR_CAT_DISPLAY));
+  emit(SettingInfo::Toggle(StrId::STR_FRONTLIGHT_SCHEDULE_ON, &CrossPointSettings::frontlightSchedule,
+                           "frontlightSchedule", StrId::STR_CAT_DISPLAY));
+  emit(SettingInfo::Value(StrId::STR_FRONTLIGHT_START_HOUR, &CrossPointSettings::frontlightStartHour, {0, 23, 1},
+                          "frontlightStartHour", StrId::STR_CAT_DISPLAY));
+  emit(SettingInfo::Value(StrId::STR_FRONTLIGHT_START_MINUTE, &CrossPointSettings::frontlightStartMinute, {0, 59, 1},
+                          "frontlightStartMinute", StrId::STR_CAT_DISPLAY));
+  emit(SettingInfo::Value(StrId::STR_FRONTLIGHT_END_HOUR, &CrossPointSettings::frontlightEndHour, {0, 23, 1},
+                          "frontlightEndHour", StrId::STR_CAT_DISPLAY));
+  emit(SettingInfo::Value(StrId::STR_FRONTLIGHT_END_MINUTE, &CrossPointSettings::frontlightEndMinute, {0, 59, 1},
+                          "frontlightEndMinute", StrId::STR_CAT_DISPLAY));
+  emit(SettingInfo::Value(StrId::STR_BRIGHTNESS, &CrossPointSettings::frontlightScheduledBrightness, {1, 100, 1},
+                          "frontlightScheduledBrightness", StrId::STR_CAT_DISPLAY));
+  emit(SettingInfo::Value(StrId::STR_WARMTH, &CrossPointSettings::frontlightScheduledWarmth, {0, 100, 1},
+                          "frontlightScheduledWarmth", StrId::STR_CAT_DISPLAY));
 #endif
   // Night mode = inverted output polarity everywhere (ActivityManager
   // applies it to every activity), so it lives in the Display category.

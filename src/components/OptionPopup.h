@@ -363,6 +363,11 @@ class OptionPopup {
 
   bool isActive() const { return active; }
 
+  // The label remains valid until the next show().
+  const char* selectedLabel() const {
+    return selectedIndex >= 0 && selectedIndex < int(ownedStrings.size()) ? ownedStrings[selectedIndex].c_str() : "";
+  }
+
   // Close without firing the callback (the surface under the popup is going
   // away, e.g. its host screen closes from outside the popup's own input).
   void dismiss() {

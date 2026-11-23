@@ -1448,7 +1448,7 @@ void XMLCALL ChapterHtmlSlimParser::startElement(void* userData, const XML_Char*
     self->tableRowCells.reserve(MAX_GRID_TABLE_COLUMNS);
     self->tableBorder = CssBorderSide{};
     self->tableColumnCount = 0;
-    if (self->xmlParser_) {
+    if (self->xmlParser_ && self->parseFile_.isOpen()) {
       // Rows stream in one at a time, so plan shared column widths from the raw markup first.
       HalFile tableFile;
       TableColumnMeasure measure;
@@ -2800,10 +2800,16 @@ void XMLCALL ChapterHtmlSlimParser::recordingDefault(void* data, const XML_Char*
 
 ChapterHtmlSlimParser::~ChapterHtmlSlimParser() { abortParse(); }
 
-bool ChapterHtmlSlimParser::beginParse() {
+bool ChapterHtmlSlimParser::beginParse() { return beginParse(true); }
+
+bool ChapterHtmlSlimParser::beginGeneratedXhtml() { return beginParse(false); }
+
+bool ChapterHtmlSlimParser::beginParse(const bool fromFile) {
   wordWidths.acquire();
-  paragraphInputs.acquire();
-  paragraphInputs.chapter(filepath.c_str());
+  if (fromFile) {
+    paragraphInputs.acquire();
+    paragraphInputs.chapter(filepath.c_str());
+  }
   progressPopupFired_ = false;
   hasTables_ = false;
   stopRequested = false;
@@ -2841,7 +2847,7 @@ bool ChapterHtmlSlimParser::beginParse() {
   paragraphAlignmentBlockStyle.alignment = align;
   startNewTextBlock(paragraphAlignmentBlockStyle);
 
-  if (eventCache_.begin(filepath, eventCachePath_, allowCacheReplay_)) {
+  if (fromFile && eventCache_.begin(filepath, eventCachePath_, allowCacheReplay_)) {
     parseStartTime_ = millis();
     return true;
   }
@@ -2856,7 +2862,7 @@ bool ChapterHtmlSlimParser::beginParse() {
   // Using DefaultHandlerExpand preserves normal entity expansion from DOCTYPE
   XML_SetDefaultHandlerExpand(xmlParser_, recordingDefault);
 
-  if (!Storage.openFileForRead("EHP", filepath, parseFile_)) {
+  if (fromFile && !Storage.openFileForRead("EHP", filepath, parseFile_)) {
     destroyXmlParser(xmlParser_);
     xmlParser_ = nullptr;
     return false;
@@ -2868,6 +2874,22 @@ bool ChapterHtmlSlimParser::beginParse() {
 
   parseStartTime_ = millis();
   return true;
+}
+
+bool ChapterHtmlSlimParser::feedGeneratedXhtml(const char* bytes, const size_t size, const bool final) {
+  if (!xmlParser_ || stopRequested || layoutOom) return false;
+  if (sourceComplete_) return true;
+  if (XML_Parse(xmlParser_, bytes, static_cast<int>(size), final) == XML_STATUS_ERROR) {
+    if (htmlEnded_ && !stopRequested && !layoutOom) {
+      sourceComplete_ = true;
+      return true;
+    }
+    LOG_ERR("EHP", "Generated XHTML parse error at line %lu: %s", XML_GetCurrentLineNumber(xmlParser_),
+            XML_ErrorString(XML_GetErrorCode(xmlParser_)));
+    return false;
+  }
+  sourceComplete_ = final;
+  return !stopRequested && !layoutOom;
 }
 
 ChapterHtmlSlimParser::ParseStatus ChapterHtmlSlimParser::parseStep() {
@@ -2986,7 +3008,7 @@ bool ChapterHtmlSlimParser::finishParse() {
     destroyXmlParser(xmlParser_);
     xmlParser_ = nullptr;
   }
-  parseFile_.close();
+  if (parseFile_.isOpen()) parseFile_.close();
 
   // Process last page if there is still text
   if (currentTextBlock) {

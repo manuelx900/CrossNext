@@ -213,7 +213,7 @@ fields plus type-specific fields.
 curl http://crosspoint.local/api/settings
 ```
 
-Example item:
+Example item for a bitmap font family:
 
 ```json
 {
@@ -229,7 +229,7 @@ Example item:
 `value` is always an index into `options`, never the option's text. The
 `fontSize` options depend on the selected family. A `.cpfont` family installed
 at 10/12/14 pt offers those three sizes. TTF/OTF/TTC families offer the
-standard 12/14/16/18 pt sizes. The `fontFamily` and `dictionaryName` options
+standard 12/14/16/18/22 pt sizes. The `fontFamily` and `dictionaryName` options
 also depend on the SD card contents.
 
 Types:

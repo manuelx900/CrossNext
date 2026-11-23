@@ -32,7 +32,7 @@ automatic-selection flag. Explicit **None** remains disabled. Definitions and
 translations are independent; changing the interface language never replaces an
 assigned name. See [SD resources](sd-resources.md) for the available defaults.
 
-A dictionary result does not automatically add a card. Choose **Save word** to
+A dictionary result does not automatically add a card. Choose **Save** to
 keep its meaning, original sentence and book location in Words; **Undo** removes
 that capture. Define uses Learn words, while Translate uses Learn languages.
 Failed lookups cannot create empty cards. An SD write failure is reported.
@@ -59,22 +59,22 @@ Two ways to start a lookup while reading:
 
 - Hold a word to show **Define** and **Translate**. Extend the selection to two or more words to show only **Save quote**. The touch toolbar and physical-button popup use the same rule.
 
-On the very first lookup with a dictionary (and again whenever the `.idx` or `.syn` source file changes), the reader shows *"Indexing dictionary…"* while it builds small sidecar files next to them — a `.qidx` for the word index, and a `.sidx` when a `.syn` synonym file is present. Each sidecar is rebuilt independently, only when its own source changes. This takes a few seconds for large dictionaries and makes all subsequent lookups fast. The sidecars can be deleted safely at any time — they will simply be rebuilt.
+The Resources bundle includes ready-to-use lookup indexes. Keep the `.qidx` and `.sidx` files with their dictionary. If an index is missing or out of date, the reader shows *Indexing dictionary…* while it rebuilds it. A direct match only needs the primary index. The reader prepares a missing synonym index when a lookup needs it.
 
 ### How Lookup Works
 
 1. **Direct match** — the selected word is searched as-is (case-insensitive) in the dictionary index. Leading and trailing punctuation and whitespace are stripped automatically.
-2. **Synonyms** — on a miss, if the dictionary ships a `.syn` file, alternate spellings and irregular forms recorded there are resolved to their headword (e.g. `oxen` → `ox`, `colour` → `color`). This step is skipped if the `.sidx` sidecar could not be built (e.g. transient low memory during indexing); the dictionary otherwise stays usable, and the build is retried the next time it is opened.
+2. **Synonyms** — on a miss, if the dictionary ships a `.syn` file, alternate spellings and irregular forms recorded there are resolved to their headword (e.g. `oxen` → `ox`, `colour` → `color`). If building the synonym index fails, direct matches are still available. The reader retries the build the next time a lookup needs it.
 3. **Stemming** — still no match: common English word forms are retried automatically: possessives and plurals (`dogs` → `dog`, `stories` → `story`) and verb endings (`walked` → `walk`, `running` → `run`, `making` → `make`).
-4. **Not found** — a short popup appears and you return to word selection.
+4. **Not found** — a short popup appears, then you return to the book page.
 
 ## The Definition Screen
 
-When a word is found, the definition screen shows the matched headword at the top and the definition text below, with a page counter for long definitions.
+Definitions and translations opened from the reader appear over the book page. The panel shows the matched word and a page counter for longer results. Use **Save** beside **×** to keep the result in Words. Tap **×** or anywhere outside the panel to return to the same page.
 
 HTML dictionaries that declare `sametypesequence=h` use the EPUB text-layout engine for semantic formatting such as headings, bold, italics, lists, and line breaks. Images and CSS styling are ignored. Definitions that are too large or cannot be laid out within the available memory fall back to plain text.
 
-Dictionary layout uses compact line spacing without the reader's extra paragraph spacing or focus-reading emphasis. These dictionary-specific choices do not change book typography. The header uses the shared back arrow and a separate **Save to Words** action.
+Dictionary layout uses compact line spacing without the reader's extra paragraph spacing or focus-reading emphasis. These dictionary-specific choices do not change book typography.
 
 The resource builder compacts all bundled HTML dictionaries in its generated copies. The monolingual dictionaries keep numbered meanings, lexical relations and examples supplied by the source. Web styling, pronunciation (including regional AFI transcriptions), syllabification, repeated headword/inflection rows and etymology metadata are omitted so the first meaning follows the word category. Examples and synonyms are never invented. Long entries can still require several pages. The bundled text renderer supplies the missing ♁ and 🜨 symbols without changing their meaning in the source.
 
@@ -89,7 +89,7 @@ Independently authored corrections additionally separate common senses and fix k
 Install desktop-only dependencies with `python -m pip install -r tools_local/requirements-resources.txt`, then run `python tools_local/build_resources.py` to regenerate the microSD package. Source dictionaries remain unchanged; generated `.idx` offsets and `.ifo` sizes are rebuilt, and `.syn` pointers are remapped to the merged entry order. `SOURCES.json` records the source hash and the new output hash. With the reader powered off, replace only the ten bundled dictionary folders with their complete updated copies so old `.dict`, `.qidx` and `.sidx` files cannot remain alongside them. Preserve other custom dictionaries, `.crosspoint` and your saved words. Merge the app, font and language folders separately. The viewer spacing correction also applies to dictionaries already installed.
 
 - **Left/Right** or side **Up/Down** — previous / next page
-- **Back** — return to word selection
+- **Back** — return to the previous definition or close the panel
 
 
 
@@ -121,8 +121,7 @@ Meaning and example content is preserved, and saving to Words
 uses this cleaned content. Original dictionary files are never rewritten.
 This formatting applies to dictionary results, not EPUB chapter content.
 
-The header uses the same height as Games and Apps. Page arrows sit above a bottom
-margin; horizontal swipes also turn definition pages. The configured Home action
+Use the panel's page arrows or swipe horizontally to turn definition pages. The configured Home action
 on the circular button closes this viewer; a lookup opened from a book returns
 to that book. Holding the circular button also closes the viewer when its action
 is Reader bottom sheet. Other configured shortcuts and emergency touch unlock
@@ -140,6 +139,6 @@ glyph; this is not a universal font for every writing system.
 
 ## Consult a word inside a definition
 
-In a definition opened from a book, hold a word to look it up in the same dictionary. This works with styled HTML and plain-text definitions. Use the header Back arrow or physical Back button to return to the previous definition at its previous page; another Back at the first definition returns to the reader flow. A missing word or read error leaves the current definition available.
+In a definition opened from a book, hold a word to look it up in the same dictionary. This works with styled HTML and plain-text definitions. Use the physical Back button to return to the previous definition at its previous page. Tap **×** to close the panel from any definition. A missing word or read error leaves the current definition available.
 
 The viewer keeps at most sixteen previous queries and page numbers, not sixteen copies of their definitions. Returning reopens the stored query from the same offline dictionary and rebuilds its layout. No network request or background task is involved. Saving to Words remains available on the original definition only, preserving its book/sentence context rather than assigning that context to an unrelated recursive lookup.

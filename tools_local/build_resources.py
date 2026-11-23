@@ -6,6 +6,7 @@ import importlib.util
 import json
 from pathlib import Path
 import shutil
+import struct
 import tempfile
 import zipfile
 
@@ -23,6 +24,26 @@ def copy_tree(source, destination):
             target = destination / path.relative_to(source)
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(path, target)
+
+
+def write_dictionary_index(source, destination, magic, suffix_size):
+    # Match Dictionary::buildSidecar's header and offsets. The index
+    # entries start with a NUL-terminated key and end with binary fields.
+    interval = 256
+    data = source.read_bytes()
+    offsets = [0]
+    position = count = 0
+    while position < len(data):
+        end = data.find(b"\0", position)
+        if end < 0 or end + 1 + suffix_size > len(data):
+            raise ValueError(f"Truncated StarDict index: {source}")
+        position = end + 1 + suffix_size
+        count += 1
+        if count % interval == 0 and position < len(data):
+            offsets.append(position)
+    with destination.open("wb") as index:
+        index.write(struct.pack("<4s5I", magic, 2, interval, len(offsets), len(data), count))
+        index.write(struct.pack(f"<{len(offsets)}I", *offsets))
 
 
 def dictionary_notices(staging, expansions):
@@ -195,6 +216,12 @@ def assemble(output, dictionaries, staging, dictionary_cache=None):
         if digest != entry["sha256"]:
             entry.setdefault("sourceSha256", entry["sha256"])
             entry.update(bytes=path.stat().st_size, sha256=digest, modified=True)
+    for suffix, sidecar, magic, suffix_size in (
+        (".idx", ".qidx", b"QIDX", 8),
+        (".syn", ".sidx", b"SIDX", 4),
+    ):
+        for source in sorted((staging / "dictionaries").rglob(f"*{suffix}")):
+            write_dictionary_index(source, source.with_suffix(sidecar), magic, suffix_size)
     (staging / "SOURCES.json").write_text(json.dumps(catalog, indent=2) + "\n", encoding="utf-8")
     dictionary_description = (
         "Includes English and Spanish definitions, plus English <-> Spanish, French, German\n"
@@ -222,6 +249,7 @@ def assemble(output, dictionaries, staging, dictionary_cache=None):
         + dictionary_description +
         "EN/ES interface languages automatically choose installed definition/translation defaults.\n"
         "Dictionary entries use compact numbered meanings, synonyms and examples when supplied by the source.\n"
+        "Keep the .qidx and .sidx files with their dictionaries for immediate lookup after installation.\n"
         "The eight bundled WikDict translators show destination-language equivalents and categories, grouped by sense.\n"
         "Monolingual source meanings are combined with duplicate meanings removed; examples are retained.\n"
         "Bilingual entries use qualified WikDict database senses, ranked by usage labels and source importance.\n"

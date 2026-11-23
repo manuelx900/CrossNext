@@ -32,7 +32,7 @@ struct Quote {
   char* body = nullptr;
   int page = 0;
 };
-inline void parse(char* record, Quote& q) {
+inline void parse(char* record, Quote& q, bool indexOnly = false) {
   q = {};
   q.body = record;
   char* header = record;
@@ -66,6 +66,7 @@ inline void parse(char* record, Quote& q) {
     if (number) number += 8;
   }
   if (number) q.page = std::atoi(number);
+  if (indexOnly) return;
   if (const char* added = std::strstr(meta, "Added on ")) {
     static constexpr const char* months[] = {"January", "February", "March",     "April",   "May",      "June",
                                              "July",    "August",   "September", "October", "November", "December"};

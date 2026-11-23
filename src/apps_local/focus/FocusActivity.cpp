@@ -1,6 +1,7 @@
 #include "FocusActivity.h"
 
 #include <HalClock.h>
+#include <HalStorage.h>
 #include <I18n.h>
 #include <Memory.h>
 
@@ -15,6 +16,42 @@
 #include "util/LoopDeadline.h"
 
 namespace {
+using focusui::View;
+constexpr char WAKE_VIEW_PATH[] = "/.crosspoint/focus-wake.bin";
+constexpr char WAKE_VIEW_TEMP[] = "/.crosspoint/focus-wake.tmp";
+constexpr uint8_t WAKE_VIEW_VERSION = 1;
+
+struct WakeView {
+  uint8_t version, view, settingsBack, taskBack, project, task, page, filter;
+};
+
+bool validList(const View view) { return view == View::Today || view == View::AllTasks || view == View::Tasks; }
+
+bool validView(const View view, const bool project, const bool task, const bool timer) {
+  switch (view) {
+    case View::Menu:
+    case View::Today:
+    case View::AllTasks:
+    case View::Projects:
+    case View::Stats:
+    case View::Settings:
+    case View::CleanupScope:
+      return true;
+    case View::Tasks:
+    case View::ProjectActions:
+      return project;
+    case View::Detail:
+      return task;
+    case View::Timer:
+    case View::TaskStats:
+      return timer;
+    case View::ConfirmDelete:
+    case View::ConfirmTimerChange:
+      return false;
+  }
+  return false;
+}
+
 struct StudyClock {
   uint32_t day = 0, second = focus::kUnknownSecond;
 };
@@ -34,6 +71,11 @@ std::unique_ptr<Activity> FocusActivity::create(GfxRenderer& renderer, MappedInp
   if (!activity) LOG_ERR("FOCUS", "OOM: activity (%u bytes)", unsigned(sizeof(FocusActivity)));
   return activity;
 }
+std::unique_ptr<Activity> FocusActivity::createForWake(GfxRenderer& renderer, MappedInputManager& input) {
+  auto activity = create(renderer, input);
+  if (activity) static_cast<FocusActivity*>(activity.get())->waking = true;
+  return activity;
+}
 focusui::Model FocusActivity::model() const {
   return {
       &state, view,         project,    task, page, saveFailed, deleteTarget, message, uint32_t(readingstats::today()),
@@ -46,6 +88,8 @@ void FocusActivity::onEnter() {
                    mappedInput.isPressed(MappedInputManager::Button::NavPrevious));
   saveFailed = !store.load(state, draft);
   lastTick = lastSave = millis();
+  if (waking && !saveFailed && restoreWakeView()) return;
+  if (Storage.exists(WAKE_VIEW_PATH)) Storage.remove(WAKE_VIEW_PATH);
   requestUpdate();
 }
 bool FocusActivity::save() {
@@ -69,7 +113,80 @@ void FocusActivity::onExit() {
   pause();
   Activity::onExit();
 }
-void FocusActivity::prepareForSleep() { pause(); }
+void FocusActivity::prepareForSleep() {
+  pause();
+  if (saveFailed) {
+    if (Storage.exists(WAKE_VIEW_PATH)) Storage.remove(WAKE_VIEW_PATH);
+    return;
+  }
+  View resume = view;
+  if (view == View::ConfirmTimerChange) resume = View::Timer;
+  if (view == View::ConfirmDelete) {
+    switch (deleteTarget) {
+      case focusui::DeleteTarget::Task:
+        resume = View::Detail;
+        break;
+      case focusui::DeleteTarget::Project:
+        resume = View::ProjectActions;
+        break;
+      case focusui::DeleteTarget::Completed:
+        resume = View::CleanupScope;
+        break;
+    }
+  }
+  const WakeView snapshot{WAKE_VIEW_VERSION,
+                          static_cast<uint8_t>(resume),
+                          static_cast<uint8_t>(returnView),
+                          static_cast<uint8_t>(taskReturnView),
+                          static_cast<uint8_t>(project),
+                          static_cast<uint8_t>(task),
+                          static_cast<uint8_t>(page),
+                          static_cast<uint8_t>(filter)};
+  {
+    HalFile file;
+    if (!Storage.ensureDirectoryExists("/.crosspoint") || !Storage.openFileForWrite("FOCUS", WAKE_VIEW_TEMP, file) ||
+        file.write(&snapshot, sizeof(snapshot)) != sizeof(snapshot)) {
+      LOG_ERR("FOCUS", "Could not save the wake screen");
+      if (Storage.exists(WAKE_VIEW_PATH)) Storage.remove(WAKE_VIEW_PATH);
+      return;
+    }
+  }
+  if (!Storage.replaceFile(WAKE_VIEW_TEMP, WAKE_VIEW_PATH)) {
+    LOG_ERR("FOCUS", "Could not publish the wake screen");
+    if (Storage.exists(WAKE_VIEW_PATH)) Storage.remove(WAKE_VIEW_PATH);
+  }
+}
+
+bool FocusActivity::restoreWakeView() {
+  WakeView snapshot{};
+  {
+    HalFile file;
+    if (!Storage.openFileForRead("FOCUS", WAKE_VIEW_PATH, file) || file.size() != sizeof(snapshot) ||
+        file.read(&snapshot, sizeof(snapshot)) != sizeof(snapshot))
+      return false;
+  }
+  Storage.remove(WAKE_VIEW_PATH);
+  if (snapshot.version != WAKE_VIEW_VERSION) return false;
+
+  const bool hasProject = snapshot.project < focus::kProjects && state.projects[snapshot.project].used;
+  const bool hasTask = snapshot.task < focus::kTasks && state.tasks[snapshot.task].used;
+  const bool hasTimer = hasTask && state.activeTask == snapshot.task && !state.tasks[snapshot.task].done;
+  const auto resume = static_cast<View>(snapshot.view);
+  if (!validView(resume, hasProject, hasTask, hasTimer)) return false;
+
+  project = hasProject ? snapshot.project : -1;
+  task = hasTask ? snapshot.task : -1;
+  page = snapshot.page;
+  if (snapshot.filter <= static_cast<uint8_t>(focusui::Filter::Completed))
+    filter = static_cast<focusui::Filter>(snapshot.filter);
+  const auto fromSettings = static_cast<View>(snapshot.settingsBack);
+  if (fromSettings != View::Settings && validView(fromSettings, hasProject, hasTask, hasTimer))
+    returnView = fromSettings;
+  const auto fromTask = static_cast<View>(snapshot.taskBack);
+  if (validList(fromTask) && (fromTask != View::Tasks || hasProject)) taskReturnView = fromTask;
+  show(resume);
+  return true;
+}
 void FocusActivity::show(focusui::View next) {
   view = next;
   if (view == focusui::View::Today || view == focusui::View::AllTasks || view == focusui::View::Projects ||

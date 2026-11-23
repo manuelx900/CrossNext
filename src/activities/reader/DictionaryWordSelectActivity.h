@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Epub/Page.h>
+#include <FreeInkUI.h>
 #include <I18n.h>
 
 #include <cstdio>
@@ -21,7 +22,8 @@ class DictionaryWordSelectActivity final : public Activity {
                                         std::unique_ptr<Page> page, int marginLeft, int marginTop,
                                         std::string lookupText = {}, std::unique_ptr<vocabulary::Context> source = {},
                                         std::string sourceLanguage = {}, bool captureRequested = false,
-                                        bool translate = false, const char* dictionary = nullptr)
+                                        bool translate = false, const char* dictionary = nullptr,
+                                        freeink::ui::Rect selection = {})
       : Activity("DictionaryWordSelect", renderer, mappedInput),
         page(std::move(page)),
         marginLeft(marginLeft),
@@ -31,7 +33,8 @@ class DictionaryWordSelectActivity final : public Activity {
         sourceLanguage(std::move(sourceLanguage)),
         captureRequested(captureRequested),
         translate(translate),
-        dictionaryOverride(dictionary != nullptr) {
+        dictionaryOverride(dictionary != nullptr),
+        selection(selection) {
     if (dictionary) std::snprintf(dictionaryName, sizeof(dictionaryName), "%s", dictionary);
   }
 
@@ -55,6 +58,7 @@ class DictionaryWordSelectActivity final : public Activity {
   const bool captureRequested;
   const bool translate;
   const bool dictionaryOverride;
+  const freeink::ui::Rect selection;
   char dictionaryName[32]{};
   bool lookupPending = false;
   Dictionary dict;

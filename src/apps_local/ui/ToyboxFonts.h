@@ -82,6 +82,7 @@ constexpr int kClockLabelFontId = 0x70B0'0012;
 
 // Call from an activity's onEnter() before drawing. Idempotent and cheap.
 void ensureFonts(GfxRenderer& renderer);
+int sansReadingFont(GfxRenderer& renderer, bool small);
 
 // Vertical metrics of the actual ink, which is not what GfxRenderer reports.
 // getTextHeight() returns the ASCENDER, and drawText() takes y as the top of the

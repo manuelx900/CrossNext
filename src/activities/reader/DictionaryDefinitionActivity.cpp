@@ -1,5 +1,6 @@
 #include "DictionaryDefinitionActivity.h"
 
+#include <ChromeRegion.h>
 #include <Epub/htmlEntities.h>
 #include <FontCacheManager.h>
 #include <GfxRenderer.h>
@@ -110,13 +111,24 @@ void DictionaryDefinitionActivity::offerVocabulary(std::unique_ptr<vocabulary::C
   vocabulary::copy(sourceLanguage, sizeof(sourceLanguage), language);
 }
 
+void DictionaryDefinitionActivity::showOverPage(std::unique_ptr<Page> page, int font, int x, int y,
+                                                freeink::ui::Rect word) {
+  readingPage = std::move(page);
+  readingFont = font;
+  readingX = x;
+  readingY = y;
+  readingOrientation = renderer.getOrientation();
+  selectedWord = word;
+}
+
 void DictionaryDefinitionActivity::onEnter() {
   sdFontSystem.ensureBundledFonts(renderer);
   Activity::onEnter();
   resetUi();
   app.setScreen(&DictionaryDefinitionActivity::noticeScreen, this);
   setEdgeBackEnabled(true);
-  for (auto action : {dictionaryui::Back, dictionaryui::Save, dictionaryui::Previous, dictionaryui::Next}) {
+  for (auto action :
+       {dictionaryui::Back, dictionaryui::Save, dictionaryui::Previous, dictionaryui::Next, dictionaryui::Close}) {
     app.on(
         action,
         [](const freeink::ui::ActionEvent& event, void* p) {
@@ -125,6 +137,9 @@ void DictionaryDefinitionActivity::onEnter() {
           switch (event.action) {
             case dictionaryui::Back:
               self.goBack();
+              break;
+            case dictionaryui::Close:
+              self.finish();
               break;
             case dictionaryui::Save:
               if (self.captureNotice.token.valid)
@@ -184,8 +199,13 @@ void DictionaryDefinitionActivity::onExit() {
 }
 
 DictionaryDefinitionActivity::BodyArea DictionaryDefinitionActivity::bodyArea() const {
-  const auto body = dictionaryui::layout(uiTarget.deviceContext(), lookupDictionary != nullptr).body;
+  const auto body = screenLayout().body;
   return {body.x, body.y, body.width, body.height};
+}
+
+dictionaryui::Layout DictionaryDefinitionActivity::screenLayout() const {
+  return readingPage ? dictionaryui::overlayLayout(uiTarget.deviceContext(), selectedWord)
+                     : dictionaryui::layout(uiTarget.deviceContext(), lookupDictionary != nullptr);
 }
 
 // Styled path: lay the HTML definition out through the EPUB chapter parser
@@ -328,6 +348,10 @@ void DictionaryDefinitionActivity::wrapText() {
 }
 
 void DictionaryDefinitionActivity::loop() {
+  if (readingPage && readingOrientation != renderer.getOrientation()) {
+    finish();
+    return;
+  }
   if (navigation != Navigation::None) {
     navigateDefinition();
     return;
@@ -393,12 +417,17 @@ void DictionaryDefinitionActivity::loop() {
     turnPage(-1);
     return;
   }
-  int tx = 0, ty = 0;
-  const auto body = bodyArea();
-  if (!routed && routingReady() && mappedInput.wasScreenTapped(tx, ty) && tx >= body.x && tx < body.x + body.width &&
-      ty >= body.y && ty < body.y + body.height) {
-    turnPage(tx < body.x + body.width / 3 ? -1 : 1);
-    return;
+  const auto& touch = routed.snap;
+  if (!routed && touch.touchReleased && touch.touchX >= 0 && touch.touchY >= 0) {
+    const auto area = screenLayout();
+    if (readingPage && !area.panel.contains(touch.touchX, touch.touchY)) {
+      finish();
+      return;
+    }
+    if (area.body.contains(touch.touchX, touch.touchY)) {
+      turnPage(touch.touchX < area.body.x + area.body.width / 3 ? -1 : 1);
+      return;
+    }
   }
   buttonNavigator.onNext([this] { turnPage(1); });
   buttonNavigator.onPrevious([this] { turnPage(-1); });
@@ -427,6 +456,7 @@ void DictionaryDefinitionActivity::drawBody(const int fontId, const int x, const
 }
 
 void DictionaryDefinitionActivity::render(RenderLock&&) {
+  if (readingPage && readingOrientation != renderer.getOrientation()) return;
   renderer.clearScreen();
 
   // Body: two-pass draw inside a prewarm scope (same pattern as the reader's
@@ -436,18 +466,29 @@ void DictionaryDefinitionActivity::render(RenderLock&&) {
   const BodyArea body = bodyArea();
   auto* fcm = renderer.getFontCacheManager();
   auto scope = fcm->createPrewarmScope();
+  if (readingPage) readingPage->render(renderer, readingFont, readingX, readingY);
   drawBody(fontId, body.x, body.y);  // scan pass: records codepoints only
   scope.endScanAndPrewarm();
-  drawBody(fontId, body.x, body.y);
-
-  const auto labels = mappedInput.mapLabels(tr(STR_BACK),
-                                            historyDepth                ? ""
-                                            : captureNotice.token.valid ? tr(STR_WORDS_UNDO)
-                                            : source                    ? tr(STR_WORD_SAVE)
-                                                                        : "",
-                                            (currentPage > 0 ? "<" : ""), (currentPage + 1 < totalPages ? ">" : ""));
-  GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);
-  renderUi();
+  if (readingPage) {
+    readingPage->render(renderer, readingFont, readingX, readingY);
+    if (selectedWord.width > 0)
+      renderer.drawRect(selectedWord.x - 1, selectedWord.y, selectedWord.width + 2, selectedWord.height);
+    renderUi();
+    const auto clip = renderer.getClipRect();
+    renderer.setClipRect(body.x, body.y, body.width, body.height);
+    drawBody(fontId, body.x, body.y);
+    renderer.setClipRect(clip[0], clip[1], clip[2], clip[3]);
+  } else {
+    drawBody(fontId, body.x, body.y);
+    const auto labels = mappedInput.mapLabels(tr(STR_BACK),
+                                              historyDepth                ? ""
+                                              : captureNotice.token.valid ? tr(STR_WORDS_UNDO)
+                                              : source                    ? tr(STR_WORD_SAVE)
+                                                                          : "",
+                                              (currentPage > 0 ? "<" : ""), (currentPage + 1 < totalPages ? ">" : ""));
+    GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);
+    renderUi();
+  }
   if (lookupMessageVisible) {
     GUI.drawPopup(renderer, I18N.get(lookupMessage));
     return;
@@ -481,7 +522,12 @@ void DictionaryDefinitionActivity::noticeScreen(UiScreen& screen, void* p) {
                     : self.captureNotice.token.valid ? tr(STR_WORDS_UNDO)
                     : self.source                    ? tr(STR_WORD_SAVE)
                                                      : nullptr;
-  dictionaryui::build(screen, model, self.chrome);
+  if (self.readingPage) {
+    model.rounded = ::chrome::lightHeader;
+    dictionaryui::buildOverlay(screen, self.screenLayout(), model, self.chrome);
+  } else {
+    dictionaryui::build(screen, model, self.chrome);
+  }
 }
 
 void DictionaryDefinitionActivity::enableLookup(Dictionary& dictionary, const std::string& query) {
@@ -580,14 +626,17 @@ void DictionaryDefinitionActivity::navigateDefinition() {
   }
   const char* query = back ? history[historyDepth - 1].query : pendingWord.c_str();
   if (!*query || strlen(query) >= sizeof(currentQuery)) return;
-  {
-    RenderLock lock;
-    showLookupMessage(StrId::STR_DICT_LOOKING_UP);
-  }
-  requestUpdateAndWait();
   std::string nextText, nextHeadword;
   Dictionary::LookupResult status = Dictionary::LookupResult::NotFound;
-  const bool found = lookupDictionary->lookup(query, nextText, nextHeadword, &status);
+  const auto showIndexing = [](void* context) {
+    auto& self = *static_cast<DictionaryDefinitionActivity*>(context);
+    {
+      RenderLock lock;
+      self.showLookupMessage(StrId::STR_DICT_INDEXING);
+    }
+    self.requestUpdate(true);
+  };
+  const bool found = lookupDictionary->lookup(query, nextText, nextHeadword, &status, showIndexing, this);
   RenderLock lock;
   if (!found) {
     StrId message = StrId::STR_DICT_NOT_FOUND;
