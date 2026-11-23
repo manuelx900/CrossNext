@@ -191,7 +191,7 @@ EMSCRIPTEN_KEEPALIVE const char* prepare_initialize(const char* configuration) {
 
 EMSCRIPTEN_KEEPALIVE int prepare_font(const char* family, int points) {
   uint8_t size = points;
-  const int id = sdFontSystem.loadForPreparation(renderer, family, size);
+  const int id = sdFontSystem.loadTemporaryFont(renderer, family, size, /* requireBundledDefaults */ true);
   if (!id || size != points) return 0;
   active.fontId = id;
   active.fontContentHash = *family && SETTINGS.sdFontHashResolver
