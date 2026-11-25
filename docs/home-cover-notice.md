@@ -26,6 +26,13 @@ Framed retains its existing wide horizontal loading notice. The normal GUI cover
 placeholder is retained in every appearance. Only title/author/progress metadata
 uses gray bars; provisional covers are not replaced with gray rectangles.
 
+With a retained, current Bookshelf catalog, Home opens the book grid directly.
+On any grid, available artwork is reused before trying to generate thumbnails.
+When thumbnails need preparation, the grid displays available covers and
+placeholders before preparing missing artwork during idle time. Home can reuse
+a rendered placeholder for an EPUB confirmed to have no cover. A media or book
+resource change invalidates the rendered scene.
+
 Host checks execute the production CoverLoading toggle branch, both persistence
 outcomes, actual Home draw functions and the production Bookshelf shell block.
 They check title/author placeholders, zero progress, horizontal notice geometry and bounds

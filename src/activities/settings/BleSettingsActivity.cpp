@@ -120,7 +120,10 @@ void BleSettingsActivity::loop() {
     snprintf(pairingCode, sizeof(pairingCode), tr(STR_BT_PAIRING_CODE), static_cast<unsigned long>(passkey));
     pairingCodeVisible = true;
   }
-  if (SETTINGS.ble.enabled && bleturner::service()) SETTINGS.saveToFile();
+  if (SETTINGS.ble.enabled) {
+    bleturner::service();
+    if (bleturner::hasPendingRemoteSelectionSave() && SETTINGS.saveToFile(true)) bleturner::remoteSelectionSaved();
+  }
   stepCapture();
   if (passkeyChanged || signature() != shownSignature) {
     refresh();

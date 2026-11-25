@@ -71,6 +71,9 @@ int pageStepClamped(const int page, const int pageCount, const int delta) {
 }
 
 namespace {
+constexpr int kFullSizeIcon = 40;
+constexpr int kVisibilityIconRightMargin = 14;
+
 struct Rows {
   const MenuModel& model;
   char label[96]{};
@@ -82,6 +85,8 @@ struct Rows {
     if (item.toggle) {
       item.icon = fui::bitmapFromIcon(self.model.checks[index] ? extra_checked_32 : extra_unchecked_32);
       item.toggle = false;
+      // Reserve the value slot for the app icon drawn at the right edge.
+      if (self.model.useFullSizeIcons) item.value = "";
     }
     pixelui::copyNatural(self.label, sizeof(self.label), item.label);
     item.label = self.label;
@@ -176,10 +181,11 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
   props.toggleCheckbox = true;
   props.toggleWidth = props.toggleHeight = 32;
   props.scrollIndicator = false;
+  if (choosing && model.useFullSizeIcons) props.valueInset = kFullSizeIcon;
   if (chrome::lightHeader) {
     props.rowHeight = rowHeight();
     props.rowPaddingY = 8;
-    props.iconSize = 30;
+    props.iconSize = model.useFullSizeIcons && !choosing ? kFullSizeIcon : 30;
     props.labelText.font = 1;
     props.labelText.maxLines = 1;
     props.rowStyles.normal.borderWidth = 0;
@@ -207,11 +213,13 @@ void buildMenu(toybox::Screen& screen, const MenuModel& model) {
   }
   if (choosing && model.icons) {
     const auto body = screen.body();
+    const int size = model.useFullSizeIcons ? kFullSizeIcon : 32;
     for (int n = 0; n < model.count; ++n)
       if (model.icons[n]) {
         const bool selected = n == props.selectedIndex;
         screen.target().bitmap(
-            fui::makeRect(body.right() - 46, body.y + n * rowHeight() + (rowHeight() - 32) / 2, 32, 32),
+            fui::makeRect(body.right() - kVisibilityIconRightMargin - size,
+                          body.y + n * rowHeight() + (rowHeight() - size) / 2, size, size),
             fui::bitmapFromIcon(*model.icons[n]), fui::BitmapMode::Contain,
             fui::Paint::solid(selected && !chrome::lightHeader ? fui::Color::White : fui::Color::Black));
       }

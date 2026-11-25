@@ -1,6 +1,7 @@
 #include "KeyboardEntryActivity.h"
 
 #include <BidiUtils.h>
+#include <ChromeRegion.h>
 #include <HalGPIO.h>
 #include <I18n.h>
 #include <Utf8.h>
@@ -170,6 +171,7 @@ void KeyboardEntryActivity::onEnter() {
 }
 
 void KeyboardEntryActivity::onExit() {
+  paintedKeys = {};
   pinyin.close();
   languageKeyboard.clear();
   Activity::onExit();
@@ -847,16 +849,29 @@ void KeyboardEntryActivity::loop() {
 }
 
 void KeyboardEntryActivity::render(RenderLock&&) {
-  renderer.clearScreen();
-
   const auto pageWidth = renderer.getScreenWidth();
+  const auto pageHeight = renderer.getScreenHeight();
   const Rect content = UITheme::getContentArea(renderer);  // bezel-safe content bounds
   const auto& metrics = UITheme::getInstance().getMetrics();
-
-  pixelui::drawHeader(renderer, title.c_str(), true);
+  const fui::Rect kbRect = keyboardRect();
+  const fui::KeyboardLayout& layout = currentLayout();
+  const bool hasTouch = mappedInput.hasTouch();
+  const int inputStartY = inputFieldTop();
+  const bool stableKeys = hasTouch && kbRect.y > inputStartY && kbRect.y < pageHeight && !useLanguageKeyboard &&
+                          !cursorMode && !alternates.active();
+  const KeyLayer layer{stableKeys ? &layout : nullptr,
+                       renderer.getOrientation(),
+                       kbRect.x,
+                       kbRect.y,
+                       kbRect.width,
+                       kbRect.height,
+                       layoutLanguage,
+                       shifted,
+                       symbols,
+                       urlPanel};
+  const bool fieldOnly = stableKeys && paintedKeys == layer && keysPaintedAt == paintclock::painted();
 
   const int lineHeight = renderer.getLineHeight(UI_12_FONT_ID);
-  const int inputStartY = inputFieldTop();
   int inputHeight = 0;
 
   std::string displayText = displayTextForCurrentState();
@@ -880,6 +895,33 @@ void KeyboardEntryActivity::render(RenderLock&&) {
   const int textAreaWidth = content.width - 2 * effectiveMargin - toggleReserve;
   const int maxLineWidth = textAreaWidth;
   const bool centerText = centerInputText || metrics.keyboardCenteredText;
+  const int fullTextWidth = measureRange(displayText, 0, static_cast<int>(displayText.size()));
+  const bool singleLine = fullTextWidth <= maxLineWidth;
+  const int fieldTop = inputStartY - 4;
+  const int fieldBottom = inputStartY + lineHeight + metrics.verticalSpacing + 4;
+  // Fallback glyphs and combining marks can extend beyond the narrow band.
+  const bool narrowField = stableKeys && singleLine && fieldBottom <= kbRect.y &&
+                           std::all_of(displayText.begin(), displayText.end(),
+                                       [](unsigned char byte) { return byte >= 0x20 && byte <= 0x7e; });
+  const bool narrowUpdate = fieldOnly && narrowField && paintedNarrowField;
+  if (narrowUpdate) {
+    renderer.fillRect(0, fieldTop, pageWidth, fieldBottom - fieldTop, false);
+  } else {
+    if (fieldOnly) {
+      chrome::beginFrame();
+      renderer.fillRect(0, 0, pageWidth, kbRect.y, false);
+    } else {
+      renderer.clearScreen();
+    }
+    pixelui::drawHeader(renderer, title.c_str(), true);
+  }
+
+  const auto clip = renderer.getClipRect();
+  if (stableKeys) {
+    const int top = narrowUpdate ? std::max(clip[1], fieldTop) : clip[1];
+    const int bottom = std::min(clip[1] + clip[3], narrowUpdate ? fieldBottom : int(kbRect.y));
+    renderer.setClipRect(clip[0], top, clip[2], bottom - top);
+  }
 
   // The cursor spans a whole code point: a lone byte of it renders as a replacement glyph.
   // Masking is per byte, so displayText keeps text's length and the same span applies to both.
@@ -898,7 +940,7 @@ void KeyboardEntryActivity::render(RenderLock&&) {
     if (w > cursorCharWidth) cursorCharWidth = w;
   }
 
-  int lineStartIdx = inputWindowStart(displayText, maxLineWidth);
+  int lineStartIdx = singleLine ? 0 : inputWindowStart(displayText, maxLineWidth);
   const int firstVisible = lineStartIdx;
   int lastVisible = lineStartIdx, drawnLines = 0;
   const int visibleLines = inputFieldLines();
@@ -908,10 +950,12 @@ void KeyboardEntryActivity::render(RenderLock&&) {
   bool cursorDrawn = false;
 
   while (true) {
-    const int lineEndIdx = lineBreakEnd(displayText, lineStartIdx, maxLineWidth);
+    const int lineEndIdx =
+        singleLine ? static_cast<int>(displayText.size()) : lineBreakEnd(displayText, lineStartIdx, maxLineWidth);
     lastVisible = lineEndIdx;
-    const std::string lineText = displayText.substr(lineStartIdx, lineEndIdx - lineStartIdx);
-    textWidth = renderer.getTextAdvanceX(UI_12_FONT_ID, lineText.c_str(), EpdFontFamily::REGULAR);
+    const auto fragment = singleLine ? std::string{} : displayText.substr(lineStartIdx, lineEndIdx - lineStartIdx);
+    const auto& lineText = singleLine ? displayText : fragment;
+    textWidth = singleLine ? fullTextWidth : measureRange(displayText, lineStartIdx, lineEndIdx);
     {
       const bool isRtl = rangeIsRtl(displayText, lineStartIdx, lineEndIdx);
       const int lineStartX = centerText ? textLeft + (maxLineWidth - textWidth) / 2 : textLeft;
@@ -919,19 +963,17 @@ void KeyboardEntryActivity::render(RenderLock&&) {
       bool isCursorLine = false;
       if (!cursorDrawn && cursorPos >= lineStartIdx &&
           (isLastLine ? cursorPos <= lineEndIdx : cursorPos < lineEndIdx)) {
-        std::string beforeCursor;
-        if (isPassword && !passwordVisible && cursorMode) {
-          beforeCursor = std::string(cursorPos - lineStartIdx, '*');
-        } else {
-          beforeCursor = displayText.substr(lineStartIdx, cursorPos - lineStartIdx);
-        }
-        int beforeWidth = renderer.getTextAdvanceX(UI_12_FONT_ID, beforeCursor.c_str(), EpdFontFamily::REGULAR);
-        int throughCursorWidth = beforeWidth;
+        int beforeWidth = textWidth;
+        int throughCursorWidth = textWidth;
         int kernOffset = 0;
-        if (cursorCharBytes > 0) {
+        if (cursorPos < static_cast<size_t>(lineEndIdx)) {
+          const std::string beforeCursor = isPassword && !passwordVisible && cursorMode
+                                               ? std::string(cursorPos - lineStartIdx, '*')
+                                               : displayText.substr(lineStartIdx, cursorPos - lineStartIdx);
+          beforeWidth = renderer.getTextAdvanceX(UI_12_FONT_ID, beforeCursor.c_str(), EpdFontFamily::REGULAR);
           std::string beforeAndCursor = beforeCursor + displayCursorChar;
           throughCursorWidth = renderer.getTextAdvanceX(UI_12_FONT_ID, beforeAndCursor.c_str(), EpdFontFamily::REGULAR);
-          int charAdvance = renderer.getTextAdvanceX(UI_12_FONT_ID, displayCursorChar, EpdFontFamily::REGULAR);
+          const int charAdvance = renderer.getTextAdvanceX(UI_12_FONT_ID, displayCursorChar, EpdFontFamily::REGULAR);
           kernOffset = throughCursorWidth - beforeWidth - charAdvance;
         }
         if (isRtl) {
@@ -1040,12 +1082,13 @@ void KeyboardEntryActivity::render(RenderLock&&) {
     }
   }
 
-  const fui::Rect kbRect = keyboardRect();
-  const int keysHeight = keyboardKeysHeight(metrics, currentLayout().rowCount, mappedInput.hasTouch(),
-                                            renderer.getScreenWidth() > renderer.getScreenHeight(), kbRect.width);
-  const fui::Rect keysRect{kbRect.x, static_cast<int16_t>(kbRect.y + (kbRect.height - keysHeight) / 2), kbRect.width,
-                           static_cast<int16_t>(keysHeight)};
-
+  paintedNarrowField = narrowField;
+  if (narrowUpdate) {
+    renderer.setClipRect(clip[0], clip[1], clip[2], clip[3]);
+    renderer.displayWindow(0, fieldTop, pageWidth, fieldBottom - fieldTop);
+    keysPaintedAt = paintclock::painted();
+    return;
+  }
   const int tipsLh = renderer.getLineHeight(SMALL_FONT_ID);
   const int underlineBottom = inputStartY + inputHeight + lineHeight + metrics.verticalSpacing + 4;
   auto drawTip = [&](const char* tip, int y) { renderer.drawCenteredText(SMALL_FONT_ID, y, tip, true); };
@@ -1056,7 +1099,7 @@ void KeyboardEntryActivity::render(RenderLock&&) {
   // Reserve cursor instructions even for an empty field; passwords need a second row.
   const int tipsTop = underlineBottom + (cursorMode ? (isPassword ? 2 : 1) * tipsLh : 0);
 
-  if (mappedInput.hasTouch()) {
+  if (hasTouch) {
     if (kbRect.y - tipsTop >= 2 * tipsLh) drawTip(tr(STR_KEY_TOUCH_HINT), tipsTop + (kbRect.y - tipsTop - tipsLh) / 2);
   } else if (kbRect.y - tipsTop >= tipsHeight) {
     int y = tipsTop + (kbRect.y - tipsTop - tipsHeight) / 2;
@@ -1099,6 +1142,18 @@ void KeyboardEntryActivity::render(RenderLock&&) {
     }
   }
 
+  if (stableKeys) renderer.setClipRect(clip[0], clip[1], clip[2], clip[3]);
+  if (fieldOnly) {
+    // The keys and their published hit targets are still valid.
+    renderer.displayWindow(0, 0, pageWidth, kbRect.y);
+    keysPaintedAt = paintclock::painted();
+    return;
+  }
+
+  const int keysHeight = keyboardKeysHeight(metrics, layout.rowCount, hasTouch, pageWidth > pageHeight, kbRect.width);
+  const fui::Rect keysRect{kbRect.x, static_cast<int16_t>(kbRect.y + (kbRect.height - keysHeight) / 2), kbRect.width,
+                           static_cast<int16_t>(keysHeight)};
+
   // The FreeInkUI keyboard draws the keys and registers their hit rects into
   // `interactions`; loop() (the main task) routes touch snapshots against
   // that table via TouchHoldRouter, which reads the published generation
@@ -1114,29 +1169,27 @@ void KeyboardEntryActivity::render(RenderLock&&) {
   fui::Frame<80> frame(target, device, noInput, interactions);
 
   fui::KeyboardProps props;
-  const fui::KeyboardLayout& layout = currentLayout();
   props.layout = &layout;
   props.keyAction = ACTION_KEY;  // one action id; loop() dispatches on key value
   props.okLabel = tr(STR_OK_BUTTON);
   // Match the label to the layer the mode key leads back from: the symbols
   // layer and the URL snippet panel both label it "abc" in the static tables.
-  props.modeLabel =
-      (symbols || (inputType == InputType::Url && urlPanel)) ? tr(STR_KEY_MODE_ABC) : tr(STR_KEY_MODE_SYMBOLS);
+  props.modeLabel = (layer.symbols || (inputType == InputType::Url && layer.urlPanel)) ? tr(STR_KEY_MODE_ABC)
+                                                                                       : tr(STR_KEY_MODE_SYMBOLS);
   props.inputMask = static_cast<uint16_t>(fui::InputTouch | fui::InputLongPress);
-  props.selectedIndex = (cursorMode || mappedInput.hasTouch()) ? -1 : static_cast<int16_t>(selectedLogicalIndex());
-  props.labelText.font = renderer.getScreenWidth() > renderer.getScreenHeight() ? fui::GfxRendererTarget::FONT_SMALL
-                                                                                : fui::GfxRendererTarget::FONT_BODY;
+  props.selectedIndex = (cursorMode || hasTouch) ? -1 : static_cast<int16_t>(selectedLogicalIndex());
+  props.labelText.font =
+      pageWidth > pageHeight ? fui::GfxRendererTarget::FONT_SMALL : fui::GfxRendererTarget::FONT_BODY;
   props.altText.font = fui::GfxRendererTarget::FONT_SMALL;
   props.controlText.font = props.labelText.font;
   props.gap = props.rowGap = static_cast<int16_t>(keyboardGap(metrics));
-  if (urlPanel) props.uniformKeyWidth = false;  // Shortcut rows stretch independently.
-  if (!mappedInput.hasTouch()) props.background = fui::Paint::none();
+  if (layer.urlPanel) props.uniformKeyWidth = false;  // Shortcut rows stretch independently.
+  if (!hasTouch) props.background = fui::Paint::none();
   props.background = fui::Paint::solid(fui::Color::White);
   frame.target().fill(kbRect, props.background);
-  const int bottomEdge =
-      mappedInput.hasTouch() ? renderer.getScreenHeight() : renderer.getScreenHeight() - metrics.buttonHintsHeight;
+  const int bottomEdge = hasTouch ? pageHeight : pageHeight - metrics.buttonHintsHeight;
   props.bottomHitOverflow = static_cast<int16_t>(std::max(0, bottomEdge - keysRect.bottom()));
-  keyboardview::style(props, shifted, symbols || urlPanel, layoutLanguage);
+  keyboardview::style(props, layer.shifted, layer.symbols || layer.urlPanel, layer.language);
   fui::keyboard(frame, keysRect, props);
   const auto popupBounds = UITheme::getContentArea(renderer);
   alternates.draw(frame, fui::makeRect(popupBounds.x, popupBounds.y, popupBounds.width, popupBounds.height), ACTION_KEY,
@@ -1154,6 +1207,8 @@ void KeyboardEntryActivity::render(RenderLock&&) {
   GUI.drawSideButtonHints(renderer, ">", "<");
 
   renderer.displayBuffer();
+  paintedKeys = layer;
+  keysPaintedAt = paintclock::painted();
 }
 
 void KeyboardEntryActivity::onComplete(std::string text) {

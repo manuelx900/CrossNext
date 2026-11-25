@@ -52,18 +52,21 @@ std::string KOReaderDocumentId::calculate(const std::string& filePath) {
 }
 
 std::string KOReaderDocumentId::calculate(const std::string& filePath, uint8_t* buffer, size_t bytes) {
-  if (!buffer || bytes < CHUNK_SIZE) {
-    LOG_ERR("KODoc", "Invalid hash scratch buffer");
-    return "";
-  }
   HalFile file;
   if (!Storage.openFileForRead("KODoc", filePath, file)) {
     LOG_DBG("KODoc", "Failed to open file: %s", filePath.c_str());
     return "";
   }
 
+  return calculate(file, buffer, bytes);
+}
+
+std::string KOReaderDocumentId::calculate(HalFile& file, uint8_t* buffer, size_t bytes) {
+  if (!buffer || bytes < CHUNK_SIZE) {
+    LOG_ERR("KODoc", "Invalid hash scratch buffer");
+    return "";
+  }
   const size_t fileSize = file.fileSize();
-  LOG_DBG("KODoc", "Calculating hash for file: %s (size: %zu)", filePath.c_str(), fileSize);
 
   // Initialize MD5 builder
   MD5Builder md5;

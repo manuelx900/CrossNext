@@ -141,7 +141,7 @@ void ActivityManager::renderTaskLoop() {
     RenderLock lock;
     if (!repaint) {
       Activity* owner = idleWorkOwner.load();
-      if (owner && currentActivity.get() == owner && !idleWorkCancelled.load()) {
+      if (!sleepPreviewActive && owner && currentActivity.get() == owner && !idleWorkCancelled.load()) {
         HalPowerManager::Lock powerLock;
         owner->runIdleWork();
         idleWorkOwner.compare_exchange_strong(owner, nullptr);
@@ -151,7 +151,7 @@ void ActivityManager::renderTaskLoop() {
       continue;
     }
     idleWorkOwner.store(nullptr);
-    if (currentActivity) {
+    if (!sleepPreviewActive && currentActivity) {
       HalPowerManager::Lock powerLock;  // Ensure we don't go into low-power mode while rendering
       // Night mode is a global output polarity applied to every activity.
       // The sleep screen forces normal polarity itself (SleepActivity).
@@ -222,7 +222,7 @@ void ActivityManager::loop() {
   mappedInput.setEdgeBackEnabled(!currentActivity || currentActivity->allowsEdgeBack());
   mappedInput.settleReleaseGate();
 
-  if (mappedInput.consumeSuppressedRelease()) return;
+  if (mappedInput.consumeSuppressedRelease() && !(pendingActivity && pendingActivity->name == "Sleep")) return;
 
   if (currentActivity && currentActivity->requiresExclusiveStorageLoop()) {
     currentActivity->loop();
@@ -270,8 +270,11 @@ void ActivityManager::loop() {
     const Activity* next = pendingActivity            ? pendingActivity.get()
                            : !stackActivities.empty() ? stackActivities.back().get()
                                                       : nullptr;
-    const bool keepRadio = next && next->preservesRemoteConnection() && !next->requiresExclusiveStorageLoop();
-    if (!sleeping && !bleturner::beforeScreenChange(0, keepRadio)) {
+    const bool returningHome = pendingAction == PendingAction::Pop && !next;
+    const bool keepRadio =
+        returningHome || (next && next->preservesRemoteConnection() && !next->requiresExclusiveStorageLoop());
+    const bool allowPendingStart = returningHome || (keepRadio && next->canEnterWhileRemoteStarts());
+    if (!sleeping && !bleturner::beforeScreenChange(0, keepRadio, allowPendingStart)) {
       return;
     }
     if (pendingAction == PendingAction::Pop) {
@@ -487,7 +490,7 @@ void ActivityManager::goToPlugins(bool showOpds) {
       std::make_unique<PluginCatalogActivity>(renderer, mappedInput, showOpds, PluginCatalogActivity::Origin::Home));
 }
 
-void ActivityManager::goToReader(std::string path, const bool allowFastInitialRefresh) {
+void ActivityManager::goToReader(std::string path, const bool allowFastInitialRefresh, const bool bookOrbitWakeSync) {
   if (path.empty()) {
     goToFileBrowser("/");
     return;
@@ -503,15 +506,21 @@ void ActivityManager::goToReader(std::string path, const bool allowFastInitialRe
     return;
   }
 
-  auto activity = ReaderActivity::create(renderer, mappedInput, std::move(path), allowFastInitialRefresh);
+  auto activity =
+      ReaderActivity::create(renderer, mappedInput, std::move(path), allowFastInitialRefresh, bookOrbitWakeSync);
   if (activity) {
     replaceActivity(std::move(activity));
   }
 }
 
-void ActivityManager::goToSleep(bool fromTimeout) {
-  replaceActivity(std::make_unique<SleepActivity>(renderer, mappedInput, fromTimeout));
+void ActivityManager::goToSleep(bool fromTimeout, std::unique_ptr<SleepActivity> preview) {
+  const bool usedPreview = static_cast<bool>(preview);
+  replaceActivity(preview ? std::move(preview) : std::make_unique<SleepActivity>(renderer, mappedInput, fromTimeout));
   loop();  // Important: sleep screen must be rendered immediately, the caller will go to sleep right after this returns
+  if (usedPreview) {
+    RenderLock lock;
+    sleepPreviewActive = false;
+  }
 }
 
 void ActivityManager::goToBoot() { replaceActivity(std::make_unique<BootActivity>(renderer, mappedInput)); }
@@ -625,6 +634,11 @@ bool ActivityManager::isRemoteControlShown() const {
   return isRemoteControlContext() && paintedVisit.load(std::memory_order_acquire) == screenVisit;
 }
 
+bool ActivityManager::isPassiveRemoteContext() const {
+  return pendingAction == PendingAction::None && currentActivity && currentActivity->retainsPassiveRemoteLink() &&
+         !currentActivity->requiresExclusiveStorageLoop();
+}
+
 bool ActivityManager::remoteRadioReady() const {
   RenderLock lock(RenderLock::Mode::Try);
   if (!lock.ownsLock()) return false;
@@ -730,6 +744,31 @@ ScreenshotInfo ActivityManager::getScreenshotInfo() const {
 void ActivityManager::noteUpdateRequested() {
   uint32_t expected = 0;
   updateRequestedAtMs.compare_exchange_strong(expected, static_cast<uint32_t>(millis()));
+}
+
+void ActivityManager::syncBookOrbitBeforeSleep(const bookorbit::SyncCallbacks& callbacks) {
+  if (currentActivity && currentActivity->syncBookOrbitBeforeSleep(callbacks)) return;
+  for (auto it = stackActivities.rbegin(); it != stackActivities.rend(); ++it) {
+    if ((*it)->syncBookOrbitBeforeSleep(callbacks)) return;
+  }
+}
+
+bool ActivityManager::showBookOrbitSleepPreview(SleepActivity& screen, const Epub& book) {
+  idleWorkCancelled.store(true);
+  RenderLock lock;
+  sleepPreviewActive = screen.showBookOrbitPreview(book);
+  return sleepPreviewActive;
+}
+
+void ActivityManager::hideBookOrbitSleepPopup(SleepActivity& screen) {
+  RenderLock lock;
+  screen.hideBookOrbitPopup();
+}
+
+void ActivityManager::cancelBookOrbitSleepPreview(SleepActivity& screen) {
+  RenderLock lock;
+  screen.restorePreviewFrame();
+  sleepPreviewActive = false;
 }
 
 void ActivityManager::prepareForSleep() {

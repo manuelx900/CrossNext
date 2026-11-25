@@ -142,8 +142,9 @@ struct Scene {
   bool bookIndexing;  // the book still builds its index in the background
   bool storageBusy;   // USB drive or file transfer owns the card
   bool wifiOn;
-  bool sleeping;  // on the way to sleep
-  bool localKey;  // a page key (or touch) of the device was released this pass
+  bool sleeping;                   // on the way to sleep
+  bool localKey;                   // a page key (or touch) of the device was released this pass
+  bool passiveRemoteLink = false;  // retain a running radio with the idle timeout and no input routing
 };
 
 void begin(const Host& host, Config& config);
@@ -152,9 +153,9 @@ void requestConnect();
 bool tick(const Scene& scene);
 // False: the radio is still stopping (or a start is in flight); call again next pass before
 // changing screens. endTimeoutMs: how long the SDK may wait for the stack to stop this call.
-// nextIsReader: the screen about to come is a book. A radio that came up at Home (S3 profile) is kept for
-// it, so the book finds the stack already in and the heap Home had.
-bool beforeScreenChange(uint32_t endTimeoutMs = 0, bool nextIsReader = false);
+// S3 transitions with keepRadio retain the running stack. Compatible menus can
+// also let an existing start continue while they paint.
+bool beforeScreenChange(uint32_t endTimeoutMs = 0, bool keepRadio = false, bool allowPendingStart = false);
 // Stops the radio now, waiting up to timeoutMs: a start in flight is cancelled or let finish, then
 // the stack stops. False: it did not stop in time. Main loop. A host that covers the page with a
 // sheet calls it first, and reports the book as Elsewhere while the sheet is up.
@@ -213,9 +214,13 @@ struct Peer {
 bool switchOn();
 // The user turned it off: clears the reasons and stops, waiting up to 1 s.
 bool switchOff();
-// Connection work while the settings screen is open. True when it changed the Config (a remote
-// being paired linked and became the chosen one): the host saves it.
+// Connection work while the settings screen is open. The host saves on a Config change.
 bool service();
+// Records the linked remote after pairing, or a bonded link when no choice was saved.
+// Does not poll the radio. Returns true when it changed the Config.
+bool rememberLinkedRemote();
+bool hasPendingRemoteSelectionSave();
+void remoteSelectionSaved();
 bool takePairingPasskey(uint32_t& out);
 // Scans for durationMs; 0 stops a scan.
 void scan(uint32_t durationMs);

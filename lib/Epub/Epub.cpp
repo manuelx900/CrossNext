@@ -65,7 +65,7 @@ bool Epub::findContentOpfFile(std::string* contentOpfFile, ZipFile* sharedZip) c
 }
 
 bool Epub::parseContentOpf(BookMetadataCache::BookMetadata& bookMetadata, const bool writeSpineEntries,
-                           const bool metadataOnly, ZipFile* sharedZip) {
+                           const bool metadataOnly, ZipFile* sharedZip, bool* noCoverDeclared) {
   std::string contentOpfFilePath;
   if (!findContentOpfFile(&contentOpfFilePath, sharedZip)) {
     LOG_ERR("EBP", "Could not find content.opf in zip");
@@ -110,6 +110,7 @@ bool Epub::parseContentOpf(BookMetadataCache::BookMetadata& bookMetadata, const 
   }
 
   bookMetadata.coverItemHref = opfParser.coverItemHref;
+  if (noCoverDeclared) *noCoverDeclared = bookMetadata.coverItemHref.empty() && opfParser.guideCoverPageHref.empty();
 
   // Guide-based cover fallback: if no cover found via metadata/properties,
   // try extracting the image reference from the guide's cover page XHTML
@@ -969,13 +970,43 @@ bool Epub::generateThumbBmp(int height) const {
   return generateThumbBmpForCover(height, bookMetadataCache->coreMetadata.coverItemHref);
 }
 
-bool Epub::generateThumbBmpFromSource(int height) {
+namespace {
+constexpr char NO_COVER_FILE[] = "/no-cover-v1.bin";
+constexpr uint32_t NO_COVER_MAGIC = 0x3156434e;
+struct NoCoverStamp {
+  uint64_t size;
+  uint32_t modified;
+  uint32_t magic;
+};
+}  // namespace
+
+bool Epub::knownMissingCover(const std::string& filepath, std::string_view cachePath) {
+  if (!FsHelpers::hasEpubExtension(filepath) || cachePath.empty()) return false;
+  NoCoverStamp stamp{};
+  {
+    std::string markerPath(cachePath);
+    markerPath += NO_COVER_FILE;
+    auto marker = Storage.open(markerPath.c_str());
+    if (!marker || marker.fileSize() != sizeof(stamp) ||
+        marker.read(&stamp, sizeof(stamp)) != static_cast<int>(sizeof(stamp)) || stamp.magic != NO_COVER_MAGIC ||
+        !stamp.modified)
+      return false;
+  }
+  auto source = Storage.open(filepath.c_str());
+  return source && source.fileSize64() == stamp.size && source.modificationTime() == stamp.modified;
+}
+
+bool Epub::generateThumbBmpFromSource(int height, bool* generated) {
+  if (generated) *generated = false;
   if (Storage.exists(getThumbBmpPath(height).c_str())) return true;
+  if (knownMissingCover()) return false;
   if (Txt::isTxtOrMd(filepath)) {
     std::string companionCover = Txt::findCompanionCoverImage(filepath);
     if (companionCover.empty()) return false;
     setupCacheDir();
-    return generateThumbBmpForCover(height, companionCover);
+    const bool created = generateThumbBmpForCover(height, companionCover);
+    if (generated) *generated = created;
+    return created;
   }
   // Parser input and metadata outlive parsing but exceed the small task stack budget.
   auto metadata = makeUniqueNoThrow<BookMetadataCache::BookMetadata>();
@@ -984,16 +1015,35 @@ bool Epub::generateThumbBmpFromSource(int height) {
     LOG_ERR("EBP", "OOM: cover metadata");
     return false;
   }
+  const auto resources = Storage.resourceRevision();
+  const auto media = Storage.mediaRevision();
   if (!zip->open()) {
     LOG_ERR("EBP", "Could not open EPUB for cover metadata");
     return false;
   }
-  if (!parseContentOpf(*metadata, /*writeSpineEntries=*/false, /*metadataOnly=*/false, zip.get())) return false;
+  bool noCoverDeclared = false;
+  if (!parseContentOpf(*metadata, /*writeSpineEntries=*/false, /*metadataOnly=*/false, zip.get(), &noCoverDeclared))
+    return false;
+  if (noCoverDeclared) {
+    const NoCoverStamp stamp{zip->sourceSize(), zip->sourceModificationTime(), NO_COVER_MAGIC};
+    zip.reset();
+    if (stamp.modified && resources == Storage.resourceRevision() && media == Storage.mediaRevision()) {
+      setupCacheDir();
+      HalFile marker;
+      if (Storage.openDerivedCacheForWrite("EBP", (cachePath + NO_COVER_FILE).c_str(), marker) &&
+          marker.write(&stamp, sizeof(stamp)) != sizeof(stamp))
+        LOG_ERR("EBP", "Failed to cache missing cover");
+    }
+    return false;
+  }
+  if (metadata->coverItemHref.empty()) return false;
   zip.reset();
   // The cover of a protected book is encrypted like everything else.
   if (!decryptor && !openProtection()) return false;
   setupCacheDir();
-  return generateThumbBmpForCover(height, metadata->coverItemHref);
+  const bool created = generateThumbBmpForCover(height, metadata->coverItemHref);
+  if (generated) *generated = created;
+  return created;
 }
 
 bool Epub::generateThumbBmpForCover(int height, const std::string& coverImageHref) const {

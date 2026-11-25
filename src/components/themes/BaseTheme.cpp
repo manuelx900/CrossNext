@@ -789,6 +789,11 @@ Rect BaseTheme::drawLoadingScreen(const GfxRenderer& renderer, const char* messa
 }
 
 Rect BaseTheme::drawPopup(const GfxRenderer& renderer, const char* message) const {
+  return drawPopup(renderer, message, nullptr, nullptr);
+}
+
+Rect BaseTheme::drawPopup(const GfxRenderer& renderer, const char* message, bool (*captureBackdrop)(const void*, Rect),
+                          const void* context) const {
   const auto& metrics = UITheme::getInstance().getMetrics();
   const int marginX = metrics.popupMarginX;
   const int marginY = metrics.popupMarginY;
@@ -807,6 +812,9 @@ Rect BaseTheme::drawPopup(const GfxRenderer& renderer, const char* message) cons
                       renderer.getScreenHeight() * metrics.popupTopOffsetRatio, chrome::headerHeight);
   const auto& box = popup.body;
   const int x = box.x, y = box.y, w = box.width, h = box.height;
+  if (captureBackdrop && !captureBackdrop(context, Rect{x - frameThickness, y - frameThickness, w + 2 * frameThickness,
+                                                        h + 2 * frameThickness}))
+    return Rect{};
 
   if (chrome::lightHeader) {
     target.fill(box, lightui::paper, 6);

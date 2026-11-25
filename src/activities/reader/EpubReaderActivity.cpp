@@ -29,6 +29,7 @@
 #include <iterator>
 #include <limits>
 #include <optional>
+#include <string_view>
 
 #include "../../util/BookmarkFile.h"
 #include "BookmarkEntry.h"
@@ -45,8 +46,10 @@
 #include "EpubReaderPercentSelectionActivity.h"
 #include "EpubReaderUtils.h"
 #include "KOReaderCredentialStore.h"
+#include "KOReaderDocumentId.h"
 #include "KOReaderSyncActivity.h"
 #include "MappedInputManager.h"
+#include "ProgressComparison.h"
 #include "ProgressMapper.h"
 #include "QrDisplayActivity.h"
 #include "ReaderActivity.h"
@@ -58,6 +61,8 @@
 #include "SilentRestart.h"
 #include "activities/network/WifiSelectionActivity.h"
 #include "activities/settings/TextSettingsActivity.h"
+#include "apps_local/bookorbit/BookOrbit.h"
+#include "apps_local/bookorbit/BookOrbitPending.h"
 #include "apps_local/bookprep/OpenedBookPreparationActivity.h"
 #include "apps_local/power/FrontlightSchedule.h"
 #include "apps_local/readertext/BookSearchActivity.h"
@@ -69,6 +74,7 @@
 #include "clippings/ClippingsManager.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
+#include "network/WifiPowerSaveGuard.h"
 #include "util/BookmarkUtil.h"
 #include "util/ButtonNavigator.h"
 #include "util/DictionaryRegistry.h"
@@ -88,6 +94,8 @@ constexpr int PAGE_TURN_RATES[] = {1, 1, 3, 6, 12};
 constexpr size_t initialBookmarkCacheCapacity = 16;
 constexpr float bookmarkProgressEpsilon = 0.0001f;
 constexpr int CLIP_SELECTION_PAGE_WINDOW = 3;
+constexpr uint32_t BOOKORBIT_WAKE_READY_MS = 8000;
+constexpr uint32_t BOOKORBIT_WAKE_SYNC_MS = 18000;
 
 Rect clippingWordRect(const GfxRenderer& renderer, const int fontId, const PageLine& line, const uint16_t i,
                       const int top, const int left, const int wordWidth) {
@@ -695,12 +703,12 @@ void EpubReaderActivity::openTextSettings() {
 void EpubReaderActivity::loop() {
   int inputX = 0, inputY = 0;
   using Button = MappedInputManager::Button;
-  if (mappedInput.isScreenTouchHeld(inputX, inputY) || mappedInput.wasScreenTouchReleased() ||
-      mappedInput.hasRemoteClick() || mappedInput.isPressed(Button::PageForward) ||
-      mappedInput.isPressed(Button::PageBack) || mappedInput.isPressed(Button::Back) ||
-      mappedInput.isPressed(Button::Confirm) || mappedInput.isPressed(Button::Left) ||
-      mappedInput.isPressed(Button::Right) || mappedInput.isPressed(Button::Power))
-    prefetchInterrupted.store(true);
+  const bool readerInput = mappedInput.isScreenTouchHeld(inputX, inputY) || mappedInput.wasScreenTouchReleased() ||
+                           mappedInput.hasRemoteClick() || mappedInput.isPressed(Button::PageForward) ||
+                           mappedInput.isPressed(Button::PageBack) || mappedInput.isPressed(Button::Back) ||
+                           mappedInput.isPressed(Button::Confirm) || mappedInput.isPressed(Button::Left) ||
+                           mappedInput.isPressed(Button::Right);
+  if (readerInput || mappedInput.isPressed(Button::Power)) prefetchInterrupted.store(true);
   if (loadFailurePopup.isActive()) {
     loadFailurePopup.handleInput(mappedInput, [this] { requestUpdate(); });
     return;
@@ -721,6 +729,9 @@ void EpubReaderActivity::loop() {
     requestUpdate();
     return;
   }
+
+  if (bookOrbitWakePending.load(std::memory_order_relaxed) && runBookOrbitWakeSync(readerInput)) return;
+  if (!readerInput) flushBookOrbitPending();
 
   {
     RenderLock lock(RenderLock::Mode::Try);
@@ -1115,8 +1126,12 @@ void EpubReaderActivity::jumpToPercent(int percent) {
 }
 
 void EpubReaderActivity::applyProgressChange(const ProgressChangeResult& sync) {
+  RenderLock lock;
+  applyProgressChangeLocked(sync);
+}
+
+void EpubReaderActivity::applyProgressChangeLocked(const ProgressChangeResult& sync) {
   if (sync.hasVisibleTextOffset && sync.spineIndex >= 0 && sync.spineIndex < epub->getSpineItemsCount()) {
-    RenderLock lock;
     clearDeferredReposition();
     const auto page = section && currentSpineIndex == sync.spineIndex
                           ? section->getPageForVisibleTextOffset(sync.visibleTextOffset)
@@ -1148,7 +1163,6 @@ void EpubReaderActivity::applyProgressChange(const ProgressChangeResult& sync) {
     targetPage = fallback.pageNumber;
   }
 
-  RenderLock lock;
   clearDeferredReposition();
 
   if (currentSpineIndex != targetSpineIndex) {
@@ -1265,6 +1279,7 @@ void EpubReaderActivity::onReaderMenuConfirm(EpubReaderMenuActivity::MenuAction 
         RenderLock lock;
         rememberContentsPosition(origin);
         clearDeferredReposition();
+        bookOrbitLayoutReposition = false;
         currentSpineIndex = chapterResult.spineIndex;
         pendingAnchor = chapterResult.anchor;
         nextPageNumber = 0;
@@ -1387,8 +1402,9 @@ void EpubReaderActivity::onReaderMenuConfirm(EpubReaderMenuActivity::MenuAction 
       requestUpdate();
       break;
     }
-    case EpubReaderMenuActivity::MenuAction::SYNC: {
-      launchKOReaderSync();
+    case EpubReaderMenuActivity::MenuAction::SYNC:
+    case EpubReaderMenuActivity::MenuAction::BOOK_ORBIT_SYNC: {
+      launchKOReaderSync(action == EpubReaderMenuActivity::MenuAction::BOOK_ORBIT_SYNC);
       break;
     }
     case EpubReaderMenuActivity::MenuAction::BOOKMARKS: {
@@ -1431,8 +1447,8 @@ unsigned long EpubReaderActivity::confirmLongPressThreshold() const {
   }
 }
 
-bool EpubReaderActivity::launchKOReaderSync() {
-  if (!KOREADER_STORE.hasCredentials()) return false;
+bool EpubReaderActivity::launchKOReaderSync(bool bookOrbit) {
+  if (!(bookOrbit ? bookorbit::Store::get().authenticated() : KOREADER_STORE.hasCredentials())) return false;
 
   RenderLock renderLock;
 
@@ -1471,12 +1487,17 @@ bool EpubReaderActivity::launchKOReaderSync() {
     }
     // The destructor can no longer save the back-stack once epub is gone.
     if (footnoteDepth > 0) saveLinkStack();
-    epub.reset();
   }
-  LOG_DBG("KOSync", "Epub released (heap after: %u)", (unsigned)ESP.getFreeHeap());
-
-  activityManager.replaceActivity(std::make_unique<KOReaderSyncActivity>(
-      renderer, mappedInput, savedEpubPath, localPos, std::move(localKoPos), std::move(localChapterName)));
+  auto sync = makeUniqueNoThrow<KOReaderSyncActivity>(
+      renderer, mappedInput, savedEpubPath, localPos, std::move(localKoPos), std::move(localChapterName), bookOrbit,
+      bookOrbit && !formatReflowPending ? presentedTextSpec : std::nullopt);
+  if (!sync) {
+    LOG_ERR("KOSync", "OOM: sync activity");
+    requestUpdate();
+    return true;
+  }
+  epub.reset();
+  activityManager.replaceActivity(std::move(sync));
   return true;
 }
 
@@ -1528,6 +1549,7 @@ bool EpubReaderActivity::pageTurn(bool isForwardTurn) {
   if (!section || formatReflowPending) return false;
   clearDeferredReposition();
   const auto turned = [this, requestedAt] {
+    bookOrbitLayoutReposition = false;
     finalPagePresented = false;
     performance::begin(performance::Operation::PageTurn, this, requestedAt);
     return true;
@@ -1771,6 +1793,7 @@ void EpubReaderActivity::onExit() {
   }
   clearPrefetchedPage();
   flushFormatProgress();
+  flushBookOrbitPending(true);
   ReaderActivity::onExit();
   if (epub)
     if (auto* css = epub->getCssParser()) css->retainForReader(false);
@@ -1778,6 +1801,7 @@ void EpubReaderActivity::onExit() {
 
 void EpubReaderActivity::rememberReflowTarget() {
   if (!section || formatReflowPending) return;
+  bookOrbitLayoutReposition = true;
   rememberCurrentContentOffset();
   cachedSpineIndex = currentSpineIndex;
   cachedChapterTotalPageCount = section->pageCount;
@@ -1791,6 +1815,7 @@ bool EpubReaderActivity::flushFormatProgress() {
     LOG_ERR("ERS", "Format progress remains unsaved");
     return false;
   }
+  noteBookOrbitPositionSaved(p.localChange);
   lastSavedSpineIndex = p.spine;
   lastSavedPage = p.page;
   lastSavedPageCount = p.count;
@@ -1806,7 +1831,276 @@ void EpubReaderActivity::prepareForSleep() {
       LOG_ERR("ERS", "Text preferences remain unsaved before sleep");
   }
   flushFormatProgress();
+  flushBookOrbitPending(true);
   ReaderActivity::prepareForSleep();
+}
+
+bool EpubReaderActivity::runBookOrbitWakeSync(const bool readerInput) {
+  using Button = MappedInputManager::Button;
+  if (readerInput || millis() - bookOrbitWakeArmedAt >= BOOKORBIT_WAKE_READY_MS) {
+    bookOrbitWakePending.store(false, std::memory_order_relaxed);
+    return false;
+  }
+  if (mappedInput.isPressed(Button::Power)) return false;
+  {
+    RenderLock lock(RenderLock::Mode::Try);
+    if (!lock.ownsLock()) return false;
+    if (isAtEndOfBook()) {
+      bookOrbitWakePending.store(false, std::memory_order_relaxed);
+      return false;
+    }
+    if (!section || !presentationComplete()) return false;
+    if (section->isBuilding() &&
+        (bookOrbitWakeWaitForLayout || section->currentPage < 0 || section->currentPage >= section->pageCount ||
+         !section->getVisibleTextOffsetForPage(static_cast<uint16_t>(section->currentPage)))) {
+      bookOrbitWakeWaitForLayout = true;
+      return false;
+    }
+  }
+
+  if (bleturner::holdsHeap()) {
+    bookOrbitWakePending.store(false, std::memory_order_relaxed);
+    return false;
+  }
+  struct WakeProgress {
+    EpubReaderActivity& reader;
+    uint32_t startedAt;
+    bool cancelled = false;
+    bool shown = false;
+  };
+  WakeProgress progress{*this, static_cast<uint32_t>(millis())};
+  const bookorbit::SyncCallbacks callbacks{
+      [&progress] {
+        auto& input = progress.reader.mappedInput;
+        // The normal activity loop handles this action after the network unwinds.
+        input.update(/*deferHomeButtonAction=*/true);
+        const auto now = millis();
+        const bool back = input.wasPressed(Button::Back);
+        if (back) input.suppressNextRelease(Button::Back);
+        progress.cancelled = progress.cancelled || back || input.wasPressed(Button::Power) ||
+                             input.nextActionDelayMs(now, 1) == 0 || now - progress.startedAt >= BOOKORBIT_WAKE_SYNC_MS;
+        return progress.cancelled;
+      },
+      [](void* context, const Epub&) {
+        auto& progress = *static_cast<WakeProgress*>(context);
+        RenderLock lock(progress.reader);
+        progress.reader.pageBufferStale.store(true);
+        GUI.drawPopup(progress.reader.renderer, tr(STR_BOOKORBIT_SYNCING_ON_SLEEP));
+        progress.shown = true;
+      },
+      &progress};
+  syncBookOrbit(callbacks, bookorbit::SyncTrigger::Wake);
+  bookOrbitWakePending.store(false, std::memory_order_relaxed);
+  if (progress.shown) requestUpdate();
+  return true;
+}
+
+bool EpubReaderActivity::isNewBookOrbitPosition(int spine, int page) const {
+  if (bookOrbitApplyingRemote || bookOrbitLayoutReposition || formatReflowPending) return false;
+  const int previousSpine = formatProgress ? formatProgress->spine : lastSavedSpineIndex;
+  const int previousPage = formatProgress ? formatProgress->page : lastSavedPage;
+  return previousSpine >= 0 && (previousSpine != spine || previousPage != page);
+}
+
+void EpubReaderActivity::noteBookOrbitPositionSaved(bool localChange) {
+  if (localChange) bookOrbitPositionRevision.fetch_add(1, std::memory_order_relaxed);
+}
+
+void EpubReaderActivity::flushBookOrbitPending(bool retry) {
+  const auto revision = bookOrbitPositionRevision.load(std::memory_order_relaxed);
+  if (bookOrbitRecordedRevision == revision && !(retry && bookOrbitPendingRetry)) return;
+  bookOrbitRecordedRevision = revision;
+  if (bookOrbitPendingStored || !bookorbit::Store::get().authenticated()) return;
+  bookOrbitPendingStored = bookorbit::markPending(bookPath);
+  bookOrbitPendingRetry = !bookOrbitPendingStored;
+}
+
+void EpubReaderActivity::acknowledgeBookOrbitPosition(uint32_t revision) {
+  // Input is paused while syncing. Keep a newer save queued if rendering
+  // still managed to commit a different position before confirmation.
+  RenderLock lock;
+  if (revision != bookOrbitPositionRevision.load(std::memory_order_relaxed)) return;
+  bookOrbitRecordedRevision = revision;
+  bookOrbitPendingRetry = false;
+  bookOrbitPendingStored = !bookorbit::clearPending(bookPath);
+}
+
+bool EpubReaderActivity::syncBookOrbitBeforeSleep(const bookorbit::SyncCallbacks& callbacks) {
+  syncBookOrbit(callbacks, bookorbit::SyncTrigger::Sleep);
+  return true;
+}
+
+void EpubReaderActivity::syncBookOrbit(const bookorbit::SyncCallbacks& callbacks,
+                                       const bookorbit::SyncTrigger trigger) {
+  const bool waking = trigger == bookorbit::SyncTrigger::Wake;
+  const auto& cancelled = callbacks.cancelled;
+  auto& account = bookorbit::Store::get();
+  if (!(waking ? account.syncOnWake : account.syncOnSleep) || !account.configured() || cancelled()) return;
+
+  std::string document;
+  bookorbit::Baseline baseline;
+  bookorbit::Position local;
+  CrossPointPosition readingPosition{};
+  bool hasBaseline = false;
+  bool atLandingPage = false;
+  bool unfinishedLayout = false;
+  uint32_t positionRevision;
+  {
+    RenderLock lock;
+    if (!epub || !section || (!waking && section->isBuilding()) || currentSpineIndex < 0 ||
+        currentSpineIndex >= epub->getSpineItemsCount() || !flushFormatProgress())
+      return;
+    unfinishedLayout = section->isBuilding();
+    readingPosition = getCurrentPosition();
+    positionRevision = bookOrbitPositionRevision.load(std::memory_order_relaxed);
+    // A visible page can have an exact locator before the rest of its chapter has been laid out.
+    if (unfinishedLayout && !readingPosition.hasVisibleTextOffset) return;
+    document = KOReaderDocumentId::calculate(epub->getPath());
+    if (document.empty()) return;
+    hasBaseline = bookorbit::readBaseline(document, baseline);
+    if (hasBaseline && readingPosition.spineIndex == baseline.landing.spine) {
+      const auto page =
+          baseline.landing.offset ? section->getPageForVisibleTextOffset(*baseline.landing.offset) : std::nullopt;
+      atLandingPage = readingPosition.pageNumber == (page ? *page : baseline.landing.page);
+    }
+    ImageBlock::releaseRenderCache();
+    clearPrefetchedPage();
+    if (auto* cache = renderer.getFontCacheManager()) cache->releaseSdFontCaches();
+    auto position = ProgressMapper::toSavedProgress(epub, readingPosition);
+    local = {std::move(position.xpath), position.percentage};
+  }
+
+  if (!(local.fraction >= 0 && local.fraction <= 1) || cancelled()) return;
+  bookorbit::SyncConnection wifi;
+  if (!wifi.connect(callbacks, *epub)) return;
+  WifiPowerSaveGuard powerSave;
+  const auto identity = bookorbit::readServerIdentity(account, cancelled);
+  if (cancelled()) return;
+  if (identity.status == bookorbit::IdentityStatus::Unavailable) {
+    LOG_INF("ORBIT", "Could not verify server identity");
+    return;
+  }
+  const bool matches = hasBaseline && bookorbit::matchesBaseline(baseline, identity, account.url);
+  if (hasBaseline && !baseline.instanceId.empty() && !matches) {
+    LOG_INF("ORBIT", "Skipped sync: saved progress belongs to a different server");
+    return;
+  }
+
+  const auto endpoint = account.endpoint(cancelled);
+  KOReaderProgress remoteProgress{};
+  const auto fetched = KOReaderSyncClient::getProgress(document, remoteProgress, &endpoint);
+  if (cancelled()) return;
+  const bool serverHasNoProgress = fetched == KOReaderSyncClient::NO_STORED_PROGRESS;
+  const bool serverHasProgress =
+      fetched == KOReaderSyncClient::OK && remoteProgress.percentage >= 0 && remoteProgress.percentage <= 1;
+  if (!serverHasProgress && !serverHasNoProgress) {
+    LOG_INF("ORBIT", "Could not read remote progress (result %d)", static_cast<int>(fetched));
+    return;
+  }
+  if (identity.status == bookorbit::IdentityStatus::Verified && account.setAuthenticated(true))
+    account.saveToFile(true);
+
+  const std::string_view readerId(endpoint.deviceId);
+  // The fallback hostname has no per-device suffix.
+  const bool latestWriteFromReader = identity.status == bookorbit::IdentityStatus::Verified &&
+                                     readerId.find('-') != std::string_view::npos &&
+                                     remoteProgress.deviceId == readerId;
+  const bookorbit::Position remote{std::move(remoteProgress.progress), remoteProgress.percentage};
+  const auto remoteDevice = std::move(remoteProgress.deviceId);
+  const auto remoteTimestamp = remoteProgress.timestamp;
+  const auto upload = [&] {
+    // The API has no conditional writes. Check for movement from another device before sending.
+    const auto result = KOReaderSyncClient::getProgress(document, remoteProgress, &endpoint);
+    if (cancelled()) return;
+    if (serverHasNoProgress
+            ? result != KOReaderSyncClient::NO_STORED_PROGRESS
+            : result != KOReaderSyncClient::OK || remoteProgress.progress != remote.anchor ||
+                  remoteProgress.percentage != remote.fraction || remoteProgress.deviceId != remoteDevice ||
+                  remoteProgress.timestamp != remoteTimestamp) {
+      LOG_INF("ORBIT", "Sleep sync skipped: remote progress could not be reconfirmed");
+      return;
+    }
+    KOReaderProgress progress{};
+    progress.document = document;
+    progress.progress = local.anchor;
+    progress.percentage = local.fraction;
+    bookorbit::Position confirmed;
+    const auto uploaded = bookorbit::uploadAndConfirm(progress, endpoint, confirmed);
+    if (uploaded == KOReaderSyncClient::OK) {
+      bookorbit::writeBaseline(document, identity, local, confirmed);
+      acknowledgeBookOrbitPosition(positionRevision);
+      LOG_INF("ORBIT", "Sleep sync uploaded and confirmed progress");
+    } else if (!cancelled()) {
+      LOG_INF("ORBIT", "Sleep sync could not confirm upload (result %d)", static_cast<int>(uploaded));
+    }
+  };
+  if (serverHasNoProgress) {
+    if (!waking && bookorbit::canUploadFirstPosition(hasBaseline, local)) upload();
+    return;
+  }
+
+  const auto saveMatchingPositions = [&] {
+    if (!matches || baseline.serverUrl != account.url || baseline.instanceId != identity.instanceId ||
+        !bookorbit::samePosition(baseline.local, local) || !bookorbit::samePosition(baseline.remote, remote)) {
+      bookorbit::writeBaseline(document, identity, local, remote,
+                               matches && atLandingPage ? baseline.landing : bookorbit::LandingPage{});
+    }
+    acknowledgeBookOrbitPosition(positionRevision);
+  };
+  if (matches && atLandingPage) baseline.local = local;
+  const auto* reference = matches ? &baseline : nullptr;
+  const auto decision = waking ? bookorbit::decideOnWake(reference, local, remote)
+                               : bookorbit::decideOnSleep(reference, local, remote, latestWriteFromReader);
+  if (decision == bookorbit::Decision::Equal) {
+    saveMatchingPositions();
+    return;
+  }
+  if (decision == bookorbit::Decision::Skip) {
+    LOG_INF("ORBIT", "Skipped sync: no eligible progress change");
+    return;
+  }
+
+  CrossPointPosition mapped{};
+  {
+    RenderLock lock;
+    mapped = ProgressMapper::toCrossPoint(epub, {remote.anchor, remote.fraction}, renderer, readingPosition.spineIndex,
+                                          readingPosition.totalPages);
+  }
+  if (cancelled()) return;
+  // Estimated page counts cannot order percentage-only progress in an unfinished chapter.
+  if (unfinishedLayout && (!mapped.hasResolvedSpineIndex ||
+                           (mapped.spineIndex == readingPosition.spineIndex && !mapped.hasVisibleTextOffset)))
+    return;
+  const auto direction = compareProgress(readingPosition, local.fraction, mapped, remote.fraction);
+  if (direction == ProgressComparison::Synchronized) {
+    saveMatchingPositions();
+    return;
+  }
+  if (decision == bookorbit::Decision::Upload) {
+    if (direction == ProgressComparison::LocalAhead) upload();
+    return;
+  }
+
+  if (direction != ProgressComparison::RemoteAhead || mapped.spineIndex < 0 ||
+      mapped.spineIndex >= epub->getSpineItemsCount())
+    return;
+  const auto offset = mapped.hasVisibleTextOffset ? std::optional<uint32_t>{mapped.visibleTextOffset} : std::nullopt;
+  ProgressChangeResult change;
+  change.spineIndex = mapped.spineIndex;
+  change.page = mapped.pageNumber;
+  change.totalPages = mapped.totalPages;
+  change.hasVisibleTextOffset = mapped.hasVisibleTextOffset;
+  change.visibleTextOffset = mapped.visibleTextOffset;
+  {
+    RenderLock lock;
+    if (cancelled() ||
+        !EpubReaderUtils::saveProgress(*epub, mapped.spineIndex, mapped.pageNumber, mapped.totalPages, offset))
+      return;
+    bookOrbitApplyingRemote = true;
+    applyProgressChangeLocked(change);
+  }
+  bookorbit::writeBaseline(document, identity, remote, remote, {mapped.spineIndex, mapped.pageNumber, offset});
+  acknowledgeBookOrbitPosition(positionRevision);
 }
 
 std::unique_ptr<Page> EpubReaderActivity::takePrefetchedPage(const int pageNumber) {
@@ -1832,6 +2126,7 @@ bool EpubReaderActivity::prefetchHeapAvailable(const bool includeBudget) const {
 }
 
 bool EpubReaderActivity::canQueueNextPagePrefetch() const {
+  if (bookOrbitWakePending.load(std::memory_order_relaxed)) return false;
   int touchX = 0, touchY = 0;
   if (mappedInput.isScreenTouchHeld(touchX, touchY) || mappedInput.isPressed(MappedInputManager::Button::PageForward) ||
       mappedInput.isPressed(MappedInputManager::Button::PageBack))
@@ -2368,7 +2663,9 @@ void EpubReaderActivity::renderBook() {
       section->pageCount != lastSavedPageCount) {
     if (textPreferencesDirty || (section && section->isFormatBuild())) {
       formatProgress = FormatProgress{currentSpineIndex, section->currentPage, section->estimatedTotalPages(),
-                                      currentPageVisibleOffset};
+                                      currentPageVisibleOffset,
+                                      isNewBookOrbitPosition(currentSpineIndex, section->currentPage) ||
+                                          (formatProgress && formatProgress->localChange)};
       progressSaveSuppressed = false;
     } else if (saveProgress(currentSpineIndex, section->currentPage, section->estimatedTotalPages())) {
       lastSavedSpineIndex = currentSpineIndex;
@@ -2376,6 +2673,8 @@ void EpubReaderActivity::renderBook() {
       lastSavedPageCount = section->estimatedTotalPages();
     }
   }
+  bookOrbitApplyingRemote = false;
+  bookOrbitLayoutReposition = false;
 
   showPendingSyncSaveError();
 
@@ -2495,6 +2794,8 @@ bool EpubReaderActivity::saveProgress(int spineIndex, int currentPage, int pageC
                  : section->getVisibleTextOffsetForPage(static_cast<uint16_t>(currentPage));
   }
   if (!EpubReaderUtils::saveProgress(*epub, spineIndex, currentPage, pageCount, offset)) return false;
+  noteBookOrbitPositionSaved(isNewBookOrbitPosition(spineIndex, currentPage) ||
+                             (formatProgress && formatProgress->localChange));
   formatProgress.reset();
   progressSaveSuppressed = false;
   return true;
@@ -4035,7 +4336,7 @@ void EpubReaderActivity::chooseBookDictionary(bool translation) {
 void EpubReaderActivity::buildMoreActions() {
   using MA = EpubReaderMenuActivity::MenuAction;
   moreItems.clear();
-  moreItems.reserve(10);
+  moreItems.reserve(11);
   moreItems.push_back({MA::STYLE_SETTINGS, StrId::STR_STYLE});
   moreItems.push_back({MA::SEARCH, StrId::STR_READER_SEARCH});
   moreItems.push_back({MA::TOGGLE_BOOKMARK,
@@ -4047,6 +4348,7 @@ void EpubReaderActivity::buildMoreActions() {
   moreItems.push_back({MA::BOOK_DICTIONARIES, StrId::STR_BOOK_DICTIONARIES});
   moreItems.push_back({MA::AUTO_PAGE_TURN, StrId::STR_AUTO_TURN_PAGES_PER_MIN});
   if (KOREADER_STORE.hasCredentials()) moreItems.push_back({MA::SYNC, StrId::STR_SYNC_PROGRESS});
+  if (bookorbit::Store::get().authenticated()) moreItems.push_back({MA::BOOK_ORBIT_SYNC, StrId::STR_BOOKORBIT_SYNC});
 }
 
 std::string EpubReaderActivity::moreRowName(int row) const {

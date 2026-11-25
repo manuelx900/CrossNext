@@ -301,8 +301,8 @@ is 488 bytes. Marker 7 moves reported progress to its full 16-bit field so the
 Secret hunt can retain its 1,800-minute target.
 The reusable reading report is 48 bytes. No new heap buffer or task is allocated.
 
-Shop lists only unowned purchasable items whose level has been reached. Story
-and request rewards remain earned through those activities. Equipment still
+The shop lists unowned items whose level or path requirement has been met.
+Story and request rewards are earned through those activities. Equipment still
 shows everything already owned. Encounter opens the encounter section directly;
 a cleared path shows the hero, PET and region, with a continuation action.
 Atlas regions list campaign victories in portrait cards with standing guardians.
@@ -677,8 +677,8 @@ On repeat Hunts, unique item rewards show Rewards obtained with a check and no s
 
 An empty completed Shop category shows a grouped monochrome treasure-chest
 illustration, its translated completion message and a My gear button. That
-button preserves the selected category. Categories with future level unlocks
-retain their different message. The supplied imagegen illustration is packed
+button preserves the selected category. Categories with future level or path
+unlocks prompt the player to continue. The supplied imagegen illustration is packed
 by `tools_local/quest/build_shop_complete.py` into 2,048 constexpr bytes: no
 runtime PNG decode, SD resource installation, allocation or worker is added.
 Its source and prompt are in `assets_local/quest/ui/`.

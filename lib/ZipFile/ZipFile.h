@@ -98,6 +98,8 @@ class ZipFile {
   // It is NOT recommended to pre-open it for any kind of inflation due to memory constraints
   bool isOpen() const { return !!file; }
   bool open();
+  uint64_t sourceSize() { return file.fileSize64(); }
+  uint32_t sourceModificationTime() { return file.modificationTime(); }
   bool close();
   bool loadAllFileStatSlims();
   bool getInflatedFileSize(const char* filename, size_t* size);

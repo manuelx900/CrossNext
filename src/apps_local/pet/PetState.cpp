@@ -160,7 +160,7 @@ bool unequip(Profile& p, unsigned item) {
 bool feed(Profile& p) {
   if (!canCare(p) || p.resting || !food(p) || p.saciety == 100 || p.spentFood == UINT32_MAX) return false;
   ++p.spentFood;
-  p.saciety = uint8_t(std::min(100u, unsigned(p.saciety) + 25));
+  p.saciety = uint8_t(std::min(100u, unsigned(p.saciety) + FOOD_FULLNESS_GAIN));
   p.memories |= 4;
   return true;
 }
@@ -215,7 +215,7 @@ bool advanceCare(Profile& p, int64_t now) {
   if (p.resting && p.restAt > 0 && now >= p.restAt && now - p.restAt >= 7200) {
     p.resting = false;
     p.restAt = 0;
-    p.energy = uint8_t(std::min(100u, unsigned(p.energy) + 30));
+    p.energy = 100;
     changed = true;
   }
   return changed;

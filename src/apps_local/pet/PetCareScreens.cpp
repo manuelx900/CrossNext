@@ -13,7 +13,7 @@ void healthHelp(toybox::Screen& s, Work& w, fui::Rect r) {
   text(s, rect(r.x + 6, r.y, r.width - 12, 42), tr(STR_PET_HEALTH_HELP_TITLE), 1);
   const auto cards = rect(r.x, r.y + 52, r.width, r.height - 114);
   static constexpr StrId titles[] = {StrId::STR_PET_CLEAN, StrId::STR_PET_CURE, StrId::STR_PET_REST};
-  static constexpr StrId copy[] = {StrId::STR_PET_HELP_CLEAN, StrId::STR_PET_HELP_CURE, StrId::STR_PET_HELP_REST};
+  static constexpr StrId copy[] = {StrId::STR_PET_HELP_CLEAN, StrId::STR_PET_HELP_CURE, StrId::STR_PET_REST_FULL_CYCLE};
   static constexpr const freeink::Icon* marks[] = {&SOAP_ICON, &MEDICINE_ICON, &extra_moon_64};
   for (unsigned i = 0; i < 3; ++i) {
     const int height = (cards.height - GAP * 2) / 3;

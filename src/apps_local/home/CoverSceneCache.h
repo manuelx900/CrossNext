@@ -20,7 +20,7 @@ bool prefetchLibraryScene(GfxRenderer& renderer, freeink::ui::Rect region, uint6
 // File-transfer/cache mutations can preserve FAT timestamps and file sizes.
 void invalidateScenes();
 uint32_t sceneRevision();
-void recordSource(const char* path, HalFile& file, bool valid);
+void recordSource(bool resolved);
 void storeScene(GfxRenderer& renderer, bool completeArtwork = false);
 bool scenePackPending();
 void stepScenePack();

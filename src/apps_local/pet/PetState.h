@@ -6,7 +6,7 @@
 #include "PetCatalog.h"
 
 namespace pet {
-inline constexpr unsigned FOOD_CHOICE_COUNT = 9;
+inline constexpr unsigned FOOD_CHOICE_COUNT = 9, FOOD_FULLNESS_GAIN = 25;
 enum class Species : uint8_t { Silva, Nox, Ember };
 enum class Stage : uint8_t { Egg, Newborn, Baby, Juvenile, Adult };
 enum class Mode : uint8_t { Relaxed, Normal, Hard, Extreme };

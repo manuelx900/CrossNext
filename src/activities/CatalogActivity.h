@@ -63,9 +63,10 @@ class CatalogActivity : public UiListActivity {
   void launchSearch();
   void beginDownload(const std::string& title);
   void finishDownload(HttpDownloader::DownloadError result);
-  HttpDownloader::DownloadError downloadFile(const std::string& url, const std::string& dest,
-                                             const std::string& user = {}, const std::string& password = {},
-                                             const std::vector<HttpDownloader::Header>& headers = {});
+  HttpDownloader::DownloadError downloadFile(
+      const std::string& url, const std::string& dest, const std::string& user = {}, const std::string& password = {},
+      const std::vector<HttpDownloader::Header>& headers = {},
+      HttpDownloader::ExistingFile existing = HttpDownloader::ExistingFile::Replace);
   void screenHeader(UiScreen& screen, const char* title);
   bool buildStatusScreen(UiScreen& screen, bool boldError = true);
 

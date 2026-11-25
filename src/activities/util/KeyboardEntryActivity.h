@@ -131,6 +131,24 @@ class KeyboardEntryActivity : public Activity {
   // betrayed by a change it did not cause.
   paintclock::RevealGate revealGate;
 
+  // The snapshot covers both the painted keys and their published touch geometry.
+  struct KeyLayer {
+    const freeink::ui::KeyboardLayout* layout = nullptr;
+    GfxRenderer::Orientation orientation{};
+    int16_t left = 0;
+    int16_t top = 0;
+    int16_t width = 0;
+    int16_t height = 0;
+    Language language = Language::EN;
+    bool shifted = false;
+    bool symbols = false;
+    bool urlPanel = false;
+    bool operator==(const KeyLayer&) const = default;
+  };
+  KeyLayer paintedKeys;
+  uint32_t keysPaintedAt = 0;
+  bool paintedNarrowField = false;
+
   int delPressCount = 0;
   bool hintVisible = false;
   unsigned long hintShowTime = 0;

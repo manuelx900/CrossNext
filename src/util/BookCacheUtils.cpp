@@ -7,6 +7,7 @@
 
 #include "ClippingStore.h"
 #include "RecentBooksStore.h"
+#include "apps_local/bookorbit/BookOrbitPending.h"
 #include "apps_local/home/CoverSceneCache.h"
 
 bool isBookCacheDirectoryName(const char* name) {
@@ -38,6 +39,7 @@ void clearBookCache(const std::string& path) {
 
 bool removeBookFile(const std::string& path) {
   if (!Storage.remove(path.c_str())) return false;
+  bookorbit::clearPending(path);
   clearBookCache(path);
   return ClippingStore::deleteForFilePath(path, "epub");
 }

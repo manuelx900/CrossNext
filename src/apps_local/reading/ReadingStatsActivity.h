@@ -32,6 +32,7 @@ class ReadingStatsActivity final : public Activity {
   void loop() override;
   void render(RenderLock&&) override;
   bool skipLoopDelay() override;
+  bool retainsPassiveRemoteLink() const override { return true; }
 
  private:
   History history = History::Automatic;

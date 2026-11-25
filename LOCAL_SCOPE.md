@@ -893,3 +893,20 @@ driver interface. The UC8279 X4 Pro driver enables the six-frame waveform on
 panel variant 0x68. It reuses the existing grayscale base and holds one
 48,000-byte PSRAM mask during preview. The next ordinary paint completes the
 transition and releases the mask.
+
+## BookOrbit position sync
+
+`src/apps_local/bookorbit` owns the opt-in account, per-EPUB baselines in
+`/.crosspoint/bookorbit/`, connection lifetime and conflict policy. Connectivity
+opens its settings. Manual progress sync reuses the KOReader UI with the
+BookOrbit account and binary file identity. The main sleep flow runs a bounded
+sync after BLE releases the radio. The resumed EPUB can also opt in to a
+bounded server check after its first page draws, before Bluetooth page turners
+reconnect. This wake check only applies a server advance. The active EPUB
+activity maps positions and persists accepted advances in the reader progress format. See
+[BookOrbit setup](docs/settings.md#bookorbit).
+
+The manual sync picker reads per-EPUB pending markers under
+`/.crosspoint/bookorbit-pending/` as reading state. The marker records the
+path, and the EPUB progress cache owns the position. The picker reuses the
+recent-books store for individual manual sync.

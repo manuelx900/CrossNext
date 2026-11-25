@@ -290,6 +290,7 @@ void ShelfFolderActivity::render(RenderLock&&) {
   shelfui::MenuModel model;
   model.title = shouted;
   model.mark = self.mark;
+  model.useFullSizeIcons = self.icon == UIIcon::Apps;
   model.items = items;
   model.icons = icons;
   model.count = onThisPage;

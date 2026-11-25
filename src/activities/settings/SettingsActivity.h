@@ -19,6 +19,7 @@ enum class SettingAction {
   CustomiseStatusBar,
   ClockSettings,
   KOReaderSync,
+  BookOrbit,
   OPDSBrowser,
   Network,
   Bluetooth,
@@ -251,6 +252,7 @@ class SettingsActivity final : public UiTabListActivity {
 
  public:
   explicit SettingsActivity(GfxRenderer& renderer, MappedInputManager& mappedInput);
+  bool canEnterWhileRemoteStarts() const override { return true; }
   void onEnter() override;
   void onExit() override;
   void render(RenderLock&& lock) override;

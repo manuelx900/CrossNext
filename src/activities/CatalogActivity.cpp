@@ -175,7 +175,8 @@ void CatalogActivity::onDownloadProgress(const size_t downloaded, const size_t t
 
 HttpDownloader::DownloadError CatalogActivity::downloadFile(const std::string& url, const std::string& dest,
                                                             const std::string& user, const std::string& password,
-                                                            const std::vector<HttpDownloader::Header>& headers) {
+                                                            const std::vector<HttpDownloader::Header>& headers,
+                                                            HttpDownloader::ExistingFile existing) {
   downloadProgress = downloadTotal = 0;
   lastRenderedPercent = -1;
   lastProgressUpdateMs = 0;
@@ -183,7 +184,10 @@ HttpDownloader::DownloadError CatalogActivity::downloadFile(const std::string& u
   // a multi-MB file; release them up front (they repopulate on demand) and
   // refuse to start below the floor. A doomed transfer otherwise dies
   // mid-stream with MEMORY_E, or abort()s on an interior allocation.
-  if (auto* fcm = renderer.getFontCacheManager()) fcm->releaseSdFontCaches();
+  {
+    RenderLock lock(*this);
+    if (auto* fcm = renderer.getFontCacheManager()) fcm->releaseSdFontCaches();
+  }
   if (ESP.getFreeHeap() < HttpDownloader::MIN_TLS_FREE_HEAP ||
       ESP.getMaxAllocHeap() < HttpDownloader::MIN_TLS_MAX_ALLOC) {
     LOG_ERR("CAT", "Low heap for download (%u free, %u max block)", ESP.getFreeHeap(), ESP.getMaxAllocHeap());
@@ -191,7 +195,7 @@ HttpDownloader::DownloadError CatalogActivity::downloadFile(const std::string& u
   }
   return HttpDownloader::downloadToFile(
       url, dest, [this](size_t downloaded, size_t total) { onDownloadProgress(downloaded, total); }, &cancelDownload,
-      user, password, headers);
+      user, password, headers, false, existing);
 }
 
 void CatalogActivity::finishDownload(const HttpDownloader::DownloadError result) {

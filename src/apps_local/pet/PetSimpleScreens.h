@@ -537,41 +537,77 @@ inline void healthState(toybox::Screen& s, const Model& m, Work& w, fui::Rect bo
          false, 1, 3);
   }
 }
+inline void careTile(toybox::Screen& s, const Model& m, Work& w, fui::Rect box, fui::ActionId action, const char* title,
+                     const char* hint, const uint8_t* illustration, bool enabled, bool horizontal, int value = 0,
+                     const char* detail = nullptr) {
+  const bool muted = action == Cure && m.profile->illness == pet::Illness::Healthy;
+  const auto mutedInk = fui::Paint::dither(fui::Color::DarkGray);
+  bool inverse = false;
+  if (muted) {
+    s.target().fill(box, paper, CONTROL_RADIUS);
+    s.target().stroke(box, mutedInk, 1, CONTROL_RADIUS);
+  } else {
+    inverse = actionsurface::button(s, w, box, action, value, false, enabled);
+  }
+  constexpr int TITLE_HEIGHT = 32, GAP_AFTER_ART = 5;
+  const int footerHeight = std::max(42, 2 * int(s.target().lineHeight(3)) + 4);
+  const bool sideBySide = horizontal || box.height < TITLE_HEIGHT + GAP_AFTER_ART + footerHeight + 54;
+  const int side = std::max(
+      0, sideBySide ? std::min({72, int(box.height) - 12, int(box.width) / 3}) : std::min(84, int(box.width) - 16));
+  const int pictureTop = sideBySide ? box.y + (box.height - side) / 2
+                                    : box.y + std::max(9, (box.height - side - TITLE_HEIGHT - footerHeight - 23) / 2);
+  const auto picture = rect(sideBySide ? box.x + 10 : box.x + (box.width - side) / 2, pictureTop, side, side);
+  if (action == Stroke)
+    symbols::draw(s, picture, symbols::Kind::Care, inverse);
+  else if (action != OpenFood || !foodPicture(m, s.target(), picture, 5, 0))
+    symbols::reference(s, picture, illustration, inverse, careactionicons::SIZE);
+
+  const int left = sideBySide ? picture.right() + 8 : box.x + 6;
+  const int titleY = sideBySide ? box.y + std::max(2, (box.height - TITLE_HEIGHT - footerHeight) / 2)
+                                : picture.bottom() + GAP_AFTER_ART;
+  const int width = box.right() - left - 6;
+  const auto titleBox = rect(left, titleY, width, TITLE_HEIGHT);
+  if (muted)
+    fittext::draw(s.target(), titleBox, title, 4, 2, fui::TextAlign::Center, fui::Color::DarkGray);
+  else
+    copy(s, titleBox, title, true, fui::TextAlign::Center, inverse);
+  if (!hint) return;
+
+  const int footerX = sideBySide ? left : box.x + 8;
+  const int footerY = sideBySide ? titleBox.bottom() : box.bottom() - footerHeight - 11;
+  const int footerWidth = sideBySide ? width : box.width - 16;
+  const auto footer = rect(footerX, footerY, footerWidth, std::min(footerHeight, box.bottom() - footerY - 3));
+  s.target().stroke(footer, muted ? mutedInk : inverse ? paper : ink, 1, 7);
+  const auto inside = rect(footer.x + 4, footer.y + 2, footer.width - 8, footer.height - 4);
+  const int lineHeight = detail ? inside.height / 2 : int(inside.height);
+  fui::TextStyle style;
+  style.font = 3;
+  style.align = fui::TextAlign::Center;
+  style.color = inverse ? fui::Color::White : fui::Color::Black;
+  style.maxLines = 1;
+  fittext::draw(s.target(), rect(inside.x, inside.y, inside.width, lineHeight), hint, style, detail ? 1 : 2);
+  if (detail)
+    copy(s, rect(inside.x, inside.y + lineHeight, inside.width, lineHeight), detail, false, fui::TextAlign::Center,
+         inverse, 1, 3);
+}
+
 inline void healthOption(toybox::Screen& s, const Model& m, Work& w, fui::Rect box, bool healing, bool horizontal) {
   const auto& p = *m.profile;
-  const bool enabled = m.writable && pet::canCare(p) &&
-                       (healing ? p.illness != pet::Illness::Healthy && pet::medicine(p) : p.hygiene < 100);
-  const bool inverse = actionsurface::button(s, w, box, healing ? Cure : Clean, 0, false, enabled);
-  const int detailH = horizontal && box.width > 350 ? 24 : 2 * s.target().lineHeight(3);
-  const int effectH = detailH + 22 + 12;
-  const int textH = 28 + 8 + effectH;
-  const int side = std::min(
-      64, horizontal ? std::min(int(box.height) - 24, int(box.width) / 4)
-                     : std::min(int(box.width) - 28, int(box.height) - 2 * UI_INSET - SHADOW_DEPTH - 8 - textH));
-  const int top = box.y + (box.height - (side + 8 + textH)) / 2;
-  const auto picture = horizontal ? rect(box.x + 14, box.y + (box.height - side) / 2, side, side)
-                                  : rect(box.x + (box.width - side) / 2, top, side, side);
-  symbols::reference(s, picture, healing ? careactionicons::HEALTH : careactionicons::CLEAN, inverse,
-                     careactionicons::SIZE);
-  const int left = horizontal ? picture.right() + 14 : box.x + 10;
-  const int y = horizontal ? box.y + (box.height - textH) / 2 : box.bottom() - UI_INSET - SHADOW_DEPTH - textH;
-  const int width = horizontal ? box.right() - left - 14 : box.width - 20;
-  const auto align = horizontal ? fui::TextAlign::Left : fui::TextAlign::Center;
-  copy(s, rect(left, y, width, 28), healing ? tr(STR_PET_CURE) : tr(STR_PET_CLEAN), true, align, inverse);
-  if (!m.writable)
-    std::snprintf(w.label, sizeof(w.label), "%s", tr(STR_PET_CARE_NO_SAVE));
-  else if (healing)
-    std::snprintf(w.label, sizeof(w.label), "%s",
-                  p.illness == pet::Illness::Healthy ? tr(STR_PET_NO_TREATMENT) : tr(STR_PET_CURE_BENEFIT));
-  else
-    std::snprintf(w.label, sizeof(w.label), tr(STR_PET_HYGIENE_VALUE), unsigned(p.hygiene));
-  const auto effect = rect(left, y + 36, width, effectH);
-  actionsurface::panel(s, effect);
-  copy(s, rect(effect.x + 4, effect.y + 6, effect.width - 8, detailH), w.label, true, fui::TextAlign::Center, false, 2,
-       3);
-  copy(s, rect(effect.x + 4, effect.bottom() - 28, effect.width - 8, 22),
-       healing ? (pet::medicine(p) ? tr(STR_PET_CURE_ONE) : tr(STR_PET_NO_MEDICINE)) : tr(STR_PET_CLEAN_FREE), false,
-       fui::TextAlign::Center, false, 1, 3);
+  const bool healthy = p.illness == pet::Illness::Healthy;
+  const bool enabled = m.writable && pet::canCare(p) && (healing ? !healthy && pet::medicine(p) : p.hygiene < 100);
+  const char* hint = healthActionHint(m, healing);
+  const char* cost = nullptr;
+  if (p.resting && pet::canCare(p) && (!healing || !healthy)) {
+    hint = tr(STR_PET_GAME_WAKE_SHORT);
+  } else if (enabled && healing) {
+    hint = tr(STR_PET_CURE_BENEFIT);
+    cost = tr(STR_PET_CURE_ONE);
+  } else if (enabled) {
+    std::snprintf(w.secondary, sizeof(w.secondary), tr(STR_PET_CARE_HYGIENE_GAIN), 100u - p.hygiene);
+    hint = w.secondary;
+  }
+  careTile(s, m, w, box, healing ? Cure : Clean, healing ? tr(STR_PET_CURE) : tr(STR_PET_CLEAN), hint,
+           healing ? careactionicons::HEALTH : careactionicons::CLEAN, enabled, horizontal, 0, cost);
 }
 inline void health(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   const auto inner = drawer(s, m, w, r, tr(STR_PET_HEALTH_SHORT));
@@ -692,97 +728,48 @@ inline void care(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   }
   const auto choices = wide ? rect(stock.right() + 12, inner.y, inner.right() - stock.right() - 12, inner.height - 4)
                             : rect(inner.x, stock.bottom() + 14, inner.width, inner.bottom() - stock.bottom() - 18);
-  const int gap = 10;
-  const int cols = 3;
-  static constexpr fui::ActionId actions[] = {OpenFood, Stroke, Rest};
-  const int rowH = choices.height;
-  const int effectH = 4 * s.target().lineHeight(3) + 16;
-  for (int n = 0; n < cols; ++n) {
-    const auto box = cell(choices, n, cols, gap);
-    const char* title = n == 0   ? tr(STR_PET_FEED)
-                        : n == 1 ? tr(STR_PET_STROKE)
-                                 : (p.resting ? tr(STR_PET_WAKE) : tr(STR_PET_REST));
-    if (p.resting && n < 2) {
-      std::snprintf(w.secondary, sizeof(w.secondary), "%s", tr(STR_PET_GAME_WAKE_SHORT));
-    } else if (!m.writable) {
-      std::snprintf(w.secondary, sizeof(w.secondary), "%s", tr(STR_PET_CARE_NO_SAVE));
+  const char* feedHint = !m.writable ? tr(STR_PET_CARE_NO_SAVE) : nullptr;
+  if (m.writable && !p.resting) {
+    if (p.saciety >= 100) {
+      feedHint = tr(STR_PET_ALREADY_FULL);
+    } else if (!pet::food(p) || p.spentFood == UINT32_MAX) {
+      feedHint = tr(STR_PET_SIMPLE_NO_FOOD);
     } else {
-      switch (n) {
-        case 0:
-          if (p.saciety == 100 || !pet::food(p) || p.spentFood == UINT32_MAX) {
-            std::snprintf(w.secondary, sizeof(w.secondary), "%s",
-                          p.saciety == 100 ? tr(STR_PET_ALREADY_FULL) : tr(STR_PET_SIMPLE_NO_FOOD));
-          } else {
-            std::snprintf(w.label, sizeof(w.label), tr(STR_PET_CARE_FOOD_GAIN),
-                          std::min(25u, 100u - unsigned(p.saciety)));
-            std::snprintf(w.secondary, sizeof(w.secondary), "%s\n%s", w.label, tr(STR_PET_FOOD_COST));
-          }
-          break;
-        case 1: {
-          const unsigned gain =
-              m.today > 0 && m.today > p.lastPetDay ? std::min(pet::moodGain(p), 100u - unsigned(p.joy)) : 0;
-          std::snprintf(w.label, sizeof(w.label), tr(STR_PET_GAME_GAIN_VALUE), gain);
-          std::snprintf(w.secondary, sizeof(w.secondary), "%s\n%s", w.label, tr(STR_PET_CARE_DAILY_BONUS));
-          break;
-        }
-        case 2:
-          if (p.resting)
-            std::snprintf(w.secondary, sizeof(w.secondary), "%s", tr(STR_PET_CARE_WAKE_EFFECT));
-          else {
-            // Two hourly recoveries plus the completed rest-cycle bonus.
-            std::snprintf(w.label, sizeof(w.label), tr(STR_PET_CARE_REST_GAIN),
-                          std::min(100u - unsigned(p.energy), 2u * 5u + 30u));
-            std::snprintf(w.secondary, sizeof(w.secondary), "%s\n%s",
-                          p.energy == 100 ? tr(STR_PET_ENERGY_FULL) : w.label, tr(STR_PET_CARE_REST_EFFECT));
-          }
-          break;
-      }
-    }
-    const bool inverse = actionsurface::button(s, w, box, actions[n], n == 0 ? p.foodChoice : 0, false, m.writable);
-    const auto drawIcon = [&](fui::Rect picture) {
-      switch (n) {
-        case 0:
-          if (!foodPicture(m, s.target(), picture, 5, 0)) symbols::draw(s, picture, symbols::Kind::Food, inverse);
-          break;
-        case 1:
-          symbols::draw(s, picture, symbols::Kind::Care, inverse);
-          break;
-        case 2:
-          symbols::reference(s, picture, careactionicons::REST, inverse, careactionicons::SIZE);
-          break;
-      }
-    };
-    const auto drawEffect = [&](fui::Rect effect) {
-      actionsurface::panel(s, effect);
-      char* detail = std::strchr(w.secondary, '\n');
-      if (detail) {
-        *detail++ = '\0';
-        const int lineH = 2 * s.target().lineHeight(3);
-        const int top = effect.y + (effect.height - 2 * lineH - 4) / 2;
-        copy(s, rect(effect.x + 4, top, effect.width - 8, lineH), w.secondary, false, fui::TextAlign::Center, false, 2,
-             0);
-        copy(s, rect(effect.x + 4, top + lineH + 4, effect.width - 8, lineH), detail, false, fui::TextAlign::Center,
-             false, 2, 3);
-      } else {
-        copy(s, effect.inset({8, 4, 8, 4}), w.secondary, true, fui::TextAlign::Center, false, 2, 3);
-      }
-    };
-    if (rowH >= 100) {
-      const int captionH = 32 + effectH, side = std::min({56, int(box.width) - 20, rowH - captionH - 16});
-      const int iconTop = box.y + (rowH - captionH - side - 8) / 2;
-      drawIcon(rect(box.x + (box.width - side) / 2, iconTop, side, side));
-      const int titleY = iconTop + side + 8;
-      copy(s, rect(box.x + 6, titleY, box.width - 12, 28), title, false, fui::TextAlign::Center, inverse);
-      const auto effect = rect(box.x + 8, titleY + 32, box.width - 16, effectH);
-      drawEffect(effect);
-    } else {
-      const int side = std::min(44, int(box.height) - 12);
-      drawIcon(rect(box.x + 8, box.y + (box.height - side) / 2, side, side));
-      copy(s, rect(box.x + side + 16, box.y + 2, box.width - side - 20, 28), title, false, fui::TextAlign::Center,
-           inverse);
-      const auto effect = rect(box.x + side + 16, box.y + 32, box.width - side - 24, box.height - 40);
-      drawEffect(effect);
+      std::snprintf(w.secondary, sizeof(w.secondary), tr(STR_PET_CARE_FOOD_GAIN),
+                    std::min(pet::FOOD_FULLNESS_GAIN, 100u - p.saciety));
+      feedHint = w.secondary;
     }
   }
+  careTile(s, m, w, cell(choices, 0, 3, 10), OpenFood, tr(STR_PET_FEED), feedHint, careactionicons::FOOD, m.writable,
+           false, p.foodChoice);
+
+  const char* strokeHint = nullptr;
+  if (m.writable && !p.resting && m.today > 0) {
+    if (m.today > p.lastPetDay && p.joy < 100) {
+      std::snprintf(w.secondary, sizeof(w.secondary), tr(STR_PET_GAME_GAIN_VALUE),
+                    std::min(pet::moodGain(p), 100u - p.joy));
+      strokeHint = w.secondary;
+    } else if (m.today <= p.lastPetDay) {
+      strokeHint = tr(STR_PET_CARE_DAILY_BONUS);
+    }
+  }
+  careTile(s, m, w, cell(choices, 1, 3, 10), Stroke, tr(STR_PET_STROKE), strokeHint, careactionicons::STROKE,
+           m.writable, false);
+
+  const char* restHint = nullptr;
+  const char* restDetail = nullptr;
+  if (m.writable) {
+    if (p.resting) {
+      restHint = tr(STR_PET_CARE_WAKE_EFFECT);
+    } else if (p.energy < 100) {
+      std::snprintf(w.secondary, sizeof(w.secondary), tr(STR_PET_CARE_REST_GAIN), 100u - p.energy);
+      restHint = w.secondary;
+      restDetail = tr(STR_PET_CARE_REST_EFFECT);
+    } else {
+      restHint = tr(STR_PET_ENERGY_FULL);
+    }
+  }
+  careTile(s, m, w, cell(choices, 2, 3, 10), Rest, p.resting ? tr(STR_PET_WAKE) : tr(STR_PET_REST), restHint,
+           careactionicons::REST, m.writable, false, 0, restDetail);
 }
 }  // namespace petui::simple

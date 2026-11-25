@@ -19,6 +19,7 @@
 #include <utility>
 
 #include "../apps_local/Shelf.h"  // fork-local seam
+#include "../apps_local/home/CoverAbsence.h"
 #include "../apps_local/home/CoverLoadingNotice.h"
 #include "../apps_local/home/CoverSceneCache.h"
 #include "../apps_local/home/HomeLoadingPlaceholders.h"
@@ -221,7 +222,8 @@ void CoverGridHomeUi::screenFn(UiScreen& screen, void* user) {
   auto& self = *static_cast<CoverGridHomeUi*>(user);
   self.allCoversReady = true;
   self.draw(screen);
-  if (self.coverLoading && !self.allCoversReady) {
+  self.noticeVisible = self.coverLoading && !self.allCoversReady && !self.loadingShell;
+  if (self.noticeVisible) {
     const auto area = homeui::coverLoadingNoticeArea(screen.device().safeRect(), self.coverAreas[0],
                                                      SETTINGS.homeLayout == CrossPointSettings::HOME_FRAMED);
     libraryui::loadingNotice(screen.target(), area, tr(STR_LIBRARY_LOADING_COVERS));
@@ -388,15 +390,12 @@ void CoverGridHomeUi::drawLicorice(UiScreen& screen) {
     coverAreas[index] = art;
     screen.frame().hit(fui::makeRect(x, y, cellWidth, artHeight + 32), SELECT, index, fui::InputTouch);
     if (cached) continue;
-    coverCache.paint(art, index, coverPaths[index], true, true);
-    if (!coverCache.hasImage(index)) {
-      allCoversReady = false;
-      GUI.drawCoverPlaceholder(renderer, Rect{art.x, art.y, art.width, art.height});
-    }
+    paintCover(art, index, true);
+    if (!coverCache.hasImage(index)) GUI.drawCoverPlaceholder(renderer, Rect{art.x, art.y, art.width, art.height});
     softCoverOutline(target, art);
     label(fui::makeRect(x, art.bottom() + 4, cellWidth, 26), (*books)[index].title.c_str());
   }
-  if (!cached) homecover::storeScene(renderer);
+  if (!cached && allCoversReady) homecover::storeScene(renderer);
   // Progress overlays are rebuilt after restoring the unchanged artwork.
   for (int index = 1; index <= rows * columns && size_t(index) < books->size(); ++index) {
     const auto art = coverAreas[index];
@@ -430,11 +429,8 @@ void CoverGridHomeUi::drawLicorice(UiScreen& screen) {
     const auto art = fui::makeRect(footer.x + 2, footer.y - 18, height * 2 / 3, height);
     coverAreas[0] = art;
     target.fill(art, paper);
-    coverCache.paint(art, 0, coverPaths[0], true, true);
-    if (!coverCache.hasImage(0)) {
-      allCoversReady = false;
-      GUI.drawCoverPlaceholder(renderer, Rect{art.x, art.y, art.width, art.height});
-    }
+    paintCover(art, 0, true);
+    if (!coverCache.hasImage(0)) GUI.drawCoverPlaceholder(renderer, Rect{art.x, art.y, art.width, art.height});
     softCoverOutline(target, art);
     const int x = art.right() + 14;
     const int copyY = footer.y + (footer.height - 100) / 2;
@@ -670,7 +666,19 @@ bool CoverGridHomeUi::paintFramedCover(fui::DrawTarget& target, fui::Rect rect, 
   target.fill(fui::Rect{static_cast<int16_t>(rect.x + SHADOW_OFFSET), rect.bottom(), rect.width, SHADOW_OFFSET}, ink);
   // The false spine draws inside the cover paint (HomeCoverCache), glued to
   // the art's left edge, so it stays aligned whatever each cover's margin is.
-  const bool drawn = index < coverPaths.size() && coverCache.paint(rect, index, coverPaths[index]);
-  if (!coverCache.hasImage(index)) allCoversReady = false;
-  return drawn;
+  return paintCover(rect, index);
+}
+
+bool CoverGridHomeUi::paintCover(fui::Rect rect, size_t index, bool flat) {
+  if (index >= coverPaths.size() || index >= books->size()) return false;
+  static const std::string noThumbnail;
+  const auto& bookPath = (*books)[index].path;
+  const auto& thumb = coverPaths[index];
+  const bool absent = homecover::knownMissingCover(bookPath);
+  const bool painted = coverCache.paint(rect, index, absent ? noThumbnail : thumb, flat, flat);
+  const bool resolved =
+      coverCache.hasImage(index) || absent || (!thumb.empty() && homecover::knownMissingCover(bookPath, thumb));
+  allCoversReady &= resolved;
+  homecover::recordSource(resolved);
+  return painted;
 }

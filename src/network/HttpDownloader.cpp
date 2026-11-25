@@ -18,6 +18,7 @@ namespace {
 // (>15s) and chunked catalogs stall mid-body, so 15s killed them. 60s gives
 // slow servers room.
 constexpr int HTTP_TIMEOUT_MS = 60000;
+constexpr int METADATA_TIMEOUT_MS = 8000;
 
 // Written after every request, and read by the UI right after a failure.
 int g_lastStatus = 0;
@@ -36,7 +37,8 @@ HttpDownloader::DownloadError runGetSecure(const std::string& url, const std::st
                                            const std::vector<HttpDownloader::Header>& headers,
                                            const freeink::FetchSink& sink, const bool* cancelFlag = nullptr,
                                            size_t* bytesOut = nullptr, const bool downgradeRedirectsToHttp = false,
-                                           std::string* effectiveUrl = nullptr) {
+                                           std::string* effectiveUrl = nullptr, const int timeoutMs = HTTP_TIMEOUT_MS,
+                                           const HttpDownloader::AbortCallback& cancelled = {}) {
   // Cleared per request: a transport failure returns before it is set, and a
   // stale 200 from the previous fetch would read as success.
   g_lastStatus = 0;
@@ -75,13 +77,13 @@ HttpDownloader::DownloadError runGetSecure(const std::string& url, const std::st
       sink.progress(bytes, total);
     };
   }
-  const auto shouldAbort = [&sink, &heldBytes, &heldTotal, &lastPumpMs, cancelFlag] {
+  const auto shouldAbort = [&sink, &heldBytes, &heldTotal, &lastPumpMs, cancelFlag, &cancelled] {
     const unsigned long now = millis();
     if (sink.progress && now - lastPumpMs >= ABORT_PUMP_INTERVAL_MS) {
       lastPumpMs = now;
       sink.progress(heldBytes, heldTotal);
     }
-    return cancelFlag && *cancelFlag;
+    return (cancelFlag && *cancelFlag) || (cancelled && cancelled());
   };
 
   // Device report headers ride only on the starting origin: a redirect off one
@@ -92,7 +94,7 @@ HttpDownloader::DownloadError runGetSecure(const std::string& url, const std::st
       url, options,
       [&](freeink::SecureHttpClient& http, const bool sameOrigin) {
         answeredBySameOrigin = sameOrigin;
-        http.setTimeout(HTTP_TIMEOUT_MS);
+        http.setTimeout(timeoutMs);
         http.setInsecure();
         // setUserAgent replaces SecureHttpClient's built-in UA; addHeader would
         // append a second User-Agent header, which strict servers reject (aiohttp
@@ -164,11 +166,22 @@ bool HttpDownloader::fetchUrl(const std::string& url, const DataCallback& onData
   return runGetSecure(url, username, password, {}, sink) == OK;
 }
 
+bool HttpDownloader::fetchMetadata(const std::string& url, Stream& stream, const std::vector<Header>& headers,
+                                   const AbortCallback& shouldAbort) {
+  freeink::FetchSink sink;
+  sink.write = [&stream](const uint8_t* data, size_t len) { return stream.write(data, len) == len; };
+  const auto started = millis();
+  return runGetSecure(url, {}, {}, headers, sink, nullptr, nullptr, false, nullptr, METADATA_TIMEOUT_MS,
+                      [started, &shouldAbort] {
+                        return millis() - started >= METADATA_TIMEOUT_MS || (shouldAbort && shouldAbort());
+                      }) == OK;
+}
+
 HttpDownloader::DownloadError HttpDownloader::downloadToFile(const std::string& url, const std::string& destPath,
                                                              ProgressCallback progress, const bool* cancelFlag,
                                                              const std::string& username, const std::string& password,
                                                              const std::vector<Header>& headers,
-                                                             bool downgradeRedirectsToHttp) {
+                                                             bool downgradeRedirectsToHttp, ExistingFile existing) {
   LOG_DBG("HTTP", "Downloading: %s -> %s", url.c_str(), destPath.c_str());
 
   // Stage in <dest>.part: a failed or cancelled download never replaces an
@@ -206,7 +219,9 @@ HttpDownloader::DownloadError HttpDownloader::downloadToFile(const std::string& 
     Storage.remove(partPath.c_str());
     return HTTP_ERROR;
   }
-  if (!Storage.replaceFile(partPath.c_str(), destPath.c_str())) {
+  const bool installed = existing == ExistingFile::Keep ? Storage.rename(partPath.c_str(), destPath.c_str())
+                                                        : Storage.replaceFile(partPath.c_str(), destPath.c_str());
+  if (!installed) {
     LOG_ERR("HTTP", "Failed to move download into place: %s", destPath.c_str());
     Storage.remove(partPath.c_str());
     return FILE_ERROR;

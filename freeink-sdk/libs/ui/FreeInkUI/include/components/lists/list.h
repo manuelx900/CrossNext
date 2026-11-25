@@ -194,6 +194,8 @@ struct ListProps {
   bool toggleCheckbox = false;
   ListLayoutCache* layoutCache = nullptr;
   uint64_t layoutContext = 0;
+  // Skip the rules immediately before and after the row at selectedIndex.
+  bool omitSelectedSeparators = false;
 };
 
 // Stateful companion to the immediate-mode list helpers in FreeInkUICore.h:
@@ -667,7 +669,8 @@ void list(Frame<MaxInteractions>& frame, Rect rect, const ListProps& props) {
     }
     Rect row{rowArea.x, cursorY, rowArea.width, itemH};
     if (previousWasRow && !hasSectionHeading && props.separatorPaint.kind != PaintKind::None &&
-        rowArea.width > sidePad * 2) {
+        rowArea.width > sidePad * 2 &&
+        (!props.omitSelectedSeparators || (props.selectedIndex != i && props.selectedIndex != i - 1))) {
       frame.target().fill(
           Rect{static_cast<int16_t>(rowArea.x + sidePad), static_cast<int16_t>(row.y - (rowGap > 1 ? rowGap / 2 : 1)),
                static_cast<int16_t>(rowArea.width - sidePad * 2), 1},

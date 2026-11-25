@@ -46,6 +46,7 @@
 #include "sudoku/SudokuActivity.h"
 #include "tools/ToolsActivity.h"
 #include "toybattle/ToyBattleActivity.h"
+#include "ui/AppMenuIcons.h"
 #include "ui/GameMenuIcons.h"
 #include "ui/NavigationIcons.h"
 #include "wallpapers/WallpapersActivity.h"
@@ -76,21 +77,21 @@ constexpr shelf::Item kGames[] = {
     {"OTHELLO", &navicons::Othello32, &PocketGamesActivity::createOthello},
 };
 constexpr shelf::Item kApps[] = {
-    {"READING QUEST", &navicons::BookOpen32, &ReadingQuestActivity::create},
-    {"PET", &navicons::Paw32, &PetActivity::create},
-    {"HABITS", &navicons::Check32, &HabitsActivity::create},
-    {"TO DO LIST", &navicons::List32, &NotesActivity::createTodo},
-    {"NOTES", &navicons::Note32, &NotesActivity::create},
-    {"POMODORO", &navicons::Timer32, &PomodoroActivity::create},
-    {"WALLPAPERS", &navicons::Image32, &WallpapersActivity::create},
-    {"QUOTES", &navicons::Books32, &QuotesActivity::create},
-    {"FLASHCARDS", &navicons::Cards32, &FlashcardsActivity::create},
-    {"WORDS", &navicons::Books32, &WordsActivity::create},
-    {"CALENDAR", &navicons::Calendar32, &ToolsActivity::calendar},
-    {"CLOCK", &navicons::Clock32, &ToolsActivity::clock},
-    {"COUNTER", &navicons::Counter32, &ToolsActivity::counter},
-    {"FOCUS", &navicons::Focus32, &FocusActivity::create},
-    {"CALCULATOR", &navicons::Calculator32, &CalculatorActivity::create},
+    {"READING QUEST", &appicons::ReadingQuest40, &ReadingQuestActivity::create},
+    {"PET", &appicons::Pet40, &PetActivity::create},
+    {"HABITS", &appicons::Habits40, &HabitsActivity::create},
+    {"TO DO LIST", &appicons::TodoList40, &NotesActivity::createTodo},
+    {"NOTES", &appicons::Notes40, &NotesActivity::create},
+    {"POMODORO", &appicons::Pomodoro40, &PomodoroActivity::create},
+    {"WALLPAPERS", &appicons::Wallpapers40, &WallpapersActivity::create},
+    {"QUOTES", &appicons::Quotes40, &QuotesActivity::create},
+    {"FLASHCARDS", &appicons::Flashcards40, &FlashcardsActivity::create},
+    {"WORDS", &appicons::Words40, &WordsActivity::create},
+    {"CALENDAR", &appicons::Calendar40, &ToolsActivity::calendar},
+    {"CLOCK", &appicons::Clock40, &ToolsActivity::clock},
+    {"COUNTER", &appicons::Counter40, &ToolsActivity::counter},
+    {"FOCUS", &appicons::Focus40, &FocusActivity::create},
+    {"CALCULATOR", &appicons::Calculator40, &CalculatorActivity::create},
 };
 
 // The two rows Home grows, in reading order. Titles are Title Case because

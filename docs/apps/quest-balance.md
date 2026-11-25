@@ -41,9 +41,9 @@ Imported profiles without counters infer one win from each existing unique claim
 Purchase gates span levels 1–150. General decorations unlock at 1, 50, 100 and 150;
 ordinary level-gated outfits, scenes and pets spread their former 1–100 gates
 across this range. Campaign-path purchases keep their path requirement and use
-that path's recommended level for pricing. The catalogue previews unowned future
-items but purchasing stays blocked until the actual level/path condition is met.
-Saga and Hunt-exclusive prizes are excluded from the shop.
+that path's recommended level for pricing. The shop shows unowned items as they
+unlock through their required level or path. Saga and Hunt-exclusive prizes
+are awarded outside the shop.
 
 For purchase tier L, outfit price is 40 + 8L + floor(L²/8) coins. Scenes cost
 85%, pets 90% and general decorations 110%, rounded up. A level-1 outfit costs

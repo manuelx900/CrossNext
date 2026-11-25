@@ -30,6 +30,7 @@ class HomeActivity final : public Activity {
   std::atomic<unsigned> libraryWarmIndex{0};
   unsigned long libraryWarmInputAt = 0;
   size_t gridPreparationIndex = 0, shelfNativeIndex = 0;
+  bool gridArtworkChanged = false;
   uint32_t libraryWarmMediaRevision = 0;
   bool prepareGridCover(RecentBook& book, int height);
   bool nativeShelfPending() const {
@@ -111,7 +112,7 @@ class HomeActivity final : public Activity {
   void fillCoverGridFromLibrary();
   void loadShelfPage();
   void resolveGridCoverPaths();
-  void loadGridCover(RecentBook& book, int height, bool& showingLoading, Rect& popupRect);
+  bool loadGridCover(RecentBook& book, int height, bool& showingLoading, Rect& popupRect);
 
  public:
   explicit HomeActivity(GfxRenderer& renderer, MappedInputManager& mappedInput,
@@ -133,4 +134,5 @@ class HomeActivity final : public Activity {
   void runIdleWork() override;
   void render(RenderLock&&) override;
   bool isHomeActivity() const override { return true; }
+  bool canEnterWhileRemoteStarts() const override { return true; }
 };

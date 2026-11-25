@@ -11,6 +11,7 @@
 #include "MappedInputManager.h"
 #include "SilentRestart.h"
 #include "activities/network/WifiSelectionActivity.h"
+#include "apps_local/bookorbit/BookOrbit.h"
 #include "apps_local/ui/PixelMenuTheme.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
@@ -43,7 +44,26 @@ void KOReaderAuthActivity::onWifiSelectionComplete(const bool success) {
 
 void KOReaderAuthActivity::performAuthentication() {
   WifiPowerSaveGuard psGuard;
-  const auto result = mode == Mode::SIGN_UP ? KOReaderSyncClient::createUser() : KOReaderSyncClient::authenticate();
+  const auto result = [this] {
+    switch (mode) {
+      case Mode::SIGN_UP:
+        return KOReaderSyncClient::createUser();
+      case Mode::AUTHENTICATE:
+        return KOReaderSyncClient::authenticate();
+      case Mode::BOOK_ORBIT: {
+        const auto endpoint = bookorbit::Store::get().endpoint();
+        return KOReaderSyncClient::authenticate(&endpoint);
+      }
+    }
+    return KOReaderSyncClient::SERVER_ERROR;
+  }();
+
+  if (mode == Mode::BOOK_ORBIT &&
+      (result == KOReaderSyncClient::OK || result == KOReaderSyncClient::AUTH_FAILED ||
+       result == KOReaderSyncClient::JSON_ERROR || KOReaderSyncClient::lastHttpCode == 403)) {
+    auto& account = bookorbit::Store::get();
+    if (account.setAuthenticated(result == KOReaderSyncClient::OK)) account.saveToFile(true);
+  }
 
   {
     RenderLock lock(*this);
@@ -64,6 +84,7 @@ void KOReaderAuthActivity::onEnter() {
 
   // Check if already connected
   if (WiFi.status() == WL_CONNECTED) {
+    borrowedBookOrbitWifi = mode == Mode::BOOK_ORBIT;
     onWifiSelectionComplete(true);
     return;
   }
@@ -79,7 +100,7 @@ void KOReaderAuthActivity::onExit() {
   // Not ours to drop if Developer Mode raised it. Every other wifi user here
   // either tracks its own ownership flag or asks this; a bare getMode() check
   // means "somebody has the radio", not "I do".
-  if (WiFi.getMode() != WIFI_MODE_NULL && !devmode::holdsRadio()) {
+  if (!borrowedBookOrbitWifi && WiFi.getMode() != WIFI_MODE_NULL && !devmode::holdsRadio()) {
     WiFi.disconnect(false);
     delay(30);
     silentRestart();
@@ -93,7 +114,10 @@ void KOReaderAuthActivity::render(RenderLock&&) {
   const auto pageWidth = renderer.getScreenWidth();
   const auto pageHeight = renderer.getScreenHeight();
 
-  pixelui::drawHeader(renderer, mode == Mode::SIGN_UP ? tr(STR_SIGN_UP) : tr(STR_KOREADER_AUTH),
+  pixelui::drawHeader(renderer,
+                      mode == Mode::SIGN_UP      ? tr(STR_SIGN_UP)
+                      : mode == Mode::BOOK_ORBIT ? tr(STR_BOOKORBIT)
+                                                 : tr(STR_KOREADER_AUTH),
                       I18N.getLanguage() != Language::EN);
   const auto height = renderer.getLineHeight(UI_10_FONT_ID);
   const auto top = (pageHeight - height) / 2;
@@ -108,7 +132,8 @@ void KOReaderAuthActivity::render(RenderLock&&) {
         renderer,
         Rect{metrics.contentSidePadding, top + height + 10, pageWidth - 2 * metrics.contentSidePadding,
              3 * renderer.getLineHeight(UI_10_FONT_ID)},
-        UI_10_FONT_ID, tr(STR_SYNC_READY), 3, true, EpdFontFamily::REGULAR, UITheme::TextVerticalAlignment::TOP);
+        UI_10_FONT_ID, mode == Mode::BOOK_ORBIT ? tr(STR_BOOKORBIT_READY) : tr(STR_SYNC_READY), 3, true,
+        EpdFontFamily::REGULAR, UITheme::TextVerticalAlignment::TOP);
   } else if (state == FAILED) {
     renderer.drawCenteredText(UI_10_FONT_ID, top, mode == Mode::SIGN_UP ? tr(STR_SIGNUP_FAILED) : tr(STR_AUTH_FAILED),
                               true, EpdFontFamily::BOLD);

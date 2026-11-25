@@ -199,11 +199,11 @@ bool prefetchLibraryScene(GfxRenderer& renderer, freeink::ui::Rect region, uint6
 void invalidateScenes() { revision.fetch_add(1); }
 uint32_t sceneRevision() { return revision.load(); }
 
-void recordSource(const char*, HalFile&, bool valid) {
+void recordSource(bool resolved) {
   if (!cache) return;
   auto& pending = cache->pending;
   if (!pending.valid) return;
-  if (!valid || pending.count == 7) {
+  if (!resolved || pending.count == 7) {
     pending.valid = false;
     return;
   }

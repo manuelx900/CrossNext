@@ -9,7 +9,6 @@
 #include "../apps_local/home/CoverBitmapPainter.h"
 #include "../apps_local/home/CoverFit.h"
 #include "../apps_local/home/CoverScanline.h"
-#include "../apps_local/home/CoverSceneCache.h"
 #include "UITheme.h"
 
 namespace fui = freeink::ui;
@@ -83,10 +82,8 @@ bool HomeCoverCache::paint(fui::Rect rect, size_t index, const std::string& path
         renderer.fillRectDither(artLeft + 3, rect.y, 2, rect.height, Color::LightGray);
       }
     }
-    homecover::recordSource(path.c_str(), coverFile, drawn);
     coverFile.close();
-  } else
-    homecover::recordSource(path.c_str(), coverFile, false);
+  }
   if (!drawn) {
     if (flat)
       renderer.fillRect(rect.x, rect.y, rect.width, rect.height, false);

@@ -40,15 +40,18 @@
 
 namespace {
 homeui::ShelfCatalogCache shelfCatalog;
+int shelfSlots(const GfxRenderer& renderer) { return renderer.getScreenWidth() > renderer.getScreenHeight() ? 3 : 6; }
+int requestedShelfPages() { return std::clamp(int(SETTINGS.homeRecentBookCount), 1, 10); }
+bool hasShelfCatalog(int limit) {
+  return shelfCatalog.matches(library::libraryContentRevision(), homecover::sceneRevision(),
+                              SETTINGS.libraryUseMetadata != 0, limit);
+}
+
 bool availableRecent(const RecentBook& book) {
   if (content::hiddenContent(book.path)) return false;
-  if (shelfCatalog.matches(library::libraryContentRevision(), homecover::sceneRevision(),
-                           SETTINGS.libraryUseMetadata != 0, 0) &&
-      shelfCatalog.contains(book.path))
-    return true;
+  if (hasShelfCatalog(0) && shelfCatalog.contains(book.path)) return true;
   const bool present = !RecentBooksStore::isMissing(book);
-  if (present && shelfCatalog.matches(library::libraryContentRevision(), homecover::sceneRevision(),
-                                      SETTINGS.libraryUseMetadata != 0, 0))
+  if (present && hasShelfCatalog(0))
     shelfCatalog.rememberPresent(library::clixPathHash(book.path.c_str(), book.path.size()), book.path);
   return present;
 }
@@ -96,9 +99,9 @@ void HomeActivity::loadRecentBooks(int maxBooks) {
 
 void HomeActivity::loadShelfPage() {
   const auto started = millis();
-  const int pageSize = renderer.getScreenWidth() > renderer.getScreenHeight() ? 3 : 6;
+  const int pageSize = shelfSlots(renderer);
   shelfPageSize = pageSize;
-  const int requestedPages = std::clamp(int(SETTINGS.homeRecentBookCount), 1, 10);
+  const int requestedPages = requestedShelfPages();
   const int shelfLimit = requestedPages * pageSize;
   struct Reader {
     library::LibraryIndexFile index;
@@ -111,8 +114,7 @@ void HomeActivity::loadShelfPage() {
     return;
   }
   const bool dirty = library::isLibraryIndexDirty();
-  bool catalogReady = !dirty && shelfCatalog.matches(library::libraryContentRevision(), homecover::sceneRevision(),
-                                                     SETTINGS.libraryUseMetadata != 0, shelfLimit);
+  bool catalogReady = !dirty && hasShelfCatalog(shelfLimit);
   const bool catalogHit = catalogReady;
   bool opened = false;
   if (!catalogReady) {
@@ -269,53 +271,48 @@ void HomeActivity::resolveGridCoverPaths() {
   }
 }
 
-void HomeActivity::loadGridCover(RecentBook& book, int height, bool& showingLoading, Rect& popupRect) {
+bool HomeActivity::loadGridCover(RecentBook& book, int height, bool& showingLoading, Rect& popupRect) {
   const bool sizedThumb = book.coverBmpPath.find("[HEIGHT]") != std::string::npos;
   // XTC paths must first be resolved against the current rotation preference.
   if (!FsHelpers::hasXtcExtension(book.path) && (sizedThumb || !FsHelpers::hasReflowableBookExtension(book.path)) &&
       !book.coverBmpPath.empty() && Storage.exists(UITheme::getCoverThumbPath(book.coverBmpPath, height).c_str()))
-    return;
+    return false;
   // Only one parser lives at a time; EPUB/XTC objects exceed the stack budget.
   if (FsHelpers::hasReflowableBookExtension(book.path)) {
     auto epub = makeUniqueNoThrow<Epub>(book.path, "/.crosspoint");
     if (!epub) {
       LOG_ERR("HOME", "OOM: cover EPUB");
-      return;
+      return false;
     }
     book.coverBmpPath = epub->getThumbBmpPath();
-    if (Storage.exists(epub->getThumbBmpPath(height).c_str())) return;
-    if (!showingLoading) {
+    if (Storage.exists(epub->getThumbBmpPath(height).c_str())) return false;
+    if (epub->knownMissingCover()) return false;
+    if (!showingLoading && SETTINGS.homeCoverNotice(SETTINGS.homeLayout)) {
       showingLoading = true;
       if (!coverGridUi) dashboard.finishCover();
-      if (SETTINGS.homeCoverNotice(SETTINGS.homeLayout)) {
-        popupRect = GUI.drawLoadingScreen(renderer, tr(STR_LOADING_POPUP));
-        GUI.fillPopupProgress(renderer, popupRect, 0);
-      }
+      popupRect = GUI.drawLoadingScreen(renderer, tr(STR_LOADING_POPUP));
+      GUI.fillPopupProgress(renderer, popupRect, 0);
     }
-    if (epub->generateThumbBmpFromSource(height)) {
-      return;
-    }
+    bool generated = false;
+    if (epub->generateThumbBmpFromSource(height, &generated)) return generated;
   } else if (FsHelpers::hasXtcExtension(book.path)) {
     auto xtc = makeUniqueNoThrow<Xtc>(book.path, "/.crosspoint", SETTINGS.xtcCoverRotation != 0);
     if (!xtc) {
       LOG_ERR("HOME", "OOM: cover XTC");
-      return;
+      return false;
     }
     book.coverBmpPath = xtc->getThumbBmpPath();
-    if (Storage.exists(xtc->getThumbBmpPath(height).c_str())) return;
-    if (!showingLoading) {
+    if (Storage.exists(xtc->getThumbBmpPath(height).c_str())) return false;
+    if (!showingLoading && SETTINGS.homeCoverNotice(SETTINGS.homeLayout)) {
       showingLoading = true;
       if (!coverGridUi) dashboard.finishCover();
-      if (SETTINGS.homeCoverNotice(SETTINGS.homeLayout)) {
-        popupRect = GUI.drawLoadingScreen(renderer, tr(STR_LOADING_POPUP));
-        GUI.fillPopupProgress(renderer, popupRect, 0);
-      }
+      popupRect = GUI.drawLoadingScreen(renderer, tr(STR_LOADING_POPUP));
+      GUI.fillPopupProgress(renderer, popupRect, 0);
     }
-    if (xtc->load() && xtc->generateThumbBmp(height)) {
-      return;
-    }
+    if (xtc->load() && xtc->generateThumbBmp(height)) return true;
   }
   book.coverBmpPath.clear();
+  return false;
 }
 
 bool HomeActivity::loadRecentCovers(int coverHeight) {
@@ -330,7 +327,7 @@ bool HomeActivity::loadRecentCovers(int coverHeight) {
     // would rescale the dithered thumb at draw time and alias badly.
     const int thumbHeight = coverGridUi ? coverGridUi->thumbHeightFor() : coverHeight;
     const bool hadPath = !book.coverBmpPath.empty();
-    loadGridCover(book, thumbHeight, showingLoading, popupRect);
+    pathsChanged |= loadGridCover(book, thumbHeight, showingLoading, popupRect);
     if (!FsHelpers::hasEpubExtension(book.path) && !FsHelpers::hasXtcExtension(book.path))
       pathsChanged |= !hadPath && !book.coverBmpPath.empty();
     ++progress;
@@ -366,11 +363,14 @@ void HomeActivity::onEnter() {
     if (!coverGridUi) LOG_ERR("HOME", "OOM: cover grid UI; using standard home");
   }
   dashboard.begin();
-  if (coverGridUi) coverGridUi->begin(recentBooks, hasLibrarySlot(), false, hasPlugins);
   shelf::autostartFromEnv(renderer, mappedInput);
-  if (SETTINGS.homeCoverNotice(SETTINGS.homeLayout))
+  const bool warmShelf = coverGridUi && SETTINGS.homeLayout == CrossPointSettings::HOME_LICORICE &&
+                         hasShelfCatalog(shelfSlots(renderer) * requestedShelfPages()) &&
+                         !library::isLibraryIndexDirty();
+  if (SETTINGS.homeCoverNotice(SETTINGS.homeLayout) && !warmShelf) {
+    if (coverGridUi) coverGridUi->begin(recentBooks, hasLibrarySlot(), false, hasPlugins);
     entryPhase = EntryPhase::Shell;
-  else {
+  } else {
     initializeContent();
     entryPhase = EntryPhase::Painting;
   }
@@ -517,7 +517,7 @@ void HomeActivity::loop() {
     activityManager.requestIdleWork(*this);
   }
   if (coverGridUi && SETTINGS.homeLayout == CrossPointSettings::HOME_LICORICE &&
-      shelfPageSize != (renderer.getScreenWidth() > renderer.getScreenHeight() ? 3 : 6)) {
+      shelfPageSize != shelfSlots(renderer)) {
     loadShelfPage();
     resolveGridCoverPaths();
     coverGridUi->begin(recentBooks, hasLibrarySlot(), hasContinueReading, hasPlugins);
@@ -698,8 +698,8 @@ bool HomeActivity::prepareGridCover(RecentBook& book, int height) {
       return false;
     }
     book.coverBmpPath = epub->getThumbBmpPath();
-    if (Storage.exists(epub->getThumbBmpPath(height).c_str())) return true;
-    if (epub->generateThumbBmpFromSource(height)) return true;
+    bool generated = false;
+    if (epub->generateThumbBmpFromSource(height, &generated)) return generated;
   } else if (FsHelpers::hasXtcExtension(book.path)) {
     auto xtc = makeUniqueNoThrow<Xtc>(book.path, "/.crosspoint", SETTINGS.xtcCoverRotation != 0);
     if (!xtc) {
@@ -707,11 +707,10 @@ bool HomeActivity::prepareGridCover(RecentBook& book, int height) {
       return false;
     }
     book.coverBmpPath = xtc->getThumbBmpPath();
-    if (Storage.exists(xtc->getThumbBmpPath(height).c_str())) return true;
+    if (Storage.exists(xtc->getThumbBmpPath(height).c_str())) return false;
     if (xtc->load() && xtc->generateThumbBmp(height)) return true;
   } else
     return false;
-  book.coverBmpPath.clear();
   return false;
 }
 
@@ -744,13 +743,24 @@ void HomeActivity::runIdleWork() {
     return;
   }
   if (coverGridUi && recentsLoading) {
-    if (gridPreparationIndex < recentBooks.size())
-      prepareGridCover(recentBooks[gridPreparationIndex++], coverGridUi->thumbHeightFor());
+    if (gridPreparationIndex < recentBooks.size()) {
+      auto& book = recentBooks[gridPreparationIndex++];
+      if (prepareGridCover(book, coverGridUi->thumbHeightFor())) {
+        // Bookshelf can show the current book in both the grid and the reading strip.
+        for (size_t i = 0; i < recentBooks.size(); ++i) {
+          auto& slot = recentBooks[i];
+          if (slot.path != book.path) continue;
+          if (slot.coverBmpPath != book.coverBmpPath) slot.coverBmpPath = book.coverBmpPath;
+          coverGridUi->refreshCoverPath(i);
+        }
+        gridArtworkChanged = true;
+      }
+    }
     if (gridPreparationIndex >= recentBooks.size()) {
       recentsLoading = false;
       recentsLoaded = true;
-      coverGridUi->refreshCoverPaths();
-      requestUpdate();
+      if (gridArtworkChanged || coverGridUi->coverNoticeVisible()) requestUpdate();
+      gridArtworkChanged = false;
     }
     return;
   }
@@ -859,23 +869,17 @@ void HomeActivity::render(RenderLock&&) {
       recentsLoaded = recentsLoading = false;
       gridPreparationIndex = shelfNativeIndex = 0;
     }
-    if (!SETTINGS.homeCoverNotice(SETTINGS.homeLayout) && !recentsLoaded) {
-      for (auto& book : recentBooks) prepareGridCover(book, coverGridUi->thumbHeightFor());
-      coverGridUi->refreshCoverPaths();
-      recentsLoaded = true;
-      recentsLoading = false;
-      gridPreparationIndex = recentBooks.size();
-    }
     coverGridUi->setSelection(selectorIndex);
-    coverGridUi->setCoverLoading(!recentsLoaded && SETTINGS.homeCoverNotice(SETTINGS.homeLayout));
+    const bool showNotice = SETTINGS.homeCoverNotice(SETTINGS.homeLayout);
+    coverGridUi->setCoverLoading(!recentsLoaded && showNotice);
     UITheme::getInstance().drawCoverGridHome(*coverGridUi);
     if (coverGridUi->coversReady()) {
       recentsLoaded = true;
       recentsLoading = false;
-    }
-    if (!recentsLoaded && !recentsLoading) {
+    } else if (!recentsLoaded && !recentsLoading) {
       recentsLoading = true;
       gridPreparationIndex = 0;
+      gridArtworkChanged = false;
     }
     // Physical navigation walks only the menu tabs; covers remain touch targets.
     const auto labels = mappedInput.mapLabels(hasContinueReading ? tr(STR_RESUME) : "", tr(STR_SELECT),
@@ -907,8 +911,8 @@ void HomeActivity::render(RenderLock&&) {
     recentsLoaded = true;
   }
   if (!recentsLoaded && !recentsLoading) {
-    // The loading popup overlays this frame, including cached art or book placeholders.
-    if (book) {
+    const bool showNotice = SETTINGS.homeCoverNotice(SETTINGS.homeLayout);
+    if (book && showNotice) {
       dashboard.paintCover(*book);
       coverPainted = true;
     }
@@ -919,15 +923,19 @@ void HomeActivity::render(RenderLock&&) {
       for (int n = 0; n < 4; ++n)
         if (sides[n]) {
           RecentBook side = *sides[n];
-          loadGridCover(side, dashboard.geometry().sides[n].height, loading, popup);
+          changed |= loadGridCover(side, dashboard.geometry().sides[n].height, loading, popup);
         }
       changed |= loading;
     }
-    if (changed) homecover::invalidateScenes();
-    coverPainted = false;
-    coverBufferStored = false;
-    renderer.clearScreen();
-    dashboard.draw(book, hasLibrarySlot(), hasPlugins, paintedSelection(), recentBookIndex, recentBookCount, sides);
+    if (changed) {
+      homecover::invalidateScenes();
+      coverPainted = false;
+      coverBufferStored = false;
+      if (showNotice) {
+        renderer.clearScreen();
+        dashboard.draw(book, hasLibrarySlot(), hasPlugins, paintedSelection(), recentBookIndex, recentBookCount, sides);
+      }
+    }
   }
   const auto& cover = dashboard.geometry().cover;
   const auto& cache = dashboard.geometry().coverRegion;

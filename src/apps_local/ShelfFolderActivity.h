@@ -28,6 +28,7 @@ class ShelfFolderActivity final : public Activity {
   void onEnter() override;
   // The folder routes right swipes to Back or paging according to its page.
   bool allowsEdgeBack() const override { return false; }
+  bool canEnterWhileRemoteStarts() const override { return true; }
   void loop() override;
   void render(RenderLock&&) override;
 

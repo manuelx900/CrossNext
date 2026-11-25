@@ -354,7 +354,8 @@ AlphaScanResult scanForUsefulAlpha(HalFile& file, const OverlayBmpInfo& info, ui
   return AlphaScanResult::NotUseful;
 }
 
-AlphaOverlayResult tryRenderTransparentOverlayBmp(HalFile& file, GfxRenderer& renderer, const char* pathForLog) {
+AlphaOverlayResult tryRenderTransparentOverlayBmp(HalFile& file, GfxRenderer& renderer, const char* pathForLog,
+                                                  const bool bookOrbitPreview) {
   OverlayBmpInfo info;
   if (!parseOverlayBmpHeader(file, info, false)) return AlphaOverlayResult::NotAlphaOverlay;
 
@@ -373,6 +374,9 @@ AlphaOverlayResult tryRenderTransparentOverlayBmp(HalFile& file, GfxRenderer& re
 
   if (!renderTransparentOverlayPass(file, info, placement, renderer, row.get(), TransparentOverlayPass::BW))
     return AlphaOverlayResult::Error;
+  if (bookOrbitPreview) {
+    return AlphaOverlayResult::Rendered;
+  }
   const bool absolute = renderer.grayscaleCapabilities(sleepGrayscaleMode(renderer)).supported();
   if (absolute) {
     cleanBeforeAbsoluteGray(renderer);
@@ -448,7 +452,8 @@ bool findNextValidSleepImage(HalFile& dir, const SleepRecentKind recentKind, cha
   return false;
 }
 
-bool selectRandomSleepFile(const char* dirPath, const SleepRecentKind recentKind, std::string& selectedPath) {
+bool selectRandomSleepFile(const char* dirPath, const SleepRecentKind recentKind, std::string& selectedPath,
+                           uint16_t& selectedIndex) {
   auto dir = Storage.open(dirPath);
   if (!dir || !dir.isDirectory()) return false;
 
@@ -481,8 +486,7 @@ bool selectRandomSleepFile(const char* dirPath, const SleepRecentKind recentKind
   selectedPath = dirPath;
   selectedPath += "/";
   selectedPath += name.get();
-  pushRecentSleepIndex(recentKind, randomFileIndex);
-  APP_STATE.saveToFile();
+  selectedIndex = randomFileIndex;
   return true;
 }
 
@@ -526,7 +530,98 @@ void releaseSdFontCachesForDecode(const GfxRenderer& renderer) {
 
 void SleepActivity::onEnter() {
   Activity::onEnter();
+  const bool previewShown = static_cast<bool>(prePreviewFrame);
+  if (previewShown) {
+    const auto sleepOrientation = renderer.getOrientation();
+    restorePreviewFrame();
+    renderer.setOrientation(sleepOrientation);
+  }
+  renderSleepScreen(APP_STATE.lastSleepFromReader, !previewShown);
+}
 
+bool SleepActivity::showBookOrbitPreview(const Epub& book) {
+  auto* frame = display.getFrameBuffer();
+  if (!frame) return false;
+  const auto frameBytes = display.getBufferSize();
+  // The reader may already own the renderer's snapshot slot. Keep its frame in PSRAM until this sleep is resolved.
+  prePreviewFrame = HalMemory::allocatePsram(frameBytes);
+  if (!prePreviewFrame) {
+    LOG_ERR("SLP", "OOM: BookOrbit sleep frame snapshot (%lu bytes)", static_cast<unsigned long>(frameBytes));
+    return false;
+  }
+  renderer.waitRefreshComplete();
+  std::memcpy(prePreviewFrame.get(), frame, frameBytes);
+  prePreviewOrientation = renderer.getOrientation();
+  prePreviewInverted = display.isInverted();
+  prePreviewHeaderHeight = chrome::headerHeight;
+  prePreviewHeaderColor = chrome::framebufferHeaderColor;
+  prePreviewLightHeader = chrome::framebufferLightHeader;
+  prePreviewPaintedHeader = chrome::headerPaintedLight;
+  previewBook = &book;
+  showingBookOrbitPreview = true;
+  renderSleepScreen(true, false);
+  showingBookOrbitPreview = false;
+  previewBook = nullptr;
+  return true;
+}
+
+void SleepActivity::restorePreviewFrame() {
+  if (!prePreviewFrame) return;
+  popupBackdrop.reset();
+  std::memcpy(display.getFrameBuffer(), prePreviewFrame.get(), display.getBufferSize());
+  prePreviewFrame.reset();
+  renderer.setOrientation(prePreviewOrientation);
+  display.setInverted(prePreviewInverted);
+  chrome::headerHeight = prePreviewHeaderHeight;
+  chrome::framebufferHeaderColor = prePreviewHeaderColor;
+  chrome::framebufferLightHeader = prePreviewLightHeader;
+  chrome::headerPaintedLight = prePreviewPaintedHeader;
+}
+
+bool SleepActivity::capturePopupBackdrop(const Rect rect) const {
+  const auto bytes = renderer.getPackedRegionByteSize(rect.x, rect.y, rect.width, rect.height);
+  if (!bytes) return false;
+  // Keep only the popup's pixels so clearing it doesn't decode the wallpaper again.
+  popupBackdrop = HalMemory::allocatePsram(bytes);
+  if (!popupBackdrop) {
+    LOG_ERR("SLP", "OOM: BookOrbit popup backdrop (%lu bytes)", static_cast<unsigned long>(bytes));
+    return false;
+  }
+  if (!renderer.copyPackedRegionToBuffer(rect.x, rect.y, rect.width, rect.height, popupBackdrop.get(), bytes)) {
+    popupBackdrop.reset();
+    return false;
+  }
+  popupX = rect.x;
+  popupY = rect.y;
+  popupWidth = rect.width;
+  popupHeight = rect.height;
+  popupOrientation = renderer.getOrientation();
+  return true;
+}
+
+void SleepActivity::hideBookOrbitPopup() {
+  if (!popupBackdrop) return;
+  const auto orientation = renderer.getOrientation();
+  renderer.setOrientation(popupOrientation);
+  const auto bytes = renderer.getPackedRegionByteSize(popupX, popupY, popupWidth, popupHeight);
+  if (renderer.copyPackedBufferToRegion(popupX, popupY, popupWidth, popupHeight, popupBackdrop.get(), bytes))
+    renderer.displayWindow(popupX, popupY, popupWidth, popupHeight);
+  renderer.setOrientation(orientation);
+  popupBackdrop.reset();
+}
+
+void SleepActivity::presentFrame(const HalDisplay::RefreshMode refresh) const {
+  if (showingBookOrbitPreview) {
+    const auto box = GUI.drawPopup(
+        renderer, tr(STR_BOOKORBIT_SYNCING_ON_SLEEP),
+        [](const void* self, Rect rect) { return static_cast<const SleepActivity*>(self)->capturePopupBackdrop(rect); },
+        this);
+    if (box.width > 0) return;
+  }
+  renderer.displayBuffer(refresh);
+}
+
+void SleepActivity::renderSleepScreen(const bool fromReader, const bool showEnteringPopup) {
   const bool renderQuickResume =
       SETTINGS.sleepScreen == CrossPointSettings::SLEEP_SCREEN_MODE::QUICK_RESUME ||
       (fromTimeout &&
@@ -552,11 +647,11 @@ void SleepActivity::onEnter() {
     // output-level inversion first so the retained content keeps its visible
     // polarity after the display driver returns to normal.
     if (frameWasInverted) renderer.invertScreen();
-    if (APP_STATE.lastSleepFromReader) {
+    if (fromReader) {
       ReaderUtils::applyOrientation(renderer, SETTINGS.orientation);
     }
-    drawSleepPopupPreservingFrame(renderer);
-    if (APP_STATE.lastSleepFromReader) {
+    if (showEnteringPopup) drawSleepPopupPreservingFrame(renderer);
+    if (fromReader) {
       renderer.setOrientation(GfxRenderer::Orientation::Portrait);
     }
     releaseSdFontCachesForDecode(renderer);
@@ -569,11 +664,11 @@ void SleepActivity::onEnter() {
     prepareGoalOverlay();
 
   // Show popup with reader orientation only when going to sleep from reader
-  if (APP_STATE.lastSleepFromReader) {
+  if (fromReader) {
     ReaderUtils::applyOrientation(renderer, SETTINGS.orientation);
-    GUI.drawPopup(renderer, tr(STR_ENTERING_SLEEP));
+    if (showEnteringPopup) GUI.drawPopup(renderer, tr(STR_ENTERING_SLEEP));
     renderer.setOrientation(GfxRenderer::Orientation::Portrait);
-  } else {
+  } else if (showEnteringPopup) {
     GUI.drawPopup(renderer, tr(STR_ENTERING_SLEEP));
   }
 
@@ -603,7 +698,7 @@ void SleepActivity::onEnter() {
                                readinggoal::target(SETTINGS.readingDailyGoal),
                                SETTINGS.readingGoalLegacyHistory ? 0 : SETTINGS.readingGoalStartDay);
       chrome::lightHeader = previous;
-      renderer.displayBuffer(HalDisplay::HALF_REFRESH);
+      presentFrame(HalDisplay::HALF_REFRESH);
       return;
     }
     case (CrossPointSettings::SLEEP_SCREEN_MODE::BLANK):
@@ -613,7 +708,7 @@ void SleepActivity::onEnter() {
     case (CrossPointSettings::SLEEP_SCREEN_MODE::COVER):
       return renderCoverSleepScreen();
     case (CrossPointSettings::SLEEP_SCREEN_MODE::COVER_CUSTOM):
-      if (APP_STATE.lastSleepFromReader) {
+      if (fromReader) {
         return renderCoverSleepScreen();
       } else {
         return renderCustomSleepScreen();
@@ -623,7 +718,7 @@ void SleepActivity::onEnter() {
       // never an old picture of itself. No note, or a note since deleted, is
       // the default screen rather than an empty page.
       if (notes::drawAsleep(renderer)) {
-        renderer.displayBuffer(HalDisplay::HALF_REFRESH);
+        presentFrame(HalDisplay::HALF_REFRESH);
         return;
       }
       return renderDefaultSleepScreen();
@@ -663,6 +758,23 @@ void SleepActivity::drawGoalOverlay() const {
   chrome::lightHeader = previous;
 }
 
+const std::string& SleepActivity::randomSleepFile(const bool transparent) const {
+  const auto kind = transparent ? SleepRecentKind::Overlay : SleepRecentKind::Standard;
+  if (!selectedWallpaper) {
+    auto& path = selectedWallpaper.emplace();
+    uint16_t index = 0;
+    if (selectRandomSleepFile(transparent ? TRANSPARENT_SLEEP_DIR : "/.sleep", kind, path, index) ||
+        selectRandomSleepFile(transparent ? TRANSPARENT_SLEEP_LEGACY_DIR : "/sleep", kind, path, index))
+      selectedWallpaperIndex = index;
+  }
+  if (selectedWallpaperIndex && !showingBookOrbitPreview) {
+    pushRecentSleepIndex(kind, *selectedWallpaperIndex);
+    APP_STATE.saveToFile();
+    selectedWallpaperIndex.reset();
+  }
+  return *selectedWallpaper;
+}
+
 void SleepActivity::renderCustomSleepScreen() const {
   // Look for sleep.bmp on the root of the sd card to determine if we should
   // render a custom sleep screen instead of the default.
@@ -682,16 +794,12 @@ void SleepActivity::renderCustomSleepScreen() const {
     file.close();
   }
 
-  std::string selectedPath;
-  if (!selectRandomSleepFile("/.sleep", SleepRecentKind::Standard, selectedPath)) {
-    selectRandomSleepFile("/sleep", SleepRecentKind::Standard, selectedPath);
-  }
-
+  const auto& selectedPath = randomSleepFile(false);
   if (!selectedPath.empty()) {
     HalFile randFile;
     if (Storage.openFileForRead("SLP", selectedPath, randFile)) {
       LOG_DBG("SLP", "Randomly loading: %s", selectedPath.c_str());
-      delay(100);
+      if (!showingBookOrbitPreview) delay(100);
       Bitmap bitmap(randFile, true,
                     renderer.grayscaleCapabilities(sleepGrayscaleMode(renderer)).supported() &&
                         display.getController() == HalDisplay::Controller::SSD1677 &&
@@ -726,7 +834,7 @@ void SleepActivity::renderDefaultSleepScreen() const {
     renderer.invertScreen();
   }
 
-  renderer.displayBuffer(kSleepClean);
+  presentFrame(kSleepClean);
 }
 
 void SleepActivity::renderBitmapSleepScreen(const Bitmap& bitmap, const bool preserveBackground) const {
@@ -747,7 +855,7 @@ void SleepActivity::renderBitmapSleepScreen(const Bitmap& bitmap, const bool pre
                                                           CrossPointSettings::SLEEP_SCREEN_COVER_FILTER::NO_FILTER);
 
   if (!renderer.drawBitmap(bitmap, x, y, pageWidth, pageHeight, cropX, cropY, preserveBackground)) {
-    renderer.displayBuffer(kSleepClean);
+    presentFrame(kSleepClean);
     return;
   }
 
@@ -757,6 +865,11 @@ void SleepActivity::renderBitmapSleepScreen(const Bitmap& bitmap, const bool pre
   }
 
   if (!preserveBackground) drawGoalOverlay();
+
+  if (showingBookOrbitPreview) {
+    presentFrame(kSleepClean);
+    return;
+  }
 
   const bool absolute = hasGreyscale && renderer.grayscaleCapabilities(sleepGrayscaleMode(renderer)).supported();
   if (absolute) {
@@ -800,8 +913,11 @@ void SleepActivity::renderBitmapSleepScreen(const Bitmap& bitmap, const bool pre
 }
 
 bool SleepActivity::renderSleepOverlayFile(HalFile& file, const char* pathForLog) const {
-  const auto alphaResult = tryRenderTransparentOverlayBmp(file, renderer, pathForLog);
-  if (alphaResult == AlphaOverlayResult::Rendered) return true;
+  const auto alphaResult = tryRenderTransparentOverlayBmp(file, renderer, pathForLog, showingBookOrbitPreview);
+  if (alphaResult == AlphaOverlayResult::Rendered) {
+    if (showingBookOrbitPreview) presentFrame(kSleepClean);
+    return true;
+  }
   if (alphaResult == AlphaOverlayResult::Error) return false;
 
   Bitmap bitmap(file);
@@ -838,6 +954,11 @@ bool SleepActivity::renderTransparentOverlayPng(const std::string& path) const {
   LOG_DBG("SLP", "Rendering transparent PNG overlay: %s (%dx%d)", path.c_str(), dimensions.width, dimensions.height);
 
   if (!converter.decodeToFramebuffer(path, renderer, config)) return false;
+  if (showingBookOrbitPreview) {
+    presentFrame(kSleepClean);
+    return true;
+  }
+
   const bool absolute = renderer.grayscaleCapabilities(sleepGrayscaleMode(renderer)).supported();
   if (absolute) {
     if (!renderer.displayGrayscaleBase(sleepGrayscaleMode(renderer))) return false;
@@ -880,11 +1001,7 @@ void SleepActivity::renderTransparentCustomSleepScreen() const {
   if (renderSleepOverlayPath(TRANSPARENT_SLEEP_ROOT_BMP)) return;
   if (renderSleepOverlayPath(TRANSPARENT_SLEEP_ROOT_PNG)) return;
 
-  std::string selectedPath;
-  if (!selectRandomSleepFile(TRANSPARENT_SLEEP_DIR, SleepRecentKind::Overlay, selectedPath)) {
-    selectRandomSleepFile(TRANSPARENT_SLEEP_LEGACY_DIR, SleepRecentKind::Overlay, selectedPath);
-  }
-
+  const auto& selectedPath = randomSleepFile(true);
   if (!selectedPath.empty() && renderSleepOverlayPath(selectedPath)) return;
 
   LOG_ERR("SLP", "No valid transparent sleep overlay found");
@@ -915,7 +1032,10 @@ void SleepActivity::renderCoverSleepScreen() const {
   bool cropped = SETTINGS.sleepScreenCoverMode == CrossPointSettings::SLEEP_SCREEN_COVER_MODE::CROP;
 
   // Check if the current book is XTC, TXT, or EPUB
-  if (FsHelpers::hasXtcExtension(APP_STATE.openEpubPath)) {
+  if (previewBook) {
+    if (!previewBook->generateCoverBmp(cropped, originalThresholds)) return (this->*renderNoCoverSleepScreen)();
+    coverBmpPath = previewBook->getCoverBmpPath(cropped, originalThresholds);
+  } else if (FsHelpers::hasXtcExtension(APP_STATE.openEpubPath)) {
     // Handle XTC file
     Xtc lastXtc(APP_STATE.openEpubPath, "/.crosspoint", SETTINGS.xtcCoverRotation != 0);
     if (!lastXtc.load()) {
@@ -967,7 +1087,9 @@ void SleepActivity::renderLastScreenSleepScreen() const {
   // Only the moon differs from the displayed frame, so a differential FAST
   // update adds it without the flashing clean pass (which sweeps the panel
   // through the inverse — a full white flash on a night-mode page).
-  if (gpio.deviceIsX3()) {
+  if (showingBookOrbitPreview) {
+    presentFrame(HalDisplay::FAST_REFRESH);
+  } else if (gpio.deviceIsX3()) {
     renderer.displayGrayscaleBase(HalDisplay::FAST_REFRESH);
   } else {
     renderer.displayBuffer(HalDisplay::FAST_REFRESH);
@@ -976,5 +1098,5 @@ void SleepActivity::renderLastScreenSleepScreen() const {
 
 void SleepActivity::renderBlankSleepScreen() const {
   renderer.clearScreen();
-  renderer.displayBuffer(kSleepClean);
+  presentFrame(kSleepClean);
 }

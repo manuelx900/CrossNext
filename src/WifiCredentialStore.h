@@ -27,6 +27,7 @@ class WifiCredentialStore : public PersistableStore<WifiCredentialStore> {
  private:
   std::vector<WifiCredential> credentials;
   std::string lastConnectedSsid;
+  bool credentialsInitialized = false;
   // Protects the in-memory strings independently of PersistableStore's file
   // serialization mutex. Readers only hold this briefly and never wait on SD
   // I/O; saveToFile() snapshots under this mutex from toJson().
@@ -46,6 +47,7 @@ class WifiCredentialStore : public PersistableStore<WifiCredentialStore> {
   bool fromJson(JsonVariantConst doc);
 
   // Credential management
+  void loadIfNeeded();
   bool addCredential(const std::string& ssid, const std::string& password);
   bool removeCredential(const std::string& ssid);
   std::optional<WifiCredential> findCredential(const std::string& ssid) const;

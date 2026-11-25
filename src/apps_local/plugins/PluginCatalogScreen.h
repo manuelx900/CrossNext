@@ -1,7 +1,6 @@
 #pragma once
 
-#include "../ui/PixelMenu.h"
-#include "../ui/ToyboxScreen.h"
+#include "../ui/CatalogHeader.h"
 
 namespace pluginui {
 namespace fui = freeink::ui;
@@ -9,17 +8,7 @@ namespace fui = freeink::ui;
 template <typename Screen>
 void header(Screen& screen, const char* title, const toybox::HeaderStatus& status, const fui::BitmapRef& search = {},
             fui::ActionId searchAction = fui::NO_ACTION) {
-  toybox::Screen chromeScreen(screen.frame(), screen.theme());
-  pixelui::Header model;
-  model.title = title;
-  model.back = screen.device().hasTouch;
-  model.battery = status.percent;
-  model.charging = status.charging;
-  model.showPercent = status.showPercent;
-  model.clockText = status.clock;
-  model.mark = search;
-  model.markAction = searchAction;
-  pixelui::header(chromeScreen, model);
+  catalogui::header(screen, title, status, search, searchAction);
   pixelui::begin(screen);
 }
 

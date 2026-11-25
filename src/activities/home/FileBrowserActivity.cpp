@@ -703,13 +703,7 @@ void FileBrowserActivity::buildScreen(UiScreen& screen) {
   const bool unicode = unicodeNames || I18N.getLanguage() != Language::EN;
   pixelui::FontScope fonts(uiTarget, renderer, unicode);
   const auto& metrics = UITheme::getInstance().getMetrics();
-  pixelui::begin(screen, libraryui::kFooterHeight + (mappedInput.hasTouch() ? 0 : metrics.buttonHintsHeight));
-  if (chrome::lightHeader) {
-    const auto body = screen.body();
-    screen.setContentMarginAbsolute({int16_t(std::max(chrome::headerHeight, int(body.y) - 6)),
-                                     int16_t(screen.device().width - body.right()),
-                                     int16_t(screen.device().height - body.bottom()), body.x});
-  }
+  libraryui::beginFileRows(screen, libraryui::kFooterHeight + (mappedInput.hasTouch() ? 0 : metrics.buttonHintsHeight));
 
   const int pathLength = std::snprintf(pathLabel, sizeof(pathLabel), tr(STR_BROWSER_MICROSD_PATH), basepath.c_str(),
                                        basepath == "/" ? "" : "/");

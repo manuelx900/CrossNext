@@ -2,6 +2,8 @@
 #include <cstdint>
 #include <string>
 
+class HalFile;
+
 /**
  * Calculate KOReader document ID (partial MD5 hash).
  *
@@ -17,6 +19,8 @@
  */
 class KOReaderDocumentId {
  public:
+  static constexpr size_t CHUNK_SIZE = 1024;
+
   /**
    * Calculate the KOReader document hash for a file (binary/content-based).
    *
@@ -26,6 +30,7 @@ class KOReaderDocumentId {
   static std::string calculate(const std::string& filePath);
   // Borrow a reusable chunk for batch operations; ownership remains with the caller.
   static std::string calculate(const std::string& filePath, uint8_t* scratch, size_t bytes);
+  static std::string calculate(HalFile& file, uint8_t* scratch, size_t bytes);
 
   /**
    * Calculate document hash from filename only (filename-based sync mode).
@@ -37,9 +42,6 @@ class KOReaderDocumentId {
   static std::string calculateFromFilename(const std::string& filePath);
 
  private:
-  // Size of each chunk to read at each offset
-  static constexpr size_t CHUNK_SIZE = 1024;
-
   // Number of offsets to try (i = -1 to 10, so 12 offsets)
   static constexpr int OFFSET_COUNT = 12;
 

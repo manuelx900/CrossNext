@@ -74,6 +74,26 @@ System → Clock → Manual date and time adjusts year (2020–2099), month, day
 
 The 12/24-hour setting applies to Home, the pull-down controls and shared pixel headers. Show in header controls the optional clock in those headers; Home keeps its dedicated clock. Reading → Manage fonts offers Installed fonts offline and Download fonts, which explicitly requires Wi-Fi. Reading sync and OPDS remain active features. English and Spanish UI languages select their corresponding initial keyboard even when an older saved mask omitted it. Wordle's English keyboard omits Ñ; Spanish includes it.
 
+## BookOrbit
+
+Open **Settings → Connectivity → BookOrbit** and enter the server address and the KOReader sync credentials created in your BookOrbit account under **Devices & Sync → KOReader**. Use **Authenticate** to verify the account and reveal the manual sync action in the EPUB menu. The existing KOReader Sync menu keeps its own account.
+
+Open the same EPUB file on the reader and in BookOrbit. To resolve different positions manually, choose **Sync with BookOrbit** in the EPUB menu and select which position to keep. In the toolbar layout, find it under **More**.
+
+In **Settings → Connectivity → BookOrbit → Sync Now**, **Reading** shows the current EPUB and books whose reading position changed on this device after authenticating. Use **Sync pending** to process the queued books over one Wi-Fi connection. Open **Recent** and choose **Sync book** for a manual sync of any listed EPUB, including a book with changes on the server. The device keeps a marker on the microSD for each pending book and reads its latest saved position when syncing.
+
+When a book needs a decision, select the position to keep or choose **Skip** to continue. The summary shows how many books synced, were skipped, or had an error. Select a card to see the numbered EPUB filenames in that group. Matching positions can clear a pending entry without a transfer. An EPUB missing from the BookOrbit library stays pending if BookOrbit rejects the upload. Long queues run in batches of up to 30 books. Run **Sync pending** again to continue. With physical buttons, highlight a row and press Confirm to sync. Move the selection to the tab band and press Confirm to switch tabs. BookOrbit matches the file by its binary fingerprint, so a modified EPUB can be treated as a different book.
+
+**Sync on sleep** starts off. When enabled, CrossNext uses an active Wi-Fi connection or reconnects to a saved network with an EPUB open and battery at 10% or higher. The frontlight turns off and a notice appears over the sleep screen while BookOrbit connects and syncs. The notice clears before deep sleep. If BookOrbit has no position yet, CrossNext can upload the reader's first progress automatically. Matching positions let the reader start tracking changes. On later syncs, if only one side moved forward, CrossNext keeps that position. If the two sides have conflicting progress from different devices, choose a position with the manual action. Press Power again during the connection or transfer to cancel at the next input check and return to reading.
+
+**Sync on wake** starts off and can be enabled separately. When the device wakes into an EPUB and has at least 10% battery, CrossNext checks BookOrbit using an active or saved Wi-Fi network. A notice appears over the page while it checks. It opens a newer server position if the local position has stayed at the last synced point. Use the manual action to resolve conflicting positions. Press Back to cancel at the next input check and keep the saved page. Press Home to cancel and go to Home.
+
+If the server IP changes, update the address in BookOrbit settings, keeping the protocol and port. CrossNext recognizes the same server and account by the instance ID so books can keep syncing. History saved by older firmware may need one manual sync if the two positions differ and the server's last position came from another device. Older servers without an instance ID use the saved URL and may require a manual sync after the address changes.
+
+Use **Browse Catalog** to see and search the EPUBs available to the same BookOrbit account. Selecting a title checks for a matching EPUB in **Download Folder** on the microSD. Choose **Open book** after a download or when the catalog finds a matching copy. If you delete that copy, selecting the title downloads it again. Leave the folder blank to use the card root.
+
+**Sync Behavior** controls single-book synchronization. **Ask Every Time** lets you choose the position. **Smart Sync** can apply or upload an unambiguous advance once the book has synced on this device. On a first sync or a conflict it asks you to choose. **Sync on sleep** has its own switch.
+
 ## Header clock and control shapes
 
 Framed and Carousel use square controls in their menus and reader sheets. Older saved theme identifiers remain readable and cannot restore the retired rounded theme. Carousel 2 and Bookshelf use restrained rounding on cover badges and popup controls. Card illustrations and circular icons keep their intended shapes.

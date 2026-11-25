@@ -7,6 +7,7 @@
 
 #include <array>
 #include <atomic>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -26,8 +27,28 @@ namespace vocabulary {
 struct Context;
 }
 
+namespace bookorbit {
+enum class SyncTrigger : uint8_t;
+}
+
 class EpubReaderActivity final : public ReaderActivity {
   std::shared_ptr<Epub> epub;
+  std::atomic<bool> bookOrbitWakePending{false};
+  uint32_t bookOrbitWakeArmedAt = 0;
+  bool bookOrbitWakeWaitForLayout = false;
+  // The render task records a change, while the activity loop owns marker writes.
+  std::atomic<uint32_t> bookOrbitPositionRevision{0};
+  uint32_t bookOrbitRecordedRevision = 0;
+  bool bookOrbitPendingStored = false;
+  bool bookOrbitPendingRetry = false;
+  bool bookOrbitApplyingRemote = false;
+  bool bookOrbitLayoutReposition = false;
+  bool isNewBookOrbitPosition(int spine, int page) const;
+  void noteBookOrbitPositionSaved(bool localChange);
+  void flushBookOrbitPending(bool retry = false);
+  void acknowledgeBookOrbitPosition(uint32_t revision);
+  bool runBookOrbitWakeSync(bool readerInput);
+  void syncBookOrbit(const bookorbit::SyncCallbacks& callbacks, bookorbit::SyncTrigger trigger);
   int textLayoutPage = 0;
   bookdictionary::Settings bookDictionaries;
   std::vector<std::string> bookDictionaryFolders;
@@ -215,6 +236,7 @@ class EpubReaderActivity final : public ReaderActivity {
   struct FormatProgress {
     int spine, page, count;
     std::optional<uint32_t> offset;
+    bool localChange;
   };
   std::optional<FormatProgress> formatProgress;
   bool flushFormatProgress();
@@ -246,7 +268,8 @@ class EpubReaderActivity final : public ReaderActivity {
   int clippingAtPoint(const Page& page, int x, int y) const;
   void openClippings();
   void applyProgressChange(const ProgressChangeResult& progress);
-  bool launchKOReaderSync();
+  void applyProgressChangeLocked(const ProgressChangeResult& progress);
+  bool launchKOReaderSync(bool bookOrbit = false);
   unsigned long confirmLongPressThreshold() const;
   void toggleAutoPageTurn(uint8_t selectedPageTurnOption);
   void loadCachedBookmarks();
@@ -295,12 +318,15 @@ class EpubReaderActivity final : public ReaderActivity {
  public:
   static std::unique_ptr<Activity> openVocabulary(GfxRenderer&, MappedInputManager&, const vocabulary::Context&);
   explicit EpubReaderActivity(GfxRenderer& renderer, MappedInputManager& mappedInput, std::string bookPath,
-                              bool allowFastInitialRefresh)
-      : ReaderActivity("EpubReader", renderer, mappedInput, std::move(bookPath), allowFastInitialRefresh) {}
+                              bool allowFastInitialRefresh, bool bookOrbitWakeSync = false)
+      : ReaderActivity("EpubReader", renderer, mappedInput, std::move(bookPath), allowFastInitialRefresh),
+        bookOrbitWakePending(bookOrbitWakeSync),
+        bookOrbitWakeArmedAt(bookOrbitWakeSync ? millis() : 0) {}
   ~EpubReaderActivity() override;
   void onExit() override;
   void prepareForChild() override;
   void prepareForSleep() override;
+  bool syncBookOrbitBeforeSleep(const bookorbit::SyncCallbacks& callbacks) override;
   void runIdleWork() override;
 
   void loop() override;
@@ -312,7 +338,9 @@ class EpubReaderActivity final : public ReaderActivity {
   }
 
   bool makeRoomForChapterBuild();
-  bool canStartRemoteRadio() const override { return !section || !section->isBuilding(); }
+  bool canStartRemoteRadio() const override {
+    return !bookOrbitWakePending.load(std::memory_order_relaxed) && (!section || !section->isBuilding());
+  }
   bool remoteShortcut(bool readerMenu) override;
   bool inputOverPage() const override { return overlay != Overlay::None || endOfBookMenuActive(); }
   bool pageTurn(bool isForward) override;

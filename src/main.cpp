@@ -4,6 +4,7 @@
 #include <Epub.h>
 #include <FontCacheManager.h>
 #include <FontDecompressor.h>
+#include <FsHelpers.h>
 #include <GfxRenderer.h>
 #include <HalClock.h>
 #include <HalDisplay.h>
@@ -28,9 +29,13 @@
 #include <builtinFonts/ubuntu_12_regular.h>
 #include <driver/gpio.h>
 #include <esp_sntp.h>
+#ifndef SIMULATOR
+#include <esp_timer.h>
+#endif
 #include <soc/soc_caps.h>
 
 #include <algorithm>
+#include <atomic>
 #include <cstring>
 
 #include "CrossPointSettings.h"
@@ -47,8 +52,10 @@
 #include "WifiCredentialStore.h"
 #include "activities/Activity.h"
 #include "activities/ActivityManager.h"
+#include "activities/boot_sleep/SleepActivity.h"
 #include "activities/settings/SdFirmwareUpdateActivity.h"
 #include "apps_local/Shelf.h"
+#include "apps_local/bookorbit/BookOrbit.h"
 #include "apps_local/power/FrontlightSchedule.h"
 #include "apps_local/power/PowerButtonPolicy.h"
 #include "apps_local/power/PowerMenuActivity.h"
@@ -118,6 +125,7 @@ FontDecompressor fontDecompressor;
 SdCardFontSystem sdFontSystem;
 FontCacheManager fontCacheManager(renderer.getFontMap(), renderer.getSdCardFonts(), renderer.getTtfFonts());
 static unsigned long allowSleepAt = 0;
+static unsigned long lastActivityTime = 0;
 static unsigned long lastX4ProPowerClickAt = 0;
 
 namespace {
@@ -652,11 +660,76 @@ static void deliverSleepPluginEvents() {
   }
 }
 
+// An in-flight BookOrbit request shares the power-button poll with the join.
+static constexpr uint32_t BOOK_ORBIT_SLEEP_TIMEOUT_MS = 21000;
+static bool bookOrbitWakeRequested = false;
+static bool bookOrbitPowerReleased = false;
+static unsigned long bookOrbitSleepStarted = 0;
+
+#ifndef SIMULATOR
+// Keep sampling while the networking library is blocked in DNS or TCP.
+static std::atomic_bool bookOrbitPowerLatched{false};
+static bool bookOrbitTimerReleased = false;
+static uint8_t bookOrbitPowerSamples = 0;
+
+static void sampleBookOrbitPower(void*) {
+  if (!gpio.isPowerButtonPhysicallyPressed()) {
+    bookOrbitPowerSamples = 0;
+    bookOrbitTimerReleased = true;
+  } else if (bookOrbitTimerReleased && ++bookOrbitPowerSamples >= 2) {
+    bookOrbitPowerLatched.store(true, std::memory_order_relaxed);
+    bookOrbitTimerReleased = false;
+  }
+}
+
+static esp_timer_handle_t startBookOrbitPowerSampler() {
+  bookOrbitPowerLatched.store(false, std::memory_order_relaxed);
+  bookOrbitTimerReleased = !gpio.isPowerButtonPhysicallyPressed();
+  bookOrbitPowerSamples = 0;
+  esp_timer_create_args_t args{};
+  args.callback = sampleBookOrbitPower;
+  args.dispatch_method = ESP_TIMER_TASK;
+  args.name = "bookorbit-wake";
+  esp_timer_handle_t timer = nullptr;
+  if (esp_timer_create(&args, &timer) != ESP_OK) {
+    LOG_ERR("ORBIT", "Could not create power sampler");
+    return nullptr;
+  }
+  if (esp_timer_start_periodic(timer, 10000) == ESP_OK) return timer;
+  LOG_ERR("ORBIT", "Could not start power sampler");
+  esp_timer_delete(timer);
+  return nullptr;
+}
+#endif
+
+static bool cancelBookOrbitSleepSync() {
+#ifndef SIMULATOR
+  if (bookOrbitPowerLatched.load(std::memory_order_relaxed)) bookOrbitWakeRequested = true;
+#endif
+  gpio.update();
+  const bool pressed = gpio.isPressed(HalGPIO::BTN_POWER);
+  if (!pressed) bookOrbitPowerReleased = true;
+  if (pressed && bookOrbitPowerReleased) bookOrbitWakeRequested = true;
+  return bookOrbitWakeRequested || millis() - bookOrbitSleepStarted >= BOOK_ORBIT_SLEEP_TIMEOUT_MS;
+}
+
+struct BookOrbitSleepPreview {
+  bool fromTimeout;
+  std::unique_ptr<SleepActivity> screen;
+};
+
+static void showBookOrbitSleepProgress(void* context, const Epub& book) {
+  auto& preview = *static_cast<BookOrbitSleepPreview*>(context);
+  auto screen = makeUniqueNoThrow<SleepActivity>(renderer, mappedInputManager, preview.fromTimeout);
+  if (screen && activityManager.showBookOrbitSleepPreview(*screen, book)) preview.screen = std::move(screen);
+  bookOrbitSleepStarted = millis();
+}
+
 // Enter deep sleep mode
 // `unattended` says the device woke itself and nobody ever saw a UI: it
 // repaints the sleep screen and re-arms, and touches no state that belongs
 // to the user's own sleep. See the block at the top.
-void enterDeepSleep(bool fromTimeout = false, bool unattended = false) {
+void enterDeepSleep(bool fromTimeout = false, bool unattended = false, bool poweringOff = false) {
   saveEdgeLight(true);
   HalPowerManager::Lock powerLock;  // Ensure we are at normal CPU frequency for sleep preparation
 
@@ -664,8 +737,54 @@ void enterDeepSleep(bool fromTimeout = false, bool unattended = false) {
   // floor now so a later cold boot resumes from it.
   trustedtime::note();
 
+  const bool maySyncBook = !unattended && !poweringOff && activityManager.isReaderActivity() &&
+                           bookorbit::Store::get().syncOnSleep && bookorbit::Store::get().configured() &&
+                           powerManager.getBatteryPercentage() >= 10;
+  BookOrbitSleepPreview preview{fromTimeout, nullptr};
+  const auto bluetoothBeforeSleep = maySyncBook ? bleturner::status() : bleturner::Status{};
+  const bool reconnectBluetooth =
+      bluetoothBeforeSleep.running || bluetoothBeforeSleep.starting || bluetoothBeforeSleep.connecting;
+  if (maySyncBook) {
+    bookOrbitWakeRequested = false;
+    bookOrbitPowerReleased = !gpio.isPressed(HalGPIO::BTN_POWER);
+    bookOrbitSleepStarted = millis();
+  }
+#ifndef SIMULATOR
+  const auto timer = maySyncBook ? startBookOrbitPowerSampler() : nullptr;
+#endif
+  if (maySyncBook) Frontlight.setSleepPreview(true);
+  if (!unattended && bleturner::status().connected) {
+    RenderLock lock;
+    bleturner::rememberLinkedRemote();
+  }
   const bool bluetoothStopped = bleturner::beforeSleep(2000);
   if (!bluetoothStopped) LOG_ERR("BLE", "Radio stop timed out before sleep");
+  if (!unattended && bleturner::hasPendingRemoteSelectionSave() && SETTINGS.saveToFile(true))
+    bleturner::remoteSelectionSaved();
+
+  if (maySyncBook) {
+    if (bluetoothStopped && !cancelBookOrbitSleepSync())
+      activityManager.syncBookOrbitBeforeSleep({cancelBookOrbitSleepSync, showBookOrbitSleepProgress, &preview});
+    cancelBookOrbitSleepSync();
+    if (!bookOrbitWakeRequested && preview.screen) activityManager.hideBookOrbitSleepPopup(*preview.screen);
+#ifndef SIMULATOR
+    if (timer) {
+      esp_timer_stop(timer);
+      esp_timer_delete(timer);
+    }
+#endif
+    cancelBookOrbitSleepSync();
+    if (bookOrbitWakeRequested) {
+      if (preview.screen) activityManager.cancelBookOrbitSleepPreview(*preview.screen);
+      Frontlight.setSleepPreview(false);
+      lastActivityTime = millis();
+      allowSleepAt = lastActivityTime + 1500;
+      wakePowerReleasePending = true;
+      if (reconnectBluetooth) bleturner::requestConnect();
+      activityManager.requestUpdate(true);
+      return;
+    }
+  }
 
   // Plugin events belong to a person's sleep. An unattended one has no
   // activity to prepare and nobody reading, and no network work is required.
@@ -704,7 +823,7 @@ void enterDeepSleep(bool fromTimeout = false, bool unattended = false) {
   // Commit to sleeping before goToSleep() runs the outgoing activity's onExit():
   // a WiFi activity would otherwise silentRestart() here and reboot instead.
   deepSleepInProgress = true;
-  activityManager.goToSleep(fromTimeout);
+  activityManager.goToSleep(fromTimeout, std::move(preview.screen));
 
   if (isQuickResumeSleep) {
     saveSleepFrameBuffer();
@@ -1132,7 +1251,12 @@ void setup() {
     APP_STATE.openEpubPath = "";
     APP_STATE.readerActivityLoadCount++;
     APP_STATE.saveToFile();
-    activityManager.goToReader(path, allowFastInitialReaderRefresh);
+    bool bookOrbitWakeSync = false;
+    if (resume == BootResume::SplashlessWake && FsHelpers::hasEpubExtension(std::string_view{path})) {
+      const auto& account = bookorbit::Store::get();
+      bookOrbitWakeSync = account.syncOnWake && account.configured() && powerManager.getBatteryPercentage() >= 10;
+    }
+    activityManager.goToReader(path, allowFastInitialReaderRefresh, bookOrbitWakeSync);
   }
 
   if (resume == BootResume::Silent) {
@@ -1156,7 +1280,8 @@ void setup() {
   // credentials are both files on the card) and boot must not wait on an AP.
   devmode::begin();
 
-  allowSleepAt = millis() + 2000;
+  lastActivityTime = millis();
+  allowSleepAt = lastActivityTime + 2000;
 }
 
 #if defined(SIMULATOR)
@@ -1226,11 +1351,16 @@ void loop() {
                                                            : bleturner::Where::Elsewhere;
   scene.visit = activityManager.visit();
   scene.pageShown = activityManager.isRemoteControlShown();
+  scene.passiveRemoteLink = scene.where == bleturner::Where::Elsewhere && activityManager.isPassiveRemoteContext();
   scene.storageBusy = activityManager.requiresExclusiveStorageLoop();
   scene.localKey = gpio.wasAnyPressed() || gpio.wasAnyReleased() || gpio.wasTouchActivity();
   scene.wifiOn = WiFi.getMode() != WIFI_MODE_NULL;
   if (scene.localKey) activityManager.cancelPendingRemoteTurns();
   const bool remoteActed = bleturner::tick(scene);
+  if (remoteActed && SETTINGS.ble.peerAddr[0] == '\0') {
+    RenderLock lock(RenderLock::Mode::Try);
+    if (lock.ownsLock()) bleturner::rememberLinkedRemote();
+  }
 
   if (activityManager.requiresExclusiveStorageLoop()) {
     // USB Drive handed the raw SD card to the host. Do not run screenshots,
@@ -1329,7 +1459,6 @@ void loop() {
 #endif
 
   // Check for any user activity (button press or release) or active background work
-  static unsigned long lastActivityTime = millis();
   applyEdgeLight(mappedInputManager.edgeLightEvent());
   saveEdgeLight();
   frontlightschedule::poll();
@@ -1345,12 +1474,18 @@ void loop() {
     powerManager.setPowerSaving(false);  // Restore normal CPU frequency on user activity
   }
 
-  // Let wake continue as soon as its hold has been verified. The release can
-  // arrive after setup, so consume that one input frame rather than making it
-  // a page turn, refresh, or other short power-button action.
-  if (wakePowerReleasePending && !gpio.isPressed(HalGPIO::BTN_POWER)) {
-    wakePowerReleasePending = false;
-    return;
+  // Consume the release of the power gesture that woke the reader.
+  if (wakePowerReleasePending) {
+    if (!gpio.isPressed(HalGPIO::BTN_POWER)) {
+      wakePowerReleasePending = false;
+      if (bookOrbitWakeRequested) {
+        bookOrbitWakeRequested = false;
+        lastActivityTime = millis();
+        allowSleepAt = lastActivityTime + 250;
+      }
+      return;
+    }
+    if (bookOrbitWakeRequested) return;
   }
 
   static bool screenshotButtonsReleased = true;
@@ -1391,7 +1526,7 @@ void loop() {
         ESP.restart();
       } else {
         if (powerAction == powermenu::Action::Off) powerManager.requestPowerOff();
-        enterDeepSleep();
+        enterDeepSleep(false, false, powerAction == powermenu::Action::Off);
       }
       return;
     }

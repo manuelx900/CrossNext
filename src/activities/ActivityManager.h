@@ -17,8 +17,13 @@
 #include "util/MenuFontStyle.h"
 #include "util/ScreenshotInfo.h"
 
-class Activity;    // forward declaration
+class Activity;  // forward declaration
+class Epub;
 class RenderLock;  // forward declaration
+class SleepActivity;
+namespace bookorbit {
+struct SyncCallbacks;
+}
 
 enum class HomeMenuItem {
   NONE,
@@ -94,6 +99,7 @@ class ActivityManager {
   std::atomic<bool> repaintNotified{false};
   std::atomic<bool> renderInFlight{false};
   std::atomic<Activity*> idleWorkOwner{nullptr};
+  bool sleepPreviewActive = false;  // Protected by RenderLock.
   void notifyRepaint();
 
   // millis() at the moment a repaint was first asked for, or 0 when none is
@@ -154,8 +160,8 @@ class ActivityManager {
   void goToLibrary();
   void goToBrowser();
   void goToPlugins(bool showOpds);
-  void goToReader(std::string path, bool allowFastInitialRefresh = false);
-  void goToSleep(bool fromTimeout = false);
+  void goToReader(std::string path, bool allowFastInitialRefresh = false, bool bookOrbitWakeSync = false);
+  void goToSleep(bool fromTimeout, std::unique_ptr<SleepActivity> preview);
   void goToBoot();
   void goToFullScreenMessage(std::string message, EpdFontFamily::Style style = EpdFontFamily::REGULAR);
   void goToCrashReport();
@@ -175,6 +181,7 @@ class ActivityManager {
   bool readerTextInputActive() const;
   bool isRemoteReaderContext() const;
   bool isRemoteControlContext() const;
+  bool isPassiveRemoteContext() const;
   bool isRemoteControlShown() const;
   bool isForegroundHomeShown() const;
   bool remoteRadioReady() const;
@@ -200,6 +207,10 @@ class ActivityManager {
   std::optional<uint32_t> nextLoopWakeDelayMs(uint32_t now) const;
   ScreenshotInfo getScreenshotInfo() const;
   void prepareForSleep();
+  void syncBookOrbitBeforeSleep(const bookorbit::SyncCallbacks& callbacks);
+  bool showBookOrbitSleepPreview(SleepActivity& screen, const Epub& book);
+  void hideBookOrbitSleepPopup(SleepActivity& screen);
+  void cancelBookOrbitSleepPreview(SleepActivity& screen);
   void prepareForRestart();
 
   // If immediate is true, the update will be triggered immediately.

@@ -332,7 +332,7 @@ field prevents repeat rewards. The shared bounded room-reaction clock adds no
 pack, task, save field or per-frame heap allocation. Satiety falls two points per elapsed
 hour and mood one; in Relaxed mode neither falls below twenty. Energy recovers
 five points per hour (up to twenty hours per reconciliation). A two-hour rest
-adds thirty energy and wakes the companion automatically.
+restores energy to 100 and wakes the companion automatically.
 
 Hygiene falls one point per elapsed hour after hatching. It stops at twenty
 in Relaxed mode. At twenty or less, a healthy companion develops a cold, or
@@ -698,7 +698,7 @@ same existing game guards and reward rules apply.
 
 The compact reading receipt shows time since the last acknowledged visit and actual food/remedy gains in the room. Gains use persisted earning and acknowledgement counters, excluding the initial remedy and previously earned bonus credit. Acknowledging the receipt advances both reading and earning counters. Detailed reading totals and stages remain in the Album. All reading still counts for Home projects, while supplies follow the daily diminishing thresholds.
 
-PET links a current need to Health or Care. Care previews the capped food gain (90 to 100 still costs one food). Tapping a food card serves it directly without a second Feed button and shows the selected food and two eating poses repeated for three bites in the existing room after a successful save. Each bite consumes another visible portion, ending with an empty plate. A brief room receipt shows actual satiety before/after and the food spent, then disappears. There is no feeding confirmation window. The sequence and receipt are temporary activity state and clear on navigation; only the already-existing food choice field is saved with the successful meal. Food IDs 0-5 remain PET7; IDs 6-8 write PET8 with the same layout and checksum. Older firmware rejects PET8 instead of falling back to an older meal balance. The clock uses the existing activity loop, with no new task, framebuffer or per-frame allocation. Eating-pose masters and prompts are in `REDISEÑOS/PET/assets/v3/feeding/`; the six-food consumption atlas and prompt are in `REDISEÑOS/PET/assets/v4/`.
+PET links a current need to Health or Care. The meal receipt shows the one food spent. Tapping a food card serves it directly without a second Feed button and shows the selected food and two eating poses repeated for three bites in the existing room after a successful save. Each bite consumes another visible portion, ending with an empty plate. A brief room receipt shows actual satiety before/after and the food spent, then disappears. There is no feeding confirmation window. The sequence and receipt are temporary activity state and clear on navigation; only the already-existing food choice field is saved with the successful meal. Food IDs 0-5 remain PET7; IDs 6-8 write PET8 with the same layout and checksum. Older firmware rejects PET8 instead of falling back to an older meal balance. The clock uses the existing activity loop, with no new task, framebuffer or per-frame allocation. Eating-pose masters and prompts are in `REDISEÑOS/PET/assets/v3/feeding/`; the six-food consumption atlas and prompt are in `REDISEÑOS/PET/assets/v4/`.
 
 Home catalogue cards open a static preview: an enlarged object and the room with its proposed placement. Owned items use Place; unowned items use Choose project. Opening or leaving does not save. Only confirmation uses the existing guarded save. Back retains category, filter and page. Read-only profiles may preview, but cannot apply. A reusable fixed-size Profile copy lives in the activity Work workspace; no framebuffer, heap buffer, task, timer, persistent field or asset pack is added. Room preview does not animate.
 
@@ -706,13 +706,13 @@ Preview arrows browse the current category and Owned/Unowned filter without savi
 
 Confirming Place returns to Home after a successful guarded save. Choose project keeps Preview open. An equipped object shows its saved status and offers Remove; a pending project's confirmation is disabled. A different unowned selection starts its reading goal at zero and stays in To earn until completed through reading. Back returns to the catalogue page containing that item. In Owned, the equipped object appears first; all remaining objects keep their canonical order, so replacing it restores the previous object to its normal position. This order is derived and is not saved.
 
-At full satiety, the food picker remains available but its food cards stay disabled, even with no provisions left. Full, empty-stock and read-only states explain why serving is unavailable. Wake warns that ending early forfeits the cycle bonus; current energy remains in its separate metric. Rest shows its energy-recovery effect and two-hour cycle before starting. Successful cleaning shows actual hygiene and capped mood changes and is free. Successful healing shows the hygiene change and the one remedy spent. Cleaning and healing results are temporary activity state, created only after a successful save and cleared when the room receipt closes or finishes; save errors never show a successful result. Remedy counts stay separate from mood values. Care receipts use fixed-size activity/model fields and reuse existing artwork with code-native bubbles, hearts, sparkles and confetti. Feeding adds its bounded clock and picker state described above, with no new save fields, heap buffers, timer task or SD pack.
+At full satiety, the food picker remains available but its food cards stay disabled, even with no provisions left. Full, empty-stock and read-only states explain why serving is unavailable. Wake warns that ending early forfeits the cycle bonus; current energy remains in its separate metric. Successful cleaning shows actual hygiene and capped mood changes and is free. Successful healing shows the hygiene change and the one remedy spent. Cleaning and healing results are temporary activity state, created only after a successful save and cleared when the room receipt closes or finishes; save errors never show a successful result. Remedy counts stay separate from mood values. Care receipts use fixed-size activity/model fields and reuse existing artwork with code-native bubbles, hearts, sparkles and confetti. Feeding adds its bounded clock and picker state described above, with no new save fields, heap buffers, timer task or SD pack.
 
 Firmware and host-rendered UI checks cover these behaviors; device refresh and consumption require hardware verification.
 
 ### Care guidance and readable progress
 
-Health actions explain their current availability: already clean, no treatment needed, no remedies, saving unavailable, or their normal free/one-remedy cost. Existing care and save guards remain in force. Care shows the rest cycle's remaining time when its clock is usable, an unknown-time message otherwise, and full energy at 100. The existing once-per-minute care check refreshes Care while resting; it creates no new timer or task. The two-hour rest cycle and its energy rules are unchanged, and waking still ends it early.
+Health shows the one-remedy treatment cost when needed and gives a short reason when a care action is unavailable. Existing care and save guards remain in force. Care shows the current energy and the gain from completing the two-hour rest cycle. Waking early ends the cycle before the full recovery is applied.
 
 Accessory previews show remaining reading as hours/minutes, rounding incomplete minutes up; zero remaining time is Ready to collect, with confirmation still required. The Games tile in Care uses the same derived offer as the game menu: actual capped mood gain and 20-energy cost for rewarded play, free practice, or a short reason play is blocked. These are presentation changes, with no additional saved fields, asset packs or heap allocations.
 
@@ -863,7 +863,7 @@ previously saved maximum is retained. No profile field, explicit app allocation,
 art asset, timer or display refresh is added. Multiline text still uses the
 existing renderer and its internal allocation behavior.
 
-Care describes Rest as Restores energy at every current energy value, with Cycle: 2 h beneath it; current energy remains in its separate metric. While resting, Wake still explains the lost cycle bonus and the status band keeps its remaining time. The passive recovery and capped completion bonus are unchanged. Health's action row shows only Healthy, Cold or Malaise; its hygiene reading is already in the separate metric above. The eleven Care icons are extracted directly from the supplied reference and packed by `tools_local/pet/build_care_icons.py` into the existing one-bit Icon format. Their 5,632 bitmap bytes plus icon metadata are compile-time flash data; no new heap allocation, SD pack, framebuffer, timer or task is needed. The source screenshot and crop manifest remain in `assets_local/pet/ui/`.
+Care describes Rest as Restores energy at every current energy value, with Cycle: 2 h beneath it; current energy remains in its separate metric. While resting, Wake explains that ending the cycle early forfeits full recovery. Passive recovery continues and a completed cycle restores energy to 100. Health's action row shows only Healthy, Cold or Malaise; its hygiene reading is already in the separate metric above. The eleven Care icons are extracted directly from the supplied reference and packed by `tools_local/pet/build_care_icons.py` into the existing one-bit Icon format. Their 5,632 bitmap bytes plus icon metadata are compile-time flash data; no new heap allocation, SD pack, framebuffer, timer or task is needed. The source screenshot and crop manifest remain in `assets_local/pet/ui/`.
 
 The Album archive is called Previous generations throughout its heading, summary, empty state and reading help. Compact buttons use Generations. Spanish loss messages use fallecer with a Despedida heading; English uses passed away. The absence rule and reconciliation behavior are unchanged.
 
@@ -1207,12 +1207,11 @@ transition. No care or resource rules change.
 
 ### Care effects and compact food choices
 
-Care, Clean and Cure effects sit in inset raised cards, matching the benefit cards in Play.
-The main effect is emphasized above its resource cost, daily limit or rest-cycle
-duration. Blocked and read-only explanations use the same space. Drawer titles
-use the larger body heading size, with the existing close-button clearance.
-Portrait Health effect cards reserve a 16 px lower inset after their shadow;
-icons use the remaining upper space and the status card stays compact.
+Care and Health action cards show an illustration, an action label and a small
+text panel for the expected gain or the reason an action is unavailable.
+A full two-hour rest restores energy to 100. The Rest card shows how much
+energy the companion will recover. Waking the companion early ends the cycle
+without applying the full recovery.
 The food-stock card uses the existing kibble illustration; Feed retains its
 sandwich illustration.
 The bone-shaped food is labelled Biscuit / Galleta; its saved choice, artwork,
@@ -1225,12 +1224,8 @@ dimensions are retained.
 
 The visible food meter is labelled Hunger (Hambre), retaining its positive
 meaning: 100 means the companion has no hunger. Feeding raises it; time lowers
-it. The saved field and rules remain unchanged. Care shows the capped food
-gain and one-food cost, the actual available daily petting gain, and the rest
-cycle or early-wake consequence below each action title. Rest shows the capped gain over its two-hour cycle (two hourly recoveries
-and the cycle bonus), or explicitly says 100 energy when already full. The food picker keeps illustration cards and
-pagination; the repeated stock line and normal result/cost preview are removed.
-Blocked food choices retain a short explanation.
+it. The food picker uses illustrated cards, pagination and a short explanation
+when a meal cannot be served.
 
 The food-stock card uses the existing kibble illustration from the extended
 food pack, while Feed uses the sandwich. Pet uses

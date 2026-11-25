@@ -185,7 +185,7 @@ bool HalStorage::ensureDirectoryExists(const char* path) {
     FsFile existing = SDCard.open(path);
     if (existing.isOpen() && existing.isDirectory()) return true;
   }
-  invalidateContent();
+  invalidateContent(storageMutation(path), storageStateKey(path));
   return SDCard.ensureDirectoryExists(path);
 }
 

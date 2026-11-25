@@ -1,4 +1,4 @@
-# CrossNext 2.0.7
+# CrossNext 2.1.0
 
 [![Support CrossNext on Ko-fi](site/assets/support-ko-fi.svg)](https://ko-fi.com/manuelx900)
 
@@ -8,27 +8,27 @@
 
 CrossNext is open-source e-reader firmware for **Xteink X4 Pro (ESP32-S3)**.
 It combines EPUB reading, a library, reading statistics, study tools, small apps
-and games. **CrossNext 2.0.7 is based on [CrossPoint 2.0.0](https://github.com/crosspoint-reader/crosspoint-reader/releases/tag/2.0.0)**, with the app/game foundation inherited from [CrossPlay 1.14.2](https://github.com/ma-r-s/crossplay/releases/tag/v1.14.2).
+and games. **CrossNext 2.1.0 is based on [CrossPoint 2.0.0](https://github.com/crosspoint-reader/crosspoint-reader/releases/tag/2.0.0)**, with the app/game foundation inherited from [CrossPlay 1.14.2](https://github.com/ma-r-s/crossplay/releases/tag/v1.14.2).
 The packages described here target X4 Pro; do not install them on X4 or X3.
 
 ## Install or update
 
-Download the X4 Pro firmware, the full resource pack and the optional Book Preparer. [CrossNext 2.0.7 release](https://github.com/manuelx900/CrossNext/releases/tag/2.0.7)
+Download the firmware and resources from the [CrossNext 2.1.0 release](https://github.com/manuelx900/CrossNext/releases/tag/2.1.0).
 
-Version 2.0.7 adds in-page definitions and translations, a redesigned Quotes app,
-scheduled frontlight control, and 22 pt for compatible fonts. [See the full 2.0.7 notes](docs/releases/2.0.7.md).
+Version 2.1.0 adds BookOrbit with catalogue browsing and automatic sync,
+refreshes the Apps icons and improves Home and keyboard responsiveness. [See the full 2.1.0 notes](docs/releases/2.1.0.md).
 
 Read the [2.0.5 release notes](docs/releases/2.0.5.md), the [2.0.4 additions](docs/releases/2.0.4.md), the [2.0.3 additions](docs/releases/2.0.3.md), the [2.0.2 additions](docs/releases/2.0.2.md) and the [full changes from 1.4.0](docs/releases/2.0.0.md).
 
-Install the matching resources even if you tried an earlier preview; PET and Reading Adventure now use versioned artwork folders.
+If you already installed the 2.0.7 resource pack, you can keep using it.
 Back up the microSD, including the hidden `/.crosspoint/` folder containing saves.
 
-1. For an existing compatible installation, copy `CrossNext-X4PRO-Firmware-v2.0.7.bin`
+1. For an existing compatible installation, copy `CrossNext-X4PRO-Firmware-v2.1.0.bin`
    to the card. Open **Settings → System → Update firmware**, select it and confirm.
-2. Back up custom fonts and dictionaries, then replace the old bundled
+2. If you are missing the 2.0.7 resources, back up custom fonts and dictionaries, then replace the old bundled
    resource folders with `CrossNext-Resources.zip` at the microSD root. Do not
    merge old and new resource packs. Keep your books, licences and `/.crosspoint/`
-   saves; restart after installation. See the resource-replacement notice in the release notes.
+   saves and restart after installation. See the [resource installation guide](docs/install.md#required-app-contents).
 3. Put books in a normal card folder such as `/books`, then open **Files** or **Library**.
    Fresh settings use English. Change the interface language in Settings.
 
@@ -96,7 +96,7 @@ Battleship, Solitaire, Hearts, Murdle, Carnivore, Connect four, Sudoku and Othel
 ## Prepare books on your computer
 
 **CrossNext Book Preparer 2.0.7** is the optional companion application for
-**Windows and macOS**, compatible with firmware 2.0.7. [Book Preparer installers on GitHub](https://github.com/manuelx900/CrossNext/releases/tag/2.0.7)
+**Windows and macOS**, compatible with firmware 2.1.0. [Book Preparer installers on GitHub](https://github.com/manuelx900/CrossNext/releases/tag/2.0.7)
 It prepares your microSD on the computer before you return
 to the reader, so CrossNext can reuse the results instead of doing that work on
 the device. Your books stay on your computer and card; they are not uploaded.

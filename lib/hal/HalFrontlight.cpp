@@ -25,6 +25,7 @@ void HalFrontlight::begin(const uint8_t brightness, const uint8_t warmth, const 
 
   lastBrightness = brightness > 100 ? 100 : brightness;
   manager.setColorTemperature(warmth > 100 ? 100 : warmth);
+  sleepPreviewDimmed = false;
   lit = on;
   manager.setBrightness(lit ? lastBrightness : 0);
   if (!ready) {
@@ -39,7 +40,7 @@ void HalFrontlight::begin(const uint8_t brightness, const uint8_t warmth, const 
 
 void HalFrontlight::setBrightness(const uint8_t percent) {
   lastBrightness = percent > 100 ? 100 : percent;
-  if (lit) manager.setBrightness(lastBrightness);
+  if (lit && !sleepPreviewDimmed) manager.setBrightness(lastBrightness);
 }
 
 void HalFrontlight::setWarmth(const uint8_t warmPercent) {
@@ -55,7 +56,13 @@ void HalFrontlight::setOn(const bool on) {
   if (!manager.present()) return;
   if (on == lit) return;
   lit = on;
-  manager.setBrightness(lit ? lastBrightness : 0);
+  manager.setBrightness(lit && !sleepPreviewDimmed ? lastBrightness : 0);
+}
+
+void HalFrontlight::setSleepPreview(const bool dimmed) {
+  if (sleepPreviewDimmed == dimmed) return;
+  sleepPreviewDimmed = dimmed;
+  if (manager.present() && lit) manager.setBrightness(dimmed ? 0 : lastBrightness);
 }
 
 void HalFrontlight::prepareForDeepSleep() {

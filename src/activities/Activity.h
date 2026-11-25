@@ -51,6 +51,7 @@ class Activity {
   virtual void prepareForChild() {}
   // Last chance to queue activity-owned state before sleep events are drained.
   virtual void prepareForSleep() {}
+  virtual bool syncBookOrbitBeforeSleep(const bookorbit::SyncCallbacks&) { return false; }
   virtual void pauseReadingPace() {}
   virtual void loop() {}
 
@@ -79,7 +80,11 @@ class Activity {
   virtual bool acceptsRemoteInput() const { return false; }
   virtual bool allowsRemoteControl() const { return remoteControlEnabled || acceptsRemoteInput() || isHomeActivity(); }
   // Configuration may retain the link while consuming raw buttons instead of executing them.
-  virtual bool preservesRemoteConnection() const { return isReaderActivity() || allowsRemoteControl(); }
+  virtual bool preservesRemoteConnection() const {
+    return isReaderActivity() || allowsRemoteControl() || retainsPassiveRemoteLink();
+  }
+  virtual bool retainsPassiveRemoteLink() const { return false; }
+  virtual bool canEnterWhileRemoteStarts() const { return false; }
   void setRemoteControlEnabled() { remoteControlEnabled = true; }
   // Reading-context screens need not own a document or its settings.
   virtual bool handleReaderTextSettingsGesture() { return false; }

@@ -844,34 +844,23 @@ void catalogue(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
   const int columns = wide ? 3 : 2, rows = wide ? 1 : 2, capacity = columns * rows;
   uint16_t visible[4];
   const int count = inventory ? quest::inventoryCount(p, selected, favoritesOnly)
-                              : quest::shopPage(p, selected, m.page, capacity, visible, quest::ShopView::Catalogue);
+                              : quest::shopPage(p, selected, m.page, capacity, visible);
   const int pages = std::max(1, (count + capacity - 1) / capacity), page = std::clamp(m.page, 0, pages - 1);
-  if (!inventory && page != m.page) quest::shopPage(p, selected, page, capacity, visible, quest::ShopView::Catalogue);
+  if (!inventory && page != m.page) quest::shopPage(p, selected, page, capacity, visible);
   const auto footer = rect(r.x, r.bottom() - 44, r.width, 44);
   const int pagerWidth = std::min(230, int(footer.width) * 60 / 100);
   pager(s, w, rect(footer.x + (footer.width - pagerWidth) / 2, footer.y, pagerWidth, 44), page, pages);
   const int contentTop = inventory ? 164 : 112;
   const auto body = rect(r.x, r.y + contentTop, r.width, footer.y - r.y - contentTop - 12);
   if (!count) {
-    bool futurePurchases = false;
-    const auto heroLevel = quest::level(p.xp);
-    if (!inventory)
-      for (int n = 0; n < quest::count(selected); ++n) {
-        const int item = quest::catalogItem(selected, n);
-        if (!quest::owns(p, item) && !quest::storyExclusive(item) && quest::shopLevel(item) > heroLevel) {
-          futurePurchases = true;
-          break;
-        }
-      }
-    if (!inventory && !futurePurchases) {
+    if (!inventory && quest::shopCount(p, selected, quest::ShopView::Catalogue) == 0) {
       completedShop(s, w, body);
       return;
     }
     text(s, body,
-         inventory         ? (favoritesOnly ? tr(STR_QUEST_COLLECTION_NO_FAVORITES) : tr(STR_QUEST_NO_GEAR))
-         : futurePurchases ? tr(STR_QUEST_CAM_ORDER_SHOP_NEXT_LEVEL)
-                           : tr(STR_QUEST_SHOP_EMPTY),
-         3, false, fui::TextAlign::Center, false, 3);
+         inventory ? (favoritesOnly ? tr(STR_QUEST_COLLECTION_NO_FAVORITES) : tr(STR_QUEST_NO_GEAR))
+                   : tr(STR_QUEST_CAM_ORDER_SHOP_NEXT_LEVEL),
+         inventory ? 3 : 1, false, fui::TextAlign::Center, false, inventory ? 3 : 4);
     return;
   }
   const int width = (body.width - (columns - 1) * GAP) / columns;
@@ -891,14 +880,12 @@ void catalogue(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
                             [](uint32_t, const fui::TextAreaLine&) {}) > 2)
         artWidth = box.width * 34 / 100;
     }
-    const bool lockedPath = !inventory && quest::pathUnlockChapter(item) >= 0 && !quest::shopUnlocked(p, item);
-    const int requirementHeight = lockedPath ? 2 * s.target().lineHeight(3) + 8 : 0;
-    sprite(s, m, item, rect(box.x + 6, box.y + 8, artWidth - 6, box.height - 16 - requirementHeight));
+    sprite(s, m, item, rect(box.x + 6, box.y + 8, artWidth - 6, box.height - 16));
     const bool compact = box.height < 178;
     const bool unseen = inventory && quest::isNewItem(p, item);
     const int titleInset = unseen ? 40 : compact ? 10 : 26;
-    const auto details = rect(box.x + artWidth + 2, box.y + titleInset, box.width - artWidth - 8,
-                              box.height - titleInset - 10 - requirementHeight);
+    const auto details =
+        rect(box.x + artWidth + 2, box.y + titleInset, box.width - artWidth - 8, box.height - titleInset - 10);
     const int titleHeight = compact ? 48 : 72;
     const int titleFont = itemTitleFont(s, w.name, details.width, compact);
     text(s, rect(details.x, details.y, details.width, titleHeight), w.name, titleFont, true, fui::TextAlign::Left,
@@ -909,7 +896,7 @@ void catalogue(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
                      : effect.experience && effect.experience >= effect.fortune ? 1
                      : effect.fortune                                           ? 2
                                                                                 : 0;
-    if (box.height >= 144 && !(lockedPath && compact))
+    if (box.height >= 144)
       bonusValue(s, w, rect(details.x, details.y + titleHeight + (compact ? 2 : 8), details.width, compact ? 20 : 28),
                  kind,
                  kind == 0   ? power
@@ -920,16 +907,9 @@ void catalogue(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
       if (!compact || !unseen)
         statusPill(s, rect(details.x, details.bottom() - 30, details.width, 28),
                    equipped ? tr(STR_QUEST_CAM_IN_USE) : tr(STR_QUEST_CAM_AVAILABLE), equipped, nullptr, wide ? 3 : 4);
-    } else if (quest::storyExclusive(item)) {
-      icon(s, rect(details.right() - 18, details.bottom() - 22, 18, 18), extra_lock_32);
-      const int encounter = quest::rewardEncounter(item);
-      std::snprintf(w.label, sizeof(w.label), tr(STR_QUEST_CAM_REWARD_SOURCE), ROMANS[encounter / 60],
-                    unsigned(encounter / 6 % 10 + 1));
-      text(s, rect(details.x, details.bottom() - 44, details.width - 22, 44), w.label, 3, true, fui::TextAlign::Left,
-           false, 2);
     } else {
       const int priceHeight = compact ? 22 : 30;
-      const int levelHeight = lockedPath ? 0 : compact ? 20 : 24;
+      const int levelHeight = compact ? 20 : 24;
       const auto priceBox =
           rect(details.x, details.bottom() - priceHeight - levelHeight - 4, details.width, priceHeight);
       s.target().stroke(priceBox, ink, 2, priceHeight / 2);
@@ -937,21 +917,12 @@ void catalogue(toybox::Screen& s, const Model& m, Work& w, fui::Rect r) {
       std::snprintf(w.label, sizeof(w.label), "%u", unsigned(quest::price(item)));
       text(s, rect(priceBox.x + 30, priceBox.y + 1, priceBox.width - 36, priceHeight - 2), w.label, compact ? 3 : 0,
            true);
-      if (const int path = quest::pathUnlockChapter(item); path >= 0) {
-        if (quest::shopUnlocked(p, item))
-          std::snprintf(w.label, sizeof(w.label), "%s", tr(STR_QUEST_CAM_AVAILABLE));
-        else
-          std::snprintf(w.label, sizeof(w.label), tr(STR_QUEST_CAM_REWARD_SOURCE), ROMANS[path / 10],
-                        unsigned(path % 10 + 1));
-      } else
+      if (quest::pathUnlockChapter(item) >= 0)
+        std::snprintf(w.label, sizeof(w.label), "%s", tr(STR_QUEST_CAM_AVAILABLE));
+      else
         std::snprintf(w.label, sizeof(w.label), tr(STR_QUEST_ITEM_LEVEL), unsigned(quest::shopLevel(item)));
-      const auto requirement =
-          lockedPath ? rect(box.x + 8, box.bottom() - requirementHeight, box.width - 36, requirementHeight - 4)
-                     : rect(details.x, details.bottom() - levelHeight,
-                            details.width - (quest::shopUnlocked(p, item) ? 0 : 19), levelHeight);
+      const auto requirement = rect(details.x, details.bottom() - levelHeight, details.width, levelHeight);
       text(s, requirement, w.label, 3, true, fui::TextAlign::Left, false, 2);
-      if (!quest::shopUnlocked(p, item))
-        icon(s, rect(requirement.right() + 2, requirement.y + 2, 16, 16), extra_lock_32);
     }
     if (unseen) {
       fui::TextStyle tag;

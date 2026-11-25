@@ -29,6 +29,7 @@ struct MenuModel {
   int page = 0;
   int pageCount = 1;
   bool outputInverted = false;
+  bool useFullSizeIcons = false;
 };
 Paging pagingFor(const fui::DeviceContext& device, int count);
 fui::Rect listBand(const fui::DeviceContext& device, bool hasPages);

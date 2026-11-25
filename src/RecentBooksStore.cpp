@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <atomic>
 
+#include "apps_local/bookorbit/BookOrbitPending.h"
+
 namespace {
 std::atomic<uint32_t> presenceMutation{1};
 }
@@ -101,6 +103,7 @@ bool RecentBooksStore::removeByPath(const std::string& path) {
 
 void RecentBooksStore::updatePath(const std::string& oldPath, const std::string& newPath,
                                   const std::string& oldCachePath, const std::string& newCachePath) {
+  bookorbit::movePending(oldPath, newPath);
   auto it = std::find_if(recentBooks.begin(), recentBooks.end(),
                          [&](const RecentBook& book) { return book.path == oldPath; });
   if (it == recentBooks.end()) {

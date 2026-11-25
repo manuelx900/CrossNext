@@ -644,7 +644,6 @@ void NotesActivity::startPhone() {
   // working association and shows a redundant chooser. Four other apps guard it
   // exactly this way.
   if (WiFi.status() != WL_CONNECTED) {
-    WiFi.mode(WIFI_STA);
     startActivityForResult(makeUniqueNoThrow<WifiSelectionActivity>(renderer, mappedInput),
                            [this](const ActivityResult& result) {
                              if (result.isCancelled || WiFi.status() != WL_CONNECTED) {

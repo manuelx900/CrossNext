@@ -8,6 +8,7 @@
 #include "KOReaderCredentialStore.h"
 #include "MappedInputManager.h"
 #include "ReaderUtils.h"
+#include "apps_local/bookorbit/BookOrbit.h"
 #include "apps_local/power/FrontlightSchedule.h"
 #include "apps_local/ui/Rotation.h"
 #include "components/UITheme.h"
@@ -70,6 +71,8 @@ void EpubReaderMenuActivity::buildMenuItems(std::vector<MenuItem>& items, const 
   items.push_back({MenuAction::DISPLAY_QR, StrId::STR_DISPLAY_QR});
   items.push_back({MenuAction::GO_HOME, StrId::STR_GO_HOME_BUTTON});
   if (KOREADER_STORE.hasCredentials()) items.push_back({MenuAction::SYNC, StrId::STR_SYNC_PROGRESS});
+  if (bookorbit::Store::get().authenticated())
+    items.push_back({MenuAction::BOOK_ORBIT_SYNC, StrId::STR_BOOKORBIT_SYNC});
   items.push_back({MenuAction::DELETE_CACHE, StrId::STR_DELETE_CACHE});
   items.push_back({MenuAction::TEXT_SETTINGS, StrId::STR_TEXT_SETTINGS});
   items.push_back({MenuAction::FINISH_BOOK, completionLabel});

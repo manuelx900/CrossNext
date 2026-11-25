@@ -3,7 +3,7 @@
 #include <string_view>
 
 struct EpubCachePath {
-  enum class Kind : uint8_t { None, Sections, Html, Events };
+  enum class Kind : uint8_t { None, Sections, Html, Events, MissingCover };
   uint64_t book = 0;
   Kind kind = Kind::None;
   bool valid() const { return kind != Kind::None; }
@@ -37,6 +37,7 @@ inline EpubCachePath epubDerivedPath(const char* path) {
   uint64_t book;
   std::string_view leaf;
   if (!epubCacheLeaf(path, book, leaf)) return {};
+  if (leaf == "no-cover-v1.bin") return {book, EpubCachePath::Kind::MissingCover};
   auto kind = EpubCachePath::Kind::None;
   if (leaf.starts_with("sections/")) {
     leaf.remove_prefix(9);
@@ -52,6 +53,7 @@ inline EpubCachePath epubDerivedPath(const char* path) {
   if (kind == EpubCachePath::Kind::Html && leaf.starts_with(".tmp_")) leaf.remove_prefix(5);
   if (!cacheNumber(leaf)) return {};
   switch (kind) {
+    case EpubCachePath::Kind::MissingCover:
     case EpubCachePath::Kind::None:
       return {};
     case EpubCachePath::Kind::Html:

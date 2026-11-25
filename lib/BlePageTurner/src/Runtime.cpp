@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <cstdarg>
+#include <cstdio>
 #include <cstring>
 
 #include "BlePageTurner.h"
@@ -46,6 +47,7 @@ std::atomic<bool> radioIdleStopped{false};
 std::atomic<bool> rearmRequested{false};
 std::atomic<bool> heldForBuild{false};
 bool connectRequested = false;
+bool selectionNeedsSave = false;
 std::atomic<Why> startRefusal{Why::Ok};
 // The start in flight was asked for at Home (S3 profile): its heap rules differ. Set by the starter.
 std::atomic<bool> startFromHome{false};
@@ -374,6 +376,7 @@ void resetForTests() {
   rearmRequested.store(false);
   heldForBuild.store(false);
   connectRequested = false;
+  selectionNeedsSave = false;
   startRefusal.store(Why::Ok);
   startFromHome.store(false);
   heapTracker.fragmentedInRow = 0;
@@ -424,7 +427,7 @@ bool tick(const Scene& s) {
   const bool reader = s.where == Where::Reader;
   // S3 profile: Home may start the radio too, once its first frame is up and a remote is chosen.
   const bool home = (s.where == Where::Home || s.where == Where::Interface) && activeProfile().homeStartLargest != 0;
-  if (!(reader || home) || !config->enabled || s.visit != visit.id) {
+  if (!(reader || home || s.passiveRemoteLink) || !config->enabled || s.visit != visit.id) {
     // A build hold belongs to one book visit; the next visit may start the radio again.
     if (s.visit != visit.id) heldForBuild.store(false, std::memory_order_relaxed);
     visit.attempted = false;
@@ -489,8 +492,8 @@ bool tick(const Scene& s) {
     // The saved opt-in starts only once the book has painted a page: Home needs its own
     // cover and font memory first. The book frees what it can right before (yieldForRadio).
     in.phase = Phase::Idle;
-    if (!visit.attempted && !port::stopping() && radioVerdict(in) == Why::Ok &&
-        (port::running() || host->yieldForRadio())) {
+    if (!visit.attempted && !attemptInFlight.load(std::memory_order_acquire) && !port::stopping() &&
+        radioVerdict(in) == Why::Ok && (port::running() || host->yieldForRadio())) {
       visit.attempted = true;
       if (!port::running()) {
         startFromHome.store(home, std::memory_order_relaxed);
@@ -563,12 +566,13 @@ bool tick(const Scene& s) {
   return acted;
 }
 
-bool beforeScreenChange(const uint32_t endTimeoutMs, const bool nextIsReader) {
-  // Up since Home (S3 profile) and the next screen is a book: the stack stays, so the book does not have to
-  // find 46 KB of internal RAM in the heap its own pages left.
-  if (nextIsReader && activeProfile().homeStartLargest != 0 && config->enabled && port::running() &&
-      !port::stopping() && !attemptInFlight.load(std::memory_order_acquire)) {
-    return true;
+bool beforeScreenChange(const uint32_t endTimeoutMs, const bool keepRadio, const bool allowPendingStart) {
+  const bool starting = attemptInFlight.load(std::memory_order_acquire);
+  if (keepRadio && activeProfile().homeStartLargest != 0 && config->enabled && !port::stopping() &&
+      !host->radioReserved()) {
+    // A compatible menu can paint while the S3 finishes bringing up the same connection.
+    if (starting ? allowPendingStart && !attemptCancelled.load(std::memory_order_acquire) : port::running())
+      return true;
   }
   return detail::suspend(endTimeoutMs);
 }
@@ -673,15 +677,34 @@ bool takePairingPasskey(uint32_t& out) { return port::takePairingPasskey(out); }
 
 bool service() {
   port::poll();
-  if (pairing.addr[0] == '\0' || !port::connected() ||
-      strncmp(port::linked().addr, pairing.addr, sizeof(pairing.addr)) != 0) {
-    return false;
-  }
-  memcpy(config->peerAddr, pairing.addr, sizeof(config->peerAddr));
-  memcpy(config->peerName, pairing.name, sizeof(config->peerName));
-  pairing = Pairing{};
-  return true;
+  return rememberLinkedRemote();
 }
+
+bool rememberLinkedRemote() {
+  if (!config->enabled || !port::connected()) return false;
+  const auto linked = port::linked();
+  if (linked.addr[0] == '\0') return false;
+  if (pairing.addr[0] != '\0' && strcmp(linked.addr, pairing.addr) == 0) {
+    memcpy(config->peerAddr, pairing.addr, sizeof(config->peerAddr));
+    memcpy(config->peerName, pairing.name, sizeof(config->peerName));
+    pairing = Pairing{};
+    selectionNeedsSave = true;
+    return true;
+  }
+  if (config->peerAddr[0] != '\0') return false;
+  for (uint8_t i = 0, count = port::bondCount(); i < count; ++i) {
+    const auto saved = port::bond(i);
+    if (strcmp(saved.addr, linked.addr) != 0) continue;
+    std::snprintf(config->peerAddr, sizeof(config->peerAddr), "%s", saved.addr);
+    std::snprintf(config->peerName, sizeof(config->peerName), "%s", saved.name);
+    selectionNeedsSave = true;
+    return true;
+  }
+  return false;
+}
+
+bool hasPendingRemoteSelectionSave() { return selectionNeedsSave; }
+void remoteSelectionSaved() { selectionNeedsSave = false; }
 
 void scan(const uint32_t durationMs) { port::scan(durationMs); }
 

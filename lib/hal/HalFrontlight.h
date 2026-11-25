@@ -16,6 +16,8 @@ class HalFrontlight {
   void setBrightness(uint8_t percent);
   void setWarmth(uint8_t warmPercent);
   void setOn(bool on);
+  // Hide the light during pre-sleep work while keeping the live setting available to the outgoing activity.
+  void setSleepPreview(bool dimmed);
   void prepareForDeepSleep();
 
   uint8_t brightness() const { return lastBrightness; }
@@ -33,6 +35,7 @@ class HalFrontlight {
   // toggling back on restores it.
   uint8_t lastBrightness = 60;
   bool lit = false;
+  bool sleepPreviewDimmed = false;
   // Did the SDK actually bring the channels up. False means every setter below
   // is accepted and drives nothing; see begin().
   bool ready = false;

@@ -12,6 +12,7 @@
 #include "../../CrossPointSettings.h"
 #include "../../RecentBooksStore.h"
 #include "../../components/UITheme.h"
+#include "CoverAbsence.h"
 #include "CoverBoxSampler.h"
 #include "CoverScanline.h"
 #include "CoverSceneCache.h"
@@ -81,32 +82,37 @@ bool BookCoverPainter::paintBitmap(fui::Rect slot, int taper) {
 }
 void BookCoverPainter::paint(const RecentBook& book, fui::Rect slot, int taper) {
   bool drawn = false;
-  char thumb[112]{};
-  const bool xtc = FsHelpers::hasXtcExtension(book.path);
-  if (FsHelpers::hasEpubExtension(book.path) || FsHelpers::hasXtcExtension(book.path)) {
-    std::snprintf(thumb, sizeof(thumb), "/.crosspoint/%s_%lu/thumb_%s%d.bmp", xtc ? "xtc" : "epub",
-                  static_cast<unsigned long>(std::hash<std::string>{}(book.path)),
-                  xtc && SETTINGS.xtcCoverRotation ? "ccw3_" : "", slot.height);
-  }
-  std::string fallback;
-  const char* path = thumb;
-  if (!*thumb || !Storage.exists(thumb)) {
-    if (xtc) {
-      std::snprintf(thumb, sizeof(thumb), "/.crosspoint/xtc_%lu/cover%s.bmp",
+  bool resolved = homecover::knownMissingCover(book.path);
+  if (!resolved) {
+    char thumb[112]{};
+    const bool xtc = FsHelpers::hasXtcExtension(book.path);
+    const bool epub = FsHelpers::hasEpubExtension(book.path);
+    if (epub || xtc) {
+      std::snprintf(thumb, sizeof(thumb), "/.crosspoint/%s_%lu/thumb_%s%d.bmp", xtc ? "xtc" : "epub",
                     static_cast<unsigned long>(std::hash<std::string>{}(book.path)),
-                    SETTINGS.xtcCoverRotation ? "_ccw3" : "");
-      fallback = UITheme::getCoverThumbPath(thumb, slot.height);
-    } else
-      fallback = UITheme::getCoverThumbPath(book.coverBmpPath, slot.height);
-    path = fallback.c_str();
+                    xtc && SETTINGS.xtcCoverRotation ? "ccw3_" : "", slot.height);
+    }
+    std::string fallback;
+    const char* path = thumb;
+    if (!*thumb || !Storage.exists(thumb)) {
+      if (xtc) {
+        std::snprintf(thumb, sizeof(thumb), "/.crosspoint/xtc_%lu/cover%s.bmp",
+                      static_cast<unsigned long>(std::hash<std::string>{}(book.path)),
+                      SETTINGS.xtcCoverRotation ? "_ccw3" : "");
+        fallback = UITheme::getCoverThumbPath(thumb, slot.height);
+      } else
+        fallback = UITheme::getCoverThumbPath(book.coverBmpPath, slot.height);
+      path = fallback.c_str();
+    }
+    if (*path && Storage.openFileForRead("HOME", path, coverFile)) {
+      if (coverBitmap.parseHeaders() == BmpReaderError::Ok) drawn = paintBitmap(slot, taper);
+      coverFile.close();
+      resolved = drawn;
+    } else if (epub) {
+      resolved = homecover::knownMissingCover(book.path, thumb);
+    }
   }
-  if (*path && Storage.openFileForRead("HOME", path, coverFile)) {
-    if (coverBitmap.parseHeaders() == BmpReaderError::Ok) drawn = paintBitmap(slot, taper);
-    homecover::recordSource(path, coverFile, drawn);
-    coverFile.close();
-  } else {
-    homecover::recordSource(path, coverFile, false);
-  }
+  homecover::recordSource(resolved);
   if (!drawn) GUI.drawCoverPlaceholder(renderer, Rect{slot.x, slot.y, slot.width, slot.height});
   if (!taper) {
     renderer.drawRect(slot.x, slot.y, slot.width, slot.height);

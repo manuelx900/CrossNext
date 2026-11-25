@@ -11,7 +11,7 @@
  */
 class KOReaderAuthActivity final : public Activity {
  public:
-  enum class Mode { AUTHENTICATE, SIGN_UP };
+  enum class Mode { AUTHENTICATE, SIGN_UP, BOOK_ORBIT };
 
   explicit KOReaderAuthActivity(GfxRenderer& renderer, MappedInputManager& mappedInput, Mode mode = Mode::AUTHENTICATE)
       : Activity("KOReaderAuth", renderer, mappedInput), mode(mode) {}
@@ -27,6 +27,7 @@ class KOReaderAuthActivity final : public Activity {
 
   Mode mode = Mode::AUTHENTICATE;
   State state = WIFI_SELECTION;
+  bool borrowedBookOrbitWifi = false;
   std::string statusMessage;
   std::string errorMessage;
 

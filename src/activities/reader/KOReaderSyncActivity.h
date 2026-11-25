@@ -1,13 +1,17 @@
 #pragma once
 #include <Epub.h>
+#include <Epub/ReaderRenderSpec.h>
 
 #include <functional>
 #include <memory>
 #include <optional>
+#include <vector>
 
 #include "KOReaderSyncClient.h"
 #include "ProgressMapper.h"
 #include "activities/Activity.h"
+#include "apps_local/bookorbit/BookOrbitBatchResults.h"
+#include "apps_local/bookorbit/BookOrbitPolicy.h"
 #include "components/UiAppHost.h"
 
 /**
@@ -24,7 +28,11 @@ class KOReaderSyncActivity final : public Activity, private UiAppHost {
  public:
   explicit KOReaderSyncActivity(GfxRenderer& renderer, MappedInputManager& mappedInput, const std::string& epubPath,
                                 CrossPointPosition localPosition, SavedProgressPosition localKoPos,
-                                std::string localChapterName);
+                                std::string localChapterName, bool bookOrbit = false,
+                                std::optional<ReaderRenderSpec> bookOrbitRenderSpec = std::nullopt);
+  KOReaderSyncActivity(GfxRenderer& renderer, MappedInputManager& mappedInput, const std::string& epubPath);
+  KOReaderSyncActivity(GfxRenderer& renderer, MappedInputManager& mappedInput,
+                       std::vector<bookorbit::BatchBook> recentBooks);
 
   void onEnter() override;
   void onExit() override;
@@ -43,17 +51,22 @@ class KOReaderSyncActivity final : public Activity, private UiAppHost {
     SYNC_COMPLETE,
     NO_REMOTE_PROGRESS,
     SYNC_FAILED,
-    NO_CREDENTIALS
+    NO_CREDENTIALS,
+    BATCH_SKIPPED,
+    BATCH_COMPLETE
   };
 
   std::shared_ptr<Epub> epub;  // null until lazy-loaded after TLS in performSync()
   std::string epubPath;
   std::string localChapterName;
   CrossPointPosition localPosition;
+  bool bookOrbit;
+  std::optional<ReaderRenderSpec> bookOrbitRenderSpec;
 
   State state = WIFI_SELECTION;
   std::string statusMessage;
   std::string documentHash;
+  bookorbit::ServerIdentity bookOrbitIdentity;
 
   // Remote progress data
   bool hasRemoteProgress = false;
@@ -75,22 +88,33 @@ class KOReaderSyncActivity final : public Activity, private UiAppHost {
   // WiFi.getMode() because performUpload() calls esp_wifi_stop() on the way out,
   // which makes WiFi.getMode() return WIFI_MODE_NULL.
   bool wifiActivated = false;
+  bool syncSavedBook = false;
+  bool wifiWasOff = false;
+
+  std::vector<bookorbit::BatchBook> batchBooks;
+  size_t batchIndex = 0;
+  bookorbit::BatchCounts batchCounts{};
+  int batchSelectedCard = 0;
+
+  bool batchMode() const { return !batchBooks.empty(); }
+  void stepBatch();
+  void advanceBatch(State outcome);
+  void openBatchBooks(int index);
+  void releaseSavedBookWifi();
 
   void onWifiSelectionComplete(bool success);
   void performSync();
   void performUpload();
   bool smartSyncEnabled() const;
   void markAutoReturn();
-  void completeAlreadySynced();
+  void completeSync(bool changed = false);
   void ensureEpubLoaded();
   void saveProgressAndReturn(int spineIndex, int page);
-  void returnToReader();
+  void exitSync();
+  enum class SavedPositionResult { Ready, Unavailable, ReadError };
+  SavedPositionResult loadSavedBookPosition();
 
-  // The UiAppHost app hosts the interactive states (SHOWING_RESULT compare
-  // rows and the NO_REMOTE_PROGRESS upload prompt) so they get themed
-  // rows/buttons and tap-flash; the header stays on GUI.drawHeader for the
-  // battery indicator and the purely-informational states keep their raw
-  // centered text.
+  // Comparison and upload actions share UiAppHost input routing.
   static void resultScreen(UiScreen& screen, void* user);
   static void onResultRow(const freeink::ui::ActionEvent& event, void* user);
   void buildResultScreen(UiScreen& screen);

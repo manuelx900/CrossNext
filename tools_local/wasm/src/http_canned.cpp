@@ -106,6 +106,14 @@ bool HttpDownloader::fetchUrl(const std::string& url, Stream& stream, const std:
   });
 }
 
+bool HttpDownloader::fetchMetadata(const std::string& url, Stream& stream, const std::vector<Header>&,
+                                   const AbortCallback& shouldAbort) {
+  if (shouldAbort && shouldAbort()) return false;
+  return readCanned(url, [&](const uint8_t* data, const size_t len) {
+    return (!shouldAbort || !shouldAbort()) && stream.write(data, len) == len;
+  });
+}
+
 bool HttpDownloader::fetchUrl(const std::string& url, const DataCallback& onData, const std::string&,
                               const std::string&) {
   return readCanned(url, onData);
@@ -118,7 +126,8 @@ bool HttpDownloader::fetchUrl(const std::string& url, const DataCallback& onData
 HttpDownloader::DownloadError HttpDownloader::downloadToFile(const std::string& url, const std::string& destPath,
                                                              ProgressCallback progress, const bool* cancelFlag,
                                                              const std::string&, const std::string&,
-                                                             const std::vector<Header>&, bool) {
+                                                             const std::vector<Header>&, bool, ExistingFile existing) {
+  if (existing == ExistingFile::Keep && Storage.exists(destPath.c_str())) return FILE_ERROR;
   HalFile out;
   if (!Storage.openFileForWrite("HTTPCAN", destPath.c_str(), out)) return FILE_ERROR;
   size_t written = 0;

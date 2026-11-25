@@ -151,6 +151,18 @@ inline void fitPortraitRows(fui::ListProps& props, const fui::DeviceContext& dev
   props.rowHeight = std::max(1, int(viewport.height) / 10);
   props.rowPaddingY = 0;
 }
+
+template <typename Screen>
+void beginFileRows(Screen& screen, const int bottomReserve) {
+  pixelui::begin(screen, bottomReserve);
+  if (chrome::lightHeader) {
+    const auto body = screen.body();
+    screen.setContentMarginAbsolute({int16_t(std::max(chrome::headerHeight, int(body.y) - 6)),
+                                     int16_t(screen.device().width - body.right()),
+                                     int16_t(screen.device().height - body.bottom()), body.x});
+  }
+}
+
 inline void fileSize(char* out, size_t size, uint64_t bytes) {
   if (bytes == UINT64_MAX) {
     std::snprintf(out, size, "—");

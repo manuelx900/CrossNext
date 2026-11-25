@@ -37,6 +37,7 @@
 #include "activities/network/WifiSelectionActivity.h"
 #include "activities/plugins/PluginCatalogActivity.h"
 #include "activities/util/IntervalSelectionActivity.h"
+#include "apps_local/bookorbit/BookOrbitSettingsActivity.h"
 #include "apps_local/bookprep/BookPreparationActivity.h"
 #include "apps_local/home/HomeMenuSettingsActivity.h"
 #include "apps_local/reading/ReadingStatsSyncActivity.h"
@@ -105,8 +106,9 @@ int settingsGroup(const SettingInfo& s, int category) {
       s.valuePtr == &CrossPointSettings::moveFinishedToReadFolder)
     return 2;
   if (s.action == SettingAction::Bluetooth || s.action == SettingAction::Network ||
-      s.action == SettingAction::KOReaderSync || s.action == SettingAction::OPDSBrowser ||
-      s.action == SettingAction::Plugins || s.valuePtr == &CrossPointSettings::pluginsEnabled)
+      s.action == SettingAction::KOReaderSync || s.action == SettingAction::BookOrbit ||
+      s.action == SettingAction::OPDSBrowser || s.action == SettingAction::Plugins ||
+      s.valuePtr == &CrossPointSettings::pluginsEnabled)
     return 3;
   if (s.action == SettingAction::ClockSettings) return 4;
   return 5;
@@ -149,6 +151,8 @@ StrId settingHelp(const SettingInfo& setting) {
       return StrId::STR_BT_SETTINGS_HELP;
     case SettingAction::KOReaderSync:
       return StrId::STR_SETTINGS_SYNC_HELP;
+    case SettingAction::BookOrbit:
+      return StrId::STR_BOOKORBIT_HELP;
     case SettingAction::OPDSBrowser:
       return StrId::STR_SETTINGS_OPDS_HELP;
     case SettingAction::ClockSettings:
@@ -291,6 +295,7 @@ void SettingsActivity::rebuildSettingsLists() {
     systemSettings.push_back(SettingInfo::Action(StrId::STR_CLOCK, SettingAction::ClockSettings));
   }
   systemSettings.push_back(SettingInfo::Action(StrId::STR_KOREADER_SYNC, SettingAction::KOReaderSync));
+  systemSettings.push_back(SettingInfo::Action(StrId::STR_BOOKORBIT, SettingAction::BookOrbit));
   systemSettings.push_back(SettingInfo::Action(StrId::STR_OPDS_SERVERS, SettingAction::OPDSBrowser));
   systemSettings.push_back(SettingInfo::Action(StrId::STR_CLEAR_READING_CACHE, SettingAction::ClearCache));
   systemSettings.push_back(SettingInfo::Action(StrId::STR_PREPARE_BOOKS, SettingAction::PrepareBooks));
@@ -790,6 +795,12 @@ void SettingsActivity::toggleCurrentSetting() {
         break;
       case SettingAction::KOReaderSync:
         startActivityForResult(std::make_unique<KOReaderSettingsActivity>(renderer, mappedInput), resultHandler);
+        break;
+      case SettingAction::BookOrbit:
+        if (auto activity = makeUniqueNoThrow<bookorbit::SettingsActivity>(renderer, mappedInput))
+          startActivityForResult(std::move(activity), resultHandler);
+        else
+          LOG_ERR("SET", "OOM: BookOrbit settings");
         break;
       case SettingAction::OPDSBrowser:
         startActivityForResult(std::make_unique<OpdsServerListActivity>(renderer, mappedInput), resultHandler);

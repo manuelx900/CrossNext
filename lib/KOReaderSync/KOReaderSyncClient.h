@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <string>
 #include <utility>
@@ -70,6 +71,14 @@ struct KOReaderProgress {
  *   x-auth-user: username
  *   x-auth-key: MD5 hash of password
  */
+struct KOReaderEndpoint {
+  std::string baseUrl;
+  std::string username;
+  std::string authKey;
+  const char* deviceId;
+  std::function<bool()> cancelled;
+};
+
 class KOReaderSyncClient {
  public:
   enum Error {
@@ -81,14 +90,16 @@ class KOReaderSyncClient {
     JSON_ERROR,
     NOT_FOUND,
     LOW_MEMORY,
-    USER_EXISTS
+    USER_EXISTS,
+    NO_STORED_PROGRESS,  // Explicit BookOrbit response for a document without a position.
+    BOOK_NOT_IN_LIBRARY
   };
 
   /**
    * Authenticate with the sync server (validate credentials).
    * @return OK on success, error code on failure
    */
-  static Error authenticate();
+  static Error authenticate(const KOReaderEndpoint* endpoint = nullptr);
 
   /**
    * Register a new account on the sync server using the stored credentials
@@ -102,16 +113,18 @@ class KOReaderSyncClient {
    * Get reading progress for a document.
    * @param documentHash The document hash (from KOReaderDocumentId)
    * @param outProgress Output: the progress data
-   * @return OK on success, NOT_FOUND if no progress exists, error code on failure
+   * @return OK on success, NO_STORED_PROGRESS or NOT_FOUND without progress, or an error code
    */
-  static Error getProgress(const std::string& documentHash, KOReaderProgress& outProgress);
+  static Error getProgress(const std::string& documentHash, KOReaderProgress& outProgress,
+                           const KOReaderEndpoint* endpoint = nullptr);
 
   /**
    * Update reading progress for a document.
    * @param progress The progress data to upload
    * @return OK on success, error code on failure
    */
-  static Error updateProgress(const KOReaderProgress& progress);
+  static Error updateProgress(const KOReaderProgress& progress, const KOReaderEndpoint* endpoint = nullptr,
+                              bool classifyMissingBook = false);
 
   /**
    * Get human-readable error message.

@@ -43,7 +43,10 @@ class HttpDownloader {
   // apart. Not thread-safe by design: one fetch runs at a time.
   static int lastStatus();
 
+  enum class ExistingFile { Replace, Keep };
+
   using Header = std::pair<std::string, std::string>;
+  using AbortCallback = std::function<bool()>;
 
   static bool fetchUrl(const std::string& url, std::string& outContent, const std::string& username = "",
                        const std::string& password = "");
@@ -51,6 +54,10 @@ class HttpDownloader {
   static bool fetchUrl(const std::string& url, Stream& stream, const std::string& username = "",
                        const std::string& password = "", const std::vector<Header>& headers = {},
                        std::string* effectiveUrl = nullptr);
+
+  // Metadata requests have a short total deadline and may poll input while waiting.
+  static bool fetchMetadata(const std::string& url, Stream& stream, const std::vector<Header>& headers,
+                            const AbortCallback& shouldAbort);
 
   /**
    * Stream the response body to onData as it arrives, without buffering it.
@@ -66,5 +73,6 @@ class HttpDownloader {
   static DownloadError downloadToFile(const std::string& url, const std::string& destPath,
                                       ProgressCallback progress = nullptr, const bool* cancelFlag = nullptr,
                                       const std::string& username = "", const std::string& password = "",
-                                      const std::vector<Header>& headers = {}, bool downgradeRedirectsToHttp = false);
+                                      const std::vector<Header>& headers = {}, bool downgradeRedirectsToHttp = false,
+                                      ExistingFile existing = ExistingFile::Replace);
 };

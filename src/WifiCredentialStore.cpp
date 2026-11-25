@@ -25,6 +25,7 @@ void WifiCredentialStore::toJson(JsonDocument& doc) const {
 
 bool WifiCredentialStore::fromJson(JsonVariantConst doc) {
   std::lock_guard<std::mutex> lock(credentialMutex);
+  credentialsInitialized = true;
   lastConnectedSsid = doc["lastConnectedSsid"] | "";
 
   // Tolerate a missing/invalid 'credentials' key (treat as empty list); only
@@ -109,6 +110,15 @@ bool WifiCredentialStore::fromJson(JsonVariantConst doc) {
   return true;
 }
 
+void WifiCredentialStore::loadIfNeeded() {
+  {
+    std::lock_guard<std::mutex> lock(credentialMutex);
+    // A network removed during this session stays removed even if its SD write failed.
+    if (credentialsInitialized) return;
+  }
+  loadFromFile();
+}
+
 bool WifiCredentialStore::addCredential(const std::string& ssid, const std::string& password) {
   {
     std::lock_guard<std::mutex> lock(credentialMutex);
@@ -130,6 +140,7 @@ bool WifiCredentialStore::addCredential(const std::string& ssid, const std::stri
       credentials.push_back({ssid, password});
       LOG_DBG("WCS", "Added credentials for: %s", ssid.c_str());
     }
+    credentialsInitialized = true;
   }
   return saveToFile();
 }
@@ -143,6 +154,7 @@ bool WifiCredentialStore::removeCredential(const std::string& ssid) {
       return false;  // Not found
     }
     credentials.erase(cred);
+    credentialsInitialized = true;
     LOG_DBG("WCS", "Removed credentials for: %s", ssid.c_str());
     if (ssid == lastConnectedSsid) lastConnectedSsid.clear();
   }

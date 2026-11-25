@@ -79,6 +79,19 @@ inline bool isPreparedCover(const char* path) {
   return true;
 }
 
+inline bool isBookOrbitPendingFile(std::string_view value) {
+  constexpr std::string_view root = "/.crosspoint/bookorbit-pending";
+  if (value == root) return true;
+  if (!value.starts_with(root) || value.size() <= root.size() || value[root.size()] != '/') return false;
+  value.remove_prefix(root.size() + 1);
+  if (value.size() <= 16 || (value.substr(16) != ".pending" && value.substr(16) != ".tmp")) return false;
+  for (size_t i = 0; i < 16; ++i) {
+    const char c = value[i];
+    if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) return false;
+  }
+  return true;
+}
+
 inline bool isVocabularyNotice(const char* path) {
   if (!path) return false;
   std::string_view value(path);
@@ -117,7 +130,8 @@ inline StorageMutation storageMutation(const char* path) {
     return StorageMutation::NavigationState;
   if (value == "/.crosspoint/state.json" || value == "/.crosspoint/reading-history/.reset.tmp" ||
       value == "/.crosspoint/reading-history/.reset.bak" || storageStateKey(path).valid() ||
-      isBookTextPreferences(path) || isVocabularyRecord(path) || isVocabularyNotice(path))
+      isBookTextPreferences(path) || isVocabularyRecord(path) || isVocabularyNotice(path) ||
+      isBookOrbitPendingFile(value))
     return StorageMutation::ReadingState;
   constexpr std::string_view root = "/.crosspoint/";
   if (value.substr(0, root.size()) != root) return StorageMutation::Resources;

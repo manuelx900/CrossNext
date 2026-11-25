@@ -11,6 +11,11 @@ from overlapping Shift or Delete.
 
 The shared text-entry keyboard refreshes after a key action changes the content, rather than refreshing the pressed-key highlight before inserting the character. This removes an intermediate panel update from a brief tap; it does not change the display waveform or promise an instantaneous physical refresh. Holds still open alternatives or clear the field using their existing thresholds. The same input path serves every built-in and SD language layout. Embedded keyboards already avoid press-only refresh requests and keep their existing routing.
 
+When the built-in touch layout stays the same, typing and deleting reuse the
+visible keys and their touch targets. Panels with windowed refresh update the
+area above the keys. Changing layouts or opening the alternate chooser repaints
+the keys.
+
 Wi-Fi's **Show password** choice applies while editing as well as on the review screen. Returning from the keyboard preserves its chosen visibility; leaving cursor mode does not hide a visible password. Cancelling keeps the previous password and visibility. New password prompts start hidden. This is a transient UI choice: it does not add a stored setting, change credential storage or normalize password bytes. The changes add no heap allocation or framebuffer.
 
 Hold a character to open its variants. Slide onto an option and release, or lift
